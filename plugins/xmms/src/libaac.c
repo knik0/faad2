@@ -3,8 +3,8 @@
 **				by ciberfred
 **		------------------------------------------------
 **
-** need libfaad2-2.0  package from http://www.audiocoding.com
-** and id3lib-3.8.x   package from http://www.id3lib.org
+** need libfaad2     package from http://www.audiocoding.com
+** and id3lib-3.8.x  package from http://id3lib.sourceforge.org
 **
 */
 
@@ -23,7 +23,7 @@
 #include "aac_utils.h"
 
 #define AAC_DESCRIPTION	"MPEG2/4 AAC player - 1.2.7"
-#define AAC_VERSION	"AAC player - 5 July 2003 (v0.4.1)"
+#define AAC_VERSION	"AAC player - 15 June 2003 (v0.4)"
 #define AAC_ABOUT	"Writen from scratch by ciberfred from France\n"
 #define PATH2CONFIGFILE "/.xmms/Plugins/aacConfig.txt"
 #define BUFFER_SIZE	FAAD_MIN_STREAMSIZE*64
@@ -275,7 +275,7 @@ static void *aac_decode(void *args)
   g_free(input->genre);
   g_free(input);
 
-  bufferconsumed = faacDecInit(decoder, buffer, BUFFER_SIZE, &samplerate, &channels);
+  bufferconsumed = faacDecInit(decoder, buffer, &samplerate, &channels);
   if((bOutputOpen = aac_ip.output->open_audio(FMT_S16_NE, samplerate, channels)) == FALSE){
     printf("Output Error\n");
     g_free(buffer); buffer=0;
@@ -312,7 +312,7 @@ static void *aac_decode(void *args)
       buffervalid += fread(&buffer[buffervalid], 1, BUFFER_SIZE-buffervalid, file);
       bufferconsumed = 0;
     }
-    sample_buffer = faacDecDecode(decoder, &finfo, buffer, buffervalid);
+    sample_buffer = faacDecDecode(decoder, &finfo, buffer);
     if(finfo.error){
       buffervalid = 0;
       printf("FAAD2 Error %s\n", faacDecGetErrorMessage(finfo.error));
