@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.6 2002/01/24 09:27:54 menno Exp $
+** $Id: in_mp4.c,v 1.7 2002/01/25 23:20:42 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -320,7 +320,7 @@ BOOL CALLBACK info_dialog_proc(HWND hwndDlg, UINT message,
 	static int numMpegVideoTypes = 
 		sizeof(mpegVideoTypes) / sizeof(u_int8_t);
 
-    unsigned long long msDuration;
+    unsigned long msDuration;
     MP4Duration trackDuration;
     unsigned int timeScale, avgBitRate;
     int type;
@@ -679,7 +679,7 @@ void stop()
 int getsonglength(char *fn)
 {
     int track;
-    long long msDuration;
+    long msDuration;
 	MP4Duration length;
     MP4FileHandle file;
 
@@ -706,7 +706,7 @@ int getsonglength(char *fn)
 int getlength()
 {
     int track;
-    long long msDuration;
+    long msDuration;
 	MP4Duration length;
 
     if ((track = GetAACTrack(mp4state.mp4file)) < 0)
