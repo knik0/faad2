@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.3 2002/12/26 17:51:49 menno Exp $
+** $Id: foo_mp4.cpp,v 1.4 2002/12/26 19:47:55 menno Exp $
 **/
 
 #include <mp4.h>
@@ -105,6 +105,9 @@ public:
         unsigned __int32 buffer_size;
         void *sample_buffer;
 
+        if (sampleId == MP4_INVALID_SAMPLE_ID)
+            return 0;
+
         do {
             buffer = NULL;
             buffer_size = 0;
@@ -133,7 +136,7 @@ public:
 
     virtual int set_info(reader *r,const file_info * info)
     {
-        return 1;
+        return 0;
     }
 
     virtual int seek(double seconds)
@@ -144,9 +147,6 @@ public:
             track, seconds, MP4_SECS_TIME_SCALE);
         sampleId = MP4GetSampleIdFromTime(hFile,
             track, duration, 0);
-
-        if (sampleId == MP4_INVALID_SAMPLE_ID)
-            sampleId = numSamples;
 
         return 1;
     }
