@@ -1,3 +1,0 @@
-How to compile foo_mp4.dll:
-Extract the 2 directories (\foobar2000, \pfc) from the foobar2000
-SDK to this directory, open the foo_mp4 project for VC and compile.
