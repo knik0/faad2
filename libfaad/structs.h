@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: structs.h,v 1.4 2003/02/06 20:01:53 menno Exp $
+** $Id: structs.h,v 1.5 2003/02/09 20:42:49 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -279,6 +279,26 @@ typedef struct
     ic_stream ics1;
     ic_stream ics2;
 } element; /* syntax element (SCE, CPE, LFE) */
+
+typedef struct mp4AudioSpecificConfig
+{
+    /* Audio Specific Info */
+    uint8_t objectTypeIndex;
+    uint8_t samplingFrequencyIndex;
+    uint32_t samplingFrequency;
+    uint8_t channelsConfiguration;
+
+    /* GA Specific Info */
+    uint8_t frameLengthFlag;
+    uint8_t dependsOnCoreCoder;
+    uint16_t coreCoderDelay;
+    uint8_t extensionFlag;
+    uint8_t aacSectionDataResilienceFlag;
+    uint8_t aacScalefactorDataResilienceFlag;
+    uint8_t aacSpectralDataResilienceFlag;
+    uint8_t epConfig;
+
+} mp4AudioSpecificConfig;
 
 typedef struct faacDecConfiguration
 {

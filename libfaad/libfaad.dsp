@@ -259,6 +259,10 @@ SOURCE=.\cfft.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\cfft_tab.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\common.h
 # End Source File
 # Begin Source File
@@ -303,6 +307,10 @@ SOURCE=.\ic_predict.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\iq_table.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\is.h
 # End Source File
 # Begin Source File
@@ -340,6 +348,10 @@ SOURCE=.\pulse.h
 # Begin Source File
 
 SOURCE=.\rvlc.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sine_win.h
 # End Source File
 # Begin Source File
 

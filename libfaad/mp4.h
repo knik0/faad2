@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mp4.h,v 1.6 2002/11/01 11:19:36 menno Exp $
+** $Id: mp4.h,v 1.7 2003/02/09 20:42:49 menno Exp $
 **/
 
 #ifndef __MP4_H__
@@ -30,14 +30,7 @@ extern "C" {
 
 int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
                                    uint32_t buffer_size,
-                                   uint32_t *samplerate,
-                                   uint8_t *channels,
-                                   uint8_t *sf_index,
-                                   uint8_t *object_type,
-                                   uint8_t *aacSectionDataResilienceFlag,
-                                   uint8_t *aacScalefactorDataResilienceFlag,
-                                   uint8_t *aacSpectralDataResilienceFlag,
-                                   uint8_t *frameLengthFlag);
+                                   mp4AudioSpecificConfig *mp4ASC);
 
 #ifdef __cplusplus
 }

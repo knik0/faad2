@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: utils.c,v 1.4 2002/11/01 11:19:36 menno Exp $
+** $Id: utils.c,v 1.5 2003/02/09 20:42:52 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -56,15 +56,13 @@ int GetAACTrack(MP4FileHandle infile)
         {
             unsigned char *buff = NULL;
             int buff_size = 0;
-            unsigned char dummy2_8, dummy3_8, dummy4_8, dummy5_8, dummy6_8,
-                dummy7_8, dummy8_8;
-            unsigned int dummy1_32;
+            mp4AudioSpecificConfig mp4ASC;
+
             MP4GetTrackESConfiguration(infile, trackId, &buff, &buff_size);
 
             if (buff)
             {
-                rc = AudioSpecificConfig(buff, buff_size, &dummy1_32, &dummy2_8,
-                    &dummy3_8, &dummy4_8, &dummy5_8, &dummy6_8, &dummy7_8, &dummy8_8);
+                rc = AudioSpecificConfig(buff, buff_size, &mp4ASC);
                 free(buff);
 
                 if (rc < 0)

@@ -16,11 +16,13 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mp4.c,v 1.13 2002/11/28 18:48:30 menno Exp $
+** $Id: mp4.c,v 1.14 2003/02/09 20:42:49 menno Exp $
 **/
 
 #include "common.h"
 #include "structs.h"
+
+#include <stdlib.h>
 
 #include "bits.h"
 #include "mp4.h"
@@ -102,91 +104,74 @@ static uint8_t ObjectTypesTable[32] = {
 /* Table 1.6.1 */
 int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
                                    uint32_t buffer_size,
-                                   uint32_t *samplerate,
-                                   uint8_t *channels,
-                                   uint8_t *sf_index,
-                                   uint8_t *object_type,
-                                   uint8_t *aacSectionDataResilienceFlag,
-                                   uint8_t *aacScalefactorDataResilienceFlag,
-                                   uint8_t *aacSpectralDataResilienceFlag,
-                                   uint8_t *frameLengthFlag)
+                                   mp4AudioSpecificConfig *mp4ASC)
 {
     bitfile ld;
-    uint8_t ep_config = 0;
     int8_t result = 0;
-    uint8_t ObjectTypeIndex, SamplingFrequencyIndex, ChannelsConfiguration;
+
+    if (pBuffer == NULL)
+        return -7;
+    if (mp4ASC == NULL)
+        return -8;
+
+    memset(mp4ASC, 0, sizeof(mp4AudioSpecificConfig));
 
     faad_initbits(&ld, pBuffer, buffer_size);
     faad_byte_align(&ld);
 
-    ObjectTypeIndex = (uint8_t)faad_getbits(&ld, 5
+    mp4ASC->objectTypeIndex = (uint8_t)faad_getbits(&ld, 5
         DEBUGVAR(1,1,"parse_audio_decoder_specific_info(): ObjectTypeIndex"));
 
-    SamplingFrequencyIndex = (uint8_t)faad_getbits(&ld, 4
+    mp4ASC->samplingFrequencyIndex = (uint8_t)faad_getbits(&ld, 4
         DEBUGVAR(1,2,"parse_audio_decoder_specific_info(): SamplingFrequencyIndex"));
 
-    ChannelsConfiguration = (uint8_t)faad_getbits(&ld, 4
+    mp4ASC->channelsConfiguration = (uint8_t)faad_getbits(&ld, 4
         DEBUGVAR(1,3,"parse_audio_decoder_specific_info(): ChannelsConfiguration"));
 
-    *samplerate = sample_rates[SamplingFrequencyIndex];
+    mp4ASC->samplingFrequency = sample_rates[mp4ASC->samplingFrequencyIndex];
 
-    *channels = ChannelsConfiguration;
-
-    *sf_index = SamplingFrequencyIndex;
-    *object_type = ObjectTypeIndex;
-
-    if (ObjectTypesTable[ObjectTypeIndex] != 1)
+    if (ObjectTypesTable[mp4ASC->objectTypeIndex] != 1)
     {
         faad_endbits(&ld);
         return -1;
     }
 
-    if (*samplerate == 0)
+    if (mp4ASC->samplingFrequency == 0)
     {
         faad_endbits(&ld);
         return -2;
     }
 
-    if (ChannelsConfiguration > 7)
+    if (mp4ASC->channelsConfiguration > 7)
     {
         faad_endbits(&ld);
         return -3;
     }
 
     /* get GASpecificConfig */
-    if (ObjectTypeIndex == 1 || ObjectTypeIndex == 2 ||
-        ObjectTypeIndex == 3 || ObjectTypeIndex == 4 ||
-        ObjectTypeIndex == 6 || ObjectTypeIndex == 7)
+    if (mp4ASC->objectTypeIndex == 1 || mp4ASC->objectTypeIndex == 2 ||
+        mp4ASC->objectTypeIndex == 3 || mp4ASC->objectTypeIndex == 4 ||
+        mp4ASC->objectTypeIndex == 6 || mp4ASC->objectTypeIndex == 7)
     {
-        result = GASpecificConfig(&ld, channels, ObjectTypeIndex,
+        result = GASpecificConfig(&ld, mp4ASC);
+
 #ifdef ERROR_RESILIENCE
-            aacSectionDataResilienceFlag,
-            aacScalefactorDataResilienceFlag,
-            aacSpectralDataResilienceFlag,
-#endif
-            frameLengthFlag);
-#ifdef ERROR_RESILIENCE
-    } else if (ObjectTypeIndex >= ER_OBJECT_START) { /* ER */
-        result = GASpecificConfig(&ld, channels, ObjectTypeIndex,
-#ifdef ERROR_RESILIENCE
-            aacSectionDataResilienceFlag,
-            aacScalefactorDataResilienceFlag,
-            aacSpectralDataResilienceFlag,
-#endif
-            frameLengthFlag);
-        ep_config = (uint8_t)faad_getbits(&ld, 2
+    } else if (mp4ASC->objectTypeIndex >= ER_OBJECT_START) { /* ER */
+        result = GASpecificConfig(&ld, mp4ASC);
+        mp4ASC->epConfig = (uint8_t)faad_getbits(&ld, 2
             DEBUGVAR(1,143,"parse_audio_decoder_specific_info(): epConfig"));
 
-        if (ep_config != 0)
+        if (mp4ASC->epConfig != 0)
             result = -5;
 #endif
+
     } else {
         result = -4;
     }
 
 #ifdef SSR_DEC
     /* shorter frames not allowed for SSR */
-    if ((ObjectTypeIndex == 4) && *frameLengthFlag)
+    if ((mp4ASC->objectTypeIndex == 4) && mp4ASC->frameLengthFlag)
         return -6;
 #endif
 

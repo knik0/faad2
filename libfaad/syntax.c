@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.38 2003/01/17 14:56:18 menno Exp $
+** $Id: syntax.c,v 1.39 2003/02/09 20:42:49 menno Exp $
 **/
 
 /*
@@ -44,52 +44,43 @@
 
 
 /* Table 4.4.1 */
-int8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration,
-                        uint8_t object_type,
-#ifdef ERROR_RESILIENCE
-                        uint8_t *aacSectionDataResilienceFlag,
-                        uint8_t *aacScalefactorDataResilienceFlag,
-                        uint8_t *aacSpectralDataResilienceFlag,
-#endif
-                        uint8_t *frameLengthFlag)
+int8_t GASpecificConfig(bitfile *ld, mp4AudioSpecificConfig *mp4ASC)
 {
-    uint8_t dependsOnCoreCoder, extensionFlag;
-    uint16_t coreCoderDelay;
     program_config pce;
 
     /* 1024 or 960 */
-    *frameLengthFlag = faad_get1bit(ld
+    mp4ASC->frameLengthFlag = faad_get1bit(ld
         DEBUGVAR(1,138,"GASpecificConfig(): FrameLengthFlag"));
 
-    dependsOnCoreCoder = faad_get1bit(ld
+    mp4ASC->dependsOnCoreCoder = faad_get1bit(ld
         DEBUGVAR(1,139,"GASpecificConfig(): DependsOnCoreCoder"));
-    if (dependsOnCoreCoder == 1)
+    if (mp4ASC->dependsOnCoreCoder == 1)
     {
-        coreCoderDelay = (uint16_t)faad_getbits(ld, 14
+        mp4ASC->coreCoderDelay = (uint16_t)faad_getbits(ld, 14
             DEBUGVAR(1,140,"GASpecificConfig(): CoreCoderDelay"));
     }
 
-    extensionFlag = faad_get1bit(ld DEBUGVAR(1,141,"GASpecificConfig(): ExtensionFlag"));
-    if (*channelConfiguration == 0)
+    mp4ASC->extensionFlag = faad_get1bit(ld DEBUGVAR(1,141,"GASpecificConfig(): ExtensionFlag"));
+    if (mp4ASC->channelsConfiguration == 0)
     {
         program_config_element(&pce, ld);
-        *channelConfiguration = pce.channels;
+        mp4ASC->channelsConfiguration = pce.channels;
 
         if (pce.num_valid_cc_elements)
             return -3;
     }
 
 #ifdef ERROR_RESILIENCE
-    if (extensionFlag == 1)
+    if (mp4ASC->extensionFlag == 1)
     {
         /* Error resilience not supported yet */
-        if (object_type >= ER_OBJECT_START)
+        if (mp4ASC->objectTypeIndex >= ER_OBJECT_START)
         {
-            *aacSectionDataResilienceFlag = faad_get1bit(ld
+            mp4ASC->aacSectionDataResilienceFlag = faad_get1bit(ld
                 DEBUGVAR(1,144,"GASpecificConfig(): aacSectionDataResilienceFlag"));
-            *aacScalefactorDataResilienceFlag = faad_get1bit(ld
+            mp4ASC->aacScalefactorDataResilienceFlag = faad_get1bit(ld
                 DEBUGVAR(1,145,"GASpecificConfig(): aacScalefactorDataResilienceFlag"));
-            *aacSpectralDataResilienceFlag = faad_get1bit(ld
+            mp4ASC->aacSpectralDataResilienceFlag = faad_get1bit(ld
                 DEBUGVAR(1,146,"GASpecificConfig(): aacSpectralDataResilienceFlag"));
 
             /* 1 bit: extensionFlag3 */

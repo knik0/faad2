@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.24 2002/12/22 19:58:31 menno Exp $
+** $Id: syntax.h,v 1.25 2003/02/09 20:42:49 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -81,14 +81,7 @@ extern "C" {
 #define INTENSITY_HCB  15
 
 
-int8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration,
-                        uint8_t object_type,
-#ifdef ERROR_RESILIENCE
-                        uint8_t *aacSectionDataResilienceFlag,
-                        uint8_t *aacScalefactorDataResilienceFlag,
-                        uint8_t *aacSpectralDataResilienceFlag,
-#endif
-                        uint8_t *frameLengthFlag);
+int8_t GASpecificConfig(bitfile *ld, mp4AudioSpecificConfig *mp4ASC);
 
 uint8_t adts_frame(adts_header *adts, bitfile *ld);
 void get_adif_header(adif_header *adif, bitfile *ld);

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.49 2003/02/06 20:01:52 menno Exp $
+** $Id: decoder.c,v 1.50 2003/02/09 20:42:49 menno Exp $
 **/
 
 #include "common.h"
@@ -207,7 +207,7 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
                             uint32_t *samplerate, uint8_t *channels)
 {
     int8_t rc;
-    uint8_t frameLengthFlag;
+    mp4AudioSpecificConfig mp4ASC;
 
     hDecoder->adif_header_present = 0;
     hDecoder->adts_header_present = 0;
@@ -221,17 +221,18 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
         return -1;
     }
 
-    rc = AudioSpecificConfig(pBuffer, SizeOfDecoderSpecificInfo,
-        samplerate, channels,
-        &hDecoder->sf_index, &hDecoder->object_type,
-#ifdef ERROR_RESILIENCE
-        &hDecoder->aacSectionDataResilienceFlag,
-        &hDecoder->aacScalefactorDataResilienceFlag,
-        &hDecoder->aacSpectralDataResilienceFlag,
-#else
-        NULL, NULL, NULL,
-#endif
-        &frameLengthFlag);
+    /* decode the audio specific config */
+    rc = AudioSpecificConfig(pBuffer, SizeOfDecoderSpecificInfo, &mp4ASC);
+
+    /* copy the relevant info to the decoder handle */
+    *samplerate = mp4ASC.samplingFrequency;
+    *channels = mp4ASC.channelsConfiguration;
+    hDecoder->sf_index = mp4ASC.samplingFrequencyIndex;
+    hDecoder->object_type = mp4ASC.objectTypeIndex;
+    hDecoder->aacSectionDataResilienceFlag = mp4ASC.aacSectionDataResilienceFlag;
+    hDecoder->aacScalefactorDataResilienceFlag = mp4ASC.aacScalefactorDataResilienceFlag;
+    hDecoder->aacSpectralDataResilienceFlag = mp4ASC.aacSpectralDataResilienceFlag;
+
     if (hDecoder->object_type < 5)
         hDecoder->object_type--; /* For AAC differs from MPEG-4 */
     if (rc != 0)
@@ -239,7 +240,7 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
         return rc;
     }
     hDecoder->channelConfiguration = *channels;
-    if (frameLengthFlag)
+    if (mp4ASC.frameLengthFlag)
         hDecoder->frameLength = 960;
 
     /* must be done before frameLength is divided by 2 for LD */

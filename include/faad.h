@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: faad.h,v 1.18 2003/02/06 20:01:51 menno Exp $
+** $Id: faad.h,v 1.19 2003/02/09 20:42:48 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -71,6 +71,25 @@ extern "C" {
 
 typedef void *faacDecHandle;
 
+typedef struct mp4AudioSpecificConfig
+{
+    /* Audio Specific Info */
+    unsigned char objectTypeIndex;
+    unsigned char samplingFrequencyIndex;
+    unsigned long samplingFrequency;
+    unsigned char channelsConfiguration;
+
+    /* GA Specific Info */
+    unsigned char frameLengthFlag;
+    unsigned char dependsOnCoreCoder;
+    unsigned long coreCoderDelay;
+    unsigned char extensionFlag;
+    unsigned char aacSectionDataResilienceFlag;
+    unsigned char aacScalefactorDataResilienceFlag;
+    unsigned char aacSpectralDataResilienceFlag;
+    unsigned char epConfig;
+
+} mp4AudioSpecificConfig;
 
 typedef struct faacDecConfiguration
 {
@@ -122,14 +141,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
 char FAADAPI AudioSpecificConfig(unsigned char *pBuffer,
                                  unsigned long buffer_size,
-                                 unsigned long *samplerate,
-                                 unsigned char *channels,
-                                 unsigned char *sf_index,
-                                 unsigned char *object_type,
-                                 unsigned char *aacSectionDataResilienceFlag,
-                                 unsigned char *aacScalefactorDataResilienceFlag,
-                                 unsigned char *aacSpectralDataResilienceFlag,
-                                 unsigned char *frameLengthFlag);
+                                 mp4AudioSpecificConfig *mp4ASC);
 
 #ifdef _WIN32
   #pragma pack(pop)
