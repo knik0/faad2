@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.53 2003/10/19 18:11:19 menno Exp $
+** $Id: main.c,v 1.54 2003/10/19 18:49:38 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -730,6 +730,7 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
     faacDecHandle hDecoder;
     faacDecConfigurationPtr config;
     faacDecFrameInfo frameInfo;
+    mp4AudioSpecificConfig mp4ASC;
 
     unsigned char *buffer;
     int buffer_size;
@@ -782,25 +783,6 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
         return 1;
     }
 
-#if 0
-    /* print some mp4 file info */
-    fprintf(stderr, "%s file info:\n", mp4file);
-    {
-        char *file_info = MP4Info(infile, MP4_INVALID_TRACK_ID);
-        fprintf(stderr, "%s\n", file_info);
-        free(file_info);
-    }
-#endif
-
-    if (infoOnly)
-    {
-        faacDecClose(hDecoder);
-        mp4ff_close(infile);
-        free(mp4cb);
-        fclose(g_mp4File);
-        return 0;
-    }
-
     if ((track = GetAACTrack(infile)) < 0)
     {
         fprintf(stderr, "Unable to find correct AAC sound track in the MP4 file.\n");
@@ -827,25 +809,45 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
         return 1;
     }
 
-    if (!noGapless)
+    timescale = mp4ff_audio_time_scale(infile, track);
+    framesize = 1024;
+    useAacLength = 0;
+
+    if (buffer)
     {
-        mp4AudioSpecificConfig mp4ASC;
-
-        timescale = mp4ff_audio_time_scale(infile, track);
-        framesize = 1024;
-        useAacLength = 0;
-
-        if (buffer)
+        if (AudioSpecificConfig(buffer, buffer_size, &mp4ASC) >= 0)
         {
-            if (AudioSpecificConfig(buffer, buffer_size, &mp4ASC) >= 0)
-            {
-                if (mp4ASC.frameLengthFlag == 1) framesize = 960;
-                if (mp4ASC.sbr_present_flag == 1) framesize *= 2;
-            }
+            if (mp4ASC.frameLengthFlag == 1) framesize = 960;
+            if (mp4ASC.sbr_present_flag == 1) framesize *= 2;
         }
+        free(buffer);
     }
 
-    if (buffer) free(buffer);
+    /* print some mp4 file info */
+    fprintf(stderr, "%s file info:\n", mp4file);
+    {
+        char *ot[6] = { "NULL", "MAIN AAC", "LC AAC", "SSR AAC", "LTP AAC", "HE AAC" };
+        long samples = mp4ff_audio_length(infile, track);
+        float f = 1024.0;
+        float seconds;
+        if ((mp4ASC.sbr_present_flag == 1) || mp4ASC.forceUpSampling)
+        {
+            f = f * 2.0;
+        }
+        seconds = (float)samples*(float)(f-1.0)/(float)mp4ASC.samplingFrequency;
+
+        fprintf(stderr, "%s\t%.3f secs, %d ch, %d Hz\n\n", ot[(mp4ASC.objectTypeIndex > 5)?0:mp4ASC.objectTypeIndex],
+            seconds, mp4ASC.channelsConfiguration, mp4ASC.samplingFrequency);
+    }
+
+    if (infoOnly)
+    {
+        faacDecClose(hDecoder);
+        mp4ff_close(infile);
+        free(mp4cb);
+        fclose(g_mp4File);
+        return 0;
+    }
 
     numSamples = mp4ff_audio_length(infile, track);
 
@@ -1009,7 +1011,6 @@ int main(int argc, char *argv[])
     char audioFileName[255];
     char adtsFileName[255];
     mp4_callback_t *mp4cb = malloc(sizeof(mp4_callback_t));
-    //MP4FileHandle infile;
 
 /* System dependant types */
 #ifdef _WIN32
@@ -1185,12 +1186,6 @@ int main(int argc, char *argv[])
 
         strcat(audioFileName, file_ext[format]);
     }
-
-    //mp4file = 1;
-    //infile = MP4Read(aacFileName, 0);
-    //if (!infile)
-    //    mp4file = 0;
-    //if (infile) MP4Close(infile);
 
     /* initialise the callback structure */
     g_mp4File = fopen(aacFileName, "rb");
