@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: error.c,v 1.17 2003/12/17 14:43:16 menno Exp $
+** $Id: error.c,v 1.18 2003/12/23 18:41:42 menno Exp $
 **/
 
 #include "common.h"
@@ -45,5 +45,7 @@ extern int8_t *err_msg[] = {
     "Maximum number of bitstream elements exceeded",
     "Input data buffer too small",
     "Array index out of range",
-    "Maximum number of scalefactor bands exceeded"
+    "Maximum number of scalefactor bands exceeded",
+    "Quantised value out of range",
+    "LTP lag out of range"
 };

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.35 2003/12/17 16:37:34 menno Exp $
+** $Id: specrec.c,v 1.36 2003/12/23 18:41:42 menno Exp $
 **/
 
 /*
@@ -461,7 +461,7 @@ static void quant_to_spec(ic_stream *ics, real_t *spec_data, uint16_t frame_len)
     memcpy(spec_data, tmp_spec, frame_len*sizeof(real_t));
 }
 
-static INLINE real_t iquant(int16_t q, const real_t *tab)
+static INLINE real_t iquant(int16_t q, const real_t *tab, uint8_t *error)
 {
 #ifdef FIXED_POINT
     static const real_t errcorr[] = {
@@ -488,35 +488,41 @@ static INLINE real_t iquant(int16_t q, const real_t *tab)
 #else
     if (q < 0)
     {
-        if (-q >= IQ_TABLE_SIZE)
-            return 0;
-
         /* tab contains a value for all possible q [0,8192] */
-        return -tab[-q];
-    }
+        if (-q < IQ_TABLE_SIZE)
+            return -tab[-q];
 
-    if (q >= IQ_TABLE_SIZE)
+        *error = 17;
         return 0;
+    } else {
+        /* tab contains a value for all possible q [0,8192] */
+        if (q < IQ_TABLE_SIZE)
+            return tab[q];
 
-    /* tab contains a value for all possible q [0,8192] */
-    return tab[q];
+        *error = 17;
+        return 0;
+    }
 #endif
 }
 
-static void inverse_quantization(real_t *x_invquant, const int16_t *x_quant, const uint16_t frame_len)
+static uint8_t inverse_quantization(real_t *x_invquant, const int16_t *x_quant, const uint16_t frame_len)
 {
     int16_t i;
+    uint8_t error = 0; /* Init error flag */
     const real_t *tab = iq_table;
 
     for(i = 0; i < frame_len; i+=4)
     {
-        x_invquant[i] = iquant(x_quant[i], tab);
-        x_invquant[i+1] = iquant(x_quant[i+1], tab);
-        x_invquant[i+2] = iquant(x_quant[i+2], tab);
-        x_invquant[i+3] = iquant(x_quant[i+3], tab);
+        x_invquant[i] = iquant(x_quant[i], tab, &error);
+        x_invquant[i+1] = iquant(x_quant[i+1], tab, &error);
+        x_invquant[i+2] = iquant(x_quant[i+2], tab, &error);
+        x_invquant[i+3] = iquant(x_quant[i+3], tab, &error);
     }
+
+    return error;
 }
 
+#ifndef FIXED_POINT
 ALIGN static const real_t pow2sf_tab[] = {
     2.9802322387695313E-008, 5.9604644775390625E-008, 1.1920928955078125E-007,
     2.384185791015625E-007, 4.76837158203125E-007, 9.5367431640625E-007,
@@ -540,12 +546,15 @@ ALIGN static const real_t pow2sf_tab[] = {
     8589934592, 17179869184, 34359738368,
     68719476736, 137438953472, 274877906944
 };
+#endif
 
 ALIGN static real_t pow2_table[] =
 {
+#if 0
     COEF_CONST(0.59460355750136053335874998528024), /* 2^-0.75 */
     COEF_CONST(0.70710678118654752440084436210485), /* 2^-0.5 */
     COEF_CONST(0.84089641525371454303112547623321), /* 2^-0.25 */
+#endif
     COEF_CONST(1.0),
     COEF_CONST(1.1892071150027210667174999705605), /* 2^0.25 */
     COEF_CONST(1.4142135623730950488016887242097), /* 2^0.5 */
@@ -573,10 +582,11 @@ void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics,
         {
             top = ics->sect_sfb_offset[g][sfb+1];
 
-            exp = (ics->scale_factors[g][sfb] - 100) >> 2;
-            frac = (ics->scale_factors[g][sfb] - 100) & 3;
+            exp = (ics->scale_factors[g][sfb] /* - 100 */) >> 2;
+            frac = (ics->scale_factors[g][sfb] /* - 100 */) & 3;
 
 #ifdef FIXED_POINT
+            exp -= 25;
             /* IMDCT pre-scaling */
             if (hDecoder->object_type == LD)
             {
@@ -606,16 +616,16 @@ void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics,
                     x_invquant[k+(groups*nshort)+3] <<= exp;
                 }
 #else
-                x_invquant[k+(groups*nshort)]   = x_invquant[k+(groups*nshort)]   * pow2sf_tab[exp+25];
-                x_invquant[k+(groups*nshort)+1] = x_invquant[k+(groups*nshort)+1] * pow2sf_tab[exp+25];
-                x_invquant[k+(groups*nshort)+2] = x_invquant[k+(groups*nshort)+2] * pow2sf_tab[exp+25];
-                x_invquant[k+(groups*nshort)+3] = x_invquant[k+(groups*nshort)+3] * pow2sf_tab[exp+25];
+                x_invquant[k+(groups*nshort)]   = x_invquant[k+(groups*nshort)]   * pow2sf_tab[exp/*+25*/];
+                x_invquant[k+(groups*nshort)+1] = x_invquant[k+(groups*nshort)+1] * pow2sf_tab[exp/*+25*/];
+                x_invquant[k+(groups*nshort)+2] = x_invquant[k+(groups*nshort)+2] * pow2sf_tab[exp/*+25*/];
+                x_invquant[k+(groups*nshort)+3] = x_invquant[k+(groups*nshort)+3] * pow2sf_tab[exp/*+25*/];
 #endif
 
-                x_invquant[k+(groups*nshort)]   = MUL_C(x_invquant[k+(groups*nshort)],pow2_table[frac + 3]);
-                x_invquant[k+(groups*nshort)+1] = MUL_C(x_invquant[k+(groups*nshort)+1],pow2_table[frac + 3]);
-                x_invquant[k+(groups*nshort)+2] = MUL_C(x_invquant[k+(groups*nshort)+2],pow2_table[frac + 3]);
-                x_invquant[k+(groups*nshort)+3] = MUL_C(x_invquant[k+(groups*nshort)+3],pow2_table[frac + 3]);
+                x_invquant[k+(groups*nshort)]   = MUL_C(x_invquant[k+(groups*nshort)],pow2_table[frac /* + 3*/]);
+                x_invquant[k+(groups*nshort)+1] = MUL_C(x_invquant[k+(groups*nshort)+1],pow2_table[frac /* + 3*/]);
+                x_invquant[k+(groups*nshort)+2] = MUL_C(x_invquant[k+(groups*nshort)+2],pow2_table[frac /* + 3*/]);
+                x_invquant[k+(groups*nshort)+3] = MUL_C(x_invquant[k+(groups*nshort)+3],pow2_table[frac /* + 3*/]);
             }
         }
         groups += ics->window_group_length[g];
@@ -644,16 +654,16 @@ void apply_scalefactors_sse(faacDecHandle hDecoder, ic_stream *ics,
         {
             top = ics->sect_sfb_offset[g][sfb+1];
 
-            exp = (ics->scale_factors[g][sfb] - 100) >> 2;
-            frac = (ics->scale_factors[g][sfb] - 100) & 3;
+            exp = (ics->scale_factors[g][sfb] /* - 100 */) >> 2;
+            frac = (ics->scale_factors[g][sfb] /* - 100 */) & 3;
 
             /* minimum size of a sf band is 4 and always a multiple of 4 */
             for ( ; k < top; k += 4)
             {
                 __m128 m1 = _mm_load_ps(&x_invquant[k+(groups*nshort)]);
-                __m128 m2 = _mm_load_ps1(&pow2sf_tab[exp+25]);
+                __m128 m2 = _mm_load_ps1(&pow2sf_tab[exp /*+25*/]);
+                __m128 m3 = _mm_load_ps1(&pow2_table[frac /* + 3*/]);
                 __m128 m4 = _mm_mul_ps(m1, m2);
-                __m128 m3 = _mm_load_ps1(&pow2_table[frac + 3]);
                 __m128 m5 = _mm_mul_ps(m3, m4);
                 _mm_store_ps(&x_invquant[k+(groups*nshort)], m5);
             }
@@ -663,9 +673,10 @@ void apply_scalefactors_sse(faacDecHandle hDecoder, ic_stream *ics,
 }
 #endif
 
-void reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
-                                element *sce, int16_t *spec_data)
+uint8_t reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
+                                   element *sce, int16_t *spec_data)
 {
+    uint8_t retval;
     ALIGN real_t spec_coef[1024];
 
 #ifdef PROFILE
@@ -673,7 +684,9 @@ void reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
 #endif
 
     /* inverse quantization */
-    inverse_quantization(spec_coef, spec_data, hDecoder->frameLength);
+    retval = inverse_quantization(spec_coef, spec_data, hDecoder->frameLength);
+    if (retval > 0)
+        return retval;
 
     /* apply scalefactors */
 #ifndef USE_SSE
@@ -682,14 +695,14 @@ void reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
     hDecoder->apply_sf_func(hDecoder, ics, spec_coef, hDecoder->frameLength);
 #endif
 
+    /* deinterleave short block grouping */
+    if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
+        quant_to_spec(ics, spec_coef, hDecoder->frameLength);
+
 #ifdef PROFILE
     count = faad_get_ts() - count;
     hDecoder->requant_cycles += count;
 #endif
-
-    /* deinterleave short block grouping */
-    if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
-        quant_to_spec(ics, spec_coef, hDecoder->frameLength);
 
 
     /* pns decoding */
@@ -810,11 +823,14 @@ void reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
             hDecoder->time_out[sce->channel]+hDecoder->frameLength, hDecoder->frameLength, hDecoder->object_type);
     }
 #endif
+
+    return 0;
 }
 
-void reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_stream *ics2,
-                              element *cpe, int16_t *spec_data1, int16_t *spec_data2)
+uint8_t reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_stream *ics2,
+                                 element *cpe, int16_t *spec_data1, int16_t *spec_data2)
 {
+    uint8_t retval;
     ALIGN real_t spec_coef1[1024];
     ALIGN real_t spec_coef2[1024];
 
@@ -823,8 +839,13 @@ void reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_stream
 #endif
 
     /* inverse quantization */
-    inverse_quantization(spec_coef1, spec_data1, hDecoder->frameLength);
-    inverse_quantization(spec_coef2, spec_data2, hDecoder->frameLength);
+    retval = inverse_quantization(spec_coef1, spec_data1, hDecoder->frameLength);
+    if (retval > 0)
+        return retval;
+
+    retval = inverse_quantization(spec_coef2, spec_data2, hDecoder->frameLength);
+    if (retval > 0)
+        return retval;
 
     /* apply scalefactors */
 #ifndef USE_SSE
@@ -835,16 +856,16 @@ void reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_stream
     hDecoder->apply_sf_func(hDecoder, ics2, spec_coef2, hDecoder->frameLength);
 #endif
 
-#ifdef PROFILE
-    count = faad_get_ts() - count;
-    hDecoder->requant_cycles += count;
-#endif
-
     /* deinterleave short block grouping */
     if (ics1->window_sequence == EIGHT_SHORT_SEQUENCE)
         quant_to_spec(ics1, spec_coef1, hDecoder->frameLength);
     if (ics2->window_sequence == EIGHT_SHORT_SEQUENCE)
         quant_to_spec(ics2, spec_coef2, hDecoder->frameLength);
+
+#ifdef PROFILE
+    count = faad_get_ts() - count;
+    hDecoder->requant_cycles += count;
+#endif
 
 
     /* pns decoding */
@@ -1036,4 +1057,6 @@ void reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_stream
             hDecoder->object_type);
     }
 #endif
+
+    return 0;
 }

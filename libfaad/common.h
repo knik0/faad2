@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.40 2003/12/17 16:37:34 menno Exp $
+** $Id: common.h,v 1.41 2003/12/23 18:41:42 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -117,7 +117,7 @@ extern "C" {
 # endif
 #endif
 
-#if ((defined(_WIN32) && !defined(_WIN32_WCE)) || ((__GNUC__ >= 3) && defined(i386)))
+#if ((defined(_WIN32) && !defined(_WIN32_WCE)) /* || ((__GNUC__ >= 3) && defined(__i386__)) */ )
 #ifndef FIXED_POINT
 /* includes <xmmintrin.h> to enable SSE intrinsics */
 #define USE_SSE
@@ -300,6 +300,19 @@ char *strchr(), *strrchr();
             fld   f
             fistp i
         }
+        return i;
+    }
+  #elif (defined(__i386__) && defined(__GNUC__))
+    #define HAS_LRINTF
+    // from http://www.stereopsis.com/FPU.html
+    static INLINE int lrintf(float f)
+    {
+        int i;
+        __asm__ __volatile__ (
+            "flds %1        \n\t"
+            "fistpl %0      \n\t"
+            : "=m" (i)
+            : "m" (f));
         return i;
     }
   #endif

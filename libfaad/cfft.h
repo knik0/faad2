@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: cfft.h,v 1.14 2003/12/17 14:43:16 menno Exp $
+** $Id: cfft.h,v 1.15 2003/12/23 18:41:42 menno Exp $
 **/
 
 #ifndef __CFFT_H__
@@ -47,13 +47,23 @@ cfft_info *cffti(uint16_t n);
 void cfftu(cfft_info *cfft);
 
 
-static void passf2(const uint16_t ido, const uint16_t l1, const complex_t *cc,
-                   complex_t *ch, const complex_t *wa, const int8_t isign);
+#ifdef USE_SSE
+void cfftb_sse(cfft_info *cfft, complex_t *c);
+static void passf2pos_sse(const uint16_t ido, const uint16_t l1, const complex_t *cc,
+                          complex_t *ch, const complex_t *wa);
+static void passf4pos_sse(const uint16_t ido, const uint16_t l1, const complex_t *cc, complex_t *ch,
+                          const complex_t *wa1, const complex_t *wa2, const complex_t *wa3);
+#endif
+static void passf2pos(const uint16_t ido, const uint16_t l1, const complex_t *cc,
+                      complex_t *ch, const complex_t *wa);
+static void passf2neg(const uint16_t ido, const uint16_t l1, const complex_t *cc,
+                      complex_t *ch, const complex_t *wa);
 static void passf3(const uint16_t ido, const uint16_t l1, const complex_t *cc,
                    complex_t *ch, const complex_t *wa1, const complex_t *wa2, const int8_t isign);
-static void passf4(const uint16_t ido, const uint16_t l1, const complex_t *cc, complex_t *ch,
-                   const complex_t *wa1, const complex_t *wa2, const complex_t *wa3,
-                   const int8_t isign);
+static void passf4pos(const uint16_t ido, const uint16_t l1, const complex_t *cc, complex_t *ch,
+                      const complex_t *wa1, const complex_t *wa2, const complex_t *wa3);
+static void passf4neg(const uint16_t ido, const uint16_t l1, const complex_t *cc, complex_t *ch,
+                      const complex_t *wa1, const complex_t *wa2, const complex_t *wa3);
 static void passf5(const uint16_t ido, const uint16_t l1, const complex_t *cc, complex_t *ch,
                    const complex_t *wa1, const complex_t *wa2, const complex_t *wa3,
                    const complex_t *wa4, const int8_t isign);

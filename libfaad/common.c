@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.c,v 1.13 2003/12/17 14:43:16 menno Exp $
+** $Id: common.c,v 1.14 2003/12/23 18:41:42 menno Exp $
 **/
 
 /* just some common functions that could be used anywhere */
@@ -30,37 +30,60 @@
 #include "common.h"
 #include "structs.h"
 
-#include <malloc.h>
 #include <stdlib.h>
 #include "syntax.h"
 
 #ifdef USE_SSE
-uint8_t cpu_has_sse()
+__declspec(naked) static int32_t __fastcall test_cpuid()
 {
-    uint32_t feature;
-
-    __try
-    {
-        __asm
-        {
-            xor eax, eax
-            cpuid
-        }
-    }
-    __except (1)
-    {
-        return 0;
-    }
-
     __asm
     {
-        mov eax, 1
+        pushf
+        pop eax
+        mov ecx,eax
+        xor eax,(1<<21)
+        push eax
+        popf
+        pushf
+        pop eax
+        push ecx
+        popf
+        cmp eax,ecx
+        mov eax,0
+        setne al
+        ret
+    }
+}
+
+__declspec(naked) static void __fastcall run_cpuid(int32_t param, int32_t out[4])
+{
+    __asm
+    {
+        pushad
+        push edx
+        mov eax,ecx
         cpuid
-        mov feature, edx
+        pop edi
+        mov [edi+0],eax
+        mov [edi+4],ebx
+        mov [edi+8],ecx
+        mov [edi+12],edx
+        popad
+        ret
+    }
+}
+
+uint8_t cpu_has_sse()
+{
+    int32_t features[4];
+
+    if (test_cpuid())
+    {
+        run_cpuid(1, features);
     }
 
     /* check for SSE */
-    if (feature & 0x02000000)
+    if (features[3] & 0x02000000)
         return 1;
 
     return 0;

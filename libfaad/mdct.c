@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mdct.c,v 1.35 2003/12/17 14:43:16 menno Exp $
+** $Id: mdct.c,v 1.36 2003/12/23 18:41:42 menno Exp $
 **/
 
 /*
@@ -192,6 +192,7 @@ mdct_info *faad_mdct_init(uint16_t N)
 
 #ifdef PROFILE
     mdct->cycles = 0;
+    mdct->fft_cycles = 0;
 #endif
 
     return mdct;
@@ -203,6 +204,7 @@ void faad_mdct_end(mdct_info *mdct)
     {
 #ifdef PROFILE
         printf("MDCT[%.4d]:         %I64d cycles\n", mdct->N, mdct->cycles);
+        printf("CFFT[%.4d]:         %I64d cycles\n", mdct->N/4, mdct->fft_cycles);
 #endif
 
         cfftu(mdct->cfft);
@@ -287,6 +289,7 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
 
 #ifdef PROFILE
     count2 = faad_get_ts() - count2;
+    mdct->fft_cycles += count1;
     mdct->cycles += (count2 - count1);
 #endif
 }
@@ -359,7 +362,7 @@ void faad_imdct_sse(mdct_info *mdct, real_t *X_in, real_t *X_out)
 #endif
 
     /* complex IFFT, any non-scaling FFT can be used here */
-    cfftb(mdct->cfft, Z1);
+    cfftb_sse(mdct->cfft, Z1);
 
 #ifdef PROFILE
     count1 = faad_get_ts() - count1;
@@ -445,6 +448,7 @@ void faad_imdct_sse(mdct_info *mdct, real_t *X_in, real_t *X_out)
 
 #ifdef PROFILE
     count2 = faad_get_ts() - count2;
+    mdct->fft_cycles += count1;
     mdct->cycles += (count2 - count1);
 #endif
 }

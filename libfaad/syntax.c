@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.62 2003/12/17 14:43:16 menno Exp $
+** $Id: syntax.c,v 1.63 2003/12/23 18:41:42 menno Exp $
 **/
 
 /*
@@ -530,7 +530,9 @@ static uint8_t single_lfe_channel_element(faacDecHandle hDecoder, bitfile *ld,
         return retval;
 
     /* noiseless coding is done, spectral reconstruction is done now */
-    reconstruct_single_channel(hDecoder, ics, &sce, spec_data);
+    retval = reconstruct_single_channel(hDecoder, ics, &sce, spec_data);
+    if (retval > 0)
+        return retval;
 
     return 0;
 }
@@ -581,7 +583,10 @@ static uint8_t channel_pair_element(faacDecHandle hDecoder, bitfile *ld,
             if ((ics1->ltp.data_present = faad_get1bit(ld
                 DEBUGVAR(1,50,"channel_pair_element(): ltp.data_present"))) & 1)
             {
-                ltp_data(hDecoder, ics1, &(ics1->ltp), ld);
+                if ((result = ltp_data(hDecoder, ics1, &(ics1->ltp), ld)) > 0)
+                {
+                    return result;
+                }
             }
         }
 #endif
@@ -604,7 +609,10 @@ static uint8_t channel_pair_element(faacDecHandle hDecoder, bitfile *ld,
         if ((ics1->ltp2.data_present = faad_get1bit(ld
             DEBUGVAR(1,50,"channel_pair_element(): ltp.data_present"))) & 1)
         {
-            ltp_data(hDecoder, ics1, &(ics1->ltp2), ld);
+            if ((result = ltp_data(hDecoder, ics1, &(ics1->ltp2), ld)) > 0)
+            {
+                return result;
+            }
         }
     }
 #endif
@@ -616,7 +624,11 @@ static uint8_t channel_pair_element(faacDecHandle hDecoder, bitfile *ld,
     }
 
     /* noiseless coding is done, spectral reconstruction is done now */
-    reconstruct_channel_pair(hDecoder, ics1, ics2, &cpe, spec_data1, spec_data2);
+    if ((result = reconstruct_channel_pair(hDecoder, ics1, ics2, &cpe,
+        spec_data1, spec_data2)) > 0)
+    {
+        return result;
+    }
 
     return 0;
 }
@@ -685,14 +697,20 @@ static uint8_t ics_info(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,
                     if ((ics->ltp.data_present = faad_get1bit(ld
                         DEBUGVAR(1,50,"ics_info(): ltp.data_present"))) & 1)
                     {
-                        ltp_data(hDecoder, ics, &(ics->ltp), ld);
+                        if ((retval = ltp_data(hDecoder, ics, &(ics->ltp), ld)) > 0)
+                        {
+                            return retval;
+                        }
                     }
                     if (common_window)
                     {
                         if ((ics->ltp2.data_present = faad_get1bit(ld
                             DEBUGVAR(1,51,"ics_info(): ltp2.data_present"))) & 1)
                         {
-                            ltp_data(hDecoder, ics, &(ics->ltp2), ld);
+                            if ((retval = ltp_data(hDecoder, ics, &(ics->ltp2), ld)) > 0)
+                            {
+                                return retval;
+                            }
                         }
                     }
                 }
@@ -1064,9 +1082,13 @@ void aac_scalable_main_element(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
 
     if (this_layer_stereo)
     {
-        reconstruct_channel_pair(hDecoder, ics1, ics2, &cpe, spec_data1, spec_data2);
+        hInfo->error = reconstruct_channel_pair(hDecoder, ics1, ics2, &cpe, spec_data1, spec_data2);
+        if (hInfo->error > 0)
+            return;
     } else {
-        reconstruct_single_channel(hDecoder, ics1, &cpe, spec_data1);
+        hInfo->error = reconstruct_single_channel(hDecoder, ics1, &cpe, spec_data1);
+        if (hInfo->error > 0)
+            return;
     }
 
     hDecoder->element_id[hDecoder->fr_ch_ele] = cpe.ele_id;
@@ -1173,7 +1195,10 @@ static int8_t aac_scalable_main_header(faacDecHandle hDecoder, ic_stream *ics1, 
             if ((ics->ltp.data_present = faad_get1bit(ld
                 DEBUGVAR(1,310,"aac_scalable_main_header(): ltp.data_present"))) & 1)
             {
-                ltp_data(hDecoder, ics, &(ics->ltp), ld);
+                if ((retval = ltp_data(hDecoder, ics, &(ics->ltp), ld)) > 0)
+                {
+                    return retval;
+                }
             }
 #if 0
         }
@@ -1594,7 +1619,7 @@ static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld)
 
 #ifdef LTP_DEC
 /* Table 4.4.28 */
-static void ltp_data(faacDecHandle hDecoder, ic_stream *ics, ltp_info *ltp, bitfile *ld)
+static uint8_t ltp_data(faacDecHandle hDecoder, ic_stream *ics, ltp_info *ltp, bitfile *ld)
 {
     uint8_t sfb, w;
 
@@ -1621,7 +1646,7 @@ static void ltp_data(faacDecHandle hDecoder, ic_stream *ics, ltp_info *ltp, bitf
 
     /* Check length of lag */
     if (ltp->lag > (hDecoder->frameLength << 1))
-        ltp->lag = 0; // FIXME: Error handling
+        return 18;
 
     ltp->coef = (uint8_t)faad_getbits(ld, 3
         DEBUGVAR(1,82,"ltp_data(): coef"));
@@ -1651,6 +1676,8 @@ static void ltp_data(faacDecHandle hDecoder, ic_stream *ics, ltp_info *ltp, bitf
                 DEBUGVAR(1,86,"ltp_data(): long_used"));
         }
     }
+
+    return 0;
 }
 #endif
 
