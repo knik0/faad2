@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: huffman.h,v 1.6 2002/05/31 17:18:34 menno Exp $
+** $Id: huffman.h,v 1.7 2002/05/31 18:06:49 menno Exp $
 **/
 
 #ifndef __HUFFMAN_H__
@@ -188,12 +188,13 @@ static INLINE int32_t huffman_getescape(bitfile *ld, int16_t sp)
             return sp;
         neg = 1;
     } else {
-        if(sp != +16)
+        if(sp != 16)
             return sp;
         neg = 0;
     }
 
-    for (i = 4; ; i++){
+    for (i = 4; ; i++)
+    {
         if (faad_get1bit(ld
             DEBUGVAR(1,6,"huffman_getescape(): escape size")) == 0)
         {
@@ -201,19 +202,25 @@ static INLINE int32_t huffman_getescape(bitfile *ld, int16_t sp)
         }
     }
 
-    if (i > 16) {
+#if 0
+    if (i > 16)
+    {
         off = faad_getbits(ld, i-16
             DEBUGVAR(1,7,"huffman_getescape(): escape, first part")) << 16;
         off |= faad_getbits(ld, 16
             DEBUGVAR(1,8,"huffman_getescape(): escape, second part"));
     } else {
+#endif
         off = faad_getbits(ld, i
             DEBUGVAR(1,9,"huffman_getescape(): escape"));
+#if 0
     }
+#endif
 
     j = off + (1<<i);
     if (neg)
         j = -j;
+
     return j;
 }
 

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: hcb.h,v 1.2 2002/02/18 10:01:05 menno Exp $
+** $Id: hcb.h,v 1.3 2002/05/31 18:06:50 menno Exp $
 **/
 
 #ifndef __HCB_H__
@@ -65,8 +65,7 @@ extern "C" {
 #define ESC_HCB        11
 #define QUAD_LEN       4
 #define PAIR_LEN       2
-#define NSPECBOOKS     ESC_HCB + 1
-#define BOOKSCL        NSPECBOOKS
+#define BOOKSCL        12
 #define NOISE_HCB      13
 #define INTENSITY_HCB2 14
 #define INTENSITY_HCB  15

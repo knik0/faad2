@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.15 2002/05/31 17:18:34 menno Exp $
+** $Id: syntax.c,v 1.16 2002/05/31 18:06:49 menno Exp $
 **/
 
 /*
@@ -1052,7 +1052,9 @@ static void ltp_data(ic_stream *ics, ltp_info *ltp, bitfile *ld,
 
 /* defines whether a huffman codebook is unsigned or not */
 /* Table 4.6.2 */
-static uint8_t unsigned_cb[] = { 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0 };
+static uint8_t unsigned_cb[] = { 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+         /* codebook 16 to 31 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+};
 
 /* Table 4.4.29 */
 static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data,
@@ -1102,7 +1104,7 @@ static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data
                         huffman_sign_bits(ld, sp, inc);
                     k += inc;
                     p += inc;
-                    if (sect_cb == ESC_HCB)
+                    if ((sect_cb == ESC_HCB) || (sect_cb >= 16))
                     {
                         sp[0] = huffman_getescape(ld, sp[0]);
                         sp[1] = huffman_getescape(ld, sp[1]);
