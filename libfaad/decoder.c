@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.3 2002/01/19 09:39:41 menno Exp $
+** $Id: decoder.c,v 1.4 2002/01/19 16:06:14 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -318,7 +318,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     if (hDecoder->adts_header_present)
     {
         if ((hInfo->error = adts_frame(&adts, ld)) > 0)
-            return NULL;
+            goto error;
 
         /* MPEG2 does byte_alignment() here,
          * but ADTS header is always multiple of 8 bits in MPEG2
@@ -351,7 +351,11 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
             if ((hInfo->error = single_lfe_channel_element(syntax_elements[ch_ele],
                 ld, spec_data[channels], sf_index, object_type)) > 0)
-                return NULL;
+            {
+                /* to make sure everything gets deallocated */
+                channels++; ch_ele++;
+                goto error;
+            }
 
             channels++;
             ch_ele++;
@@ -371,25 +375,29 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             if ((hInfo->error = channel_pair_element(syntax_elements[ch_ele],
                 ld, spec_data[channels], spec_data[channels+1],
                 sf_index, object_type)) > 0)
-                return NULL;
+            {
+                /* to make sure everything gets deallocated */
+                channels+=2; ch_ele++;
+                goto error;
+            }
 
             channels += 2;
             ch_ele++;
             break;
         case ID_CCE: /* not implemented yet */
             hInfo->error = 6;
-            return NULL;
+            goto error;
             break;
         case ID_DSE:
             data_stream_element(ld);
             break;
         case ID_PCE:
             if ((hInfo->error = program_config_element(&pce, ld)) > 0)
-                return NULL;
+                goto error;
             break;
         case ID_FIL:
             if ((hInfo->error = fill_element(ld, drc)) > 0)
-                return NULL;
+                goto error;
             break;
         }
         ele++;
@@ -398,6 +406,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     faad_byte_align(ld);
     hInfo->bytesconsumed = bit2byte(faad_get_processed_bits(ld));
     if (ld) free(ld);
+    ld = NULL;
 
     /* number of samples in this frame */
     hInfo->samples = 1024*channels;
@@ -580,4 +589,26 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #endif
 
     return sample_buffer;
+
+error:
+    /* free all memory that could have been allocated */
+    if (ld) free(ld);
+
+    /* cleanup */
+    for (ch = 0; ch < channels; ch++)
+    {
+        free(spec_coef[ch]);
+        free(spec_data[ch]);
+    }
+
+    for (i = 0; i < ch_ele; i++)
+    {
+        free(syntax_elements[i]);
+    }
+
+#ifdef ANALYSIS
+    fflush(stdout);
+#endif
+
+    return NULL;
 }
