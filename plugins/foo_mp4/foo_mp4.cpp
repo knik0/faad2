@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.71 2003/11/22 11:12:13 ca5e Exp $
+** $Id: foo_mp4.cpp,v 1.72 2003/11/22 11:38:46 ca5e Exp $
 **/
 
 #include <mp4.h>
@@ -391,6 +391,8 @@ public:
                 const char *val = info->meta_enum_value(i);
                 if (!val || (val && !*val)) continue;
 
+                if (stricmp(pName, "TOTALTRACKS") == 0 || stricmp(pName, "TOTALDISCS") == 0) continue;
+
                 if (stricmp(pName, "TITLE") == 0)
                 {
                     MP4SetMetadataName(hFile, val);
@@ -410,11 +412,15 @@ public:
                     int t1 = 0, t2 = 0;
                     sscanf(val, "%d/%d", &t1, &t2);
                     unsigned __int16 trkn = t1, tot = t2;
+                    const char *t = info->meta_get("TOTALTRACKS");
+                    if (t && *t) tot = atoi(t);
                     MP4SetMetadataTrack(hFile, trkn, tot);
                 } else if (stricmp(pName, "DISKNUMBER") == 0 || stricmp(pName, "DISC") == 0) {
                     int t1 = 0, t2 = 0;
                     sscanf(val, "%d/%d", &t1, &t2);
                     unsigned __int16 disk = t1, tot = t2;
+                    const char *t = info->meta_get("TOTALDISCS");
+                    if (t && *t) tot = atoi(t);
                     MP4SetMetadataDisk(hFile, disk, tot);
                 } else if (stricmp(pName, "COMPILATION") == 0) {
                     unsigned __int8 cpil = atoi(val);
