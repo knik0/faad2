@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: in_mp4.c,v 1.54 2004/09/04 14:56:30 menno Exp $
+** $Id: in_mp4.c,v 1.55 2004/10/18 19:25:00 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -318,7 +318,7 @@ void in_mp4_DebugOutput(char *message)
 {
     char s[1024];
 
-    sprintf(s, "in_mp4: %s: %s", mp4state.filename, message);
+    sprintf(s, "in_mp4: %s", message);
     OutputDebugString(s);
 }
 #endif
@@ -1406,7 +1406,7 @@ int play(char *fn)
         int bread = 0;
         double length = 0.;
         __int64 bitrate = 128;
-        NeAACDecFrameInfo frameInfo;
+//        NeAACDecFrameInfo frameInfo;
 
         module.is_seekable = 1;
 
@@ -1633,6 +1633,17 @@ int play(char *fn)
         mp4state.numSamples = mp4ff_num_samples(mp4state.mp4file, mp4state.mp4track);
         mp4state.sampleId = 0;
 
+        {
+            double timescale_div = 1.0 / (double)mp4ff_time_scale(mp4state.mp4file, mp4state.mp4track);
+            int64_t duration = mp4ff_get_track_duration_use_offsets(mp4state.mp4file, mp4state.mp4track);
+            if (duration == -1)
+            {
+                mp4state.m_length = 0;
+            } else {
+                mp4state.m_length = (int)((double)duration * timescale_div * 1000.0);
+            }
+        }
+
         module.is_seekable = 1;
     }
 
@@ -1832,7 +1843,7 @@ int getsonglength(const char *fn)
 
         length = mp4ff_get_track_duration(file, track);
 
-        msDuration = (long)((float)length / (float)mp4ff_time_scale(file, track) + 0.5);
+        msDuration = (long)((float)length*1000.0 / (float)mp4ff_time_scale(file, track) + 0.5);
 
         mp4ff_close(file);
         fclose(mp4File);

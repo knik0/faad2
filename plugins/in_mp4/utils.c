@@ -22,11 +22,12 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: utils.c,v 1.8 2004/09/03 19:38:32 menno Exp $
+** $Id: utils.c,v 1.9 2004/10/18 19:25:00 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <malloc.h>
 //#include <mp4.h>
 #include <mp4ff.h>
 #include <neaacdec.h>
