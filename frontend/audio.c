@@ -1,22 +1,22 @@
 /*
 ** FAAD - Freeware Advanced Audio Decoder
 ** Copyright (C) 2002 M. Bakker
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: audio.c,v 1.8 2002/08/17 11:17:39 menno Exp $
+** $Id: audio.c,v 1.9 2002/08/21 16:23:15 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -39,7 +39,7 @@ audio_file *open_audio_file(char *infile, int samplerate, int channels,
 
     aufile->samplerate = samplerate;
     aufile->channels = channels;
-    aufile->samples = 0;
+    aufile->total_samples = 0;
     aufile->fileType = fileType;
 
     switch (outputFormat)
@@ -99,7 +99,7 @@ int write_audio_file(audio_file *aufile, void *sample_buffer, int samples)
         return 0;
     }
 
-	return 0;
+    return 0;
 }
 
 void close_audio_file(audio_file *aufile)
@@ -121,7 +121,7 @@ static int write_wav_header(audio_file *aufile)
     unsigned char header[44];
     unsigned char* p = header;
     unsigned int bytes = (aufile->bits_per_sample + 7) / 8;
-    float data_size = (float)bytes * aufile->samples;
+    float data_size = (float)bytes * aufile->total_samples;
     unsigned long word32;
 
     *p++ = 'R'; *p++ = 'I'; *p++ = 'F'; *p++ = 'F';
@@ -187,7 +187,7 @@ static int write_audio_16bit(audio_file *aufile, void *sample_buffer,
     short *sample_buffer16 = (short*)sample_buffer;
     char *data = malloc(samples*aufile->bits_per_sample*sizeof(char)/8);
 
-    aufile->samples += samples;
+    aufile->total_samples += samples;
 
     for (i = 0; i < samples; i++)
     {
@@ -210,7 +210,7 @@ static int write_audio_24bit(audio_file *aufile, void *sample_buffer,
     long *sample_buffer24 = (long*)sample_buffer;
     char *data = malloc(samples*aufile->bits_per_sample*sizeof(char)/8);
 
-    aufile->samples += samples;
+    aufile->total_samples += samples;
 
     for (i = 0; i < samples; i++)
     {
@@ -234,7 +234,7 @@ static int write_audio_32bit(audio_file *aufile, void *sample_buffer,
     long *sample_buffer32 = (long*)sample_buffer;
     char *data = malloc(samples*aufile->bits_per_sample*sizeof(char)/8);
 
-    aufile->samples += samples;
+    aufile->total_samples += samples;
 
     for (i = 0; i < samples; i++)
     {
@@ -259,7 +259,7 @@ static int write_audio_float(audio_file *aufile, void *sample_buffer,
     float *sample_buffer_f = (float*)sample_buffer;
     unsigned char *data = malloc(samples*aufile->bits_per_sample*sizeof(char)/8);
 
-    aufile->samples += samples;
+    aufile->total_samples += samples;
 
     for (i = 0; i < samples; i++)
     {

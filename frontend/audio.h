@@ -1,22 +1,22 @@
 /*
 ** FAAD - Freeware Advanced Audio Decoder
 ** Copyright (C) 2002 M. Bakker
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: audio.h,v 1.3 2002/08/14 10:55:28 menno Exp $
+** $Id: audio.h,v 1.4 2002/08/21 16:23:15 menno Exp $
 **/
 
 #ifndef AUDIO_H_INCLUDED
@@ -41,7 +41,7 @@ typedef struct
     unsigned long samplerate;
     unsigned int bits_per_sample;
     unsigned int channels;
-    unsigned long samples;
+    unsigned long total_samples;
 } audio_file;
 
 audio_file *open_audio_file(char *infile, int samplerate, int channels,
