@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.33 2003/06/19 21:20:59 menno Exp $
+** $Id: foo_mp4.cpp,v 1.34 2003/06/25 19:18:35 menno Exp $
 **/
 
 #include <mp4.h>
@@ -44,7 +44,7 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "$Revision: 1.33 $",
+                           "$Revision: 1.34 $",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -67,6 +67,12 @@ public:
         mp4AudioSpecificConfig mp4ASC;
 
         m_reader = r;
+
+        if (!m_reader->can_seek())
+        {
+            console::error("MP4 file needs seeking.", "foo_mp4");
+            return 0;
+        }
 
         hDecoder = faacDecOpen();
         if (!hDecoder)
@@ -190,13 +196,13 @@ public:
         if (sampleId > numSamples)
             return 0;
 
-        chunk->data = (audio_sample*)sample_buffer;
         if (frameInfo.channels == 0)
-            chunk->samples = 0;
-        else
-            chunk->samples = frameInfo.samples/frameInfo.channels;
-        chunk->nch = frameInfo.channels;
-        chunk->srate = frameInfo.samplerate;
+        {
+            chunk->set_data((audio_sample*)sample_buffer, 0, frameInfo.channels, frameInfo.samplerate);
+        } else {
+            chunk->set_data((audio_sample*)sample_buffer, frameInfo.samples/frameInfo.channels,
+                frameInfo.channels, frameInfo.samplerate);
+        }
 
         return 1;
     }
@@ -439,7 +445,7 @@ public:
         config->outputFormat = FAAD_FMT_DOUBLE;
         faacDecSetConfiguration(hDecoder, config);
 
-        tag_reader::process_file(m_reader, info);
+        tag_reader::g_run_multi(m_reader, info, "ape|id3v2|lyrics3|id3v1");
 
         m_at_eof = 0;
 
@@ -500,7 +506,7 @@ public:
             length = (double)m_reader->get_length();
             if (length == -1.)
             {
-                length = 1.;
+                length = 1;
             } else {
                 length = ((double)length*8.)/((double)bitrate) + 0.5;
             }
@@ -508,6 +514,11 @@ public:
             bitrate = (__int64)((double)bitrate/1000.0 + 0.5);
 
             m_header_type = 2;
+        }
+
+        if (!m_reader->can_seek())
+        {
+            length = 0;
         }
 
         fill_buffer();
@@ -608,10 +619,13 @@ public:
 
         if (chunk)
         {
-            chunk->data = (audio_sample*)sample_buffer;
-            chunk->samples = frameInfo.samples/frameInfo.channels;
-            chunk->nch = frameInfo.channels;
-            chunk->srate = frameInfo.samplerate;
+            if (frameInfo.channels == 0)
+            {
+                chunk->set_data((audio_sample*)sample_buffer, 0, frameInfo.channels, frameInfo.samplerate);
+            } else {
+                chunk->set_data((audio_sample*)sample_buffer, frameInfo.samples/frameInfo.channels,
+                    frameInfo.channels, frameInfo.samplerate);
+            }
         }
         m_samplerate = frameInfo.samplerate;
 
@@ -622,7 +636,7 @@ public:
 
     virtual int set_info(reader *r,const file_info * info)
     {
-        return tag_writer::process_file(r, info);
+        return tag_writer::g_run(r,info,"ape");
     }
 
     virtual int seek(double seconds)
