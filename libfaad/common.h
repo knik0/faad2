@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.6 2002/04/07 21:26:04 menno Exp $
+** $Id: common.h,v 1.7 2002/04/20 14:45:13 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -168,6 +168,11 @@ typedef float float32_t;
   #include <math.h>
 
 #endif
+
+
+/* common functions */
+uint32_t int_log2(uint32_t val);
+
 
 #ifdef __cplusplus
 }

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.6 2002/02/25 19:58:33 menno Exp $
+** $Id: syntax.h,v 1.7 2002/04/20 14:45:13 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -272,7 +272,11 @@ uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
                          int16_t *spec_data2, uint8_t sf_index, uint8_t object_type);
 uint16_t data_stream_element(bitfile *ld);
 uint8_t program_config_element(program_config *pce, bitfile *ld);
-uint8_t fill_element(bitfile *ld, drc_info *drc);
+uint8_t fill_element(bitfile *ld, drc_info *drc
+#ifdef SBR
+                     ,uint8_t next_ele_id
+#endif
+                     );
 uint8_t adts_frame(adts_header *adts, bitfile *ld);
 void get_adif_header(adif_header *adif, bitfile *ld);
 

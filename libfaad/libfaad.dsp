@@ -437,6 +437,10 @@ SOURCE=.\bits.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\common.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\data.c
 # End Source File
 # Begin Source File
@@ -490,6 +494,18 @@ SOURCE=.\pns.c
 # Begin Source File
 
 SOURCE=.\pulse.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_huff.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_qmf.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_syntax.c
 # End Source File
 # Begin Source File
 
@@ -602,6 +618,18 @@ SOURCE=.\pns.h
 # Begin Source File
 
 SOURCE=.\pulse.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_huff.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_qmf.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_syntax.h
 # End Source File
 # Begin Source File
 

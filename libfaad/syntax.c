@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.11 2002/04/18 18:08:07 menno Exp $
+** $Id: syntax.c,v 1.12 2002/04/20 14:45:13 menno Exp $
 **/
 
 /*
@@ -37,6 +37,9 @@
 #include "data.h"
 #include "pulse.h"
 #include "analysis.h"
+#ifdef SBR
+#include "sbr_syntax.h"
+#endif
 
 
 /* Table 4.4.1 */
@@ -408,9 +411,17 @@ uint16_t data_stream_element(bitfile *ld)
 }
 
 /* Table 4.4.11 */
-uint8_t fill_element(bitfile *ld, drc_info *drc)
+uint8_t fill_element(bitfile *ld, drc_info *drc
+#ifdef SBR
+                     ,uint8_t next_ele_id
+#endif
+                     )
 {
     uint16_t count;
+#ifdef SBR
+    uint8_t bs_extension_type;
+    uint32_t btot;
+#endif
 
     count = (uint16_t)faad_getbits(ld, 4
         DEBUGVAR(1,65,"fill_element(): count"));
@@ -420,10 +431,43 @@ uint8_t fill_element(bitfile *ld, drc_info *drc)
             DEBUGVAR(1,66,"fill_element(): extra count")) - 1;
     }
 
-    while (count > 0)
+#ifdef SBR
+    bs_extension_type = (uint8_t)faad_showbits(ld, 4);
+
+    if (bs_extension_type == SBR_HDR || bs_extension_type == SBR_STD)
     {
-        count -= extension_payload(ld, drc, count);
+        uint16_t i;
+        uint16_t bytes, bits;
+
+        /* flush the extension type and the fill nibble */
+        faad_flushbits(ld, 8);
+
+        btot = faad_get_processed_bits(ld);
+
+        /* SBR bitstream reading function */
+        sbr_bitstream(next_ele_id, bs_extension_type);
+
+        btot = faad_get_processed_bits(ld) - btot;
+
+        /* there might still be some fill bits left to read */
+        bits = (8*(count-1) - btot) % 8;
+        bytes = ((8*(count-1) - btot) - bits) / 8;
+
+        if (bits > 0)
+            faad_flushbits(ld, bits);
+        for (i = 0; i < bytes; i++)
+        {
+            faad_flushbits(ld, 8);
+        }
+    } else {
+#endif
+        while (count > 0)
+        {
+            count -= extension_payload(ld, drc, count);
+        }
+#ifdef SBR
     }
+#endif
 
     return 0;
 }
@@ -591,6 +635,13 @@ static void section_data(ic_stream *ics, bitfile *ld
  *  decode_scale_factors()
  *   decodes the scalefactors from the bitstream
  */
+/*
+ * All scalefactors (and also the stereo positions and pns energies) are
+ * transmitted using Huffman coded DPCM relative to the previous active
+ * scalefactor (respectively previous stereo position or previous pns energy,
+ * see subclause 4.6.2 and 4.6.3). The first active scalefactor is
+ * differentially coded relative to the global gain.
+ */
 static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
 {
     uint8_t g, sfb;
@@ -653,13 +704,6 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
     return 0;
 }
 
-/*
-  All scalefactors (and also the stereo positions and pns energies) are
-  transmitted using Huffman coded DPCM relative to the previous active
-  scalefactor (respectively previous stereo position or previous pns energy,
-  see subclause 4.6.2 and 4.6.3). The first active scalefactor is
-  differentially coded relative to the global gain.
-*/
 /* Table 4.4.26 */
 static uint8_t scale_factor_data(ic_stream *ics, bitfile *ld
 #ifdef ERROR_RESILIENCE
@@ -689,10 +733,9 @@ static uint8_t scale_factor_data(ic_stream *ics, bitfile *ld
         length_of_rvlc_sf = faad_getbits(ld, bits
             DEBUGVAR(1,151,"scale_factor_data(): length_of_rvlc_sf"));
 
-        /* check how many bits are used in decoing the scalefactors
+        /* check how many bits are used in decoding the scalefactors
            A better solution would be to read length_of_rvlc_sf ahead
            in a buffer and use that to decode the scale factors
-           There's work ahead :-)
         */
         bits_used = faad_get_processed_bits(ld);
         decode_scale_factors(ics, ld);
@@ -700,7 +743,7 @@ static uint8_t scale_factor_data(ic_stream *ics, bitfile *ld
 
         /* return an error if the number of decoded bits is not correct
            FAAD should be able to recover from this, for example by
-           setting all scalefactors to 0 (muting the frame)
+           setting all scalefactors to 0 (e.g. muting the frame)
         */
         if (bits_used != length_of_rvlc_sf)
             return 8;
