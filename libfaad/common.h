@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.54 2004/03/11 13:32:39 menno Exp $
+** $Id: common.h,v 1.55 2004/03/14 21:26:22 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -30,6 +30,10 @@
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifdef HAVE_CONFIG_H
+#  include "../config.h"
 #endif
 
 #define INLINE __inline
@@ -160,10 +164,6 @@ typedef float float32_t;
 
 
 #else
-
-#ifdef HAVE_CONFIG_H
-#  include "../config.h"
-#endif
 
 #include <stdio.h>
 #if HAVE_SYS_TYPES_H
