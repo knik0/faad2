@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.70 2003/11/10 18:57:59 ca5e Exp $
+** $Id: foo_mp4.cpp,v 1.71 2003/11/22 11:12:13 ca5e Exp $
 **/
 
 #include <mp4.h>
@@ -48,7 +48,7 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "1.66",
+                           "1.68",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 static const char *object_type_string(int type)
@@ -360,17 +360,13 @@ public:
         if (hFile == MP4_INVALID_FILE_HANDLE) return SET_INFO_FAILURE;
 
         MP4MetadataDelete(hFile);
-
         MP4Close(hFile);
 
         hFile = MP4ModifyCb(0, 0, open_cb, close_cb, read_cb, write_cb,
             setpos_cb, getpos_cb, filesize_cb, (void*)m_reader);
         if (hFile == MP4_INVALID_FILE_HANDLE) return SET_INFO_FAILURE;
 
-        /* replay gain writing */
-        const char *p = NULL;
-
-        p = info->info_get("TOOL");
+        const char *p = info->info_get("TOOL");
         if (p && *p)
             MP4SetMetadataTool(hFile, p);
         p = info->info_get("REPLAYGAIN_TRACK_PEAK");
@@ -411,10 +407,14 @@ public:
                 } else if (stricmp(pName, "GENRE") == 0) {
                     MP4SetMetadataGenre(hFile, val);
                 } else if (stricmp(pName, "TRACKNUMBER") == 0) {
-                    unsigned __int16 trkn = atoi(val), tot = 0;
+                    int t1 = 0, t2 = 0;
+                    sscanf(val, "%d/%d", &t1, &t2);
+                    unsigned __int16 trkn = t1, tot = t2;
                     MP4SetMetadataTrack(hFile, trkn, tot);
                 } else if (stricmp(pName, "DISKNUMBER") == 0 || stricmp(pName, "DISC") == 0) {
-                    unsigned __int16 disk = atoi(val), tot = 0;
+                    int t1 = 0, t2 = 0;
+                    sscanf(val, "%d/%d", &t1, &t2);
+                    unsigned __int16 disk = t1, tot = t2;
                     MP4SetMetadataDisk(hFile, disk, tot);
                 } else if (stricmp(pName, "COMPILATION") == 0) {
                     unsigned __int8 cpil = atoi(val);
@@ -505,7 +505,7 @@ private:
         unsigned __int32 valueSize = 0;
         unsigned __int8* pValue;
         char* pName;
-        int i = 0;
+        unsigned int i = 0;
 
         do {
             valueSize = 0;
@@ -514,86 +514,105 @@ private:
 
             if (valueSize > 0)
             {
-                char* val = (char*)malloc((valueSize+1)*sizeof(char));
-                memset(val, 0, (valueSize+1)*sizeof(char));
-                memcpy(val, pValue, valueSize*sizeof(char));
+                char *val = (char*)malloc((valueSize+1)*sizeof(char));
 
-                if (pName[0] == '©')
+                if (val)
                 {
-                    if (memcmp(pName, "©nam", 4) == 0)
+                    memcpy(val, pValue, valueSize*sizeof(char));
+                    val[valueSize] = '\0';
+
+                    if (pName[0] == '©')
                     {
-                        info->meta_add("TITLE", val);
-                    } else if (memcmp(pName, "©ART", 4) == 0) {
-                        info->meta_add("ARTIST", val);
-                    } else if (memcmp(pName, "©wrt", 4) == 0) {
-                        info->meta_add("WRITER", val);
-                    } else if (memcmp(pName, "©alb", 4) == 0) {
-                        info->meta_add("ALBUM", val);
-                    } else if (memcmp(pName, "©day", 4) == 0) {
-                        info->meta_add("DATE", val);
-                    } else if (memcmp(pName, "©too", 4) == 0) {
-                        info->info_set("tool", val);
-                    } else if (memcmp(pName, "©cmt", 4) == 0) {
-                        info->meta_add("COMMENT", val);
-                    } else if (memcmp(pName, "©gen", 4) == 0) {
-                        info->meta_add("GENRE", val);
+                        if (memcmp(pName, "©nam", 4) == 0)
+                        {
+                            info->meta_add("TITLE", val);
+                        } else if (memcmp(pName, "©ART", 4) == 0) {
+                            info->meta_add("ARTIST", val);
+                        } else if (memcmp(pName, "©wrt", 4) == 0) {
+                            info->meta_add("WRITER", val);
+                        } else if (memcmp(pName, "©alb", 4) == 0) {
+                            info->meta_add("ALBUM", val);
+                        } else if (memcmp(pName, "©day", 4) == 0) {
+                            info->meta_add("DATE", val);
+                        } else if (memcmp(pName, "©too", 4) == 0) {
+                            info->info_set("tool", val);
+                        } else if (memcmp(pName, "©cmt", 4) == 0) {
+                            info->meta_add("COMMENT", val);
+                        } else if (memcmp(pName, "©gen", 4) == 0) {
+                            info->meta_add("GENRE", val);
+                        } else {
+                            info->meta_add(pName, val);
+                        }
+                    } else if (memcmp(pName, "gnre", 4) == 0) {
+                        char *t=0;
+                        if (MP4GetMetadataGenre(hFile, &t) && t)
+                            info->meta_add("GENRE", t);
+                    } else if (memcmp(pName, "trkn", 4) == 0) {
+                        unsigned __int16 trkn = 0, tot = 0;
+                        if (MP4GetMetadataTrack(hFile, &trkn, &tot))
+                        {
+                            char t[64];
+                            if (tot > 0)
+                                wsprintf(t, "%d/%d", (int)trkn, (int)tot);
+                            else
+                                wsprintf(t, "%d", (int)trkn);
+                            info->meta_add("TRACKNUMBER", t);
+                        }
+                    } else if (memcmp(pName, "disk", 4) == 0) {
+                        unsigned __int16 disk = 0, tot = 0;
+                        if (MP4GetMetadataDisk(hFile, &disk, &tot))
+                        {
+                            char t[64];
+                            if (tot > 0)
+                                wsprintf(t, "%d/%d", (int)disk, (int)tot);
+                            else
+                                wsprintf(t, "%d", (int)disk);
+                            //info->meta_add("DISKNUMBER", t);
+                            info->meta_add("DISC", t);
+                        }
+                    } else if (memcmp(pName, "cpil", 4) == 0) {
+                        unsigned __int8 cpil = 0;
+                        if (MP4GetMetadataCompilation(hFile, &cpil))
+                        {
+                            char t[64];
+                            wsprintf(t, "%d", (int)cpil);
+                            info->meta_add("COMPILATION", t);
+                        }
+                    } else if (memcmp(pName, "tmpo", 4) == 0) {
+                        unsigned __int16 tempo = 0;
+                        if (MP4GetMetadataTempo(hFile, &tempo))
+                        {
+                            char t[64];
+                            wsprintf(t, "%d BPM", (int)tempo);
+                            info->meta_add("TEMPO", t);
+                        }
+                    } else if (memcmp(pName, "NDFL", 4) == 0) {
+                        /* Removed */
                     } else {
-                        info->meta_add(pName, val);
+                        float f = 0;
+                        if (!stricmp(pName, "REPLAYGAIN_TRACK_PEAK"))
+                        {
+                            sscanf(val, "%f", &f);
+                            info->info_set_replaygain_track_peak((double)f);
+                        } else if (!stricmp(pName, "REPLAYGAIN_TRACK_GAIN")) {
+                            sscanf(val, "%f", &f);
+                            info->info_set_replaygain_track_gain((double)f);
+                        } else if (!stricmp(pName, "REPLAYGAIN_ALBUM_PEAK")) {
+                            sscanf(val, "%f", &f);
+                            info->info_set_replaygain_album_peak((double)f);
+                        } else if (!stricmp(pName, "REPLAYGAIN_ALBUM_GAIN")) {
+                            sscanf(val, "%f", &f);
+                            info->info_set_replaygain_album_gain((double)f);
+                        } else {
+                            info->meta_add(pName, val);
+                        }
                     }
-                } else if (memcmp(pName, "gnre", 4) == 0) {
-                    char *t=0;
-                    MP4GetMetadataGenre(hFile, &t);
-                    info->meta_add("GENRE", t);
-                } else if (memcmp(pName, "trkn", 4) == 0) {
-                    unsigned __int16 trkn = 0, tot = 0;
-                    char t[200];
-                    MP4GetMetadataTrack(hFile, &trkn, &tot);
-                    wsprintf(t, "%d", trkn);
-                    info->meta_add("TRACKNUMBER", t);
-                } else if (memcmp(pName, "disk", 4) == 0) {
-                    unsigned __int16 disk = 0, tot = 0;
-                    char t[200];
-                    MP4GetMetadataDisk(hFile, &disk, &tot);
-                    wsprintf(t, "%d", disk);
-                    //info->meta_add("DISKNUMBER", t);
-                    info->meta_add("DISC", t);
-                } else if (memcmp(pName, "cpil", 4) == 0) {
-                    unsigned __int8 cpil = 0;
-                    char t[200];
-                    MP4GetMetadataCompilation(hFile, &cpil);
-                    wsprintf(t, "%d", cpil);
-                    info->meta_add("COMPILATION", t);
-                } else if (memcmp(pName, "tmpo", 4) == 0) {
-                    unsigned __int16 tempo = 0;
-                    char t[200];
-                    MP4GetMetadataTempo(hFile, &tempo);
-                    wsprintf(t, "%d BPM", tempo);
-                    info->meta_add("TEMPO", t);
-                } else if (memcmp(pName, "NDFL", 4) == 0) {
-                    /* Removed */
-                } else {
-                    float f = 0;
-                    if (!stricmp(pName, "REPLAYGAIN_TRACK_PEAK"))
-                    {
-                        sscanf(val, "%f", &f);
-                        info->info_set_replaygain_track_peak((double)f);
-                    } else if (!stricmp(pName, "REPLAYGAIN_TRACK_GAIN")) {
-                        sscanf(val, "%f", &f);
-                        info->info_set_replaygain_track_gain((double)f);
-                    } else if (!stricmp(pName, "REPLAYGAIN_ALBUM_PEAK")) {
-                        sscanf(val, "%f", &f);
-                        info->info_set_replaygain_album_peak((double)f);
-                    } else if (!stricmp(pName, "REPLAYGAIN_ALBUM_GAIN")) {
-                        sscanf(val, "%f", &f);
-                        info->info_set_replaygain_album_gain((double)f);
-                    } else {
-                        info->meta_add(pName, val);
-                    }
+
+                    free(val);
                 }
             }
 
             i++;
-
         } while (valueSize > 0);
 
         return 1;
