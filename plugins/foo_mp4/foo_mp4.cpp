@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.26 2003/04/27 17:42:59 menno Exp $
+** $Id: foo_mp4.cpp,v 1.27 2003/04/27 18:53:22 menno Exp $
 **/
 
 #include <mp4.h>
@@ -35,7 +35,7 @@ char *STRIP_REVISION(const char *str)
 }
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           STRIP_REVISION("$Revision: 1.26 $"),
+                           STRIP_REVISION("$Revision: 1.27 $"),
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -381,6 +381,12 @@ private:
     }
 };
 
+struct seek_list
+{
+    seek_list *next;
+    __int64 offset;
+};
+
 class input_aac : public input
 {
 public:
@@ -428,6 +434,7 @@ public:
         bread = m_reader->read(m_aac_buffer, 768*6);
         m_aac_bytes_into_buffer = bread;
         m_aac_bytes_consumed = 0;
+        m_file_offset = 0;
 
         if (bread != 768*6)
             m_at_eof = 1;
@@ -446,6 +453,10 @@ public:
             advance_buffer(tagsize);
             fill_buffer();
         }
+
+        m_head = (struct seek_list*)malloc(sizeof(struct seek_list));
+        m_tail = m_head;
+        m_tail->next = NULL;
 
         m_header_type = 0;
         if ((m_aac_buffer[0] == 0xFF) && ((m_aac_buffer[1] & 0xF6) == 0xF0))
@@ -506,6 +517,8 @@ public:
 
     input_aac()
     {
+        m_head = NULL;
+        m_tail = NULL;
         cur_pos_sec = 0.0;
         m_samplerate = 0;
         hDecoder = NULL;
@@ -514,10 +527,19 @@ public:
 
     ~input_aac()
     {
+        struct seek_list *target = m_head;
+
         if (hDecoder)
             faacDecClose(hDecoder);
         if (m_aac_buffer)
             free(m_aac_buffer);
+
+        while (target)
+        {
+            struct seek_list *tmp = target;
+            target = target->next;
+            if (tmp) free(tmp);
+        }
     }
 
     virtual int run(audio_chunk * chunk)
@@ -535,6 +557,14 @@ public:
             {
                 sample_buffer = faacDecDecode(hDecoder, &frameInfo,
                     m_aac_buffer, m_aac_bytes_into_buffer);
+
+                if (m_header_type != 1)
+                {
+                    m_tail->offset = m_file_offset;
+                    m_tail->next = (struct seek_list*)malloc(sizeof(struct seek_list));
+                    m_tail = m_tail->next;
+                    m_tail->next = NULL;
+                }
 
                 advance_buffer(frameInfo.bytesconsumed);
             } else {
@@ -574,19 +604,51 @@ public:
 
     virtual int seek(double seconds)
     {
-        int i;
-        int frames = (int)((seconds - cur_pos_sec)*((double)m_samplerate/1024.0) + 0.5);
+        int i, frames;
+        int bread;
+        struct seek_list *target = m_head;
 
-        if (frames > 0)
+        if (m_reader->can_seek() && ((m_header_type == 1) || (seconds < cur_pos_sec)))
         {
+            frames = (int)(seconds*((double)m_samplerate/1024.0) + 0.5);
+
             for (i = 0; i < frames; i++)
             {
-                if (!run(NULL))
-                    break;
+                if (target->next)
+                    target = target->next;
+                else
+                    return 0;
+            }
+            m_reader->seek(target->offset);
+
+            bread = m_reader->read(m_aac_buffer, 768*6);
+            if (bread != 768*6)
+                m_at_eof = 1;
+            else
+                m_at_eof = 0;
+            m_aac_bytes_into_buffer = bread;
+            m_aac_bytes_consumed = 0;
+
+            return 1;
+        } else {
+            if (seconds > cur_pos_sec)
+            {
+                frames = (int)((seconds - cur_pos_sec)*((double)m_samplerate/1024.0) + 0.5);
+
+                if (frames > 0)
+                {
+                    for (i = 0; i < frames; i++)
+                    {
+                        if (!run(NULL))
+                            break;
+                    }
+                }
+
+                return 1;
+            } else {
+                return 0;
             }
         }
-
-        return 1;
     }
     
     virtual int is_our_content_type(const char *url, const char *type)
@@ -602,12 +664,16 @@ private:
 
     long m_aac_bytes_into_buffer;
     long m_aac_bytes_consumed;
+    __int64 m_file_offset;
     unsigned char *m_aac_buffer;
     int m_at_eof;
 
     unsigned long m_samplerate;
     double cur_pos_sec;
     int m_header_type;
+
+    struct seek_list *m_head;
+    struct seek_list *m_tail;
 
     int fill_buffer()
     {
@@ -656,6 +722,7 @@ private:
 
     int advance_buffer(int bytes)
     {
+        m_file_offset += bytes;
         m_aac_bytes_consumed = bytes;
         m_aac_bytes_into_buffer -= bytes;
     }
@@ -678,6 +745,11 @@ private:
                 /* check syncword */
                 if (!((m_aac_buffer[0] == 0xFF)&&((m_aac_buffer[1] & 0xF6) == 0xF0)))
                     break;
+
+                m_tail->offset = m_file_offset;
+                m_tail->next = (struct seek_list*)malloc(sizeof(struct seek_list));
+                m_tail = m_tail->next;
+                m_tail->next = NULL;
 
                 if (frames == 0)
                     samplerate = sample_rates[(m_aac_buffer[2]&0x3c)>>2];

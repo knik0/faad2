@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.54 2003/04/02 20:07:45 menno Exp $
+** $Id: decoder.c,v 1.55 2003/04/27 18:53:22 menno Exp $
 **/
 
 #include "common.h"
@@ -51,6 +51,8 @@ uint16_t dbg_count;
 
 int8_t* FAADAPI faacDecGetErrorMessage(uint8_t errcode)
 {
+    if (errcode >= NUM_ERROR_MESSAGES)
+        return NULL;
     return err_msg[errcode];
 }
 
