@@ -171,11 +171,6 @@ int gettimeofday(struct timeval *t, void *);
 #define FPOS_TO_VAR(fpos, typed, var) (var) = (typed)(fpos)
 #define VAR_TO_FPOS(fpos, var) (fpos) = (var)
 
-#ifdef linux
-#define HAVE_SOCKLEN_T
-#endif
-
-
 #endif
 
 #define FOPEN_READ_BINARY "r"
