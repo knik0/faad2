@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.54 2003/10/19 18:49:38 menno Exp $
+** $Id: main.c,v 1.55 2003/10/19 19:18:53 ca5e Exp $
 **/
 
 #ifdef _WIN32
@@ -893,7 +893,7 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
 
         if (!noGapless)
         {
-            if (sampleId == 1) dur = 0;
+            if (sampleId == 0) dur = 0;
 
             if (useAacLength || (timescale != samplerate)) {
                 sample_count = frameInfo.samples;
