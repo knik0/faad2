@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: output.c,v 1.7 2002/03/16 15:09:59 menno Exp $
+** $Id: output.c,v 1.8 2002/03/16 15:43:28 menno Exp $
 **/
 
 #include "common.h"
@@ -27,6 +27,7 @@
 
 #define ftol(A,B) {tmp = *(int32_t*) & A - 0x4B7F8000; \
                    B = (int16_t)((tmp==(int16_t)tmp) ? tmp : (tmp>>31)^0x7FFF);}
+
 #define ROUND(x) ((x >= 0) ? (int32_t)floor((x) + 0.5) : (int32_t)ceil((x) + 0.5))
 
 #define ROUND32(x) ROUND(x)
@@ -66,6 +67,10 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
         {
             for(i = 0; i < frame_len; i++)
             {
+                if (input[ch][i] > (1<<16)-1)
+                    input[ch][i] = (1<<16)-1;
+                else if (input[ch][i] < -(1<<16))
+                    input[ch][i] = -(1<<16);
                 int_sample_buffer[(i*channels)+ch] = ROUND(input[ch][i]*(1<<8));
             }
         }
@@ -75,6 +80,10 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
         {
             for(i = 0; i < frame_len; i++)
             {
+                if (input[ch][i] > (1<<16)-1)
+                    input[ch][i] = (1<<16)-1;
+                else if (input[ch][i] < -(1<<16))
+                    input[ch][i] = -(1<<16);
                 int_sample_buffer[(i*channels)+ch] = ROUND32(input[ch][i]*(1<<16));
             }
         }
@@ -84,6 +93,10 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
         {
             for(i = 0; i < frame_len; i++)
             {
+                if (input[ch][i] > (1<<16)-1)
+                    input[ch][i] = (1<<16)-1;
+                else if (input[ch][i] < -(1<<16))
+                    input[ch][i] = -(1<<16);
                 float_sample_buffer[(i*channels)+ch] = input[ch][i]*FLOAT_SCALE;
             }
         }
