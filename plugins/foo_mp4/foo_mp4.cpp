@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.10 2002/12/29 11:10:18 menno Exp $
+** $Id: foo_mp4.cpp,v 1.11 2002/12/29 12:26:30 menno Exp $
 **/
 
 #include <mp4.h>
@@ -146,8 +146,7 @@ public:
         track = GetAACTrack(hFile);
         if (track < 1) return 0;
 
-        if (MP4TagGetNumEntries(hFile, track) > 0)
-            MP4TagDelete(hFile, track);
+        MP4TagDelete(hFile, track);
 
         int numItems = info->meta_get_count();
         if (numItems > 0)
@@ -162,6 +161,23 @@ public:
             }
         }
 
+        /* replay gain writing */
+        const char *p = NULL;
+
+        p = info->info_get("REPLAYGAIN_TRACK_PEAK");
+        if (p)
+            MP4TagAddEntry(hFile, track, "REPLAYGAIN_TRACK_PEAK", p);
+        p = info->info_get("REPLAYGAIN_TRACK_GAIN");
+        if (p)
+            MP4TagAddEntry(hFile, track, "REPLAYGAIN_TRACK_GAIN", p);
+        p = info->info_get("REPLAYGAIN_ALBUM_PEAK");
+        if (p)
+            MP4TagAddEntry(hFile, track, "REPLAYGAIN_ALBUM_PEAK", p);
+        p = info->info_get("REPLAYGAIN_ALBUM_GAIN");
+        if (p)
+            MP4TagAddEntry(hFile, track, "REPLAYGAIN_ALBUM_GAIN", p);
+
+        /* end */
         return 1;
     }
 
@@ -195,10 +211,27 @@ private:
 
         for (int i = 0; i < numItems; i++)
         {
+            float f = 0.0;
             const char *n = NULL, *v = NULL;
 
             MP4TagGetEntry(hFile, track, i, &n, &v);
-            info->meta_add(n, v);
+
+            if (!strcmp(n, "REPLAYGAIN_TRACK_PEAK"))
+            {
+                sscanf(v, "%f", &f);
+                info->info_set_replaygain_track_peak((double)f);
+            } else if (!strcmp(n, "REPLAYGAIN_TRACK_GAIN")) {
+                sscanf(v, "%f", &f);
+                info->info_set_replaygain_track_gain((double)f);
+            } else if (!strcmp(n, "REPLAYGAIN_ALBUM_PEAK")) {
+                sscanf(v, "%f", &f);
+                info->info_set_replaygain_album_peak((double)f);
+            } else if (!strcmp(n, "REPLAYGAIN_ALBUM_GAIN")) {
+                sscanf(v, "%f", &f);
+                info->info_set_replaygain_album_gain((double)f);
+            } else {
+                info->meta_add(n, v);
+            }
         }
 
         return 1;

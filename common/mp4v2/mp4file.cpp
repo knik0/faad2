@@ -2323,7 +2323,7 @@ void MP4File::TagCreate(MP4TrackId trackId)
         AddDescendantAtoms(MakeTrackName(trackId, NULL), "udta.TAG4");
 }
 
-void MP4File::TagDelete(MP4TrackId trackId)
+bool MP4File::TagDelete(MP4TrackId trackId)
 {
     MP4Atom *pUdtaAtom = NULL;
     MP4Atom *pTagAtom = NULL;
@@ -2336,10 +2336,14 @@ void MP4File::TagDelete(MP4TrackId trackId)
         pUdtaAtom = m_pRootAtom->FindAtom(MakeTrackName(trackId, "udta"));
         pTagAtom = m_pRootAtom->FindAtom(MakeTrackName(trackId, "udta.TAG4"));
     }
+    if (!pUdtaAtom || !pTagAtom)
+        return false;
 
     pUdtaAtom->DeleteChildAtom(pTagAtom);
 
     delete pTagAtom;
+
+    return true;
 }
 
 void MP4File::TagAddEntry(MP4TrackId trackId,
@@ -2440,4 +2444,24 @@ void MP4File::TagGetEntry(MP4TrackId trackId, u_int32_t index,
         sprintf(s, "udta.TAG4.entries[%u].value", index);
         *value = GetTrackStringProperty(trackId, s);
     }
+}
+
+bool MP4File::TagGetEntryByName(MP4TrackId trackId, char *name,
+                                const char **value)
+{
+    int numEntries = TagGetNumEntries(trackId);
+
+    for (int i = 0; i < numEntries; i++)
+    {
+        const char *n = NULL, *v = NULL;
+        TagGetEntry(trackId, i, &n, &v);
+
+        if (!strcmp(n, name))
+        {
+            strcpy((char*)*value, v);
+            return true;
+        }
+    }
+
+    return false;
 }

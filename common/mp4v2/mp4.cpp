@@ -2533,12 +2533,11 @@ extern "C" void MP4TagCreate(MP4FileHandle hFile, MP4TrackId trackId)
 	}
 }
 
-extern "C" void MP4TagDelete(MP4FileHandle hFile, MP4TrackId trackId)
+extern "C" bool MP4TagDelete(MP4FileHandle hFile, MP4TrackId trackId)
 {
 	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
 		try {
-			((MP4File*)hFile)->TagDelete(trackId);
-            return;
+			return ((MP4File*)hFile)->TagDelete(trackId);
 		}
 		catch (MP4Error* e) {
 			PRINT_ERROR(e);
@@ -2610,3 +2609,16 @@ extern "C" void MP4TagGetEntry(MP4FileHandle hFile, MP4TrackId trackId,
 	}
 }
 
+extern "C" bool MP4TagGetEntryByName(MP4FileHandle hFile, MP4TrackId trackId,
+                                     char *name, const char **value)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->TagGetEntryByName(trackId, name, value);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+}

@@ -908,7 +908,7 @@ char* MP4BinaryToBase64(
 	u_int32_t dataSize);
 
 void MP4TagCreate(MP4FileHandle hFile, MP4TrackId trackId);
-void MP4TagDelete(MP4FileHandle hFile, MP4TrackId trackId);
+bool MP4TagDelete(MP4FileHandle hFile, MP4TrackId trackId);
 void MP4TagAddEntry(MP4FileHandle hFile, MP4TrackId trackId,
                     const char *name, const char *value);
 #if 0
@@ -918,6 +918,8 @@ void MP4TagDeleteEntry(MP4FileHandle hFile, MP4TrackId trackId,
 u_int32_t MP4TagGetNumEntries(MP4FileHandle hFile, MP4TrackId trackId);
 void MP4TagGetEntry(MP4FileHandle hFile, MP4TrackId trackId,
                     u_int32_t index, const char **name, const char **value);
+bool MP4TagGetEntryNyName(MP4FileHandle hFile, MP4TrackId trackId,
+                          char *name, const char **value);
 
 #ifdef __cplusplus
 }
