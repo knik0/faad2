@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: error.c,v 1.7 2002/12/05 18:01:55 menno Exp $
+** $Id: error.c,v 1.8 2003/02/16 18:17:11 menno Exp $
 **/
 
 #include "common.h"
@@ -36,5 +36,6 @@ extern int8_t *err_msg[] = {
     "Error decoding huffman codeword (bitstream error)",
     "Non existent huffman codebook number found",
     "Maximum number of channels exceeded",
-    "Maximum number of bitstream elements exceeded"
+    "Maximum number of bitstream elements exceeded",
+    "Input data buffer too small"
 };

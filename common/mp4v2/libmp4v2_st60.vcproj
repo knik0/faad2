@@ -71,7 +71,7 @@
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<IntelOptions
-				CompilerName="0"/>
+				CompilerName="1"/>
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"

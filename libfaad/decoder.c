@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.50 2003/02/09 20:42:49 menno Exp $
+** $Id: decoder.c,v 1.51 2003/02/16 18:17:11 menno Exp $
 **/
 
 #include "common.h"
@@ -173,6 +173,8 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
                 2 : adts.channel_configuration;
         }
 
+        if (ld.error)
+            return -1;
         faad_endbits(&ld);
     }
     hDecoder->channelConfiguration = *channels;
@@ -426,6 +428,11 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
     /* no more bit reading after this */
     hInfo->bytesconsumed = bit2byte(faad_get_processed_bits(ld));
+    if (ld->error)
+    {
+        hInfo->error = 14;
+        goto error;
+    }
     faad_endbits(ld);
     if (ld) free(ld);
     ld = NULL;

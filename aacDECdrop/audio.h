@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: audio.h,v 1.6 2002/08/26 19:08:39 menno Exp $
+** $Id: audio.h,v 1.7 2003/02/16 18:17:09 menno Exp $
 **/
 
 #ifndef AUDIO_H_INCLUDED
@@ -28,10 +28,8 @@ extern "C" {
 
 #define MAXWAVESIZE     4294967040LU
 
-enum {
-    OUTPUT_WAV = 1,
-    OUTPUT_RAW
-} output_format;
+#define OUTPUT_WAV 1
+#define OUTPUT_RAW 2
 
 typedef struct
 {

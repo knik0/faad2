@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.c,v 1.18 2002/12/10 19:45:35 menno Exp $
+** $Id: bits.c,v 1.19 2003/02/16 18:17:10 menno Exp $
 **/
 
 #include "common.h"
@@ -53,17 +53,22 @@ void faad_initbits(bitfile *ld, void *_buffer, uint32_t buffer_size)
     ld->tail = ((uint32_t*)ld->buffer + 2);
 
     ld->bits_left = 32;
+
+    ld->bytes_used = 0;
+    ld->no_more_reading = 0;
+    ld->error = 0;
 }
 
 void faad_endbits(bitfile *ld)
 {
-    if (ld->buffer) free(ld->buffer);
+    if (ld)
+        if (ld->buffer) free(ld->buffer);
 }
 
 
 uint32_t faad_get_processed_bits(bitfile *ld)
 {
-    return 8 * (4*(ld->tail - ld->start) - 4) - (ld->bits_left);
+    return 8*(ld->bytes_used + (32 - ld->bits_left));
 }
 
 uint8_t faad_byte_align(bitfile *ld)
@@ -153,4 +158,8 @@ void faad_initbits_rev(bitfile *ld, void *buffer,
     ld->bits_left = bits_in_buffer % 32;
     if (ld->bits_left == 0)
         ld->bits_left = 32;
+
+    ld->bytes_used = 0;
+    ld->no_more_reading = 0;
+    ld->error = 0;
 }

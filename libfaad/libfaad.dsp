@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Target_Dir ""
 MTL=midl.exe
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /G6 /MD /W3 /GX /O2 /I "fftw" /D "NDEBUG" /D "WIN32" /D "_MBCS" /D "_LIB" /D "FFTW_ENABLE_FLOAT" /YX /FD /c
+# ADD CPP /nologo /G6 /MD /W3 /GX /O2 /Ob1 /I "fftw" /D "NDEBUG" /D "WIN32" /D "_MBCS" /D "_LIB" /D "FFTW_ENABLE_FLOAT" /YX /FD /c
 # ADD BASE RSC /l 0x413 /d "NDEBUG"
 # ADD RSC /l 0x413 /d "NDEBUG"
 BSC32=bscmake.exe

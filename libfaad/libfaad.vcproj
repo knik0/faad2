@@ -21,8 +21,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="fftw"
-				PreprocessorDefinitions="_DEBUG,WIN32,_LIB,FFTW_ENABLE_FLOAT"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="_DEBUG,WIN32,_LIB"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
@@ -33,22 +33,26 @@
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				DebugInformationFormat="4"
-				CompileAs="0">
+				CompileAs="0"
+				AdditionalOptions="">
 				<IntelOptions
 					Optimization="0"
 					MinimalRebuild="1"
 					BasicRuntimeChecks="3"
 					RuntimeLibrary="3"
-					AllOptions="/c  /I &quot;fftw&quot; /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;FFTW_ENABLE_FLOAT&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd"/>
+					AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd"
+					MSOriginalAdditionalOptions=""/>
 			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile=".\Debug\libfaad.lib"
-				SuppressStartupBanner="TRUE">
+				SuppressStartupBanner="TRUE"
+				AdditionalOptions="">
 				<IntelOptions
-					AllOptions="/OUT:&quot;.\Debug\libfaad.lib&quot; /NOLOGO"/>
+					AllOptions="/OUT:&quot;.\Debug\libfaad.lib&quot; /NOLOGO"
+					MSOriginalAdditionalOptions=""/>
 			</Tool>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -75,24 +79,34 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
+				GlobalOptimizations="FALSE"
 				InlineFunctionExpansion="1"
+				EnableIntrinsicFunctions="FALSE"
+				FavorSizeOrSpeed="0"
 				OptimizeForProcessor="0"
-				AdditionalIncludeDirectories="fftw"
-				PreprocessorDefinitions="NDEBUG,WIN32,_LIB,FFTW_ENABLE_FLOAT"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="NDEBUG,WIN32,_LIB"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="TRUE"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\Release/libfaad.pch"
+				AssemblerOutput="0"
 				AssemblerListingLocation=".\Release/"
 				ObjectFile=".\Release/"
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				CompileAs="0">
+				CompileAs="0"
+				AdditionalOptions="">
 				<IntelOptions
+					AssemblyOutput="0"
+					PGOPhase="0"
 					Optimization="2"
+					GlobalOptimizations="0"
 					InlineFuncExpansion="1"
+					IntrinsicFuncs="0"
+					FavorSizeSpeed="0"
 					OmitFramePtrs="1"
 					OptimProc="0"
 					UseProcExt="0"
@@ -101,16 +115,19 @@
 					RuntimeLibrary="0"
 					BufferSecurityCheck="1"
 					FunctionLevelLinking="1"
-					AllOptions="/c  /I &quot;fftw&quot; /nologo /W3 /O2 /Ob1 /Oy /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;FFTW_ENABLE_FLOAT&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd"/>
+					AllOptions="/c  /nologo /W3 /O2 /Ob1 /Oy /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd"
+					MSOriginalAdditionalOptions=""/>
 			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile=".\Release\libfaad.lib"
-				SuppressStartupBanner="TRUE">
+				SuppressStartupBanner="TRUE"
+				AdditionalOptions="">
 				<IntelOptions
-					AllOptions="/OUT:&quot;.\Release\libfaad.lib&quot; /NOLOGO"/>
+					AllOptions="/OUT:&quot;.\Release\libfaad.lib&quot; /NOLOGO"
+					MSOriginalAdditionalOptions=""/>
 			</Tool>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -126,6 +143,9 @@
 				Culture="1043"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
+			<IntelOptions
+				AssemblyOutput="0"
+				PGOPhase="0"/>
 		</Configuration>
 	</Configurations>
 	<Files>

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: specrec.c,v 1.18 2002/12/22 19:58:31 menno Exp $
+** $Id: specrec.c,v 1.19 2003/02/16 18:17:11 menno Exp $
 **/
 
 /*
@@ -256,39 +256,36 @@ void build_tables(real_t *pow2_table)
 
 static INLINE real_t iquant(int16_t q)
 {
-    if (q > 0)
+    int16_t sgn = 1;
+
+    if (q == 0) return 0;
+
+    if (q < 0)
     {
-        if (q < IQ_TABLE_SIZE)
-            return iq_table[q];
-        else
-            return iq_table[q>>3] * 16;
-    } else if (q < 0) {
         q = -q;
-        if (q < IQ_TABLE_SIZE)
-            return -iq_table[q];
-        else
-          return -iq_table[q>>3] * 16;
-    } else {
-        return 0;
+        sgn = -1;
     }
+
+    if (q >= IQ_TABLE_SIZE)
+        return sgn * iq_table[q>>3] * 16;
+
+    return sgn * iq_table[q];
 }
 
 void inverse_quantization(real_t *x_invquant, int16_t *x_quant, uint16_t frame_len)
 {
-    int8_t i;
+    int16_t i;
     int16_t *in_ptr = x_quant;
     real_t *out_ptr = x_invquant;
 
-    for(i = frame_len/8-1; i >= 0; --i)
+    for(i = frame_len/4-1; i >= 0; --i)
     {
-        *out_ptr++ = iquant(*in_ptr++);
-        *out_ptr++ = iquant(*in_ptr++);
-        *out_ptr++ = iquant(*in_ptr++);
-        *out_ptr++ = iquant(*in_ptr++);
-        *out_ptr++ = iquant(*in_ptr++);
-        *out_ptr++ = iquant(*in_ptr++);
-        *out_ptr++ = iquant(*in_ptr++);
-        *out_ptr++ = iquant(*in_ptr++);
+        out_ptr[0] = iquant(in_ptr[0]);
+        out_ptr[1] = iquant(in_ptr[1]);
+        out_ptr[2] = iquant(in_ptr[2]);
+        out_ptr[3] = iquant(in_ptr[3]);
+        out_ptr += 4;
+        in_ptr += 4;
     }
 }
 

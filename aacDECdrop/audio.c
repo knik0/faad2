@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: audio.c,v 1.7 2002/08/26 19:08:39 menno Exp $
+** $Id: audio.c,v 1.8 2003/02/16 18:17:09 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -132,7 +132,7 @@ static int write_wav_header(audio_file *aufile)
 
     *p++ = 'R'; *p++ = 'I'; *p++ = 'F'; *p++ = 'F';
 
-    word32 = data_size + (44 - 8) < (float)MAXWAVESIZE ?
+    word32 = (data_size + (44 - 8) < (float)MAXWAVESIZE) ?
         (unsigned long)data_size + (44 - 8)  :  (unsigned long)MAXWAVESIZE;
     *p++ = (unsigned char)(word32 >>  0);
     *p++ = (unsigned char)(word32 >>  8);
@@ -160,7 +160,7 @@ static int write_wav_header(audio_file *aufile)
     *p++ = (unsigned char)(aufile->samplerate >> 16);
     *p++ = (unsigned char)(aufile->samplerate >> 24);
 
-    word32 *= bytes * aufile->channels;
+    word32 = aufile->samplerate * bytes * aufile->channels;
     *p++ = (unsigned char)(word32 >>  0);
     *p++ = (unsigned char)(word32 >>  8);
     *p++ = (unsigned char)(word32 >> 16);
