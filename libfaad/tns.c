@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: tns.c,v 1.28 2003/12/17 14:43:17 menno Exp $
+** $Id: tns.c,v 1.29 2004/01/05 14:05:12 menno Exp $
 **/
 
 #include "common.h"
@@ -30,6 +30,16 @@
 
 #include "syntax.h"
 #include "tns.h"
+
+
+/* static function declarations */
+static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_compress,
+                            uint8_t *coef, real_t *a);
+static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *lpc,
+                          uint8_t order);
+static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *lpc,
+                          uint8_t order);
+
 
 #ifdef _MSC_VER
 #pragma warning(disable:4305)

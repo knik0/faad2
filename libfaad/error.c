@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,13 +22,13 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: error.c,v 1.18 2003/12/23 18:41:42 menno Exp $
+** $Id: error.c,v 1.19 2004/01/05 14:05:11 menno Exp $
 **/
 
 #include "common.h"
 #include "error.h"
 
-extern int8_t *err_msg[] = {
+int8_t *err_msg[] = {
     "No error",
     "Gain control not yet implemented",
     "Pulse coding not allowed in short blocks",
@@ -49,3 +49,4 @@ extern int8_t *err_msg[] = {
     "Quantised value out of range",
     "LTP lag out of range"
 };
+

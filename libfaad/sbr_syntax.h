@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_syntax.h,v 1.13 2003/12/17 14:43:16 menno Exp $
+** $Id: sbr_syntax.h,v 1.14 2004/01/05 14:05:12 menno Exp $
 **/
 
 #ifndef __SBR_SYNTAX_H__
@@ -56,14 +56,6 @@ extern "C" {
 
 
 uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr);
-static void sbr_header(bitfile *ld, sbr_info *sbr);
-static uint8_t sbr_data(bitfile *ld, sbr_info *sbr);
-static uint8_t sbr_single_channel_element(bitfile *ld, sbr_info *sbr);
-static uint8_t sbr_channel_pair_element(bitfile *ld, sbr_info *sbr);
-static uint8_t sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch);
-static void sbr_dtdf(bitfile *ld, sbr_info *sbr, uint8_t ch);
-static void invf_mode(bitfile *ld, sbr_info *sbr, uint8_t ch);
-static void sinusoidal_coding(bitfile *ld, sbr_info *sbr, uint8_t ch);
 
 #ifdef __cplusplus
 }

@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfgen.c,v 1.11 2003/12/17 14:43:16 menno Exp $
+** $Id: sbr_hfgen.c,v 1.12 2004/01/05 14:05:12 menno Exp $
 **/
 
 /* High Frequency generation */
@@ -36,7 +36,22 @@
 #include "sbr_hfgen.h"
 #include "sbr_fbt.h"
 
-void hf_generation(sbr_info *sbr, const qmf_t Xlow[MAX_NTSRHFG][32],
+
+/* static function declarations */
+static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][32],
+                                 complex_t *alpha_0, complex_t *alpha_1
+#ifdef SBR_LOW_POWER
+                                 , real_t *rxx
+#endif
+                                 );
+#ifdef SBR_LOW_POWER
+static void calc_aliasing_degree(sbr_info *sbr, real_t *rxx, real_t *deg);
+#endif
+static void calc_chirp_factors(sbr_info *sbr, uint8_t ch);
+static void patch_construction(sbr_info *sbr);
+
+
+void hf_generation(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][32],
                    qmf_t Xhigh[MAX_NTSRHFG][64]
 #ifdef SBR_LOW_POWER
                    ,real_t *deg
@@ -172,13 +187,14 @@ typedef struct
 
 #ifdef SBR_LOW_POWER
 static void auto_correlation(sbr_info *sbr, acorr_coef *ac,
-                             const qmf_t buffer[MAX_NTSRHFG][32],
+                             qmf_t buffer[MAX_NTSRHFG][32],
                              uint8_t bd, uint8_t len)
 {
     real_t r01 = 0, r02 = 0, r11 = 0;
     int8_t j;
     uint8_t offset = sbr->tHFAdj;
     const real_t rel = 1 / (1 + 1e-6f);
+
 
     for (j = offset; j < len + offset; j++)
     {
@@ -199,7 +215,7 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac,
     ac->det = MUL_R(RE(ac->r11), RE(ac->r22)) - MUL_C(MUL_R(RE(ac->r12), RE(ac->r12)), rel);
 }
 #else
-static void auto_correlation(sbr_info *sbr, acorr_coef *ac, const qmf_t buffer[MAX_NTSRHFG][32],
+static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t buffer[MAX_NTSRHFG][32],
                              uint8_t bd, uint8_t len)
 {
     real_t r01r = 0, r01i = 0, r02r = 0, r02i = 0, r11r = 0;
@@ -243,7 +259,7 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, const qmf_t buffer[M
 #endif
 
 /* calculate linear prediction coefficients using the covariance method */
-static void calc_prediction_coef(sbr_info *sbr, const qmf_t Xlow[MAX_NTSRHFG][32],
+static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][32],
                                  complex_t *alpha_0, complex_t *alpha_1
 #ifdef SBR_LOW_POWER
                                  , real_t *rxx

@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_e_nf.c,v 1.10 2003/12/17 14:43:16 menno Exp $
+** $Id: sbr_e_nf.c,v 1.11 2004/01/05 14:05:12 menno Exp $
 **/
 
 #include "common.h"
@@ -53,39 +53,39 @@ ALIGN static const real_t pow2deq[] = {
     REAL_CONST(0.0078125), REAL_CONST(0.015625),
     REAL_CONST(0.03125), REAL_CONST(0.0625),
     REAL_CONST(0.125), REAL_CONST(0.25),
-    REAL_CONST(0.5), REAL_CONST(1),
-    REAL_CONST(2), REAL_CONST(4),
-    REAL_CONST(8), REAL_CONST(16),
-    REAL_CONST(32), REAL_CONST(64),
-    REAL_CONST(128), REAL_CONST(256),
-    REAL_CONST(512), REAL_CONST(1024),
-    REAL_CONST(2048), REAL_CONST(4096),
-    REAL_CONST(8192), REAL_CONST(16384),
-    REAL_CONST(32768), REAL_CONST(65536),
-    REAL_CONST(131072), REAL_CONST(262144),
-    REAL_CONST(524288), REAL_CONST(1048576),
-    REAL_CONST(2097152), REAL_CONST(4194304),
-    REAL_CONST(8388608), REAL_CONST(16777216),
-    REAL_CONST(33554432), REAL_CONST(67108864),
-    REAL_CONST(134217728), REAL_CONST(268435456),
-    REAL_CONST(536870912), REAL_CONST(1073741824),
-    REAL_CONST(2147483648), REAL_CONST(4294967296),
-    REAL_CONST(8589934592), REAL_CONST(17179869184),
-    REAL_CONST(34359738368), REAL_CONST(68719476736),
-    REAL_CONST(137438953472), REAL_CONST(274877906944),
-    REAL_CONST(549755813888), REAL_CONST(1099511627776),
-    REAL_CONST(2199023255552), REAL_CONST(4398046511104),
-    REAL_CONST(8796093022208), REAL_CONST(17592186044416),
-    REAL_CONST(35184372088832), REAL_CONST(70368744177664),
-    REAL_CONST(140737488355328), REAL_CONST(281474976710656),
-    REAL_CONST(562949953421312), REAL_CONST(1125899906842624),
-    REAL_CONST(2251799813685248), REAL_CONST(4503599627370496),
-    REAL_CONST(9007199254740992), REAL_CONST(18014398509481984),
-    REAL_CONST(36028797018963968), REAL_CONST(72057594037927936),
-    REAL_CONST(144115188075855870), REAL_CONST(288230376151711740),
-    REAL_CONST(576460752303423490), REAL_CONST(1152921504606847000),
-    REAL_CONST(2305843009213694000), REAL_CONST(4611686018427387900),
-    REAL_CONST(9223372036854775800), REAL_CONST(1.8446744073709552E+019),
+    REAL_CONST(0.5), REAL_CONST(1.0),
+    REAL_CONST(2.0), REAL_CONST(4.0),
+    REAL_CONST(8.0), REAL_CONST(16.0),
+    REAL_CONST(32.0), REAL_CONST(64.0),
+    REAL_CONST(128.0), REAL_CONST(256.0),
+    REAL_CONST(512.0), REAL_CONST(1024.0),
+    REAL_CONST(2048.0), REAL_CONST(4096.0),
+    REAL_CONST(8192.0), REAL_CONST(16384.0),
+    REAL_CONST(32768.0), REAL_CONST(65536.0),
+    REAL_CONST(131072.0), REAL_CONST(262144.0),
+    REAL_CONST(524288.0), REAL_CONST(1048576.0),
+    REAL_CONST(2097152.0), REAL_CONST(4194304.0),
+    REAL_CONST(8388608.0), REAL_CONST(16777216.0),
+    REAL_CONST(33554432.0), REAL_CONST(67108864.0),
+    REAL_CONST(134217728.0), REAL_CONST(268435456.0),
+    REAL_CONST(536870912.0), REAL_CONST(1073741824.0),
+    REAL_CONST(2147483648.0), REAL_CONST(4294967296.0),
+    REAL_CONST(8589934592.0), REAL_CONST(17179869184.0),
+    REAL_CONST(34359738368.0), REAL_CONST(68719476736.0),
+    REAL_CONST(137438953472.0), REAL_CONST(274877906944.0),
+    REAL_CONST(549755813888.0), REAL_CONST(1099511627776.0),
+    REAL_CONST(2199023255552.0), REAL_CONST(4398046511104.0),
+    REAL_CONST(8796093022208.0), REAL_CONST(17592186044416.0),
+    REAL_CONST(35184372088832.0), REAL_CONST(70368744177664.0),
+    REAL_CONST(140737488355328.0), REAL_CONST(281474976710656.0),
+    REAL_CONST(562949953421312.0), REAL_CONST(1125899906842624.0),
+    REAL_CONST(2251799813685248.0), REAL_CONST(4503599627370496.0),
+    REAL_CONST(9007199254740992.0), REAL_CONST(18014398509481984.0),
+    REAL_CONST(36028797018963968.0), REAL_CONST(72057594037927936.0),
+    REAL_CONST(144115188075855870.0), REAL_CONST(288230376151711740.0),
+    REAL_CONST(576460752303423490.0), REAL_CONST(1152921504606847000.0),
+    REAL_CONST(2305843009213694000.0), REAL_CONST(4611686018427387900.0),
+    REAL_CONST(9223372036854775800.0), REAL_CONST(1.8446744073709552E+019),
     REAL_CONST(3.6893488147419103E+019), REAL_CONST(7.3786976294838206E+019),
     REAL_CONST(1.4757395258967641E+020), REAL_CONST(2.9514790517935283E+020),
     REAL_CONST(5.9029581035870565E+020), REAL_CONST(1.1805916207174113E+021),
@@ -256,11 +256,7 @@ void envelope_noise_dequantisation(sbr_info *sbr, uint8_t ch)
                 /* +6 for the *64 and -10 for the /32 in the synthesis QMF
                  * since this is a energy value: (x/32)^2 = (x^2)/1024
                  */
-                exp = (sbr->E[ch][k][l] >> amp) + 6
-#ifdef FIXED_POINT
-                    - 10
-#endif
-                    ;
+                exp = (sbr->E[ch][k][l] >> amp) + 6;
 
                 if ((exp < -P2_TABLE_OFFSET) || (exp > P2_TABLE_MAX))
                 {
@@ -287,11 +283,7 @@ void envelope_noise_dequantisation(sbr_info *sbr, uint8_t ch)
                     sbr->Q_orig[ch][k][l] = 0;
                 } else {
                     exp = NOISE_FLOOR_OFFSET - sbr->Q[ch][k][l];
-#ifdef FIXED_POINT
-                    sbr->Q_orig[ch][k][l] = pow2deq_q[exp + P2Q_TABLE_OFFSET];
-#else
                     sbr->Q_orig[ch][k][l] = pow2deq[exp + P2_TABLE_OFFSET];
-#endif
                 }
             }
         }
@@ -311,11 +303,8 @@ void unmap_envelope_noise(sbr_info *sbr)
         for (k = 0; k < sbr->n[sbr->f[0][l]]; k++)
         {
             /* +6: * 64 ; +1: * 2 ; -10: /1024 QMF */
-            exp0 = (sbr->E[0][k][l] >> amp0) + 7
-#ifdef FIXED_POINT
-                - 10
-#endif
-                ;
+            exp0 = (sbr->E[0][k][l] >> amp0) + 7;
+
             /* UN_MAP removed: (x / 4096) same as (x >> 12) */
             /* E[1] is always even so no need for compensating the divide by 2 with
              * an extra multiplication
@@ -334,11 +323,7 @@ void unmap_envelope_noise(sbr_info *sbr)
 
                 /* FIXED POINT TODO: E_orig: INTEGER!! */
                 sbr->E_orig[1][k][l] = MUL_F(tmp, pow2deq_rcp[exp1 + P2_TABLE_RCP_OFFSET]);
-#ifdef FIXED_POINT
                 sbr->E_orig[0][k][l] = MUL_R(sbr->E_orig[1][k][l], pow2deq[exp1 + P2_TABLE_OFFSET]);
-#else
-                sbr->E_orig[0][k][l] = MUL_R(sbr->E_orig[1][k][l], pow2deq[exp1 + P2_TABLE_OFFSET]);
-#endif
             }
         }
     }
@@ -355,13 +340,8 @@ void unmap_envelope_noise(sbr_info *sbr)
                 exp0 = NOISE_FLOOR_OFFSET - sbr->Q[0][k][l] + 1;
                 exp1 = sbr->Q[1][k][l] - 12;
 
-#ifdef FIXED_POINT
-                sbr->Q_orig[1][k][l] = MUL_F(pow2deq_q[exp0 + P2Q_TABLE_OFFSET], pow2deq_rcp[exp1 + P2_TABLE_RCP_OFFSET]);
-                sbr->Q_orig[0][k][l] = MUL_R(sbr->Q_orig[1][k][l], pow2deq_q[exp1 + P2Q_TABLE_OFFSET]);
-#else
                 sbr->Q_orig[1][k][l] = MUL_F(pow2deq[exp0 + P2_TABLE_OFFSET], pow2deq_rcp[exp1 + P2_TABLE_RCP_OFFSET]);
                 sbr->Q_orig[0][k][l] = MUL_R(sbr->Q_orig[1][k][l], pow2deq[exp1 + P2_TABLE_OFFSET]);
-#endif
             }
         }
     }

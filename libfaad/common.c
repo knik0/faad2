@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.c,v 1.14 2003/12/23 18:41:42 menno Exp $
+** $Id: common.c,v 1.15 2004/01/05 14:05:11 menno Exp $
 **/
 
 /* just some common functions that could be used anywhere */
@@ -34,7 +34,7 @@
 #include "syntax.h"
 
 #ifdef USE_SSE
-__declspec(naked) static int32_t __fastcall test_cpuid()
+__declspec(naked) static int32_t __fastcall test_cpuid(void)
 {
     __asm
     {
@@ -233,7 +233,7 @@ int8_t can_decode_ot(const uint8_t object_type)
 /* common malloc function */
 void *faad_malloc(int32_t size)
 {
-#ifdef _WIN32
+#if 0 // defined(_WIN32) && !defined(_WIN32_WCE)
     return _aligned_malloc(size, 16);
 #else
     return malloc(size);
@@ -243,7 +243,7 @@ void *faad_malloc(int32_t size)
 /* common free function */
 void faad_free(void *b)
 {
-#ifdef _WIN32
+#if 0 // defined(_WIN32) && !defined(_WIN32_WCE)
     _aligned_free(b);
 #else
     free(b);
@@ -293,7 +293,6 @@ static uint32_t  __r2 = 1;
  */
 uint32_t random_int(void)
 {
-    static const uint32_t rnd_seed = 16428320;
 	uint32_t  t1, t2, t3, t4;
 
 	t3   = t1 = __r1;   t4   = t2 = __r2;       // Parity calculation is done via table lookup, this is also available

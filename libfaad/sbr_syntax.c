@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_syntax.c,v 1.17 2003/12/17 16:37:34 menno Exp $
+** $Id: sbr_syntax.c,v 1.18 2004/01/05 14:05:12 menno Exp $
 **/
 
 #include "common.h"
@@ -38,6 +38,17 @@
 #include "sbr_e_nf.h"
 #include "bits.h"
 #include "analysis.h"
+
+/* static function declarations */
+static void sbr_header(bitfile *ld, sbr_info *sbr);
+static uint8_t sbr_data(bitfile *ld, sbr_info *sbr);
+static uint8_t sbr_single_channel_element(bitfile *ld, sbr_info *sbr);
+static uint8_t sbr_channel_pair_element(bitfile *ld, sbr_info *sbr);
+static uint8_t sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch);
+static void sbr_dtdf(bitfile *ld, sbr_info *sbr, uint8_t ch);
+static void invf_mode(bitfile *ld, sbr_info *sbr, uint8_t ch);
+static void sinusoidal_coding(bitfile *ld, sbr_info *sbr, uint8_t ch);
+
 
 static void sbr_reset(sbr_info *sbr)
 {
@@ -484,7 +495,7 @@ static uint8_t sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch)
 {
     uint8_t i, env, rel, result;
     uint8_t bs_abs_bord, bs_abs_bord_1;
-    uint8_t bs_num_env;
+    uint8_t bs_num_env = 0;
 
     sbr->bs_frame_class[ch] = (uint8_t)faad_getbits(ld, 2
         DEBUGVAR(1,248,"sbr_grid(): bs_frame_class"));

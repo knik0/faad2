@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.63 2003/12/23 18:41:42 menno Exp $
+** $Id: syntax.c,v 1.64 2004/01/05 14:05:12 menno Exp $
 **/
 
 /*
@@ -48,6 +48,48 @@
 #endif
 #ifdef SBR_DEC
 #include "sbr_syntax.h"
+#endif
+
+
+/* static function declarations */
+static uint8_t single_lfe_channel_element(faacDecHandle hDecoder, bitfile *ld,
+                                          uint8_t channel, uint8_t *tag);
+static uint8_t channel_pair_element(faacDecHandle hDecoder, bitfile *ld,
+                                    uint8_t channel, uint8_t *tag);
+#ifdef COUPLING_DEC
+static uint8_t coupling_channel_element(faacDecHandle hDecoder, bitfile *ld);
+#endif
+static uint16_t data_stream_element(faacDecHandle hDecoder, bitfile *ld);
+static uint8_t program_config_element(program_config *pce, bitfile *ld);
+static uint8_t fill_element(faacDecHandle hDecoder, bitfile *ld, drc_info *drc
+#ifdef SBR_DEC
+                            ,uint8_t sbr_ele
+#endif
+                            );
+static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
+                                         bitfile *ld, ic_stream *ics, uint8_t scal_flag,
+                                         int16_t *spec_data);
+static uint8_t ics_info(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,
+                        uint8_t common_window);
+static uint8_t section_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld);
+static uint8_t scale_factor_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld);
+#ifdef SSR_DEC
+static void gain_control_data(bitfile *ld, ic_stream *ics);
+#endif
+static uint8_t spectral_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,
+                             int16_t *spectral_data);
+static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count);
+static uint8_t pulse_data(ic_stream *ics, pulse_info *pul, bitfile *ld);
+static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld);
+static uint8_t ltp_data(faacDecHandle hDecoder, ic_stream *ics, ltp_info *ltp, bitfile *ld);
+static uint8_t adts_fixed_header(adts_header *adts, bitfile *ld);
+static void adts_variable_header(adts_header *adts, bitfile *ld);
+static void adts_error_check(adts_header *adts, bitfile *ld);
+static uint8_t dynamic_range_info(bitfile *ld, drc_info *drc);
+static uint8_t excluded_channels(bitfile *ld, drc_info *drc);
+#ifdef SCALABLE_DEC
+static int8_t aac_scalable_main_header(faacDecHandle hDecoder, ic_stream *ics1, ic_stream *ics2,
+                                       bitfile *ld, uint8_t this_layer_stereo);
 #endif
 
 
@@ -869,7 +911,7 @@ static uint16_t data_stream_element(faacDecHandle hDecoder, bitfile *ld)
 
     for (i = 0; i < count; i++)
     {
-        uint8_t data = (uint8_t)faad_getbits(ld, LEN_BYTE
+        faad_getbits(ld, LEN_BYTE
             DEBUGVAR(1,64,"data_stream_element(): data_stream_byte"));
     }
 
@@ -1687,8 +1729,7 @@ static uint8_t spectral_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld
 {
     int8_t i;
     uint8_t g;
-    int16_t *sp;
-    uint16_t k, p = 0;
+    uint16_t inc, k, p = 0;
     uint8_t groups = 0;
     uint8_t sect_cb;
     uint8_t result;
@@ -1698,9 +1739,6 @@ static uint8_t spectral_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld
     int64_t count = faad_get_ts();
 #endif
 
-    sp = spectral_data;
-    /*memset(sp, 0, hDecoder->frameLength*sizeof(int16_t));*/
-
     for(g = 0; g < ics->num_window_groups; g++)
     {
         p = groups*nshort;
@@ -1708,6 +1746,8 @@ static uint8_t spectral_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld
         for (i = 0; i < ics->num_sec[g]; i++)
         {
             sect_cb = ics->sect_cb[g][i];
+
+            inc = (sect_cb >= FIRST_PAIR_HCB) ? 2 : 4;
 
             switch (sect_cb)
             {
@@ -1720,18 +1760,11 @@ static uint8_t spectral_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld
                 break;
             default:
                 for (k = ics->sect_sfb_offset[g][ics->sect_start[g][i]];
-                     k < ics->sect_sfb_offset[g][ics->sect_end[g][i]]; k += 4)
+                     k < ics->sect_sfb_offset[g][ics->sect_end[g][i]]; k += inc)
                 {
-                    sp = spectral_data + p;
-
-                    if ((result = huffman_spectral_data(sect_cb, ld, sp)) > 0)
+                    if ((result = huffman_spectral_data(sect_cb, ld, &spectral_data[p])) > 0)
                         return result;
-                    if (sect_cb >= FIRST_PAIR_HCB)
-                    {
-                        if ((result = huffman_spectral_data(sect_cb, ld, sp+2)) > 0)
-                            return result;
-                    }
-                    p += 4;
+                    p += inc;
                 }
                 break;
             }

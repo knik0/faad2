@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.36 2003/12/23 18:41:42 menno Exp $
+** $Id: specrec.c,v 1.37 2004/01/05 14:05:12 menno Exp $
 **/
 
 /*
@@ -50,6 +50,11 @@
 #include "ssr.h"
 #include "ssr_fb.h"
 #endif
+
+
+/* static function declarations */
+static void quant_to_spec(ic_stream *ics, real_t *spec_data, uint16_t frame_len);
+static uint8_t inverse_quantization(real_t *x_invquant, const int16_t *x_quant, const uint16_t frame_len);
 
 
 #ifdef LD_DEC
@@ -511,7 +516,7 @@ static uint8_t inverse_quantization(real_t *x_invquant, const int16_t *x_quant, 
     uint8_t error = 0; /* Init error flag */
     const real_t *tab = iq_table;
 
-    for(i = 0; i < frame_len; i+=4)
+    for (i = 0; i < frame_len; i+=4)
     {
         x_invquant[i] = iquant(x_quant[i], tab, &error);
         x_invquant[i+1] = iquant(x_quant[i+1], tab, &error);
@@ -532,19 +537,19 @@ ALIGN static const real_t pow2sf_tab[] = {
     0.0009765625, 0.001953125, 0.00390625,
     0.0078125, 0.015625, 0.03125,
     0.0625, 0.125, 0.25,
-    0.5, 1, 2,
-    4, 8, 16, 32,
-    64, 128, 256,
-    512, 1024, 2048,
-    4096, 8192, 16384,
-    32768, 65536, 131072,
-    262144, 524288, 1048576,
-    2097152, 4194304, 8388608,
-    16777216, 33554432, 67108864,
-    134217728, 268435456, 536870912,
-    1073741824, 2147483648, 4294967296,
-    8589934592, 17179869184, 34359738368,
-    68719476736, 137438953472, 274877906944
+    0.5, 1.0, 2.0,
+    4.0, 8.0, 16.0, 32.0,
+    64.0, 128.0, 256.0,
+    512.0, 1024.0, 2048.0,
+    4096.0, 8192.0, 16384.0,
+    32768.0, 65536.0, 131072.0,
+    262144.0, 524288.0, 1048576.0,
+    2097152.0, 4194304.0, 8388608.0,
+    16777216.0, 33554432.0, 67108864.0,
+    134217728.0, 268435456.0, 536870912.0,
+    1073741824.0, 2147483648.0, 4294967296.0,
+    8589934592.0, 17179869184.0, 34359738368.0,
+    68719476736.0, 137438953472.0, 274877906944.0
 };
 #endif
 

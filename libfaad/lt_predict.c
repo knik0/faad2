@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: lt_predict.c,v 1.19 2003/12/17 14:43:16 menno Exp $
+** $Id: lt_predict.c,v 1.20 2004/01/05 14:05:12 menno Exp $
 **/
 
 
@@ -36,6 +36,11 @@
 #include "lt_predict.h"
 #include "filtbank.h"
 #include "tns.h"
+
+
+/* static function declarations */
+static int16_t real_to_int16(real_t sig_in);
+
 
 /* check if the object type is an object type that can have LTP */
 uint8_t is_ltp_ot(uint8_t object_type)
@@ -128,7 +133,7 @@ void lt_prediction(ic_stream *ics, ltp_info *ltp, real_t *spec,
 }
 
 #ifdef FIXED_POINT
-INLINE int16_t real_to_int16(real_t sig_in)
+static INLINE int16_t real_to_int16(real_t sig_in)
 {
     if (sig_in >= 0)
     {
@@ -144,7 +149,7 @@ INLINE int16_t real_to_int16(real_t sig_in)
     return (sig_in >> REAL_BITS);
 }
 #else
-INLINE int16_t real_to_int16(real_t sig_in)
+static INLINE int16_t real_to_int16(real_t sig_in)
 {
     if (sig_in >= 0)
     {

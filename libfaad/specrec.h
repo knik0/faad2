@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.h,v 1.22 2003/12/23 18:41:42 menno Exp $
+** $Id: specrec.h,v 1.23 2004/01/05 14:05:12 menno Exp $
 **/
 
 #ifndef __SPECREC_H__
@@ -35,8 +35,6 @@ extern "C" {
 #include "syntax.h"
 
 uint8_t window_grouping_info(faacDecHandle hDecoder, ic_stream *ics);
-static void quant_to_spec(ic_stream *ics, real_t *spec_data, uint16_t frame_len);
-static uint8_t inverse_quantization(real_t *x_invquant, const int16_t *x_quant, const uint16_t frame_len);
 void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics, real_t *x_invquant,
                         uint16_t frame_len);
 #ifdef USE_SSE

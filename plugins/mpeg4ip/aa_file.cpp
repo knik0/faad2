@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: aa_file.cpp,v 1.1 2003/08/07 17:21:21 menno Exp $
+** $Id: aa_file.cpp,v 1.2 2004/01/05 14:05:12 menno Exp $
 **/
 /*
  * aa_file.cpp - create media structure for aac files
@@ -26,7 +26,11 @@
 codec_data_t *aac_file_check (lib_message_func_t message,
                   const char *name,
                   double *max,
-                  char *desc[4])
+                  char *desc[4]
+#ifdef HAVE_PLUGIN_VERSION_0_8
+                , CConfigSet *pConfig
+#endif
+)
 {
   aac_codec_t *aac;
   int len = strlen(name);

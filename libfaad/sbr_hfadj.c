@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfadj.c,v 1.9 2003/12/17 14:43:16 menno Exp $
+** $Id: sbr_hfadj.c,v 1.10 2004/01/05 14:05:12 menno Exp $
 **/
 
 /* High Frequency adjustment */
@@ -37,13 +37,27 @@
 
 #include "sbr_noise.h"
 
+
+/* static function delcarations */
+static void map_noise_data(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch);
+static void map_sinusoids(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch);
+static void estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
+                                      qmf_t Xsbr[MAX_NTSRHFG][64], uint8_t ch);
+static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch);
+#ifdef SBR_LOW_POWER
+static void calc_gain_groups(sbr_info *sbr, sbr_hfadj_info *adj, real_t *deg, uint8_t ch);
+static void aliasing_reduction(sbr_info *sbr, sbr_hfadj_info *adj, real_t *deg, uint8_t ch);
+#endif
+static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj, qmf_t Xsbr[MAX_NTSRHFG][64], uint8_t ch);
+
+
 void hf_adjustment(sbr_info *sbr, qmf_t Xsbr[MAX_NTSRHFG][64]
 #ifdef SBR_LOW_POWER
                    ,real_t *deg /* aliasing degree */
 #endif
                    ,uint8_t ch)
 {
-    ALIGN sbr_hfadj_info adj = {0};
+    ALIGN sbr_hfadj_info adj = {{{0}}};
 
     map_noise_data(sbr, &adj, ch);
     map_sinusoids(sbr, &adj, ch);
@@ -266,6 +280,7 @@ static void estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
 #define EPS (1e-12)
 
 #define ONE (1)
+
 
 static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 {

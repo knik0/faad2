@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: filtbank.c,v 1.33 2003/12/17 14:43:16 menno Exp $
+** $Id: filtbank.c,v 1.34 2004/01/05 14:05:11 menno Exp $
 **/
 
 #include "common.h"
@@ -120,7 +120,7 @@ void filter_bank_end(fb_info *fb)
 static INLINE void imdct_long(fb_info *fb, real_t *in_data, real_t *out_data, uint16_t len)
 {
 #ifdef LD_DEC
-    mdct_info *mdct;
+    mdct_info *mdct = NULL;
 
     switch (len)
     {
@@ -144,7 +144,7 @@ static INLINE void imdct_long(fb_info *fb, real_t *in_data, real_t *out_data, ui
 static INLINE void imdct_long_sse(fb_info *fb, real_t *in_data, real_t *out_data, uint16_t len)
 {
 #ifdef LD_DEC
-    mdct_info *mdct;
+    mdct_info *mdct = NULL;
 
     switch (len)
     {
@@ -168,7 +168,7 @@ static INLINE void imdct_long_sse(fb_info *fb, real_t *in_data, real_t *out_data
 #ifdef LTP_DEC
 static INLINE void mdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_t len)
 {
-    mdct_info *mdct;
+    mdct_info *mdct = NULL;
 
     switch (len)
     {
@@ -199,10 +199,10 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
     int16_t i;
     ALIGN real_t transf_buf[2*1024] = {0};
 
-    const real_t *window_long;
-    const real_t *window_long_prev;
-    const real_t *window_short;
-    const real_t *window_short_prev;
+    const real_t *window_long = NULL;
+    const real_t *window_long_prev = NULL;
+    const real_t *window_short = NULL;
+    const real_t *window_short_prev = NULL;
 
     uint16_t nlong = frame_len;
     uint16_t nshort = frame_len/8;
@@ -323,10 +323,10 @@ void ifilter_bank_sse(fb_info *fb, uint8_t window_sequence, uint8_t window_shape
     int16_t i;
     ALIGN real_t transf_buf[2*1024] = {0};
 
-    const real_t *window_long;
-    const real_t *window_long_prev;
-    const real_t *window_short;
-    const real_t *window_short_prev;
+    const real_t *window_long = NULL;
+    const real_t *window_long_prev = NULL;
+    const real_t *window_short = NULL;
+    const real_t *window_short_prev = NULL;
 
     uint16_t nlong = frame_len;
     uint16_t nshort = frame_len/8;
@@ -359,26 +359,22 @@ void ifilter_bank_sse(fb_info *fb, uint8_t window_sequence, uint8_t window_shape
         imdct_long_sse(fb, freq_in, transf_buf, 2*nlong);
         for (i = 0; i < nlong; i+=4)
         {
-            __m128 m1 = _mm_load_ps(&transf_buf[i]);
-            __m128 m2 = _mm_load_ps(&window_long_prev[i]);
-            __m128 m3 = _mm_load_ps(&time_out[nlong+i]);
+            __m128 m1, m2, m3, m4, m5, m6, m7, m8;
 
-            __m128 m4 = _mm_mul_ps(m1, m2);
+            m1 = _mm_load_ps(&transf_buf[i]);
+            m2 = _mm_load_ps(&window_long_prev[i]);
+            m6 = _mm_load_ps(&window_long[nlong-4-i]);
+            m3 = _mm_load_ps(&time_out[nlong+i]);
+            m5 = _mm_load_ps(&transf_buf[nlong+i]);
+
+            m4 = _mm_mul_ps(m1, m2);
+            m7 = _mm_shuffle_ps(m6, m6, _MM_SHUFFLE(0, 1, 2, 3));
+
             m4 = _mm_add_ps(m4, m3);
+            m8 = _mm_mul_ps(m5, m7);
 
             _mm_store_ps(&time_out[i], m4);
-        }
-        for (i = 0; i < nlong; i+=4)
-        {
-            __m128 m1 = _mm_load_ps(&transf_buf[nlong+i]);
-            __m128 m2 = _mm_load_ps(&window_long[nlong-4-i]);
-            __m128 m3, m4;
-
-            m3 = _mm_shuffle_ps(m2, m2, _MM_SHUFFLE(0, 1, 2, 3));
-
-            m4 = _mm_mul_ps(m1, m3);
-
-            _mm_store_ps(&time_out[nlong+i], m4);
+            _mm_store_ps(&time_out[nlong+i], m8);
         }
         break;
 
@@ -420,14 +416,14 @@ void ifilter_bank_sse(fb_info *fb, uint8_t window_sequence, uint8_t window_shape
         break;
 
     case EIGHT_SHORT_SEQUENCE:
-        faad_imdct_sse(fb->mdct256, freq_in+0*nshort, transf_buf+2*nshort*0);
-        faad_imdct_sse(fb->mdct256, freq_in+1*nshort, transf_buf+2*nshort*1);
-        faad_imdct_sse(fb->mdct256, freq_in+2*nshort, transf_buf+2*nshort*2);
-        faad_imdct_sse(fb->mdct256, freq_in+3*nshort, transf_buf+2*nshort*3);
-        faad_imdct_sse(fb->mdct256, freq_in+4*nshort, transf_buf+2*nshort*4);
-        faad_imdct_sse(fb->mdct256, freq_in+5*nshort, transf_buf+2*nshort*5);
-        faad_imdct_sse(fb->mdct256, freq_in+6*nshort, transf_buf+2*nshort*6);
-        faad_imdct_sse(fb->mdct256, freq_in+7*nshort, transf_buf+2*nshort*7);
+        faad_imdct_sse(fb->mdct256, &freq_in[0*nshort], &transf_buf[2*nshort*0]);
+        faad_imdct_sse(fb->mdct256, &freq_in[1*nshort], &transf_buf[2*nshort*1]);
+        faad_imdct_sse(fb->mdct256, &freq_in[2*nshort], &transf_buf[2*nshort*2]);
+        faad_imdct_sse(fb->mdct256, &freq_in[3*nshort], &transf_buf[2*nshort*3]);
+        faad_imdct_sse(fb->mdct256, &freq_in[4*nshort], &transf_buf[2*nshort*4]);
+        faad_imdct_sse(fb->mdct256, &freq_in[5*nshort], &transf_buf[2*nshort*5]);
+        faad_imdct_sse(fb->mdct256, &freq_in[6*nshort], &transf_buf[2*nshort*6]);
+        faad_imdct_sse(fb->mdct256, &freq_in[7*nshort], &transf_buf[2*nshort*7]);
         for (i = 0; i < nflat_ls; i+=4)
         {
             __m128 m1 = _mm_load_ps(&time_out[nlong+i]);
@@ -657,10 +653,10 @@ void filter_bank_ltp(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
     int16_t i;
     ALIGN real_t windowed_buf[2*1024] = {0};
 
-    const real_t *window_long;
-    const real_t *window_long_prev;
-    const real_t *window_short;
-    const real_t *window_short_prev;
+    const real_t *window_long = NULL;
+    const real_t *window_long_prev = NULL;
+    const real_t *window_short = NULL;
+    const real_t *window_short_prev = NULL;
 
     uint16_t nlong = frame_len;
     uint16_t nshort = frame_len/8;

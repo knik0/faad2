@@ -68,7 +68,7 @@ MY_CHECK_TYPEDEF_FROM_INCLUDE([fpos_t foo; foo.__pos = 0;],
 
 external_mp4v2=yes
 AC_CHECK_LIB(mp4v2, MP4Create, , external_mp4v2=no, -lstdc++)
-AC_CHECK_LIB(mp4v2, MP4MetadataDelete, external_mp4v2=no, , -lstdc++)
+AC_CHECK_LIB(mp4v2, MP4MetadataDelete, , external_mp4v2=no, -lstdc++)
 AC_CHECK_HEADER(mp4.h, , external_mp4v2=no)
 
 AM_CONDITIONAL(WITH_MP4V2, false)
@@ -79,6 +79,7 @@ if test x$external_mp4v2 = xyes; then
   AC_SUBST(MPEG4IP_PLAYER_PLUGIN_DIR)
   AC_MSG_NOTICE([*** Building with external mp4v2 ***])
 else
+  AC_MSG_NOTICE([*** Building with internal mp4v2 ***])
   AM_CONDITIONAL(HAVE_MPEG4IP, false)
   if test x$WITHMP4V2 = xyes; then
      AM_CONDITIONAL(WITH_MP4V2, true)

@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.68 2003/12/17 14:43:15 menno Exp $
+** $Id: main.c,v 1.69 2004/01/05 14:05:11 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -373,7 +373,8 @@ void usage(void)
 
 int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_stdout,
                   int def_srate, int object_type, int outputFormat, int fileType,
-                  int downMatrix, int infoOnly, int adts_out, int old_format)
+                  int downMatrix, int infoOnly, int adts_out, int old_format,
+                  float *song_length)
 {
     int tagsize;
     unsigned long samplerate;
@@ -499,6 +500,8 @@ int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_stdout,
 
         header_type = 2;
     }
+
+    *song_length = length;
 
     fill_buffer(&b);
     if ((bread = faacDecInit(hDecoder, b.buffer,
@@ -680,7 +683,7 @@ unsigned long srates[] =
 
 int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
                   int outputFormat, int fileType, int downMatrix, int noGapless,
-                  int infoOnly, int adts_out)
+                  int infoOnly, int adts_out, float *song_length)
 {
     int track;
     unsigned long samplerate;
@@ -806,6 +809,8 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
             f = f * 2.0;
         }
         seconds = (float)samples*(float)(f-1.0)/(float)mp4ASC.samplingFrequency;
+
+        *song_length = seconds;
 
         fprintf(stderr, "%s\t%.3f secs, %d ch, %d Hz\n\n", ot[(mp4ASC.objectTypeIndex > 5)?0:mp4ASC.objectTypeIndex],
             seconds, mp4ASC.channelsConfiguration, mp4ASC.samplingFrequency);
@@ -996,27 +1001,37 @@ int main(int argc, char *argv[])
     char audioFileName[255];
     char adtsFileName[255];
     unsigned char header[8];
+    float length = 0;
     FILE *hMP4File;
 
 /* System dependant types */
 #ifdef _WIN32
-    long begin, end;
+    long begin;
 #else
     clock_t begin;
 #endif
 
     unsigned long cap = faacDecGetCapabilities();
 
-    fprintf(stderr, " ****** Ahead Software MPEG-4 AAC Decoder V%s ******\n\n", FAAD2_VERSION);
-    fprintf(stderr, "        Build: %s\n", __DATE__);
-    fprintf(stderr, "        Copyright 2002-2003: Ahead Software AG\n");
-    fprintf(stderr, "        http://www.audiocoding.com\n");
+    fprintf(stderr, " *********** Ahead Software MPEG-4 AAC Decoder V%s ******************\n\n", FAAD2_VERSION);
+    fprintf(stderr, " Build: %s\n", __DATE__);
+    fprintf(stderr, " Copyright 2002-2004: Ahead Software AG\n");
+    fprintf(stderr, " http://www.audiocoding.com\n");
     if (cap & FIXED_POINT_CAP)
-        fprintf(stderr, "        Fixed point version\n");
+        fprintf(stderr, " Fixed point version\n");
     else
-        fprintf(stderr, "        Floating point version\n");
+        fprintf(stderr, " Floating point version\n");
     fprintf(stderr, "\n");
-    fprintf(stderr, " ****************************************************\n\n");
+    fprintf(stderr, " This program is free software; you can redistribute it and/or modify\n");
+    fprintf(stderr, " it under the terms of the GNU General Public License as published by\n");
+    fprintf(stderr, " the Free Software Foundation; either version 2 of the License, or\n");
+    fprintf(stderr, " (at your option) any later version.\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, " You should have received a copy of the GNU General Public License\n");
+    fprintf(stderr, " along with this program; if not, write to the Free Software\n");
+    fprintf(stderr, " Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, " **************************************************************************\n\n");
 
     /* begin process command line */
     progName = argv[0];
@@ -1175,6 +1190,11 @@ int main(int argc, char *argv[])
     /* check for mp4 file */
     mp4file = 0;
     hMP4File = fopen(aacFileName, "rb");
+    if (!hMP4File)
+    {
+        fprintf(stderr, "Error opening file: %s\n", aacFileName);
+        return 1;
+    }
     fread(header, 1, 8, hMP4File);
     fclose(hMP4File);
     if (header[4] == 'f' && header[5] == 't' && header[6] == 'y' && header[7] == 'p')
@@ -1183,27 +1203,26 @@ int main(int argc, char *argv[])
     if (mp4file)
     {
         result = decodeMP4file(aacFileName, audioFileName, adtsFileName, writeToStdio,
-            outputFormat, format, downMatrix, noGapless, infoOnly, adts_out);
+            outputFormat, format, downMatrix, noGapless, infoOnly, adts_out, &length);
     } else {
         result = decodeAACfile(aacFileName, audioFileName, adtsFileName, writeToStdio,
             def_srate, object_type, outputFormat, format, downMatrix, infoOnly, adts_out,
-            old_format);
+            old_format, &length);
     }
 
     if (!result && !infoOnly)
     {
 #ifdef _WIN32
-        end = GetTickCount();
-        fprintf(stderr, "Decoding %s took: %5.2f sec.\n", aacFileName,
-            (float)(end-begin)/1000.0);
+        float dec_length = (float)(GetTickCount()-begin)/1000.0;
         SetConsoleTitle("FAAD");
 #else
         /* clock() grabs time since the start of the app but when we decode
            multiple files, each file has its own starttime (begin).
          */
-        fprintf(stderr, "Decoding %s took: %5.2f sec.\n", aacFileName,
-            (float)(clock() - begin)/(float)CLOCKS_PER_SEC);
+        float dec_length = (float)(clock() - begin)/(float)CLOCKS_PER_SEC;
 #endif
+        fprintf(stderr, "Decoding %s took: %5.2f sec. %5.2fx real-time.\n", aacFileName,
+            dec_length, length/dec_length);
     }
 
     return 0;

@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: rvlc.c,v 1.12 2003/12/17 14:43:16 menno Exp $
+** $Id: rvlc.c,v 1.13 2004/01/05 14:05:12 menno Exp $
 **/
 
 /* RVLC scalefactor decoding
@@ -51,6 +51,22 @@
 #ifdef ERROR_RESILIENCE
 
 //#define PRINT_RVLC
+
+/* static function declarations */
+static uint8_t rvlc_decode_sf_forward(ic_stream *ics,
+                                      bitfile *ld_sf,
+                                      bitfile *ld_esc,
+                                      uint8_t *is_used);
+#if 0
+static uint8_t rvlc_decode_sf_reverse(ic_stream *ics,
+                                      bitfile *ld_sf,
+                                      bitfile *ld_esc,
+                                      uint8_t is_used);
+#endif
+static int8_t rvlc_huffman_sf(bitfile *ld_sf, bitfile *ld_esc,
+                              int8_t direction);
+static int8_t rvlc_huffman_esc(bitfile *ld_esc, int8_t direction);
+
 
 uint8_t rvlc_scale_factor_data(ic_stream *ics, bitfile *ld)
 {
@@ -235,6 +251,7 @@ static uint8_t rvlc_decode_sf_forward(ic_stream *ics, bitfile *ld_sf, bitfile *l
     return 0;
 }
 
+#if 0 // not used right now, doesn't work correctly yet
 static uint8_t rvlc_decode_sf_reverse(ic_stream *ics, bitfile *ld_sf, bitfile *ld_esc,
                                       uint8_t intensity_used)
 {
@@ -337,6 +354,7 @@ static uint8_t rvlc_decode_sf_reverse(ic_stream *ics, bitfile *ld_sf, bitfile *l
 
     return 0;
 }
+#endif
 
 /* index == 99 means not allowed codeword */
 static rvlc_huff_table book_rvlc[] = {
@@ -509,3 +527,4 @@ static int8_t rvlc_huffman_esc(bitfile *ld,
 }
 
 #endif
+

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: faad2.h,v 1.1 2003/08/07 17:21:21 menno Exp $
+** $Id: faad2.h,v 1.2 2004/01/05 14:05:12 menno Exp $
 **/
 /*
  * aa.h - class definition for AAC codec.
@@ -26,6 +26,11 @@
 #define __AA_H__ 1
 #include "faad.h"
 #include "codec_plugin.h"
+
+#ifndef M_LLU
+#define M_LLU M_64
+#define LLU U64
+#endif
 
 typedef struct aac_codec_t {
   codec_data_t c;
@@ -68,7 +73,11 @@ extern const char *aaclib;
 codec_data_t *aac_file_check(lib_message_func_t message,
                  const char *name,
                  double *max,
-                 char *desc[4]);
+                 char *desc[4]
+#ifdef HAVE_PLUGIN_VERSION_0_8
+               , CConfigSet *pConfig
+#endif
+);
 
 int aac_file_next_frame(codec_data_t *ifptr,
             uint8_t **buffer,

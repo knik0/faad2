@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_huff.c,v 1.12 2003/12/17 14:43:16 menno Exp $
+** $Id: sbr_huff.c,v 1.13 2004/01/05 14:05:12 menno Exp $
 **/
 
 #include "common.h"
@@ -220,7 +220,7 @@ static const int8_t t_huffman_noise_bal_3_0dB[24][2] = {
 };
 
 
-INLINE int16_t sbr_huff_dec(bitfile *ld, sbr_huff_tab t_huff)
+static INLINE int16_t sbr_huff_dec(bitfile *ld, sbr_huff_tab t_huff)
 {
     uint8_t bit;
     int16_t index = 0;

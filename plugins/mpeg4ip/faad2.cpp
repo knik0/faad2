@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: faad2.cpp,v 1.1 2003/08/07 17:21:21 menno Exp $
+** $Id: faad2.cpp,v 1.2 2004/01/05 14:05:12 menno Exp $
 **/
 #include "faad2.h"
 #include <mpeg4_audio_config.h>
@@ -26,6 +26,10 @@
 
 #define DEBUG_SYNC 2
 
+#ifndef M_LLU
+#define M_LLU M_64
+#define LLU U64
+#endif
 const char *aaclib="faad2";
 
 /*
@@ -282,7 +286,11 @@ static int aac_codec_check (lib_message_func_t message,
                 int profile,
                 format_list_t *fptr,
                 const uint8_t *userdata,
-                uint32_t userdata_size)
+                uint32_t userdata_size
+#ifdef HAVE_PLUGIN_VERSION_0_8
+              ,CConfigSet *pConfig
+#endif
+              )
 {
   fmtp_parse_t *fmtp = NULL;
   if (compressor != NULL &&
@@ -344,6 +352,7 @@ static int aac_codec_check (lib_message_func_t message,
   return -1;
 }
 
+#ifndef HAVE_PLUGIN_VERSION_0_8
 AUDIO_CODEC_WITH_RAW_FILE_PLUGIN("faad2",
                  aac_codec_create,
                  aac_do_pause,
@@ -355,7 +364,25 @@ AUDIO_CODEC_WITH_RAW_FILE_PLUGIN("faad2",
                  aac_file_next_frame,
                  aac_file_used_for_frame,
                  aac_raw_file_seek_to,
-                 aac_file_eof);
+               aac_file_eof
+               );
+#else
+AUDIO_CODEC_WITH_RAW_FILE_PLUGIN("faad2",
+               aac_codec_create,
+               aac_do_pause,
+               aac_decode,
+               NULL,
+               aac_close,
+               aac_codec_check,
+               aac_file_check,
+               aac_file_next_frame,
+               aac_file_used_for_frame,
+               aac_raw_file_seek_to,
+               aac_file_eof,
+               NULL,
+               0
+               );
+#endif
 /* end file aa.cpp */
 
 

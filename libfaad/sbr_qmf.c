@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_qmf.c,v 1.18 2003/12/17 14:43:16 menno Exp $
+** $Id: sbr_qmf.c,v 1.19 2004/01/05 14:05:12 menno Exp $
 **/
 
 #include "common.h"
@@ -82,7 +82,11 @@ void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const real_t *input,
         /* add new samples to input buffer x */
         for (n = 32 - 1; n >= 0; n--)
         {
+#ifdef FIXED_POINT
+            qmfa->x[n] = (input[in++]) >> 5;
+#else
             qmfa->x[n] = input[in++];
+#endif
         }
 
         /* window and summation to create array u */
@@ -109,7 +113,11 @@ void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const real_t *input,
         {
             if (n < kx)
             {
+#ifdef FIXED_POINT
+                QMF_RE(X[l + offset][n]) = u[n] << 1;
+#else
                 QMF_RE(X[l + offset][n]) = 2. * u[n];
+#endif
             } else {
                 QMF_RE(X[l + offset][n]) = 0;
             }
@@ -129,8 +137,13 @@ void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const real_t *input,
         {
             if (n < kx)
             {
+#ifdef FIXED_POINT
+                QMF_RE(X[l + offset][n]) = y[n] << 1;
+                QMF_IM(X[l + offset][n]) = -y[63-n] << 1;
+#else
                 QMF_RE(X[l + offset][n]) = 2. * y[n];
                 QMF_IM(X[l + offset][n]) = -2. * y[63-n];
+#endif
             } else {
                 QMF_RE(X[l + offset][n]) = 0;
                 QMF_IM(X[l + offset][n]) = 0;
@@ -184,7 +197,7 @@ void qmfs_end(qmfs_info *qmfs)
 }
 
 #ifdef SBR_LOW_POWER
-void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t X[MAX_NTSRHFG][64],
+void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][64],
                           real_t *output)
 {
     ALIGN real_t x[64];
@@ -210,7 +223,11 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t X[MAX_NTSR
         /* calculate 128 samples */
         for (k = 0; k < 64; k++)
         {
+#ifdef FIXED_POINT
+            x[k] = QMF_RE(X[l][k]);
+#else
             x[k] = QMF_RE(X[l][k]) / 32.;
+#endif
         }
 
         for (n = 0; n < 32; n++)
@@ -266,37 +283,7 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t X[MAX_NTSR
     }
 }
 
-void DST2(real_t *in, real_t *out, int32_t len)
-{
-    int r, i;
-
-    for (r = 1; r <= len; r++)
-    {
-        double sum = 0;
-        for (i = 1; i <= len; i++)
-        {
-            sum += in[i-1] * sin(((real_t)r)*((real_t)i-0.5)*M_PI/(real_t)len);
-        }
-        out[r-1] = (real_t)sum;
-    }
-}
-
-void DCT2(real_t *in, real_t *out, int32_t len)
-{
-    int r, i;
-
-    for (r = 0; r < len; r++)
-    {
-        double sum = 0;
-        for (i = 0; i < len; i++)
-        {
-            sum += in[i] * cos(((real_t)r)*((real_t)i+0.5)*M_PI/(real_t)len);
-        }
-        out[r] = (real_t)sum;
-    }
-}
-
-void sbr_qmf_synthesis_64_sse(sbr_info *sbr, qmfs_info *qmfs, const qmf_t X[MAX_NTSRHFG][64],
+void sbr_qmf_synthesis_64_sse(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][64],
                               real_t *output)
 {
     ALIGN real_t x[64];
@@ -322,7 +309,11 @@ void sbr_qmf_synthesis_64_sse(sbr_info *sbr, qmfs_info *qmfs, const qmf_t X[MAX_
         /* calculate 128 samples */
         for (k = 0; k < 64; k++)
         {
+#ifdef FIXED_POINT
+            x[k] = QMF_RE(X[l][k]);
+#else
             x[k] = QMF_RE(X[l][k]) / 32.;
+#endif
         }
 
         for (n = 0; n < 32; n++)
@@ -379,7 +370,7 @@ void sbr_qmf_synthesis_64_sse(sbr_info *sbr, qmfs_info *qmfs, const qmf_t X[MAX_
     }
 }
 #else
-void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t X[MAX_NTSRHFG][64],
+void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][64],
                           real_t *output)
 {
     ALIGN real_t x1[64], x2[64];
@@ -459,7 +450,7 @@ void memmove_sse_576(real_t *out, const real_t *in)
     }
 }
 
-void sbr_qmf_synthesis_64_sse(sbr_info *sbr, qmfs_info *qmfs, const qmf_t X[MAX_NTSRHFG][64],
+void sbr_qmf_synthesis_64_sse(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][64],
                               real_t *output)
 {
     ALIGN real_t x1[64], x2[64];

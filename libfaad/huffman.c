@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: huffman.c,v 1.10 2003/12/17 14:43:16 menno Exp $
+** $Id: huffman.c,v 1.11 2004/01/05 14:05:11 menno Exp $
 **/
 
 #include "common.h"
@@ -36,6 +36,20 @@
 #include "bits.h"
 #include "huffman.h"
 #include "codebook/hcb.h"
+
+
+/* static function declarations */
+static INLINE void huffman_sign_bits(bitfile *ld, int16_t *sp, uint8_t len);
+static INLINE int16_t huffman_getescape(bitfile *ld, int16_t sp);
+static uint8_t huffman_2step_quad(uint8_t cb, bitfile *ld, int16_t *sp);
+static uint8_t huffman_2step_quad_sign(uint8_t cb, bitfile *ld, int16_t *sp);
+static uint8_t huffman_2step_pair(uint8_t cb, bitfile *ld, int16_t *sp);
+static uint8_t huffman_2step_pair_sign(uint8_t cb, bitfile *ld, int16_t *sp);
+static uint8_t huffman_binary_quad(uint8_t cb, bitfile *ld, int16_t *sp);
+static uint8_t huffman_binary_quad_sign(uint8_t cb, bitfile *ld, int16_t *sp);
+static uint8_t huffman_binary_pair(uint8_t cb, bitfile *ld, int16_t *sp);
+static uint8_t huffman_binary_pair_sign(uint8_t cb, bitfile *ld, int16_t *sp);
+static int16_t huffman_codebook(uint8_t i);
 
 
 int8_t huffman_scale_factor(bitfile *ld)
@@ -104,10 +118,20 @@ static INLINE void huffman_sign_bits(bitfile *ld, int16_t *sp, uint8_t len)
     }
 }
 
+#ifdef _WIN32
+static INLINE uint32_t bsr(uint32_t bits)
+{
+    __asm
+    {
+        bsr eax, dword ptr [bits]
+    }
+}
+#endif
+
 static INLINE int16_t huffman_getescape(bitfile *ld, int16_t sp)
 {
     uint8_t neg, i;
-    int16_t j;
+    int32_t j;
 	int32_t off;
 
     if (sp < 0)
@@ -116,11 +140,12 @@ static INLINE int16_t huffman_getescape(bitfile *ld, int16_t sp)
             return sp;
         neg = 1;
     } else {
-        if(sp != 16)
+        if (sp != 16)
             return sp;
         neg = 0;
     }
 
+#ifndef _WIN32
     for (i = 4; ; i++)
     {
         if (faad_get1bit(ld
@@ -129,11 +154,22 @@ static INLINE int16_t huffman_getescape(bitfile *ld, int16_t sp)
             break;
         }
     }
+#else
+    /* maximum quantised value is 8192,
+     * so the maximum number of bits for 1 value is log[2](8192)=13
+     * minimum bits used when escape is present is 4 bits
+     * this leaves a maximum of 9 bits to be read at this point
+     */
+    j = faad_showbits(ld, 9) | 0xFFFFFE00;
+    i = 12 - bsr(~j);
+    faad_getbits(ld, i-3
+        DEBUGVAR(1,6,"huffman_getescape(): escape size"));
+#endif
 
     off = faad_getbits(ld, i
         DEBUGVAR(1,9,"huffman_getescape(): escape"));
 
-    j = off + (1<<i);
+    j = off | (1<<i);
     if (neg)
         j = -j;
 
@@ -216,7 +252,7 @@ static uint8_t huffman_2step_pair(uint8_t cb, bitfile *ld, int16_t *sp)
     return 0;
 }
 
-static huffman_2step_pair_sign(uint8_t cb, bitfile *ld, int16_t *sp)
+static uint8_t huffman_2step_pair_sign(uint8_t cb, bitfile *ld, int16_t *sp)
 {
     uint8_t err = huffman_2step_pair(cb, ld, sp);
     huffman_sign_bits(ld, sp, PAIR_LEN);
@@ -357,7 +393,6 @@ int8_t huffman_spectral_data_2(uint8_t cb, bits_t *ld, int16_t *sp)
     uint16_t offset = 0;
     uint8_t extra_bits;
     uint8_t i;
-    uint8_t save_cb = cb;
 
 
     switch (cb)

@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.41 2003/12/23 18:41:42 menno Exp $
+** $Id: common.h,v 1.42 2004/01/05 14:05:11 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -33,7 +33,7 @@ extern "C" {
 #endif
 
 #define INLINE __inline
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_WIN32_WCE)
 #define ALIGN __declspec(align(16))
 #else
 #define ALIGN
@@ -120,7 +120,7 @@ extern "C" {
 #if ((defined(_WIN32) && !defined(_WIN32_WCE)) /* || ((__GNUC__ >= 3) && defined(__i386__)) */ )
 #ifndef FIXED_POINT
 /* includes <xmmintrin.h> to enable SSE intrinsics */
-#define USE_SSE
+//#define USE_SSE
 #endif
 #endif
 
@@ -379,7 +379,7 @@ typedef real_t complex_t[2];
 
 
 /* common functions */
-uint8_t cpu_has_sse();
+uint8_t cpu_has_sse(void);
 uint32_t random_int(void);
 uint8_t get_sr_index(const uint32_t samplerate);
 uint8_t max_pred_sfb(const uint8_t sr_index);
