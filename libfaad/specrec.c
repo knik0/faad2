@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.38 2004/01/13 14:24:10 menno Exp $
+** $Id: specrec.c,v 1.39 2004/01/13 20:35:14 menno Exp $
 **/
 
 /*
@@ -682,7 +682,7 @@ void apply_scalefactors_sse(faacDecHandle hDecoder, ic_stream *ics,
 uint8_t reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
                                    element *sce, int16_t *spec_data)
 {
-    uint8_t retval;
+    uint8_t retval, mul;
     ALIGN real_t spec_coef[1024];
 
 #ifdef PROFILE
@@ -777,10 +777,19 @@ uint8_t reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
             drc_decode(hDecoder->drc, spec_coef);
     }
 
+    mul = 1;
+#ifdef SBR_DEC
+    if ((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1))
+    {
+        /* SBR requires 2 times as much output data */
+        mul = 2;
+    }
+#endif
+
     if (hDecoder->time_out[sce->channel] == NULL)
     {
-        hDecoder->time_out[sce->channel] = (real_t*)faad_malloc(hDecoder->frameLength*sizeof(real_t));
-        memset(hDecoder->time_out[sce->channel], 0, hDecoder->frameLength*sizeof(real_t));
+        hDecoder->time_out[sce->channel] = (real_t*)faad_malloc(mul*hDecoder->frameLength*sizeof(real_t));
+        memset(hDecoder->time_out[sce->channel], 0, mul*hDecoder->frameLength*sizeof(real_t));
     }
 
     if (hDecoder->fb_intermed[sce->channel] == NULL)
@@ -837,13 +846,35 @@ uint8_t reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
     }
 #endif
 
+#ifdef SBR_DEC
+    if ((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1))
+    {
+        uint8_t ele = hDecoder->fr_ch_ele;
+        uint8_t ch = sce->channel;
+
+        /* following case can happen when forceUpSampling == 1 */
+        if (hDecoder->sbr[ele] == NULL)
+        {
+            hDecoder->sbr[ele] = sbrDecodeInit(hDecoder->frameLength
+#ifdef DRM
+                , 0
+#endif
+                );
+            hDecoder->sbr[ele]->id_aac = sce->ele_id;
+        }
+
+        sbrDecodeSingleFrame(hDecoder->sbr[ele], hDecoder->time_out[ch],
+            hDecoder->postSeekResetFlag, hDecoder->forceUpSampling);
+    }
+#endif
+
     return 0;
 }
 
 uint8_t reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_stream *ics2,
                                  element *cpe, int16_t *spec_data1, int16_t *spec_data2)
 {
-    uint8_t retval;
+    uint8_t retval, mul;
     ALIGN real_t spec_coef1[1024];
     ALIGN real_t spec_coef2[1024];
 
@@ -987,15 +1018,24 @@ uint8_t reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_str
             drc_decode(hDecoder->drc, spec_coef2);
     }
 
+    mul = 1;
+#ifdef SBR_DEC
+    if ((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1))
+    {
+        /* SBR requires 2 times as much output data */
+        mul = 2;
+    }
+#endif
+
     if (hDecoder->time_out[cpe->channel] == NULL)
     {
-        hDecoder->time_out[cpe->channel] = (real_t*)faad_malloc(hDecoder->frameLength*sizeof(real_t));
-        memset(hDecoder->time_out[cpe->channel], 0, hDecoder->frameLength*sizeof(real_t));
+        hDecoder->time_out[cpe->channel] = (real_t*)faad_malloc(mul*hDecoder->frameLength*sizeof(real_t));
+        memset(hDecoder->time_out[cpe->channel], 0, mul*hDecoder->frameLength*sizeof(real_t));
     }
     if (hDecoder->time_out[cpe->paired_channel] == NULL)
     {
-        hDecoder->time_out[cpe->paired_channel] = (real_t*)faad_malloc(hDecoder->frameLength*sizeof(real_t));
-        memset(hDecoder->time_out[cpe->paired_channel], 0, hDecoder->frameLength*sizeof(real_t));
+        hDecoder->time_out[cpe->paired_channel] = (real_t*)faad_malloc(mul*hDecoder->frameLength*sizeof(real_t));
+        memset(hDecoder->time_out[cpe->paired_channel], 0, mul*hDecoder->frameLength*sizeof(real_t));
     }
 
     if (hDecoder->fb_intermed[cpe->channel] == NULL)
@@ -1080,6 +1120,30 @@ uint8_t reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_str
             hDecoder->fb_intermed[cpe->channel], hDecoder->frameLength, hDecoder->object_type);
         lt_update_state(hDecoder->lt_pred_stat[cpe->paired_channel], hDecoder->time_out[cpe->paired_channel],
             hDecoder->fb_intermed[cpe->paired_channel], hDecoder->frameLength, hDecoder->object_type);
+    }
+#endif
+
+#ifdef SBR_DEC
+    if ((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1))
+    {
+        uint8_t ele = hDecoder->fr_ch_ele;
+        uint8_t ch0 = cpe->channel;
+        uint8_t ch1 = cpe->paired_channel;
+
+        /* following case can happen when forceUpSampling == 1 */
+        if (hDecoder->sbr[ele] == NULL)
+        {
+            hDecoder->sbr[ele] = sbrDecodeInit(hDecoder->frameLength
+#ifdef DRM
+                , 0
+#endif
+                );
+            hDecoder->sbr[ele]->id_aac = cpe->ele_id;
+        }
+
+        sbrDecodeCoupleFrame(hDecoder->sbr[ele],
+            hDecoder->time_out[ch0], hDecoder->time_out[ch1],
+            hDecoder->postSeekResetFlag, hDecoder->forceUpSampling);
     }
 #endif
 
