@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.54 2004/09/04 14:56:28 menno Exp $
+** $Id: specrec.c,v 1.55 2004/09/04 18:37:58 gcp Exp $
 **/
 
 /*
@@ -544,9 +544,11 @@ static uint8_t quant_to_spec(NeAACDecHandle hDecoder,
     const real_t *tab = iq_table;
 
     uint8_t g, sfb, win;
-    uint16_t width, bin, k, gindex;
+    uint16_t width, bin, k, gindex, wa, wb;
     uint8_t error = 0; /* Init error flag */
-
+#ifndef FIXED_POINT
+    real_t scf;
+#endif
 
     k = 0;
     gindex = 0;
@@ -590,40 +592,51 @@ static uint8_t quant_to_spec(NeAACDecHandle hDecoder,
             }
 #endif
 
+            wa = gindex + j;
+
+#ifndef FIXED_POINT
+            scf = pow2sf_tab[exp/*+25*/] * pow2_table[frac];
+#endif
+
             for (win = 0; win < ics->window_group_length[g]; win++)
             {
                 for (bin = 0; bin < width; bin += 4)
                 {
 #ifndef FIXED_POINT
-                    spec_data[gindex+(win*win_inc)+j+bin+0] = iquant(quant_data[k+0], tab, &error) *
-                        pow2sf_tab[exp/*+25*/] * pow2_table[frac];
-                    spec_data[gindex+(win*win_inc)+j+bin+1] = iquant(quant_data[k+1], tab, &error) *
-                        pow2sf_tab[exp/*+25*/] * pow2_table[frac];
-                    spec_data[gindex+(win*win_inc)+j+bin+2] = iquant(quant_data[k+2], tab, &error) *
-                        pow2sf_tab[exp/*+25*/] * pow2_table[frac];
-                    spec_data[gindex+(win*win_inc)+j+bin+3] = iquant(quant_data[k+3], tab, &error) *
-                        pow2sf_tab[exp/*+25*/] * pow2_table[frac];
+                    wb = wa + bin;
+
+                    spec_data[wb+0] = iquant(quant_data[k+0], tab, &error) * scf;
+                    spec_data[wb+1] = iquant(quant_data[k+1], tab, &error) * scf;                        
+                    spec_data[wb+2] = iquant(quant_data[k+2], tab, &error) * scf;                        
+                    spec_data[wb+3] = iquant(quant_data[k+3], tab, &error) * scf;
+                        
 #else
                     real_t iq0 = iquant(quant_data[k+0], tab, &error);
                     real_t iq1 = iquant(quant_data[k+1], tab, &error);
                     real_t iq2 = iquant(quant_data[k+2], tab, &error);
                     real_t iq3 = iquant(quant_data[k+3], tab, &error);
+
+                    wb = wa + bin;
+
                     if (exp < 0)
                     {
-                        spec_data[gindex+(win*win_inc)+j+bin+0] = iq0 >>= -exp;
-                        spec_data[gindex+(win*win_inc)+j+bin+1] = iq1 >>= -exp;
-                        spec_data[gindex+(win*win_inc)+j+bin+2] = iq2 >>= -exp;
-                        spec_data[gindex+(win*win_inc)+j+bin+3] = iq3 >>= -exp;
+                        spec_data[wb+0] = iq0 >>= -exp;
+                        spec_data[wb+1] = iq1 >>= -exp;
+                        spec_data[wb+2] = iq2 >>= -exp;
+                        spec_data[wb+3] = iq3 >>= -exp;
                     } else {
-                        spec_data[gindex+(win*win_inc)+j+bin+0] = iq0 <<= exp;
-                        spec_data[gindex+(win*win_inc)+j+bin+1] = iq1 <<= exp;
-                        spec_data[gindex+(win*win_inc)+j+bin+2] = iq2 <<= exp;
-                        spec_data[gindex+(win*win_inc)+j+bin+3] = iq3 <<= exp;
+                        spec_data[wb+0] = iq0 <<= exp;
+                        spec_data[wb+1] = iq1 <<= exp;
+                        spec_data[wb+2] = iq2 <<= exp;
+                        spec_data[wb+3] = iq3 <<= exp;
                     }
-                    spec_data[gindex+(win*win_inc)+j+bin+0] = MUL_C(spec_data[gindex+(win*win_inc)+j+bin+0],pow2_table[frac]);
-                    spec_data[gindex+(win*win_inc)+j+bin+1] = MUL_C(spec_data[gindex+(win*win_inc)+j+bin+1],pow2_table[frac]);
-                    spec_data[gindex+(win*win_inc)+j+bin+2] = MUL_C(spec_data[gindex+(win*win_inc)+j+bin+2],pow2_table[frac]);
-                    spec_data[gindex+(win*win_inc)+j+bin+3] = MUL_C(spec_data[gindex+(win*win_inc)+j+bin+3],pow2_table[frac]);
+                    if (frac != 0)
+                    {
+                        spec_data[wb+0] = MUL_C(spec_data[wb+0],pow2_table[frac]);
+                        spec_data[wb+1] = MUL_C(spec_data[wb+1],pow2_table[frac]);
+                        spec_data[wb+2] = MUL_C(spec_data[wb+2],pow2_table[frac]);
+                        spec_data[wb+3] = MUL_C(spec_data[wb+3],pow2_table[frac]);
+                    }
 
 //#define SCFS_PRINT
 #ifdef SCFS_PRINT
@@ -641,6 +654,7 @@ static uint8_t quant_to_spec(NeAACDecHandle hDecoder,
                     gincrease += 4;
                     k += 4;
                 }
+                wa += win_inc;
             }
             j += width;
         }

@@ -1,3 +1,6 @@
+4 september 2004  gpascutto(at)nero.com
+    - specrec.c: small optimizations to inverse quant
+
 3 september 2004  mbakker(at)nero.com
     - neaacdec.h, decoder.c, syntax.c, structs.h: added output flag for PS
 
