@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.31 2003/05/07 18:30:49 menno Exp $
+** $Id: main.c,v 1.32 2003/06/07 11:06:37 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -296,9 +296,9 @@ int GetAACTrack(MP4FileHandle infile)
     /* find AAC track */
     unsigned short i;
     int rc;
-	int numTracks = MP4GetNumberOfTracks(infile, NULL, /* subType */ 0);
+    int numTracks = MP4GetNumberOfTracks(infile, NULL, /* subType */ 0);
 
-	for (i = 0; i < numTracks; i++)
+    for (i = 0; i < numTracks; i++)
     {
         MP4TrackId trackId = MP4FindTrackId(infile, i, NULL, /* subType */ 0);
         const char* trackType = MP4GetTrackType(infile, trackId);
@@ -364,13 +364,13 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
     config->outputFormat = outputFormat;
     faacDecSetConfiguration(hDecoder, config);
 
-	infile = MP4Read(mp4file, 0);
-	if (!infile)
+    infile = MP4Read(mp4file, 0);
+    if (!infile)
     {
         /* unable to open file */
         fprintf(stderr, "Error opening file: %s\n", mp4file);
         return 1;
-	}
+    }
 
     if ((track = GetAACTrack(infile)) < 0)
     {
@@ -396,23 +396,23 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
 
     numSamples = MP4GetTrackNumberOfSamples(infile, track);
 
-	for (sampleId = 1; sampleId <= numSamples; sampleId++)
+    for (sampleId = 1; sampleId <= numSamples; sampleId++)
     {
         int rc;
 
         /* get acces unit from MP4 file */
-		buffer = NULL;
-		buffer_size = 0;
+        buffer = NULL;
+        buffer_size = 0;
 
-		rc = MP4ReadSample(infile, track, sampleId, &buffer, &buffer_size,
+        rc = MP4ReadSample(infile, track, sampleId, &buffer, &buffer_size,
             NULL, NULL, NULL, NULL);
-		if (rc == 0)
+        if (rc == 0)
         {
-			fprintf(stderr, "Reading from MP4 file failed.\n");
+            fprintf(stderr, "Reading from MP4 file failed.\n");
             faacDecClose(hDecoder);
             MP4Close(infile);
             return 1;
-		}
+        }
 
         sample_buffer = faacDecDecode(hDecoder, &frameInfo, buffer, buffer_size);
 
@@ -459,9 +459,8 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
 
         if (frameInfo.error > 0)
         {
-            fprintf(stderr, "Error: %s\n",
+            fprintf(stderr, "Warning: %s\n",
                 faacDecGetErrorMessage(frameInfo.error));
-            break;
         }
     }
 
