@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.41 2003/04/02 18:31:08 menno Exp $
+** $Id: syntax.c,v 1.42 2003/04/02 19:09:49 menno Exp $
 **/
 
 /*
@@ -955,6 +955,9 @@ static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
 #ifdef ERROR_RESILIENCE
     if (hDecoder->aacSpectralDataResilienceFlag)
     {
+        ics->length_of_reordered_spectral_data = (uint16_t)faad_getbits(ld, 14
+            DEBUGVAR(1,147,"individual_channel_stream(): length_of_reordered_spectral_data"));
+
         if (hDecoder->channelConfiguration == 2)
         {
             if (ics->length_of_reordered_spectral_data > 6144)
@@ -964,9 +967,6 @@ static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
                 ics->length_of_reordered_spectral_data = 12288;
         }
 
-        ics->length_of_reordered_spectral_data = (uint16_t)faad_getbits(ld, 14
-            DEBUGVAR(1,147,"individual_channel_stream(): length_of_reordered_spectral_data"));
-        /* TODO: test for >6144/12288, see page 143 */
         ics->length_of_longest_codeword = (uint8_t)faad_getbits(ld, 6
             DEBUGVAR(1,148,"individual_channel_stream(): length_of_longest_codeword"));
         if (ics->length_of_longest_codeword >= 49)
