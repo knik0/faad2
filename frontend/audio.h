@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: audio.h,v 1.12 2004/01/05 14:05:11 menno Exp $
+** $Id: audio.h,v 1.15 2004/03/10 19:45:40 menno Exp $
 **/
 
 #ifndef AUDIO_H_INCLUDED
@@ -39,6 +39,7 @@ extern "C" {
 
 typedef struct
 {
+    int toStdio;
     int outputFormat;
     FILE *sndfile;
     unsigned int fileType;

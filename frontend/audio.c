@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: audio.c,v 1.21 2004/01/05 14:05:11 menno Exp $
+** $Id: audio.c,v 1.22 2004/03/02 23:13:49 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -72,7 +72,9 @@ audio_file *open_audio_file(char *infile, int samplerate, int channels,
         setmode(fileno(stdout), O_BINARY);
 #endif
         aufile->sndfile = stdout;
+        aufile->toStdio = 1;
     } else {
+        aufile->toStdio = 0;
         aufile->sndfile = fopen(infile, "wb");
     }
 
@@ -125,7 +127,8 @@ void close_audio_file(audio_file *aufile)
             write_wav_header(aufile);
     }
 
-    fclose(aufile->sndfile);
+    if (aufile->toStdio == 0)
+        fclose(aufile->sndfile);
 
     if (aufile) free(aufile);
 }

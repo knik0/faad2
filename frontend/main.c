@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.72 2004/03/02 20:09:58 menno Exp $
+** $Id: main.c,v 1.73 2004/03/02 23:13:50 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -832,7 +832,7 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
                 }
             }
         }
-        if (j > 0) printf("\n");
+        if (j > 0) fprintf(stderr, "\n");
 #endif
     }
 
@@ -1163,6 +1163,12 @@ int main(int argc, char *argv[])
     {
         usage();
         return 1;
+    }
+
+    /* only allow raw data on stdio */
+    if (writeToStdio == 1)
+    {
+        format = 2;
     }
 
     /* point to the specified file name */
