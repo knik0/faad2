@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.75 2004/03/10 19:45:42 menno Exp $
+** $Id: syntax.c,v 1.76 2004/03/11 11:40:13 menno Exp $
 **/
 
 /*
@@ -1147,11 +1147,11 @@ void aac_scalable_main_element(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo
     cpe.common_window = 1;
     if (this_layer_stereo)
     {
-        cpe.ele_id = ID_CPE;
+        hDecoder->element_id[0] = ID_CPE;
         if (hDecoder->element_output_channels[hDecoder->fr_ch_ele] == 0)
             hDecoder->element_output_channels[hDecoder->fr_ch_ele] = 2;
     } else {
-        cpe.ele_id = ID_SCE;
+        hDecoder->element_id[0] = ID_SCE;
     }
 
     for (ch = 0; ch < (this_layer_stereo ? 2 : 1); ch++)
@@ -1196,7 +1196,7 @@ void aac_scalable_main_element(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo
 
         if (!hDecoder->sbr[0])
         {
-            hDecoder->sbr[0] = sbrDecodeInit(hDecoder->frameLength, cpe.ele_id,
+            hDecoder->sbr[0] = sbrDecodeInit(hDecoder->frameLength, hDecoder->element_id[0],
                 2*get_sample_rate(hDecoder->sf_index), 0 /* ds SBR */, 1);
         }
 
@@ -1258,8 +1258,6 @@ void aac_scalable_main_element(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo
     } else {
         hDecoder->internal_channel[channels] = channels;
     }
-
-    hDecoder->element_id[hDecoder->fr_ch_ele] = cpe.ele_id;
 
     hDecoder->fr_channels += hDecoder->element_output_channels[hDecoder->fr_ch_ele];
     hDecoder->fr_ch_ele++;

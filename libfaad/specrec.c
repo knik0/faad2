@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.46 2004/03/02 20:09:58 menno Exp $
+** $Id: specrec.c,v 1.47 2004/03/11 11:40:13 menno Exp $
 **/
 
 /*
@@ -1031,7 +1031,7 @@ uint8_t reconstruct_single_channel(NeAACDecHandle hDecoder, ic_stream *ics,
         if (hDecoder->sbr[ele] == NULL)
         {
             hDecoder->sbr[ele] = sbrDecodeInit(hDecoder->frameLength,
-                sce->ele_id, 2*get_sample_rate(hDecoder->sf_index),
+                hDecoder->element_id[ele], 2*get_sample_rate(hDecoder->sf_index),
                 hDecoder->downSampledSBR
 #ifdef DRM
                 , 0
@@ -1257,7 +1257,7 @@ uint8_t reconstruct_channel_pair(NeAACDecHandle hDecoder, ic_stream *ics1, ic_st
         if (hDecoder->sbr[ele] == NULL)
         {
             hDecoder->sbr[ele] = sbrDecodeInit(hDecoder->frameLength,
-                cpe->ele_id, 2*get_sample_rate(hDecoder->sf_index),
+                hDecoder->element_id[ele], 2*get_sample_rate(hDecoder->sf_index),
                 hDecoder->downSampledSBR
 #ifdef DRM
                 , 0
