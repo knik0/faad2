@@ -536,7 +536,7 @@ void MP4RtpHintTrack::AddESConfigurationPacket()
 			"MP4RtpAddESConfigurationPacket");
 	}
 
-	AddPacket(true);
+	AddPacket(false);
 
 	MP4RtpPacket* pPacket = m_pWriteHint->GetCurrentPacket();
 	ASSERT(pPacket);

@@ -108,7 +108,11 @@ public:
 
 	void SetValue(u_int64_t value, u_int32_t index = 0);
 
-	void IncrementValue(u_int32_t increment = 1, u_int32_t index = 0);
+	void InsertValue(u_int64_t value, u_int32_t index = 0);
+
+	void DeleteValue(u_int32_t index = 0);
+
+	void IncrementValue(int32_t increment = 1, u_int32_t index = 0);
 };
 
 #define MP4INTEGER_PROPERTY_DECL2(isize, xsize) \
@@ -500,6 +504,10 @@ public:
 	}
 
 	MP4Descriptor* AddDescriptor(u_int8_t tag);
+
+	void AppendDescriptor(MP4Descriptor* pDescriptor) {
+		m_pDescriptors.Add(pDescriptor);
+	}
 
 	void DeleteDescriptor(u_int32_t index);
 

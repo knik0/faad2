@@ -1,3 +1,5 @@
+SUBDIRS = . test util
+
 INCLUDES = -I$(top_srcdir)/include
 
 AM_CXXFLAGS = -Wall 
@@ -5,26 +7,6 @@ AM_CXXFLAGS = -Wall
 lib_LTLIBRARIES = libmp4v2.la
 
 libmp4v2_la_SOURCES = \
-	mp4.h \
-	mp4.cpp \
-	mp4array.h \
-	mp4atom.h \
-	mp4atom.cpp \
-	mp4common.h \
-	mp4container.h \
-	mp4container.cpp \
-	mp4descriptor.h \
-	mp4descriptor.cpp \
-	mp4file.h \
-	mp4file.cpp \
-	mp4file_io.cpp \
-	mp4property.h \
-	mp4property.cpp \
-	mp4track.h \
-	mp4track.cpp \
-	mp4util.h \
-	mp4util.cpp \
-	atoms.h \
 	atom_co64.cpp \
 	atom_cprt.cpp \
 	atom_ctts.cpp \
@@ -64,6 +46,7 @@ libmp4v2_la_SOURCES = \
 	atom_root.cpp \
 	atom_rtp.cpp \
 	atom_sdp.cpp \
+	atoms.h \
 	atom_smhd.cpp \
 	atom_snro.cpp \
 	atom_stbl.cpp \
@@ -93,15 +76,40 @@ libmp4v2_la_SOURCES = \
 	atom_url.cpp \
 	atom_urn.cpp \
 	atom_vmhd.cpp \
-	descriptors.h \
 	descriptors.cpp \
-	ocidescriptors.h \
+	descriptors.h \
+	isma.cpp \
+	mp4array.h \
+	mp4atom.cpp \
+	mp4atom.h \
+	mp4common.h \
+	mp4container.cpp \
+	mp4container.h \
+	mp4.h \
+	mp4.cpp \
+	mp4descriptor.cpp \
+	mp4descriptor.h \
+	mp4file.cpp \
+	mp4file.h \
+	mp4file_io.cpp \
+	mp4info.cpp \
+	mp4property.cpp \
+	mp4property.h \
+	mp4track.cpp \
+	mp4track.h \
+	mp4util.cpp \
+	mp4util.h \
 	ocidescriptors.cpp \
-	qosqualifiers.h \
-	qosqualifiers.cpp \
-	odcommands.h \
+	ocidescriptors.h \
 	odcommands.cpp \
-	rtphint.h \
+	odcommands.h \
+	qosqualifiers.cpp \
+	qosqualifiers.h \
 	rtphint.cpp \
-	isma.cpp
+	rtphint.h 
 
+EXTRA_DIST = API_CHANGES \
+	INTERNALS \
+	libmp4v260.dsp \
+	libmp4v2_st60.dsp \
+	TODO

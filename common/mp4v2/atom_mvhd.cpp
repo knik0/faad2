@@ -86,6 +86,8 @@ void MP4MvhdAtom::Generate()
 		((MP4Integer32Property*)m_pProperties[3])->SetValue(now);
 	}
 
+	((MP4Integer32Property*)m_pProperties[4])->SetValue(1000);
+
 	((MP4Float32Property*)m_pProperties[6])->SetValue(1.0);
 	((MP4Float32Property*)m_pProperties[7])->SetValue(1.0);
 

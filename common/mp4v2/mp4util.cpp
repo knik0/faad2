@@ -230,7 +230,7 @@ u_int64_t MP4ConvertTime(u_int64_t t,
 	}
 
 	// final resort is to use floating point
-	double d = (double)newTimeScale / (double)oldTimeScale;
+	double d = ((double)newTimeScale / (double)oldTimeScale) + 0.5;
 #ifdef _WINDOWS
 	d *= (double)(int64_t)t;
 #else

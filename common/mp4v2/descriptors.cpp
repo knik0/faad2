@@ -94,7 +94,7 @@ MP4ODescriptor::MP4ODescriptor()
 		new MP4StringProperty("URL", Counted));
 	AddProperty( /* 4 */ 
 		new MP4DescriptorProperty("esIds", 
-			MP4ESIDIncDescrTag, 0, Required, Many));
+			MP4ESIDRefDescrTag, 0, Required, Many));
 	AddProperty( /* 5 */ 
 		new MP4DescriptorProperty("ociDescr", 
 			MP4OCIDescrTagsStart, MP4OCIDescrTagsEnd, Optional, Many));

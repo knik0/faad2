@@ -92,7 +92,53 @@ void MP4IntegerProperty::SetValue(u_int64_t value, u_int32_t index)
 	}
 }
 
-void MP4IntegerProperty::IncrementValue(u_int32_t increment, u_int32_t index)
+void MP4IntegerProperty::InsertValue(u_int64_t value, u_int32_t index)
+{
+	switch (this->GetType()) {
+	case Integer8Property:
+		((MP4Integer8Property*)this)->InsertValue(value, index);
+		break;
+	case Integer16Property:
+		((MP4Integer16Property*)this)->InsertValue(value, index);
+		break;
+	case Integer24Property:
+		((MP4Integer24Property*)this)->InsertValue(value, index);
+		break;
+	case Integer32Property:
+		((MP4Integer32Property*)this)->InsertValue(value, index);
+		break;
+	case Integer64Property:
+		((MP4Integer64Property*)this)->InsertValue(value, index);
+		break;
+	default:
+		ASSERT(FALSE);
+	}
+}
+
+void MP4IntegerProperty::DeleteValue(u_int32_t index)
+{
+	switch (this->GetType()) {
+	case Integer8Property:
+		((MP4Integer8Property*)this)->DeleteValue(index);
+		break;
+	case Integer16Property:
+		((MP4Integer16Property*)this)->DeleteValue(index);
+		break;
+	case Integer24Property:
+		((MP4Integer24Property*)this)->DeleteValue(index);
+		break;
+	case Integer32Property:
+		((MP4Integer32Property*)this)->DeleteValue(index);
+		break;
+	case Integer64Property:
+		((MP4Integer64Property*)this)->DeleteValue(index);
+		break;
+	default:
+		ASSERT(FALSE);
+	}
+}
+
+void MP4IntegerProperty::IncrementValue(int32_t increment, u_int32_t index)
 {
 	SetValue(GetValue() + increment);
 }
@@ -189,7 +235,7 @@ void MP4BitfieldProperty::Dump(FILE* pFile, u_int8_t indent,
 	}
 	fprintf(pFile, 
 #ifdef WIN32
-		"%s = "LLU" (0x%0*I64) <%u bits>\n", 
+		"%s = "LLU" (0x%0*I64x) <%u bits>\n", 
 #else
 		"%s = "LLU" (0x%0*llx) <%u bits>\n", 
 #endif
@@ -428,7 +474,6 @@ void MP4BytesProperty::Read(MP4File* pFile, u_int32_t index)
 		return;
 	}
 	MP4Free(m_values[index]);
-	WARNING(m_valueSizes[index] == 0);
 	m_values[index] = (u_int8_t*)MP4Malloc(m_valueSizes[index]);
 	pFile->ReadBytes(m_values[index], m_valueSizes[index]);
 }
@@ -438,8 +483,6 @@ void MP4BytesProperty::Write(MP4File* pFile, u_int32_t index)
 	if (m_implicit) {
 		return;
 	}
-	WARNING(m_values[index] == NULL);
-	WARNING(m_valueSizes[index] == 0);
 	pFile->WriteBytes(m_values[index], m_valueSizes[index]);
 }
 
@@ -756,7 +799,8 @@ void MP4DescriptorProperty::Read(MP4File* pFile, u_int32_t index)
 	u_int64_t start = pFile->GetPosition();
 
 	while (true) {
-		if (m_sizeLimit && pFile->GetPosition() > start + m_sizeLimit) {
+		// enforce size limitation
+		if (m_sizeLimit && pFile->GetPosition() >= start + m_sizeLimit) {
 			break;
 		}
 

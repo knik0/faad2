@@ -22,8 +22,8 @@
 #ifndef __DESCRIPTORS_INCLUDED__
 #define __DESCRIPTORS_INCLUDED__
 
-const u_int8_t MP4ODescrTag				= 0x01; 
-const u_int8_t MP4IODescrTag					= 0x02; 
+const u_int8_t MP4ODescrTag					= 0x01; 
+const u_int8_t MP4IODescrTag				= 0x02; 
 const u_int8_t MP4ESDescrTag				= 0x03; 
 const u_int8_t MP4DecConfigDescrTag			= 0x04; 
 const u_int8_t MP4DecSpecificDescrTag		= 0x05; 

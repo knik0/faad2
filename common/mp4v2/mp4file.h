@@ -29,6 +29,7 @@ class MP4Float32Property;
 class MP4StringProperty;
 class MP4BytesProperty;
 class MP4Descriptor;
+class MP4DescriptorProperty;
 
 class MP4File {
 public: /* equivalent to MP4 library API */
@@ -41,7 +42,6 @@ public: /* equivalent to MP4 library API */
 	void Modify(const char* fileName);
 	void Optimize(const char* orgFileName, 
 		const char* newFileName = NULL);
-	void MakeIsmaCompliant(bool addIsmaComplianceSdp = true);
 	void Dump(FILE* pDumpFile = NULL, bool dumpImplicits = false);
 	void Close();
 
@@ -101,7 +101,7 @@ public: /* equivalent to MP4 library API */
 
 	/* track operations */
 
-	MP4TrackId AddTrack(const char* type, u_int32_t timeScale = 1);
+	MP4TrackId AddTrack(const char* type, u_int32_t timeScale = 1000);
 	void DeleteTrack(MP4TrackId trackId);
 
 	u_int32_t GetNumberOfTracks(const char* type = NULL, u_int8_t subType = 0);
@@ -188,11 +188,17 @@ public: /* equivalent to MP4 library API */
 
 	MP4TrackId AddSceneTrack();
 
-	MP4TrackId AddAudioTrack(u_int32_t timeScale, u_int32_t sampleDuration,
+	MP4TrackId AddAudioTrack(
+		u_int32_t timeScale, 
+		MP4Duration sampleDuration,
 		u_int8_t audioType);
 
-	MP4TrackId AddVideoTrack(u_int32_t timeScale, u_int32_t sampleDuration,
-		u_int16_t width, u_int16_t height, u_int8_t videoType);
+	MP4TrackId AddVideoTrack(
+		u_int32_t timeScale, 
+		MP4Duration sampleDuration,
+		u_int16_t width, 
+		u_int16_t height, 
+		u_int8_t videoType);
 
 	MP4TrackId AddHintTrack(MP4TrackId refTrackId);
 
@@ -206,9 +212,12 @@ public: /* equivalent to MP4 library API */
 	void SetTrackTimeScale(MP4TrackId trackId, u_int32_t value);
 
 	u_int8_t GetTrackAudioType(MP4TrackId trackId);
+	u_int8_t GetTrackAudioMpeg4Type(MP4TrackId trackId);
 	u_int8_t GetTrackVideoType(MP4TrackId trackId);
 
 	MP4Duration GetTrackFixedSampleDuration(MP4TrackId trackId);
+
+	float GetTrackVideoFrameRate(MP4TrackId trackId);
 
 	void GetTrackESConfiguration(MP4TrackId trackId, 
 		u_int8_t** ppConfig, u_int32_t* pConfigSize);
@@ -218,6 +227,22 @@ public: /* equivalent to MP4 library API */
 	const char* GetHintTrackSdp(MP4TrackId hintTrackId);
 	void SetHintTrackSdp(MP4TrackId hintTrackId, const char* sdpString);
 	void AppendHintTrackSdp(MP4TrackId hintTrackId, const char* sdpString);
+
+	// ISMA specific functions
+
+	void MakeIsmaCompliant(bool addIsmaComplianceSdp = true);
+
+	void CreateIsmaIodFromParams(
+		u_int8_t videoProfile,
+		u_int32_t videoBitrate,
+		u_int8_t* videoConfig,
+		u_int32_t videoConfigLength,
+		u_int8_t audioProfile,
+		u_int32_t audioBitrate,
+		u_int8_t* audioConfig,
+		u_int32_t audioConfigLength,
+		u_int8_t** ppBytes,
+		u_int64_t* pNumBytes);
 
 	// time convenience functions
 
@@ -324,6 +349,65 @@ public: /* equivalent to MP4 library API */
 		bool isSyncSample);
 
 	u_int8_t AllocRtpPayloadNumber();
+
+	// edit list related
+
+	char* MakeTrackEditName(
+		MP4TrackId trackId,
+		MP4EditId editId,
+		const char* name);
+
+	MP4EditId AddTrackEdit(
+		MP4TrackId trackId,
+		MP4EditId editId = MP4_INVALID_EDIT_ID);
+
+	void DeleteTrackEdit(
+		MP4TrackId trackId,
+		MP4EditId editId);
+
+	u_int32_t GetTrackNumberOfEdits(
+		MP4TrackId trackId);
+
+	MP4Timestamp GetTrackEditStart(
+		MP4TrackId trackId,
+		MP4EditId editId);
+
+	MP4Duration GetTrackEditTotalDuration(
+		MP4TrackId trackId,
+		MP4EditId editId);
+
+	MP4Timestamp GetTrackEditMediaStart(
+		MP4TrackId trackId,
+		MP4EditId editId);
+
+	void SetTrackEditMediaStart(
+		MP4TrackId trackId,
+		MP4EditId editId,
+		MP4Timestamp startTime);
+
+	MP4Duration GetTrackEditDuration(
+		MP4TrackId trackId,
+		MP4EditId editId);
+
+	void SetTrackEditDuration(
+		MP4TrackId trackId,
+		MP4EditId editId,
+		MP4Duration duration);
+
+	bool GetTrackEditDwell(
+		MP4TrackId trackId,
+		MP4EditId editId);
+
+	void SetTrackEditDwell(
+		MP4TrackId trackId,
+		MP4EditId editId,
+		bool dwell);
+
+	MP4SampleId GetSampleIdFromEditTime(
+		MP4TrackId trackId,
+		MP4Timestamp when,
+		MP4Timestamp* pStartTime = NULL,
+		MP4Duration* pDuration = NULL);
 
 	/* end of MP4 API */
 
@@ -463,20 +547,49 @@ protected:
 
 	u_int8_t ConvertTrackTypeToStreamType(const char* trackType);
 
-	void CreateIsmaIod(
-		MP4TrackId odTrackId, MP4TrackId sceneTrackId, 
-		MP4TrackId audioTrackId, MP4TrackId videoTrackId,
-		u_int8_t** ppBytes, u_int64_t* pNumBytes);
-
-	void CreateIsmaODUpdateCommand(
+	void CreateIsmaIodFromFile(
 		MP4TrackId odTrackId,
-		MP4TrackId audioTrackId, MP4TrackId videoTrackId,
-		bool mp4FileMode,
-		u_int8_t** ppBytes, u_int64_t* pNumBytes);
+		MP4TrackId sceneTrackId,
+		MP4TrackId audioTrackId, 
+		MP4TrackId videoTrackId,
+		u_int8_t** ppBytes,
+		u_int64_t* pNumBytes);
 
-	void CreateIsmaSceneCommand(MP4TrackId sceneTrackId,
-		MP4TrackId audioTrackId, MP4TrackId videoTrackId,
-		u_int8_t** ppBytes, u_int64_t* pNumBytes);
+	MP4Descriptor* CreateESD(
+		MP4DescriptorProperty* pEsProperty,
+		u_int32_t esid,
+		u_int8_t objectType,
+		u_int8_t streamType,
+		u_int32_t bufferSize,
+		u_int32_t bitrate,
+		u_int8_t* pConfig,
+		u_int32_t configLength,
+		char* url);
+
+	void CreateIsmaODUpdateCommandFromFileForFile(
+		MP4TrackId odTrackId,
+		MP4TrackId audioTrackId, 
+		MP4TrackId videoTrackId,
+		u_int8_t** ppBytes,
+		u_int64_t* pNumBytes);
+
+	void CreateIsmaODUpdateCommandFromFileForStream(
+		MP4TrackId audioTrackId, 
+		MP4TrackId videoTrackId,
+		u_int8_t** ppBytes,
+		u_int64_t* pNumBytes);
+
+	void CreateIsmaODUpdateCommandForStream(
+		MP4DescriptorProperty* pAudioEsdProperty, 
+		MP4DescriptorProperty* pVideoEsdProperty,
+		u_int8_t** ppBytes,
+		u_int64_t* pNumBytes);
+
+	void CreateIsmaSceneCommand(
+		bool hasAudio,
+		bool hasVideo,
+		u_int8_t** ppBytes, 
+		u_int64_t* pNumBytes);
 
 protected:
 	char*			m_fileName;

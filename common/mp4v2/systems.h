@@ -23,7 +23,7 @@
 #ifndef __SYSTEMS_H__
 #define __SYSTEMS_H__
 
-#ifdef _WIN32
+#ifdef WIN32
 #define HAVE_IN_PORT_T
 #define HAVE_SOCKLEN_T
 #include <win32_ver.h>
@@ -34,7 +34,7 @@
 
 
 
-#ifdef _WIN32
+#ifdef WIN32
 
 #define _WIN32_WINNT 0x0400
 #include <windows.h>
@@ -51,7 +51,7 @@ typedef unsigned __int8 uint8_t;
 typedef unsigned __int64 u_int64_t;
 typedef unsigned __int32 u_int32_t;
 typedef unsigned __int16 u_int16_t;
-typedef unsigned char u_int8_t;
+typedef unsigned __int8 u_int8_t;
 typedef __int64 int64_t;
 typedef __int32 int32_t;
 typedef __int16 int16_t;
@@ -72,6 +72,7 @@ typedef int ssize_t;
 #define close _close
 #define open _open
 #define access _access
+#define vsnprintf _vsnprintf
 #define F_OK 0
 #define OPEN_RDWR (_O_RDWR | _O_BINARY)
 #define OPEN_CREAT (_O_CREAT | _O_BINARY)
@@ -170,7 +171,6 @@ int gettimeofday(struct timeval *t, void *);
 #else
 #define FPOS_TO_VAR(fpos, typed, var) (var) = (typed)(fpos)
 #define VAR_TO_FPOS(fpos, var) (fpos) = (var)
-
 #endif
 
 #define FOPEN_READ_BINARY "r"
@@ -182,7 +182,10 @@ typedef void (*error_msg_func_t)(int loglevel,
 				 const char *lib,
 				 const char *fmt,
 				 va_list ap);
-
+typedef void (*lib_message_func_t)(int loglevel,
+				   const char *lib,
+				   const char *fmt,
+				   ...);
 #ifndef HAVE_IN_PORT_T
 typedef uint16_t in_port_t;
 #endif
@@ -222,4 +225,46 @@ char *strsep(char **strp, const char *delim);
 #define INADDR_NONE (-1)
 #endif
 
+#define MALLOC_STRUCTURE(a) ((a *)malloc(sizeof(a)))
+
+#ifndef HAVE_GLIB_H
+typedef char gchar;
+typedef unsigned char guchar;
+
+typedef int gint;
+typedef unsigned int guint;
+
+typedef long glong;
+typedef unsigned long gulong;
+
+typedef double gdouble;
+
+typedef int gboolean;
+
+typedef int16_t gint16;
+typedef uint16_t guint16;
+
+typedef int32_t gint32;
+typedef uint32_t guint32;
+
+typedef int64_t gint64;
+typedef uint64_t guint64;
+
+typedef uint8_t  guint8;
+typedef int8_t gint8;
+
+#endif
+
+#ifndef TRUE
+#define TRUE 1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
 #endif /* __SYSTEMS_H__ */
+
+
+
+

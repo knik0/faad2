@@ -29,6 +29,7 @@ class MP4File;
 class MP4Atom;
 class MP4Property;
 class MP4IntegerProperty;
+class MP4Integer16Property;
 class MP4Integer32Property;
 class MP4Integer64Property;
 class MP4StringProperty;
@@ -92,12 +93,30 @@ public:
 
 	bool		IsSyncSample(MP4SampleId sampleId);
 
-	MP4SampleId GetSampleIdFromTime(MP4Timestamp when, 
+	MP4SampleId GetSampleIdFromTime(
+		MP4Timestamp when, 
 		bool wantSyncSample = false);
 
 	MP4Duration	GetSampleRenderingOffset(MP4SampleId sampleId);
 	void		SetSampleRenderingOffset(MP4SampleId sampleId,
 					MP4Duration renderingOffset);
+
+	MP4EditId	AddEdit(
+		MP4EditId editId = MP4_INVALID_EDIT_ID);
+
+	void		DeleteEdit(
+		MP4EditId editId);
+
+	MP4Timestamp GetEditStart(
+		MP4EditId editId);
+
+	MP4Timestamp GetEditTotalDuration(
+		MP4EditId editId);
+
+	MP4SampleId GetSampleIdFromEditTime(
+		MP4Timestamp editWhen, 
+		MP4Timestamp* pStartTime = NULL, 
+		MP4Duration* pDuration = NULL);
 
 	static const char* NormalizeTrackType(const char* type);
 
@@ -121,6 +140,8 @@ public:
 		u_int8_t* pChunk, u_int32_t chunkSize);
 
 protected:
+	bool		InitEditListProperties();
+
 	FILE*		GetSampleFile(MP4SampleId sampleId);
 	u_int64_t	GetSampleFileOffset(MP4SampleId sampleId);
 	u_int32_t	GetSampleStscIndex(MP4SampleId sampleId);
@@ -194,7 +215,7 @@ protected:
 	MP4Integer32Property* m_pStscFirstSampleProperty;
 
 	MP4Integer32Property* m_pChunkCountProperty;
-	MP4IntegerProperty* m_pChunkOffsetProperty;			// 32 or 64 bits
+	MP4IntegerProperty*   m_pChunkOffsetProperty;		// 32 or 64 bits
 
 	MP4Integer32Property* m_pSttsCountProperty;
 	MP4Integer32Property* m_pSttsSampleCountProperty;
@@ -206,6 +227,12 @@ protected:
 
 	MP4Integer32Property* m_pStssCountProperty;
 	MP4Integer32Property* m_pStssSampleProperty;
+
+	MP4Integer32Property* m_pElstCountProperty;
+	MP4IntegerProperty*   m_pElstMediaTimeProperty;		// 32 or 64 bits
+	MP4IntegerProperty*   m_pElstDurationProperty;		// 32 or 64 bits
+	MP4Integer16Property* m_pElstRateProperty;
+	MP4Integer16Property* m_pElstReservedProperty;
 };
 
 MP4ARRAY_DECL(MP4Track, MP4Track*);

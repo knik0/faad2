@@ -21,6 +21,10 @@
 
 #include "mp4common.h"
 
+static u_int8_t BifsV2Config[3] = {
+	0x00, 0x00, 0x40 // IsCommandStream
+};
+
 void MP4File::MakeIsmaCompliant(bool addIsmaComplianceSdp)
 {
 	ProtectWriteOperation("MP4MakeIsmaCompliant");
@@ -48,6 +52,9 @@ void MP4File::MakeIsmaCompliant(bool addIsmaComplianceSdp)
 	catch (MP4Error* e) {
 		delete e;
 	}
+
+	u_int64_t fileMsDuration =
+		ConvertFromMovieDuration(GetDuration(), MP4_MSECS_TIME_SCALE);
 
 	// delete any existing OD track
 	if (m_odTrackId != MP4_INVALID_TRACK_ID) {
@@ -84,41 +91,50 @@ void MP4File::MakeIsmaCompliant(bool addIsmaComplianceSdp)
 	SetTrackIntegerProperty(sceneTrackId, 
 		"mdia.minf.stbl.stsd.mp4s.esds.decConfigDescr.objectTypeId", 
 		MP4SystemsV2ObjectType);
-	static u_int8_t bifsv2Config[3] = {
-		0x00, 0x00, 0x40 // IsCommandStream
-	};
+	
 	SetTrackESConfiguration(sceneTrackId, 
-		bifsv2Config, sizeof(bifsv2Config));
+		BifsV2Config, sizeof(BifsV2Config));
 
 	u_int8_t* pBytes = NULL;
 	u_int64_t numBytes = 0;
 
 	// write OD Update Command
-	CreateIsmaODUpdateCommand(
-		m_odTrackId, audioTrackId, videoTrackId, true,
-		&pBytes, &numBytes);
+	CreateIsmaODUpdateCommandFromFileForFile(
+		m_odTrackId, 
+		audioTrackId, 
+		videoTrackId,
+		&pBytes, 
+		&numBytes);
 
-	WriteSample(m_odTrackId, pBytes, numBytes, 1);
+	WriteSample(m_odTrackId, pBytes, numBytes, fileMsDuration);
 
 	MP4Free(pBytes);
 	pBytes = NULL;
 
 	// write BIFS Scene Replace Command
 	CreateIsmaSceneCommand(
-		sceneTrackId, audioTrackId, videoTrackId,
-		&pBytes, &numBytes);
+		MP4_IS_VALID_TRACK_ID(audioTrackId), 
+		MP4_IS_VALID_TRACK_ID(videoTrackId),
+		&pBytes, 
+		&numBytes);
 
-	WriteSample(sceneTrackId, pBytes, numBytes, 1);
+	WriteSample(sceneTrackId, pBytes, numBytes, fileMsDuration);
 
 	MP4Free(pBytes);
 	pBytes = NULL;
 
 	// add session level sdp 
-	CreateIsmaIod(
-		m_odTrackId, sceneTrackId, audioTrackId, videoTrackId,
-		&pBytes, &numBytes);
+	CreateIsmaIodFromFile(
+		m_odTrackId, 
+		sceneTrackId, 
+		audioTrackId, 
+		videoTrackId,
+		&pBytes, 
+		&numBytes);
 
-	char* sdpBuf = (char*)MP4Calloc(numBytes + 256);
+	char* iodBase64 = MP4ToBase64(pBytes, numBytes);
+
+	char* sdpBuf = (char*)MP4Calloc(strlen(iodBase64) + 256);
 
 	if (addIsmaComplianceSdp) {
 		strcpy(sdpBuf, "a=isma-compliance:1,1.0,1\015\012");
@@ -126,13 +142,15 @@ void MP4File::MakeIsmaCompliant(bool addIsmaComplianceSdp)
 
 	sprintf(&sdpBuf[strlen(sdpBuf)], 
 		"a=mpeg4-iod: \042data:application/mpeg4-iod;base64,%s\042\015\012",
-		MP4ToBase64(pBytes, numBytes));
+		iodBase64);
 
 	SetSessionSdp(sdpBuf);
 
 	VERBOSE_ISMA(GetVerbosity(),
 		printf("IOD SDP = %s\n", sdpBuf));
 
+	MP4Free(iodBase64);
+	iodBase64 = NULL;
 	MP4Free(pBytes);
 	pBytes = NULL;
 	MP4Free(sdpBuf);
@@ -153,7 +171,7 @@ static void CloneIntegerProperty(
 	pSetProperty->SetValue(pGetProperty->GetValue());
 } 
 
-void MP4File::CreateIsmaIod(
+void MP4File::CreateIsmaIodFromFile(
 	MP4TrackId odTrackId,
 	MP4TrackId sceneTrackId,
 	MP4TrackId audioTrackId, 
@@ -200,22 +218,24 @@ void MP4File::CreateIsmaIod(
 	u_int8_t* pBytes;
 	u_int64_t numBytes;
 
-	CreateIsmaODUpdateCommand(
-		m_odTrackId, audioTrackId, videoTrackId, false,
-		&pBytes, &numBytes);
+	CreateIsmaODUpdateCommandFromFileForStream(
+		audioTrackId, 
+		videoTrackId,
+		&pBytes, 
+		&numBytes);
 
 	VERBOSE_ISMA(GetVerbosity(),
 		printf("OD data =\n"); MP4HexDump(pBytes, numBytes));
 
-	MP4StringProperty* pUrlProperty;
-	char* urlBuf = NULL;
+	char* odCmdBase64 = MP4ToBase64(pBytes, numBytes);
 
-	urlBuf = (char*)MP4Malloc((numBytes * 4 / 3) + 64);
+	char* urlBuf = (char*)MP4Malloc(strlen(odCmdBase64) + 64);
 
 	sprintf(urlBuf, 
 		"data:application/mpeg4-od-au;base64,%s",
-		 MP4ToBase64(pBytes, numBytes));
+		odCmdBase64);
 
+	MP4StringProperty* pUrlProperty;
 	pOdEsd->FindProperty("URL", 
 		(MP4Property**)&pUrlProperty);
 	pUrlProperty->SetValue(urlBuf);
@@ -223,6 +243,8 @@ void MP4File::CreateIsmaIod(
 	VERBOSE_ISMA(GetVerbosity(),
 		printf("OD data URL = \042%s\042\n", urlBuf));
 
+	MP4Free(odCmdBase64);
+	odCmdBase64 = NULL;
 	MP4Free(pBytes);
 	pBytes = NULL;
 	MP4Free(urlBuf);
@@ -266,16 +288,20 @@ void MP4File::CreateIsmaIod(
 	pSetProperty->SetValue(1);
 
 	CreateIsmaSceneCommand(
-		sceneTrackId, audioTrackId, videoTrackId,
-		&pBytes, &numBytes);
+		MP4_IS_VALID_TRACK_ID(audioTrackId), 
+		MP4_IS_VALID_TRACK_ID(videoTrackId),
+		&pBytes, 
+		&numBytes);
 
 	VERBOSE_ISMA(GetVerbosity(),
 		printf("Scene data =\n"); MP4HexDump(pBytes, numBytes));
 
-	urlBuf = (char*)MP4Malloc((numBytes * 4 / 3) + 64);
+	char *sceneCmdBase64 = MP4ToBase64(pBytes, numBytes);
+
+	urlBuf = (char*)MP4Malloc(strlen(sceneCmdBase64) + 64);
 	sprintf(urlBuf, 
 		"data:application/mpeg4-bifs-au;base64,%s",
-		 MP4ToBase64(pBytes, numBytes));
+		sceneCmdBase64);
 
 	pSceneEsd->FindProperty("URL", 
 		(MP4Property**)&pUrlProperty);
@@ -284,6 +310,8 @@ void MP4File::CreateIsmaIod(
 	VERBOSE_ISMA(GetVerbosity(),
 		printf("Scene data URL = \042%s\042\n", urlBuf));
 
+	MP4Free(sceneCmdBase64);
+	sceneCmdBase64 = NULL;
 	MP4Free(urlBuf);
 	urlBuf = NULL;
 	MP4Free(pBytes);
@@ -325,23 +353,250 @@ void MP4File::CreateIsmaIod(
 		printf("IOD data =\n"); MP4HexDump(*ppBytes, *pNumBytes));
 }
 
-void MP4File::CreateIsmaODUpdateCommand(
+void MP4File::CreateIsmaIodFromParams(
+	u_int8_t videoProfile,
+	u_int32_t videoBitrate,
+	u_int8_t* videoConfig,
+	u_int32_t videoConfigLength,
+	u_int8_t audioProfile,
+	u_int32_t audioBitrate,
+	u_int8_t* audioConfig,
+	u_int32_t audioConfigLength,
+	u_int8_t** ppIodBytes,
+	u_int64_t* pIodNumBytes)
+{
+	MP4IntegerProperty* pInt;
+	u_int8_t* pBytes = NULL;
+	u_int64_t numBytes;
+
+	// Create the IOD
+	MP4Descriptor* pIod = new MP4IODescriptor();
+	pIod->SetTag(MP4IODescrTag);
+	pIod->Generate();
+	
+	// Set audio and video profileLevels
+	pIod->FindProperty("audioProfileLevelId", 
+		(MP4Property**)&pInt);
+	pInt->SetValue(audioProfile);
+
+	pIod->FindProperty("visualProfileLevelId", 
+		(MP4Property**)&pInt);
+	pInt->SetValue(videoProfile);
+
+	// Mutate esIds from MP4ESIDIncDescrTag to MP4ESDescrTag
+	MP4DescriptorProperty* pEsProperty;
+	pIod->FindProperty("esIds", (MP4Property**)&pEsProperty);
+	pEsProperty->SetTags(MP4ESDescrTag);
+
+	// Add ES Descriptors
+
+	// Scene
+	CreateIsmaSceneCommand(
+		(audioProfile != 0xFF),
+		(videoProfile != 0xFF),
+		&pBytes, 
+		&numBytes);
+
+	VERBOSE_ISMA(GetVerbosity(),
+		printf("Scene data =\n"); MP4HexDump(pBytes, numBytes));
+
+	char* sceneCmdBase64 = MP4ToBase64(pBytes, numBytes);
+
+	char* urlBuf = 
+		(char*)MP4Malloc(strlen(sceneCmdBase64) + 64);
+	sprintf(urlBuf, 
+		"data:application/mpeg4-bifs-au;base64,%s",
+		sceneCmdBase64);
+
+	VERBOSE_ISMA(GetVerbosity(),
+		printf("Scene data URL = \042%s\042\n", urlBuf));
+
+	MP4Descriptor* pSceneEsd =
+		CreateESD(
+			pEsProperty,
+			201,				// esid
+			MP4SystemsV2ObjectType,
+			MP4SceneDescriptionStreamType,
+			numBytes,			// bufferSize
+			numBytes * 8,		// bitrate
+			BifsV2Config,
+			sizeof(BifsV2Config),
+			urlBuf);
+
+	MP4Free(sceneCmdBase64);
+	sceneCmdBase64 = NULL;
+	MP4Free(urlBuf);
+	urlBuf = NULL;
+	MP4Free(pBytes);
+	pBytes = NULL;
+
+	// Video
+	MP4Descriptor* pVideoEsd =
+		CreateESD(
+			pEsProperty,
+			20,					// esid
+			MP4_MPEG4_VIDEO_TYPE,
+			MP4VisualStreamType,
+			videoBitrate / 8,	// bufferSize
+			videoBitrate,
+			videoConfig,
+			videoConfigLength,
+			NULL);
+
+	// Audio
+	MP4Descriptor* pAudioEsd =
+		CreateESD(
+			pEsProperty,
+			10,					// esid
+			MP4_MPEG4_AUDIO_TYPE,
+			MP4AudioStreamType,
+			audioBitrate / 8, 	// bufferSize
+			audioBitrate,
+			audioConfig,
+			audioConfigLength,
+			NULL);
+
+	// OD
+
+	// Glop to make infrastructure happy
+	MP4DescriptorProperty* pAudioEsdProperty =
+		new MP4DescriptorProperty();
+	pAudioEsdProperty->AppendDescriptor(pAudioEsd);
+	MP4DescriptorProperty* pVideoEsdProperty =
+		new MP4DescriptorProperty();
+	pVideoEsdProperty->AppendDescriptor(pVideoEsd);
+
+	CreateIsmaODUpdateCommandForStream(
+		pAudioEsdProperty,
+		pVideoEsdProperty, 
+		&pBytes,
+		&numBytes);
+
+	// TBD cleanup temporary descriptor properties
+
+	VERBOSE_ISMA(GetVerbosity(),
+		printf("OD data =\n"); MP4HexDump(pBytes, numBytes));
+
+	char* odCmdBase64 = MP4ToBase64(pBytes, numBytes);
+
+	urlBuf = (char*)MP4Malloc(strlen(odCmdBase64) + 64);
+
+	sprintf(urlBuf, 
+		"data:application/mpeg4-od-au;base64,%s",
+		odCmdBase64);
+
+	VERBOSE_ISMA(GetVerbosity(),
+		printf("OD data URL = \042%s\042\n", urlBuf));
+
+	MP4Descriptor* pOdEsd =
+		CreateESD(
+			pEsProperty,
+			101,
+			MP4SystemsV1ObjectType,
+			MP4ObjectDescriptionStreamType,
+			numBytes,		// bufferSize
+			numBytes * 8,	// bitrate
+			NULL,			// config
+			0,				// configLength
+			urlBuf);
+
+	MP4Free(odCmdBase64);
+	odCmdBase64 = NULL;
+	MP4Free(pBytes);
+	pBytes = NULL;
+	MP4Free(urlBuf);
+	urlBuf = NULL;
+
+	// finally get the whole thing written to a memory 
+	pIod->WriteToMemory(this, ppIodBytes, pIodNumBytes);
+
+	delete pIod;
+
+	VERBOSE_ISMA(GetVerbosity(),
+		printf("IOD data =\n"); MP4HexDump(*ppIodBytes, *pIodNumBytes));
+}
+
+MP4Descriptor* MP4File::CreateESD(
+	MP4DescriptorProperty* pEsProperty,
+	u_int32_t esid,
+	u_int8_t objectType,
+	u_int8_t streamType,
+	u_int32_t bufferSize,
+	u_int32_t bitrate,
+	u_int8_t* pConfig,
+	u_int32_t configLength,
+	char* url)
+{
+	MP4IntegerProperty* pInt;
+	MP4StringProperty* pString;
+	MP4BytesProperty* pBytes;
+
+	MP4Descriptor* pEsd =
+		pEsProperty->AddDescriptor(MP4ESDescrTag);
+	pEsd->Generate();
+
+	pEsd->FindProperty("ESID", 
+		(MP4Property**)&pInt);
+	pInt->SetValue(esid);
+
+	pEsd->FindProperty("decConfigDescr.objectTypeId", 
+		(MP4Property**)&pInt);
+	pInt->SetValue(objectType);
+
+	pEsd->FindProperty("decConfigDescr.streamType", 
+		(MP4Property**)&pInt);
+	pInt->SetValue(streamType);
+
+	pEsd->FindProperty("decConfigDescr.bufferSizeDB", 
+		(MP4Property**)&pInt);
+	pInt->SetValue(bufferSize);
+
+	pEsd->FindProperty("decConfigDescr.maxBitrate", 
+		(MP4Property**)&pInt);
+	pInt->SetValue(bitrate);
+
+	pEsd->FindProperty("decConfigDescr.avgBitrate", 
+		(MP4Property**)&pInt);
+	pInt->SetValue(bitrate);
+	
+	MP4DescriptorProperty* pConfigDescrProperty;
+	pEsd->FindProperty("decConfigDescr.decSpecificInfo",
+		(MP4Property**)&pConfigDescrProperty);
+
+	MP4Descriptor* pConfigDescr =
+		pConfigDescrProperty->AddDescriptor(MP4DecSpecificDescrTag);
+	pConfigDescr->Generate();
+
+	pConfigDescrProperty->FindProperty("decSpecificInfo[0].info",
+		(MP4Property**)&pBytes);
+	pBytes->SetValue(pConfig, configLength);
+
+	pEsd->FindProperty("slConfigDescr.predefined", 
+		(MP4Property**)&pInt);
+	pInt->SetValue(1);
+
+	if (url) {
+		pEsd->FindProperty("URLFlag", 
+			(MP4Property**)&pInt);
+		pInt->SetValue(1);
+
+		pEsd->FindProperty("URL", 
+			(MP4Property**)&pString);
+		pString->SetValue(url);
+	}
+
+	return pEsd;
+}
+
+void MP4File::CreateIsmaODUpdateCommandFromFileForFile(
 	MP4TrackId odTrackId,
 	MP4TrackId audioTrackId, 
 	MP4TrackId videoTrackId,
-	bool mp4FileMode,
 	u_int8_t** ppBytes,
 	u_int64_t* pNumBytes)
 {
 	MP4Descriptor* pCommand = CreateODCommand(MP4ODUpdateODCommandTag);
 	pCommand->Generate();
-
-	MP4Descriptor* pAudioOd = NULL;
-	MP4Descriptor* pVideoOd = NULL;
-	MP4DescriptorProperty* pOrgAudioEsdProperty = NULL;
-	MP4DescriptorProperty* pOrgVideoEsdProperty = NULL;
-	MP4DescriptorProperty* pRealAudioEsdProperty = NULL;
-	MP4DescriptorProperty* pRealVideoEsdProperty = NULL;
 
 	for (u_int8_t i = 0; i < 2; i++) {
 		MP4TrackId trackId;
@@ -359,25 +614,138 @@ void MP4File::CreateIsmaODUpdateCommand(
 			continue;
 		}
 
+		MP4DescriptorProperty* pOdDescrProperty =
+				(MP4DescriptorProperty*)(pCommand->GetProperty(0));
+
+		pOdDescrProperty->SetTags(MP4FileODescrTag);
+
+		MP4Descriptor* pOd =
+			pOdDescrProperty->AddDescriptor(MP4FileODescrTag);
+
+		pOd->Generate();
+
+		MP4BitfieldProperty* pOdIdProperty = NULL;
+		pOd->FindProperty("objectDescriptorId", 
+			(MP4Property**)&pOdIdProperty);
+		pOdIdProperty->SetValue(odId);
+
+		MP4DescriptorProperty* pEsIdsDescriptorProperty = NULL;
+		pOd->FindProperty("esIds", 
+			(MP4Property**)&pEsIdsDescriptorProperty);
+		ASSERT(pEsIdsDescriptorProperty);
+
+		pEsIdsDescriptorProperty->SetTags(MP4ESIDRefDescrTag);
+
+		MP4Descriptor *pRefDescriptor =
+			pEsIdsDescriptorProperty->AddDescriptor(MP4ESIDRefDescrTag);
+		pRefDescriptor->Generate();
+
+		MP4Integer16Property* pRefIndexProperty = NULL;
+		pRefDescriptor->FindProperty("refIndex", 
+			(MP4Property**)&pRefIndexProperty);
+		ASSERT(pRefIndexProperty);
+
 		u_int32_t mpodIndex = FindTrackReference(
 			MakeTrackName(odTrackId, "tref.mpod"), trackId);
 		ASSERT(mpodIndex != 0);
 
-		u_int8_t odTag;
-		if (mp4FileMode) {
-			odTag = MP4FileODescrTag;
+		pRefIndexProperty->SetValue(mpodIndex);
+	}
+
+	pCommand->WriteToMemory(this, ppBytes, pNumBytes);
+
+	delete pCommand;
+}
+
+void MP4File::CreateIsmaODUpdateCommandFromFileForStream(
+	MP4TrackId audioTrackId, 
+	MP4TrackId videoTrackId,
+	u_int8_t** ppBytes,
+	u_int64_t* pNumBytes)
+{
+	MP4DescriptorProperty* pAudioEsd = NULL;
+	MP4Integer8Property* pAudioSLConfig = NULL;
+	MP4DescriptorProperty* pVideoEsd = NULL;
+	MP4Integer8Property* pVideoSLConfig = NULL;
+
+	if (audioTrackId != MP4_INVALID_TRACK_ID) {
+		MP4Atom* pEsdsAtom = 
+			FindAtom(MakeTrackName(audioTrackId, 
+				"mdia.minf.stbl.stsd.mp4a.esds"));
+		ASSERT(pEsdsAtom);
+
+		pAudioEsd = (MP4DescriptorProperty*)(pEsdsAtom->GetProperty(2));
+
+		// SL config needs to change from 2 (file) to 1 (null)
+		pAudioEsd->FindProperty("slConfigDescr.predefined", 
+			(MP4Property**)&pAudioSLConfig);
+		ASSERT(pAudioSLConfig);
+		pAudioSLConfig->SetValue(1);
+	}
+
+	if (videoTrackId != MP4_INVALID_TRACK_ID) {
+		MP4Atom* pEsdsAtom = 
+			FindAtom(MakeTrackName(videoTrackId, 
+				"mdia.minf.stbl.stsd.mp4v.esds"));
+		ASSERT(pEsdsAtom);
+
+		pVideoEsd = (MP4DescriptorProperty*)(pEsdsAtom->GetProperty(2));
+
+		// SL config needs to change from 2 (file) to 1 (null)
+		pVideoEsd->FindProperty("slConfigDescr.predefined", 
+			(MP4Property**)&pVideoSLConfig);
+		ASSERT(pVideoSLConfig);
+		pVideoSLConfig->SetValue(1);
+	}
+
+	CreateIsmaODUpdateCommandForStream(
+		pAudioEsd, pVideoEsd, ppBytes, pNumBytes);
+			
+	// return SL config values to 2 (file)
+	if (pAudioSLConfig) {
+		pAudioSLConfig->SetValue(2);
+	}
+	if (pVideoSLConfig) {
+		pVideoSLConfig->SetValue(2);
+	}
+}
+
+void MP4File::CreateIsmaODUpdateCommandForStream(
+	MP4DescriptorProperty* pAudioEsdProperty, 
+	MP4DescriptorProperty* pVideoEsdProperty,
+	u_int8_t** ppBytes,
+	u_int64_t* pNumBytes)
+{
+	MP4Descriptor* pAudioOd = NULL;
+	MP4Descriptor* pVideoOd = NULL;
+
+	MP4Descriptor* pCommand = 
+		CreateODCommand(MP4ODUpdateODCommandTag);
+	pCommand->Generate();
+
+	for (u_int8_t i = 0; i < 2; i++) {
+		u_int16_t odId;
+		MP4DescriptorProperty* pEsdProperty = NULL;
+
+		if (i == 0) {
+			odId = 10;
+			pEsdProperty = pAudioEsdProperty;
 		} else {
-			odTag = MP4ODescrTag;
+			odId = 20;
+			pEsdProperty = pVideoEsdProperty;
+		}
+
+		if (pEsdProperty == NULL) {
+			continue;
 		}
 
 		MP4DescriptorProperty* pOdDescrProperty =
-				(MP4DescriptorProperty*)(pCommand->GetProperty(0));
+			(MP4DescriptorProperty*)(pCommand->GetProperty(0));
 
-		pOdDescrProperty->SetTags(odTag);
+		pOdDescrProperty->SetTags(MP4ODescrTag);
 
 		MP4Descriptor* pOd =
-			pOdDescrProperty->AddDescriptor(odTag);
-
+			pOdDescrProperty->AddDescriptor(MP4ODescrTag);
 		pOd->Generate();
 
 		if (i == 0) {
@@ -391,92 +759,28 @@ void MP4File::CreateIsmaODUpdateCommand(
 			(MP4Property**)&pOdIdProperty);
 		pOdIdProperty->SetValue(odId);
 
-		MP4DescriptorProperty* pEsIdsDescriptorProperty = NULL;
-		pOd->FindProperty("esIds", 
-			(MP4Property**)&pEsIdsDescriptorProperty);
-		ASSERT(pEsIdsDescriptorProperty);
-
-		if (mp4FileMode) {
-			pEsIdsDescriptorProperty->SetTags(MP4ESIDRefDescrTag);
-
-			MP4Descriptor *pRefDescriptor =
-				pEsIdsDescriptorProperty->AddDescriptor(MP4ESIDRefDescrTag);
-			pRefDescriptor->Generate();
-
-			MP4Integer16Property* pRefIndexProperty = NULL;
-			pRefDescriptor->FindProperty("refIndex", 
-				(MP4Property**)&pRefIndexProperty);
-			ASSERT(pRefIndexProperty);
-
-			pRefIndexProperty->SetValue(mpodIndex);
-
-		} else { // stream mode
-			pEsIdsDescriptorProperty->SetTags(MP4ESDescrTag);
-
-			MP4Atom* pEsdsAtom = 
-				FindAtom(MakeTrackName(trackId, "mdia.minf.stbl.stsd.*.esds"));
-			ASSERT(pEsdsAtom);
-
-			MP4DescriptorProperty* pEsdProperty = 
-				(MP4DescriptorProperty*)(pEsdsAtom->GetProperty(2));
-
-			// HACK we temporarily point to the esds 
-			if (i == 0) {
-				pOrgAudioEsdProperty = pEsIdsDescriptorProperty;
-				pRealAudioEsdProperty = pEsdProperty;
-			} else {
-				pOrgVideoEsdProperty = pEsIdsDescriptorProperty;
-				pRealVideoEsdProperty = pEsdProperty;
-			}
-			pOd->SetProperty(4, pEsdProperty);
-
-			// SL config needs to change from 2 (file) to 1 (null)
-			MP4Integer8Property* pSLConfigProperty = NULL;
-			pEsdProperty->FindProperty("slConfigDescr.predefined", 
-				(MP4Property**)&pSLConfigProperty);
-			ASSERT(pSLConfigProperty);
-			pSLConfigProperty->SetValue(1);
-		}
+		delete (MP4DescriptorProperty*)pOd->GetProperty(4);
+		pOd->SetProperty(4, pEsdProperty);
 	}
 
+	// serialize OD command
 	pCommand->WriteToMemory(this, ppBytes, pNumBytes);
 
-	// carefully replace esd properties before destroying
+	// detach from esd descriptor params
 	if (pAudioOd) {
-		pAudioOd->SetProperty(4, pOrgAudioEsdProperty);
-
-		// SL config needs to go back to 2 (file)
-		if (!mp4FileMode) {
-			ASSERT(pRealAudioEsdProperty);
-			MP4Integer8Property* pSLConfigProperty = NULL;
-			pRealAudioEsdProperty->FindProperty("slConfigDescr.predefined", 
-				(MP4Property**)&pSLConfigProperty);
-			ASSERT(pSLConfigProperty);
-			pSLConfigProperty->SetValue(2);
-		}
+		pAudioOd->SetProperty(4, NULL);
 	}
-
 	if (pVideoOd) {
-		pVideoOd->SetProperty(4, pOrgVideoEsdProperty);
-
-		// SL config needs to go back to 2 (file)
-		if (!mp4FileMode) {
-			ASSERT(pRealVideoEsdProperty);
-			MP4Integer8Property* pSLConfigProperty = NULL;
-			pRealVideoEsdProperty->FindProperty("slConfigDescr.predefined", 
-				(MP4Property**)&pSLConfigProperty);
-			ASSERT(pSLConfigProperty);
-			pSLConfigProperty->SetValue(2);
-		}
+		pVideoOd->SetProperty(4, NULL);
 	}
 
+	// then destroy
 	delete pCommand;
 }
 
 void MP4File::CreateIsmaSceneCommand(
-	MP4TrackId sceneTrackId, 
-	MP4TrackId audioTrackId, 
-	MP4TrackId videoTrackId,
+	bool hasAudio,
+	bool hasVideo,
 	u_int8_t** ppBytes,
 	u_int64_t* pNumBytes)
 {
@@ -495,18 +799,17 @@ void MP4File::CreateIsmaSceneCommand(
 		0x61, 0x04, 0x88, 0x50, 0x45, 0x05, 0x3F, 0x00
 	};
 
-	if (audioTrackId != MP4_INVALID_TRACK_ID 
-	  && videoTrackId != MP4_INVALID_TRACK_ID) {
+	if (hasAudio && hasVideo) {
 		*pNumBytes = sizeof(bifsAudioVideo);
 		*ppBytes = (u_int8_t*)MP4Malloc(*pNumBytes);
 		memcpy(*ppBytes, bifsAudioVideo, sizeof(bifsAudioVideo));
 
-	} else if (audioTrackId != MP4_INVALID_TRACK_ID) {
+	} else if (hasAudio) {
 		*pNumBytes = sizeof(bifsAudioOnly);
 		*ppBytes = (u_int8_t*)MP4Malloc(*pNumBytes);
 		memcpy(*ppBytes, bifsAudioOnly, sizeof(bifsAudioOnly));
 
-	} else if (videoTrackId != MP4_INVALID_TRACK_ID) {
+	} else if (hasVideo) {
 		*pNumBytes = sizeof(bifsVideoOnly);
 		*ppBytes = (u_int8_t*)MP4Malloc(*pNumBytes);
 		memcpy(*ppBytes, bifsVideoOnly, sizeof(bifsVideoOnly));

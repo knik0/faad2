@@ -164,19 +164,18 @@ void MP4File::DisableMemoryBuffer(u_int8_t** ppBytes, u_int64_t* pNumBytes)
 
 void MP4File::WriteBytes(u_int8_t* pBytes, u_int32_t numBytes, FILE* pFile)
 {
-	WARNING(pBytes == NULL);
-	WARNING(numBytes == 0);
 	ASSERT(m_numWriteBits == 0 || m_numWriteBits >= 8);
 
 	if (pBytes == NULL || numBytes == 0) {
 		return;
 	}
-	if (pFile == NULL) {
-		ASSERT(m_pFile);
-		pFile = m_pFile;
-	}
 
 	if (m_memoryBuffer == NULL) {
+		if (pFile == NULL) {
+			ASSERT(m_pFile);
+			pFile = m_pFile;
+		}
+
 		u_int32_t rc = fwrite(pBytes, 1, numBytes, pFile);
 		if (rc != numBytes) {
 			throw new MP4Error(errno, "MP4WriteBytes");
@@ -442,11 +441,11 @@ void MP4File::WriteCountedString(char* string,
 	u_int32_t charLength = byteLength / charSize;
 
 	if (allowExpandedCount) {
-		do {
-			u_int8_t b = MIN(charLength, 255);
-			WriteUInt8(b);
-			charLength -= b;
-		} while (charLength);
+		while (charLength >= 0xFF) {
+			WriteUInt8(0xFF);
+			charLength -= 0xFF;
+		}		
+		WriteUInt8(charLength);
 	} else {
 		if (charLength > 255) {
 			throw new MP4Error(ERANGE, "MP4WriteCountedString");

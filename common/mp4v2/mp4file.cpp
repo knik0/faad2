@@ -676,7 +676,7 @@ void MP4File::FindIntegerProperty(const char* name,
 	MP4Property** ppProperty, u_int32_t* pIndex)
 {
 	if (!FindProperty(name, ppProperty, pIndex)) {
-		throw new MP4Error("no such property", "MP4File::FindIntegerProperty");
+		throw new MP4Error("no such property - %s", "MP4File::FindIntegerProperty", name);
 	}
 
 	switch ((*ppProperty)->GetType()) {
@@ -687,7 +687,7 @@ void MP4File::FindIntegerProperty(const char* name,
 	case Integer64Property:
 		break;
 	default:
-		throw new MP4Error("type mismatch", "MP4File::FindIntegerProperty");
+	  throw new MP4Error("type mismatch - property %s type %d", "MP4File::FindIntegerProperty", name, (*ppProperty)->GetType());
 	}
 }
 
@@ -717,10 +717,13 @@ void MP4File::FindFloatProperty(const char* name,
 	MP4Property** ppProperty, u_int32_t* pIndex)
 {
 	if (!FindProperty(name, ppProperty, pIndex)) {
-		throw new MP4Error("no such property", "MP4File::FindFloatProperty");
+		throw new MP4Error("no such property - %s", "MP4File::FindFloatProperty", name);
 	}
 	if ((*ppProperty)->GetType() != Float32Property) {
-		throw new MP4Error("type mismatch", "MP4File::FindFloatProperty");
+		throw new MP4Error("type mismatch - property %s type %d", 
+				   "MP4File::FindFloatProperty",
+				   name, 
+				   (*ppProperty)->GetType());
 	}
 }
 
@@ -750,10 +753,11 @@ void MP4File::FindStringProperty(const char* name,
 	MP4Property** ppProperty, u_int32_t* pIndex)
 {
 	if (!FindProperty(name, ppProperty, pIndex)) {
-		throw new MP4Error("no such property", "MP4File::FindStringProperty");
+		throw new MP4Error("no such property - %s", "MP4File::FindStringProperty", name);
 	}
 	if ((*ppProperty)->GetType() != StringProperty) {
-		throw new MP4Error("type mismatch", "MP4File::FindStringProperty");
+		throw new MP4Error("type mismatch - property %s type %d", "MP4File::FindStringProperty",
+				   name, (*ppProperty)->GetType());
 	}
 }
 
@@ -783,10 +787,10 @@ void MP4File::FindBytesProperty(const char* name,
 	MP4Property** ppProperty, u_int32_t* pIndex)
 {
 	if (!FindProperty(name, ppProperty, pIndex)) {
-		throw new MP4Error("no such property", "MP4File::FindBytesProperty");
+		throw new MP4Error("no such property %s", "MP4File::FindBytesProperty", name);
 	}
 	if ((*ppProperty)->GetType() != BytesProperty) {
-		throw new MP4Error("type mismatch", "MP4File::FindBytesProperty");
+		throw new MP4Error("type mismatch - property %s - type %d", "MP4File::FindBytesProperty", name, (*ppProperty)->GetType());
 	}
 }
 
@@ -857,7 +861,7 @@ MP4TrackId MP4File::AddTrack(const char* type, u_int32_t timeScale)
 	pTrakAtom->FindProperty(
 		"trak.mdia.mdhd.timeScale", (MP4Property**)&pInteger32Property);
 	ASSERT(pInteger32Property);
-	pInteger32Property->SetValue(timeScale ? timeScale : 1);
+	pInteger32Property->SetValue(timeScale ? timeScale : 1000);
 
 	// now have enough to create MP4Track object
 	MP4Track* pTrack = NULL;
@@ -1091,8 +1095,10 @@ MP4TrackId MP4File::AddSceneTrack()
 	return trackId;
 }
 
-MP4TrackId MP4File::AddAudioTrack(u_int32_t timeScale, 
-	u_int32_t sampleDuration, u_int8_t audioType)
+MP4TrackId MP4File::AddAudioTrack(
+	u_int32_t timeScale, 
+	MP4Duration sampleDuration, 
+	u_int8_t audioType)
 {
 	MP4TrackId trackId = AddTrack(MP4_AUDIO_TRACK_TYPE, timeScale);
 
@@ -1133,8 +1139,11 @@ MP4TrackId MP4File::AddAudioTrack(u_int32_t timeScale,
 }
 
 MP4TrackId MP4File::AddVideoTrack(
-	u_int32_t timeScale, u_int32_t sampleDuration, 
-	u_int16_t width, u_int16_t height, u_int8_t videoType)
+	u_int32_t timeScale, 
+	MP4Duration sampleDuration, 
+	u_int16_t width, 
+	u_int16_t height, 
+	u_int8_t videoType)
 {
 	MP4TrackId trackId = AddTrack(MP4_VIDEO_TRACK_TYPE, timeScale);
 
@@ -1277,28 +1286,39 @@ u_int32_t MP4File::GetNumberOfTracks(const char* type, u_int8_t subType)
 
 MP4TrackId MP4File::AllocTrackId()
 {
-	MP4TrackId trackId = GetIntegerProperty("moov.mvhd.nextTrackId");
+	MP4TrackId trackId = 
+		GetIntegerProperty("moov.mvhd.nextTrackId");
 
 	if (trackId <= 0xFFFF) {
-		SetIntegerProperty("moov.mvhd.nextTrackId", trackId + 1);
-	} else {
-		// extremely rare case where we need to search for a track id
-		for (u_int16_t i = 1; i <= 0xFFFF; i++) {
-			try {
-				FindTrackIndex(i);
-			}
-			catch (MP4Error* e) {
-				trackId = i;
-				delete e;
-			}
+		// check that nextTrackid is correct
+		try {
+			FindTrackIndex(trackId);
+			// ERROR, this trackId is in use
 		}
-		// even more extreme case where mp4 file has 2^16 tracks in it
-		if (trackId > 0xFFFF) {
-			throw new MP4Error("too many exising tracks", "AddTrack");
+		catch (MP4Error* e) {
+			// OK, this trackId is not in use, proceed
+			delete e;
+			SetIntegerProperty("moov.mvhd.nextTrackId", trackId + 1);
+			return trackId;
 		}
 	}
 
-	return trackId;
+	// we need to search for a track id
+	for (trackId = 1; trackId <= 0xFFFF; trackId++) {
+		try {
+			FindTrackIndex(trackId);
+			// KEEP LOOKING, this trackId is in use
+		}
+		catch (MP4Error* e) {
+			// OK, this trackId is not in use, proceed
+			delete e;
+			return trackId;
+		}
+	}
+
+	// extreme case where mp4 file has 2^16 tracks in it
+	throw new MP4Error("too many exising tracks", "AddTrack");
+	return MP4_INVALID_TRACK_ID;		// to keep MSVC happy
 }
 
 MP4TrackId MP4File::FindTrackId(
@@ -1334,7 +1354,9 @@ MP4TrackId MP4File::FindTrackId(
 		}
 	}
 
-	throw new MP4Error("Track index doesn't exist", "FindTrackId"); 
+	throw new MP4Error("Track index doesn't exist - track %d type %s", 
+			   "FindTrackId", 
+			   trackIndex, type); 
 	return MP4_INVALID_TRACK_ID; // satisfy MS compiler
 }
 
@@ -1346,7 +1368,7 @@ u_int16_t MP4File::FindTrackIndex(MP4TrackId trackId)
 		}
 	}
 	
-	throw new MP4Error("Track id doesn't exist", "FindTrackIndex"); 
+	throw new MP4Error("Track id %d doesn't exist", "FindTrackIndex", trackId); 
 	return (u_int16_t)-1; // satisfy MS compiler
 }
 
@@ -1360,7 +1382,8 @@ u_int16_t MP4File::FindTrakAtomIndex(MP4TrackId trackId)
 		}
 	}
 
-	throw new MP4Error("Track id doesn't exist", "FindTrakAtomIndex"); 
+	throw new MP4Error("Track id %d doesn't exist", "FindTrakAtomIndex",
+			   trackId); 
 	return (u_int16_t)-1; // satisfy MS compiler
 }
 
@@ -1649,6 +1672,32 @@ u_int8_t MP4File::GetTrackAudioType(MP4TrackId trackId)
 		"mdia.minf.stbl.stsd.mp4a.esds.decConfigDescr.objectTypeId");
 }
 
+u_int8_t MP4File::GetTrackAudioMpeg4Type(MP4TrackId trackId)
+{
+	// verify that track is an MPEG-4 audio track 
+	if (GetTrackAudioType(trackId) != MP4_MPEG4_AUDIO_TYPE) {
+		return MP4_MPEG4_INVALID_AUDIO_TYPE;
+	}
+
+	u_int8_t* pEsConfig = NULL;
+	u_int32_t esConfigSize;
+
+	// The Mpeg4 audio type (AAC, CELP, HXVC, ...)
+	// is the first 5 bits of the ES configuration
+
+	GetTrackESConfiguration(trackId, &pEsConfig, &esConfigSize);
+
+	if (esConfigSize < 1) {
+		return MP4_MPEG4_INVALID_AUDIO_TYPE;
+	}
+
+	u_int8_t mpeg4Type = (pEsConfig[0] >> 3);
+
+	free(pEsConfig);
+
+	return mpeg4Type;
+}
+
 u_int8_t MP4File::GetTrackVideoType(MP4TrackId trackId)
 {
 	return GetTrackIntegerProperty(trackId, 
@@ -1658,6 +1707,26 @@ u_int8_t MP4File::GetTrackVideoType(MP4TrackId trackId)
 MP4Duration MP4File::GetTrackFixedSampleDuration(MP4TrackId trackId)
 {
 	return m_pTracks[FindTrackIndex(trackId)]->GetFixedSampleDuration();
+}
+
+float MP4File::GetTrackVideoFrameRate(MP4TrackId trackId)
+{
+	MP4SampleId numSamples =
+		GetTrackNumberOfSamples(trackId);
+#ifdef _WIN32
+	int64_t
+#else
+	u_int64_t 
+#endif
+		msDuration =
+		ConvertFromTrackDuration(trackId, 
+			GetTrackDuration(trackId), MP4_MSECS_TIME_SCALE);
+
+	if (msDuration == 0) {
+		return 0.0;
+	}
+
+	return ((double)numSamples / (double)msDuration) * MP4_MSECS_TIME_SCALE;
 }
 
 void MP4File::GetTrackESConfiguration(MP4TrackId trackId, 
@@ -2088,5 +2157,121 @@ u_int8_t MP4File::ConvertTrackTypeToStreamType(const char* trackType)
 	}
 
 	return streamType;
+}
+
+// edit list
+
+char* MP4File::MakeTrackEditName(
+	MP4TrackId trackId,
+	MP4EditId editId,
+	const char* name)
+{
+	char* trakName = MakeTrackName(trackId, NULL);
+
+	static char editName[1024];
+	snprintf(editName, sizeof(editName), 
+		"%s.edts.elst.entries[%u].%s", 
+		trakName, editId - 1, name);
+	return editName;
+}
+
+MP4EditId MP4File::AddTrackEdit(
+	MP4TrackId trackId,
+	MP4EditId editId)
+{
+	ProtectWriteOperation("AddTrackEdit");
+	return m_pTracks[FindTrackIndex(trackId)]->AddEdit(editId);
+}
+
+void MP4File::DeleteTrackEdit(
+	MP4TrackId trackId,
+	MP4EditId editId)
+{
+	ProtectWriteOperation("DeleteTrackEdit");
+	m_pTracks[FindTrackIndex(trackId)]->DeleteEdit(editId);
+}
+
+u_int32_t MP4File::GetTrackNumberOfEdits(
+	MP4TrackId trackId)
+{
+	return GetTrackIntegerProperty(trackId, "edts.elst.entryCount");
+}
+
+MP4Duration MP4File::GetTrackEditTotalDuration(
+	MP4TrackId trackId,
+	MP4EditId editId)
+{
+	return m_pTracks[FindTrackIndex(trackId)]->GetEditTotalDuration(editId);
+}
+
+MP4Timestamp MP4File::GetTrackEditStart(
+	MP4TrackId trackId,
+	MP4EditId editId)
+{
+	return m_pTracks[FindTrackIndex(trackId)]->GetEditStart(editId);
+}
+
+MP4Timestamp MP4File::GetTrackEditMediaStart(
+	MP4TrackId trackId,
+	MP4EditId editId)
+{
+	return GetIntegerProperty(
+		MakeTrackEditName(trackId, editId, "mediaTime"));
+}
+
+void MP4File::SetTrackEditMediaStart(
+	MP4TrackId trackId,
+	MP4EditId editId,
+	MP4Timestamp startTime)
+{
+	SetIntegerProperty(
+		MakeTrackEditName(trackId, editId, "mediaTime"),
+		startTime);
+}
+
+MP4Duration MP4File::GetTrackEditDuration(
+	MP4TrackId trackId,
+	MP4EditId editId)
+{
+	return GetIntegerProperty(
+		MakeTrackEditName(trackId, editId, "segmentDuration"));
+}
+
+void MP4File::SetTrackEditDuration(
+	MP4TrackId trackId,
+	MP4EditId editId,
+	MP4Duration duration)
+{
+	SetIntegerProperty(
+		MakeTrackEditName(trackId, editId, "segmentDuration"),
+		duration);
+}
+
+bool MP4File::GetTrackEditDwell(
+	MP4TrackId trackId,
+	MP4EditId editId)
+{
+	return (GetIntegerProperty(
+		MakeTrackEditName(trackId, editId, "mediaRate")) == 0);
+}
+
+void MP4File::SetTrackEditDwell(
+	MP4TrackId trackId,
+	MP4EditId editId,
+	bool dwell)
+{
+	SetIntegerProperty(
+		MakeTrackEditName(trackId, editId, "mediaRate"),
+		(dwell ? 0 : 1));
+}
+
+MP4SampleId MP4File::GetSampleIdFromEditTime(
+	MP4TrackId trackId,
+	MP4Timestamp when,
+	MP4Timestamp* pStartTime,
+	MP4Duration* pDuration)
+{
+	return m_pTracks[FindTrackIndex(trackId)]->GetSampleIdFromEditTime(
+		when, pStartTime, pDuration);
 }
 

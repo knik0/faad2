@@ -108,31 +108,35 @@ void MP4Descriptor::ReadProperties(MP4File* pFile,
 	for (u_int32_t i = propStartIndex; 
 	  i < propStartIndex + numProperties; i++) {
 
+		MP4Property* pProperty = m_pProperties[i];
+
 		int32_t remaining = m_size - (pFile->GetPosition() - m_start);
 
-		if (m_pProperties[i]->GetType() == DescriptorProperty
-		  && remaining >= 0) {
-			// place a limit on how far this sub-descriptor looks
-			((MP4DescriptorProperty*)m_pProperties[i])->SetSizeLimit(remaining);
-			m_pProperties[i]->Read(pFile);
-
-		} else if (remaining >= 0) {
-			m_pProperties[i]->Read(pFile);
-
-			if (m_pProperties[i]->GetType() == TableProperty) {
-				VERBOSE_READ_TABLE(pFile->GetVerbosity(), 
-					printf("Read: "); m_pProperties[i]->Dump(stdout, 0, true));
-			} else {
-				VERBOSE_READ(pFile->GetVerbosity(), 
-					printf("Read: "); m_pProperties[i]->Dump(stdout, 0, true));
-			}
-
+		if (pProperty->GetType() == DescriptorProperty) {
+		   	if (remaining > 0) {
+				// place a limit on how far this sub-descriptor looks
+				((MP4DescriptorProperty*)pProperty)->SetSizeLimit(remaining);
+				pProperty->Read(pFile);
+			} // else do nothing, empty descriptor
 		} else {
-			VERBOSE_ERROR(pFile->GetVerbosity(),
-				printf("Overran descriptor, tag %u data size %u property %u\n",
+			// non-descriptor property
+			if (remaining >= 0) {
+				pProperty->Read(pFile);
+
+				if (pProperty->GetType() == TableProperty) {
+					VERBOSE_READ_TABLE(pFile->GetVerbosity(), 
+						printf("Read: "); pProperty->Dump(stdout, 0, true));
+				} else {
+					VERBOSE_READ(pFile->GetVerbosity(), 
+						printf("Read: "); pProperty->Dump(stdout, 0, true));
+				}
+			} else {
+				VERBOSE_ERROR(pFile->GetVerbosity(),
+					printf("Overran descriptor, tag %u data size %u property %u\n",
 					m_tag, m_size, i));
-			throw new MP4Error("overran descriptor",
-				 "MP4Descriptor::ReadProperties");
+				throw new MP4Error("overran descriptor",
+					 "MP4Descriptor::ReadProperties");
+			}
 		} 
 	}
 }
