@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.44 2002/12/10 14:53:14 menno Exp $
+** $Id: decoder.c,v 1.45 2002/12/11 11:36:13 menno Exp $
 **/
 
 #include "common.h"
@@ -431,6 +431,13 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     /* number of samples in this frame */
     hInfo->channels = channels;
 
+    /* check if frame has channel elements */
+    if (channels == 0)
+    {
+        hDecoder->frame++;
+        return NULL;
+    }
+
     if (hDecoder->sample_buffer == NULL)
         hDecoder->sample_buffer = malloc(frame_len*channels*sizeof(real_t));
 
@@ -652,13 +659,13 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     /* cleanup */
     for (ch = 0; ch < channels; ch++)
     {
-        free(spec_coef[ch]);
-        free(spec_data[ch]);
+        if (spec_coef[ch]) free(spec_coef[ch]);
+        if (spec_data[ch]) free(spec_data[ch]);
     }
 
     for (i = 0; i < ch_ele; i++)
     {
-        free(syntax_elements[i]);
+        if (syntax_elements[i]) free(syntax_elements[i]);
     }
 
 #ifdef ANALYSIS
