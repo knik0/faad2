@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: faad.h,v 1.16 2002/11/01 11:19:35 menno Exp $
+** $Id: faad.h,v 1.17 2002/12/10 19:45:35 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -107,6 +107,10 @@ long FAADAPI faacDecInit(faacDecHandle hDecoder,
 char FAADAPI faacDecInit2(faacDecHandle hDecoder, unsigned char *pBuffer,
                          unsigned long SizeOfDecoderSpecificInfo,
                          unsigned long *samplerate, unsigned char *channels);
+
+/* Init the library for DRM */
+char FAADAPI faacDecInitDRM(faacDecHandle hDecoder, unsigned long samplerate,
+                            unsigned char channels);
 
 void FAADAPI faacDecClose(faacDecHandle hDecoder);
 

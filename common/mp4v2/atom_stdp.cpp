@@ -41,9 +41,9 @@ MP4StdpAtom::MP4StdpAtom()
 void MP4StdpAtom::Read() 
 {
 	// table entry count computed from atom size
-	((MP4Integer32Property*)m_pProperties[0])->SetReadOnly(false);
-	((MP4Integer32Property*)m_pProperties[0])->SetValue((m_size - 4) / 2);
-	((MP4Integer32Property*)m_pProperties[0])->SetReadOnly(true);
+	((MP4Integer32Property*)m_pProperties[2])->SetReadOnly(false);
+	((MP4Integer32Property*)m_pProperties[2])->SetValue((m_size - 4) / 2);
+	((MP4Integer32Property*)m_pProperties[2])->SetReadOnly(true);
 
 	MP4Atom::Read();
 }

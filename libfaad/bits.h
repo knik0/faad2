@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.h,v 1.14 2002/11/28 18:48:29 menno Exp $
+** $Id: bits.h,v 1.15 2002/12/10 19:45:35 menno Exp $
 **/
 
 #ifndef __BITS_H__
@@ -70,6 +70,7 @@ void faad_initbits_rev(bitfile *ld, void *buffer,
                        uint32_t bits_in_buffer);
 uint8_t faad_byte_align(bitfile *ld);
 uint32_t faad_get_processed_bits(bitfile *ld);
+void faad_rewindbits(bitfile *ld);
 uint8_t *faad_getbitbuffer(bitfile *ld, uint32_t bits
                        DEBUGDEC);
 

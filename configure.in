@@ -1,13 +1,11 @@
 AC_INIT()
 AM_INIT_AUTOMAKE(faad,2.0)
 
-AC_PROG_CC
 AM_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 
 dnl Checks for programs.
 AC_PROG_CXX
-AC_PROG_AWK
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_INSTALL
@@ -15,19 +13,50 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_RANLIB
 
+AM_CONFIG_HEADER(config.h)
+
+
 dnl Checks for header files required for mp4.h
+AC_HEADER_STDC
 AC_CHECK_HEADERS(stdint.h inttypes.h)
+AC_CHECK_HEADERS(mathf.h)
+AC_CHECK_HEADERS(float.h)
+AC_CHECK_FUNCS(strchr memcpy)
 
-dnl Checks for sndfile library.
-AC_CHECK_LIB(sndfile, sf_perror, have_sndfile_lib=yes)
-AC_CHECK_HEADER(sndfile.h, have_sndfile_hdr=yes)
+AC_C_INLINE
+AC_C_BIGENDIAN
 
-if test x$have_sndfile_lib != xyes -o x$have_sndfile_hdr != xyes; then
-AC_MSG_ERROR([
-  *** FAAD requires libsndfile to be installed first.
-  *** A copy of it is included in common/libsndfile.
-  ])
+AC_DEFUN(MY_CHECK_TYPEDEF_FROM_INCLUDE,
+[
+   AC_MSG_CHECKING([for $1])
+   AC_TRY_COMPILE([$2],
+                  [$1;],
+                  libfaad_ok=yes, libfaad_ok=no)
+   if test $libfaad_ok = yes; then
+      AC_DEFINE($3)
+      AC_MSG_RESULT([yes])
+   else
+      AC_MSG_RESULT([no])
 fi
+])
+
+
+MY_CHECK_TYPEDEF_FROM_INCLUDE([float32_t temp],
+        [#include <sys/types.h>,
+        #include <sys/float.h>], [HAVE_FLOAT32_T])
+
+AC_CHECK_FUNCS(strsep)
+
+MY_CHECK_TYPEDEF_FROM_INCLUDE([in_port_t temp],
+        [#include <sys/types.h>
+         #include <netinet/in.h>], [HAVE_IN_PORT_T])
+MY_CHECK_TYPEDEF_FROM_INCLUDE([socklen_t temp],
+        [#include <sys/types.h>
+         #include <sys/socket.h>], HAVE_SOCKLEN_T)
+MY_CHECK_TYPEDEF_FROM_INCLUDE([fpos_t foo; foo.__pos = 0;],
+        [#include <stdio.h>],
+        [HAVE_FPOS_T_POS])
+
 
 AC_OUTPUT_COMMANDS(,[cd common/mp4v2; aclocal -I .; autoheader; libtoolize --automake; automake --add-missing; autoconf; cd -])
 

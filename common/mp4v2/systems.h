@@ -28,6 +28,8 @@
 #define HAVE_SOCKLEN_T
 #include <win32_ver.h>
 #else
+#undef PACKAGE
+#undef VERSION
 #include <config.h>
 #endif
 
@@ -197,7 +199,7 @@ typedef unsigned int socklen_t;
 #ifdef sun
 #include <limits.h>
 #define u_int8_t uint8_t
-#define u_int16_t uint8_t
+#define u_int16_t uint16_t
 #define u_int32_t uint32_t
 #define u_int64_t uint64_t
 #define __STRING(expr) #expr
@@ -227,6 +229,7 @@ char *strsep(char **strp, const char *delim);
 
 #define MALLOC_STRUCTURE(a) ((a *)malloc(sizeof(a)))
 
+#define CHECK_AND_FREE(a) if ((a) != NULL) { free((a)); (a) = NULL;}
 #ifndef HAVE_GLIB_H
 typedef char gchar;
 typedef unsigned char guchar;

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.c,v 1.17 2002/11/28 18:48:29 menno Exp $
+** $Id: bits.c,v 1.18 2002/12/10 19:45:35 menno Exp $
 **/
 
 #include "common.h"
@@ -76,6 +76,26 @@ uint8_t faad_byte_align(bitfile *ld)
         return (8 - remainder);
     }
     return 0;
+}
+
+/* rewind to beginning */
+void faad_rewindbits(bitfile *ld)
+{
+    uint32_t tmp;
+
+    tmp = ld->start[0];
+#ifndef ARCH_IS_BIG_ENDIAN
+    BSWAP(tmp);
+#endif
+    ld->bufa = tmp;
+
+    tmp = ld->start[1];
+#ifndef ARCH_IS_BIG_ENDIAN
+    BSWAP(tmp);
+#endif
+    ld->bufb = tmp;
+    ld->bits_left = 32;
+    ld->tail = &ld->start[2];
 }
 
 uint8_t *faad_getbitbuffer(bitfile *ld, uint32_t bits

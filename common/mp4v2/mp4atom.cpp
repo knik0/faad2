@@ -278,14 +278,15 @@ MP4Atom* MP4Atom::ReadAtom(MP4File* pFile, MP4Atom* pParentAtom)
 
 	u_int64_t dataSize = pFile->ReadUInt32();
 
+	char type[5];
+	pFile->ReadBytes((u_int8_t*)&type[0], 4);
+	type[4] = '\0';
+	
+	// extended size
 	if (dataSize == 1) {
 		dataSize = pFile->ReadUInt64(); 
 		hdrSize += 8;
 	}
-
-	char type[5];
-	pFile->ReadBytes((u_int8_t*)&type[0], 4);
-	type[4] = '\0';
 
 	// extended type
 	if (ATOMID(type) == ATOMID("uuid")) {
@@ -612,11 +613,13 @@ void MP4Atom::BeginWrite(bool use64)
 	m_start = m_pFile->GetPosition();
 	if (use64) {
 		m_pFile->WriteUInt32(1);
-		m_pFile->WriteUInt64(0);
 	} else {
 		m_pFile->WriteUInt32(0);
 	}
 	m_pFile->WriteBytes((u_int8_t*)&m_type[0], 4);
+	if (use64) {
+		m_pFile->WriteUInt64(0);
+	}
 	if (ATOMID(m_type) == ATOMID("uuid")) {
 		m_pFile->WriteBytes(m_extendedType, sizeof(m_extendedType));
 	}
@@ -627,7 +630,7 @@ void MP4Atom::FinishWrite(bool use64)
 	m_end = m_pFile->GetPosition();
 	m_size = (m_end - m_start);
 	if (use64) {
-		m_pFile->SetPosition(m_start + 4);
+		m_pFile->SetPosition(m_start + 8);
 		m_pFile->WriteUInt64(m_size);
 	} else {
 		ASSERT(m_size <= (u_int64_t)0xFFFFFFFF);

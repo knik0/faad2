@@ -411,7 +411,7 @@ void MP4File::CreateIsmaIodFromParams(
 	VERBOSE_ISMA(GetVerbosity(),
 		printf("Scene data URL = \042%s\042\n", urlBuf));
 
-	MP4Descriptor* pSceneEsd =
+	/* MP4Descriptor* pSceneEsd = */
 		CreateESD(
 			pEsProperty,
 			201,				// esid
@@ -430,10 +430,16 @@ void MP4File::CreateIsmaIodFromParams(
 	MP4Free(pBytes);
 	pBytes = NULL;
 
+    // OD
+    
 	// Video
-	MP4Descriptor* pVideoEsd =
+	MP4DescriptorProperty* pVideoEsdProperty =
+		new MP4DescriptorProperty();
+    pVideoEsdProperty->SetTags(MP4ESDescrTag);
+
+	/* MP4Descriptor* pVideoEsd = */
 		CreateESD(
-			pEsProperty,
+			pVideoEsdProperty,
 			20,					// esid
 			MP4_MPEG4_VIDEO_TYPE,
 			MP4VisualStreamType,
@@ -444,9 +450,13 @@ void MP4File::CreateIsmaIodFromParams(
 			NULL);
 
 	// Audio
-	MP4Descriptor* pAudioEsd =
+    MP4DescriptorProperty* pAudioEsdProperty =
+		new MP4DescriptorProperty();
+    pAudioEsdProperty->SetTags(MP4ESDescrTag);
+        
+	/* MP4Descriptor* pAudioEsd = */
 		CreateESD(
-			pEsProperty,
+			pAudioEsdProperty,
 			10,					// esid
 			MP4_MPEG4_AUDIO_TYPE,
 			MP4AudioStreamType,
@@ -455,24 +465,16 @@ void MP4File::CreateIsmaIodFromParams(
 			audioConfig,
 			audioConfigLength,
 			NULL);
-
-	// OD
-
-	// Glop to make infrastructure happy
-	MP4DescriptorProperty* pAudioEsdProperty =
-		new MP4DescriptorProperty();
-	pAudioEsdProperty->AppendDescriptor(pAudioEsd);
-	MP4DescriptorProperty* pVideoEsdProperty =
-		new MP4DescriptorProperty();
-	pVideoEsdProperty->AppendDescriptor(pVideoEsd);
-
+	
 	CreateIsmaODUpdateCommandForStream(
 		pAudioEsdProperty,
 		pVideoEsdProperty, 
 		&pBytes,
 		&numBytes);
 
-	// TBD cleanup temporary descriptor properties
+	// cleanup temporary descriptor properties
+    delete pAudioEsdProperty;
+    delete pVideoEsdProperty;
 
 	VERBOSE_ISMA(GetVerbosity(),
 		printf("OD data =\n"); MP4HexDump(pBytes, numBytes));
@@ -488,7 +490,7 @@ void MP4File::CreateIsmaIodFromParams(
 	VERBOSE_ISMA(GetVerbosity(),
 		printf("OD data URL = \042%s\042\n", urlBuf));
 
-	MP4Descriptor* pOdEsd =
+	/* MP4Descriptor* pOdEsd = */
 		CreateESD(
 			pEsProperty,
 			101,

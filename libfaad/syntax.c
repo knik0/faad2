@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.35 2002/12/10 14:53:15 menno Exp $
+** $Id: syntax.c,v 1.36 2002/12/10 19:45:36 menno Exp $
 **/
 
 /*
@@ -451,6 +451,35 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
 
     return elements;
 }
+
+#ifdef DRM
+static uint8_t faad_check_CRC(bitfile *ld)
+{
+    uint16_t len = faad_get_processed_bits(ld) - 8;
+    uint8_t CRC;
+    uint16_t r=255;  /* Initialize to all ones */
+
+    /* CRC polynome used x^8 + x^4 + x^3 + x^2 +1 */
+#define GPOLY 0435
+
+    faad_rewindbits(ld);
+
+    CRC = ~faad_getbits(ld, 8
+        DEBUGVAR(1,999,"faad_check_CRC(): CRC"));          /* CRC is stored inverted */
+
+    for (; len>0; len--)
+    {
+        r = ( (r << 1) ^ (( ( faad_get1bit(ld
+            DEBUGVAR(1,998,""))  & 1) ^ ((r >> 7) & 1)) * GPOLY )) & 0xFF;
+    }
+    if (r != CRC)
+    {
+        return 8;
+    } else {
+        return 0;
+    }
+}
+#endif
 
 /* Table 4.4.4 and */
 /* Table 4.4.9 */

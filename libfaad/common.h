@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.27 2002/12/05 19:28:22 menno Exp $
+** $Id: common.h,v 1.28 2002/12/10 19:45:35 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -156,6 +156,10 @@ char *strchr(), *strrchr();
 # endif
 #endif
 
+#endif
+
+#ifdef WORDS_BIGENDIAN
+#define ARCH_IS_BIG_ENDIAN
 #endif
 
 /* FIXED_POINT doesn't work with MAIN and SSR yet */
