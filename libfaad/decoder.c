@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.28 2002/08/30 19:03:48 menno Exp $
+** $Id: decoder.c,v 1.29 2002/09/04 09:17:42 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -690,16 +690,16 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             }
         }
 
+        /* pns decoding */
+        if ((!right_channel) && (pch != -1) && (ics->ms_mask_present))
+            pns_decode(ics, icsr, spec_coef[ch], spec_coef[pch], frame_len, 1);
+        else
+            pns_decode(ics, NULL, spec_coef[ch], NULL, frame_len, 0);
+
         if (!right_channel)
         {
             /* mid/side decoding */
             ms_decode(ics, icsr, spec_coef[ch], spec_coef[pch], frame_len);
-
-            /* pns decoding */
-            if ((pch != -1) && (ics->ms_mask_present))
-                pns_decode(ics, icsr, spec_coef[ch], spec_coef[pch], frame_len, 1);
-            else if (pch == -1)
-                pns_decode(ics, NULL, spec_coef[ch], NULL, frame_len, 0);
 
             /* intensity stereo decoding */
             is_decode(ics, icsr, spec_coef[ch], spec_coef[pch], frame_len);
