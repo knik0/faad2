@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: pns.h,v 1.7 2002/08/30 18:06:26 menno Exp $
+** $Id: pns.h,v 1.8 2002/09/04 10:22:18 menno Exp $
 **/
 
 #ifndef __PNS_H__
@@ -38,7 +38,7 @@ void pns_decode(ic_stream *ics_left, ic_stream *ics_right,
                 uint8_t channel_pair);
 
 static INLINE int32_t random2();
-static void gen_rand_vector(real_t *spec, uint16_t scale_factor, uint16_t size);
+static void gen_rand_vector(real_t *spec, int16_t scale_factor, uint16_t size);
 
 static INLINE uint8_t is_noise(ic_stream *ics, uint8_t group, uint8_t sfb)
 {

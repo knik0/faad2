@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.18 2002/08/30 18:14:26 menno Exp $
+** $Id: syntax.h,v 1.19 2002/09/04 10:22:18 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -233,7 +233,7 @@ typedef struct
     uint8_t num_sec[8]; /* number of sections in a group */
 
     uint8_t global_gain;
-    uint16_t scale_factors[8][51];
+    int16_t scale_factors[8][51];
 
     uint8_t ms_mask_present;
     uint8_t ms_used[MAX_WINDOW_GROUPS][MAX_SFB];

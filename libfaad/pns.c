@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: pns.c,v 1.13 2002/08/30 18:06:26 menno Exp $
+** $Id: pns.c,v 1.14 2002/09/04 10:22:18 menno Exp $
 **/
 
 #include "common.h"
@@ -55,7 +55,7 @@ static INLINE int32_t random2()
    value. A suitable random number generator can be realized using one
    multiplication/accumulation per random value.
 */
-static INLINE void gen_rand_vector(real_t *spec, uint16_t scale_factor, uint16_t size)
+static INLINE void gen_rand_vector(real_t *spec, int16_t scale_factor, uint16_t size)
 {
     uint16_t i;
     real_t energy = 0;
@@ -68,7 +68,7 @@ static INLINE void gen_rand_vector(real_t *spec, uint16_t scale_factor, uint16_t
         energy += MUL(spec[i],spec[i]);
     }
 
-    scale = 1 / (float32_t)sqrt(energy);
+    scale = 1.0/(float32_t)sqrt(energy);
     scale *= (float32_t)pow(2.0, 0.25 * scale_factor);
     for (i = 0; i < size; i++)
     {
