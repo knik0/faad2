@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.h,v 1.39 2004/03/10 19:45:41 menno Exp $
+** $Id: decoder.h,v 1.40 2004/03/19 15:35:35 menno Exp $
 **/
 
 #ifndef __DECODER_H__
@@ -49,6 +49,7 @@ extern "C" {
 #define FAAD_FMT_24BIT  2
 #define FAAD_FMT_32BIT  3
 #define FAAD_FMT_FLOAT  4
+#define FAAD_FMT_FIXED  FAAD_FMT_FLOAT
 #define FAAD_FMT_DOUBLE 5
 
 #define LC_DEC_CAP            (1<<0)

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: output.c,v 1.38 2004/03/11 14:34:10 menno Exp $
+** $Id: output.c,v 1.42 2004/09/04 14:56:28 menno Exp $
 **/
 
 #include "common.h"
@@ -537,6 +537,14 @@ void* output_to_PCM(NeAACDecHandle hDecoder,
                     tmp += -(1 << (16-REAL_BITS-1));
                     tmp <<= (16-REAL_BITS);
                 }
+                int_sample_buffer[(i*channels)+ch] = (int32_t)tmp;
+            }
+            break;
+        case FAAD_FMT_FIXED:
+            for(i = 0; i < frame_len; i++)
+            {
+                real_t tmp = get_sample(input, ch, i, hDecoder->downMatrix, hDecoder->upMatrix,
+                    hDecoder->internal_channel);
                 int_sample_buffer[(i*channels)+ch] = (int32_t)tmp;
             }
             break;

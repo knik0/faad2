@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.100 2004/03/10 19:53:40 menno Exp $
+** $Id: decoder.c,v 1.101 2004/03/19 15:35:35 menno Exp $
 **/
 
 #include "common.h"
@@ -176,12 +176,18 @@ uint8_t NEAACDECAPI NeAACDecSetConfiguration(NeAACDecHandle hDecoder,
         hDecoder->config.defSampleRate = config->defSampleRate;
 
         /* check output format */
-        if ((config->outputFormat < 1) || (config->outputFormat > 9))
+#ifdef FIXED_POINT
+        if ((config->outputFormat < 1) || (config->outputFormat > 4))
             return 0;
+#else
+        if ((config->outputFormat < 1) || (config->outputFormat > 5))
+            return 0;
+#endif
         hDecoder->config.outputFormat = config->outputFormat;
 
         if (config->downMatrix > 1)
-            hDecoder->config.downMatrix = config->downMatrix;
+            return 0;
+        hDecoder->config.downMatrix = config->downMatrix;
 
         /* OK */
         return 1;
