@@ -1,22 +1,22 @@
 /*
 ** FAAD - Freeware Advanced Audio Decoder
 ** Copyright (C) 2002 M. Bakker
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: audio.c,v 1.8 2003/02/16 18:17:09 menno Exp $
+** $Id: audio.c,v 1.9 2003/02/27 11:37:25 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -105,7 +105,7 @@ int write_audio_file(audio_file *aufile, void *sample_buffer, int samples)
         return 0;
     }
 
-	return 0;
+    return 0;
 }
 
 void close_audio_file(audio_file *aufile)
@@ -155,10 +155,11 @@ static int write_wav_header(audio_file *aufile)
     *p++ = (unsigned char)(aufile->channels >> 0);
     *p++ = (unsigned char)(aufile->channels >> 8);
 
-    *p++ = (unsigned char)(aufile->samplerate >>  0);
-    *p++ = (unsigned char)(aufile->samplerate >>  8);
-    *p++ = (unsigned char)(aufile->samplerate >> 16);
-    *p++ = (unsigned char)(aufile->samplerate >> 24);
+    word32 = (unsigned long)(aufile->samplerate + 0.5);
+    *p++ = (unsigned char)(word32 >>  0);
+    *p++ = (unsigned char)(word32 >>  8);
+    *p++ = (unsigned char)(word32 >> 16);
+    *p++ = (unsigned char)(word32 >> 24);
 
     word32 = aufile->samplerate * bytes * aufile->channels;
     *p++ = (unsigned char)(word32 >>  0);
