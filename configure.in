@@ -1,3 +1,12 @@
+dnl
+dnl This is the configure.in for faad2 related to unix creation
+
+dnl - libfaad.so
+dnl - libmp4ff.a (only static for moment)
+dnl - faad
+dnl - xmms input mp4/aac plugin
+dnl - mpeg4ip plugin (broken) -> disable for moment
+
 AC_INIT
 AC_CONFIG_AUX_DIR(.)
 AM_INIT_AUTOMAKE(faad2, 2.0)
@@ -6,9 +15,10 @@ AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 
 dnl Checks for programs.
-AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_CPP
+dnl disable for mpeg4ip plugin
+dnl AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
@@ -16,11 +26,14 @@ AC_CHECK_PROGS(RPMBUILD, rpmbuild, rpm)
 
 AM_CONFIG_HEADER(config.h)
 
-AC_ARG_WITH( xmms,   [  --with-xmms             compile XMMS plugins],WITHXMMS=$withval, WITHXMMS=no)
+AC_ARG_WITH(xmms,[  --with-xmms             compile XMMS-1 plugin],
+	     WITHXMMS=$withval, WITHXMMS=no)
 
-AC_ARG_WITH( drm,    [  --with-drm              compile libfaad with DRM support],WITHDRM=$withval, WITHDRM=no)
+AC_ARG_WITH(drm,[  --with-drm              compile libfaad with DRM support],
+	     WITHDRM=$withval, WITHDRM=no)
 
-AC_ARG_WITH( mp4v2,  [  --with-mp4v2            compile libmp4v2],WITHMP4V2=$withval, WITHMP4V2=no)
+dnl AC_ARG_WITH(mp4v2,[  --with-mp4v2            compile libmp4v2],
+dnl		WITHMP4V2=$withval, WITHMP4V2=no)
 
 dnl Checks for header files required for mp4.h
 AC_HEADER_STDC
@@ -67,32 +80,32 @@ MY_CHECK_TYPEDEF_FROM_INCLUDE([float32_t temp],
 
 AC_CHECK_FUNCS(strsep)
 
-MY_CHECK_TYPEDEF_FROM_INCLUDE([in_port_t temp],
-        [#include <sys/types.h>
-         #include <netinet/in.h>], [HAVE_IN_PORT_T])
-MY_CHECK_TYPEDEF_FROM_INCLUDE([socklen_t temp],
-        [#include <sys/types.h>
-         #include <sys/socket.h>], HAVE_SOCKLEN_T)
-MY_CHECK_TYPEDEF_FROM_INCLUDE([fpos_t foo; foo.__pos = 0;],
-        [#include <stdio.h>],
-        [HAVE_FPOS_T_POS])
+dnl MY_CHECK_TYPEDEF_FROM_INCLUDE([in_port_t temp],
+dnl         [#include <sys/types.h>
+dnl          #include <netinet/in.h>], [HAVE_IN_PORT_T])
+dnl MY_CHECK_TYPEDEF_FROM_INCLUDE([socklen_t temp],
+dnl         [#include <sys/types.h>
+dnl          #include <sys/socket.h>], HAVE_SOCKLEN_T)
+dnl MY_CHECK_TYPEDEF_FROM_INCLUDE([fpos_t foo; foo.__pos = 0;],
+dnl         [#include <stdio.h>],
+dnl         [HAVE_FPOS_T_POS])
 
 
-AC_CHECK_PROG(external_mp4v2, mpeg4ip-config, yes, no)
-AM_CONDITIONAL(WITH_MP4V2, false)
+dnl AC_CHECK_PROG(external_mp4v2, mpeg4ip-config, yes, no)
+dnl AM_CONDITIONAL(WITH_MP4V2, false)
 
-if test x$external_mp4v2 = xyes; then
-  AM_CONDITIONAL(HAVE_MPEG4IP, true)
-  MPEG4IP_PLAYER_PLUGIN_DIR=`mpeg4ip-config --player-plugin-dir`  
-  AC_SUBST(MPEG4IP_PLAYER_PLUGIN_DIR)
-  AC_MSG_NOTICE([*** Building with external mp4v2 ***])
-else
-  AC_MSG_NOTICE([*** Building with internal mp4v2 ***])
-  AM_CONDITIONAL(HAVE_MPEG4IP, false)
-  if test x$WITHMP4V2 = xyes; then
-     AM_CONDITIONAL(WITH_MP4V2, true)
-  fi
-fi
+dnl if test x$external_mp4v2 = xyes; then
+dnl   AM_CONDITIONAL(HAVE_MPEG4IP, true)
+dnl   MPEG4IP_PLAYER_PLUGIN_DIR=`mpeg4ip-config --player-plugin-dir`  
+dnl   AC_SUBST(MPEG4IP_PLAYER_PLUGIN_DIR)
+dnl   AC_MSG_NOTICE([*** Building with external mp4v2 ***])
+dnl else
+dnl   AC_MSG_NOTICE([*** Building with internal mp4v2 ***])
+dnl   AM_CONDITIONAL(HAVE_MPEG4IP, false)
+dnl   if test x$WITHMP4V2 = xyes; then
+dnl      AM_CONDITIONAL(WITH_MP4V2, true)
+dnl   fi
+dnl fi
 
 if test x$WITHXMMS = xyes; then
   AC_CHECK_PROGS(XMMS_CONFIG, xmms-config,"not_found")
@@ -109,9 +122,9 @@ if test x$WITHXMMS = xyes; then
   fi
 
   AM_CONDITIONAL(HAVE_XMMS, true)
-  AC_MSG_NOTICE("xmms plugin requires libmp4v2 to be build")
-  AM_CONDITIONAL(WITH_MP4V2, true)
-  AC_CONFIG_FILES(plugins/xmms/Makefile plugins/xmms/src/Makefile)
+dnl  AC_MSG_NOTICE("xmms plugin requires libmp4v2 to be build")
+dnl  AM_CONDITIONAL(WITH_MP4V2, true)
+dnl  AC_CONFIG_FILES(plugins/xmms/Makefile plugins/xmms/src/Makefile)
 else
  AC_MSG_NOTICE(no xmms build configured)
  AM_CONDITIONAL(HAVE_XMMS, false)
@@ -121,11 +134,15 @@ if test x$WITHDRM = xyes; then
   AC_DEFINE(DRM, 1, [Define if you want to use libfaad together with Digital Radio Mondiale (DRM)])
 fi
 
-AC_CONFIG_FILES(libfaad/Makefile frontend/Makefile common/Makefile plugins/Makefile Makefile )
-
-AC_CONFIG_FILES(plugins/mpeg4ip/Makefile)
-
+AC_CONFIG_FILES(libfaad/Makefile)
+AC_CONFIG_FILES(common/Makefile)
 AC_CONFIG_FILES(common/mp4ff/Makefile)
-
+AC_CONFIG_FILES(plugins/Makefile)
+AC_CONFIG_FILES(plugins/xmms/Makefile)
+AC_CONFIG_FILES(plugins/xmms/src/Makefile)
+dnl AC_CONFIG_FILES(plugins/mpeg4ip/Makefile)
 AC_CONFIG_FILES(faad2.spec)
+AC_CONFIG_FILES(frontend/Makefile)
+AC_CONFIG_FILES(Makefile)
+
 AC_OUTPUT

@@ -1,9 +1,11 @@
 /*
-** some function for MP4 file based on libmp4v2 from mpeg4ip project
+ * some functions for MP4 files
 */
-#include <mp4.h>
-#include <faad.h>
 
+#include "mp4ff.h"
+#include "faad.h"
+
+#include <stdio.h>
 const char *mp4AudioNames[]=
   {
     "MPEG-1 Audio Layers 1,2 or 3",
@@ -12,17 +14,6 @@ const char *mp4AudioNames[]=
     "MPEG-2 AAC Low Complexity profile",
     "MPEG-2 AAC SSR profile",
     "MPEG-4 audio (MPEG-4 AAC)",
-    0
-  };
-
-const u_int8_t mp4AudioTypes[] =
-  {
-    MP4_MPEG1_AUDIO_TYPE,		// 0x6B
-    MP4_MPEG2_AUDIO_TYPE,		// 0x69
-    MP4_MPEG2_AAC_MAIN_AUDIO_TYPE,	// 0x66
-    MP4_MPEG2_AAC_LC_AUDIO_TYPE,	// 0x67
-    MP4_MPEG2_AAC_SSR_AUDIO_TYPE,	// 0x68
-    MP4_MPEG4_AUDIO_TYPE,		// 0x40
     0
   };
 
@@ -44,72 +35,38 @@ const char *mpeg4AudioNames[]=
     "MPEG-4 Algorithmic Synthesis and Audio FX profile"
   };
 
-int getAACTrack(MP4FileHandle file)
+/*
+ * find AAC track
+*/
+
+int getAACTrack(mp4ff_t *infile)
 {
-  int numTracks = MP4GetNumberOfTracks(file, NULL, 0);
-  int i=0;
+  int i, rc;
+  int numTracks = mp4ff_total_tracks(infile);
 
-  for(i=0;i<numTracks;i++){
-    MP4TrackId trackID = MP4FindTrackId(file, i, NULL, 0);
-    const char *trackType = MP4GetTrackType(file, trackID);
-    if(!strcmp(trackType, MP4_AUDIO_TRACK_TYPE)){//we found audio track !
-      int j=0;
-      u_int8_t audiotype = MP4GetTrackAudioType(file, trackID);
-      while(mp4AudioTypes[j]){ // what kind of audio is ?
-	if(mp4AudioTypes[j] == audiotype){
-	  if(mp4AudioTypes[j] == MP4_MPEG4_AUDIO_TYPE){//MPEG4 audio ok
-	    audiotype = MP4GetTrackAudioMpeg4Type(file, trackID);
-	    printf("%d-%s\n", audiotype, mpeg4AudioNames[audiotype]);
-	    return (trackID);
-	  }
-	  else{
-	    printf("%s\n", mp4AudioNames[j]);
-	    if (mp4AudioTypes[j]== MP4_MPEG2_AAC_LC_AUDIO_TYPE ||
-		mp4AudioTypes[j]== MP4_MPEG2_AAC_MAIN_AUDIO_TYPE ||
-		mp4AudioTypes[j]== MP4_MPEG2_AAC_SSR_AUDIO_TYPE)
-	      return(trackID);
-	    return(-1);
-	  }
-	}
-	j++;
-      }
-    }
-  }
-    return(-1);
-}
+  printf("total-tracks: %d\n", numTracks);
+  for(i=0; i<numTracks; i++){
+    unsigned char*	buff = 0;
+    int			buff_size = 0;
+    mp4AudioSpecificConfig mp4ASC;
 
-int getAudioTrack(MP4FileHandle file)
-{
-  int numTracks = MP4GetNumberOfTracks(file, NULL,0);
-  int i=0;
-
-  for(i=0;i<numTracks;i++){
-    MP4TrackId trackID = MP4FindTrackId(file, i, NULL, 0);
-    const char *trackType = MP4GetTrackType(file, trackID);
-    if(!strcmp(trackType, MP4_AUDIO_TRACK_TYPE)){
-      return(trackID);
+    printf("testing-track: %d\n", i);
+    mp4ff_get_decoder_config(infile, i, &buff, &buff_size);
+    if(buff){
+      rc = NeAACDecAudioSpecificConfig(buff, buff_size, &mp4ASC);
+      free(buff);
+      if(rc < 0)
+	continue;
+      return(i);
     }
   }
   return(-1);
 }
 
-int getVideoTrack(MP4FileHandle file)
-{
-  int numTracks = MP4GetNumberOfTracks(file, NULL, 0);
-  int i=0;
-
-  for(i=0;i<numTracks; i++){
-    MP4TrackId trackID = MP4FindTrackId(file, i, NULL, 0);
-    const char *trackType = MP4GetTrackType(file, trackID);
-    if(!strcmp(trackType, MP4_VIDEO_TRACK_TYPE)){
-      return (trackID);
-    }
-  }
-  return(-1);
-}
 
 void getMP4info(char* file)
 {
+  /*
   MP4FileHandle	mp4file;
   MP4Duration	trackDuration;
   int numTracks;
@@ -148,4 +105,5 @@ void getMP4info(char* file)
     printf("\n");
   }
   MP4Close(mp4file);
+  */
 }

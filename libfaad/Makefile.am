@@ -1,5 +1,8 @@
 lib_LTLIBRARIES = libfaad.la
-include_HEADERS = ../include/faad.h
+
+include_HEADERS = $(top_srcdir)/include/faad.h
+
+libfaad_la_LDFLAGS = -lm
 
 libfaad_la_SOURCES = bits.c cfft.c decoder.c drc.c \
 drm_dec.c error.c filtbank.c \
@@ -20,7 +23,3 @@ sbr_qmf_c.h codebook/hcb.h \
 codebook/hcb_1.h codebook/hcb_2.h codebook/hcb_3.h codebook/hcb_4.h \
 codebook/hcb_5.h codebook/hcb_6.h codebook/hcb_7.h codebook/hcb_8.h \
 codebook/hcb_9.h codebook/hcb_10.h codebook/hcb_11.h codebook/hcb_sf.h
-
-LIBTOOL_DEPS =
-LIBS =
-
