@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.65 2003/10/17 13:37:22 menno Exp $
+** $Id: foo_mp4.cpp,v 1.66 2003/10/17 16:23:05 ca5e Exp $
 **/
 
 #include <mp4.h>
@@ -48,7 +48,7 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "1.63",
+                           "1.65",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 static const char *object_type_string(int type)
@@ -175,7 +175,17 @@ public:
         if (mp4ASC.frameLengthFlag == 1) m_framesize = 960;
         useAacLength = false;
 
-        MP4Duration trackDuration = MP4GetTrackDuration(hFile, track);
+        {
+            MP4Timestamp sample_pos;
+            MP4Duration sample_dur;
+            unsigned char *buf = NULL;
+            unsigned __int32 buf_size = 0;
+            MP4ReadSample(hFile, track, 1, (unsigned __int8**)&buf,
+                &buf_size, &sample_pos, &sample_dur, NULL, NULL);
+            if (buf) free(buf);
+            m_delaydur = (unsigned int)sample_dur;
+        }
+        MP4Duration trackDuration = MP4GetTrackDuration(hFile, track) - m_delaydur;
         m_length = (double)(__int64)trackDuration / (double)m_timescale;
         info->set_length(m_length);
         info->info_set_int("bitrate",(__int64)(1.0/1000.0 *
@@ -243,6 +253,8 @@ public:
                 MP4ReadSample(hFile, track, sampleId,
                     (unsigned __int8**)&buffer, &buffer_size,
                     &sample_pos, &sample_dur, NULL, NULL);
+                if (sampleId == 1) sample_dur -= m_delaydur;
+                sample_pos -= m_delaydur;
                 sampleId++;
 
                 sample_buffer = (audio_sample*)faacDecDecode(hDecoder, &frameInfo, buffer, buffer_size);
@@ -397,6 +409,22 @@ public:
             return true;
         }
 
+        unsigned int frame = (unsigned int)((double)m_framesize * ((double)m_timescale / (double)m_samplerate) + 0.5);
+        if (frame == 0) frame = 1;
+        m_seekto = (unsigned __int64)(seconds * m_timescale + 0.5) + frame;
+        MP4Duration target = m_seekto - frame + m_delaydur;
+
+        while (1) {
+            MP4Duration duration = MP4ConvertToTrackDuration(hFile, track, target, m_timescale);
+            sampleId = MP4GetSampleIdFromTime(hFile, track, duration, 0);
+            if (sampleId == MP4_INVALID_SAMPLE_ID) return false;
+            MP4Timestamp position = MP4GetSampleTime(hFile, track, sampleId);
+            if (position <= m_seekto + m_delaydur) break;
+            if (target == 0) return false;
+            if (target > frame) target -= frame; else target = 0;
+        }
+
+        /*
         unsigned int frame = (unsigned int)((double)m_framesize * ((double)m_samplerate / (double)m_timescale) + 0.5);
         if (frame == 0) frame = 1;
 
@@ -412,6 +440,7 @@ public:
             if (target == 0) return false;
             if (target > frame) target -= frame; else target = 0;
         }
+        */
 
         faacDecPostSeekReset(hDecoder, -1);
 
@@ -435,6 +464,7 @@ private:
     unsigned int m_timescale;
     unsigned int m_samplerate;
     unsigned int m_framesize;
+    unsigned int m_delaydur;
     unsigned __int64 m_seekto;
     double m_length;
     bool m_eof;
@@ -1352,8 +1382,58 @@ public:
             if (!error)
             {
                 const char *src = (const char *)src_info.get_file_path();
+                if (!src || (src && stricmp_utf8_partial(src, "file://")))
+                {
+                    console::error("Unsupported file location");
+                    return;
+                }
 
-                MP4Optimize(src);
+                string8 name = src + strlen("file://");
+                string8 name_short;
+
+                if (IsUnicode())
+                {
+                    string_wide_from_utf8 tname(name);
+
+                    int len = wcslen(tname) + 1;
+                    WCHAR *wide_fn = (WCHAR *)malloc((len+1) * sizeof(WCHAR));
+                    if (!wide_fn) return;
+
+                    int ret = GetShortPathNameW(tname, wide_fn, len+1);
+                    if (ret == 0)
+                    {
+                        wcscpy(wide_fn, tname);
+                    }
+                    else if (ret > len)
+                    {
+                        len = ret;
+                        free(wide_fn);
+                        wide_fn = (WCHAR *)malloc((len+1) * sizeof (WCHAR));
+                        if (!wide_fn) return;
+                        if (GetShortPathNameW(tname, wide_fn, (len+1)) == 0)
+                            wcscpy(wide_fn, tname);
+                    }
+
+                    string8 shortname = string_ansi_from_wide(wide_fn);
+                    name = shortname;
+                    name_short = string_utf8_from_wide(wide_fn);
+                    free(wide_fn);
+                } else {
+                    string_ansi_from_utf8 ansi_fn(name);
+                    name = ansi_fn;
+                    name_short = string_utf8_from_ansi(ansi_fn);
+                }
+
+                MP4Optimize((const char*)name);
+
+                if (IsUnicode())
+                {
+                    string_wide_from_utf8 short_fn(name_short);
+                    string_wide_from_utf8 real_fn(name);
+                    MoveFileW(short_fn, real_fn);
+                }
+
+                console::info(string_printf("'%s' optimised", src));
             }
             else
             {
