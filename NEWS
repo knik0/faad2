@@ -1,12 +1,3 @@
 
-8 August 2002
- - Version 1.1 of the FAAD2 library
-   - Almost 50% speedup, due to new Huffman decoding
-   - Better error handling
-   - LD (Low Delay) AAC supported
-   - ER (Error Resilient) AAC profiles supported
-   - Complete new MDCT code
-   - Bug fixes
-
-14 Januari 2002
- - Initial revision of completely rewritten FAAD 2 library
+25 July 2003
+ - Release version with SBR decoding

@@ -1,22 +1,28 @@
 /*
-** FAAD - Freeware Advanced Audio Decoder
-** Copyright (C) 2002 M. Bakker
-**
+** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
+** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+**  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**
+** 
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
+** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: faad.h,v 1.25 2003/07/09 13:55:59 menno Exp $
+** Any non-GPL usage of this software or parts of this software is strictly
+** forbidden.
+**
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+**
+** $Id: faad.h,v 1.26 2003/07/29 08:20:11 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -37,7 +43,7 @@ extern "C" {
   #endif
 #endif
 
-#define FAAD2_VERSION "1.2 beta"
+#define FAAD2_VERSION "2.0 RC1 "
 
 /* object types for AAC */
 #define MAIN       0
@@ -64,7 +70,7 @@ extern "C" {
 #define FAAD_FMT_16BIT_L_SHAPE 7
 #define FAAD_FMT_16BIT_M_SHAPE 8
 #define FAAD_FMT_16BIT_H_SHAPE 9
-    
+
 /* Capabilities */
 #define LC_DEC_CAP            (1<<0)
 #define MAIN_DEC_CAP          (1<<1)
@@ -104,13 +110,14 @@ typedef struct mp4AudioSpecificConfig
     /* GA Specific Info */
     unsigned char frameLengthFlag;
     unsigned char dependsOnCoreCoder;
-    unsigned long coreCoderDelay;
+    unsigned short coreCoderDelay;
     unsigned char extensionFlag;
     unsigned char aacSectionDataResilienceFlag;
     unsigned char aacScalefactorDataResilienceFlag;
     unsigned char aacSpectralDataResilienceFlag;
     unsigned char epConfig;
 
+    char sbr_present_flag;
 } mp4AudioSpecificConfig;
 
 typedef struct faacDecConfiguration

@@ -1,22 +1,28 @@
 /*
-** FAAD - Freeware Advanced Audio Decoder
-** Copyright (C) 2002 M. Bakker
-**
+** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
+** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+**  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**
+** 
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
+** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: hcb.h,v 1.4 2003/05/18 18:14:37 menno Exp $
+** Any non-GPL usage of this software or parts of this software is strictly
+** forbidden.
+**
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+**
+** $Id: hcb.h,v 1.5 2003/07/29 08:20:14 menno Exp $
 **/
 
 #ifndef __HCB_H__
@@ -65,7 +71,6 @@ extern "C" {
 #define ESC_HCB        11
 #define QUAD_LEN       4
 #define PAIR_LEN       2
-#define BOOKSCL        12
 #define NOISE_HCB      13
 #define INTENSITY_HCB2 14
 #define INTENSITY_HCB  15
@@ -107,31 +112,15 @@ typedef struct
     int8_t data[2];
 } hcb_bin_pair;
 
-#if 0
-extern hcb hcb1_1[];
-extern hcb hcb2_1[];
-extern hcb hcb4_1[];
-extern hcb hcb6_1[];
-extern hcb hcb8_1[];
-extern hcb hcb10_1[];
-extern hcb hcb11_1[];
-
-extern hcb_2_quad hcb1_2[];
-extern hcb_2_quad hcb2_2[];
-extern hcb_2_quad hcb4_2[];
-extern hcb_2_pair hcb6_2[];
-extern hcb_2_pair hcb8_2[];
-extern hcb_2_pair hcb10_2[];
-extern hcb_2_pair hcb11_2[];
-
-extern hcb_bin_quad hcb3[];
-extern hcb_bin_pair hcb5[];
-extern hcb_bin_pair hcb7[];
-extern hcb_bin_pair hcb9[];
-
-extern uint8_t hcb_sf[][2];
-
-#else
+hcb *hcb_table[];
+hcb_2_quad *hcb_2_quad_table[];
+hcb_2_pair *hcb_2_pair_table[];
+hcb_bin_pair *hcb_bin_table[];
+uint8_t hcbN[];
+uint8_t unsigned_cb[];
+int hcb_2_quad_table_size[];
+int hcb_2_pair_table_size[];
+int hcb_bin_table_size[];
 
 #include "codebook/hcb_1.h"
 #include "codebook/hcb_2.h"
@@ -145,9 +134,6 @@ extern uint8_t hcb_sf[][2];
 #include "codebook/hcb_10.h"
 #include "codebook/hcb_11.h"
 #include "codebook/hcb_sf.h"
-
-#endif
-
 
 
 #ifdef __cplusplus

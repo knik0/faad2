@@ -1,10 +1,7 @@
 
 - Small fixes to PNS (see pns.c)
-- Channel coupling
-- Better buffering in frontend (more intelligently handle nr. of channels)
-- Lot's of testing
+- Channel coupling (skipping works)
 - SSR (???)
-- CELP decoder -> AAC scalable profile
 
 - Reintroduce:
  - Sonique plugin

@@ -163,6 +163,46 @@ SOURCE=.\rvlc.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\sbr_dct.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_dec.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_e_nf.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_fbt.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_hfadj.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_hfgen.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_huff.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_qmf.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_syntax.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_tf_grid.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\specrec.c
 # End Source File
 # Begin Source File
@@ -263,10 +303,6 @@ SOURCE=.\common.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\fftw\config.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\decoder.h
 # End Source File
 # Begin Source File
@@ -344,6 +380,50 @@ SOURCE=.\pulse.h
 # Begin Source File
 
 SOURCE=.\rvlc.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_dct.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_dec.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_e_nf.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_fbt.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_hfadj.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_hfgen.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_huff.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_noise.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_qmf.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_syntax.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_tf_grid.h
 # End Source File
 # Begin Source File
 

@@ -1,6 +1,6 @@
 /*
-** FAAD - Freeware Advanced Audio Decoder
-** Copyright (C) 2002 M. Bakker
+** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
+** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -16,7 +16,13 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: huffman.h,v 1.12 2002/09/27 08:37:22 menno Exp $
+** Any non-GPL usage of this software or parts of this software is strictly
+** forbidden.
+**
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+**
+** $Id: huffman.h,v 1.13 2003/07/29 08:20:12 menno Exp $
 **/
 
 #ifndef __HUFFMAN_H__
@@ -55,33 +61,33 @@ static INLINE int8_t huffman_scale_factor(bitfile *ld)
 }
 
 
-static hcb *hcb_table[] = {
+hcb *hcb_table[] = {
     0, hcb1_1, hcb2_1, 0, hcb4_1, 0, hcb6_1, 0, hcb8_1, 0, hcb10_1, hcb11_1
 };
 
-static hcb_2_quad *hcb_2_quad_table[] = {
+hcb_2_quad *hcb_2_quad_table[] = {
     0, hcb1_2, hcb2_2, 0, hcb4_2, 0, 0, 0, 0, 0, 0, 0
 };
 
-static hcb_2_pair *hcb_2_pair_table[] = {
+hcb_2_pair *hcb_2_pair_table[] = {
     0, 0, 0, 0, 0, 0, hcb6_2, 0, hcb8_2, 0, hcb10_2, hcb11_2
 };
 
-static hcb_bin_pair *hcb_bin_table[] = {
+hcb_bin_pair *hcb_bin_table[] = {
     0, 0, 0, 0, 0, hcb5, 0, hcb7, 0, hcb9, 0, 0
 };
 
-static uint8_t hcbN[] = { 0, 5, 5, 0, 5, 0, 5, 0, 5, 0, 6, 5 };
+uint8_t hcbN[] = { 0, 5, 5, 0, 5, 0, 5, 0, 5, 0, 6, 5 };
 
 /* defines whether a huffman codebook is unsigned or not */
 /* Table 4.6.2 */
-static uint8_t unsigned_cb[] = { 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+uint8_t unsigned_cb[] = { 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0,
          /* codebook 16 to 31 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 };
 
-static int hcb_2_quad_table_size[] = { 0, 114, 86, 0, 185, 0, 0, 0, 0, 0, 0, 0 };
-static int hcb_2_pair_table_size[] = { 0, 0, 0, 0, 0, 0, 126, 0, 83, 0, 210, 373 };
-static int hcb_bin_table_size[] = { 0, 0, 0, 161, 0, 161, 0, 127, 0, 337, 0, 0 };
+int hcb_2_quad_table_size[] = { 0, 114, 86, 0, 185, 0, 0, 0, 0, 0, 0, 0 };
+int hcb_2_pair_table_size[] = { 0, 0, 0, 0, 0, 0, 126, 0, 83, 0, 210, 373 };
+int hcb_bin_table_size[] = { 0, 0, 0, 161, 0, 161, 0, 127, 0, 337, 0, 0 };
 
 static INLINE void huffman_sign_bits(bitfile *ld, int16_t *sp, uint8_t len)
 {
@@ -285,6 +291,13 @@ static uint8_t huffman_binary_pair_sign(uint8_t cb, bitfile *ld, int16_t *sp)
     return err;
 }
 
+static int16_t huffman_codebook(uint8_t i)
+{
+    static const uint32_t data = 16428320;
+    if (i == 0) return (int16_t)(data >> 16) & 0xFFFF;
+    else        return (int16_t)data & 0xFFFF;
+}
+
 static INLINE uint8_t huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
 {
     switch (cb)
@@ -306,6 +319,10 @@ static INLINE uint8_t huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp
     case 8: /* 2-step method for data pairs */
     case 10:
         return huffman_2step_pair_sign(cb, ld, sp);
+    case 12: {
+        uint8_t err = huffman_2step_quad(1, ld, sp);
+        sp[0] = huffman_codebook(0); sp[1] = huffman_codebook(1); 
+        return err; }
     case 11:
 #ifdef ERROR_RESILIENCE
     /* VCB11 uses codebook 11 */

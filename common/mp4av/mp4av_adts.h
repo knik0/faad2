@@ -77,6 +77,7 @@ bool MP4AV_AdtsMakeFrameFromMp4Sample(
 	MP4FileHandle mp4File,
 	MP4TrackId trackId,
 	MP4SampleId sampleId,
+	int force_profile,
 	u_int8_t** ppAdtsData,
 	u_int32_t* pAdtsDataLength);
 

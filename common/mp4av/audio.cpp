@@ -56,7 +56,7 @@ extern "C" u_int8_t MP4AV_AudioGetChannels(
 	MP4TrackId audioTrackId)
 {
 	u_int8_t audioType = 
-		MP4GetTrackAudioType(mp4File, audioTrackId);
+		MP4GetTrackEsdsObjectTypeId(mp4File, audioTrackId);
 
 	if (audioType == MP4_INVALID_AUDIO_TYPE) {
 		return 0;
@@ -116,7 +116,7 @@ extern "C" u_int32_t MP4AV_AudioGetSamplingRate(
 	MP4TrackId audioTrackId)
 {
 	u_int8_t audioType = 
-		MP4GetTrackAudioType(mp4File, audioTrackId);
+		MP4GetTrackEsdsObjectTypeId(mp4File, audioTrackId);
 
 	if (audioType == MP4_INVALID_AUDIO_TYPE) {
 		return 0;
@@ -165,7 +165,7 @@ extern "C" u_int16_t MP4AV_AudioGetSamplingWindow(
 	MP4TrackId audioTrackId)
 {
 	u_int8_t audioType = 
-		MP4GetTrackAudioType(mp4File, audioTrackId);
+		MP4GetTrackEsdsObjectTypeId(mp4File, audioTrackId);
 
 	if (audioType == MP4_INVALID_AUDIO_TYPE) {
 		return 0;

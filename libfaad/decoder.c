@@ -1,6 +1,6 @@
 /*
-** FAAD - Freeware Advanced Audio Decoder
-** Copyright (C) 2002 M. Bakker
+** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
+** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -16,7 +16,13 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.61 2003/07/09 13:55:59 menno Exp $
+** Any non-GPL usage of this software or parts of this software is strictly
+** forbidden.
+**
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+**
+** $Id: decoder.c,v 1.62 2003/07/29 08:20:12 menno Exp $
 **/
 
 #include "common.h"
@@ -42,6 +48,9 @@
 #ifdef SSR_DEC
 #include "ssr.h"
 #include "ssr_fb.h"
+#endif
+#ifdef SBR_DEC
+#include "sbr_dec.h"
 #endif
 
 #ifdef ANALYSIS
@@ -110,6 +119,9 @@ faacDecHandle FAADAPI faacDecOpen()
     {
         hDecoder->window_shape_prev[i] = 0;
         hDecoder->time_out[i] = NULL;
+#ifdef SBR_DEC
+        hDecoder->time_out2[i] = NULL;
+#endif
 #ifdef SSR_DEC
         hDecoder->ssr_overlap[i] = NULL;
         hDecoder->prev_fmd[i] = NULL;
@@ -122,6 +134,13 @@ faacDecHandle FAADAPI faacDecOpen()
         hDecoder->lt_pred_stat[i] = NULL;
 #endif
     }
+
+#ifdef SBR_DEC
+    for (i = 0; i < 32; i++)
+    {
+        hDecoder->sbr[i] = NULL;
+    }
+#endif
 
     hDecoder->drc = drc_init(REAL_CONST(1.0), REAL_CONST(1.0));
 
@@ -275,6 +294,15 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
     hDecoder->aacSectionDataResilienceFlag = mp4ASC.aacSectionDataResilienceFlag;
     hDecoder->aacScalefactorDataResilienceFlag = mp4ASC.aacScalefactorDataResilienceFlag;
     hDecoder->aacSpectralDataResilienceFlag = mp4ASC.aacSpectralDataResilienceFlag;
+#ifdef SBR_DEC
+    hDecoder->sbr_present_flag = mp4ASC.sbr_present_flag;
+
+    /* AAC core decoder samplerate is 2 times as low */
+    if (hDecoder->sbr_present_flag == 1)
+    {
+        hDecoder->sf_index = get_sr_index(mp4ASC.samplingFrequency / 2);
+    }
+#endif
 
     if (hDecoder->object_type < 5)
         hDecoder->object_type--; /* For AAC differs from MPEG-4 */
@@ -343,6 +371,9 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
     for (i = 0; i < MAX_CHANNELS; i++)
     {
         if (hDecoder->time_out[i]) free(hDecoder->time_out[i]);
+#ifdef SBR_DEC
+        if (hDecoder->time_out2[i]) free(hDecoder->time_out2[i]);
+#endif
 #ifdef SSR_DEC
         if (hDecoder->ssr_overlap[i]) free(hDecoder->ssr_overlap[i]);
         if (hDecoder->prev_fmd[i]) free(hDecoder->prev_fmd[i]);
@@ -372,7 +403,26 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
 
     if (hDecoder->sample_buffer) free(hDecoder->sample_buffer);
 
+#ifdef SBR_DEC
+    for (i = 0; i < 32; i++)
+    {
+        if (hDecoder->sbr[i])
+            sbrDecodeEnd(hDecoder->sbr[i]);
+    }
+#endif
+
     if (hDecoder) free(hDecoder);
+}
+
+void FAADAPI faacDecPostSeekReset(faacDecHandle hDecoder, int32_t frame)
+{
+    if (hDecoder)
+    {
+        hDecoder->postSeekResetFlag = 1;
+
+        if (frame != -1)
+            hDecoder->frame = frame;
+    }
 }
 
 void create_channel_config(faacDecHandle hDecoder, faacDecFrameInfo *hInfo)
@@ -610,6 +660,9 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #endif
     uint8_t *window_shape_prev = hDecoder->window_shape_prev;
     real_t **time_out      =  hDecoder->time_out;
+#ifdef SBR_DEC
+    real_t **time_out2     =  hDecoder->time_out2;
+#endif
 #ifdef SSR_DEC
     real_t **ssr_overlap   =  hDecoder->ssr_overlap;
     real_t **prev_fmd      =  hDecoder->prev_fmd;
@@ -722,10 +775,22 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
     if (hDecoder->sample_buffer == NULL)
     {
-        if (hDecoder->config.outputFormat == FAAD_FMT_DOUBLE)
-            hDecoder->sample_buffer = malloc(frame_len*output_channels*sizeof(double));
-        else
-            hDecoder->sample_buffer = malloc(frame_len*output_channels*sizeof(real_t));
+#ifdef SBR_DEC
+        if (hDecoder->sbr_present_flag == 1)
+        {
+            if (hDecoder->config.outputFormat == FAAD_FMT_DOUBLE)
+                hDecoder->sample_buffer = malloc(2*frame_len*channels*sizeof(double));
+            else
+                hDecoder->sample_buffer = malloc(2*frame_len*channels*sizeof(real_t));
+        } else {
+#endif
+            if (hDecoder->config.outputFormat == FAAD_FMT_DOUBLE)
+                hDecoder->sample_buffer = malloc(frame_len*channels*sizeof(double));
+            else
+                hDecoder->sample_buffer = malloc(frame_len*channels*sizeof(real_t));
+#ifdef SBR_DEC
+        }
+#endif
     }
 
     sample_buffer = hDecoder->sample_buffer;
@@ -871,6 +936,13 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             time_out[ch] = (real_t*)malloc(frame_len*2*sizeof(real_t));
             memset(time_out[ch], 0, frame_len*2*sizeof(real_t));
         }
+#ifdef SBR_DEC
+        if (time_out2[ch] == NULL)
+        {
+            time_out2[ch] = (real_t*)malloc(frame_len*2*sizeof(real_t));
+            memset(time_out2[ch], 0, frame_len*2*sizeof(real_t));
+        }
+#endif
 
         /* filter bank */
 #ifdef SSR_DEC
@@ -919,8 +991,52 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #endif
     }
 
-    sample_buffer = output_to_PCM(hDecoder, time_out, sample_buffer,
-        output_channels, frame_len, outputFormat);
+#ifdef SBR_DEC
+    if (hDecoder->sbr_present_flag == 1)
+    {
+        for (i = 0; i < ch_ele; i++)
+        {
+            if (syntax_elements[i]->paired_channel != -1)
+            {
+                memcpy(time_out2[syntax_elements[i]->channel],
+                    time_out[syntax_elements[i]->channel], frame_len*sizeof(real_t));
+                memcpy(time_out2[syntax_elements[i]->paired_channel],
+                    time_out[syntax_elements[i]->paired_channel], frame_len*sizeof(real_t));
+                sbrDecodeFrame(hDecoder->sbr[i],
+                    time_out2[syntax_elements[i]->channel],
+                    time_out2[syntax_elements[i]->paired_channel], ID_CPE,
+                    hDecoder->postSeekResetFlag);
+            } else {
+                memcpy(time_out2[syntax_elements[i]->channel],
+                    time_out[syntax_elements[i]->channel], frame_len*sizeof(real_t));
+                sbrDecodeFrame(hDecoder->sbr[i],
+                    time_out2[syntax_elements[i]->channel],
+                    NULL, ID_SCE,
+                    hDecoder->postSeekResetFlag);
+            }
+        }
+        frame_len *= 2;
+        hInfo->samples *= 2;
+        hInfo->samplerate *= 2;
+
+        sample_buffer = output_to_PCM(hDecoder, time_out2, sample_buffer,
+            output_channels, frame_len, outputFormat);
+    } else {
+#endif
+        sample_buffer = output_to_PCM(hDecoder, time_out, sample_buffer,
+            output_channels, frame_len, outputFormat);
+#ifdef SBR_DEC
+    }
+#endif
+
+    /* gapless playback */
+    if (hDecoder->samplesLeft != 0)
+    {
+        hInfo->samples = hDecoder->samplesLeft*channels;
+    }
+    hDecoder->samplesLeft = 0;
+
+    hDecoder->postSeekResetFlag = 0;
 
     hDecoder->frame++;
 #ifdef LD_DEC
@@ -929,6 +1045,32 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #endif
         if (hDecoder->frame <= 1)
             hInfo->samples = 0;
+
+#if 0
+        if (hDecoder->frame == 2 && hDecoder->sbr_present_flag == 1)
+        {
+            uint8_t samplesize;
+            switch (outputFormat)
+            {
+            case FAAD_FMT_16BIT: case FAAD_FMT_16BIT_DITHER:
+            case FAAD_FMT_16BIT_L_SHAPE: case FAAD_FMT_16BIT_M_SHAPE:
+            case FAAD_FMT_16BIT_H_SHAPE:
+                samplesize = 2;
+                break;
+            case FAAD_FMT_24BIT:
+            case FAAD_FMT_32BIT:
+            case FAAD_FMT_FLOAT:
+                samplesize = 4;
+                break;
+            case FAAD_FMT_DOUBLE:
+                samplesize = 8;
+                break;
+            }
+            hInfo->samples = 512*channels;
+            memmove(sample_buffer, (void*)((char*)sample_buffer + 1536*channels*samplesize), hInfo->samples*samplesize);
+        }
+#endif
+
 #ifdef LD_DEC
     } else {
         /* LD encoders will give lower delay */

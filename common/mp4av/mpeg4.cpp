@@ -26,6 +26,21 @@
 
 #include <mp4av_common.h>
 
+extern "C" uint8_t *MP4AV_Mpeg4FindVosh (uint8_t *pBuf, uint32_t buflen)
+{
+  while (buflen > 4) {
+    if (pBuf[0] == 0x0 &&
+	pBuf[1] == 0x0 &&
+	pBuf[2] == 0x1 &&
+	pBuf[3] == MP4AV_MPEG4_VOSH_START) {
+      return pBuf;
+    }
+    pBuf++;
+    buflen--;
+  }
+  return NULL;
+}
+
 extern "C" bool MP4AV_Mpeg4ParseVosh(
 				     u_int8_t* pVoshBuf, 
 				     u_int32_t voshSize,
@@ -108,6 +123,21 @@ extern "C" bool MP4AV_Mpeg4CreateVo(
 	}
 
 	return true;
+}
+
+extern "C" uint8_t *MP4AV_Mpeg4FindVol (uint8_t *pBuf, uint32_t buflen)
+{
+  while (buflen > 4) {
+    if (pBuf[0] == 0x0 &&
+	pBuf[1] == 0x0 &&
+	pBuf[2] == 0x1 &&
+	(pBuf[3] & 0xf0) == MP4AV_MPEG4_VOL_START) {
+      return pBuf;
+    }
+    pBuf++;
+    buflen--;
+  }
+  return NULL;
 }
 
 extern "C" bool MP4AV_Mpeg4ParseVol(
@@ -235,8 +265,8 @@ extern "C" bool MP4AV_Mpeg4CreateVol(
 		vol.PutBits(profile, 8);
 		/* 1 bit - is object layer id = 1 */
 		vol.PutBits(1, 1);
-		/* 4 bits - visual object layer ver id = 2 */
-		vol.PutBits(2, 4); 
+		/* 4 bits - visual object layer ver id = 1 */
+		vol.PutBits(1, 4); 
 		/* 3 bits - visual object layer priority = 1 */
 		vol.PutBits(1, 3); 
 
@@ -295,8 +325,12 @@ extern "C" bool MP4AV_Mpeg4CreateVol(
 
 		/* 1 bit - overlapped block motion compensation disable = 1 */
 		vol.PutBits(1, 1);
+#if 0
 		/* 2 bits - sprite usage = 0 */
 		vol.PutBits(0, 2);
+#else
+		vol.PutBits(0, 1);
+#endif
 		/* 1 bit - not 8 bit pixels = 0 */
 		vol.PutBits(0, 1);
 		/* 1 bit - quant type = 0 */
@@ -307,18 +341,22 @@ extern "C" bool MP4AV_Mpeg4CreateVol(
 			/* 1 bit - load inter quant mat = 0 */
 			vol.PutBits(0, 1);
 		}
+#if 0
 		/* 1 bit - quarter pixel = 0 */
 		vol.PutBits(0, 1);
+#endif
 		/* 1 bit - complexity estimation disable = 1 */
 		vol.PutBits(1, 1);
 		/* 1 bit - resync marker disable = 1 */
 		vol.PutBits(1, 1);
 		/* 1 bit - data partitioned = 0 */
 		vol.PutBits(0, 1);
+#if 0
 		/* 1 bit - newpred = 0 */
 		vol.PutBits(0, 1);
 		/* 1 bit - reduced resolution vop = 0 */
 		vol.PutBits(0, 1);
+#endif
 		/* 1 bit - scalability = 0 */
 		vol.PutBits(0, 1);
 

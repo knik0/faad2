@@ -1,6 +1,6 @@
 /*
-** FAAD - Freeware Advanced Audio Decoder
-** Copyright (C) 2002 M. Bakker
+** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
+** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -16,7 +16,13 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.50 2003/07/09 13:55:59 menno Exp $
+** Any non-GPL usage of this software or parts of this software is strictly
+** forbidden.
+**
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+**
+** $Id: syntax.c,v 1.51 2003/07/29 08:20:14 menno Exp $
 **/
 
 /*
@@ -39,6 +45,9 @@
 #include "drc.h"
 #ifdef ERROR_RESILIENCE
 #include "rvlc.h"
+#endif
+#ifdef SBR_DEC
+#include "sbr_syntax.h"
 #endif
 
 
@@ -400,7 +409,7 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
                     return elements;
                 break;
             case ID_DSE:
-                data_stream_element(ld);
+                data_stream_element(hDecoder, ld);
                 break;
             case ID_PCE:
                 if ((hInfo->error = program_config_element(pce, ld)) > 0)
@@ -408,8 +417,21 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
                 hDecoder->pce_set = 1;
                 break;
             case ID_FIL:
-                if ((hInfo->error = fill_element(ld, drc)) > 0)
+                /* one sbr_info describes a channel_element not a channel! */
+                if ((hInfo->error = fill_element(hDecoder, ld, drc
+#ifdef SBR_DEC
+                    , (ch_ele-1)
+#endif
+                    )) > 0)
                     return elements;
+#ifdef SBR_DEC
+                if (hDecoder->sbr_used[ch_ele-1])
+                {
+                    hDecoder->sbr_present_flag = 1;
+                    hDecoder->sbr[ch_ele-1]->sample_rate = sample_rates[hDecoder->sf_index];
+                    hDecoder->sbr[ch_ele-1]->sample_rate *= 2;
+                }
+#endif
                 break;
             }
         }
@@ -930,7 +952,7 @@ static uint8_t coupling_channel_element(faacDecHandle hDecoder, bitfile *ld)
 }
 
 /* Table 4.4.10 */
-static uint16_t data_stream_element(bitfile *ld)
+static uint16_t data_stream_element(faacDecHandle hDecoder, bitfile *ld)
 {
     uint8_t byte_aligned;
     uint16_t i, count;
@@ -951,17 +973,47 @@ static uint16_t data_stream_element(bitfile *ld)
 
     for (i = 0; i < count; i++)
     {
-        faad_getbits(ld, LEN_BYTE
+        uint8_t data = faad_getbits(ld, LEN_BYTE
             DEBUGVAR(1,64,"data_stream_element(): data_stream_byte"));
+
+        if (count == 6 && data == 'N')
+        {
+            data = faad_getbits(ld, LEN_BYTE
+                DEBUGVAR(1,64,"data_stream_element(): data_stream_byte"));
+            i++;
+            if (data == 'D')
+            {
+                uint16_t samplesLeft;
+                uint8_t data2 = faad_getbits(ld, LEN_BYTE
+                    DEBUGVAR(1,64,"data_stream_element(): data_stream_byte"));
+                data = faad_getbits(ld, LEN_BYTE
+                    DEBUGVAR(1,64,"data_stream_element(): data_stream_byte"));
+                samplesLeft = faad_getbits(ld, LEN_BYTE
+                    DEBUGVAR(1,64,"data_stream_element(): data_stream_byte"));
+                samplesLeft += (faad_getbits(ld, LEN_BYTE
+                    DEBUGVAR(1,64,"data_stream_element(): data_stream_byte")) << 8);
+                i += 4;
+
+                if (data == 'L' && data2 == 'F')
+                    hDecoder->samplesLeft = samplesLeft;
+            }
+        }
     }
 
     return count;
 }
 
 /* Table 4.4.11 */
-static uint8_t fill_element(bitfile *ld, drc_info *drc)
+static uint8_t fill_element(faacDecHandle hDecoder, bitfile *ld, drc_info *drc
+#ifdef SBR_DEC
+                            ,uint8_t sbr_ele
+#endif
+                            )
 {
     uint16_t count;
+#ifdef SBR_DEC
+    uint8_t bs_extension_type;
+#endif
 
     count = (uint16_t)faad_getbits(ld, 4
         DEBUGVAR(1,65,"fill_element(): count"));
@@ -971,9 +1023,36 @@ static uint8_t fill_element(bitfile *ld, drc_info *drc)
             DEBUGVAR(1,66,"fill_element(): extra count")) - 1;
     }
 
-    while (count > 0)
+    if (count > 0)
     {
-        count -= extension_payload(ld, drc, count);
+#ifdef SBR_DEC
+        hDecoder->sbr_used[sbr_ele] = 0;
+        bs_extension_type = (uint8_t)faad_showbits(ld, 4);
+
+        if ((bs_extension_type == EXT_SBR_DATA) ||
+            (bs_extension_type == EXT_SBR_DATA_CRC))
+        {
+            hDecoder->sbr_used[sbr_ele] = 1;
+
+            if (!hDecoder->sbr[sbr_ele])
+                hDecoder->sbr[sbr_ele] = sbrDecodeInit();
+
+            /* read in all the SBR data for processing later on
+               this is needed because the SBR bitstream reader needs to know
+               what element type comes _after_ the (this) SBR FIL element
+            */
+            hDecoder->sbr[sbr_ele]->data = (uint8_t*)faad_getbitbuffer(ld, count*8);
+            hDecoder->sbr[sbr_ele]->data_size = count;
+        } else {
+            hDecoder->sbr_used[sbr_ele] = 0;
+#endif
+            while (count > 0)
+            {
+                count -= extension_payload(ld, drc, count);
+            }
+#ifdef SBR_DEC
+        }
+#endif
     }
 
     return 0;
@@ -1376,8 +1455,6 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
                 ics->scale_factors[g][sfb] = noise_energy;
 
                 break;
-            case BOOKSCL: /* invalid books */
-                return 3;
             default: /* spectral books */
 
                 /* decode scale factor */

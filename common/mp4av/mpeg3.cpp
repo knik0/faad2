@@ -265,7 +265,7 @@ extern "C" bool Mpeg12Hinter (MP4FileHandle mp4file,
 
   if (numSamples == 0) return false;
 
-  videoType = MP4GetTrackVideoType(mp4file, trackid);
+  videoType = MP4GetTrackEsdsObjectTypeId(mp4file, trackid);
 
   if (videoType != MP4_MPEG1_VIDEO_TYPE &&
       videoType != MP4_MPEG2_VIDEO_TYPE) {

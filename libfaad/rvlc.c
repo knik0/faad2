@@ -1,6 +1,6 @@
 /*
-** FAAD - Freeware Advanced Audio Decoder
-** Copyright (C) 2002 M. Bakker
+** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
+** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -16,7 +16,13 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: rvlc.c,v 1.4 2003/04/02 18:31:08 menno Exp $
+** Any non-GPL usage of this software or parts of this software is strictly
+** forbidden.
+**
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+**
+** $Id: rvlc.c,v 1.5 2003/07/29 08:20:13 menno Exp $
 **/
 
 /* RVLC scalefactor decoding
@@ -198,8 +204,6 @@ static uint8_t rvlc_decode_sf_forward(ic_stream *ics, bitfile *ld_sf, bitfile *l
                     ics->scale_factors[g][sfb] = noise_energy;
 
                     break;
-                case BOOKSCL: /* invalid books */
-                    return 3;
                 default: /* spectral books */
 
                     /* decode scale factor */
@@ -298,8 +302,6 @@ static uint8_t rvlc_decode_sf_reverse(ic_stream *ics, bitfile *ld_sf, bitfile *l
                     ics->scale_factors[g][sfb] = noise_energy;
 
                     break;
-                case BOOKSCL: /* invalid books */
-                    return 3;
                 default: /* spectral books */
 
                     if (sf_pcm_flag || (sfb == 0))

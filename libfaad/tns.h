@@ -1,6 +1,6 @@
 /*
-** FAAD - Freeware Advanced Audio Decoder
-** Copyright (C) 2002 M. Bakker
+** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
+** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -16,7 +16,13 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: tns.h,v 1.7 2003/06/23 15:21:20 menno Exp $
+** Any non-GPL usage of this software or parts of this software is strictly
+** forbidden.
+**
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+**
+** $Id: tns.h,v 1.8 2003/07/29 08:20:14 menno Exp $
 **/
 
 #ifndef __TNS_H__
@@ -41,10 +47,6 @@ static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
                           uint8_t order);
 static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *lpc,
                           uint8_t order);
-static uint8_t tns_max_bands(ic_stream *ics, uint8_t sr_index,
-                             uint8_t object_type, uint16_t frame_len);
-static uint8_t tns_max_order(ic_stream *ics, uint8_t sr_index,
-                             uint8_t object_type);
 
 
 #ifdef __cplusplus

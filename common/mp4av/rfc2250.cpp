@@ -45,7 +45,7 @@ extern "C" bool MP4AV_Rfc2250Hinter(
 	}
 
 	u_int8_t audioType =
-		MP4GetTrackAudioType(mp4File, mediaTrackId);
+		MP4GetTrackEsdsObjectTypeId(mp4File, mediaTrackId);
 
 	if (!MP4_IS_MP3_AUDIO_TYPE(audioType)) {
 		return false;

@@ -1,22 +1,28 @@
 /*
-** FAAD - Freeware Advanced Audio Decoder
-** Copyright (C) 2002 M. Bakker
-**
+** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
+** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+**  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**
+** 
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
+** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.29 2003/02/06 20:01:51 menno Exp $
+** Any non-GPL usage of this software or parts of this software is strictly
+** forbidden.
+**
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+**
+** $Id: common.h,v 1.30 2003/07/29 08:20:12 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -63,6 +69,32 @@ extern "C" {
 #ifndef LTP_DEC
 #define LTP_DEC
 #endif
+#endif
+
+
+#define SBR_DEC
+//#define SBR_LOW_POWER
+
+#ifdef FIXED_POINT
+#ifndef SBR_LOW_POWER
+#define SBR_LOW_POWER
+#endif
+#endif
+
+#ifdef FIXED_POINT
+#define SBR_DIV(A, B) (((int64_t)A << REAL_BITS)/B)
+#else
+#define SBR_DIV(A, B) ((A)/(B))
+#endif
+
+#ifndef SBR_LOW_POWER
+#define qmf_t complex_t
+#define QMF_RE(A) RE(A)
+#define QMF_IM(A) IM(A)
+#else
+#define qmf_t real_t
+#define QMF_RE(A) (A)
+#define QMF_IM(A) 0
 #endif
 
 
@@ -251,8 +283,8 @@ typedef real_t complex_t[2];
 
 
 /* common functions */
-uint32_t int_log2(uint32_t val);
-
+int32_t int_log2(int32_t val);
+uint32_t random_int(void);
 uint8_t get_sr_index(uint32_t samplerate);
 int8_t can_decode_ot(uint8_t object_type);
 

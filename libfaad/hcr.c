@@ -1,5 +1,5 @@
 /*
-** FAAD - Freeware Advanced Audio Decoder
+** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2002 A. Kurpiers
 **  
 ** This program is free software; you can redistribute it and/or modify
@@ -16,8 +16,15 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: hcr.c,v 1.4 2003/06/23 15:21:19 menno Exp $
+** Any non-GPL usage of this software or parts of this software is strictly
+** forbidden.
+**
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+**
+** $Id: hcr.c,v 1.5 2003/07/29 08:20:12 menno Exp $
 **/
+
 
 #include "common.h"
 #include "structs.h"
@@ -37,32 +44,6 @@
 
 #ifdef ERROR_RESILIENCE
 
-//FIXME these tables are not needed twice actually
-
-static hcb *hcb_table[] = {
-    0, hcb1_1, hcb2_1, 0, hcb4_1, 0, hcb6_1, 0, hcb8_1, 0, hcb10_1, hcb11_1
-};
-
-static hcb_2_quad *hcb_2_quad_table[] = {
-    0, hcb1_2, hcb2_2, 0, hcb4_2, 0, 0, 0, 0, 0, 0, 0
-};
-
-static hcb_2_pair *hcb_2_pair_table[] = {
-    0, 0, 0, 0, 0, 0, hcb6_2, 0, hcb8_2, 0, hcb10_2, hcb11_2
-};
-
-static hcb_bin_pair *hcb_bin_table[] = {
-    0, 0, 0, 0, 0, hcb5, 0, hcb7, 0, hcb9, 0, 0
-};
-
-static uint8_t hcbN[] = { 0, 5, 5, 0, 5, 0, 5, 0, 5, 0, 6, 5 };
-
-
-/* defines whether a huffman codebook is unsigned or not */
-/* Table 4.6.2 */
-static uint8_t unsigned_cb[] = { 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-         /* codebook 16 to 31 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-};
 typedef struct
 {
     /* bit input */
@@ -120,7 +101,7 @@ static INLINE int8_t get1bit(bits_t *ld, uint8_t *result)
     int8_t ret;
 
     ret = getbits(ld, 1, &res);
-    *result = res & 1;
+    *result = (int8_t)(res & 1);
     return ret;
 }
 
@@ -270,7 +251,7 @@ static int8_t huffman_spectral_data_2(uint8_t cb, bits_t *ld, int16_t *sp )
                 if (getbits(ld, i, &off))
                     return -1;
                 j = off + (1<<i);
-                sp[k] = neg ? -j : j;          
+                sp[k] = (int16_t)((neg) ? -j : j);
             }
         }
     }    

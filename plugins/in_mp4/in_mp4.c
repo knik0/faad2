@@ -1,22 +1,28 @@
 /*
-** FAAD - Freeware Advanced Audio Decoder
-** Copyright (C) 2002 M. Bakker
-**
+** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
+** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+**  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**
+** 
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
+** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.34 2003/07/09 18:32:43 menno Exp $
+** Any non-GPL usage of this software or parts of this software is strictly
+** forbidden.
+**
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+**
+** $Id: in_mp4.c,v 1.35 2003/07/29 08:20:14 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -213,6 +219,8 @@ BOOL CALLBACK mp4_info_dialog_proc(HWND hwndDlg, UINT message,
 {
     char *file_info;
     MP4FileHandle file;
+    char *pVal, dummy1[1024], dummy3;
+    short dummy, dummy2;
 
 #ifdef DEBUG_OUTPUT
     in_mp4_DebugOutput("mp4_info_dialog_proc");
@@ -220,21 +228,78 @@ BOOL CALLBACK mp4_info_dialog_proc(HWND hwndDlg, UINT message,
 
     switch (message) {
     case WM_INITDIALOG:
-        EnableWindow(GetDlgItem(hwndDlg,IDC_CONVERT), FALSE) ;
+        EnableWindow(GetDlgItem(hwndDlg,IDC_CONVERT), FALSE);
         ShowWindow(GetDlgItem(hwndDlg,IDC_CONVERT), SW_HIDE);
-        EnableWindow(GetDlgItem(hwndDlg,IDC_CONVERT1), FALSE) ;
+        EnableWindow(GetDlgItem(hwndDlg,IDC_CONVERT1), FALSE);
         ShowWindow(GetDlgItem(hwndDlg,IDC_CONVERT1), SW_HIDE);
-        EnableWindow(GetDlgItem(hwndDlg,IDC_CONVERT2), FALSE) ;
+        EnableWindow(GetDlgItem(hwndDlg,IDC_CONVERT2), FALSE);
         ShowWindow(GetDlgItem(hwndDlg,IDC_CONVERT2), SW_HIDE);
+
 
         file = MP4Read(info_fn, 0);
 
-        if (!file)
+        if (file == MP4_INVALID_FILE_HANDLE)
             return FALSE;
 
         file_info = MP4Info(file, MP4_INVALID_TRACK_ID);
         SetDlgItemText(hwndDlg, IDC_INFOTEXT, file_info);
         free(file_info);
+
+        /* get Metadata */
+
+        pVal = NULL;
+        MP4GetMetadataName(file, &pVal);
+        SetDlgItemText(hwndDlg,IDC_METANAME, pVal);
+
+        pVal = NULL;
+        MP4GetMetadataArtist(file, &pVal);
+        SetDlgItemText(hwndDlg,IDC_METAARTIST, pVal);
+
+        pVal = NULL;
+        MP4GetMetadataWriter(file, &pVal);
+        SetDlgItemText(hwndDlg,IDC_METAWRITER, pVal);
+
+        pVal = NULL;
+        MP4GetMetadataComment(file, &pVal);
+        SetDlgItemText(hwndDlg,IDC_METACOMMENTS, pVal);
+
+        pVal = NULL;
+        MP4GetMetadataAlbum(file, &pVal);
+        SetDlgItemText(hwndDlg,IDC_METAALBUM, pVal);
+
+        pVal = NULL;
+        MP4GetMetadataGenre(file, &pVal);
+        SetDlgItemText(hwndDlg,IDC_METAGENRE, pVal);
+
+        dummy = 0;
+        MP4GetMetadataTempo(file, &dummy);
+        wsprintf(dummy1, "%d", dummy);
+        SetDlgItemText(hwndDlg,IDC_METATEMPO, dummy1);
+
+        dummy = 0; dummy2 = 0;
+        MP4GetMetadataTrack(file, &dummy, &dummy2);
+        wsprintf(dummy1, "%d", dummy);
+        SetDlgItemText(hwndDlg,IDC_METATRACK1, dummy1);
+        wsprintf(dummy1, "%d", dummy2);
+        SetDlgItemText(hwndDlg,IDC_METATRACK2, dummy1);
+
+        dummy = 0; dummy2 = 0;
+        MP4GetMetadataDisk(file, &dummy, &dummy2);
+        wsprintf(dummy1, "%d", dummy);
+        SetDlgItemText(hwndDlg,IDC_METADISK1, dummy1);
+        wsprintf(dummy1, "%d", dummy2);
+        SetDlgItemText(hwndDlg,IDC_METADISK2, dummy1);
+
+        pVal = NULL;
+        MP4GetMetadataYear(file, &pVal);
+        SetDlgItemText(hwndDlg,IDC_METAYEAR, pVal);
+
+        dummy3 = 0;
+        MP4GetMetadataCompilation(file, &dummy3);
+        if (dummy3)
+            SendMessage(GetDlgItem(hwndDlg, IDC_METACOMPILATION), BM_SETCHECK, BST_CHECKED, 0);
+
+        /* ! Metadata */
 
         MP4Close(file);
 
@@ -243,7 +308,64 @@ BOOL CALLBACK mp4_info_dialog_proc(HWND hwndDlg, UINT message,
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDCANCEL:
+            EndDialog(hwndDlg, wParam);
+            return TRUE;
         case IDOK:
+
+            /* save Metadata changes */
+
+            file = MP4Modify(info_fn, 0, 0);
+            if (file == MP4_INVALID_FILE_HANDLE)
+            {
+                EndDialog(hwndDlg, wParam);
+                return FALSE;
+            }
+
+            GetDlgItemText(hwndDlg, IDC_METANAME, dummy1, 1024);
+            MP4SetMetadataName(file, dummy1);
+
+            GetDlgItemText(hwndDlg, IDC_METAWRITER, dummy1, 1024);
+            MP4SetMetadataWriter(file, dummy1);
+
+            GetDlgItemText(hwndDlg, IDC_METAARTIST, dummy1, 1024);
+            MP4SetMetadataArtist(file, dummy1);
+
+            GetDlgItemText(hwndDlg, IDC_METAALBUM, dummy1, 1024);
+            MP4SetMetadataAlbum(file, dummy1);
+
+            GetDlgItemText(hwndDlg, IDC_METACOMMENTS, dummy1, 1024);
+            MP4SetMetadataComment(file, dummy1);
+
+            GetDlgItemText(hwndDlg, IDC_METAGENRE, dummy1, 1024);
+            MP4SetMetadataGenre(file, dummy1);
+
+            GetDlgItemText(hwndDlg, IDC_METAYEAR, dummy1, 1024);
+            MP4SetMetadataYear(file, dummy1);
+
+            GetDlgItemText(hwndDlg, IDC_METATRACK1, dummy1, 1024);
+            dummy = atoi(dummy1);
+            GetDlgItemText(hwndDlg, IDC_METATRACK2, dummy1, 1024);
+            dummy2 = atoi(dummy1);
+            MP4SetMetadataTrack(file, dummy, dummy2);
+
+            GetDlgItemText(hwndDlg, IDC_METADISK1, dummy1, 1024);
+            dummy = atoi(dummy1);
+            GetDlgItemText(hwndDlg, IDC_METADISK2, dummy1, 1024);
+            dummy2 = atoi(dummy1);
+            MP4SetMetadataDisk(file, dummy, dummy2);
+
+            GetDlgItemText(hwndDlg, IDC_METATEMPO, dummy1, 1024);
+            dummy = atoi(dummy1);
+            MP4SetMetadataTempo(file, dummy);
+
+            dummy3 = SendMessage(GetDlgItem(hwndDlg, IDC_METACOMPILATION), BM_GETCHECK, 0, 0);
+            MP4SetMetadataCompilation(file, dummy3);
+
+            MP4Close(file);
+
+            MP4Optimize(info_fn, NULL, 0);
+            /* ! */
+
             EndDialog(hwndDlg, wParam);
             return TRUE;
         }
@@ -282,6 +404,33 @@ BOOL CALLBACK aac_info_dialog_proc(HWND hwndDlg, UINT message,
     case WM_INITDIALOG:
         EnableWindow(GetDlgItem(hwndDlg,IDC_USERDATA), FALSE) ;
         ShowWindow(GetDlgItem(hwndDlg,IDC_USERDATA), SW_HIDE);
+
+        ShowWindow(GetDlgItem(hwndDlg,IDC_STATIC1), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_STATIC2), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_STATIC3), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_STATIC4), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_STATIC5), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_STATIC6), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_STATIC7), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_STATIC8), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_STATIC9), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_STATIC10), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_STATIC11), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_STATIC12), SW_HIDE);
+
+        ShowWindow(GetDlgItem(hwndDlg,IDC_METANAME), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_METAARTIST), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_METAWRITER), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_METACOMMENTS), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_METAALBUM), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_METAGENRE), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_METATEMPO), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_METATRACK1), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_METATRACK2), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_METADISK1), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_METADISK2), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_METAYEAR), SW_HIDE);
+        ShowWindow(GetDlgItem(hwndDlg,IDC_METACOMPILATION), SW_HIDE);
 
         info_text = malloc(1024*sizeof(char));
 

@@ -1,22 +1,28 @@
 /*
-** FAAD - Freeware Advanced Audio Decoder
-** Copyright (C) 2002-2003 M. Bakker
-**
+** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
+** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
+**  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**
+** 
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
+** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.37 2003/07/09 12:33:08 menno Exp $
+** Any non-GPL usage of this software or parts of this software is strictly
+** forbidden.
+**
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+**
+** $Id: foo_mp4.cpp,v 1.38 2003/07/29 08:20:14 menno Exp $
 **/
 
 #include <mp4.h>
@@ -44,7 +50,7 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "$Revision: 1.37 $",
+                           "$Revision: 1.38 $",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -133,12 +139,9 @@ public:
             track, "mdia.minf.stbl.stsd.mp4a.esds.decConfigDescr.avgBitrate")) + 0.5);
         info->info_set_int("channels", (__int64)channels);
         info->info_set_int("samplerate", (__int64)samplerate);
-
-#if 0
-        if (mp4ASC.sbr_present_flag)
+        if (mp4ASC.sbr_present_flag == 1)
             info->info_set("codec", "AAC+SBR");
         else
-#endif
             info->info_set("codec", "AAC");
 
         ReadMP4Tag(info);
@@ -150,6 +153,7 @@ public:
     {
         hFile = MP4_INVALID_FILE_HANDLE;
         hDecoder = NULL;
+        m_samples = 0;
     }
 
     ~input_mp4()
@@ -254,6 +258,18 @@ public:
         if (p)
             MP4SetMetadataFreeForm(hFile, "REPLAYGAIN_ALBUM_GAIN", (unsigned __int8*)p, strlen(p));
 
+        if (m_samples > 0)
+        {
+            unsigned __int8 length[4];
+
+            length[0] = (unsigned __int8)(((unsigned int)m_samples >> 24) & 0xFF);
+            length[1] = (unsigned __int8)(((unsigned int)m_samples >> 16) & 0xFF);
+            length[2] = (unsigned __int8)(((unsigned int)m_samples >>  8) & 0xFF);
+            length[3] = (unsigned __int8)(((unsigned int)m_samples      ) & 0xFF);
+
+            MP4SetMetadataFreeForm(hFile, "NDFL", length, 4);
+        }
+
         int numItems = info->meta_get_count();
         if (numItems > 0)
         {
@@ -331,6 +347,7 @@ private:
     MP4FileHandle hFile;
     MP4SampleId sampleId, numSamples;
     MP4TrackId track;
+    unsigned int m_samples;
 
     int ReadMP4Tag(file_info *info)
     {
@@ -400,6 +417,15 @@ private:
                     MP4GetMetadataTempo(hFile, &tempo);
                     wsprintf(t, "%d BPM", tempo);
                     info->meta_add("TEMPO", t);
+                } else if (memcmp(pName, "NDFL", 4) == 0) {
+                    unsigned __int8 *data = NULL;
+                    unsigned __int32 valueSize = 0;
+                    MP4GetMetadataFreeForm(hFile, "NDFL", &data, &valueSize);
+                    if (data && valueSize == 4)
+                    {
+                        // len = number of samples in whole file per channel
+                        m_samples = ((data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3]);
+                    }
                 } else {
                     float f = 0;
                     if (!stricmp(pName, "REPLAYGAIN_TRACK_PEAK"))

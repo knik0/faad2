@@ -33,6 +33,7 @@
 extern "C" {
 #endif
 
+  uint8_t *MP4AV_Mpeg4FindVosh(uint8_t *pBuf, uint32_t bufLen);
 bool MP4AV_Mpeg4ParseVosh(
 	u_int8_t* pVoshBuf, 
 	u_int32_t voshSize,
@@ -47,6 +48,8 @@ bool MP4AV_Mpeg4CreateVo(
 	u_int8_t** ppBytes,
 	u_int32_t* pNumBytes,
 	u_int8_t objectId);
+
+  uint8_t *MP4AV_Mpeg4FindVol(uint8_t *pBuf, uint32_t buflen);
 
 bool MP4AV_Mpeg4ParseVol(
 	u_int8_t* pVolBuf, 

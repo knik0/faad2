@@ -27,6 +27,31 @@
 #define IDC_CONVERT1                    1009
 #define IDC_USERDATA                    1010
 #define IDC_USEFORAAC                   1011
+#define IDC_METACOMPILATION             1012
+#define IDC_METANAME                    1013
+#define IDC_METAARTIST                  1014
+#define IDC_METAWRITER                  1015
+#define IDC_METAALBUM                   1016
+#define IDC_METACOMMENTS                1017
+#define IDC_METAGENRE                   1018
+#define IDC_METAYEAR                    1019
+#define IDC_METATRACK1                  1020
+#define IDC_METADISK1                   1021
+#define IDC_METATEMPO                   1022
+#define IDC_METATRACK2                  1023
+#define IDC_METADISK2                   1024
+#define IDC_STATIC1                     1025
+#define IDC_STATIC2                     1026
+#define IDC_STATIC3                     1027
+#define IDC_STATIC4                     1028
+#define IDC_STATIC5                     1029
+#define IDC_STATIC6                     1030
+#define IDC_STATIC7                     1031
+#define IDC_STATIC8                     1032
+#define IDC_STATIC9                     1033
+#define IDC_STATIC10                    1034
+#define IDC_STATIC11                    1035
+#define IDC_STATIC12                    1036
 
 // Next default values for new objects
 // 
@@ -34,7 +59,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        103
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1012
+#define _APS_NEXT_CONTROL_VALUE         1038
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

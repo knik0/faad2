@@ -1,6 +1,6 @@
 /*
-** FAAD - Freeware Advanced Audio Decoder
-** Copyright (C) 2002 M. Bakker
+** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
+** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -16,7 +16,13 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.31 2003/07/09 11:53:07 menno Exp $
+** Any non-GPL usage of this software or parts of this software is strictly
+** forbidden.
+**
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+**
+** $Id: syntax.h,v 1.32 2003/07/29 08:20:14 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -75,7 +81,6 @@ extern "C" {
 #define ESC_HCB        11
 #define QUAD_LEN       4
 #define PAIR_LEN       2
-#define BOOKSCL        12
 #define NOISE_HCB      13
 #define INTENSITY_HCB2 14
 #define INTENSITY_HCB  15
@@ -101,9 +106,13 @@ static uint8_t channel_pair_element(faacDecHandle hDecoder, element *cpe,
                                     bitfile *ld, int16_t *spec_data1,
                                     int16_t *spec_data2);
 static uint8_t coupling_channel_element(faacDecHandle hDecoder, bitfile *ld);
-static uint16_t data_stream_element(bitfile *ld);
+static uint16_t data_stream_element(faacDecHandle hDecoder, bitfile *ld);
 static uint8_t program_config_element(program_config *pce, bitfile *ld);
-static uint8_t fill_element(bitfile *ld, drc_info *drc);
+static uint8_t fill_element(faacDecHandle hDecoder, bitfile *ld, drc_info *drc
+#ifdef SBR_DEC
+                            ,uint8_t sbr_ele
+#endif
+                            );
 static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
                                          bitfile *ld, ic_stream *ics, uint8_t scal_flag,
                                          int16_t *spec_data);

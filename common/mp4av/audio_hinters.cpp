@@ -100,6 +100,17 @@ bool MP4AV_AudioConsecutiveHinter(
 		}
 	}
 
+	if (samplesThisHint > 0) {
+	  rc = (*pConcatenator)(mp4File, mediaTrackId, hintTrackId,
+				samplesThisHint, pSampleIds,
+				samplesThisHint * sampleDuration,
+				maxPayloadSize);
+	  
+	  if (!rc) {
+	    return false;
+	  }
+	}
+
 	delete [] pSampleIds;
 
 	return true;
@@ -121,6 +132,7 @@ bool MP4AV_AudioInterleaveHinter(
 
 	MP4SampleId* pSampleIds = new MP4SampleId[bundle];
 
+	uint32_t sampleIds = 0;
 	for (u_int32_t i = 1; i <= numSamples; i += stride * bundle) {
 		for (u_int32_t j = 0; j < stride; j++) {
 			u_int32_t k;
@@ -135,6 +147,7 @@ bool MP4AV_AudioInterleaveHinter(
 
 				// add sample to this hint
 				pSampleIds[k] = sampleId;
+				sampleIds++;
 			}
 
 			if (k == 0) {
@@ -150,6 +163,9 @@ bool MP4AV_AudioInterleaveHinter(
 				// at the end of the track
 				if (i + (stride * bundle) > numSamples) {
 					hintDuration = ((numSamples - i) - j) * sampleDuration;
+					if (hintDuration == 0) {
+					  hintDuration = sampleDuration;
+					}
 				} else {
 					hintDuration = ((stride * bundle) - j) * sampleDuration;
 				}
@@ -160,6 +176,7 @@ bool MP4AV_AudioInterleaveHinter(
 			// write hint
 			rc = (*pConcatenator)(mp4File, mediaTrackId, hintTrackId,
 				k, pSampleIds, hintDuration, maxPayloadSize);
+			sampleIds = 0;
 
 			if (!rc) {
 				return false;

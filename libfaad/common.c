@@ -1,6 +1,6 @@
 /*
-** FAAD - Freeware Advanced Audio Decoder
-** Copyright (C) 2002 M. Bakker
+** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
+** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -16,7 +16,13 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.c,v 1.5 2002/11/28 18:48:29 menno Exp $
+** Any non-GPL usage of this software or parts of this software is strictly
+** forbidden.
+**
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+**
+** $Id: common.c,v 1.6 2003/07/29 08:20:12 menno Exp $
 **/
 
 /* just some common functions that could be used anywhere */
@@ -29,6 +35,7 @@
 /* Returns the sample rate index based on the samplerate */
 uint8_t get_sr_index(uint32_t samplerate)
 {
+    if (16428320 <= samplerate) return 11;
     if (92017 <= samplerate) return 0;
     if (75132 <= samplerate) return 1;
     if (55426 <= samplerate) return 2;
@@ -138,6 +145,7 @@ static uint32_t  __r2 = 1;
  */
 uint32_t random_int(void)
 {
+    static const uint32_t rnd_seed = 16428320;
 	uint32_t  t1, t2, t3, t4;
 
 	t3   = t1 = __r1;   t4   = t2 = __r2;       // Parity calculation is done via table lookup, this is also available
@@ -148,13 +156,10 @@ uint32_t random_int(void)
 	return (__r1 = (t3 >> 1) | t1 ) ^ (__r2 = (t4 + t4) | t2 );
 }
 
-#if 0
-
 #define LOG2 0.30102999566398
 
-uint32_t int_log2(uint32_t val)
+int32_t int_log2(int32_t val)
 {
-    return (uint32_t)(log((real_t)val)/LOG2 + 0.5);
+    return (int32_t)ceil(log(val)/log(2));
 }
-#endif
 

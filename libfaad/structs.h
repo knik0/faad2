@@ -1,6 +1,6 @@
 /*
-** FAAD - Freeware Advanced Audio Decoder
-** Copyright (C) 2002 M. Bakker
+** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
+** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -16,7 +16,13 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: structs.h,v 1.9 2003/07/09 13:55:59 menno Exp $
+** Any non-GPL usage of this software or parts of this software is strictly
+** forbidden.
+**
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+**
+** $Id: structs.h,v 1.10 2003/07/29 08:20:14 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -24,6 +30,10 @@
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifdef SBR_DEC
+#include "sbr_dec.h"
 #endif
 
 #define MAX_CHANNELS        64
@@ -307,6 +317,7 @@ typedef struct mp4AudioSpecificConfig
     uint8_t aacSpectralDataResilienceFlag;
     uint8_t epConfig;
 
+    int8_t sbr_present_flag;
 } mp4AudioSpecificConfig;
 
 typedef struct faacDecConfiguration
@@ -346,6 +357,8 @@ typedef struct
     uint8_t aacSpectralDataResilienceFlag;
 #endif
     uint16_t frameLength;
+    uint16_t samplesLeft;
+    uint8_t postSeekResetFlag;
 
     uint32_t frame;
 
@@ -366,6 +379,16 @@ typedef struct
     drc_info *drc;
 
     real_t *time_out[MAX_CHANNELS];
+
+#ifdef SBR_DEC
+    int8_t sbr_present_flag;
+
+    real_t *time_out2[MAX_CHANNELS];
+
+    uint8_t sbr_used[32];
+
+    sbr_info *sbr[32];
+#endif
 
 #ifdef SSR_DEC
     real_t *ssr_overlap[MAX_CHANNELS];
