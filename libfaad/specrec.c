@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: specrec.c,v 1.20 2003/05/15 20:58:47 menno Exp $
+** $Id: specrec.c,v 1.21 2003/05/16 08:31:14 menno Exp $
 **/
 
 /*
@@ -350,14 +350,16 @@ void apply_scalefactors(ic_stream *ics, real_t *x_invquant, real_t *pow2_table,
             exp = (ics->scale_factors[g][sfb] - 100) / 4;
             frac = (ics->scale_factors[g][sfb] - 100) % 4;
 
+            /* MDCT scaling done here to get values within 16 bit range */
+            /* the extra 3 bit shift is for iq_table[] compensation */
             if (hDecoder->object_type == LD)
             {
-                exp -= 9;
+                exp -= 6 /*9*/;
             } else {
                 if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
-                    exp -= 7;
+                    exp -= 4 /*7*/;
                 else
-                    exp -= 10;
+                    exp -= 7 /*10*/;
             }
 #endif
 
