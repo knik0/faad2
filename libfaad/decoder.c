@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.1 2002/01/14 19:15:55 menno Exp $
+** $Id: decoder.c,v 1.2 2002/01/15 12:58:56 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -128,38 +128,41 @@ int FAADAPI faacDecInit(faacDecHandle hDecoder, unsigned char *buffer,
     hDecoder->sf_index = get_sr_index(hDecoder->config.defSampleRate);
     hDecoder->object_type = hDecoder->config.defObjectType;
 
-    faad_initbits(&ld, buffer);
-
-    /* Check if an ADIF header is present */
-    if ((buffer[0] == 'A') && (buffer[1] == 'D') &&
-        (buffer[2] == 'I') && (buffer[3] == 'F'))
+    if (buffer != NULL)
     {
-        hDecoder->adif_header_present = 1;
+        faad_initbits(&ld, buffer);
 
-        get_adif_header(&adif, &ld);
+        /* Check if an ADIF header is present */
+        if ((buffer[0] == 'A') && (buffer[1] == 'D') &&
+            (buffer[2] == 'I') && (buffer[3] == 'F'))
+        {
+            hDecoder->adif_header_present = 1;
 
-        hDecoder->sf_index = adif.pce.sf_index;
-        hDecoder->object_type = adif.pce.object_type;
+            get_adif_header(&adif, &ld);
 
-        *samplerate = sample_rates[hDecoder->sf_index];
-        *channels = adif.pce.channels;
+            hDecoder->sf_index = adif.pce.sf_index;
+            hDecoder->object_type = adif.pce.object_type;
 
-        return bit2byte(faad_get_processed_bits(&ld));
+            *samplerate = sample_rates[hDecoder->sf_index];
+            *channels = adif.pce.channels;
 
-    /* Check if an ADTS header is present */
-    } else if (faad_showbits(&ld, 12) == 0xfff) {
-        hDecoder->adts_header_present = 1;
+            return bit2byte(faad_get_processed_bits(&ld));
 
-        adts_frame(&adts, &ld);
+        /* Check if an ADTS header is present */
+        } else if (faad_showbits(&ld, 12) == 0xfff) {
+            hDecoder->adts_header_present = 1;
 
-        hDecoder->sf_index = adts.sf_index;
-        hDecoder->object_type = adts.profile;
+            adts_frame(&adts, &ld);
 
-        *samplerate = sample_rates[hDecoder->sf_index];
-        *channels = (adts.channel_configuration > 6) ?
-            2 : adts.channel_configuration;
+            hDecoder->sf_index = adts.sf_index;
+            hDecoder->object_type = adts.profile;
 
-        return 0;
+            *samplerate = sample_rates[hDecoder->sf_index];
+            *channels = (adts.channel_configuration > 6) ?
+                2 : adts.channel_configuration;
+
+            return 0;
+        }
     }
 
     *samplerate = sample_rates[hDecoder->sf_index];

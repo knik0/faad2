@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.1 2002/01/14 19:15:55 menno Exp $
+** $Id: main.c,v 1.2 2002/01/15 12:58:38 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -27,13 +27,14 @@
 #endif
 
 #include <stdio.h>
-#include <io.h>
-#include <fcntl.h>
 #include <stdlib.h>
 #include <getopt.h>
 
 #include <faad.h>
 #include <sndfile.h>
+#include <mp4.h>
+
+#include "audio.h"
 
 #ifndef min
 #define min(a,b) ( (a) < (b) ? (a) : (b) )
@@ -45,7 +46,7 @@
 /* FAAD file buffering routines */
 /* declare buffering variables */
 #define DEC_BUFF_VARS \
-    int fileread, tagsize, bytesconsumed, k; \
+    int fileread, bytesconsumed, k; \
     int buffercount = 0, buffer_index = 0; \
     unsigned char *buffer;
 
@@ -140,31 +141,24 @@ void usage(void)
     fprintf(stderr, " -l    Use Long Term Prediction (for RAW files).\n");
     fprintf(stderr, " -w    Write output to stdio instead of a file.\n");
     fprintf(stderr, "Example:\n");
-    fprintf(stderr, "       faad -o aac infile.aac\n");
+    fprintf(stderr, "       faad infile.aac\n");
+    fprintf(stderr, "       faad infile.mp4\n");
+    fprintf(stderr, "       faad -o outfile.wav infile.aac\n");
+    fprintf(stderr, "       faad -w infile.aac > outfile.wav\n");
     return;
 }
 
 
-int main(int argc, char *argv[])
+int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
+                  int def_srate, int use_ltp, int outputFormat, int fileType)
 {
-    void *sample_buffer;
-    int writeToStdio = 0;
-    int def_sr_set = 0;
-    int use_ltp = 0;
-    int def_srate;
+    int tagsize;
     unsigned long samplerate, channels;
-    int format = 1;
-    int outputFormat = FAAD_FMT_16BIT;
-    int outfile_set = 0;
-    int showHelp = 0;
-    char *fnp;
-    char aacFileName[255];
-    char audioFileName[255];
-
-    SNDFILE *sndfile = NULL;
-    SF_INFO sfinfo;
+    void *sample_buffer;
 
     FILE *infile;
+
+    audio_file *aufile;
 
     faacDecHandle hDecoder;
     faacDecFrameInfo frameInfo;
@@ -175,15 +169,325 @@ int main(int argc, char *argv[])
 
     int first_time = 1;
 
+    /* declare variables for buffering */
+    DEC_BUFF_VARS
+
+
+    infile = fopen(aacfile, "rb");
+    if (infile == NULL)
+    {
+        /* unable to open file */
+        fprintf(stderr, "Error opening file: %s\n", aacfile);
+        return 1;
+    }
+    INIT_BUFF(infile)
+
+    tagsize = id3v2_tag(buffer);
+    if (tagsize) {
+        UPDATE_BUFF_SKIP(tagsize)
+    }
+
+    hDecoder = faacDecOpen();
+
+    /* Set the default object type and samplerate */
+    /* This is useful for RAW AAC files */
+    config = faacDecGetCurrentConfiguration(hDecoder);
+    if (def_srate)
+        config->defSampleRate = def_srate;
+    if (use_ltp)
+        config->defObjectType = LTP;
+    config->outputFormat = outputFormat;
+
+    faacDecSetConfiguration(hDecoder, config);
+
+    if((bytesconsumed = faacDecInit(hDecoder, buffer, &samplerate,
+        &channels)) < 0)
+    {
+        /* If some error initializing occured, skip the file */
+        fprintf(stderr, "Error initializing decoder library.\n");
+        END_BUFF
+        faacDecClose(hDecoder);
+        fclose(infile);
+        return 1;
+    }
+
+    /* update buffer */
+    UPDATE_BUFF_READ
+
+    do
+    {
+        /* update buffer */
+        UPDATE_BUFF_READ
+
+        sample_buffer = faacDecDecode(hDecoder, &frameInfo, buffer);
+
+        /* update buffer indices */
+        UPDATE_BUFF_IDX(frameInfo)
+
+        if (frameInfo.error > 0)
+        {
+            fprintf(stderr, "Error: %s\n",
+                faacDecGetErrorMessage(frameInfo.error));
+        }
+
+        percent = min((int)(buffer_index*100)/fileread, 100);
+        if (percent > old_percent)
+        {
+            old_percent = percent;
+            sprintf(percents, "%d%% decoding %s.", percent, aacfile);
+            fprintf(stderr, "%s\r", percents);
+#ifdef _WIN32
+            SetConsoleTitle(percents);
+#endif
+        }
+
+        /* open the sound file now that the number of channels are known */
+        if (first_time && !frameInfo.error)
+        {
+            if(!to_stdout)
+            {
+                aufile = open_audio_file(sndfile, samplerate, frameInfo.channels,
+                    outputFormat, fileType);
+            } else {
+                setmode(fileno(stdout), O_BINARY);
+                aufile = open_audio_file("-", samplerate, frameInfo.channels,
+                    outputFormat, fileType);
+            }
+            if (aufile == NULL)
+            {
+                END_BUFF
+                faacDecClose(hDecoder);
+                fclose(infile);
+                return 0;
+            }
+            first_time = 0;
+        }
+
+        if ((frameInfo.error == 0) && (frameInfo.samples > 0))
+        {
+            write_audio_file(aufile, sample_buffer, frameInfo.samples);
+        }
+
+        if (IS_FILE_END)
+            sample_buffer = NULL; /* to make sure it stops now */
+
+    } while (sample_buffer != NULL);
+
+
+    faacDecClose(hDecoder);
+
+    fclose(infile);
+
+    close_audio_file(aufile);
+
+    END_BUFF
+
+    return frameInfo.error;
+}
+
+int use_ltp;
+
+int GetAACTrack(MP4FileHandle *infile)
+{
+    /* find AAC track */
+    int i;
+	int numTracks = MP4GetNumberOfTracks(infile, NULL);
+
+	for (i = 0; i < numTracks; i++)
+    {
+        MP4TrackId trackId = MP4FindTrackId(infile, i, NULL);
+        const char* trackType = MP4GetTrackType(infile, trackId);
+
+        if (!strcmp(trackType, MP4_AUDIO_TRACK_TYPE))
+        {
+            int type = MP4GetTrackAudioType(infile, trackId);
+
+            switch (type)
+            {
+            case MP4_MPEG4_AUDIO_TYPE:
+                /* could be LTP */
+                use_ltp = 1;
+
+                return trackId;
+            case MP4_MPEG2_AAC_MAIN_AUDIO_TYPE:
+            case MP4_MPEG2_AAC_LC_AUDIO_TYPE:
+            case MP4_MPEG2_AAC_SSR_AUDIO_TYPE:
+                /* MPEG2: no LTP */
+                use_ltp = 0;
+
+                return trackId;
+            }
+        }
+    }
+
+    /* can't decode this */
+    return -1;
+}
+
+int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
+                  int outputFormat, int fileType)
+{
+    int track, srate;
+    unsigned long samplerate, channels;
+    void *sample_buffer;
+
+    MP4FileHandle *infile;
+    MP4SampleId sampleId, numSamples;
+
+    audio_file *aufile;
+
+    faacDecHandle hDecoder;
+    faacDecConfigurationPtr config;
+    faacDecFrameInfo frameInfo;
+
+    unsigned char *buffer;
+    int buffer_size;
+
+    char percents[200];
+    int percent, old_percent = -1;
+
+    int first_time = 1;
+
+	infile = MP4Read(mp4file, 0);
+	if (!infile)
+    {
+        /* unable to open file */
+        fprintf(stderr, "Error opening file: %s\n", mp4file);
+        return 1;
+	}
+
+    use_ltp = 0;
+
+    if ((track = GetAACTrack(infile)) < 0)
+    {
+        fprintf(stderr, "Unable to find correct AAC sound track in the MP4 file.\n");
+        MP4Close(infile);
+        return 1;
+    }
+    srate = MP4GetTrackTimeScale(infile, track);
+
+    hDecoder = faacDecOpen();
+
+    /* Set the default object type and samplerate */
+    /* This is useful for RAW AAC files */
+    config = faacDecGetCurrentConfiguration(hDecoder);
+    config->defSampleRate = srate;
+    if (use_ltp)
+        config->defObjectType = LTP;
+    config->outputFormat = outputFormat;
+
+    faacDecSetConfiguration(hDecoder, config);
+
+
+    if(faacDecInit(hDecoder, NULL, &samplerate,
+        &channels) < 0)
+    {
+        /* If some error initializing occured, skip the file */
+        fprintf(stderr, "Error initializing decoder library.\n");
+        faacDecClose(hDecoder);
+        MP4Close(infile);
+        return 1;
+    }
+
+    numSamples = MP4GetTrackNumberOfSamples(infile, track);
+
+	for (sampleId = 1; sampleId <= numSamples; sampleId++)
+    {
+        int rc;
+
+        /* get acces unit from MP4 file */
+		buffer = NULL;
+		buffer_size = 0;
+
+		rc = MP4ReadSample(infile, track, sampleId, &buffer, &buffer_size,
+            NULL, NULL, NULL, NULL);
+		if (rc == 0)
+        {
+			fprintf(stderr, "Reading from MP4 file failed.\n");
+            faacDecClose(hDecoder);
+            MP4Close(infile);
+            return 1;
+		}
+
+        sample_buffer = faacDecDecode(hDecoder, &frameInfo, buffer);
+
+        if (frameInfo.error > 0)
+        {
+            fprintf(stderr, "Error: %s\n",
+                faacDecGetErrorMessage(frameInfo.error));
+        }
+
+        percent = min((int)(sampleId*100)/numSamples, 100);
+        if (percent > old_percent)
+        {
+            old_percent = percent;
+            sprintf(percents, "%d%% decoding %s.", percent, mp4file);
+            fprintf(stderr, "%s\r", percents);
+#ifdef _WIN32
+            SetConsoleTitle(percents);
+#endif
+        }
+
+        /* open the sound file now that the number of channels are known */
+        if (first_time && !frameInfo.error)
+        {
+            if(!to_stdout)
+            {
+                aufile = open_audio_file(sndfile, srate, frameInfo.channels,
+                    outputFormat, fileType);
+            } else {
+                setmode(fileno(stdout), O_BINARY);
+                aufile = open_audio_file("-", srate, frameInfo.channels,
+                    outputFormat, fileType);
+            }
+            if (aufile == NULL)
+            {
+                faacDecClose(hDecoder);
+                MP4Close(infile);
+                return 0;
+            }
+            first_time = 0;
+        }
+
+        if ((frameInfo.error == 0) && (frameInfo.samples > 0))
+        {
+            write_audio_file(aufile, sample_buffer, frameInfo.samples);
+        }
+    }
+
+
+    faacDecClose(hDecoder);
+
+    MP4Close(infile);
+
+    close_audio_file(aufile);
+
+    return frameInfo.error;
+}
+
+int main(int argc, char *argv[])
+{
+    int result;
+    int writeToStdio = 0;
+    int use_ltp = 0;
+    int def_srate = 0;
+    int format = 1;
+    int outputFormat = FAAD_FMT_16BIT;
+    int outfile_set = 0;
+    int showHelp = 0;
+    int mp4file = 0;
+    char *fnp;
+    char aacFileName[255];
+    char audioFileName[255];
+
+    FILE *infile;
+
 /* System dependant types */
 #ifdef _WIN32
     long begin, end;
 #else
     clock_t begin;
 #endif
-
-    /* declare variables for buffering */
-    DEC_BUFF_VARS
 
     fprintf(stderr, "FAAD (Freeware AAC Decoder) Compiled on: " __DATE__ "\n");
     fprintf(stderr, "Copyright:   M. Bakker\n");
@@ -226,9 +530,8 @@ int main(int argc, char *argv[])
             if (optarg) {
                 char dr[10];
                 if (sscanf(optarg, "%s", dr) < 1) {
-                    def_sr_set = 0;
+                    def_srate = 0;
                 } else {
-                    def_sr_set = 1;
                     def_srate = atoi(dr);
                 }
             }
@@ -288,47 +591,6 @@ int main(int argc, char *argv[])
     begin = clock();
 #endif
 
-    infile = fopen(aacFileName, "rb");
-    if (infile == NULL)
-    {
-        /* unable to open file */
-        fprintf(stderr, "Error opening file: %s\n", aacFileName);
-        return 1;
-    }
-    INIT_BUFF(infile)
-
-    tagsize = id3v2_tag(buffer);
-    if (tagsize) {
-        UPDATE_BUFF_SKIP(tagsize)
-    }
-
-    hDecoder = faacDecOpen();
-
-    /* Set the default object type and samplerate */
-    /* This is useful for RAW AAC files */
-    config = faacDecGetCurrentConfiguration(hDecoder);
-    if (def_sr_set)
-        config->defSampleRate = def_srate;
-    if (use_ltp)
-        config->defObjectType = LTP;
-    config->outputFormat = outputFormat;
-
-    faacDecSetConfiguration(hDecoder, config);
-
-    if((bytesconsumed = faacDecInit(hDecoder, buffer, &samplerate,
-        &channels)) < 0)
-    {
-        /* If some error initializing occured, skip the file */
-        fprintf(stderr, "Error initializing decoder library.\n");
-        END_BUFF
-        faacDecClose(hDecoder);
-        fclose(infile);
-        return 1;
-    }
-
-    /* update buffer */
-    UPDATE_BUFF_READ
-
 
     /* Only calculate the path and open the file for writing if
        we are not writing to stdout.
@@ -345,110 +607,21 @@ int main(int argc, char *argv[])
         strcat(audioFileName, file_ext[format]);
     }
 
+    fnp = (char *)strrchr(aacFileName, '.');
+    if (!stricmp(fnp, ".MP4"))
+        mp4file = 1;
 
-    do
+    if (mp4file)
     {
-        /* update buffer */
-        UPDATE_BUFF_READ
-
-        sample_buffer = faacDecDecode(hDecoder, &frameInfo, buffer);
-
-        /* update buffer indices */
-        UPDATE_BUFF_IDX(frameInfo)
-
-        if (frameInfo.error > 0)
-        {
-            fprintf(stderr, "Error: %s\n",
-                faacDecGetErrorMessage(frameInfo.error));
-        }
-
-        percent = min((int)(buffer_index*100)/fileread, 100);
-        if (percent > old_percent)
-        {
-            old_percent = percent;
-            sprintf(percents, "%d%% decoding %s.", percent, aacFileName);
-            fprintf(stderr, "%s\r", percents);
-#ifdef _WIN32
-            SetConsoleTitle(percents);
-#endif
-        }
-
-        /* open the sound file now that the number of channels are known */
-        if (first_time && !frameInfo.error)
-        {
-            sfinfo.samplerate  = samplerate;
-            switch (outputFormat)
-            {
-            case FAAD_FMT_16BIT:
-                sfinfo.pcmbitwidth = 16;
-                sfinfo.format      = ((1<<(format+15)) | SF_FORMAT_PCM);
-                break;
-            case FAAD_FMT_24BIT:
-                sfinfo.pcmbitwidth = 24;
-                sfinfo.format      = ((1<<(format+15)) | SF_FORMAT_PCM);
-                break;
-            case FAAD_FMT_32BIT:
-                sfinfo.pcmbitwidth = 32;
-                sfinfo.format      = ((1<<(format+15)) | SF_FORMAT_PCM);
-                break;
-            case FAAD_FMT_FLOAT:
-                sfinfo.pcmbitwidth = 32;
-                sfinfo.format      = ((1<<(format+15)) | SF_FORMAT_FLOAT);
-                break;
-            }
-            sfinfo.channels = frameInfo.channels;
-            sfinfo.samples  = 0;
-            if(!writeToStdio)
-            {
-                sndfile = sf_open_write(audioFileName, &sfinfo);
-            } else {
-                setmode(fileno(stdout), O_BINARY);
-                sndfile = sf_open_write("-", &sfinfo);
-            }
-
-            if (sndfile == NULL)
-            {
-                sf_perror(NULL);
-                END_BUFF
-                faacDecClose(hDecoder);
-                fclose(infile);
-                return 1;
-            }
-
-            first_time = 0;
-        }
-
-        if ((frameInfo.error == 0) && (frameInfo.samples > 0))
-        {
-            switch (outputFormat)
-            {
-            case FAAD_FMT_16BIT:
-                sf_write_short(sndfile, (short*)sample_buffer, frameInfo.samples);
-                break;
-            case FAAD_FMT_24BIT:
-            case FAAD_FMT_32BIT:
-                sf_write_int(sndfile, (int*)sample_buffer, frameInfo.samples);
-                break;
-            case FAAD_FMT_FLOAT:
-                sf_write_float(sndfile, (float*)sample_buffer, frameInfo.samples);
-                break;
-            }
-        }
-
-        if (IS_FILE_END)
-            sample_buffer = NULL; /* to make sure it stops now */
-
-    } while (sample_buffer != NULL);
+        result = decodeMP4file(aacFileName, audioFileName, writeToStdio,
+            outputFormat, format);
+    } else {
+        result = decodeAACfile(aacFileName, audioFileName, writeToStdio,
+            def_srate, use_ltp, outputFormat, format);
+    }
 
 
-    faacDecClose(hDecoder);
-
-    fclose(infile);
-
-    if (sndfile)
-        sf_close(sndfile);
-
-    if (!frameInfo.error)
+    if (!result)
     {
 #ifdef _WIN32
         end = GetTickCount();
@@ -463,8 +636,6 @@ int main(int argc, char *argv[])
             (float)(clock() - begin)/(float)CLOCKS_PER_SEC);
 #endif
     }
-
-    END_BUFF
 
     return 0;
 }
