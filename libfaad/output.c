@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: output.c,v 1.33 2003/12/23 18:41:42 menno Exp $
+** $Id: output.c,v 1.35 2004/02/26 09:29:27 menno Exp $
 **/
 
 #include "common.h"
@@ -36,7 +36,7 @@
 
 #define FLOAT_SCALE (1.0f/(1<<15))
 
-#define DM_MUL REAL_CONST(0.4142135623730950488) // 1/(1+sqrt(2))
+#define DM_MUL REAL_CONST(0.3203772410170407) // 1/(1+sqrt(2) + 1/sqrt(2))
 #define RSQRT2 REAL_CONST(0.7071067811865475244) // 1/sqrt(2)
 
 
@@ -370,6 +370,29 @@ void *output_to_PCM(faacDecHandle hDecoder,
 
 #else
 
+#define DM_MUL FRAC_CONST(0.3203772410170407) // 1/(1+sqrt(2) + 1/sqrt(2))
+#define RSQRT2 FRAC_CONST(0.7071067811865475244) // 1/sqrt(2)
+
+static INLINE real_t get_sample(real_t **input, uint8_t channel, uint16_t sample,
+                                uint8_t down_matrix, uint8_t *internal_channel)
+{
+    if (!down_matrix)
+        return input[internal_channel[channel]][sample];
+
+    if (channel == 0)
+    {
+        real_t C   = MUL_F(input[internal_channel[0]][sample], RSQRT2);
+        real_t L_S = MUL_F(input[internal_channel[3]][sample], RSQRT2);
+        real_t cum = input[internal_channel[1]][sample] + C + L_S;
+        return MUL_F(cum, DM_MUL);
+    } else {
+        real_t C   = MUL_F(input[internal_channel[0]][sample], RSQRT2);
+        real_t R_S = MUL_F(input[internal_channel[4]][sample], RSQRT2);
+        real_t cum = input[internal_channel[2]][sample] + C + R_S;
+        return MUL_F(cum, DM_MUL);
+    }
+}
+
 void* output_to_PCM(faacDecHandle hDecoder,
                     real_t **input, void *sample_buffer, uint8_t channels,
                     uint16_t frame_len, uint8_t format)
@@ -387,7 +410,8 @@ void* output_to_PCM(faacDecHandle hDecoder,
         case FAAD_FMT_16BIT:
             for(i = 0; i < frame_len; i++)
             {
-                int32_t tmp = input[ch][i];
+                //int32_t tmp = input[ch][i];
+                int32_t tmp = get_sample(input, ch, i, hDecoder->downMatrix, hDecoder->internal_channel);
                 if (tmp >= 0)
                 {
                     tmp += (1 << (REAL_BITS-1));
@@ -409,7 +433,8 @@ void* output_to_PCM(faacDecHandle hDecoder,
         case FAAD_FMT_24BIT:
             for(i = 0; i < frame_len; i++)
             {
-                int32_t tmp = input[ch][i];
+                //int32_t tmp = input[ch][i];
+                int32_t tmp = get_sample(input, ch, i, hDecoder->downMatrix, hDecoder->internal_channel);
                 if (tmp >= 0)
                 {
                     tmp += (1 << (REAL_BITS-9));
@@ -432,7 +457,8 @@ void* output_to_PCM(faacDecHandle hDecoder,
         case FAAD_FMT_32BIT:
             for(i = 0; i < frame_len; i++)
             {
-                int32_t tmp = input[ch][i];
+                //int32_t tmp = input[ch][i];
+                int32_t tmp = get_sample(input, ch, i, hDecoder->downMatrix, hDecoder->internal_channel);
                 if (tmp >= 0)
                 {
                     tmp += (1 << (16-REAL_BITS-1));

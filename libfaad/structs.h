@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: structs.h,v 1.29 2004/01/16 20:20:32 menno Exp $
+** $Id: structs.h,v 1.30 2004/01/28 19:17:26 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -386,6 +386,7 @@ typedef struct
 
     void *sample_buffer;
     uint8_t alloced_channels;
+    uint8_t element_alloced[MAX_SYNTAX_ELEMENTS];
 
     uint8_t window_shape_prev[MAX_CHANNELS];
 #ifdef LTP_DEC

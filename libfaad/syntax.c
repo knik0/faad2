@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.68 2004/01/16 20:20:32 menno Exp $
+** $Id: syntax.c,v 1.69 2004/01/28 19:17:26 menno Exp $
 **/
 
 /*
@@ -328,11 +328,6 @@ void decode_sce_lfe(faacDecHandle hDecoder,
         return;
     }
 
-    if (hDecoder->pce_set)
-        hDecoder->internal_channel[hDecoder->pce.sce_channel[tag]] = channels;
-    else
-        hDecoder->internal_channel[channels] = channels;
-
     if (id_syn_ele == ID_SCE)
         hDecoder->channel_element[channels] = hDecoder->fr_ch_ele;
     else /* LFE */
@@ -340,6 +335,11 @@ void decode_sce_lfe(faacDecHandle hDecoder,
     hDecoder->element_id[hDecoder->fr_ch_ele] = id_syn_ele;
 
     hInfo->error = single_lfe_channel_element(hDecoder, ld, channels, &tag);
+
+    if (hDecoder->pce_set)
+        hDecoder->internal_channel[hDecoder->pce.sce_channel[tag]] = channels;
+    else
+        hDecoder->internal_channel[channels] = channels;
 
     hDecoder->fr_channels++;
     hDecoder->fr_ch_ele++;
@@ -362,6 +362,12 @@ void decode_cpe(faacDecHandle hDecoder, faacDecFrameInfo *hInfo, bitfile *ld,
         return;
     }
 
+    hDecoder->channel_element[channels] = hDecoder->fr_ch_ele;
+    hDecoder->channel_element[channels+1] = hDecoder->fr_ch_ele;
+    hDecoder->element_id[hDecoder->fr_ch_ele] = id_syn_ele;
+
+    hInfo->error = channel_pair_element(hDecoder, ld, channels, &tag);
+
     if (hDecoder->pce_set)
     {
         hDecoder->internal_channel[hDecoder->pce.cpe_channel[tag]] = channels;
@@ -371,12 +377,6 @@ void decode_cpe(faacDecHandle hDecoder, faacDecFrameInfo *hInfo, bitfile *ld,
         hDecoder->internal_channel[channels+1] = channels+1;
     }
 
-    hDecoder->channel_element[channels] = hDecoder->fr_ch_ele;
-    hDecoder->channel_element[channels+1] = hDecoder->fr_ch_ele;
-    hDecoder->element_id[hDecoder->fr_ch_ele] = id_syn_ele;
-
-    hInfo->error = channel_pair_element(hDecoder, ld, channels, &tag);
-
     hDecoder->fr_channels += 2;
     hDecoder->fr_ch_ele++;
 }
@@ -385,7 +385,6 @@ void raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
                     bitfile *ld, program_config *pce, drc_info *drc)
 {
     uint8_t id_syn_ele;
-    uint8_t ch_ele = 0;
 
     hDecoder->fr_channels = 0;
     hDecoder->fr_ch_ele = 0;
@@ -404,21 +403,18 @@ void raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
             case ID_SCE:
                 if (hDecoder->first_syn_ele == 25) hDecoder->first_syn_ele = id_syn_ele;
                 decode_sce_lfe(hDecoder, hInfo, ld, id_syn_ele);
-                ch_ele++;
                 if (hInfo->error > 0)
                     return;
                 break;
             case ID_CPE:
                 if (hDecoder->first_syn_ele == 25) hDecoder->first_syn_ele = id_syn_ele;
                 decode_cpe(hDecoder, hInfo, ld, id_syn_ele);
-                ch_ele++;
                 if (hInfo->error > 0)
                     return;
                 break;
             case ID_LFE:
                 hDecoder->has_lfe++;
                 decode_sce_lfe(hDecoder, hInfo, ld, id_syn_ele);
-                ch_ele++;
                 if (hInfo->error > 0)
                     return;
                 break;
@@ -448,7 +444,6 @@ void raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
                 /* SBR data will be read directly in the SCE/LFE/CPE element */
                 if ((hInfo->error = fill_element(hDecoder, ld, drc
 #ifdef SBR_DEC
-                    //, (ch_ele == 0) ? INVALID_SBR_ELEMENT : (ch_ele-1)
                     , INVALID_SBR_ELEMENT
 #endif
                     )) > 0)
@@ -463,67 +458,48 @@ void raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
         {
         case 1:
             decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
-            ch_ele++;
             if (hInfo->error > 0)
                 return;
             break;
         case 2:
             decode_cpe(hDecoder, hInfo, ld, ID_CPE);
-            ch_ele++;
             if (hInfo->error > 0)
                 return;
             break;
         case 3:
             decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
-            ch_ele++;
             decode_cpe(hDecoder, hInfo, ld, ID_CPE);
-            ch_ele++;
             if (hInfo->error > 0)
                 return;
             break;
         case 4:
             decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
-            ch_ele++;
             decode_cpe(hDecoder, hInfo, ld, ID_CPE);
-            ch_ele++;
             decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
-            ch_ele++;
             if (hInfo->error > 0)
                 return;
             break;
         case 5:
             decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
-            ch_ele++;
             decode_cpe(hDecoder, hInfo, ld, ID_CPE);
-            ch_ele++;
             decode_cpe(hDecoder, hInfo, ld, ID_CPE);
-            ch_ele++;
             if (hInfo->error > 0)
                 return;
             break;
         case 6:
             decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
-            ch_ele++;
             decode_cpe(hDecoder, hInfo, ld, ID_CPE);
-            ch_ele++;
             decode_cpe(hDecoder, hInfo, ld, ID_CPE);
-            ch_ele++;
             decode_sce_lfe(hDecoder, hInfo, ld, ID_LFE);
-            ch_ele++;
             if (hInfo->error > 0)
                 return;
             break;
-        case 7:
+        case 7: /* 8 channels */
             decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
-            ch_ele++;
             decode_cpe(hDecoder, hInfo, ld, ID_CPE);
-            ch_ele++;
             decode_cpe(hDecoder, hInfo, ld, ID_CPE);
-            ch_ele++;
             decode_cpe(hDecoder, hInfo, ld, ID_CPE);
-            ch_ele++;
             decode_sce_lfe(hDecoder, hInfo, ld, ID_LFE);
-            ch_ele++;
             if (hInfo->error > 0)
                 return;
             break;
@@ -1624,9 +1600,7 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
 
                 /* decode intensity position */
                 t = huffman_scale_factor(ld);
-                if (t < 0)
-                    return 9;
-                is_position += (t - 60);
+                is_position += t;
                 ics->scale_factors[g][sfb] = is_position;
 
                 break;
@@ -1640,9 +1614,6 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
                         DEBUGVAR(1,73,"scale_factor_data(): first noise")) - 256;
                 } else {
                     t = huffman_scale_factor(ld);
-                    if (t < 0)
-                        return 9;
-                    t -= 60;
                 }
                 noise_energy += t;
                 ics->scale_factors[g][sfb] = noise_energy;
@@ -1656,9 +1627,7 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
 
                 /* decode scale factor */
                 t = huffman_scale_factor(ld);
-                if (t < 0)
-                    return 9;
-                scale_factor += (t - 60);
+                scale_factor += t;
                 if (scale_factor < 0 || scale_factor > 255)
                     return 4;
                 ics->scale_factors[g][sfb] = scale_factor;

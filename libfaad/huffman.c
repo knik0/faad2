@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: huffman.c,v 1.16 2004/01/20 18:42:51 menno Exp $
+** $Id: huffman.c,v 1.17 2004/01/28 19:17:25 menno Exp $
 **/
 
 #include "common.h"
@@ -62,7 +62,7 @@ int8_t huffman_scale_factor(bitfile *ld)
         index = hcb_sf[index][bit];
     }
 
-    return index + 121;
+    return index + 61;
 }
 
 
