@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.29 2002/09/04 09:17:42 menno Exp $
+** $Id: decoder.c,v 1.30 2002/09/04 09:33:17 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -663,7 +663,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             quant_to_spec(ics, spec_coef[ch], frame_len);
     }
 
-    /* Because for ms and is both channels spectral coefficients are needed
+    /* Because for ms, is and pns both channels spectral coefficients are needed
        we have to restart running through all channels here.
     */
     for (ch = 0; ch < channels; ch++)
@@ -693,7 +693,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         /* pns decoding */
         if ((!right_channel) && (pch != -1) && (ics->ms_mask_present))
             pns_decode(ics, icsr, spec_coef[ch], spec_coef[pch], frame_len, 1);
-        else
+        else if ((pch == -1) || ((pch != -1) && (!ics->ms_mask_present)))
             pns_decode(ics, NULL, spec_coef[ch], NULL, frame_len, 0);
 
         if (!right_channel)
