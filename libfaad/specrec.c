@@ -1,19 +1,19 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.23 2003/07/29 08:20:13 menno Exp $
+** $Id: specrec.c,v 1.24 2003/08/31 17:39:39 menno Exp $
 **/
 
 /*
@@ -483,6 +483,7 @@ void build_tables(real_t *pow2_table)
 
 static INLINE real_t iquant(int16_t q, real_t *tab)
 {
+#ifdef FIXED_POINT
     int16_t sgn = 1;
 
     if (q == 0) return 0;
@@ -497,6 +498,22 @@ static INLINE real_t iquant(int16_t q, real_t *tab)
         return sgn * tab[q>>3] * 16;
 
     return sgn * tab[q];
+#else
+    int16_t sgn = 1;
+
+    if (q == 0) return 0;
+
+    if (q < 0)
+    {
+        q = -q;
+        sgn = -1;
+    }
+
+    if (q < IQ_TABLE_SIZE)
+        return sgn * tab[q];
+
+    return sgn * pow(q, 4./3.);
+#endif
 }
 
 void inverse_quantization(real_t *x_invquant, int16_t *x_quant, uint16_t frame_len)
