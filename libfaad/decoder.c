@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.30 2002/09/04 09:33:17 menno Exp $
+** $Id: decoder.c,v 1.31 2002/09/05 20:10:53 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -645,18 +645,12 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                 ics = &(syntax_elements[i]->ics2);
         }
 
-#ifdef FIXED_POINT
-        /* inverse quantization and application of scalefactors */
-        iquant_and_apply_scalefactors(ics, spec_coef[ch], spec_data[ch],
-            iq_table, frame_len);
-#else
         /* inverse quantization */
         inverse_quantization(spec_coef[ch], spec_data[ch], iq_table,
             frame_len);
 
         /* apply scalefactors */
         apply_scalefactors(ics, spec_coef[ch], pow2_table, frame_len);
-#endif
 
         /* deinterleave short block grouping */
         if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: specrec.c,v 1.13 2002/08/30 12:10:57 menno Exp $
+** $Id: specrec.c,v 1.14 2002/09/05 20:10:53 menno Exp $
 **/
 
 /*
@@ -251,83 +251,12 @@ void build_tables(real_t *iq_table, real_t *pow2_table)
         iq_table[i] = REAL_CONST(pow(i, 4.0/3.0));
     }
 
-#ifndef FIXED_POINT
     /* build pow(2, 0.25*x) table for scalefactors */
     for(i = 0; i < POW_TABLE_SIZE; i++)
     {
-        pow2_table[i] = (real_t)pow(2.0, 0.25 * (i-100));
-    }
-#endif
-}
-
-#ifdef FIXED_POINT
-
-static real_t newpow2_table[4] = {
-    COEF_CONST(1.0),
-    COEF_CONST(1.1892071), /* pow(2,.25) */
-    COEF_CONST(1.4142136), /* pow(2,.5) */
-    COEF_CONST(1.6817928)  /* pow(2,.75) */
-};
-
-void iquant_and_apply_scalefactors(ic_stream *ics, real_t *x_invquant,
-                                   int16_t *x_quant, real_t *iq_table,
-                                   uint16_t frame_len)
-{
-    int16_t i;
-    uint16_t g, sfb, k;
-    uint16_t nshort = frame_len/8;
-
-    for (i = 0; i < frame_len; i++)
-        x_invquant[i] = REAL_CONST(0.0);
-
-    for (g = 0; g < ics->num_window_groups; g++)
-    {
-        for (sfb = 0, k = 0; sfb < ics->max_sfb; sfb++)
-        {
-            uint16_t top = ics->sect_sfb_offset[g][sfb+1];
-            int16_t scalefactor = ics->scale_factors[g][sfb] - 100;
-
-            for ( ; k < top; k++)
-            {
-                real_t dequant;
-                int16_t shift;
-                int16_t q = x_quant[k];
-                if (!q)
-                    continue;
-
-                i = abs(q) << 3;
-                shift = scalefactor >> 2;
-
-                while (i < IQ_TABLE_SIZE)
-                {
-                    i <<= 3;
-                    shift -= 4;
-                }
-                i >>= 3;
-                if (i < IQ_TABLE_SIZE)
-                    dequant = iq_table[i];
-                else 
-                    dequant = iq_table[i>>3] * 16;
-
-                if (shift >= 0)
-                    dequant *= (1 << shift);
-                else if (shift >= -31)
-                    dequant *= (1 >> -shift);
-                else
-                    dequant = REAL_CONST(0.0);
-
-                dequant = MUL_R_C(dequant, newpow2_table[scalefactor & 3]);
-
-                x_invquant[k] = (q > 0) ? dequant : -dequant;
-//                x_invquant[k] = (dequant^(q >> (sizeof(int32_t)*8-1))) - (q >> (sizeof(int32_t)*8-1));
-            }
-        }
-        x_invquant += nshort * ics->window_group_length[g];
-        x_quant += nshort * ics->window_group_length[g];
+        pow2_table[i] = REAL_CONST(pow(2.0, 0.25 * (i-100)));
     }
 }
-
-#else
 
 static INLINE real_t iquant(int16_t q, real_t *iq_table)
 {
@@ -404,15 +333,13 @@ void apply_scalefactors(ic_stream *ics, real_t *x_invquant, real_t *pow2_table,
             /* minimum size of a sf band is 4 and always a multiple of 4 */
             for ( ; k < top; k+=4)
             {
-                fp[0] *= scale;
-                fp[1] *= scale;
-                fp[2] *= scale;
-                fp[3] *= scale;
+                fp[0] = MUL(fp[0],scale);
+                fp[1] = MUL(fp[1],scale);
+                fp[2] = MUL(fp[2],scale);
+                fp[3] = MUL(fp[3],scale);
                 fp += 4;
             }
         }
         groups += ics->window_group_length[g];
     }
 }
-
-#endif
