@@ -22,12 +22,13 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.60 2003/11/17 19:40:11 menno Exp $
+** $Id: main.c,v 1.61 2003/11/21 15:09:16 menno Exp $
 **/
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#define off_t __int64
 #else
 #include <time.h>
 #endif
@@ -164,36 +165,15 @@ int adts_parse(aac_buffer *b, int *bitrate, float *length)
 }
 
 
-FILE *g_mp4File = NULL;
 
-size_t read_callback(void *buffer, size_t length)
+int read_callback(void *user_data, void *buffer, int length)
 {
-    return fread(buffer, length, 1, g_mp4File);
+    return fread(buffer, 1, length, (FILE*)user_data);
 }
 
-size_t write_callback(void *buffer, size_t length)
+int seek_callback(void *user_data, int position)
 {
-    return 0;
-}
-
-off_t get_position_callback()
-{
-    return ftell(g_mp4File);
-}
-
-off_t get_length_callback()
-{
-    off_t oldpos, size = 0;
-    oldpos = ftell(g_mp4File);
-    fseek(g_mp4File, 0, SEEK_END);
-    size = ftell(g_mp4File);
-    fseek(g_mp4File, oldpos, SEEK_SET);
-    return size;
-}
-
-int seek_callback(off_t position)
-{
-    return fseek(g_mp4File, position, SEEK_SET);
+    return fseek((FILE*)user_data, position, SEEK_SET);
 }
 
 /* MicroSoft channel definitions */
@@ -668,30 +648,24 @@ int GetAACTrack(mp4ff_t *infile)
 {
     /* find AAC track */
     int i, rc;
-    int numTracks = mp4ff_audio_tracks(infile);
+    int numTracks = mp4ff_total_tracks(infile);
 
     for (i = 0; i < numTracks; i++)
     {
-        //const char* trackType = mp4ff_audio_compressor(infile, i);
+        unsigned char *buff = NULL;
+        int buff_size = 0;
+        mp4AudioSpecificConfig mp4ASC;
 
-        //if (!strcmp(trackType, "soun"))
+        mp4ff_get_decoder_config(infile, i, &buff, &buff_size);
+
+        if (buff)
         {
-            unsigned char *buff = NULL;
-            int buff_size = 0;
-            mp4AudioSpecificConfig mp4ASC;
+            rc = AudioSpecificConfig(buff, buff_size, &mp4ASC);
+            free(buff);
 
-            //MP4GetTrackESConfiguration(infile, trackId, &buff, &buff_size);
-            mp4ff_get_mp4_audio_decoder_config(infile, i, &buff, &buff_size);
-
-            if (buff)
-            {
-                rc = AudioSpecificConfig(buff, buff_size, &mp4ASC);
-                free(buff);
-
-                if (rc < 0)
-                    return -1;
-                return i;
-            }
+            if (rc < 0)
+                return -1;
+            return i;
         }
     }
 
@@ -719,6 +693,7 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
 
     audio_file *aufile;
 
+    FILE *mp4File;
     FILE *adtsFile;
     unsigned char *adtsData;
     int adtsDataSize;
@@ -744,13 +719,11 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
 
 
     /* initialise the callback structure */
-    mp4_callback_t *mp4cb = malloc(sizeof(mp4_callback_t));
-    g_mp4File = fopen(mp4file, "rb");
-    mp4cb->get_length = get_length_callback;
-    mp4cb->get_position = get_position_callback;
+    mp4ff_callback_t *mp4cb = malloc(sizeof(mp4ff_callback_t));
+    mp4File = fopen(mp4file, "rb");
     mp4cb->read = read_callback;
     mp4cb->seek = seek_callback;
-    mp4cb->write = write_callback;
+    mp4cb->user_data = mp4File;
 
 
     hDecoder = faacDecOpen();
@@ -771,7 +744,7 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
         }
     }
 
-    infile = mp4ff_open(mp4cb, 1, 0, 0);
+    infile = mp4ff_open_read(mp4cb);
     if (!infile)
     {
         /* unable to open file */
@@ -785,13 +758,13 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
         faacDecClose(hDecoder);
         mp4ff_close(infile);
         free(mp4cb);
-        fclose(g_mp4File);
+        fclose(mp4File);
         return 1;
     }
 
     buffer = NULL;
     buffer_size = 0;
-    mp4ff_get_mp4_audio_decoder_config(infile, track, &buffer, &buffer_size);
+    mp4ff_get_decoder_config(infile, track, &buffer, &buffer_size);
 
     if(faacDecInit2(hDecoder, buffer, buffer_size,
                     &samplerate, &channels) < 0)
@@ -801,11 +774,11 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
         faacDecClose(hDecoder);
         mp4ff_close(infile);
         free(mp4cb);
-        fclose(g_mp4File);
+        fclose(mp4File);
         return 1;
     }
 
-    timescale = mp4ff_audio_time_scale(infile, track);
+    timescale = mp4ff_time_scale(infile, track);
     framesize = 1024;
     useAacLength = 0;
 
@@ -823,7 +796,7 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
     fprintf(stderr, "%s file info:\n", mp4file);
     {
         char *ot[6] = { "NULL", "MAIN AAC", "LC AAC", "SSR AAC", "LTP AAC", "HE AAC" };
-        long samples = mp4ff_audio_length(infile, track);
+        long samples = mp4ff_num_samples(infile, track);
         float f = 1024.0;
         float seconds;
         if ((mp4ASC.sbr_present_flag == 1) || mp4ASC.forceUpSampling)
@@ -841,11 +814,11 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
         faacDecClose(hDecoder);
         mp4ff_close(infile);
         free(mp4cb);
-        fclose(g_mp4File);
+        fclose(mp4File);
         return 0;
     }
 
-    numSamples = mp4ff_audio_length(infile, track);
+    numSamples = mp4ff_num_samples(infile, track);
 
     for (sampleId = 0; sampleId < numSamples; sampleId++)
     {
@@ -858,18 +831,15 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
         buffer = NULL;
         buffer_size = 0;
 
-        mp4ff_set_audio_position(infile, sampleId, track);
-        dur = mp4ff_get_sample_duration(infile, sampleId, track);
-        buffer_size = mp4ff_audio_frame_size(infile, sampleId, track);
-        buffer = (unsigned char*)malloc(buffer_size*sizeof(unsigned char));
-        rc = mp4ff_read_audio_frame(infile, buffer, buffer_size, track);
+        dur = mp4ff_get_sample_duration(infile, track, sampleId);
+        rc = mp4ff_read_sample(infile, track, sampleId, &buffer,  &buffer_size);
         if (rc == 0)
         {
             fprintf(stderr, "Reading from MP4 file failed.\n");
             faacDecClose(hDecoder);
             mp4ff_close(infile);
             free(mp4cb);
-            fclose(g_mp4File);
+            fclose(mp4File);
             return 1;
         }
 
@@ -935,7 +905,7 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
                     faacDecClose(hDecoder);
                     mp4ff_close(infile);
                     free(mp4cb);
-                    fclose(g_mp4File);
+                    fclose(mp4File);
                     return 0;
                 }
             }
@@ -967,7 +937,6 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
         }
     }
 
-
     faacDecClose(hDecoder);
 
     if (adts_out == 1)
@@ -981,7 +950,7 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
         close_audio_file(aufile);
 
     free(mp4cb);
-    fclose(g_mp4File);
+    fclose(mp4File);
 
     return frameInfo.error;
 }
@@ -1006,7 +975,8 @@ int main(int argc, char *argv[])
     char aacFileName[255];
     char audioFileName[255];
     char adtsFileName[255];
-    mp4_callback_t *mp4cb = malloc(sizeof(mp4_callback_t));
+    unsigned char header[8];
+    FILE *hMP4File;
 
 /* System dependant types */
 #ifdef _WIN32
@@ -1182,17 +1152,13 @@ int main(int argc, char *argv[])
         strcat(audioFileName, file_ext[format]);
     }
 
-    /* initialise the callback structure */
-    g_mp4File = fopen(aacFileName, "rb");
-    mp4cb->get_length = get_length_callback;
-    mp4cb->get_position = get_position_callback;
-    mp4cb->read = read_callback;
-    mp4cb->seek = seek_callback;
-    mp4cb->write = write_callback;
-
-    mp4file = mp4ff_check_sig(mp4cb);
-    free(mp4cb);
-    fclose(g_mp4File);
+    /* check for mp4 file */
+    mp4file = 0;
+    hMP4File = fopen(aacFileName, "rb");
+    fread(header, 1, 8, hMP4File);
+    fclose(hMP4File);
+    if (header[4] == 'f' && header[5] == 't' && header[6] == 'y' && header[7] == 'p')
+        mp4file = 1;
 
     if (mp4file)
     {
