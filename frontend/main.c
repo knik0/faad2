@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.3 2002/01/15 13:20:13 menno Exp $
+** $Id: main.c,v 1.4 2002/01/15 13:49:42 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -324,6 +324,12 @@ int GetAACTrack(MP4FileHandle *infile)
     return -1;
 }
 
+unsigned long srates[] =
+{
+    96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000,
+    12000, 11025, 8000
+};
+
 int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
                   int outputFormat, int fileType)
 {
@@ -371,7 +377,7 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
     /* Set the default object type and samplerate */
     /* This is useful for RAW AAC files */
     config = faacDecGetCurrentConfiguration(hDecoder);
-    config->defSampleRate = srate;
+    config->defSampleRate = srates[srate];
     if (use_ltp)
         config->defObjectType = LTP;
     config->outputFormat = outputFormat;
@@ -452,10 +458,7 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
         {
             fprintf(stderr, "Error: %s\n",
                 faacDecGetErrorMessage(frameInfo.error));
-            faacDecClose(hDecoder);
-            MP4Close(infile);
-            close_audio_file(aufile);
-            return frameInfo.error;
+            break;
         }
     }
 
