@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: rvlc_scale_factors.h,v 1.1 2002/08/05 20:33:38 menno Exp $
+** $Id: rvlc_scale_factors.h,v 1.2 2002/08/07 08:14:31 menno Exp $
 **/
 
 #ifndef __RVLC_SCF_H__
@@ -26,9 +26,26 @@
 extern "C" {
 #endif
 
+typedef struct
+{
+    int8_t index;
+    uint8_t len;
+    uint32_t cw;
+} rvlc_huff_table;
+
+
+#define ESC_VAL 7
+
 
 uint8_t rvlc_scale_factor_data(ic_stream *ics, bitfile *ld);
 uint8_t rvlc_decode_scale_factors(ic_stream *ics, bitfile *ld);
+
+static uint8_t rvlc_decode_sf_forward(ic_stream *ics,
+                                      bitfile *ld_sf,
+                                      bitfile *ld_esc);
+static int8_t rvlc_huffman_sf(bitfile *ld_sf,
+                              bitfile *ld_esc);
+static int8_t rvlc_huffman_esc(bitfile *ld_esc);
 
 
 #ifdef __cplusplus

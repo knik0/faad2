@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.h,v 1.6 2002/08/05 20:33:38 menno Exp $
+** $Id: bits.h,v 1.7 2002/08/07 08:14:31 menno Exp $
 **/
 
 #ifndef __BITS_H__
@@ -58,7 +58,7 @@ typedef struct _bitfile
 void faad_initbits(bitfile *ld, void *buffer);
 uint8_t faad_byte_align(bitfile *ld);
 uint32_t faad_get_processed_bits(bitfile *ld);
-void faad_getbitbuffer(bitfile *ld, void *buffer, uint16_t bits
+uint8_t *faad_getbitbuffer(bitfile *ld, uint16_t bits
                        DEBUGDEC);
 
 
@@ -96,7 +96,12 @@ static INLINE void faad_flushbits(bitfile *ld, uint8_t bits)
 /* return next n bits (right adjusted) */
 static INLINE uint32_t faad_getbits(bitfile *ld, uint8_t n DEBUGDEC)
 {
-	uint32_t ret = faad_showbits(ld, n);
+    uint32_t ret;
+
+    if (n == 0)
+        return 0;
+
+	ret = faad_showbits(ld, n);
 	faad_flushbits(ld, n);
 
 #ifdef ANALYSIS
