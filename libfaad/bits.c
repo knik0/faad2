@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.c,v 1.10 2002/09/28 14:03:07 menno Exp $
+** $Id: bits.c,v 1.11 2002/09/28 21:57:37 menno Exp $
 **/
 
 #include "common.h"
@@ -97,17 +97,18 @@ void faad_initbits_rev(bitfile *ld, void *buffer,
     uint32_t tmp, index;
 
     index = (bits_in_buffer+31)/32;
+    index--;
 
     ld->start = (uint32_t*)buffer + index - 2;
 
     tmp = *((uint32_t*)buffer + index);
-#ifdef ARCH_IS_BIG_ENDIAN
+#ifndef ARCH_IS_BIG_ENDIAN
     BSWAP(tmp);
 #endif
     ld->bufa = tmp;
 
     tmp = *((uint32_t*)buffer + index - 1);
-#ifdef ARCH_IS_BIG_ENDIAN
+#ifndef ARCH_IS_BIG_ENDIAN
     BSWAP(tmp);
 #endif
     ld->bufb = tmp;
@@ -115,4 +116,6 @@ void faad_initbits_rev(bitfile *ld, void *buffer,
     ld->tail = (uint32_t*)buffer + index;
 
     ld->bits_left = bits_in_buffer % 32;
+    if (ld->bits_left == 0)
+        ld->bits_left = 32;
 }

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.h,v 1.9 2002/09/28 14:03:07 menno Exp $
+** $Id: bits.h,v 1.10 2002/09/28 21:57:37 menno Exp $
 **/
 
 #ifndef __BITS_H__
@@ -63,6 +63,8 @@ static uint32_t bitmask[] = {
 };
 
 void faad_initbits(bitfile *ld, void *buffer);
+void faad_initbits_rev(bitfile *ld, void *buffer,
+                       uint32_t bits_in_buffer);
 uint8_t faad_byte_align(bitfile *ld);
 uint32_t faad_get_processed_bits(bitfile *ld);
 uint8_t *faad_getbitbuffer(bitfile *ld, uint32_t bits
@@ -147,6 +149,7 @@ static INLINE uint32_t faad_showbits_rev(bitfile *ld, uint32_t bits)
             if (ld->bufb & (1 << (i + (32-ld->bits_left))))
                 B |= (1 << (bits - ld->bits_left - i - 1));
         }
+        return B;
     }
 }
 
@@ -160,7 +163,7 @@ static INLINE void faad_flushbits_rev(bitfile *ld, uint32_t bits)
 
         ld->bufa = ld->bufb;
         tmp = *(uint32_t*)ld->start;
-#ifdef ARCH_IS_BIG_ENDIAN
+#ifndef ARCH_IS_BIG_ENDIAN
         BSWAP(tmp);
 #endif
         ld->bufb = tmp;
