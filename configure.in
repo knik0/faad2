@@ -78,8 +78,7 @@ MY_CHECK_TYPEDEF_FROM_INCLUDE([fpos_t foo; foo.__pos = 0;],
         [HAVE_FPOS_T_POS])
 
 
-external_mp4v2=yes
-
+AC_CHECK_PROG(external_mp4v2, mpeg4ip-config, yes, no)
 AM_CONDITIONAL(WITH_MP4V2, false)
 
 if test x$external_mp4v2 = xyes; then
