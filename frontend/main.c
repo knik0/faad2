@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.40 2003/07/09 13:55:59 menno Exp $
+** $Id: main.c,v 1.41 2003/07/09 15:11:25 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -155,6 +155,39 @@ int adts_parse(aac_buffer *b, int *bitrate, float *length)
     return 1;
 }
 
+/* MicroSoft channel definitions */
+#define SPEAKER_FRONT_LEFT             0x1
+#define SPEAKER_FRONT_RIGHT            0x2
+#define SPEAKER_FRONT_CENTER           0x4
+#define SPEAKER_LOW_FREQUENCY          0x8
+#define SPEAKER_BACK_LEFT              0x10
+#define SPEAKER_BACK_RIGHT             0x20
+#define SPEAKER_FRONT_LEFT_OF_CENTER   0x40
+#define SPEAKER_FRONT_RIGHT_OF_CENTER  0x80
+#define SPEAKER_BACK_CENTER            0x100
+#define SPEAKER_SIDE_LEFT              0x200
+#define SPEAKER_SIDE_RIGHT             0x400
+#define SPEAKER_TOP_CENTER             0x800
+#define SPEAKER_TOP_FRONT_LEFT         0x1000
+#define SPEAKER_TOP_FRONT_CENTER       0x2000
+#define SPEAKER_TOP_FRONT_RIGHT        0x4000
+#define SPEAKER_TOP_BACK_LEFT          0x8000
+#define SPEAKER_TOP_BACK_CENTER        0x10000
+#define SPEAKER_TOP_BACK_RIGHT         0x20000
+#define SPEAKER_RESERVED               0x80000000
+
+long aacChannelConfig2wavexChannelMask(faacDecFrameInfo *hInfo)
+{
+    if (hInfo->channels == 6 && hInfo->num_lfe_channels)
+    {
+        return SPEAKER_FRONT_LEFT + SPEAKER_FRONT_RIGHT +
+            SPEAKER_FRONT_CENTER + SPEAKER_LOW_FREQUENCY +
+            SPEAKER_BACK_LEFT + SPEAKER_BACK_RIGHT;
+    } else {
+        return 0;
+    }
+}
+
 char *position2string(int position)
 {
     switch (position)
@@ -179,15 +212,24 @@ void print_channel_info(faacDecFrameInfo *frameInfo)
 {
     /* print some channel info */
     int i;
+    long channelMask = aacChannelConfig2wavexChannelMask(frameInfo);
 
     printf("  ---------------------\n");
     if (frameInfo->num_lfe_channels > 0)
     {
-        printf(" | Config: %2d.%d Ch     |\n", frameInfo->channels-frameInfo->num_lfe_channels, frameInfo->num_lfe_channels);
+        printf(" | Config: %2d.%d Ch     |", frameInfo->channels-frameInfo->num_lfe_channels, frameInfo->num_lfe_channels);
     } else {
-        printf(" | Config: %2d Ch       |\n", frameInfo->channels);
+        printf(" | Config: %2d Ch       |", frameInfo->channels);
     }
-    printf("  ---------------------\n");
+    if (channelMask)
+        printf(" WARNING: channels are reordered according to\n");
+    else
+        printf("\n");
+    printf("  ---------------------");
+    if (channelMask)
+        printf("  MS defaults defined in WAVE_FORMAT_EXTENSIBLE\n");
+    else
+        printf("\n");
     printf(" | Ch |    Position    |\n");
     printf("  ---------------------\n");
     for (i = 0; i < frameInfo->channels; i++)
@@ -197,6 +239,7 @@ void print_channel_info(faacDecFrameInfo *frameInfo)
     printf("  ---------------------\n");
     printf("\n");
 }
+
 
 /* globals */
 char *progName;
@@ -428,10 +471,10 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
             if (!to_stdout)
             {
                 aufile = open_audio_file(sndfile, frameInfo.samplerate, frameInfo.channels,
-                    outputFormat, fileType);
+                    outputFormat, fileType, aacChannelConfig2wavexChannelMask(&frameInfo));
             } else {
                 aufile = open_audio_file("-", frameInfo.samplerate, frameInfo.channels,
-                    outputFormat, fileType);
+                    outputFormat, fileType, aacChannelConfig2wavexChannelMask(&frameInfo));
             }
             if (aufile == NULL)
             {
@@ -649,13 +692,13 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
             if(!to_stdout)
             {
                 aufile = open_audio_file(sndfile, frameInfo.samplerate, frameInfo.channels,
-                    outputFormat, fileType);
+                    outputFormat, fileType, aacChannelConfig2wavexChannelMask(&frameInfo));
             } else {
 #ifdef _WIN32
                 setmode(fileno(stdout), O_BINARY);
 #endif
                 aufile = open_audio_file("-", frameInfo.samplerate, frameInfo.channels,
-                    outputFormat, fileType);
+                    outputFormat, fileType, aacChannelConfig2wavexChannelMask(&frameInfo));
             }
             if (aufile == NULL)
             {

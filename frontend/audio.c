@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: audio.c,v 1.15 2003/07/09 11:53:07 menno Exp $
+** $Id: audio.c,v 1.16 2003/07/09 15:11:25 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -31,7 +31,7 @@
 
 
 audio_file *open_audio_file(char *infile, int samplerate, int channels,
-                            int outputFormat, int fileType)
+                            int outputFormat, int fileType, long channelMask)
 {
     audio_file *aufile = malloc(sizeof(audio_file));
 
@@ -41,6 +41,7 @@ audio_file *open_audio_file(char *infile, int samplerate, int channels,
     aufile->channels = channels;
     aufile->total_samples = 0;
     aufile->fileType = fileType;
+    aufile->channelMask = channelMask;
 
     switch (outputFormat)
     {
@@ -79,7 +80,10 @@ audio_file *open_audio_file(char *infile, int samplerate, int channels,
 
     if (aufile->fileType == OUTPUT_WAV)
     {
-        write_wav_header(aufile);
+        if (aufile->channelMask)
+            write_wav_extensible_header(aufile, aufile->channelMask);
+        else
+            write_wav_header(aufile);
     }
 
     return aufile;
@@ -114,7 +118,10 @@ void close_audio_file(audio_file *aufile)
     {
         fseek(aufile->sndfile, 0, SEEK_SET);
 
-        write_wav_header(aufile);
+        if (aufile->channelMask)
+            write_wav_extensible_header(aufile, aufile->channelMask);
+        else
+            write_wav_header(aufile);
     }
 
     fclose(aufile->sndfile);
@@ -186,10 +193,9 @@ static int write_wav_header(audio_file *aufile)
     return fwrite(header, sizeof(header), 1, aufile->sndfile);
 }
 
-/* ??????? */
 static int write_wav_extensible_header(audio_file *aufile, long channelMask)
 {
-    unsigned char header[66];
+    unsigned char header[68];
     unsigned char* p = header;
     unsigned int bytes = (aufile->bits_per_sample + 7) / 8;
     float data_size = (float)bytes * aufile->total_samples;
@@ -197,8 +203,8 @@ static int write_wav_extensible_header(audio_file *aufile, long channelMask)
 
     *p++ = 'R'; *p++ = 'I'; *p++ = 'F'; *p++ = 'F';
 
-    word32 = (data_size + (66 - 8) < (float)MAXWAVESIZE) ?
-        (unsigned long)data_size + (66 - 8)  :  (unsigned long)MAXWAVESIZE;
+    word32 = (data_size + (68 - 8) < (float)MAXWAVESIZE) ?
+        (unsigned long)data_size + (68 - 8)  :  (unsigned long)MAXWAVESIZE;
     *p++ = (unsigned char)(word32 >>  0);
     *p++ = (unsigned char)(word32 >>  8);
     *p++ = (unsigned char)(word32 >> 16);
@@ -208,7 +214,7 @@ static int write_wav_extensible_header(audio_file *aufile, long channelMask)
 
     *p++ = 'f'; *p++ = 'm'; *p++ = 't'; *p++ = ' ';
 
-    *p++ = 0x10; *p++ = 0x00; *p++ = 0x00; *p++ = 0x00;
+    *p++ = /*0x10*/0x28; *p++ = 0x00; *p++ = 0x00; *p++ = 0x00;
 
     /* WAVE_FORMAT_EXTENSIBLE */
     *p++ = 0xFE; *p++ = 0xFF;
@@ -256,17 +262,17 @@ static int write_wav_extensible_header(audio_file *aufile, long channelMask)
     if (aufile->outputFormat == FAAD_FMT_FLOAT)
     {
         /* KSDATAFORMAT_SUBTYPE_IEEE_FLOAT: 00000003-0000-0010-8000-00aa00389b71 */
-//        /*??*/ *p++ = 0x00;
-//        /*??*/ *p++ = 0x00;
         *p++ = 0x03;
+        *p++ = 0x00;
+        *p++ = 0x00;
         *p++ = 0x00;
         *p++ = 0x00; *p++ = 0x00; *p++ = 0x10; *p++ = 0x00; *p++ = 0x80; *p++ = 0x00;
         *p++ = 0x00; *p++ = 0xaa; *p++ = 0x00; *p++ = 0x38; *p++ = 0x9b; *p++ = 0x71;
     } else {
         /* KSDATAFORMAT_SUBTYPE_PCM: 00000001-0000-0010-8000-00aa00389b71 */
-//        /*??*/ *p++ = 0x00;
-//        /*??*/ *p++ = 0x00;
         *p++ = 0x01;
+        *p++ = 0x00;
+        *p++ = 0x00;
         *p++ = 0x00;
         *p++ = 0x00; *p++ = 0x00; *p++ = 0x10; *p++ = 0x00; *p++ = 0x80; *p++ = 0x00;
         *p++ = 0x00; *p++ = 0xaa; *p++ = 0x00; *p++ = 0x38; *p++ = 0x9b; *p++ = 0x71;
@@ -296,6 +302,26 @@ static int write_audio_16bit(audio_file *aufile, void *sample_buffer,
 
     aufile->total_samples += samples;
 
+    if (aufile->channels == 6 && aufile->channelMask)
+    {
+        for (i = 0; i < samples; i += aufile->channels)
+        {
+            short r1, r2, r3, r4, r5, r6;
+            r1 = sample_buffer16[i];
+            r2 = sample_buffer16[i+1];
+            r3 = sample_buffer16[i+2];
+            r4 = sample_buffer16[i+3];
+            r5 = sample_buffer16[i+4];
+            r6 = sample_buffer16[i+5];
+            sample_buffer16[i] = r2;
+            sample_buffer16[i+1] = r3;
+            sample_buffer16[i+2] = r1;
+            sample_buffer16[i+3] = r6;
+            sample_buffer16[i+4] = r4;
+            sample_buffer16[i+5] = r5;
+        }
+    }
+
     for (i = 0; i < samples; i++)
     {
         data[i*2] = (char)(sample_buffer16[i] & 0xFF);
@@ -318,6 +344,26 @@ static int write_audio_24bit(audio_file *aufile, void *sample_buffer,
     char *data = malloc(samples*aufile->bits_per_sample*sizeof(char)/8);
 
     aufile->total_samples += samples;
+
+    if (aufile->channels == 6 && aufile->channelMask)
+    {
+        for (i = 0; i < samples; i += aufile->channels)
+        {
+            long r1, r2, r3, r4, r5, r6;
+            r1 = sample_buffer24[i];
+            r2 = sample_buffer24[i+1];
+            r3 = sample_buffer24[i+2];
+            r4 = sample_buffer24[i+3];
+            r5 = sample_buffer24[i+4];
+            r6 = sample_buffer24[i+5];
+            sample_buffer24[i] = r2;
+            sample_buffer24[i+1] = r3;
+            sample_buffer24[i+2] = r1;
+            sample_buffer24[i+3] = r6;
+            sample_buffer24[i+4] = r4;
+            sample_buffer24[i+5] = r5;
+        }
+    }
 
     for (i = 0; i < samples; i++)
     {
@@ -343,6 +389,26 @@ static int write_audio_32bit(audio_file *aufile, void *sample_buffer,
 
     aufile->total_samples += samples;
 
+    if (aufile->channels == 6 && aufile->channelMask)
+    {
+        for (i = 0; i < samples; i += aufile->channels)
+        {
+            long r1, r2, r3, r4, r5, r6;
+            r1 = sample_buffer32[i];
+            r2 = sample_buffer32[i+1];
+            r3 = sample_buffer32[i+2];
+            r4 = sample_buffer32[i+3];
+            r5 = sample_buffer32[i+4];
+            r6 = sample_buffer32[i+5];
+            sample_buffer32[i] = r2;
+            sample_buffer32[i+1] = r3;
+            sample_buffer32[i+2] = r1;
+            sample_buffer32[i+3] = r6;
+            sample_buffer32[i+4] = r4;
+            sample_buffer32[i+5] = r5;
+        }
+    }
+
     for (i = 0; i < samples; i++)
     {
         data[i*4] = (char)(sample_buffer32[i] & 0xFF);
@@ -367,6 +433,26 @@ static int write_audio_float(audio_file *aufile, void *sample_buffer,
     unsigned char *data = malloc(samples*aufile->bits_per_sample*sizeof(char)/8);
 
     aufile->total_samples += samples;
+
+    if (aufile->channels == 6 && aufile->channelMask)
+    {
+        for (i = 0; i < samples; i += aufile->channels)
+        {
+            float r1, r2, r3, r4, r5, r6;
+            r1 = sample_buffer_f[i];
+            r2 = sample_buffer_f[i+1];
+            r3 = sample_buffer_f[i+2];
+            r4 = sample_buffer_f[i+3];
+            r5 = sample_buffer_f[i+4];
+            r6 = sample_buffer_f[i+5];
+            sample_buffer_f[i] = r2;
+            sample_buffer_f[i+1] = r3;
+            sample_buffer_f[i+2] = r1;
+            sample_buffer_f[i+3] = r6;
+            sample_buffer_f[i+4] = r4;
+            sample_buffer_f[i+5] = r5;
+        }
+    }
 
     for (i = 0; i < samples; i++)
     {

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: audio.h,v 1.7 2003/07/08 13:45:45 menno Exp $
+** $Id: audio.h,v 1.8 2003/07/09 15:11:25 menno Exp $
 **/
 
 #ifndef AUDIO_H_INCLUDED
@@ -40,13 +40,15 @@ typedef struct
     unsigned int bits_per_sample;
     unsigned int channels;
     unsigned long total_samples;
+    long channelMask;
 } audio_file;
 
 audio_file *open_audio_file(char *infile, int samplerate, int channels,
-                            int outputFormat, int fileType);
+                            int outputFormat, int fileType, long channelMask);
 int write_audio_file(audio_file *aufile, void *sample_buffer, int samples);
 void close_audio_file(audio_file *aufile);
 static int write_wav_header(audio_file *aufile);
+static int write_wav_extensible_header(audio_file *aufile, long channelMask);
 static int write_audio_16bit(audio_file *aufile, void *sample_buffer,
                              unsigned int samples);
 static int write_audio_24bit(audio_file *aufile, void *sample_buffer,
