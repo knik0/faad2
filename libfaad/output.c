@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: output.c,v 1.29 2003/11/12 20:47:58 menno Exp $
+** $Id: output.c,v 1.30 2003/11/19 11:43:57 menno Exp $
 **/
 
 #include "common.h"
@@ -94,7 +94,7 @@ void* output_to_PCM(faacDecHandle hDecoder,
 #ifndef HAS_LRINTF
                     inp += -0.5f;
 #endif
-                    if (inp <= -32769.0f)
+                    if (inp <= -32768.0f)
                     {
                         inp = -32768.0f;
                     }
@@ -120,7 +120,7 @@ void* output_to_PCM(faacDecHandle hDecoder,
 #ifndef HAS_LRINTF
                     inp += -0.5f;
 #endif
-                    if (inp <= -8388609.0f)
+                    if (inp <= -8388608.0f)
                     {
                         inp = -8388608.0f;
                     }
@@ -146,7 +146,7 @@ void* output_to_PCM(faacDecHandle hDecoder,
 #ifndef HAS_LRINTF
                     inp += -0.5f;
 #endif
-                    if (inp <= -2147483649.0f)
+                    if (inp <= -2147483648.0f)
                     {
                         inp = -2147483648.0f;
                     }
