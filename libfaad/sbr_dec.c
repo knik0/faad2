@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.c,v 1.31 2004/03/12 13:31:25 menno Exp $
+** $Id: sbr_dec.c,v 1.32 2004/03/19 10:37:55 menno Exp $
 **/
 
 
@@ -79,6 +79,11 @@ sbr_info *sbrDecodeInit(uint16_t framelength, uint8_t id_aac,
     sbr->bs_samplerate_mode = 1;
     sbr->tHFGen = T_HFGEN;
     sbr->tHFAdj = T_HFADJ;
+
+    sbr->bsco = 0;
+    sbr->bsco_prev = 0;
+    sbr->M_prev = 0;
+    sbr->frame_len = framelength;
 
     /* force sbr reset */
     sbr->bs_start_freq_prev = -1;
@@ -165,6 +170,8 @@ static uint8_t sbr_save_prev_data(sbr_info *sbr, uint8_t ch)
 
     /* save data for next frame */
     sbr->kx_prev = sbr->kx;
+    sbr->M_prev = sbr->M;
+    sbr->bsco_prev = sbr->bsco;
 
     sbr->L_E_prev[ch] = sbr->L_E[ch];
 
@@ -201,6 +208,17 @@ static void sbr_process_channel(sbr_info *sbr, real_t *channel_buf, qmf_t X[MAX_
 
 #ifdef SBR_LOW_POWER
     ALIGN real_t deg[64];
+#endif
+
+#ifdef DRM
+    if (sbr->Is_DRM_SBR)
+    {
+        sbr->bsco = max((int32_t)sbr->maxAACLine*32/(int32_t)sbr->frame_len - (int32_t)sbr->kx, 0);
+    } else {
+#endif
+        sbr->bsco = 0;
+#ifdef DRM
+    }
 #endif
 
     /* subband analysis */
@@ -263,29 +281,50 @@ static void sbr_process_channel(sbr_info *sbr, real_t *channel_buf, qmf_t X[MAX_
     } else {
         for (l = 0; l < sbr->numTimeSlotsRate; l++)
         {
-            uint8_t xover_band;
+            uint8_t kx_band, M_band, bsco_band;
 
             if (l < sbr->t_E[ch][0])
-                xover_band = sbr->kx_prev;
-            else
-                xover_band = sbr->kx;
+            {
+                kx_band = sbr->kx_prev;
+                M_band = sbr->M_prev;
+                bsco_band = sbr->bsco_prev;
+            } else {
+                kx_band = sbr->kx;
+                M_band = sbr->M;
+                bsco_band = sbr->bsco;
+            }
 
-            for (k = 0; k < xover_band; k++)
+#ifndef SBR_LOW_POWER
+            for (k = 0; k < kx_band + bsco_band; k++)
             {
                 QMF_RE(X[l][k]) = QMF_RE(sbr->Xcodec[ch][l + sbr->tHFAdj][k]);
-#ifndef SBR_LOW_POWER
                 QMF_IM(X[l][k]) = QMF_IM(sbr->Xcodec[ch][l + sbr->tHFAdj][k]);
-#endif
             }
-            for (k = xover_band; k < 64; k++)
+            for (k = kx_band + bsco_band; k < kx_band + M_band; k++)
             {
                 QMF_RE(X[l][k]) = QMF_RE(sbr->Xsbr[ch][l + sbr->tHFAdj][k]);
-#ifndef SBR_LOW_POWER
                 QMF_IM(X[l][k]) = QMF_IM(sbr->Xsbr[ch][l + sbr->tHFAdj][k]);
-#endif
             }
-#ifdef SBR_LOW_POWER
-            QMF_RE(X[l][xover_band - 1]) += QMF_RE(sbr->Xsbr[ch][l + sbr->tHFAdj][xover_band - 1]);
+            for (k = max(kx_band + bsco_band, kx_band + M_band); k < 64; k++)
+            {
+                QMF_RE(X[l][k]) = 0;
+                QMF_IM(X[l][k]) = 0;
+            }
+#else
+            for (k = 0; k < kx_band + bsco_band; k++)
+            {
+                QMF_RE(X[l][k]) = QMF_RE(sbr->Xcodec[ch][l + sbr->tHFAdj][k]);
+            }
+            for (k = kx_band + bsco_band; k < min(kx_band + M_band, 63); k++)
+            {
+                QMF_RE(X[l][k]) = QMF_RE(sbr->Xsbr[ch][l + sbr->tHFAdj][k]);
+            }
+            for (k = max(kx_band + bsco_band, kx_band + M_band); k < 64; k++)
+            {
+                QMF_RE(X[l][k]) = 0;
+            }
+            QMF_RE(X[l][kx_band - 1 + bsco_band]) +=
+                QMF_RE(sbr->Xsbr[ch][l + sbr->tHFAdj][kx_band - 1 + bsco_band]);
 #endif
         }
     }

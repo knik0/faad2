@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.47 2004/03/11 11:40:13 menno Exp $
+** $Id: specrec.c,v 1.48 2004/03/19 10:37:55 menno Exp $
 **/
 
 /*
@@ -891,6 +891,12 @@ uint8_t reconstruct_single_channel(NeAACDecHandle hDecoder, ic_stream *ics,
 #else
     output_channels = 1;
 #endif
+#ifdef DRM_PS
+    /* for DRM error recovery is crucial */
+    /* simply always allocate 2 channels, you never know when PS will pop up */
+    if (hDecoder->object_type == DRM_ER_LC)
+        output_channels = 2;
+#endif
     if (hDecoder->element_output_channels[hDecoder->fr_ch_ele] == 0)
     {
         /* element_output_channels not set yet */
@@ -1039,9 +1045,14 @@ uint8_t reconstruct_single_channel(NeAACDecHandle hDecoder, ic_stream *ics,
                 );
         }
 
+        if (sce->ics1.window_sequence == EIGHT_SHORT_SEQUENCE)
+            hDecoder->sbr[ele]->maxAACLine = 8*sce->ics1.swb_offset[max(sce->ics1.max_sfb-1, 0)];
+        else
+            hDecoder->sbr[ele]->maxAACLine = sce->ics1.swb_offset[max(sce->ics1.max_sfb-1, 0)];
+
         /* check if any of the PS tools is used */
 #if (defined(PS_DEC) || defined(DRM_PS))
-        if (output_channels == 1)
+        if (hDecoder->ps_used[hDecoder->fr_ch_ele] == 0)
         {
 #endif
             retval = sbrDecodeSingleFrame(hDecoder->sbr[ele], hDecoder->time_out[ch],
@@ -1059,6 +1070,20 @@ uint8_t reconstruct_single_channel(NeAACDecHandle hDecoder, ic_stream *ics,
         && !hDecoder->sbr_alloced[hDecoder->fr_ch_ele])
     {
         return 23;
+    }
+#endif
+
+#ifdef DRM_PS
+    /* copy L to R for DRM when no PS is used */
+    if ((hDecoder->object_type == DRM_ER_LC) &&
+        (hDecoder->ps_used[hDecoder->fr_ch_ele] == 0))
+    {
+        uint8_t ele = hDecoder->fr_ch_ele;
+        uint8_t ch = sce->channel;
+        uint16_t frame_size = (hDecoder->sbr_alloced[ele]) ? 2 : 1;
+        frame_size *= hDecoder->frameLength*sizeof(real_t);
+
+        memcpy(hDecoder->time_out[ch+1], hDecoder->time_out[ch], frame_size);
     }
 #endif
 
@@ -1264,6 +1289,11 @@ uint8_t reconstruct_channel_pair(NeAACDecHandle hDecoder, ic_stream *ics1, ic_st
 #endif
                 );
         }
+
+        if (cpe->ics1.window_sequence == EIGHT_SHORT_SEQUENCE)
+            hDecoder->sbr[ele]->maxAACLine = 8*cpe->ics1.swb_offset[max(cpe->ics1.max_sfb-1, 0)];
+        else
+            hDecoder->sbr[ele]->maxAACLine = cpe->ics1.swb_offset[max(cpe->ics1.max_sfb-1, 0)];
 
         retval = sbrDecodeCoupleFrame(hDecoder->sbr[ele],
             hDecoder->time_out[ch0], hDecoder->time_out[ch1],

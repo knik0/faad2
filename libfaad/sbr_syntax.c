@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_syntax.c,v 1.28 2004/03/10 19:45:42 menno Exp $
+** $Id: sbr_syntax.c,v 1.29 2004/03/19 10:37:55 menno Exp $
 **/
 
 #include "common.h"
@@ -47,6 +47,9 @@
 
 /* static function declarations */
 static void sbr_header(bitfile *ld, sbr_info *sbr);
+static uint8_t calc_sbr_tables(sbr_info *sbr, uint8_t start_freq, uint8_t stop_freq,
+                               uint8_t samplerate_mode, uint8_t freq_scale,
+                               uint8_t alter_scale, uint8_t xover_band);
 static uint8_t sbr_data(bitfile *ld, sbr_info *sbr);
 static uint16_t sbr_extension(bitfile *ld, sbr_info *sbr,
                               uint8_t bs_extension_id, uint16_t num_bits_left);
@@ -100,12 +103,53 @@ static void sbr_reset(sbr_info *sbr)
     sbr->bs_noise_bands_prev = sbr->bs_noise_bands;
 }
 
+static uint8_t calc_sbr_tables(sbr_info *sbr, uint8_t start_freq, uint8_t stop_freq,
+                               uint8_t samplerate_mode, uint8_t freq_scale,
+                               uint8_t alter_scale, uint8_t xover_band)
+{
+    uint8_t result = 0;
+    uint8_t k2;
+
+    /* calculate the Master Frequency Table */
+    sbr->k0 = qmf_start_channel(start_freq, samplerate_mode, sbr->sample_rate);
+    k2 = qmf_stop_channel(stop_freq, sbr->sample_rate, sbr->k0);
+
+    /* check k0 and k2 */
+    if (sbr->sample_rate >= 48000)
+    {
+        if ((k2 - sbr->k0) > 32)
+            result += 1;
+    } else if (sbr->sample_rate <= 32000) {
+        if ((k2 - sbr->k0) > 48)
+            result += 1;
+    } else { /* (sbr->sample_rate == 44100) */
+        if ((k2 - sbr->k0) > 45)
+            result += 1;
+    }
+
+    if (freq_scale == 0)
+    {
+        result += master_frequency_table_fs0(sbr, sbr->k0, k2, alter_scale);
+    } else {
+        result += master_frequency_table(sbr, sbr->k0, k2, freq_scale, alter_scale);
+    }
+    result += derived_frequency_table(sbr, xover_band, k2);
+
+    result = (result > 0) ? 1 : 0;
+
+    return result;
+}
+
 /* table 2 */
 uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint16_t cnt)
 {
     uint8_t result = 0;
     uint16_t num_align_bits = 0;
     uint16_t num_sbr_bits = (uint16_t)faad_get_processed_bits(ld);
+
+    uint8_t saved_start_freq, saved_samplerate_mode;
+    uint8_t saved_stop_freq, saved_freq_scale;
+    uint8_t saved_alter_scale, saved_xover_band;
 
 #ifdef DRM
     if (!sbr->Is_DRM_SBR)
@@ -120,6 +164,14 @@ uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint16_t cnt)
                 DEBUGVAR(1,199,"sbr_bitstream(): bs_sbr_crc_bits"));
         }
     }
+
+    /* save old header values, in case the new ones are corrupted */
+    saved_start_freq = sbr->bs_start_freq;
+    saved_samplerate_mode = sbr->bs_samplerate_mode;
+    saved_stop_freq = sbr->bs_stop_freq;
+    saved_freq_scale = sbr->bs_freq_scale;
+    saved_alter_scale = sbr->bs_alter_scale;
+    saved_xover_band = sbr->bs_xover_band;
 
     sbr->bs_header_flag = faad_get1bit(ld
         DEBUGVAR(1,200,"sbr_bitstream(): bs_header_flag"));
@@ -136,41 +188,40 @@ uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint16_t cnt)
     {
         if (sbr->Reset || (sbr->bs_header_flag && sbr->just_seeked))
         {
-            uint8_t k2;
+            uint8_t rt = calc_sbr_tables(sbr, sbr->bs_start_freq, sbr->bs_stop_freq,
+                sbr->bs_samplerate_mode, sbr->bs_freq_scale,
+                sbr->bs_alter_scale, sbr->bs_xover_band);
 
-            /* calculate the Master Frequency Table */
-            sbr->k0 = qmf_start_channel(sbr->bs_start_freq, sbr->bs_samplerate_mode,
-                sbr->sample_rate);
-            k2 = qmf_stop_channel(sbr->bs_stop_freq, sbr->sample_rate, sbr->k0);
-
-            /* check k0 and k2 */
-            if (sbr->sample_rate >= 48000)
+            /* if an error occured with the new header values revert to the old ones */
+            if (rt > 0)
             {
-                if ((k2 - sbr->k0) > 32)
-                    result += 1;
-            } else if (sbr->sample_rate <= 32000) {
-                if ((k2 - sbr->k0) > 48)
-                    result += 1;
-            } else { /* (sbr->sample_rate == 44100) */
-                if ((k2 - sbr->k0) > 45)
-                    result += 1;
+                calc_sbr_tables(sbr, saved_start_freq, saved_stop_freq,
+                    saved_samplerate_mode, saved_freq_scale,
+                    saved_alter_scale, saved_xover_band);
             }
-
-            if (sbr->bs_freq_scale == 0)
-            {
-                result += master_frequency_table_fs0(sbr, sbr->k0, k2,
-                    sbr->bs_alter_scale);
-            } else {
-                result += master_frequency_table(sbr, sbr->k0, k2, sbr->bs_freq_scale,
-                    sbr->bs_alter_scale);
-            }
-            result += derived_frequency_table(sbr, sbr->bs_xover_band, k2);
-
-            result = (result > 0) ? 1 : 0;
         }
 
         if (result == 0)
+        {
             result = sbr_data(ld, sbr);
+
+            /* sbr_data() returning an error means that there was an error in
+               envelope_time_border_vector().
+               In this case the old time border vector is saved and all the previous
+               data normally read after sbr_grid() is saved.
+            */
+            /* to be on the safe side, calculate old sbr tables in case of error */
+            if ((result > 0) &&
+                (sbr->Reset || (sbr->bs_header_flag && sbr->just_seeked)))
+            {
+                calc_sbr_tables(sbr, saved_start_freq, saved_stop_freq,
+                    saved_samplerate_mode, saved_freq_scale,
+                    saved_alter_scale, saved_xover_band);
+            }
+
+            /* we should be able to safely set result to 0 now */
+            result = 0;
+        }
     } else {
         result = 1;
     }
@@ -432,10 +483,31 @@ static uint8_t sbr_channel_pair_element(bitfile *ld, sbr_info *sbr)
         if (sbr->bs_add_harmonic_flag[1])
             sinusoidal_coding(ld, sbr, 1);
     } else {
+        uint8_t saved_t_E[6] = {0}, saved_t_Q[3] = {0};
+        uint8_t saved_L_E = sbr->L_E[0];
+        uint8_t saved_L_Q = sbr->L_Q[0];
+        uint8_t saved_frame_class = sbr->bs_frame_class[0];
+
+        for (n = 0; n < saved_L_E; n++)
+            saved_t_E[n] = sbr->t_E[0][n];
+        for (n = 0; n < saved_L_Q; n++)
+            saved_t_Q[n] = sbr->t_Q[0][n];
+
         if ((result = sbr_grid(ld, sbr, 0)) > 0)
             return result;
         if ((result = sbr_grid(ld, sbr, 1)) > 0)
+        {
+            /* restore first channel data as well */
+            sbr->bs_frame_class[0] = saved_frame_class;
+            sbr->L_E[0] = saved_L_E;
+            sbr->L_Q[0] = saved_L_Q;
+            for (n = 0; n < 6; n++)
+                sbr->t_E[0][n] = saved_t_E[n];
+            for (n = 0; n < 3; n++)
+                sbr->t_Q[0][n] = saved_t_Q[n];
+
             return result;
+        }
         sbr_dtdf(ld, sbr, 0);
         sbr_dtdf(ld, sbr, 1);
         invf_mode(ld, sbr, 0);
@@ -514,6 +586,9 @@ static uint8_t sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch)
     uint8_t i, env, rel, result;
     uint8_t bs_abs_bord, bs_abs_bord_1;
     uint8_t bs_num_env = 0;
+    uint8_t saved_L_E = sbr->L_E[ch];
+    uint8_t saved_L_Q = sbr->L_Q[ch];
+    uint8_t saved_frame_class = sbr->bs_frame_class[ch];
 
     sbr->bs_frame_class[ch] = (uint8_t)faad_getbits(ld, 2
         DEBUGVAR(1,248,"sbr_grid(): bs_frame_class"));
@@ -645,7 +720,12 @@ static uint8_t sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch)
 
     /* TODO: this code can probably be integrated into the code above! */
     if ((result = envelope_time_border_vector(sbr, ch)) > 0)
+    {
+        sbr->bs_frame_class[ch] = saved_frame_class;
+        sbr->L_E[ch] = saved_L_E;
+        sbr->L_Q[ch] = saved_L_Q;
         return result;
+    }
     noise_floor_time_border_vector(sbr, ch);
 
 #if 0

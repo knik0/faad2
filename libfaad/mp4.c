@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4.c,v 1.28 2004/03/02 20:09:58 menno Exp $
+** $Id: mp4.c,v 1.32 2004/09/04 14:56:28 menno Exp $
 **/
 
 #include "common.h"
@@ -175,6 +175,15 @@ int8_t AudioSpecificConfig2(uint8_t *pBuffer,
         faad_endbits(&ld);
         return -3;
     }
+
+#if (defined(PS_DEC) || defined(DRM_PS))
+    /* check if we have a mono file */
+    if (mp4ASC->channelsConfiguration == 1)
+    {
+        /* upMatrix to 2 channels for implicit signalling of PS */
+        mp4ASC->channelsConfiguration = 2;
+    }
+#endif
 
 #ifdef SBR_DEC
     mp4ASC->sbr_present_flag = -1;

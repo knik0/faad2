@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.55 2004/03/14 21:26:22 menno Exp $
+** $Id: common.h,v 1.56 2004/03/19 10:37:55 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -151,6 +151,7 @@ extern "C" {
 
 #if defined(_WIN32) && !defined(__MINGW32__)
 
+#include <stdlib.h>
 
 typedef unsigned __int64 uint64_t;
 typedef unsigned __int32 uint32_t;
@@ -392,7 +393,7 @@ uint8_t max_tns_sfb(const uint8_t sr_index, const uint8_t object_type,
 uint32_t get_sample_rate(const uint8_t sr_index);
 int8_t can_decode_ot(const uint8_t object_type);
 
-void *faad_malloc(int32_t size);
+void *faad_malloc(size_t size);
 void faad_free(void *b);
 
 //#define PROFILE

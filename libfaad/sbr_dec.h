@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.h,v 1.27 2004/03/10 19:45:41 menno Exp $
+** $Id: sbr_dec.h,v 1.28 2004/03/19 10:37:55 menno Exp $
 **/
 
 #ifndef __SBR_DEC_H__
@@ -62,6 +62,7 @@ typedef struct {
 typedef struct
 {
     uint32_t sample_rate;
+    uint32_t maxAACLine;
 
     uint8_t rate;
     uint8_t just_seeked;
@@ -144,6 +145,10 @@ typedef struct
     int8_t prevEnvIsShort[2];
 
     int8_t kx_prev;
+    uint8_t bsco;
+    uint8_t bsco_prev;
+    uint8_t M_prev;
+    uint16_t frame_len;
 
     uint8_t Reset;
     uint32_t frame;

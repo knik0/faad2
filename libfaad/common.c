@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.c,v 1.16 2004/02/26 09:29:26 menno Exp $
+** $Id: common.c,v 1.17 2004/03/19 10:37:55 menno Exp $
 **/
 
 /* just some common functions that could be used anywhere */
@@ -231,7 +231,7 @@ int8_t can_decode_ot(const uint8_t object_type)
 }
 
 /* common malloc function */
-void *faad_malloc(int32_t size)
+void *faad_malloc(size_t size)
 {
 #if 0 // defined(_WIN32) && !defined(_WIN32_WCE)
     return _aligned_malloc(size, 16);

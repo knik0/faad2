@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_e_nf.c,v 1.13 2004/03/10 19:45:41 menno Exp $
+** $Id: sbr_e_nf.c,v 1.14 2004/03/19 10:37:55 menno Exp $
 **/
 
 #include "common.h"
@@ -46,6 +46,8 @@ void extract_envelope_data(sbr_info *sbr, uint8_t ch)
             for (k = 1; k < sbr->n[sbr->f[ch][l]]; k++)
             {
                 sbr->E[ch][k][l] = sbr->E[ch][k - 1][l] + sbr->E[ch][k][l];
+                if (sbr->E[ch][k][l] < 0)
+                    sbr->E[ch][k][l] = 0;
             }
 
         } else { /* bs_df_env == 1 */
