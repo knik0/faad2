@@ -196,21 +196,6 @@
 				RelativePath=".\rvlc_scale_factors.c">
 			</File>
 			<File
-				RelativePath="sbr_dec.c">
-			</File>
-			<File
-				RelativePath="sbr_huff.c">
-			</File>
-			<File
-				RelativePath="sbr_qmf.c">
-			</File>
-			<File
-				RelativePath="sbr_syntax.c">
-			</File>
-			<File
-				RelativePath="sbr_util.c">
-			</File>
-			<File
 				RelativePath=".\specrec.c">
 			</File>
 			<File

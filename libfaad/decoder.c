@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.36 2002/09/27 08:37:22 menno Exp $
+** $Id: decoder.c,v 1.37 2002/10/16 19:18:09 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -431,7 +431,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             } else if (syntax_elements[i]->paired_channel == ch) {
                 ics = &(syntax_elements[i]->ics2);
                 if (syntax_elements[i]->common_window)
-                    ltp = &(syntax_elements[i]->ics1.ltp2);
+                    ltp = &(ics->ltp2);
                 else
                     ltp = &(ics->ltp);
                 right_channel = 1;
@@ -489,11 +489,10 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             {
                 if (ltp->data_present)
                 {
-                    if (!ltp->lag_update)
-                        ltp->lag = ltp_lag[ch];
-                    else
+                    if (ltp->lag_update)
                         ltp_lag[ch] = ltp->lag;
                 }
+                ltp->lag = ltp_lag[ch];
             }
 #endif
 
@@ -527,7 +526,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             uint16_t r;
             time_out[ch] = (real_t*)malloc(frame_len*2*sizeof(real_t));
 			for (r = 0; r < frame_len*2; r++)
-				time_out[ch][r] = REAL_CONST(0.0);
+				time_out[ch][r] = 0;
         }
 
         /* filter bank */

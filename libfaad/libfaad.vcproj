@@ -24,7 +24,7 @@
 				AdditionalIncludeDirectories="fftw"
 				PreprocessorDefinitions="_DEBUG,WIN32,_LIB,FFTW_ENABLE_FLOAT"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="5"
+				RuntimeLibrary="1"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\Debug/libfaad.pch"
 				AssemblerListingLocation=".\Debug/"
@@ -65,13 +65,10 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="1"
-				EnableIntrinsicFunctions="TRUE"
-				FavorSizeOrSpeed="1"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="NDEBUG,WIN32,_LIB"
+				AdditionalIncludeDirectories="fftw"
+				PreprocessorDefinitions="NDEBUG,WIN32,_LIB,FFTW_ENABLE_FLOAT"
 				StringPooling="TRUE"
 				RuntimeLibrary="4"
 				EnableFunctionLevelLinking="TRUE"
@@ -170,21 +167,6 @@
 				RelativePath=".\rvlc_scale_factors.c">
 			</File>
 			<File
-				RelativePath=".\sbr_dec.c">
-			</File>
-			<File
-				RelativePath=".\sbr_huff.c">
-			</File>
-			<File
-				RelativePath=".\sbr_qmf.c">
-			</File>
-			<File
-				RelativePath=".\sbr_syntax.c">
-			</File>
-			<File
-				RelativePath="sbr_util.c">
-			</File>
-			<File
 				RelativePath=".\specrec.c">
 			</File>
 			<File
@@ -247,9 +229,6 @@
 				RelativePath=".\cfft.h">
 			</File>
 			<File
-				RelativePath="cfft_tab.h">
-			</File>
-			<File
 				RelativePath=".\common.h">
 			</File>
 			<File
@@ -271,10 +250,10 @@
 				RelativePath=".\error.h">
 			</File>
 			<File
-				RelativePath=".\filtbank.h">
+				RelativePath=".\fftw\f77_func.h">
 			</File>
 			<File
-				RelativePath="fixed.h">
+				RelativePath=".\filtbank.h">
 			</File>
 			<File
 				RelativePath=".\codebook\hcb.h">
@@ -284,9 +263,6 @@
 			</File>
 			<File
 				RelativePath=".\ic_predict.h">
-			</File>
-			<File
-				RelativePath="iq_table.h">
 			</File>
 			<File
 				RelativePath=".\is.h">
@@ -331,10 +307,7 @@
 				RelativePath=".\sbr_syntax.h">
 			</File>
 			<File
-				RelativePath="sbr_util.h">
-			</File>
-			<File
-				RelativePath="sine_win.h">
+				RelativePath=".\sbr_util.h">
 			</File>
 			<File
 				RelativePath=".\specrec.h">

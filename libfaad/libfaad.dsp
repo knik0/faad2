@@ -217,26 +217,6 @@ SOURCE=.\rvlc_scale_factors.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\sbr_dec.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\sbr_huff.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\sbr_qmf.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\sbr_syntax.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\sbr_util.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\specrec.c
 # End Source File
 # Begin Source File
@@ -350,26 +330,6 @@ SOURCE=.\pulse.h
 # Begin Source File
 
 SOURCE=.\rvlc_scale_factors.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sbr_dec.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sbr_huff.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sbr_qmf.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sbr_syntax.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sbr_util.h
 # End Source File
 # Begin Source File
 
