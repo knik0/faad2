@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfgen.c,v 1.1 2003/07/29 08:20:13 menno Exp $
+** $Id: sbr_hfgen.c,v 1.2 2003/08/02 18:07:39 menno Exp $
 **/
 
 /* High Frequency generation */
@@ -176,34 +176,6 @@ static void auto_correlation(acorr_coef *ac, qmf_t *buffer,
     int8_t j, jminus1, jminus2;
     const real_t rel = COEF_CONST(0.9999999999999); // 1 / (1 + 1e-6f);
 
-#ifdef FIXED_POINT
-    /*
-     *  For computing the covariance matrix and the filter coefficients
-     *  in fixed point, all values are normalised so that the fixed point
-     *  values don't overflow.
-     */
-    uint32_t max = 0;
-    uint32_t pow2, exp;
-
-    for (j = tHFAdj-2; j < len + tHFAdj; j++)
-    {
-        max = max(SBR_ABS(QMF_RE(buffer[j*32 + bd])>>REAL_BITS), max);
-    }
-
-    /* find the first power of 2 bigger than max to avoid division */
-    pow2 = 1;
-    exp = 0;
-    while (max > pow2)
-    {
-        pow2 <<= 1;
-        exp++;
-    }
-
-    /* give some more space */
-//    if (exp > 3)
-//        exp -= 3;
-#endif
-
     memset(ac, 0, sizeof(acorr_coef));
 
     for (j = tHFAdj; j < len + tHFAdj; j++)
@@ -212,20 +184,11 @@ static void auto_correlation(acorr_coef *ac, qmf_t *buffer,
         jminus2 = jminus1 - 1;
 
 #ifdef SBR_LOW_POWER
-#ifdef FIXED_POINT
-        /* normalisation with rounding */
-        RE(ac->r01) += MUL(((QMF_RE(buffer[j*32 + bd])+(1<<(exp-1)))>>exp), ((QMF_RE(buffer[jminus1*32 + bd])+(1<<(exp-1)))>>exp));
-        RE(ac->r02) += MUL(((QMF_RE(buffer[j*32 + bd])+(1<<(exp-1)))>>exp), ((QMF_RE(buffer[jminus2*32 + bd])+(1<<(exp-1)))>>exp));
-        RE(ac->r11) += MUL(((QMF_RE(buffer[jminus1*32 + bd])+(1<<(exp-1)))>>exp), ((QMF_RE(buffer[jminus1*32 + bd])+(1<<(exp-1)))>>exp));
-        RE(ac->r12) += MUL(((QMF_RE(buffer[jminus1*32 + bd])+(1<<(exp-1)))>>exp), ((QMF_RE(buffer[jminus2*32 + bd])+(1<<(exp-1)))>>exp));
-        RE(ac->r22) += MUL(((QMF_RE(buffer[jminus2*32 + bd])+(1<<(exp-1)))>>exp), ((QMF_RE(buffer[jminus2*32 + bd])+(1<<(exp-1)))>>exp));
-#else
         RE(ac->r01) += QMF_RE(buffer[j*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]);
         RE(ac->r02) += QMF_RE(buffer[j*32 + bd]) * QMF_RE(buffer[jminus2*32 + bd]);
         RE(ac->r11) += QMF_RE(buffer[jminus1*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]);
         RE(ac->r12) += QMF_RE(buffer[jminus1*32 + bd]) * QMF_RE(buffer[jminus2*32 + bd]);
         RE(ac->r22) += QMF_RE(buffer[jminus2*32 + bd]) * QMF_RE(buffer[jminus2*32 + bd]);
-#endif
 #else
         RE(ac->r01) += QMF_RE(buffer[j*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]) +
             QMF_IM(buffer[j*32 + bd]) * QMF_IM(buffer[jminus1*32 + bd]);
