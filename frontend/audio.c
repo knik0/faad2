@@ -1,22 +1,22 @@
 /*
 ** FAAD - Freeware Advanced Audio Decoder
 ** Copyright (C) 2002 M. Bakker
-**
+**  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**
+** 
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
+** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: audio.c,v 1.9 2002/08/21 16:23:15 menno Exp $
+** $Id: audio.c,v 1.10 2002/08/26 19:08:39 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -46,6 +46,9 @@ audio_file *open_audio_file(char *infile, int samplerate, int channels,
     {
     case FAAD_FMT_16BIT:
     case FAAD_FMT_16BIT_DITHER:
+    case FAAD_FMT_16BIT_L_SHAPE:
+    case FAAD_FMT_16BIT_M_SHAPE:
+    case FAAD_FMT_16BIT_H_SHAPE:
         aufile->bits_per_sample = 16;
         break;
     case FAAD_FMT_24BIT:
@@ -88,6 +91,9 @@ int write_audio_file(audio_file *aufile, void *sample_buffer, int samples)
     {
     case FAAD_FMT_16BIT:
     case FAAD_FMT_16BIT_DITHER:
+    case FAAD_FMT_16BIT_L_SHAPE:
+    case FAAD_FMT_16BIT_M_SHAPE:
+    case FAAD_FMT_16BIT_H_SHAPE:
         return write_audio_16bit(aufile, sample_buffer, samples);
     case FAAD_FMT_24BIT:
         return write_audio_24bit(aufile, sample_buffer, samples);
@@ -99,7 +105,7 @@ int write_audio_file(audio_file *aufile, void *sample_buffer, int samples)
         return 0;
     }
 
-    return 0;
+	return 0;
 }
 
 void close_audio_file(audio_file *aufile)

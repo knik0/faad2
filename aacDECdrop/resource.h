@@ -30,6 +30,9 @@
 #define IDC_LTP                         1025
 #define IDC_LD                          1026
 #define IDC_16BIT_DITHER                1027
+#define IDC_16BIT_L_SHAPE               1028
+#define IDC_16BIT_M_SHAPE               1029
+#define IDC_16BIT_H_SHAPE               1030
 #define IDC_BUTTON6                     1033
 #define IDM_VOLUME                      40005
 #define IDM_STOP_DEC                    40006
@@ -45,7 +48,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         40018
-#define _APS_NEXT_CONTROL_VALUE         1028
+#define _APS_NEXT_CONTROL_VALUE         1031
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

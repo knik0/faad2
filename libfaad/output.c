@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: output.c,v 1.11 2002/08/26 18:41:47 menno Exp $
+** $Id: output.c,v 1.12 2002/08/26 19:08:39 menno Exp $
 **/
 
 #include "common.h"
@@ -46,7 +46,7 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
                     uint16_t frame_len, uint8_t format)
 {
     uint8_t ch;
-    uint16_t i;
+    uint16_t i, j = 0;
 
     int16_t   *short_sample_buffer = (int16_t*)sample_buffer;
     int32_t   *int_sample_buffer = (int32_t*)sample_buffer;
@@ -71,10 +71,33 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
     case FAAD_FMT_16BIT_DITHER:
         for (ch = 0; ch < channels; ch++)
         {
-            for(i = 0; i < frame_len; i++)
+            for(i = 0; i < frame_len; i++, j++)
             {
                 double Sum = input[ch][i] * 65535.f;
-                int64_t val = dither_output(1, Sum, ch) / 65536;
+                int64_t val;
+                if(j > 31)
+                   j = 0;
+                val = dither_output(1, 0, j, Sum, ch) / 65536;
+                if (val > (1<<15)-1)
+                    val = (1<<15)-1;
+                else if (val < -(1<<15))
+                    val = -(1<<15);
+                short_sample_buffer[(i*channels)+ch] = (int16_t)val;
+            }
+        }
+        break;
+    case FAAD_FMT_16BIT_L_SHAPE:
+    case FAAD_FMT_16BIT_M_SHAPE:
+    case FAAD_FMT_16BIT_H_SHAPE:
+        for (ch = 0; ch < channels; ch++)
+        {
+            for(i = 0; i < frame_len; i++, j++)
+            {
+                double Sum = input[ch][i] * 65535.f;
+                int64_t val;
+                if(j > 31)
+                   j = 0;
+                val = dither_output(1, 1, j, Sum, ch) / 65536;
                 if (val > (1<<15)-1)
                     val = (1<<15)-1;
                 else if (val < -(1<<15))
@@ -153,18 +176,28 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
 #endif
 
 /* Dither output */
-static int64_t dither_output(uint8_t dithering, double Sum, uint8_t k)
+static int64_t dither_output(uint8_t dithering, uint8_t shapingtype, uint16_t i, double Sum, uint8_t k)
 {
     double Sum2;
-
+    int64_t val;
     if(dithering)
     {
-        double tmp = Random_Equi(Dither.Dither);
-        Sum2 = tmp - Dither.LastRandomNumber[k];
-        Dither.LastRandomNumber[k] = tmp;
-        Sum2 = Sum += Sum2;
-        return ROUND64(Sum2);
-    } else {
-        return ROUND64(Sum);
+        if(!shapingtype)
+        {
+            double tmp = Random_Equi(Dither.Dither);
+            Sum2 = tmp - Dither.LastRandomNumber[k];
+            Dither.LastRandomNumber[k] = tmp;
+            Sum2 = Sum += Sum2;
+            val = ROUND64(Sum2)&Dither.Mask;
+        } else {
+            Sum2 = Random_Triangular(Dither.Dither) - scalar16(Dither.DitherHistory[k], Dither.FilterCoeff + i);
+            Sum += Dither.DitherHistory[k][(-1-i)&15] = Sum2;
+            Sum2 = Sum + scalar16(Dither.ErrorHistory[k], Dither.FilterCoeff + i );
+            val = ROUND64(Sum2)&Dither.Mask;
+            Dither.ErrorHistory[k][(-1-i)&15] = (float)(Sum - val);
+        }
+        return val;
     }
+    else
+        return ROUND64 (Sum);
 }

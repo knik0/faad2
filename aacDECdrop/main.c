@@ -509,12 +509,21 @@ BOOL CALLBACK QCProc(HWND hwndDlg, UINT message,
 				CheckDlgButton(hwndDlg,IDC_PLAYBACK,TRUE);
 				CheckDlgButton(hwndDlg,IDC_WAV,TRUE);
 				if(iniSettings.outputFormat != 1
-					&& iniSettings.outputFormat != 5)
+					&& iniSettings.outputFormat != 5
+					&& iniSettings.outputFormat != 6
+					&& iniSettings.outputFormat != 7
+					&& iniSettings.outputFormat != 8)
 					CheckDlgButton(hwndDlg,IDC_16BIT,TRUE);
 				else if(iniSettings.outputFormat == 1)
 					CheckDlgButton(hwndDlg,IDC_16BIT,TRUE);
 				else if(iniSettings.outputFormat == 5)
 					CheckDlgButton(hwndDlg,IDC_16BIT_DITHER,TRUE);
+				else if(iniSettings.outputFormat == 6)
+					CheckDlgButton(hwndDlg,IDC_16BIT_L_SHAPE,TRUE);
+				else if(iniSettings.outputFormat == 7)
+					CheckDlgButton(hwndDlg,IDC_16BIT_M_SHAPE,TRUE);
+				else if(iniSettings.outputFormat == 8)
+					CheckDlgButton(hwndDlg,IDC_16BIT_H_SHAPE,TRUE);
 				CheckDlgButton(hwndDlg,IDC_WAV,TRUE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_AIFF), FALSE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_SUNAU), FALSE);
@@ -538,6 +547,12 @@ BOOL CALLBACK QCProc(HWND hwndDlg, UINT message,
 					CheckDlgButton(hwndDlg,IDC_FLOATS,TRUE);
 				else if(iniSettings.outputFormat == 5)
 					CheckDlgButton(hwndDlg,IDC_16BIT_DITHER,TRUE);
+				else if(iniSettings.outputFormat == 6)
+					CheckDlgButton(hwndDlg,IDC_16BIT_L_SHAPE,TRUE);
+				else if(iniSettings.outputFormat == 7)
+					CheckDlgButton(hwndDlg,IDC_16BIT_M_SHAPE,TRUE);
+				else if(iniSettings.outputFormat == 8)
+					CheckDlgButton(hwndDlg,IDC_16BIT_H_SHAPE,TRUE);
 
 				if(iniSettings.fileType == 1)
 					CheckDlgButton(hwndDlg,IDC_WAV,TRUE);
@@ -592,6 +607,12 @@ BOOL CALLBACK QCProc(HWND hwndDlg, UINT message,
 						set_outputFormat(4);             // 32 bit floats
 					else if (IsDlgButtonChecked(hwndDlg, IDC_16BIT_DITHER) == BST_CHECKED)
 						set_outputFormat(5);             // 16 bit PCM dithered
+					else if (IsDlgButtonChecked(hwndDlg, IDC_16BIT_L_SHAPE) == BST_CHECKED)
+						set_outputFormat(6);             // dithered LIGHT noise shaping
+					else if (IsDlgButtonChecked(hwndDlg, IDC_16BIT_M_SHAPE) == BST_CHECKED)
+						set_outputFormat(7);             // dithered MEDIUM noise shaping
+					else if (IsDlgButtonChecked(hwndDlg, IDC_16BIT_H_SHAPE) == BST_CHECKED)
+						set_outputFormat(8);             // dithered HEAVY noise shaping
 
 					if (IsDlgButtonChecked(hwndDlg, IDC_MAIN) == BST_CHECKED)
 						set_object_type(0);             // Main
@@ -622,8 +643,13 @@ BOOL CALLBACK QCProc(HWND hwndDlg, UINT message,
 					CheckDlgButton(hwndDlg,IDC_FLOATS,FALSE);
 					EnableWindow(GetDlgItem(hwndDlg, IDC_16BIT), TRUE);
 					EnableWindow(GetDlgItem(hwndDlg, IDC_16BIT_DITHER), TRUE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_16BIT_L_SHAPE), TRUE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_16BIT_M_SHAPE), TRUE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_16BIT_H_SHAPE), TRUE);
 					if (IsDlgButtonChecked(hwndDlg, IDC_16BIT_DITHER) != BST_CHECKED
-						&& IsDlgButtonChecked(hwndDlg, IDC_16BIT) != BST_CHECKED)
+						&& IsDlgButtonChecked(hwndDlg, IDC_16BIT_L_SHAPE) != BST_CHECKED
+						&& IsDlgButtonChecked(hwndDlg, IDC_16BIT_M_SHAPE) != BST_CHECKED
+						&& IsDlgButtonChecked(hwndDlg, IDC_16BIT_H_SHAPE) != BST_CHECKED)
 						CheckDlgButton(hwndDlg,IDC_16BIT,TRUE);
 					break;
 				case IDC_DECODE:
@@ -635,6 +661,9 @@ BOOL CALLBACK QCProc(HWND hwndDlg, UINT message,
 					EnableWindow(GetDlgItem(hwndDlg, IDC_FLOATS), TRUE);
 					EnableWindow(GetDlgItem(hwndDlg, IDC_16BIT), TRUE);
 					EnableWindow(GetDlgItem(hwndDlg, IDC_16BIT_DITHER), TRUE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_16BIT_L_SHAPE), TRUE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_16BIT_M_SHAPE), TRUE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_16BIT_H_SHAPE), TRUE);
 					break;
 				default:
 					break;

@@ -5,8 +5,10 @@
  *
  * rand_t header.
  *
- * last modified: $Id: dither.h,v 1.1 2002/08/13 19:16:07 menno Exp $
+ * last modified: $ID:$
  */
+
+#include "common.h"
 
 #ifndef __RAND_T_H
 #define __RAND_T_H
@@ -16,18 +18,23 @@ extern "C" {
 #endif 
 
 typedef struct {
-    double                 Add;
-    float                  Dither;
-    int                    LastRandomNumber [2];
+    const float32_t*  FilterCoeff;
+    uint64_t          Mask;
+    double            Add;
+    float32_t         Dither;
+    float32_t         ErrorHistory     [2] [16];       // max. 2 channels, 16th order Noise shaping
+    float32_t         DitherHistory    [2] [16];
+    int32_t           LastRandomNumber [2];
 } dither_t;
 
 extern dither_t            Dither;
 extern double              doubletmp;
-static const unsigned char Parity [256];
-unsigned int               random_int ( void );
+static const uint8_t       Parity [256];
+uint32_t                   random_int ( void );
+extern double              scalar16 ( const float32_t* x, const float32_t* y );
 extern double              Random_Equi ( double mult );
 extern double              Random_Triangular ( double mult );
-extern double              Init_Dither ( int bits );
+void                       Init_Dither ( unsigned char bits, unsigned char shapingtype );
 
 #ifdef __cplusplus
 }

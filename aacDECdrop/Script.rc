@@ -97,7 +97,7 @@ IDI_ICON1               ICON                    "resource/AAC01.ico"
 // Dialog
 //
 
-IDD_VOLUME DIALOGEX 0, 0, 255, 236
+IDD_VOLUME DIALOGEX 0, 0, 255, 257
 STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Decoder Options V1.2"
@@ -117,7 +117,7 @@ BEGIN
                     WS_DISABLED,15,60,65,10
     CONTROL         "DEC AU",IDC_DECAU,"Button",BS_AUTORADIOBUTTON | 
                     WS_DISABLED,125,60,65,10
-    GROUPBOX        "Output Sample Format Settings",IDC_STATIC,7,82,241,65
+    GROUPBOX        "Output Sample Format Settings",IDC_STATIC,7,82,241,91
     CONTROL         "16 bit PCM",IDC_16BIT,"Button",BS_AUTORADIOBUTTON | 
                     WS_GROUP,15,96,65,10
     CONTROL         "24 bit PCM",IDC_24BIT,"Button",BS_AUTORADIOBUTTON,125,
@@ -128,22 +128,31 @@ BEGIN
                     125,111,65,10
     CONTROL         "16 bit PCM - Dithered",IDC_16BIT_DITHER,"Button",
                     BS_AUTORADIOBUTTON,15,126,83,10
-    GROUPBOX        "Object Type Settings",IDC_STATIC,7,149,241,50
+    CONTROL         "16 bit PCM - Dithered with",IDC_16BIT_L_SHAPE,"Button",
+                    BS_AUTORADIOBUTTON,125,126,98,10
+    CONTROL         "16 bit PCM - Dithered with",IDC_16BIT_M_SHAPE,"Button",
+                    BS_AUTORADIOBUTTON,15,146,98,10
+    CONTROL         "16 bit PCM - Dithered with",IDC_16BIT_H_SHAPE,"Button",
+                    BS_AUTORADIOBUTTON,125,146,98,10
+    LTEXT           "LIGHT Noise Shaping",IDC_STATIC,138,136,70,8
+    LTEXT           "HEAVY Noise Shaping",IDC_STATIC,138,156,73,8
+    LTEXT           "MEDIUM Noise Shaping",IDC_STATIC,28,156,78,8
+    GROUPBOX        "Object Type Settings",IDC_STATIC,7,174,241,50
     CONTROL         "Main",IDC_MAIN,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
-                    15,163,65,10
+                    15,188,65,10
     CONTROL         "Low Complexity",IDC_LC,"Button",BS_AUTORADIOBUTTON,125,
-                    163,65,10
+                    188,65,10
     CONTROL         "Long Term Prediction",IDC_LTP,"Button",
-                    BS_AUTORADIOBUTTON,15,178,85,10
-    CONTROL         "Low Delay",IDC_LD,"Button",BS_AUTORADIOBUTTON,125,178,
+                    BS_AUTORADIOBUTTON,15,203,85,10
+    CONTROL         "Low Delay",IDC_LD,"Button",BS_AUTORADIOBUTTON,125,203,
                     65,10
-    DEFPUSHBUTTON   "Accept",IDC_BUTTON1,102,210,50,16
+    DEFPUSHBUTTON   "Accept",IDC_BUTTON1,102,233,50,16
 END
 
 IDD_ABOUT DIALOGEX 0, 0, 255, 194
 STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | 
     WS_SYSMENU
-CAPTION "About aacDECdrop V1.21"
+CAPTION "About aacDECdrop V1.22"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     GROUPBOX        "",IDC_STATIC,7,5,241,157
@@ -171,6 +180,22 @@ BEGIN
     CONTROL         112,IDC_STATIC,"Static",SS_BITMAP | SS_SUNKEN,12,13,43,
                     40
 END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_VOLUME, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 256
+    END
+END
+#endif    // APSTUDIO_INVOKED
 
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////

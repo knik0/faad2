@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.21 2002/08/26 18:41:47 menno Exp $
+** $Id: decoder.c,v 1.22 2002/08/26 19:08:39 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -36,6 +36,7 @@
 #include "drc.h"
 #include "error.h"
 #include "output.h"
+#include "dither.h"
 
 #ifdef ANALYSIS
 uint16_t dbg_count;
@@ -245,6 +246,9 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
     if (can_decode_ot(hDecoder->object_type) < 0)
         return -1;
 
+    if (hDecoder->config.outputFormat > 5)
+        Init_Dither(16, hDecoder->config.outputFormat - 5);
+
     return bits;
 }
 
@@ -291,6 +295,9 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
     if (hDecoder->object_type == LD)
         hDecoder->frameLength >>= 1;
 #endif
+
+    if (hDecoder->config.outputFormat > 5)
+        Init_Dither(16, hDecoder->config.outputFormat - 5);
 
     return 0;
 }
