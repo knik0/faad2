@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.17 2002/08/26 18:41:47 menno Exp $
+** $Id: syntax.h,v 1.18 2002/08/30 18:14:26 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -271,7 +271,7 @@ typedef struct
     uint8_t ele_id;
 
     uint8_t channel;
-    uint8_t paired_channel;
+    int16_t paired_channel;
 
     uint8_t element_instance_tag;
     uint8_t common_window;

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.26 2002/08/30 18:06:26 menno Exp $
+** $Id: decoder.c,v 1.27 2002/08/30 18:14:25 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -660,7 +660,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     */
     for (ch = 0; ch < channels; ch++)
     {
-        uint8_t pch = 0;
+        int16_t pch = -1;
         uint8_t right_channel;
         ic_stream *ics, *icsr;
         ltp_info *ltp;
@@ -678,24 +678,26 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             } else if (syntax_elements[i]->paired_channel == ch) {
                 ics = &(syntax_elements[i]->ics2);
                 ltp = &(ics->ltp2);
-                pch = 0;
                 right_channel = 1;
             }
         }
 
-        /* mid/side decoding */
-        if (!right_channel)
-            ms_decode(ics, icsr, spec_coef[ch], spec_coef[pch], frame_len);
-
         /* pns decoding */
-        if ((!right_channel) && (pch != 0) && (ics->ms_mask_present))
+        if ((!right_channel) && (pch != -1) && (ics->ms_mask_present))
             pns_decode(ics, icsr, spec_coef[ch], spec_coef[pch], frame_len, 1);
-        else if (!pch)
+        else if (pch == -1)
             pns_decode(ics, NULL, spec_coef[ch], NULL, frame_len, 0);
 
-        /* intensity stereo decoding */
+        printf("\n\n%d\n\n",pch);
+
         if (!right_channel)
+        {
+            /* mid/side decoding */
+            ms_decode(ics, icsr, spec_coef[ch], spec_coef[pch], frame_len);
+
+            /* intensity stereo decoding */
             is_decode(ics, icsr, spec_coef[ch], spec_coef[pch], frame_len);
+        }
 
 #ifdef MAIN_DEC
         /* MAIN object type prediction */
