@@ -99,10 +99,6 @@ SOURCE=.\common.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\data.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\decoder.c
 # End Source File
 # Begin Source File
@@ -268,10 +264,6 @@ SOURCE=.\common.h
 # Begin Source File
 
 SOURCE=.\fftw\config.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\data.h
 # End Source File
 # Begin Source File
 

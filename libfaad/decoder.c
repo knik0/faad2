@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.56 2003/05/15 20:58:46 menno Exp $
+** $Id: decoder.c,v 1.57 2003/06/23 15:21:19 menno Exp $
 **/
 
 #include "common.h"
@@ -29,7 +29,6 @@
 #include "mp4.h"
 #include "syntax.h"
 #include "specrec.h"
-#include "data.h"
 #include "tns.h"
 #include "pns.h"
 #include "is.h"

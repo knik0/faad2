@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.44 2003/04/15 19:53:42 menno Exp $
+** $Id: syntax.c,v 1.45 2003/06/23 15:21:20 menno Exp $
 **/
 
 /*
@@ -34,7 +34,6 @@
 #include "specrec.h"
 #include "huffman.h"
 #include "bits.h"
-#include "data.h"
 #include "pulse.h"
 #include "analysis.h"
 #include "drc.h"
@@ -641,6 +640,22 @@ static uint8_t channel_pair_element(faacDecHandle hDecoder, element *cpe,
 
     return 0;
 }
+
+static uint8_t pred_sfb_max[] =
+{
+    33,     /* 96000 */
+    33,     /* 88200 */
+    38,     /* 64000 */
+    40,     /* 48000 */
+    40,     /* 44100 */
+    40,     /* 32000 */
+    41,     /* 24000 */
+    41,     /* 22050 */
+    37,     /* 16000 */
+    37,     /* 12000 */
+    37,     /* 11025 */
+    34      /* 8000  */
+};
 
 /* Table 4.4.6 */
 static uint8_t ics_info(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,

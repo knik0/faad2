@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: hcr.c,v 1.3 2003/04/01 16:34:34 menno Exp $
+** $Id: hcr.c,v 1.4 2003/06/23 15:21:19 menno Exp $
 **/
 
 #include "common.h"
@@ -28,7 +28,6 @@
 #include "syntax.h"
 #include "specrec.h"
 #include "bits.h"
-#include "data.h"
 #include "pulse.h"
 #include "analysis.h"
 #include "bits.h"

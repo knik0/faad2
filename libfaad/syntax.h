@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.27 2003/04/13 18:27:10 menno Exp $
+** $Id: syntax.h,v 1.28 2003/06/23 15:21:20 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -80,6 +80,11 @@ extern "C" {
 #define INTENSITY_HCB2 14
 #define INTENSITY_HCB  15
 
+static uint32_t sample_rates[] =
+{
+    96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000,
+    12000, 11025, 8000
+};
 
 int8_t GASpecificConfig(bitfile *ld, mp4AudioSpecificConfig *mp4ASC);
 

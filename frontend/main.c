@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.32 2003/06/07 11:06:37 menno Exp $
+** $Id: main.c,v 1.33 2003/06/23 15:21:19 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -40,74 +40,124 @@
 #endif
 
 #define MAX_CHANNELS 6 /* make this higher to support files with
+
                           more channels */
-
 /* FAAD file buffering routines */
-/* declare buffering variables */
-#define DEC_BUFF_VARS \
-    int fileread, bytesconsumed, k; \
-    int buffercount = 0, buffer_index = 0; \
-    unsigned char *buffer; \
-    unsigned int bytes_in_buffer = 0;
+typedef struct {
+    long bytes_into_buffer;
+    long bytes_consumed;
+    __int64 file_offset;
+    unsigned char *buffer;
+    int at_eof;
+    FILE *infile;
+} aac_buffer;
 
-/* initialise buffering */
-#define INIT_BUFF(file) \
-    fseek(file, 0, SEEK_END); \
-    fileread = ftell(file); \
-    fseek(file, 0, SEEK_SET); \
-    buffer = (unsigned char*)malloc(FAAD_MIN_STREAMSIZE*MAX_CHANNELS); \
-    memset(buffer, 0, FAAD_MIN_STREAMSIZE*MAX_CHANNELS); \
-    bytes_in_buffer = fread(buffer, 1, FAAD_MIN_STREAMSIZE*MAX_CHANNELS, file);
 
-/* skip bytes in buffer */
-#define UPDATE_BUFF_SKIP(bytes) \
-    fseek(infile, bytes, SEEK_SET); \
-    buffer_index += bytes; \
-    buffercount = 0; \
-    bytes_in_buffer = fread(buffer, 1, FAAD_MIN_STREAMSIZE*MAX_CHANNELS, infile);
+int fill_buffer(aac_buffer *b)
+{
+    int bread;
 
-/* update buffer */
-#define UPDATE_BUFF_READ \
-    if (bytesconsumed > 0) { \
-        for (k = 0; k < (FAAD_MIN_STREAMSIZE*MAX_CHANNELS - bytesconsumed); k++) \
-            buffer[k] = buffer[k + bytesconsumed]; \
-        bytes_in_buffer += fread(buffer + (FAAD_MIN_STREAMSIZE*MAX_CHANNELS) - bytesconsumed, 1, bytesconsumed, infile); \
-        bytesconsumed = 0; \
+    if (b->bytes_consumed > 0)
+    {
+        if (b->bytes_into_buffer)
+        {
+            memmove((void*)b->buffer, (void*)(b->buffer + b->bytes_consumed),
+                b->bytes_into_buffer*sizeof(unsigned char));
+        }
+
+        if (!b->at_eof)
+        {
+            bread = fread((void*)(b->buffer + b->bytes_into_buffer), 1,
+                b->bytes_consumed, b->infile);
+
+            if (bread != b->bytes_consumed)
+                b->at_eof = 1;
+
+            b->bytes_into_buffer += bread;
+        }
+
+        b->bytes_consumed = 0;
+
+        if (b->bytes_into_buffer > 3)
+        {
+            if (memcmp(b->buffer, "TAG", 3) == 0)
+                b->bytes_into_buffer = 0;
+        }
+        if (b->bytes_into_buffer > 11)
+        {
+            if (memcmp(b->buffer, "LYRICSBEGIN", 11) == 0)
+                b->bytes_into_buffer = 0;
+        }
+        if (b->bytes_into_buffer > 8)
+        {
+            if (memcmp(b->buffer, "APETAGEX", 8) == 0)
+                b->bytes_into_buffer = 0;
+        }
     }
 
-/* update buffer indices after faacDecDecode */
-#define UPDATE_BUFF_IDX(frame) \
-    bytesconsumed += frame.bytesconsumed; \
-    buffer_index += frame.bytesconsumed; \
-    bytes_in_buffer -= frame.bytesconsumed;
+    return 1;
+}
 
-/* true if decoding has to stop because of EOF */
-#define IS_FILE_END buffer_index >= fileread
+void advance_buffer(aac_buffer *b, int bytes)
+{
+    b->file_offset += bytes;
+    b->bytes_consumed = bytes;
+    b->bytes_into_buffer -= bytes;
+}
 
-/* end buffering */
-#define END_BUFF if (buffer) free(buffer);
+int adts_parse(aac_buffer *b, int *bitrate, float *length)
+{
+    static int sample_rates[] = {96000,88200,64000,48000,44100,32000,24000,22050,16000,12000,11025,8000};
+    int frames, frame_length;
+    int t_framelength = 0;
+    int samplerate;
+    float frames_per_sec, bytes_per_frame;
 
+    /* Read all frames to ensure correct time and bitrate */
+    for (frames = 0; /* */; frames++)
+    {
+        fill_buffer(b);
+
+        if (b->bytes_into_buffer > 7)
+        {
+            /* check syncword */
+            if (!((b->buffer[0] == 0xFF)&&((b->buffer[1] & 0xF6) == 0xF0)))
+                break;
+
+            if (frames == 0)
+                samplerate = sample_rates[(b->buffer[2]&0x3c)>>2];
+
+            frame_length = ((((unsigned int)b->buffer[3] & 0x3)) << 11)
+                | (((unsigned int)b->buffer[4]) << 3) | (b->buffer[5] >> 5);
+
+            t_framelength += frame_length;
+
+            if (frame_length > b->bytes_into_buffer)
+                break;
+
+            advance_buffer(b, frame_length);
+        } else {
+            break;
+        }
+    }
+
+    frames_per_sec = (float)samplerate/1024.0;
+    if (frames != 0)
+        bytes_per_frame = (float)t_framelength/(float)(frames*1000);
+    else
+        bytes_per_frame = 0;
+    *bitrate = (int)(8. * bytes_per_frame * frames_per_sec + 0.5);
+    if (frames_per_sec != 0)
+        *length = (float)frames/frames_per_sec;
+    else
+        *length = 1;
+
+    return 1;
+}
 
 
 /* globals */
 char *progName;
-
-int id3v2_tag(unsigned char *buffer)
-{
-    if (strncmp(buffer, "ID3", 3) == 0) {
-        unsigned long tagsize;
-
-        /* high bit is not used */
-        tagsize = (buffer[6] << 21) | (buffer[7] << 14) |
-            (buffer[8] <<  7) | (buffer[9] <<  0);
-
-        tagsize += 10;
-
-        return tagsize;
-    } else {
-        return 0;
-    }
-}
 
 char *file_ext[] =
 {
@@ -163,8 +213,6 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
     unsigned char channels;
     void *sample_buffer;
 
-    FILE *infile;
-
     audio_file *aufile;
 
     faacDecHandle hDecoder;
@@ -173,26 +221,53 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
 
     char percents[200];
     int percent, old_percent = -1;
+    int bread, fileread;
+    int header_type = 0;
+    int bitrate = 0;
+    float length = 0;
 
     int first_time = 1;
 
+    aac_buffer b;
 
-    /* declare variables for buffering */
-    DEC_BUFF_VARS
+    memset(&b, 0, sizeof(aac_buffer));
 
-
-    infile = fopen(aacfile, "rb");
-    if (infile == NULL)
+    b.infile = fopen(aacfile, "rb");
+    if (b.infile == NULL)
     {
         /* unable to open file */
         fprintf(stderr, "Error opening file: %s\n", aacfile);
         return 1;
     }
-    INIT_BUFF(infile)
 
-    tagsize = id3v2_tag(buffer);
-    if (tagsize) {
-        UPDATE_BUFF_SKIP(tagsize)
+    fseek(b.infile, 0, SEEK_END);
+    fileread = ftell(b.infile);
+    fseek(b.infile, 0, SEEK_SET);
+
+    if (!(b.buffer = (unsigned char*)malloc(FAAD_MIN_STREAMSIZE*MAX_CHANNELS)))
+    {
+        fprintf(stderr, "Memory allocation error\n");
+        return 0;
+    }
+    memset(b.buffer, 0, FAAD_MIN_STREAMSIZE*MAX_CHANNELS);
+
+    bread = fread(b.buffer, 1, FAAD_MIN_STREAMSIZE*MAX_CHANNELS, b.infile);
+    b.bytes_into_buffer = bread;
+    b.bytes_consumed = 0;
+    b.file_offset = 0;
+
+    if (bread != 768*6)
+        b.at_eof = 1;
+
+    tagsize = 0;
+    if (!memcmp(b.buffer, "ID3", 3))
+    {
+        /* high bit is not used */
+        tagsize = (b.buffer[6] << 21) | (b.buffer[7] << 14) |
+            (b.buffer[8] <<  7) | (b.buffer[9] <<  0);
+
+        tagsize += 10;
+        advance_buffer(&b, tagsize);
     }
 
     hDecoder = faacDecOpen();
@@ -207,28 +282,82 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
 
     faacDecSetConfiguration(hDecoder, config);
 
-    if ((bytesconsumed = faacDecInit(hDecoder, buffer, bytes_in_buffer,
-        &samplerate, &channels)) < 0)
+    /* get AAC infos for printing */
+    header_type = 0;
+    if ((b.buffer[0] == 0xFF) && ((b.buffer[1] & 0xF6) == 0xF0))
+    {
+        adts_parse(&b, &bitrate, &length);
+        fseek(b.infile, tagsize, SEEK_SET);
+
+        bread = fread(b.buffer, 1, FAAD_MIN_STREAMSIZE*MAX_CHANNELS, b.infile);
+        if (bread != FAAD_MIN_STREAMSIZE*MAX_CHANNELS)
+            b.at_eof = 1;
+        else
+            b.at_eof = 0;
+        b.bytes_into_buffer = bread;
+        b.bytes_consumed = 0;
+        b.file_offset = tagsize;
+
+        header_type = 1;
+    } else if (memcmp(b.buffer, "ADIF", 4) == 0) {
+        int skip_size = (b.buffer[4] & 0x80) ? 9 : 0;
+        bitrate = ((unsigned int)(b.buffer[4 + skip_size] & 0x0F)<<19) |
+            ((unsigned int)b.buffer[5 + skip_size]<<11) |
+            ((unsigned int)b.buffer[6 + skip_size]<<3) |
+            ((unsigned int)b.buffer[7 + skip_size] & 0xE0);
+
+        length = (float)fileread;
+        if (length != 0)
+        {
+            length = ((float)length*8.)/((float)bitrate) + 0.5;
+        }
+
+        bitrate = (int)((float)bitrate/1000.0 + 0.5);
+
+        header_type = 2;
+    }
+
+    fill_buffer(&b);
+    if ((bread = faacDecInit(hDecoder, b.buffer,
+        b.bytes_into_buffer, &samplerate, &channels)) < 0)
     {
         /* If some error initializing occured, skip the file */
         fprintf(stderr, "Error initializing decoder library.\n");
-        END_BUFF
+        if (b.buffer)
+            free(b.buffer);
         faacDecClose(hDecoder);
-        fclose(infile);
+        fclose(b.infile);
         return 1;
     }
-    buffer_index += bytesconsumed;
+    advance_buffer(&b, bread);
+
+    /* print AAC file info */
+    fprintf(stderr, "AAC file info:\n");
+    switch (header_type)
+    {
+    case 0:
+        fprintf(stderr, "RAW\n\n");
+        break;
+    case 1:
+        fprintf(stderr, "ADTS, %.3f sec, %d kbps, %d Hz\n\n",
+            length, bitrate, samplerate);
+        break;
+    case 2:
+        fprintf(stderr, "ADIF, %.3f sec, %d kbps, %d Hz\n\n",
+            length, bitrate, samplerate);
+        break;
+    }
 
     do
     {
-        /* update buffer */
-        UPDATE_BUFF_READ
+        /* fill buffer */
+        fill_buffer(&b);
 
         sample_buffer = faacDecDecode(hDecoder, &frameInfo,
-            buffer, bytes_in_buffer);
+            b.buffer, b.bytes_into_buffer);
 
         /* update buffer indices */
-        UPDATE_BUFF_IDX(frameInfo)
+        advance_buffer(&b, frameInfo.bytesconsumed);
 
         if (frameInfo.error > 0)
         {
@@ -236,7 +365,7 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
                 faacDecGetErrorMessage(frameInfo.error));
         }
 
-        percent = min((int)(buffer_index*100)/fileread, 100);
+        percent = min((int)(b.file_offset*100)/fileread, 100);
         if (percent > old_percent)
         {
             old_percent = percent;
@@ -250,7 +379,7 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
         /* open the sound file now that the number of channels are known */
         if (first_time && !frameInfo.error)
         {
-            if(!to_stdout)
+            if (!to_stdout)
             {
                 aufile = open_audio_file(sndfile, frameInfo.samplerate, frameInfo.channels,
                     outputFormat, fileType);
@@ -260,9 +389,10 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
             }
             if (aufile == NULL)
             {
-                END_BUFF
+                if (b.buffer)
+                    free(b.buffer);
                 faacDecClose(hDecoder);
-                fclose(infile);
+                fclose(b.infile);
                 return 0;
             }
             first_time = 0;
@@ -273,7 +403,7 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
             write_audio_file(aufile, sample_buffer, frameInfo.samples);
         }
 
-        if (buffer_index >= fileread)
+        if (b.bytes_into_buffer == 0)
             sample_buffer = NULL; /* to make sure it stops now */
 
     } while (sample_buffer != NULL);
@@ -281,12 +411,13 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
 
     faacDecClose(hDecoder);
 
-    fclose(infile);
+    fclose(b.infile);
 
     if (!first_time)
         close_audio_file(aufile);
 
-    END_BUFF
+    if (b.buffer)
+        free(b.buffer);
 
     return frameInfo.error;
 }
@@ -336,6 +467,7 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
                   int outputFormat, int fileType)
 {
     int track;
+    unsigned int tracks;
     unsigned long samplerate;
     unsigned char channels;
     void *sample_buffer;
@@ -370,6 +502,26 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
         /* unable to open file */
         fprintf(stderr, "Error opening file: %s\n", mp4file);
         return 1;
+    }
+
+    /* print some mp4 file info */
+    tracks = MP4GetNumberOfTracks(infile, NULL, 0);
+    if (tracks > 0)
+    {
+        char *file_info;
+        unsigned int i;
+
+        fprintf(stderr, "MP4 file info:\n");
+        for (i = 0; i < tracks; i++)
+        {
+            file_info = MP4Info(infile, i+1);
+            if (file_info)
+            {
+                fprintf(stderr, "Track: %s", file_info);
+                free(file_info);
+            }
+        }
+        fprintf(stderr, "\n");
     }
 
     if ((track = GetAACTrack(infile)) < 0)

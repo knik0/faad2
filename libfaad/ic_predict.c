@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ic_predict.c,v 1.10 2002/11/28 18:48:30 menno Exp $
+** $Id: ic_predict.c,v 1.11 2003/06/23 15:21:19 menno Exp $
 **/
 
 #include "common.h"
@@ -27,6 +27,31 @@
 #include "syntax.h"
 #include "ic_predict.h"
 #include "pns.h"
+
+static void flt_round(real_t *pf)
+{
+    /* more stable version for clever compilers like gcc 3.x */
+    int32_t flg;
+    uint32_t tmp, tmp1, tmp2;
+
+    tmp = *(uint32_t*)pf;
+    flg = tmp & (uint32_t)0x00008000;
+    tmp &= (uint32_t)0xffff0000;
+    tmp1 = tmp;
+
+    /* round 1/2 lsb toward infinity */
+    if (flg)
+    {
+        tmp &= (uint32_t)0xff800000;       /* extract exponent and sign */
+        tmp |= (uint32_t)0x00010000;       /* insert 1 lsb */
+        tmp2 = tmp;                             /* add 1 lsb and elided one */
+        tmp &= (uint32_t)0xff800000;       /* extract exponent and sign */
+        
+        *pf = *(real_t*)&tmp1+*(real_t*)&tmp2-*(real_t*)&tmp;/* subtract elided one */
+    } else {
+        *pf = *(real_t*)&tmp;
+    }
+}
 
 static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t pred)
 {
@@ -42,7 +67,7 @@ static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t 
     KOR = state->KOR; /* correlations */
     VAR = state->VAR; /* variances */
 
-    if (VAR[0] == 0)
+    if (VAR[0] <= 1)
         k1 = 0;
     else
         k1 = KOR[0]/VAR[0]*B;
@@ -50,12 +75,13 @@ static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t 
     if (pred)
     {
         /* only needed for the actual predicted value, k1 is always needed */
-        if (VAR[1] == 0)
+        if (VAR[1] <= 1)
             k2 = 0;
         else
             k2 = KOR[1]/VAR[1]*B;
 
         predictedvalue = MUL(k1, r[0]) + MUL(k2, r[1]);
+        flt_round(&predictedvalue);
 
         *output = input + predictedvalue;
     } else {

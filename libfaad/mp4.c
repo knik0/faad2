@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mp4.c,v 1.14 2003/02/09 20:42:49 menno Exp $
+** $Id: mp4.c,v 1.15 2003/06/23 15:21:19 menno Exp $
 **/
 
 #include "common.h"
@@ -26,7 +26,6 @@
 
 #include "bits.h"
 #include "mp4.h"
-#include "data.h"
 #include "syntax.h"
 
 /* defines if an object type can be decoded by this library or not */

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: specrec.h,v 1.11 2003/05/15 20:58:47 menno Exp $
+** $Id: specrec.h,v 1.12 2003/06/23 15:21:20 menno Exp $
 **/
 
 #ifndef __SPECREC_H__

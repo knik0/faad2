@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: aacinfo.c,v 1.2 2002/01/24 14:30:08 menno Exp $
+** $Id: aacinfo.c,v 1.3 2003/06/23 15:21:19 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -125,13 +125,11 @@ static int read_ADTS_header(FILE_STREAM *file, faadAACInfo *info,
         /* ...and the variable ADTS header */
         if (ID == 0) {
             info->version = 4;
-            frame_length = (((unsigned int)buffer[4]) << 5) |
-                ((unsigned int)buffer[5] >> 3);
         } else { /* MPEG-2 */
             info->version = 2;
-            frame_length = ((((unsigned int)buffer[3] & 0x3)) << 11)
-            | (((unsigned int)buffer[4]) << 3) | (buffer[5] >> 5);
         }
+        frame_length = ((((unsigned int)buffer[3] & 0x3)) << 11)
+            | (((unsigned int)buffer[4]) << 3) | (buffer[5] >> 5);
 
         t_framelength += frame_length;
 
