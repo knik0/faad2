@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ic_predict.c,v 1.6 2002/06/13 11:03:27 menno Exp $
+** $Id: ic_predict.c,v 1.7 2002/08/17 11:15:31 menno Exp $
 **/
 
 #include "common.h"
@@ -63,12 +63,18 @@ static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t 
     KOR = state->KOR; /* correlations */
     VAR = state->VAR; /* variances */
 
-    k1 = KOR[0]/VAR[0]*B;
+    if (VAR[0] == 0.0)
+        k1 = 0.0;
+    else
+        k1 = KOR[0]/VAR[0]*B;
 
     if (pred)
     {
         /* only needed for the actual predicted value, k1 is always needed */
-        k2 = KOR[1]/VAR[1]*B;
+        if (VAR[1] == 0.0)
+            k2 = 0.0;
+        else
+            k2 = KOR[1]/VAR[1]*B;
 
         predictedvalue = MUL(k1, r[0]) + MUL(k2, r[1]);
         flt_round_inf(&predictedvalue);

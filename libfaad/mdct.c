@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.c,v 1.13 2002/08/17 10:03:15 menno Exp $
+** $Id: mdct.c,v 1.14 2002/08/17 11:15:31 menno Exp $
 **/
 
 /*
@@ -72,7 +72,7 @@ mdct_info *faad_mdct_init(uint16_t N)
 
     for (k = 0; k < N/4; k++)
     {
-        real_t angle = 2.0 * M_PI * (k + 1.0/8.0)/(real_t)N;
+        real_t angle = 2.0 * M_PI * ((real_t)k + 1.0/8.0)/(real_t)N;
         mdct->sincos[k].sin = -sin(angle);
         mdct->sincos[k].cos = -cos(angle);
     }
@@ -138,8 +138,8 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
         Z1[k].re  = MUL(fac, MUL(x1, sincos[k].cos) - MUL(x0, sincos[k].sin));
         Z1[k].im  = MUL(fac, MUL(x0, sincos[k].cos) + MUL(x1, sincos[k].sin));
 #else
-        Z1[2*k]   = MUL(fac, MUL(x1, sincos[k].cos) - MUL(x0, sincos[k].sin));
-        Z1[2*k+1] = MUL(fac, MUL(x0, sincos[k].cos) + MUL(x1, sincos[k].sin));
+        Z1[n]   = MUL(fac, MUL(x1, sincos[k].cos) - MUL(x0, sincos[k].sin));
+        Z1[n+1] = MUL(fac, MUL(x0, sincos[k].cos) + MUL(x1, sincos[k].sin));
 #endif
     }
 
@@ -157,8 +157,9 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
         real_t zr = Z2[k].re;
         real_t zi = Z2[k].im;
 #else
-        real_t zr = Z1[2*k];
-        real_t zi = Z1[2*k+1];
+        uint16_t n = k << 1;
+        real_t zr = Z1[n];
+        real_t zi = Z1[n+1];
 #endif
         Z2[k].re  = MUL(zr, sincos[k].cos) - MUL(zi, sincos[k].sin);
         Z2[k].im  = MUL(zi, sincos[k].cos) + MUL(zr, sincos[k].sin);
@@ -209,8 +210,8 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
         Z1[k     ].re = -MUL(zr, sincos[k     ].cos) - MUL(zi, sincos[k     ].sin);
         Z1[k     ].im = -MUL(zi, sincos[k     ].cos) + MUL(zr, sincos[k     ].sin);
 #else
-        Z1[k*2       ] = -MUL(zr, sincos[k     ].cos) - MUL(zi, sincos[k     ].sin);
-        Z1[k*2+1     ] = -MUL(zi, sincos[k     ].cos) + MUL(zr, sincos[k     ].sin);
+        Z1[n       ] = -MUL(zr, sincos[k     ].cos) - MUL(zi, sincos[k     ].sin);
+        Z1[n+1     ] = -MUL(zi, sincos[k     ].cos) + MUL(zr, sincos[k     ].sin);
 #endif
 
         zr            =  X_in[    N2 - 1 - n] - X_in[             n];
@@ -220,8 +221,8 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
         Z1[k + N8].re = -MUL(zr, sincos[k + N8].cos) - MUL(zi, sincos[k + N8].sin);
         Z1[k + N8].im = -MUL(zi, sincos[k + N8].cos) + MUL(zr, sincos[k + N8].sin);
 #else
-        Z1[k*2   + N8] = -MUL(zr, sincos[k + N8].cos) - MUL(zi, sincos[k + N8].sin);
-        Z1[k*2+1 + N8] = -MUL(zi, sincos[k + N8].cos) + MUL(zr, sincos[k + N8].sin);
+        Z1[n   + N8] = -MUL(zr, sincos[k + N8].cos) - MUL(zi, sincos[k + N8].sin);
+        Z1[n+1 + N8] = -MUL(zi, sincos[k + N8].cos) + MUL(zr, sincos[k + N8].sin);
 #endif
     }
 
@@ -240,8 +241,8 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
         real_t zr = MUL(2.0, MUL(Z2[k].re, sincos[k].cos) + MUL(Z2[k].im, sincos[k].sin));
         real_t zi = MUL(2.0, MUL(Z2[k].im, sincos[k].cos) - MUL(Z2[k].re, sincos[k].sin));
 #else
-        real_t zr = MUL(2.0, MUL(Z1[k*2], sincos[k].cos) + MUL(Z1[k*2+1], sincos[k].sin));
-        real_t zi = MUL(2.0, MUL(Z1[k*2+1], sincos[k].cos) - MUL(Z1[k*2], sincos[k].sin));
+        real_t zr = MUL(2.0, MUL(Z1[n], sincos[k].cos) + MUL(Z1[n+1], sincos[k].sin));
+        real_t zi = MUL(2.0, MUL(Z1[n+1], sincos[k].cos) - MUL(Z1[n], sincos[k].sin));
 #endif
 
         X_out[         n] = -zr;

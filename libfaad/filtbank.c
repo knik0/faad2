@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.c,v 1.12 2002/08/17 10:03:13 menno Exp $
+** $Id: filtbank.c,v 1.13 2002/08/17 11:15:31 menno Exp $
 **/
 
 #include "common.h"
@@ -50,9 +50,9 @@ fb_info *filter_bank_init(uint16_t frame_len)
 
     /* calculate the sine windows */
     for (i = 0; i < frame_len; i++)
-        fb->long_window[0][i] = (real_t)sin(M_PI / (2.0 * frame_len) * (i + 0.5));
+        fb->long_window[0][i] = (real_t)sin(M_PI / (2.0 * (real_t)frame_len) * ((real_t)i + 0.5));
     for (i = 0; i < nshort; i++)
-        fb->short_window[0][i] = (real_t)sin(M_PI / (2.0 * nshort) * (i + 0.5));
+        fb->short_window[0][i] = (real_t)sin(M_PI / (2.0 * (real_t)nshort) * ((real_t)i + 0.5));
 
 #ifdef LD_DEC
     /* LD */
@@ -69,7 +69,7 @@ fb_info *filter_bank_init(uint16_t frame_len)
     for (i = 0; i < 3*(frame_len_ld>>3); i++)
         fb->ld_window[1][i] = 0.0;
     for (; i < 5*(frame_len_ld>>3); i++)
-        fb->ld_window[1][i] = (real_t)sin((i-3*(frame_len_ld>>3)+0.5) * M_PI / (frame_len_ld>>1));
+        fb->ld_window[1][i] = (real_t)sin((i-3*(frame_len_ld>>3)+0.5) * M_PI / (real_t)(frame_len_ld>>1));
     for (; i < frame_len_ld; i++)
         fb->ld_window[1][i] = 1.0;
 #endif
