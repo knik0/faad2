@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.2 2002/01/15 12:58:38 menno Exp $
+** $Id: main.c,v 1.3 2002/01/15 13:20:13 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -411,12 +411,6 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
 
         sample_buffer = faacDecDecode(hDecoder, &frameInfo, buffer);
 
-        if (frameInfo.error > 0)
-        {
-            fprintf(stderr, "Error: %s\n",
-                faacDecGetErrorMessage(frameInfo.error));
-        }
-
         percent = min((int)(sampleId*100)/numSamples, 100);
         if (percent > old_percent)
         {
@@ -452,6 +446,16 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
         if ((frameInfo.error == 0) && (frameInfo.samples > 0))
         {
             write_audio_file(aufile, sample_buffer, frameInfo.samples);
+        }
+
+        if (frameInfo.error > 0)
+        {
+            fprintf(stderr, "Error: %s\n",
+                faacDecGetErrorMessage(frameInfo.error));
+            faacDecClose(hDecoder);
+            MP4Close(infile);
+            close_audio_file(aufile);
+            return frameInfo.error;
         }
     }
 
