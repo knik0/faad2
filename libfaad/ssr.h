@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ssr.h,v 1.2 2002/12/02 20:28:02 menno Exp $
+** $Id: ssr.h,v 1.3 2002/12/10 14:53:15 menno Exp $
 **/
 
 #ifndef __SSR_H__
@@ -27,16 +27,22 @@ extern "C" {
 #endif
 
 #define SSR_BANDS 4
+#define PQFTAPS 96
 
 void ssr_decode(ssr_info *ssr, fb_info *fb, uint8_t window_sequence,
                 uint8_t window_shape, uint8_t window_shape_prev,
                 real_t *freq_in, real_t *time_out, real_t *overlap,
-                uint16_t frame_len);
+                real_t ipqf_buffer[SSR_BANDS][96/4],
+                real_t *prev_fmd, uint16_t frame_len);
 
 
 static void ssr_gain_control(ssr_info *ssr, real_t *data, real_t *output,
-                             real_t *overlap, uint8_t band,
+                             real_t *overlap, real_t *prev_fmd, uint8_t band,
                              uint8_t window_sequence, uint16_t frame_len);
+static void ssr_gc_function(ssr_info *ssr, real_t *prev_fmd,
+                            real_t *gc_function, uint8_t window_sequence,
+                            uint16_t frame_len);
+
 
 #ifdef __cplusplus
 }

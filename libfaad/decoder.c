@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.43 2002/12/05 19:28:22 menno Exp $
+** $Id: decoder.c,v 1.44 2002/12/10 14:53:14 menno Exp $
 **/
 
 #include "common.h"
@@ -85,6 +85,7 @@ faacDecHandle FAADAPI faacDecOpen()
         hDecoder->time_out[i] = NULL;
 #ifdef SSR_DEC
         hDecoder->ssr_overlap[i] = NULL;
+        hDecoder->prev_fmd[i] = NULL;
 #endif
 #ifdef MAIN_DEC
         hDecoder->pred_stat[i] = NULL;
@@ -296,6 +297,7 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
         if (hDecoder->time_out[i]) free(hDecoder->time_out[i]);
 #ifdef SSR_DEC
         if (hDecoder->ssr_overlap[i]) free(hDecoder->ssr_overlap[i]);
+        if (hDecoder->prev_fmd[i]) free(hDecoder->prev_fmd[i]);
 #endif
 #ifdef MAIN_DEC
         if (hDecoder->pred_stat[i]) free(hDecoder->pred_stat[i]);
@@ -332,7 +334,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     int32_t i;
     uint8_t ch;
     adts_header adts;
-    uint8_t channels, ch_ele;
+    uint8_t channels = 0, ch_ele = 0;
     bitfile *ld = (bitfile*)malloc(sizeof(bitfile));
 
     /* local copys of globals */
@@ -356,6 +358,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     real_t **time_out      =  hDecoder->time_out;
 #ifdef SSR_DEC
     real_t **ssr_overlap   =  hDecoder->ssr_overlap;
+    real_t **prev_fmd      =  hDecoder->prev_fmd;
 #endif
     fb_info *fb            =  hDecoder->fb;
     drc_info *drc          =  hDecoder->drc;
@@ -370,10 +373,10 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     int16_t *spec_data[MAX_CHANNELS];
     real_t *spec_coef[MAX_CHANNELS];
 
-    /* frame length is different for Low Delay AAC */
     uint16_t frame_len = hDecoder->frameLength;
 
     void *sample_buffer;
+
 
     memset(hInfo, 0, sizeof(faacDecFrameInfo));
 
@@ -403,16 +406,17 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     dbg_count = 0;
 #endif
 
-    channels = 0;
-    ch_ele = 0;
     elements = syntax_elements;
 
     /* decode the complete bitstream */
     elements = raw_data_block(hDecoder, hInfo, ld, syntax_elements,
-        spec_data, spec_coef, &ch_ele, &channels, &pce, drc);
+        spec_data, spec_coef, &pce, drc);
 
     if (hInfo->error > 0)
         goto error;
+
+    ch_ele = hDecoder->fr_ch_ele;
+    channels = hDecoder->fr_channels;
 
 
     /* no more bit reading after this */
@@ -595,10 +599,17 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                 ssr_overlap[ch] = (real_t*)malloc(2*frame_len*sizeof(real_t));
                 memset(ssr_overlap[ch], 0, 2*frame_len*sizeof(real_t));
             }
+            if (prev_fmd[ch] == NULL)
+            {
+                uint16_t k;
+                prev_fmd[ch] = (real_t*)malloc(2*frame_len*sizeof(real_t));
+                for (k = 0; k < 2*frame_len; k++)
+                    prev_fmd[ch][k] = REAL_CONST(-1);
+            }
 
             ssr_decode(&(ics->ssr), fb, ics->window_sequence, ics->window_shape,
-                window_shape_prev[ch], spec_coef[ch],
-                time_out[ch], ssr_overlap[ch], frame_len);
+                window_shape_prev[ch], spec_coef[ch], time_out[ch],
+                ssr_overlap[ch], hDecoder->ipqf_buffer[ch], prev_fmd[ch], frame_len);
         }
 #endif
         /* save window shape for next frame */

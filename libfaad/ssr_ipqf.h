@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ssr_ipqf.h,v 1.1 2002/11/28 18:48:30 menno Exp $
+** $Id: ssr_ipqf.h,v 1.2 2002/12/10 14:53:15 menno Exp $
 **/
 
 #ifndef __SSR_IPQF_H__
@@ -26,6 +26,9 @@
 extern "C" {
 #endif
 
+void ssr_ipqf(ssr_info *ssr, real_t *in_data, real_t *out_data,
+              real_t buffer[SSR_BANDS][96/4],
+              uint16_t frame_len, uint8_t bands);
 
 
 #ifdef __cplusplus

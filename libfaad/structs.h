@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: structs.h,v 1.2 2002/12/02 20:28:04 menno Exp $
+** $Id: structs.h,v 1.3 2002/12/10 14:53:15 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -311,6 +311,9 @@ typedef struct
 
     uint32_t frame;
 
+    uint8_t fr_channels;
+    uint8_t fr_ch_ele;
+
     void *sample_buffer;
 
     uint8_t window_shape_prev[MAX_CHANNELS];
@@ -324,6 +327,8 @@ typedef struct
 
 #ifdef SSR_DEC
     real_t *ssr_overlap[MAX_CHANNELS];
+    real_t *prev_fmd[MAX_CHANNELS];
+    real_t ipqf_buffer[MAX_CHANNELS][4][96/4];
 #endif
 
 #ifdef MAIN_DEC

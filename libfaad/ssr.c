@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ssr.c,v 1.2 2002/12/02 20:27:59 menno Exp $
+** $Id: ssr.c,v 1.3 2002/12/10 14:53:15 menno Exp $
 **/
 
 #include "common.h"
@@ -32,7 +32,8 @@
 void ssr_decode(ssr_info *ssr, fb_info *fb, uint8_t window_sequence,
                 uint8_t window_shape, uint8_t window_shape_prev,
                 real_t *freq_in, real_t *time_out, real_t *overlap,
-                uint16_t frame_len)
+                real_t ipqf_buffer[SSR_BANDS][96/4],
+                real_t *prev_fmd, uint16_t frame_len)
 {
     uint8_t band;
     uint16_t ssr_frame_len = frame_len/SSR_BANDS;
@@ -65,27 +66,28 @@ void ssr_decode(ssr_info *ssr, fb_info *fb, uint8_t window_sequence,
             ssr_frame_len);
 
         /* gain control */
-        ssr_gain_control(ssr, time_tmp, output, overlap, band,
-            window_sequence, ssr_frame_len);
+        ssr_gain_control(ssr, time_tmp, output, overlap, prev_fmd,
+            band, window_sequence, ssr_frame_len);
     }
 
-#if 0
     /* inverse pqf to bring subbands together again */
-    ssr_ipqf(ssr_info *ssr, real_t *time_tmp);
-#endif
+    ssr_ipqf(ssr, output, time_out, ipqf_buffer, frame_len, SSR_BANDS);
 }
 
 static void ssr_gain_control(ssr_info *ssr, real_t *data, real_t *output,
-                             real_t *overlap, uint8_t band,
+                             real_t *overlap, real_t *prev_fmd, uint8_t band,
                              uint8_t window_sequence, uint16_t frame_len)
 {
     uint16_t i;
+    real_t gc_function[2*1024/SSR_BANDS];
 
     if (window_sequence != EIGHT_SHORT_SEQUENCE)
     {
-//        ssr_gc_function();
-//        for (i = 0; i < frame_len*2; i++)
-//          input[band * frame_len*2 + i] *= gc_function[i];
+        ssr_gc_function(ssr, &prev_fmd[band * frame_len*2],
+            gc_function, window_sequence, frame_len);
+
+        for (i = 0; i < frame_len*2; i++)
+            data[band * frame_len*2 + i] *= gc_function[i];
         for (i = 0; i < frame_len; i++)
         {
             output[band*frame_len + i] = overlap[band*frame_len + i] +
@@ -102,9 +104,12 @@ static void ssr_gain_control(ssr_info *ssr, real_t *data, real_t *output,
         {
             uint16_t frame_len8 = frame_len/8;
             uint16_t frame_len16 = frame_len/16;
-//            ssr_gc_function();
-//            for (i = 0; i < frame_len*2/8; i++)
-//                input[band*frame_len*2 + w*frame_len*2/8+j] *= gc_function[j];
+
+            ssr_gc_function(ssr, &prev_fmd[band*frame_len*2 + w*frame_len*2/8],
+                gc_function, window_sequence, frame_len);
+
+            for (i = 0; i < frame_len8*2; i++)
+                data[band*frame_len*2 + w*frame_len8*2+i] *= gc_function[i];
             for (i = 0; i < frame_len8; i++)
             {
                 overlap[band*frame_len + i + 7*frame_len16 + w*frame_len8] +=
@@ -123,10 +128,12 @@ static void ssr_gain_control(ssr_info *ssr, real_t *data, real_t *output,
     }
 }
 
-#if 0
-static void ssr_gc_function(ssr_info *ssr, real_t *prevFMD,
-                            real_t *gc_function, uint16_t frame_len)
+static void ssr_gc_function(ssr_info *ssr, real_t *prev_fmd,
+                            real_t *gc_function, uint8_t window_sequence,
+                            uint16_t frame_len)
 {
+    uint16_t i;
+    uint16_t len_area1, len_area2;
     int32_t aloc[10];
     real_t alev[10];
 
@@ -153,7 +160,10 @@ static void ssr_gc_function(ssr_info *ssr, real_t *prevFMD,
     /* decode bitstream information */
 
     /* build array M */
+
+
+    for (i = 0; i < frame_len*2; i++)
+        gc_function[i] = 1;
 }
-#endif
 
 #endif

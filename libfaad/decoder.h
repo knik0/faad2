@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.h,v 1.19 2002/12/05 19:28:22 menno Exp $
+** $Id: decoder.h,v 1.20 2002/12/10 14:53:15 menno Exp $
 **/
 
 #ifndef __DECODER_H__
@@ -90,15 +90,14 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 element *decode_sce_lfe(faacDecHandle hDecoder,
                         faacDecFrameInfo *hInfo, bitfile *ld,
                         int16_t **spec_data, real_t **spec_coef,
-                        uint8_t channels, uint8_t id_syn_ele);
+                        uint8_t id_syn_ele);
 element *decode_cpe(faacDecHandle hDecoder,
                     faacDecFrameInfo *hInfo, bitfile *ld,
                     int16_t **spec_data, real_t **spec_coef,
-                    uint8_t channels, uint8_t id_syn_ele);
+                    uint8_t id_syn_ele);
 element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
                          bitfile *ld, element **elements,
                          int16_t **spec_data, real_t **spec_coef,
-                         uint8_t *out_ch_ele, uint8_t *out_channels,
                          program_config *pce, drc_info *drc);
 
 #ifdef _WIN32
