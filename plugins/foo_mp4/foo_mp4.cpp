@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.72 2003/11/22 11:38:46 ca5e Exp $
+** $Id: foo_mp4.cpp,v 1.73 2003/11/22 11:48:16 ca5e Exp $
 **/
 
 #include <mp4.h>
@@ -559,10 +559,17 @@ private:
                         {
                             char t[64];
                             if (tot > 0)
+                            {
                                 wsprintf(t, "%d/%d", (int)trkn, (int)tot);
+                                info->meta_add("TRACKNUMBER", t);
+                                wsprintf(t, "%d", (int)tot);
+                                info->meta_add("TOTALTRACKS", t);
+                            }
                             else
+                            {
                                 wsprintf(t, "%d", (int)trkn);
-                            info->meta_add("TRACKNUMBER", t);
+                                info->meta_add("TRACKNUMBER", t);
+                            }
                         }
                     } else if (memcmp(pName, "disk", 4) == 0) {
                         unsigned __int16 disk = 0, tot = 0;
@@ -570,11 +577,18 @@ private:
                         {
                             char t[64];
                             if (tot > 0)
+                            {
                                 wsprintf(t, "%d/%d", (int)disk, (int)tot);
+                                info->meta_add("DISC", t);
+                                wsprintf(t, "%d", (int)tot);
+                                info->meta_add("TOTALDISCS", t);
+                            }
                             else
+                            {
                                 wsprintf(t, "%d", (int)disk);
+                                info->meta_add("DISC", t);
+                            }
                             //info->meta_add("DISKNUMBER", t);
-                            info->meta_add("DISC", t);
                         }
                     } else if (memcmp(pName, "cpil", 4) == 0) {
                         unsigned __int8 cpil = 0;
