@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.27 2002/09/18 11:22:36 menno Exp $
+** $Id: syntax.c,v 1.28 2002/09/26 19:01:45 menno Exp $
 **/
 
 /*
@@ -467,11 +467,11 @@ uint16_t data_stream_element(bitfile *ld)
         DEBUGVAR(1,60,"data_stream_element(): element_instance_tag"));
     byte_aligned = faad_get1bit(ld
         DEBUGVAR(1,61,"data_stream_element(): byte_aligned"));
-    count = faad_getbits(ld, 8
+    count = (uint16_t)faad_getbits(ld, 8
         DEBUGVAR(1,62,"data_stream_element(): count"));
     if (count == 255)
     {
-        count += faad_getbits(ld, 8
+        count += (uint16_t)faad_getbits(ld, 8
             DEBUGVAR(1,63,"data_stream_element(): extra count"));
     }
     if (byte_aligned)
@@ -885,7 +885,7 @@ static void section_data(ic_stream *ics, bitfile *ld
 static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
 {
     uint8_t g, sfb;
-    int8_t t;
+    int16_t t;
     int8_t noise_pcm_flag = 1;
 
     int16_t scale_factor = ics->global_gain;
@@ -918,7 +918,7 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
                 if (noise_pcm_flag)
                 {
                     noise_pcm_flag = 0;
-                    t = faad_getbits(ld, 9
+                    t = (int16_t)faad_getbits(ld, 9
                         DEBUGVAR(1,73,"scale_factor_data(): first noise")) - 256;
                 } else {
                     t = huffman_scale_factor(ld);
@@ -1089,18 +1089,12 @@ static void ltp_data(ic_stream *ics, ltp_info *ltp, bitfile *ld,
 }
 #endif
 
-/* defines whether a huffman codebook is unsigned or not */
-/* Table 4.6.2 */
-static uint8_t unsigned_cb[] = { 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-         /* codebook 16 to 31 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-};
-
 /* Table 4.4.29 */
 static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data,
                              uint16_t frame_len)
 {
     int8_t i;
-    uint8_t g, inc;
+    uint8_t g;
     int16_t *sp;
     uint16_t k, p = 0;
     uint8_t groups = 0;
@@ -1125,33 +1119,34 @@ static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data
         {
             sect_cb = ics->sect_cb[g][i];
 
-            if ((sect_cb == ZERO_HCB) ||
-                (sect_cb == NOISE_HCB) ||
-                (sect_cb == INTENSITY_HCB) ||
-                (sect_cb == INTENSITY_HCB2))
+            switch (sect_cb)
             {
+            case ZERO_HCB:
+            case NOISE_HCB:
+            case INTENSITY_HCB:
+            case INTENSITY_HCB2:
                 p += (ics->sect_sfb_offset[g][ics->sect_end[g][i]] -
                     ics->sect_sfb_offset[g][ics->sect_start[g][i]]);
-            } else {
+                break;
+            default:
                 for (k = ics->sect_sfb_offset[g][ics->sect_start[g][i]];
-                     k < ics->sect_sfb_offset[g][ics->sect_end[g][i]]; )
+                     k < ics->sect_sfb_offset[g][ics->sect_end[g][i]]; k += 4)
                 {
                     sp = spectral_data + p;
 
-                    inc = (sect_cb < FIRST_PAIR_HCB) ? QUAD_LEN : PAIR_LEN;
-
-                    if ((result = huffman_spectral_data(sect_cb, ld, sp)) > 0)
-                        return result;
-                    if (unsigned_cb[sect_cb])
-                        huffman_sign_bits(ld, sp, inc);
-                    k += inc;
-                    p += inc;
-                    if ((sect_cb == ESC_HCB) || (sect_cb >= 16))
+                    if (sect_cb < FIRST_PAIR_HCB)
                     {
-                        sp[0] = huffman_getescape(ld, sp[0]);
-                        sp[1] = huffman_getescape(ld, sp[1]);
+                        if ((result = huffman_spectral_data(sect_cb, ld, sp)) > 0)
+                            return result;
+                    } else {
+                        if ((result = huffman_spectral_data(sect_cb, ld, sp)) > 0)
+                            return result;
+                        if ((result = huffman_spectral_data(sect_cb, ld, sp+2)) > 0)
+                            return result;
                     }
+                    p += 4;
                 }
+                break;
             }
         }
         groups += ics->window_group_length[g];
@@ -1164,7 +1159,7 @@ static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data
 static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count)
 {
     uint16_t i, n;
-    uint8_t extension_type = faad_getbits(ld, 4
+    uint8_t extension_type = (uint8_t)faad_getbits(ld, 4
         DEBUGVAR(1,87,"extension_payload(): extension_type"));
 
     switch (extension_type)
@@ -1222,7 +1217,7 @@ static uint8_t dynamic_range_info(bitfile *ld, drc_info *drc)
     if (faad_get1bit(ld
         DEBUGVAR(1,94,"dynamic_range_info(): has bands data")) & 1)
     {
-        band_incr = faad_getbits(ld, 4
+        band_incr = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,95,"dynamic_range_info(): band_incr"));
         /* drc->drc_bands_reserved_bits = */ faad_getbits(ld, 4
             DEBUGVAR(1,96,"dynamic_range_info(): drc_bands_reserved_bits"));

@@ -244,6 +244,9 @@
 				RelativePath=".\cfft.h">
 			</File>
 			<File
+				RelativePath="cfft_tab.h">
+			</File>
+			<File
 				RelativePath=".\common.h">
 			</File>
 			<File

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.h,v 1.7 2002/08/07 08:14:31 menno Exp $
+** $Id: bits.h,v 1.8 2002/09/26 19:01:45 menno Exp $
 **/
 
 #ifndef __BITS_H__
@@ -37,79 +37,84 @@ extern "C" {
 typedef struct _bitfile
 {
     /* bit input */
-	uint32_t bufa;
-	uint32_t bufb;
-	uint32_t pos;
-	uint32_t *tail;
-	uint32_t *start;
+    uint32_t bufa;
+    uint32_t bufb;
+    uint32_t bits_left;
+    uint32_t *tail;
+    uint32_t *start;
 } bitfile;
 
 
-#if defined(_WIN32)
+#if defined (_WIN32)
 #define BSWAP(a) __asm mov eax,a __asm bswap eax __asm mov a, eax
 #elif defined(LINUX) || defined(DJGPP)
 #define BSWAP(a) __asm__ ( "bswapl %0\n" : "=r" (a) : "0" (a) )
 #else
 #define BSWAP(a) \
-	 ((a) = ( ((a)&0xff)<<24) | (((a)&0xff00)<<8) | (((a)>>8)&0xff00) | (((a)>>24)&0xff))
+    ((a) = ( ((a)&0xff)<<24) | (((a)&0xff00)<<8) | (((a)>>8)&0xff00) | (((a)>>24)&0xff))
 #endif
 
+static uint32_t bitmask[] = {
+    0x0, 0x1, 0x3, 0x7, 0xF, 0x1F, 0x3F, 0x7F, 0xFF, 0x1FF,
+    0x3FF, 0x7FF, 0xFFF, 0x1FFF, 0x3FFF, 0x7FFF, 0xFFFF,
+    0x1FFFF, 0x3FFFF, 0x7FFFF, 0xFFFFF, 0x1FFFFF, 0x3FFFFF,
+    0x7FFFFF, 0xFFFFFF, 0x1FFFFFF, 0x3FFFFFF, 0x7FFFFFF,
+    0xFFFFFFF, 0x1FFFFFFF, 0x3FFFFFFF, 0x7FFFFFFF
+};
 
 void faad_initbits(bitfile *ld, void *buffer);
 uint8_t faad_byte_align(bitfile *ld);
 uint32_t faad_get_processed_bits(bitfile *ld);
-uint8_t *faad_getbitbuffer(bitfile *ld, uint16_t bits
+uint8_t *faad_getbitbuffer(bitfile *ld, uint32_t bits
                        DEBUGDEC);
 
-
-static INLINE uint32_t faad_showbits(bitfile *ld, uint8_t bits)
+static INLINE uint32_t faad_showbits(bitfile *ld, uint32_t bits)
 {
-    int32_t nbit = (bits + ld->pos) - 32;
-    if (nbit > 0) 
+    if (bits <= ld->bits_left)
     {
-        return ((ld->bufa & (0xffffffff >> ld->pos)) << nbit) |
-            (ld->bufb >> (32 - nbit));
+        return (ld->bufa >> (ld->bits_left - bits)) & bitmask[bits];
     } else {
-        return (ld->bufa & (0xffffffff >> ld->pos)) >> (32 - ld->pos - bits);
+        bits -= ld->bits_left;
+        return ((ld->bufa & bitmask[ld->bits_left]) << bits) | (ld->bufb >> (32 - bits));
     }
 }
 
-static INLINE void faad_flushbits(bitfile *ld, uint8_t bits)
+static INLINE void faad_flushbits(bitfile *ld, uint32_t bits)
 {
-	ld->pos += bits;
+    if (bits < ld->bits_left)
+    {
+        ld->bits_left -= bits;
+    } else {
+        uint32_t tmp;
 
-	if (ld->pos >= 32) 
-	{
-		uint32_t tmp;
-
-		ld->bufa = ld->bufb;
-		tmp = *(uint32_t*)ld->tail;
+        ld->bufa = ld->bufb;
+        tmp = *(uint32_t*)ld->tail;
 #ifndef ARCH_IS_BIG_ENDIAN
-		BSWAP(tmp);
+        BSWAP(tmp);
 #endif
-		ld->bufb = tmp;
-		ld->tail++;
-		ld->pos -= 32;
-	}
+        ld->bufb = tmp;
+        ld->tail++;
+        ld->bits_left += (32 - bits);
+    }
 }
 
 /* return next n bits (right adjusted) */
-static INLINE uint32_t faad_getbits(bitfile *ld, uint8_t n DEBUGDEC)
+static INLINE uint32_t faad_getbits(bitfile *ld, uint32_t n DEBUGDEC)
 {
     uint32_t ret;
 
     if (n == 0)
         return 0;
 
-	ret = faad_showbits(ld, n);
-	faad_flushbits(ld, n);
+    ret = faad_showbits(ld, n);
+    faad_flushbits(ld, n);
 
 #ifdef ANALYSIS
     if (print)
         fprintf(stdout, "%4d %2d bits, val: %4d, variable: %d %s\n", dbg_count++, n, ret, var, dbg);
 #endif
 
-	return ret;
+    return ret;
 }
 
 static INLINE uint8_t faad_get1bit(bitfile *ld DEBUGDEC)

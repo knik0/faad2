@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.c,v 1.20 2002/09/13 13:08:45 menno Exp $
+** $Id: mdct.c,v 1.21 2002/09/26 19:01:45 menno Exp $
 **/
 
 /*
@@ -101,9 +101,8 @@ mdct_info *faad_mdct_init(uint16_t N)
     assert(N % 8 == 0);
 
     mdct->N = N;
-    mdct->sincos = (faad_sincos*)malloc(N/4*sizeof(faad_sincos));
-    mdct->Z1 = (real_t*)malloc(N/2*sizeof(real_t));
-    mdct->Z2 = (complex_t*)malloc(N/4*sizeof(complex_t));
+    mdct->sincos = (complex_t*)malloc(N/4*sizeof(complex_t));
+    mdct->Z1 = (complex_t*)malloc(N/4*sizeof(complex_t));
 
     N_idx = map_N_to_idx(N);
 
@@ -115,8 +114,8 @@ mdct_info *faad_mdct_init(uint16_t N)
 
     for (k = 0; k < N/4; k++)
     {
-        mdct->sincos[k].sin = -1*MUL_C_C(s,scale);
-        mdct->sincos[k].cos = -1*MUL_C_C(c,scale);
+        RE(mdct->sincos[k]) = -1*MUL_C_C(c,scale);
+        IM(mdct->sincos[k]) = -1*MUL_C_C(s,scale);
 
         cold = c;
         c = MUL_C_C(c,cangle) - MUL_C_C(s,sangle);
@@ -133,7 +132,6 @@ void faad_mdct_end(mdct_info *mdct)
 {
     cfftu(mdct->cfft);
 
-    if (mdct->Z2) free(mdct->Z2);
     if (mdct->Z1) free(mdct->Z1);
     if (mdct->sincos) free(mdct->sincos);
 
@@ -144,9 +142,9 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
 {
     uint16_t k;
 
-    real_t *Z1    = mdct->Z1;
-    complex_t *Z2 = mdct->Z2;
-    faad_sincos *sincos = mdct->sincos;
+    complex_t x;
+    complex_t *Z1 = mdct->Z1;
+    complex_t *sincos = mdct->sincos;
 
     uint16_t N  = mdct->N;
     uint16_t N2 = N >> 1;
@@ -157,10 +155,10 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     for (k = 0; k < N4; k++)
     {
         uint16_t n = k << 1;
-        real_t x0 = X_in[         n];
-        real_t x1 = X_in[N2 - 1 - n];
-        Z1[n]   = MUL_R_C(x1, sincos[k].cos) - MUL_R_C(x0, sincos[k].sin);
-        Z1[n+1] = MUL_R_C(x0, sincos[k].cos) + MUL_R_C(x1, sincos[k].sin);
+        RE(x) = X_in[         n];
+        IM(x) = X_in[N2 - 1 - n];
+        RE(Z1[k]) = MUL_R_C(IM(x), RE(sincos[k])) - MUL_R_C(RE(x), IM(sincos[k]));
+        IM(Z1[k]) = MUL_R_C(RE(x), RE(sincos[k])) + MUL_R_C(IM(x), IM(sincos[k]));
     }
 
     /* complex IFFT */
@@ -170,25 +168,25 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     for (k = 0; k < N4; k++)
     {
         uint16_t n = k << 1;
-        real_t zr = Z1[n];
-        real_t zi = Z1[n+1];
+        RE(x) = RE(Z1[k]);
+        IM(x) = IM(Z1[k]);
 
-        Z2[k].re  = MUL_R_C(zr, sincos[k].cos) - MUL_R_C(zi, sincos[k].sin);
-        Z2[k].im  = MUL_R_C(zi, sincos[k].cos) + MUL_R_C(zr, sincos[k].sin);
+        RE(Z1[k]) = MUL_R_C(RE(x), RE(sincos[k])) - MUL_R_C(IM(x), IM(sincos[k]));
+        IM(Z1[k]) = MUL_R_C(IM(x), RE(sincos[k])) + MUL_R_C(RE(x), IM(sincos[k]));
     }
 
     /* reordering */
     for (k = 0; k < N8; k++)
     {
         uint16_t n = k << 1;
-        X_out[              n] =  Z2[N8 +     k].im;
-        X_out[          1 + n] = -Z2[N8 - 1 - k].re;
-        X_out[N4 +          n] =  Z2[         k].re;
-        X_out[N4 +      1 + n] = -Z2[N4 - 1 - k].im;
-        X_out[N2 +          n] =  Z2[N8 +     k].re;
-        X_out[N2 +      1 + n] = -Z2[N8 - 1 - k].im;
-        X_out[N2 + N4 +     n] = -Z2[         k].im;
-        X_out[N2 + N4 + 1 + n] =  Z2[N4 - 1 - k].re;
+        X_out[              n] =  IM(Z1[N8 +     k]);
+        X_out[          1 + n] = -RE(Z1[N8 - 1 - k]);
+        X_out[N4 +          n] =  RE(Z1[         k]);
+        X_out[N4 +      1 + n] = -IM(Z1[N4 - 1 - k]);
+        X_out[N2 +          n] =  RE(Z1[N8 +     k]);
+        X_out[N2 +      1 + n] = -IM(Z1[N8 - 1 - k]);
+        X_out[N2 + N4 +     n] = -IM(Z1[         k]);
+        X_out[N2 + N4 + 1 + n] =  RE(Z1[N4 - 1 - k]);
     }
 }
 
@@ -197,8 +195,9 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
 {
     uint16_t k;
 
-    real_t *Z1 = mdct->Z1;
-    faad_sincos *sincos = mdct->sincos;
+    complex_t x;
+    complex_t *Z1 = mdct->Z1;
+    complex_t *sincos = mdct->sincos;
 
     uint16_t N  = mdct->N;
     uint16_t N2 = N >> 1;
@@ -211,17 +210,17 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     for (k = 0; k < N8; k++)
     {
         uint16_t n = k << 1;
-        real_t zr =  X_in[N - N4 - 1 - n] + X_in[N - N4 +     n];
-        real_t zi =  X_in[    N4 +     n] - X_in[    N4 - 1 - n];
+        RE(x) = X_in[N - N4 - 1 - n] + X_in[N - N4 +     n];
+        IM(x) = X_in[    N4 +     n] - X_in[    N4 - 1 - n];
 
-        Z1[n]   = -MUL_R_C(zr, sincos[k].cos) - MUL_R_C(zi, sincos[k].sin);
-        Z1[n+1] = -MUL_R_C(zi, sincos[k].cos) + MUL_R_C(zr, sincos[k].sin);
+        RE(Z1[k]) = -MUL_R_C(RE(x), RE(sincos[k])) - MUL_R_C(IM(x), IM(sincos[k]));
+        IM(Z1[k]) = -MUL_R_C(IM(x), RE(sincos[k])) + MUL_R_C(RE(x), IM(sincos[k]));
 
-        zr =  X_in[N2 - 1 - n] - X_in[        n];
-        zi =  X_in[N2 +     n] + X_in[N - 1 - n];
+        RE(x) =  X_in[N2 - 1 - n] - X_in[        n];
+        IM(x) =  X_in[N2 +     n] + X_in[N - 1 - n];
 
-        Z1[n   + N4] = -MUL_R_C(zr, sincos[k + N8].cos) - MUL_R_C(zi, sincos[k + N8].sin);
-        Z1[n+1 + N4] = -MUL_R_C(zi, sincos[k + N8].cos) + MUL_R_C(zr, sincos[k + N8].sin);
+        RE(Z1[k + N8]) = -MUL_R_C(RE(x), RE(sincos[k + N8])) - MUL_R_C(IM(x), IM(sincos[k + N8]));
+        IM(Z1[k + N8]) = -MUL_R_C(IM(x), RE(sincos[k + N8])) + MUL_R_C(RE(x), IM(sincos[k + N8]));
     }
 
     /* complex FFT */
@@ -231,13 +230,13 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     for (k = 0; k < N4; k++)
     {
         uint16_t n = k << 1;
-        real_t zr = MUL(MUL_R_C(Z1[n], sincos[k].cos) + MUL_R_C(Z1[n+1], sincos[k].sin), scale);
-        real_t zi = MUL(MUL_R_C(Z1[n+1], sincos[k].cos) - MUL_R_C(Z1[n], sincos[k].sin), scale);
+        RE(x) = MUL(MUL_R_C(RE(Z1[k]), RE(sincos[k])) + MUL_R_C(IM(Z1[k]), IM(sincos[k])), scale);
+        IM(x) = MUL(MUL_R_C(IM(Z1[k]), RE(sincos[k])) - MUL_R_C(RE(Z1[k]), IM(sincos[k])), scale);
 
-        X_out[         n] =  zr;
-        X_out[N2 - 1 - n] = -zi;
-        X_out[N2 +     n] =  zi;
-        X_out[N  - 1 - n] = -zr;
+        X_out[         n] =  RE(x);
+        X_out[N2 - 1 - n] = -IM(x);
+        X_out[N2 +     n] =  IM(x);
+        X_out[N  - 1 - n] = -RE(x);
     }
 }
 #endif

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: huffman.h,v 1.10 2002/09/16 20:43:37 menno Exp $
+** $Id: huffman.h,v 1.11 2002/09/26 19:01:45 menno Exp $
 **/
 
 #ifndef __HUFFMAN_H__
@@ -73,143 +73,15 @@ static hcb_bin_pair *hcb_bin_table[] = {
 
 static uint8_t hcbN[] = { 0, 5, 5, 0, 5, 0, 5, 0, 5, 0, 6, 5 };
 
+/* defines whether a huffman codebook is unsigned or not */
+/* Table 4.6.2 */
+static uint8_t unsigned_cb[] = { 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+         /* codebook 16 to 31 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+};
+
 static int hcb_2_quad_table_size[] = { 0, 114, 86, 0, 185, 0, 0, 0, 0, 0, 0, 0 };
 static int hcb_2_pair_table_size[] = { 0, 0, 0, 0, 0, 0, 126, 0, 83, 0, 210, 373 };
 static int hcb_bin_table_size[] = { 0, 0, 0, 161, 0, 161, 0, 127, 0, 337, 0, 0 };
-
-static INLINE uint8_t huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
-{
-    uint32_t cw;
-    uint16_t offset = 0;
-    uint8_t extra_bits;
-
-    switch (cb)
-    {
-    case 1: /* 2-step method for data quadruples */
-    case 2:
-    case 4:
-
-        cw = faad_showbits(ld, hcbN[cb]);
-        offset = hcb_table[cb][cw].offset;
-        extra_bits = hcb_table[cb][cw].extra_bits;
-
-        if (extra_bits)
-        {
-            /* we know for sure it's more than hcbN[cb] bits long */
-            faad_flushbits(ld, hcbN[cb]);
-            offset += (uint16_t)faad_showbits(ld, extra_bits);
-            faad_flushbits(ld, hcb_2_quad_table[cb][offset].bits - hcbN[cb]);
-        } else {
-            faad_flushbits(ld, hcb_2_quad_table[cb][offset].bits);
-        }
-
-        if (offset > hcb_2_quad_table_size[cb])
-        {
-            /* printf("ERROR: offset into hcb_2_quad_table = %d >%d!\n", offset,
-                hcb_2_quad_table_size[cb]); */
-            return 10;
-        }
-
-        sp[0] = hcb_2_quad_table[cb][offset].x;
-        sp[1] = hcb_2_quad_table[cb][offset].y;
-        sp[2] = hcb_2_quad_table[cb][offset].v;
-        sp[3] = hcb_2_quad_table[cb][offset].w;
-
-        return 0;
-
-    case 6: /* 2-step method for data pairs */
-    case 8:
-    case 10:
-    case 11:
-#ifdef ERROR_RESILIENCE
-    /* VCB11 uses codebook 11 */
-    case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
-    case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
-
-        /* TODO: If ER is used, some extra error checking should be done */
-        if (cb >= 16)
-            cb = 11;
-#endif
-
-        cw = faad_showbits(ld, hcbN[cb]);
-        offset = hcb_table[cb][cw].offset;
-        extra_bits = hcb_table[cb][cw].extra_bits;
-
-        if (extra_bits)
-        {
-            /* we know for sure it's more than hcbN[cb] bits long */
-            faad_flushbits(ld, hcbN[cb]);
-            offset += (uint16_t)faad_showbits(ld, extra_bits);
-            faad_flushbits(ld, hcb_2_pair_table[cb][offset].bits - hcbN[cb]);
-        } else {
-            faad_flushbits(ld, hcb_2_pair_table[cb][offset].bits);
-        }
-
-        if (offset > hcb_2_pair_table_size[cb])
-        {
-            /* printf("ERROR: offset into hcb_2_pair_table = %d >%d!\n", offset,
-                hcb_2_pair_table_size[cb]); */
-            return 10;
-        }
-
-        sp[0] = hcb_2_pair_table[cb][offset].x;
-        sp[1] = hcb_2_pair_table[cb][offset].y;
-
-        return 0;
-
-    case 3: /* binary search for data quadruples */
-
-        while (!hcb3[offset].is_leaf)
-        {
-            uint8_t b = faad_get1bit(ld
-                DEBUGVAR(1,255,"huffman_spectral_data():3"));
-            offset += hcb3[offset].data[b];
-        }
-
-        if (offset > hcb_bin_table_size[cb])
-        {
-            /* printf("ERROR: offset into hcb_bin_table = %d >%d!\n", offset,
-                hcb_bin_table_size[cb]); */
-            return 10;
-        }
-
-        sp[0] = hcb3[offset].data[0];
-        sp[1] = hcb3[offset].data[1];
-        sp[2] = hcb3[offset].data[2];
-        sp[3] = hcb3[offset].data[3];
-
-        return 0;
-
-    case 5: /* binary search for data pairs */
-    case 7:
-    case 9:
-
-        while (!hcb_bin_table[cb][offset].is_leaf)
-        {
-            uint8_t b = faad_get1bit(ld
-                DEBUGVAR(1,255,"huffman_spectral_data():9"));
-            offset += hcb_bin_table[cb][offset].data[b];
-        }
-
-        if (offset > hcb_bin_table_size[cb])
-        {
-            /* printf("ERROR: offset into hcb_bin_table = %d >%d!\n", offset,
-                hcb_bin_table_size[cb]); */
-            return 10;
-        }
-
-        sp[0] = hcb_bin_table[cb][offset].data[0];
-        sp[1] = hcb_bin_table[cb][offset].data[1];
-
-        return 0;
-
-    default:
-        /* Non existent codebook number, something went wrong */
-        return 11;
-    }
-
-    return 0;
-}
 
 static INLINE void huffman_sign_bits(bitfile *ld, int16_t *sp, uint8_t len)
 {
@@ -228,10 +100,11 @@ static INLINE void huffman_sign_bits(bitfile *ld, int16_t *sp, uint8_t len)
     }
 }
 
-static INLINE int32_t huffman_getescape(bitfile *ld, int16_t sp)
+static INLINE int16_t huffman_getescape(bitfile *ld, int16_t sp)
 {
     uint8_t neg, i;
-    int32_t j, off;
+    int16_t j;
+	int32_t off;
 
     if (sp < 0) {
         if(sp != -16)
@@ -252,26 +125,206 @@ static INLINE int32_t huffman_getescape(bitfile *ld, int16_t sp)
         }
     }
 
-#if 0
-    if (i > 16)
-    {
-        off = faad_getbits(ld, i-16
-            DEBUGVAR(1,7,"huffman_getescape(): escape, first part")) << 16;
-        off |= faad_getbits(ld, 16
-            DEBUGVAR(1,8,"huffman_getescape(): escape, second part"));
-    } else {
-#endif
-        off = faad_getbits(ld, i
-            DEBUGVAR(1,9,"huffman_getescape(): escape"));
-#if 0
-    }
-#endif
+    off = faad_getbits(ld, i
+        DEBUGVAR(1,9,"huffman_getescape(): escape"));
 
     j = off + (1<<i);
     if (neg)
         j = -j;
 
     return j;
+}
+
+static uint8_t huffman_2step_quad(uint8_t cb, bitfile *ld, int16_t *sp)
+{
+    uint32_t cw;
+    uint16_t offset = 0;
+    uint8_t extra_bits;
+
+    cw = faad_showbits(ld, hcbN[cb]);
+    offset = hcb_table[cb][cw].offset;
+    extra_bits = hcb_table[cb][cw].extra_bits;
+
+    if (extra_bits)
+    {
+        /* we know for sure it's more than hcbN[cb] bits long */
+        faad_flushbits(ld, hcbN[cb]);
+        offset += (uint16_t)faad_showbits(ld, extra_bits);
+        faad_flushbits(ld, hcb_2_quad_table[cb][offset].bits - hcbN[cb]);
+    } else {
+        faad_flushbits(ld, hcb_2_quad_table[cb][offset].bits);
+    }
+
+    if (offset > hcb_2_quad_table_size[cb])
+    {
+        /* printf("ERROR: offset into hcb_2_quad_table = %d >%d!\n", offset,
+           hcb_2_quad_table_size[cb]); */
+        return 10;
+    }
+
+    sp[0] = hcb_2_quad_table[cb][offset].x;
+    sp[1] = hcb_2_quad_table[cb][offset].y;
+    sp[2] = hcb_2_quad_table[cb][offset].v;
+    sp[3] = hcb_2_quad_table[cb][offset].w;
+
+    return 0;
+}
+
+static uint8_t huffman_2step_quad_sign(uint8_t cb, bitfile *ld, int16_t *sp)
+{
+    uint8_t err = huffman_2step_quad(cb, ld, sp);
+    huffman_sign_bits(ld, sp, QUAD_LEN);
+
+    return err;
+}
+
+static uint8_t huffman_2step_pair(uint8_t cb, bitfile *ld, int16_t *sp)
+{
+    uint32_t cw;
+    uint16_t offset = 0;
+    uint8_t extra_bits;
+
+    cw = faad_showbits(ld, hcbN[cb]);
+    offset = hcb_table[cb][cw].offset;
+    extra_bits = hcb_table[cb][cw].extra_bits;
+
+    if (extra_bits)
+    {
+        /* we know for sure it's more than hcbN[cb] bits long */
+        faad_flushbits(ld, hcbN[cb]);
+        offset += (uint16_t)faad_showbits(ld, extra_bits);
+        faad_flushbits(ld, hcb_2_pair_table[cb][offset].bits - hcbN[cb]);
+    } else {
+        faad_flushbits(ld, hcb_2_pair_table[cb][offset].bits);
+    }
+
+    if (offset > hcb_2_pair_table_size[cb])
+    {
+        /* printf("ERROR: offset into hcb_2_pair_table = %d >%d!\n", offset,
+           hcb_2_pair_table_size[cb]); */
+        return 10;
+    }
+
+    sp[0] = hcb_2_pair_table[cb][offset].x;
+    sp[1] = hcb_2_pair_table[cb][offset].y;
+
+    return 0;
+}
+
+static huffman_2step_pair_sign(uint8_t cb, bitfile *ld, int16_t *sp)
+{
+    uint8_t err = huffman_2step_pair(cb, ld, sp);
+    huffman_sign_bits(ld, sp, PAIR_LEN);
+
+    return err;
+}
+
+static uint8_t huffman_binary_quad(uint8_t cb, bitfile *ld, int16_t *sp)
+{
+    uint16_t offset = 0;
+
+    while (!hcb3[offset].is_leaf)
+    {
+        uint8_t b = faad_get1bit(ld
+            DEBUGVAR(1,255,"huffman_spectral_data():3"));
+        offset += hcb3[offset].data[b];
+    }
+
+    if (offset > hcb_bin_table_size[cb])
+    {
+        /* printf("ERROR: offset into hcb_bin_table = %d >%d!\n", offset,
+           hcb_bin_table_size[cb]); */
+        return 10;
+    }
+
+    sp[0] = hcb3[offset].data[0];
+    sp[1] = hcb3[offset].data[1];
+    sp[2] = hcb3[offset].data[2];
+    sp[3] = hcb3[offset].data[3];
+
+    return 0;
+}
+
+static uint8_t huffman_binary_quad_sign(uint8_t cb, bitfile *ld, int16_t *sp)
+{
+    uint8_t err = huffman_binary_quad(cb, ld, sp);
+    huffman_sign_bits(ld, sp, QUAD_LEN);
+
+    return err;
+}
+
+static uint8_t huffman_binary_pair(uint8_t cb, bitfile *ld, int16_t *sp)
+{
+    uint16_t offset = 0;
+
+    while (!hcb_bin_table[cb][offset].is_leaf)
+    {
+        uint8_t b = faad_get1bit(ld
+            DEBUGVAR(1,255,"huffman_spectral_data():9"));
+        offset += hcb_bin_table[cb][offset].data[b];
+    }
+
+    if (offset > hcb_bin_table_size[cb])
+    {
+        /* printf("ERROR: offset into hcb_bin_table = %d >%d!\n", offset,
+           hcb_bin_table_size[cb]); */
+        return 10;
+    }
+
+    sp[0] = hcb_bin_table[cb][offset].data[0];
+    sp[1] = hcb_bin_table[cb][offset].data[1];
+
+    return 0;
+}
+
+static uint8_t huffman_binary_pair_sign(uint8_t cb, bitfile *ld, int16_t *sp)
+{
+    uint8_t err = huffman_binary_pair(cb, ld, sp);
+    huffman_sign_bits(ld, sp, PAIR_LEN);
+
+    return err;
+}
+
+static INLINE uint8_t huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
+{
+    switch (cb)
+    {
+    case 1: /* 2-step method for data quadruples */
+    case 2:
+        return huffman_2step_quad(cb, ld, sp);
+    case 3: /* binary search for data quadruples */
+        return huffman_binary_quad_sign(cb, ld, sp);
+    case 4: /* 2-step method for data quadruples */
+        return huffman_2step_quad_sign(cb, ld, sp);
+    case 5: /* binary search for data pairs */
+        return huffman_binary_pair(cb, ld, sp);
+    case 6: /* 2-step method for data pairs */
+        return huffman_2step_pair(cb, ld, sp);
+    case 7: /* binary search for data pairs */
+    case 9:
+        return huffman_binary_pair_sign(cb, ld, sp);
+    case 8: /* 2-step method for data pairs */
+    case 10:
+        return huffman_2step_pair_sign(cb, ld, sp);
+    case 11:
+#ifdef ERROR_RESILIENCE
+    /* VCB11 uses codebook 11 */
+    case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
+    case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
+    {
+        /* TODO: If ER is used, some extra error checking should be done */
+#endif
+        uint8_t err = huffman_2step_pair_sign(11, ld, sp);
+        sp[0] = huffman_getescape(ld, sp[0]);
+        sp[1] = huffman_getescape(ld, sp[1]);
+        return err;
+    }
+    default:
+        /* Non existent codebook number, something went wrong */
+        return 11;
+    }
+
+    return 0;
 }
 
 #ifdef __cplusplus

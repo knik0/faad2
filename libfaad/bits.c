@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.c,v 1.8 2002/08/10 19:01:18 menno Exp $
+** $Id: bits.c,v 1.9 2002/09/26 19:01:45 menno Exp $
 **/
 
 #include "common.h"
@@ -42,18 +42,18 @@ void faad_initbits(bitfile *ld, void *buffer)
 #endif
     ld->bufb = tmp;
 
-    ld->pos = 0;
+    ld->bits_left = 32;
     ld->tail = ((uint32_t*)buffer + 2);
 }
 
 uint32_t faad_get_processed_bits(bitfile *ld)
 {
-    return 8 * (4*(ld->tail - ld->start) - 4) - (32 - ld->pos);
+    return 8 * (4*(ld->tail - ld->start) - 4) - (ld->bits_left);
 }
 
 uint8_t faad_byte_align(bitfile *ld)
 {
-    uint8_t remainder = (uint8_t)(ld->pos % 8);
+    uint8_t remainder = (uint8_t)((32 - ld->bits_left) % 8);
 
     if (remainder)
     {
@@ -63,24 +63,24 @@ uint8_t faad_byte_align(bitfile *ld)
     return 0;
 }
 
-uint8_t *faad_getbitbuffer(bitfile *ld, uint16_t bits
+uint8_t *faad_getbitbuffer(bitfile *ld, uint32_t bits
                        DEBUGDEC)
 {
     uint16_t i;
 	uint8_t temp;
-    uint16_t bytes = bits / 8;
-    uint8_t remainder = bits % 8;
+    uint16_t bytes = (uint16_t)bits / 8;
+    uint8_t remainder = (uint8_t)bits % 8;
 
     uint8_t *buffer = (uint8_t*)malloc((bytes+1)*sizeof(uint8_t));
 
     for (i = 0; i < bytes; i++)
     {
-        buffer[i] = faad_getbits(ld, 8 DEBUGVAR(print,var,dbg));
+        buffer[i] = (uint8_t)faad_getbits(ld, 8 DEBUGVAR(print,var,dbg));
     }
 
     if (remainder)
     {
-        temp = faad_getbits(ld, remainder DEBUGVAR(print,var,dbg)) << (8-remainder);
+        temp = (uint8_t)faad_getbits(ld, remainder DEBUGVAR(print,var,dbg)) << (8-remainder);
 
         buffer[bytes] = temp;
     }

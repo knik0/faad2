@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.21 2002/09/13 13:08:45 menno Exp $
+** $Id: common.h,v 1.22 2002/09/26 19:01:45 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -196,10 +196,9 @@ typedef float float32_t;
 
 #endif
 
-typedef struct {
-    real_t re;
-    real_t im;
-} complex_t;
+typedef real_t complex_t[2];
+#define RE(A) A[0]
+#define IM(A) A[1]
 
 
 /* common functions */
