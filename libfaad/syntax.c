@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.10 2002/04/07 21:26:04 menno Exp $
+** $Id: syntax.c,v 1.11 2002/04/18 18:08:07 menno Exp $
 **/
 
 /*
@@ -588,6 +588,72 @@ static void section_data(ic_stream *ics, bitfile *ld
 }
 
 /*
+ *  decode_scale_factors()
+ *   decodes the scalefactors from the bitstream
+ */
+static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
+{
+    uint8_t g, sfb;
+    int8_t t;
+    int8_t noise_pcm_flag = 1;
+
+    int16_t scale_factor = ics->global_gain;
+    int16_t is_position = 0;
+    int16_t noise_energy = ics->global_gain - 90;
+
+    for (g = 0; g < ics->num_window_groups; g++)
+    {
+        for (sfb = 0; sfb < ics->max_sfb; sfb++)
+        {
+            switch (ics->sfb_cb[g][sfb])
+            {
+            case ZERO_HCB: /* zero book */
+                ics->scale_factors[g][sfb] = 0;
+                break;
+            case INTENSITY_HCB: /* intensity books */
+            case INTENSITY_HCB2:
+
+                /* decode intensity position */
+                t = huffman_scale_factor(ld) - 60;
+                is_position += t;
+                ics->scale_factors[g][sfb] = is_position;
+
+                break;
+            case NOISE_HCB: /* noise books */
+
+                /* decode noise energy */
+                if (noise_pcm_flag)
+                {
+                    noise_pcm_flag = 0;
+                    t = faad_getbits(ld, 9
+                        DEBUGVAR(1,73,"scale_factor_data(): first noise")) - 256;
+                } else {
+                    t = huffman_scale_factor(ld) - 60;
+                }
+                noise_energy += t;
+                ics->scale_factors[g][sfb] = noise_energy;
+
+                break;
+            case BOOKSCL: /* invalid books */
+                return 3;
+            default: /* spectral books */
+
+                /* decode scale factor */
+                t = huffman_scale_factor(ld) - 60;
+                scale_factor += t;
+                if (scale_factor < 0)
+                    return 4;
+                ics->scale_factors[g][sfb] = scale_factor;
+
+                break;
+            }
+        }
+    }
+
+    return 0;
+}
+
+/*
   All scalefactors (and also the stereo positions and pns energies) are
   transmitted using Huffman coded DPCM relative to the previous active
   scalefactor (respectively previous stereo position or previous pns energy,
@@ -605,68 +671,10 @@ static uint8_t scale_factor_data(ic_stream *ics, bitfile *ld
     if (!aacScalefactorDataResilienceFlag)
     {
 #endif
-        uint8_t g, sfb;
-        int8_t t;
-        uint8_t noise_pcm_flag = 1;
-        int16_t scale_factor = ics->global_gain;
-        int16_t is_position = 0;
-        int16_t noise_energy = ics->global_gain - 90;
-
-        for (g = 0; g < ics->num_window_groups; g++)
-        {
-            for (sfb = 0; sfb < ics->max_sfb; sfb++)
-            {
-                switch (ics->sfb_cb[g][sfb])
-                {
-                case ZERO_HCB: /* zero book */
-                    ics->scale_factors[g][sfb] = 0;
-                    break;
-                case INTENSITY_HCB: /* intensity books */
-                case INTENSITY_HCB2:
-
-                    /* decode intensity position */
-                    t = huffman_scale_factor(ld) - 60;
-                    is_position += t;
-                    ics->scale_factors[g][sfb] = is_position;
-
-                    break;
-                case NOISE_HCB: /* noise books */
-
-                    /* decode noise energy */
-                    if (noise_pcm_flag)
-                    {
-                        noise_pcm_flag = 0;
-                        t = faad_getbits(ld, 9
-                            DEBUGVAR(1,73,"scale_factor_data(): first noise")) - 256;
-                    } else {
-                        t = huffman_scale_factor(ld) - 60;
-                    }
-                    noise_energy += t;
-                    ics->scale_factors[g][sfb] = noise_energy;
-
-                    break;
-                case BOOKSCL: /* invalid books */
-                    return 3;
-                default: /* spectral books */
-
-                    /* decode scale factor */
-                    t = huffman_scale_factor(ld) - 60;
-                    scale_factor += t;
-                    if (scale_factor < 0)
-                        return 4;
-                    ics->scale_factors[g][sfb] = scale_factor;
-
-                    break;
-                }
-            }
-        }
-
-        return 0;
+        return decode_scale_factors(ics, ld);
 #ifdef ERROR_RESILIENCE
     } else {
-        uint8_t g, sfb;
-        uint8_t intensity_used = 0;
-        uint8_t noise_used = 0;
+        uint32_t bits_used, length_of_rvlc_sf;
         uint8_t bits = 11;
 
         sf_concealment = faad_get1bit(ld
@@ -681,39 +689,21 @@ static uint8_t scale_factor_data(ic_stream *ics, bitfile *ld
         length_of_rvlc_sf = faad_getbits(ld, bits
             DEBUGVAR(1,151,"scale_factor_data(): length_of_rvlc_sf"));
 
-        for (g = 0; g < num_window_groups; g++)
-        {
-            for (sfb = 0; sfb < max_sfb; sfb++)
-            {
-                if (sect_cb[g][sfb] != ZERO_HCB)
-                {
-                    if (is_intensity(g, sfb))
-                    {
-                        intensity_used = 1;
-                        rvlc_cod_sf[dpcm_is_position[g][sfb]]; 1..9 vlclbf
-                    } else {
-                        if (is_noise(g,sfb))
-                        {
-                            if (!noise_used)
-                            {
-                                noise_used = 1;
-                                dpcm_noise_nrg[g][sfb] = faad_getbits(ld, 9
-                                    DEBUGVAR(1,152,"scale_factor_data(): dpcm_noise_nrg"));
-                            } else {
-                                rvlc_cod_sf[dpcm_noise_nrg[g][sfb]]; 1..9 vlclbf
-                            }
-                        } else {
-                            rvlc_cod_sf[dpcm_sf[g][sfb]]; 1..9 vlclbf
-                        }
-                    }
-                }
-            }
-        }
+        /* check how many bits are used in decoing the scalefactors
+           A better solution would be to read length_of_rvlc_sf ahead
+           in a buffer and use that to decode the scale factors
+           There's work ahead :-)
+        */
+        bits_used = faad_get_processed_bits(ld);
+        decode_scale_factors(ics, ld);
+        bits_used = faad_get_processed_bits(ld) - bits_used;
 
-        if (intensity_used)
-        {
-            rvlc_cod_sf[dpcm_is_last_position]; 1..9 vlclbf
-        }
+        /* return an error if the number of decoded bits is not correct
+           FAAD should be able to recover from this, for example by
+           setting all scalefactors to 0 (muting the frame)
+        */
+        if (bits_used != length_of_rvlc_sf)
+            return 8;
 
         sf_escapes_present; 1 uimsbf
 
