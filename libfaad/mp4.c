@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mp4.c,v 1.2 2002/02/18 10:01:05 menno Exp $
+** $Id: mp4.c,v 1.3 2002/02/25 19:58:33 menno Exp $
 **/
 
 #include "common.h"
@@ -43,15 +43,32 @@ static uint8_t ObjectTypesTable[32] = {
     0, /* Main synthetic */
     0, /* Wavetable synthesis */
     0, /* General MIDI */
-    0  /* Algorithmic Synthesis and Audio FX */
+    0, /* Algorithmic Synthesis and Audio FX */
+
+    /* MPEG-4 Version 2 */
+    0, /* ER AAC LC */
+    0, /* (Reserved) */
+    0, /* ER AAC LTP */
+    0, /* ER AAC scalable */
+    0, /* ER TwinVQ */
+    0, /* ER BSAC */
+    1, /* ER AAC LD */     /* !!! Supported, but only with ER turned off !!! */
+    0, /* ER CELP */
+    0, /* ER HVXC */
+    0, /* ER HILN */
+    0, /* ER Parametric */
+    0, /* (Reserved) */
+    0, /* (Reserved) */
+    0, /* (Reserved) */
+    0  /* (Reserved) */
 };
 
 /* Table 1.6.1 */
 int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
-                                uint32_t *samplerate,
-                                uint8_t *channels,
-                                uint8_t *sf_index,
-                                uint8_t *object_type)
+                                   uint32_t *samplerate,
+                                   uint8_t *channels,
+                                   uint8_t *sf_index,
+                                   uint8_t *object_type)
 {
     bitfile ld;
     uint8_t ObjectTypeIndex, SamplingFrequencyIndex, ChannelsConfiguration;
@@ -94,9 +111,17 @@ int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
     /* get GASpecificConfig */
     if (ObjectTypeIndex == 1 || ObjectTypeIndex == 2 ||
         ObjectTypeIndex == 3 || ObjectTypeIndex == 4 ||
-        ObjectTypeIndex == 6 || ObjectTypeIndex == 7 )
+        ObjectTypeIndex == 6 || ObjectTypeIndex == 7)
     {
-        return GASpecificConfig(&ld, channels);
+        return GASpecificConfig(&ld, channels, ObjectTypeIndex);
+    } else if (ObjectTypeIndex == 23) { /* ER AAC LD */
+        uint8_t result = GASpecificConfig(&ld, channels, ObjectTypeIndex);
+        uint8_t ep_config = (uint8_t)faad_getbits(&ld, 2
+            DEBUGVAR(1,143,"parse_audio_decoder_specific_info(): epConfig"));
+        if (ep_config != 0)
+            return -5;
+
+        return result;
     } else {
         return -4;
     }

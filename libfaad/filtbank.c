@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.c,v 1.3 2002/02/20 13:05:57 menno Exp $
+** $Id: filtbank.c,v 1.4 2002/02/25 19:58:33 menno Exp $
 **/
 
 #include "common.h"
@@ -29,38 +29,54 @@
 #include "mdct.h"
 
 
-real_t *long_window[2];
-real_t *short_window[2];
-
 void filter_bank_init(fb_info *fb)
 {
     uint16_t i;
 
+    /* LD */
+    mdct_init(&(fb->mdct1024), 1024);
+
+    fb->ld_window[0] = malloc(BLOCK_LEN_LD*sizeof(real_t));
+    fb->ld_window[1] = malloc(BLOCK_LEN_LD*sizeof(real_t));
+
+    /* calculate the sine windows */
+    for (i = 0; i < BLOCK_LEN_LD; i++)
+        fb->ld_window[0][i] = (real_t)sin(M_PI / (2.0 * BLOCK_LEN_LD) * (i + 0.5));
+
+    /* low overlap window */
+    for (i = 0; i < 3*(BLOCK_LEN_LD>>3); i++)
+        fb->ld_window[1][i] = 0.0;
+    for (; i < 5*(BLOCK_LEN_LD>>3); i++)
+        fb->ld_window[1][i] = (real_t)sin((i-3*(BLOCK_LEN_LD>>3)+0.5) * M_PI / (BLOCK_LEN_LD>>1));
+    for (; i < BLOCK_LEN_LD; i++)
+        fb->ld_window[1][i] = 1.0;
+
+    /* normal */
     mdct_init(&(fb->mdct256), 256);
     mdct_init(&(fb->mdct2048), 2048);
 
-    fb->sin_long  = malloc(BLOCK_LEN_LONG*sizeof(real_t));
-    fb->sin_short = malloc(BLOCK_LEN_SHORT*sizeof(real_t));
-
-    long_window[0]  = fb->sin_long;
-    long_window[1]  = kbd_long;
-    short_window[0] = fb->sin_short;
-    short_window[1] = kbd_short;
+    fb->long_window[0]  = malloc(BLOCK_LEN_LONG*sizeof(real_t));
+    fb->short_window[0] = malloc(BLOCK_LEN_SHORT*sizeof(real_t));
+    fb->long_window[1]  = kbd_long;
+    fb->short_window[1] = kbd_short;
 
     /* calculate the sine windows */
     for (i = 0; i < BLOCK_LEN_LONG; i++)
-        fb->sin_long[i] = (real_t)sin(M_PI / (2.0 * BLOCK_LEN_LONG) * (i + 0.5));
+        fb->long_window[0][i] = (real_t)sin(M_PI / (2.0 * BLOCK_LEN_LONG) * (i + 0.5));
     for (i = 0; i < BLOCK_LEN_SHORT; i++)
-        fb->sin_short[i] = (real_t)sin(M_PI / (2.0 * BLOCK_LEN_SHORT) * (i + 0.5));
+        fb->short_window[0][i] = (real_t)sin(M_PI / (2.0 * BLOCK_LEN_SHORT) * (i + 0.5));
 }
 
 void filter_bank_end(fb_info *fb)
 {
     mdct_end(&(fb->mdct256));
+    mdct_end(&(fb->mdct1024));
     mdct_end(&(fb->mdct2048));
 
-    if (fb->sin_long) free(fb->sin_long);
-    if (fb->sin_short) free(fb->sin_short);
+    if (fb->long_window[0]) free(fb->long_window[0]);
+    if (fb->short_window[0]) free(fb->short_window[0]);
+    if (fb->ld_window[0]) free(fb->ld_window[0]);
+    if (fb->ld_window[1]) free(fb->ld_window[1]);
 }
 
 static INLINE void vcopy(real_t *src, real_t *dest, uint16_t vlen)
@@ -157,6 +173,9 @@ static INLINE void imdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_
     case 2048:
         IMDCT_long(&(fb->mdct2048), in_data, out_data);
         return;
+    case 1024:
+        IMDCT_LD(&(fb->mdct1024), in_data, out_data);
+        return;
     case 256:
         IMDCT_short(&(fb->mdct256), in_data, out_data);
         return;
@@ -170,6 +189,9 @@ static INLINE void mdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_t
     case 2048:
         MDCT_long(&(fb->mdct2048), in_data, out_data);
         return;
+    case 1024:
+        MDCT_LD(&(fb->mdct1024), in_data, out_data);
+        return;
     case 256:
         MDCT_short(&(fb->mdct256), in_data, out_data);
         return;
@@ -178,9 +200,9 @@ static INLINE void mdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_t
 
 void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
                   uint8_t window_shape_prev, real_t *freq_in, real_t *time_buff,
-                  real_t *time_out)
+                  real_t *time_out, uint8_t object_type)
 {
-    real_t *o_buf, transf_buf[2*BLOCK_LEN_LONG];
+    real_t *o_buf, *transf_buf;
 
     real_t *window_long;
     real_t *window_long_prev;
@@ -190,15 +212,23 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
 
     real_t *fp;
     int8_t win;
-    uint16_t nlong = 1024;
+    uint16_t nlong = (object_type == LD) ? 512 : 1024;
     uint16_t nshort = 128;
 
     uint16_t nflat_ls = (nlong-nshort)/2;
 
-    window_long       =  long_window[window_shape];
-    window_long_prev  =  long_window[window_shape_prev];
-    window_short      = short_window[window_shape];
-    window_short_prev = short_window[window_shape_prev];
+    transf_buf = malloc(2*nlong*sizeof(real_t));
+
+    if (object_type == LD)
+    {
+        window_long       = fb->ld_window[window_shape];
+        window_long_prev  = fb->ld_window[window_shape_prev];
+    } else {
+        window_long       = fb->long_window[window_shape];
+        window_long_prev  = fb->long_window[window_shape_prev];
+        window_short      = fb->short_window[window_shape];
+        window_short_prev = fb->short_window[window_shape_prev];
+    }
 
     /* pointer to previous window function */
     window_short_prev_ptr = window_short_prev;
@@ -299,14 +329,17 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
 
     /* save second half of data */
     vcopy(o_buf+nlong, time_buff, nlong);
+
+    free(transf_buf);
 }
 
 /* only works for LTP -> no overlapping */
 void filter_bank_ltp(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
-                     uint8_t window_shape_prev, real_t *in_data, real_t *out_mdct)
+                     uint8_t window_shape_prev, real_t *in_data, real_t *out_mdct,
+                     uint8_t object_type)
 {
     int8_t win;
-    real_t windowed_buf[2*1024];
+    real_t *windowed_buf;
     real_t *p_o_buf;
 
     real_t *window_long;
@@ -315,15 +348,23 @@ void filter_bank_ltp(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
     real_t *window_short_prev;
     real_t *window_short_prev_ptr;
 
-    uint16_t nlong = 1024;
+    uint16_t nlong = (object_type == LD) ? 512 : 1024;
     uint16_t nshort = 128;
     uint16_t nflat_ls = (nlong-nshort)/2;
 
+    windowed_buf = malloc(nlong*2*sizeof(real_t));
 
-    window_long       =  long_window[window_shape];
-    window_long_prev  =  long_window[window_shape_prev];
-    window_short      = short_window[window_shape];
-    window_short_prev = short_window[window_shape_prev];
+    if (object_type == LD)
+    {
+        window_long       = fb->ld_window[window_shape];
+        window_long_prev  = fb->ld_window[window_shape_prev];
+    } else {
+        window_long       = fb->long_window[window_shape];
+        window_long_prev  = fb->long_window[window_shape_prev];
+        window_short      = fb->short_window[window_shape];
+        window_short_prev = fb->short_window[window_shape_prev];
+    }
+
     window_short_prev_ptr = window_short_prev;
   
     p_o_buf = in_data;
@@ -365,4 +406,6 @@ void filter_bank_ltp(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
         mdct(fb, windowed_buf, out_mdct, 2*nlong);
         break;
     }
+
+    free(windowed_buf);
 }

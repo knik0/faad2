@@ -16,8 +16,29 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.c,v 1.3 2002/02/20 13:05:57 menno Exp $
+** $Id: mdct.c,v 1.4 2002/02/25 19:58:33 menno Exp $
 **/
+
+/*
+ * Fast MDCT Implementation using pre-twiddling and FFT using fftw
+ *
+ *
+ * Optionally uses recurrence relation to find sine and cosine values without
+ * lookup table or calling the actual sine or cosine function.
+ * Works like this:
+ *  cos(2*Pi*(i+1)/N) = cos(2*Pi*i/N)*cos(2*Pi/N) - sin(2*Pi*i/N)*sin(2*Pi/N)
+ *  sin(2*Pi*(i+1)/N) = sin(2*Pi*i/N)*cos(2*Pi/N) + cos(2*Pi*i/N)*sin(2*Pi/N)
+ *
+ * In which cos(2*Pi/N) and sin(2*Pi/N) are constants and cos(2*Pi*i/N) and
+ * sin(2*Pi*i/N) are the previous values.
+ * (in the method used in this MDCT there is an extra factor 8, but I left that
+ * out here to show more clearly the relation)
+ *
+ * Nice method for low memory usage, but lookup table is faster on most
+ * machines.
+ *
+ */
+
 
 #include "common.h"
 
@@ -26,7 +47,9 @@
 
 void mdct_init(mdct_info *mdct, uint16_t len)
 {
+#ifdef USE_TWIDDLE_TABLE
     uint16_t i;
+#endif
 
     mdct->len = len;
 
@@ -38,8 +61,8 @@ void mdct_init(mdct_info *mdct, uint16_t len)
     for (i = 0; i < len/4; i++)
     {
         real_t angle = 2.0f * M_PI * (i + 1.0f/8.0f) / (real_t)len;
-        mdct->twiddlers[2*i]     = cos(angle);
-        mdct->twiddlers[2*i + 1] = sin(angle);
+        mdct->twiddlers[i*2]     = (real_t)cos(angle);
+        mdct->twiddlers[i*2 + 1] = (real_t)sin(angle);
     }
 #endif
 }
@@ -55,7 +78,7 @@ void mdct_end(mdct_info *mdct)
 void MDCT_long(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
 {
     fftw_complex FFTarray[512];
-    fftw_real tempr, tempi, fac;
+    real_t tempr, tempi, fac;
 
 #ifdef USE_TWIDDLE_TABLE
     /* use twiddle factor tables */
@@ -67,7 +90,7 @@ void MDCT_long(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
     uint16_t i;
 
 
-    fac = 2.; /* 2 from MDCT inverse  to forward */
+    fac = 2.; /* 2 from MDCT inverse to forward */
 
 #ifndef USE_TWIDDLE_TABLE
     /* prepare for recurrence relation in pre-twiddle */
@@ -149,10 +172,107 @@ void MDCT_long(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
     }
 }
 
+void MDCT_LD(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
+{
+    fftw_complex FFTarray[256];
+    real_t tempr, tempi, fac;
+
+#ifdef USE_TWIDDLE_TABLE
+    /* use twiddle factor tables */
+    real_t *twiddlers = mdct->twiddlers;
+#else
+    /* temps for pre and post twiddle */
+    real_t cosfreq8, sinfreq8, c, s, cold, cfreq, sfreq;
+#endif
+    uint16_t i;
+
+
+    fac = 2.; /* 2 from MDCT inverse to forward */
+
+#ifndef USE_TWIDDLE_TABLE
+    /* prepare for recurrence relation in pre-twiddle */
+    cfreq = 0.9999811752826011426f;
+    sfreq = 0.0061358846491544753f;
+    cosfreq8 = 0.99999970586288221916f;
+    sinfreq8 = 0.00076699031874270453f;
+
+    c = cosfreq8;
+    s = sinfreq8;
+#endif
+
+    for (i = 0; i < 256; i++)
+    {
+        uint16_t n = 511 - (i << 1);
+        if (i < 128)
+            tempr = in_data[256 + n] + in_data[1279 - n];
+        else
+            tempr = in_data[256 + n] - in_data[255 - n];
+
+        n = (i << 1);
+        if (i < 128)
+            tempi = in_data[256 + n] - in_data[255 - n];
+        else
+            tempi = in_data[256 + n] + in_data[1279 - n];
+
+        /* calculate pre-twiddled FFT input */
+#ifdef USE_TWIDDLE_TABLE
+        FFTarray[i].re = tempr * twiddlers[n] + tempi * twiddlers[n + 1];
+        FFTarray[i].im = tempi * twiddlers[n] - tempr * twiddlers[n + 1];
+#else
+        FFTarray[i].re = tempr * c + tempi * s;
+        FFTarray[i].im = tempi * c - tempr * s;
+
+        /* use recurrence to prepare cosine and sine for next value of i */
+        cold = c;
+        c = c * cfreq - s * sfreq;
+        s = s * cfreq + cold * sfreq;
+#endif
+    }
+
+    /* Perform in-place complex FFT of length N/4 */
+    pfftw_256(FFTarray);
+
+
+#ifndef USE_TWIDDLE_TABLE
+    /* prepare for recurrence relations in post-twiddle */
+    c = cosfreq8;
+    s = sinfreq8;
+#endif
+
+    /* post-twiddle FFT output and then get output data */
+    for (i = 0; i < 256; i++)
+    {
+        uint16_t n = i << 1;
+        uint16_t unscr = mdct->unscrambled[i];
+
+        /* get post-twiddled FFT output  */
+#ifdef USE_TWIDDLE_TABLE
+        tempr = fac * (FFTarray[unscr].re * twiddlers[n] + FFTarray[unscr].im * twiddlers[n + 1]);
+        tempi = fac * (FFTarray[unscr].im * twiddlers[n] - FFTarray[unscr].re * twiddlers[n + 1]);
+#else
+        tempr = fac * (FFTarray[unscr].re * c + FFTarray[unscr].im * s);
+        tempi = fac * (FFTarray[unscr].im * c - FFTarray[unscr].re * s);
+#endif
+
+        /* fill in output values */
+        out_data[n]        = -tempr;  /* first half even */
+        out_data[511 - n]  =  tempi;  /* first half odd */
+        out_data[512 + n]  = -tempi;  /* second half even */
+        out_data[1023 - n] =  tempr;  /* second half odd */
+
+#ifndef USE_TWIDDLE_TABLE
+        /* use recurrence to prepare cosine and sine for next value of i */
+        cold = c;
+        c = c * cfreq - s * sfreq;
+        s = s * cfreq + cold * sfreq;
+#endif
+    }
+}
+
 void MDCT_short(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
 {
     fftw_complex FFTarray[64];    /* the array for in-place FFT */
-    fftw_real tempr, tempi, fac;
+    real_t tempr, tempi, fac;
 
 #ifdef USE_TWIDDLE_TABLE
     /* use twiddle factor tables */
@@ -248,7 +368,7 @@ void MDCT_short(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
 void IMDCT_long(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
 {
     fftw_complex FFTarray[512];    /* the array for in-place FFT */
-    fftw_real tempr, tempi, fac;
+    real_t tempr, tempi, fac;
 
 #ifdef USE_TWIDDLE_TABLE
     /* use twiddle factor tables */
@@ -340,11 +460,105 @@ void IMDCT_long(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
     }
 }
 
+void IMDCT_LD(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
+{
+    fftw_complex FFTarray[256];    /* the array for in-place FFT */
+    real_t tempr, tempi, fac;
+
+#ifdef USE_TWIDDLE_TABLE
+    /* use twiddle factor tables */
+    real_t *twiddlers = mdct->twiddlers;
+#else
+    /* temps for pre and post twiddle */
+    real_t cosfreq8, sinfreq8, c, s, cold, cfreq, sfreq;
+#endif
+    uint16_t i;
+
+    /* Choosing to allocate 2/N factor to Inverse Xform! */
+    fac = 0.001953125f;
+
+#ifndef USE_TWIDDLE_TABLE
+    /* prepare for recurrence relation in pre-twiddle */
+    cfreq = 0.9999811752826011426f;
+    sfreq = 0.0061358846491544753f;
+    cosfreq8 = 0.99999970586288221916f;
+    sinfreq8 = 0.00076699031874270453f;
+
+    c = cosfreq8;
+    s = sinfreq8;
+#endif
+
+    for (i = 0; i < 256; i++)
+    {
+        uint16_t n = i << 1;
+        uint16_t unscr = mdct->unscrambled[i];
+
+        tempr = -in_data[n];
+        tempi =  in_data[511 - n];
+
+        /* calculate pre-twiddled FFT input */
+#ifdef USE_TWIDDLE_TABLE
+        FFTarray[unscr].re = tempr * twiddlers[n] - tempi * twiddlers[n + 1];
+        FFTarray[unscr].im = tempi * twiddlers[n] + tempr * twiddlers[n + 1];
+#else
+        FFTarray[unscr].re = tempr * c - tempi * s;
+        FFTarray[unscr].im = tempi * c + tempr * s;
+
+        /* use recurrence to prepare cosine and sine for next value of i */
+        cold = c;
+        c = c * cfreq - s * sfreq;
+        s = s * cfreq + cold * sfreq;
+#endif
+    }
+
+    /* Perform in-place complex IFFT of length N/4 */
+    pfftwi_256(FFTarray);
+
+#ifndef USE_TWIDDLE_TABLE
+    /* prepare for recurrence relations in post-twiddle */
+    c = cosfreq8;
+    s = sinfreq8;
+#endif
+
+    /* post-twiddle FFT output and then get output data */
+    for (i = 0; i < 256; i++)
+    {
+        uint16_t n = i << 1;
+        /* get post-twiddled FFT output  */
+#ifdef USE_TWIDDLE_TABLE
+        tempr = fac * (FFTarray[i].re * twiddlers[n] - FFTarray[i].im * twiddlers[n + 1]);
+        tempi = fac * (FFTarray[i].im * twiddlers[n] + FFTarray[i].re * twiddlers[n + 1]);
+#else
+        tempr = fac * (FFTarray[i].re * c - FFTarray[i].im * s);
+        tempi = fac * (FFTarray[i].im * c + FFTarray[i].re * s);
+#endif
+
+        /* fill in output values */
+        out_data [767 - n] = tempr;
+        if (i < 128)
+            out_data[768 + n] = tempr;
+        else
+            out_data[n - 256] = -tempr;
+
+        out_data [256 + n] = tempi;
+        if (i < 128)
+            out_data[255 - n] = -tempi;
+        else
+            out_data[1279 - n] = tempi;
+
+#ifndef USE_TWIDDLE_TABLE
+        /* use recurrence to prepare cosine and sine for next value of i */
+        cold = c;
+        c = c * cfreq - s * sfreq;
+        s = s * cfreq + cold * sfreq;
+#endif
+    }
+}
+
 void IMDCT_short(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
 {
     fftw_complex FFTarray[64];    /* the array for in-place FFT */
-    fftw_real tempr, tempi;
-    fftw_real fac;
+    real_t tempr, tempi, fac;
 
 #ifdef USE_TWIDDLE_TABLE
     /* use twiddle factor tables */
@@ -443,21 +657,20 @@ void IMDCT_short(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
 #pragma warning(disable:4305)
 #endif
 
-
-static fftw_real K980785280[1] =
-{FFTW_KONST(+0.980785280403230449126182236134239036973933731)};
-static fftw_real K195090322[1] =
-{FFTW_KONST(+0.195090322016128267848284868477022240927691618)};
-static fftw_real K555570233[1] =
-{FFTW_KONST(+0.555570233019602224742830813948532874374937191)};
-static fftw_real K831469612[1] =
-{FFTW_KONST(+0.831469612302545237078788377617905756738560812)};
-static fftw_real K923879532[1] =
-{FFTW_KONST(+0.923879532511286756128183189396788286822416626)};
 static fftw_real K382683432[1] =
 {FFTW_KONST(+0.382683432365089771728459984030398866761344562)};
+static fftw_real K923879532[1] =
+{FFTW_KONST(+0.923879532511286756128183189396788286822416626)};
 static fftw_real K707106781[1] =
 {FFTW_KONST(+0.707106781186547524400844362104849039284835938)};
+static fftw_real K831469612[1] =
+{FFTW_KONST(+0.831469612302545237078788377617905756738560812)};
+static fftw_real K555570233[1] =
+{FFTW_KONST(+0.555570233019602224742830813948532874374937191)};
+static fftw_real K195090322[1] =
+{FFTW_KONST(+0.195090322016128267848284868477022240927691618)};
+static fftw_real K980785280[1] =
+{FFTW_KONST(+0.980785280403230449126182236134239036973933731)};
 
 static fftw_complex PFFTW(W_64)[30] = {
 { 0.995184726672197, 0.0980171403295606 },
@@ -555,6 +768,135 @@ static fftw_complex PFFTW(W_128)[62] = {
 { -0.98078528040323, 0.195090322016129 },
 { 0.0490676743274181, 0.998795456205172 },
 { -0.995184726672197, 0.0980171403295608 },
+};
+
+static fftw_complex PFFTW(W_256)[126] = {
+{ 0.999698818696204, 0.0245412285229123 },
+{ 0.998795456205172, 0.049067674327418 },
+{ 0.998795456205172, 0.049067674327418 },
+{ 0.995184726672197, 0.0980171403295606 },
+{ 0.99729045667869, 0.0735645635996674 },
+{ 0.989176509964781, 0.146730474455362 },
+{ 0.995184726672197, 0.0980171403295606 },
+{ 0.98078528040323, 0.195090322016128 },
+{ 0.99247953459871, 0.122410675199216 },
+{ 0.970031253194544, 0.242980179903264 },
+{ 0.989176509964781, 0.146730474455362 },
+{ 0.956940335732209, 0.290284677254462 },
+{ 0.985277642388941, 0.170961888760301 },
+{ 0.941544065183021, 0.33688985339222 },
+{ 0.98078528040323, 0.195090322016128 },
+{ 0.923879532511287, 0.38268343236509 },
+{ 0.975702130038529, 0.21910124015687 },
+{ 0.903989293123443, 0.427555093430282 },
+{ 0.970031253194544, 0.242980179903264 },
+{ 0.881921264348355, 0.471396736825998 },
+{ 0.96377606579544, 0.266712757474898 },
+{ 0.857728610000272, 0.514102744193222 },
+{ 0.956940335732209, 0.290284677254462 },
+{ 0.831469612302545, 0.555570233019602 },
+{ 0.949528180593037, 0.313681740398892 },
+{ 0.803207531480645, 0.595699304492433 },
+{ 0.941544065183021, 0.33688985339222 },
+{ 0.773010453362737, 0.634393284163645 },
+{ 0.932992798834739, 0.359895036534988 },
+{ 0.740951125354959, 0.671558954847018 },
+{ 0.923879532511287, 0.38268343236509 },
+{ 0.707106781186548, 0.707106781186547 },
+{ 0.914209755703531, 0.40524131400499 },
+{ 0.671558954847018, 0.740951125354959 },
+{ 0.903989293123443, 0.427555093430282 },
+{ 0.634393284163645, 0.773010453362737 },
+{ 0.893224301195515, 0.449611329654607 },
+{ 0.595699304492433, 0.803207531480645 },
+{ 0.881921264348355, 0.471396736825998 },
+{ 0.555570233019602, 0.831469612302545 },
+{ 0.870086991108711, 0.492898192229784 },
+{ 0.514102744193222, 0.857728610000272 },
+{ 0.857728610000272, 0.514102744193222 },
+{ 0.471396736825998, 0.881921264348355 },
+{ 0.844853565249707, 0.534997619887097 },
+{ 0.427555093430282, 0.903989293123443 },
+{ 0.831469612302545, 0.555570233019602 },
+{ 0.38268343236509, 0.923879532511287 },
+{ 0.817584813151584, 0.575808191417845 },
+{ 0.33688985339222, 0.941544065183021 },
+{ 0.803207531480645, 0.595699304492433 },
+{ 0.290284677254462, 0.956940335732209 },
+{ 0.788346427626606, 0.615231590580627 },
+{ 0.242980179903264, 0.970031253194544 },
+{ 0.773010453362737, 0.634393284163645 },
+{ 0.195090322016128, 0.98078528040323 },
+{ 0.757208846506485, 0.653172842953777 },
+{ 0.146730474455362, 0.989176509964781 },
+{ 0.740951125354959, 0.671558954847018 },
+{ 0.0980171403295608, 0.995184726672197 },
+{ 0.724247082951467, 0.689540544737067 },
+{ 0.0490676743274181, 0.998795456205172 },
+{ 0.707106781186548, 0.707106781186547 },
+{ 6.12303176911189e-17, 1 },
+{ 0.689540544737067, 0.724247082951467 },
+{ -0.049067674327418, 0.998795456205172 },
+{ 0.671558954847018, 0.740951125354959 },
+{ -0.0980171403295606, 0.995184726672197 },
+{ 0.653172842953777, 0.757208846506484 },
+{ -0.146730474455362, 0.989176509964781 },
+{ 0.634393284163645, 0.773010453362737 },
+{ -0.195090322016128, 0.98078528040323 },
+{ 0.615231590580627, 0.788346427626606 },
+{ -0.242980179903264, 0.970031253194544 },
+{ 0.595699304492433, 0.803207531480645 },
+{ -0.290284677254462, 0.956940335732209 },
+{ 0.575808191417845, 0.817584813151584 },
+{ -0.33688985339222, 0.941544065183021 },
+{ 0.555570233019602, 0.831469612302545 },
+{ -0.38268343236509, 0.923879532511287 },
+{ 0.534997619887097, 0.844853565249707 },
+{ -0.427555093430282, 0.903989293123443 },
+{ 0.514102744193222, 0.857728610000272 },
+{ -0.471396736825998, 0.881921264348355 },
+{ 0.492898192229784, 0.870086991108711 },
+{ -0.514102744193222, 0.857728610000272 },
+{ 0.471396736825998, 0.881921264348355 },
+{ -0.555570233019602, 0.831469612302545 },
+{ 0.449611329654607, 0.893224301195515 },
+{ -0.595699304492433, 0.803207531480645 },
+{ 0.427555093430282, 0.903989293123443 },
+{ -0.634393284163645, 0.773010453362737 },
+{ 0.40524131400499, 0.914209755703531 },
+{ -0.671558954847018, 0.740951125354959 },
+{ 0.38268343236509, 0.923879532511287 },
+{ -0.707106781186547, 0.707106781186548 },
+{ 0.359895036534988, 0.932992798834739 },
+{ -0.740951125354959, 0.671558954847019 },
+{ 0.33688985339222, 0.941544065183021 },
+{ -0.773010453362737, 0.634393284163645 },
+{ 0.313681740398892, 0.949528180593037 },
+{ -0.803207531480645, 0.595699304492433 },
+{ 0.290284677254462, 0.956940335732209 },
+{ -0.831469612302545, 0.555570233019602 },
+{ 0.266712757474898, 0.96377606579544 },
+{ -0.857728610000272, 0.514102744193222 },
+{ 0.242980179903264, 0.970031253194544 },
+{ -0.881921264348355, 0.471396736825998 },
+{ 0.21910124015687, 0.975702130038529 },
+{ -0.903989293123443, 0.427555093430282 },
+{ 0.195090322016128, 0.98078528040323 },
+{ -0.923879532511287, 0.38268343236509 },
+{ 0.170961888760301, 0.985277642388941 },
+{ -0.941544065183021, 0.33688985339222 },
+{ 0.146730474455362, 0.989176509964781 },
+{ -0.956940335732209, 0.290284677254462 },
+{ 0.122410675199216, 0.99247953459871 },
+{ -0.970031253194544, 0.242980179903264 },
+{ 0.0980171403295608, 0.995184726672197 },
+{ -0.98078528040323, 0.195090322016129 },
+{ 0.0735645635996675, 0.99729045667869 },
+{ -0.989176509964781, 0.146730474455362 },
+{ 0.0490676743274181, 0.998795456205172 },
+{ -0.995184726672197, 0.0980171403295608 },
+{ 0.0245412285229123, 0.999698818696204 },
+{ -0.998795456205172, 0.049067674327418 },
 };
 
 static fftw_complex PFFTW(W_512)[254] = {
@@ -1904,31 +2246,40 @@ static void PFFTW(32) (fftw_complex * input) {
      c_im(input[1]) = st1;
 }
 
-static void  PFFTW(64)(fftw_complex *input)
-{
+static void PFFTW(64)(fftw_complex *input) 
+{ 
      PFFTW(twiddle_4)(input, PFFTW(W_64), 16);
-     PFFTW(16)(input );
-     PFFTW(16)(input + 16);
-     PFFTW(16)(input + 32);
-     PFFTW(16)(input + 48);
+     PFFTW(16)(input + 16 * 0);
+     PFFTW(16)(input + 16 * 1);
+     PFFTW(16)(input + 16 * 2);
+     PFFTW(16)(input + 16 * 3);
 }
 
-static void PFFTW(128)(fftw_complex *input)
-{
+static void PFFTW(128)(fftw_complex *input) 
+{ 
      PFFTW(twiddle_4)(input, PFFTW(W_128), 32);
-     PFFTW(32)(input );
-     PFFTW(32)(input + 32);
-     PFFTW(32)(input + 64);
-     PFFTW(32)(input + 96);
+     PFFTW(32)(input + 32 * 0);
+     PFFTW(32)(input + 32 * 1);
+     PFFTW(32)(input + 32 * 2);
+     PFFTW(32)(input + 32 * 3);
 }
 
-static void PFFTW(512)(fftw_complex *input)
-{
+static void PFFTW(256)(fftw_complex *input) 
+{ 
+     PFFTW(twiddle_4)(input, PFFTW(W_256), 64);
+     PFFTW(64)(input + 64 * 0);
+     PFFTW(64)(input + 64 * 1);
+     PFFTW(64)(input + 64 * 2);
+     PFFTW(64)(input + 64 * 3);
+}
+
+static void PFFTW(512)(fftw_complex *input) 
+{ 
      PFFTW(twiddle_4)(input, PFFTW(W_512), 128);
-     PFFTW(128)(input );
-     PFFTW(128)(input + 128);
-     PFFTW(128)(input + 256);
-     PFFTW(128)(input + 384);
+     PFFTW(128)(input + 128 * 0);
+     PFFTW(128)(input + 128 * 1);
+     PFFTW(128)(input + 128 * 2);
+     PFFTW(128)(input + 128 * 3);
 }
 
 static void PFFTWI(16) (fftw_complex * input) {
@@ -3023,143 +3374,152 @@ static void PFFTWI(32) (fftw_complex * input) {
      c_re(input[3]) = st1;
 }
 
-static void PFFTWI(64)(fftw_complex *input)
+static void PFFTWI(64)(fftw_complex *input) 
 {
-     PFFTWI(16)(input );
-     PFFTWI(16)(input + 16);
-     PFFTWI(16)(input + 32);
-     PFFTWI(16)(input + 48);
+     PFFTWI(16)(input + 16 * 0);
+     PFFTWI(16)(input + 16 * 1);
+     PFFTWI(16)(input + 16 * 2);
+     PFFTWI(16)(input + 16 * 3);
      PFFTWI(twiddle_4)(input, PFFTW(W_64), 16);
 }
 
-static void PFFTWI(128)(fftw_complex *input)
+static void PFFTWI(128)(fftw_complex *input) 
 {
-     PFFTWI(32)(input );
-     PFFTWI(32)(input + 32);
-     PFFTWI(32)(input + 64);
-     PFFTWI(32)(input + 96);
+     PFFTWI(32)(input + 32 * 0);
+     PFFTWI(32)(input + 32 * 1);
+     PFFTWI(32)(input + 32 * 2);
+     PFFTWI(32)(input + 32 * 3);
      PFFTWI(twiddle_4)(input, PFFTW(W_128), 32);
 }
 
-static void PFFTWI(512)(fftw_complex *input)
+static void PFFTWI(256)(fftw_complex *input) 
 {
-     PFFTWI(128)(input );
-     PFFTWI(128)(input + 128);
-     PFFTWI(128)(input + 256);
-     PFFTWI(128)(input + 384);
+     PFFTWI(64)(input + 64 * 0);
+     PFFTWI(64)(input + 64 * 1);
+     PFFTWI(64)(input + 64 * 2);
+     PFFTWI(64)(input + 64 * 3);
+     PFFTWI(twiddle_4)(input, PFFTW(W_256), 64);
+}
+
+static void PFFTWI(512)(fftw_complex *input) 
+{
+     PFFTWI(128)(input + 128 * 0);
+     PFFTWI(128)(input + 128 * 1);
+     PFFTWI(128)(input + 128 * 2);
+     PFFTWI(128)(input + 128 * 3);
      PFFTWI(twiddle_4)(input, PFFTW(W_512), 128);
 }
 
-static void  PFFTW(twiddle_4) (fftw_complex * A, const fftw_complex * W, uint16_t iostride) {
+static void PFFTW(twiddle_4) (fftw_complex * A, const fftw_complex * W, uint16_t iostride) {
      uint16_t i;
      fftw_complex *inout;
      inout = A;
      {
-      fftw_real st1;
-      fftw_real st2;
-      fftw_real st3;
-      fftw_real st4;
-      fftw_real st5;
-      fftw_real st6;
-      fftw_real st7;
-      fftw_real st8;
-      st8 = c_re(inout[0]);
-      st8 = st8 + c_re(inout[2 * iostride]);
-      st7 = c_re(inout[iostride]);
-      st7 = st7 + c_re(inout[3 * iostride]);
-      st6 = st8 - st7;
-      st8 = st8 + st7;
-      st5 = c_im(inout[0]);
-      st5 = st5 + c_im(inout[2 * iostride]);
-      st4 = c_im(inout[iostride]);
-      st4 = st4 + c_im(inout[3 * iostride]);
-      st3 = st5 - st4;
-      st5 = st5 + st4;
-      st2 = c_im(inout[0]);
-      st2 = st2 - c_im(inout[2 * iostride]);
-      st1 = c_re(inout[iostride]);
-      st1 = st1 - c_re(inout[3 * iostride]);
-      st7 = st2 - st1;
-      st1 = st1 + st2;
-      st4 = c_re(inout[0]);
-      st4 = st4 - c_re(inout[2 * iostride]);
-      c_re(inout[2 * iostride]) = st6;
-      st6 = c_im(inout[iostride]);
-      st6 = st6 - c_im(inout[3 * iostride]);
-      c_re(inout[0]) = st8;
-      st8 = st4 - st6;
-      st4 = st4 + st6;
-      c_im(inout[0]) = st5;
-      c_im(inout[2 * iostride]) = st3;
-      c_im(inout[iostride]) = st7;
-      c_im(inout[3 * iostride]) = st1;
-      c_re(inout[3 * iostride]) = st8;
-      c_re(inout[iostride]) = st4;
+	  fftw_real st1;
+	  fftw_real st2;
+	  fftw_real st3;
+	  fftw_real st4;
+	  fftw_real st5;
+	  fftw_real st6;
+	  fftw_real st7;
+	  fftw_real st8;
+	  st8 = c_re(inout[0]);
+	  st8 = st8 + c_re(inout[2 * iostride]);
+	  st7 = c_re(inout[iostride]);
+	  st7 = st7 + c_re(inout[3 * iostride]);
+	  st6 = st8 - st7;
+	  st8 = st8 + st7;
+	  st5 = c_im(inout[0]);
+	  st5 = st5 + c_im(inout[2 * iostride]);
+	  st4 = c_im(inout[iostride]);
+	  st4 = st4 + c_im(inout[3 * iostride]);
+	  st3 = st5 - st4;
+	  st5 = st5 + st4;
+	  st2 = c_im(inout[0]);
+	  st2 = st2 - c_im(inout[2 * iostride]);
+	  st1 = c_re(inout[iostride]);
+	  st1 = st1 - c_re(inout[3 * iostride]);
+	  st7 = st2 - st1;
+	  st1 = st1 + st2;
+	  st4 = c_re(inout[0]);
+	  st4 = st4 - c_re(inout[2 * iostride]);
+	  c_re(inout[2 * iostride]) = st6;
+	  st6 = c_im(inout[iostride]);
+	  st6 = st6 - c_im(inout[3 * iostride]);
+	  c_re(inout[0]) = st8;
+	  st8 = st4 - st6;
+	  st4 = st4 + st6;
+	  c_im(inout[0]) = st5;
+	  c_im(inout[2 * iostride]) = st3;
+	  c_im(inout[iostride]) = st7;
+	  c_im(inout[3 * iostride]) = st1;
+	  c_re(inout[3 * iostride]) = st8;
+	  c_re(inout[iostride]) = st4;
      }
      inout = inout + 1;
      i = iostride - 1;
      do {
-      {
-           fftw_real st1;
-           fftw_real st2;
-           fftw_real st3;
-           fftw_real st4;
-           fftw_real st5;
-           fftw_real st6;
-           fftw_real st7;
-           fftw_real st8;
-           st8 = c_re(inout[0]);
-           st8 = st8 + c_re(inout[2 * iostride]);
-           st7 = c_re(inout[iostride]);
-           st7 = st7 + c_re(inout[3 * iostride]);
-           st6 = st8 - st7;
-           st5 = st6 * c_im(W[1]);
-           st8 = st8 + st7;
-           st6 = st6 * c_re(W[1]);
-           st4 = c_im(inout[0]);
-           st4 = st4 + c_im(inout[2 * iostride]);
-           st3 = c_im(inout[iostride]);
-           st3 = st3 + c_im(inout[3 * iostride]);
-           st2 = st4 - st3;
-           st1 = st2 * c_im(W[1]);
-           st4 = st4 + st3;
-           st2 = st2 * c_re(W[1]);
-           st2 = st2 - st5;
-           st6 = st6 + st1;
-           st7 = c_re(inout[0]);
-           st7 = st7 - c_re(inout[2 * iostride]);
-           st5 = c_im(inout[iostride]);
-           st5 = st5 - c_im(inout[3 * iostride]);
-           c_re(inout[0]) = st8;
-           st8 = st7 - st5;
-           st3 = st8 * c_re(W[0]);
-           st7 = st7 + st5;
-           st8 = st8 * c_im(W[0]);
-           st1 = c_re(inout[iostride]);
-           c_re(inout[2 * iostride]) = st6;
-           st6 = st7 * c_im(W[0]);
-           st1 = st1 - c_re(inout[3 * iostride]);
-           st7 = st7 * c_re(W[0]);
-           st5 = c_im(inout[0]);
-           st5 = st5 - c_im(inout[2 * iostride]);
-           c_im(inout[0]) = st4;
-           st4 = st1 + st5;
-           c_im(inout[2 * iostride]) = st2;
-           st2 = st4 * c_im(W[0]);
-           st5 = st5 - st1;
-           st4 = st4 * c_re(W[0]);
-           st3 = st3 - st2;
-           st1 = st5 * c_re(W[0]);
-           st5 = st5 * c_im(W[0]);
-           st4 = st4 + st8;
-           st5 = st5 + st7;
-           st1 = st1 - st6;
-           c_re(inout[3 * iostride]) = st3;
-           c_im(inout[3 * iostride]) = st4;
-           c_re(inout[iostride]) = st5;
-           c_im(inout[iostride]) = st1;
-      }
-      i = i - 1, inout = inout + 1, W = W + 2;
+	  {
+	       fftw_real st1;
+	       fftw_real st2;
+	       fftw_real st3;
+	       fftw_real st4;
+	       fftw_real st5;
+	       fftw_real st6;
+	       fftw_real st7;
+	       fftw_real st8;
+	       st8 = c_re(inout[0]);
+	       st8 = st8 + c_re(inout[2 * iostride]);
+	       st7 = c_re(inout[iostride]);
+	       st7 = st7 + c_re(inout[3 * iostride]);
+	       st6 = st8 - st7;
+	       st5 = st6 * c_im(W[1]);
+	       st8 = st8 + st7;
+	       st6 = st6 * c_re(W[1]);
+	       st4 = c_im(inout[0]);
+	       st4 = st4 + c_im(inout[2 * iostride]);
+	       st3 = c_im(inout[iostride]);
+	       st3 = st3 + c_im(inout[3 * iostride]);
+	       st2 = st4 - st3;
+	       st1 = st2 * c_im(W[1]);
+	       st4 = st4 + st3;
+	       st2 = st2 * c_re(W[1]);
+	       st2 = st2 - st5;
+	       st6 = st6 + st1;
+	       st7 = c_re(inout[0]);
+	       st7 = st7 - c_re(inout[2 * iostride]);
+	       st5 = c_im(inout[iostride]);
+	       st5 = st5 - c_im(inout[3 * iostride]);
+	       c_re(inout[0]) = st8;
+	       st8 = st7 - st5;
+	       st3 = st8 * c_re(W[0]);
+	       st7 = st7 + st5;
+	       st8 = st8 * c_im(W[0]);
+	       st1 = c_re(inout[iostride]);
+	       c_re(inout[2 * iostride]) = st6;
+	       st6 = st7 * c_im(W[0]);
+	       st1 = st1 - c_re(inout[3 * iostride]);
+	       st7 = st7 * c_re(W[0]);
+	       st5 = c_im(inout[0]);
+	       st5 = st5 - c_im(inout[2 * iostride]);
+	       c_im(inout[0]) = st4;
+	       st4 = st1 + st5;
+	       c_im(inout[2 * iostride]) = st2;
+	       st2 = st4 * c_im(W[0]);
+	       st5 = st5 - st1;
+	       st4 = st4 * c_re(W[0]);
+	       st3 = st3 - st2;
+	       st1 = st5 * c_re(W[0]);
+	       st5 = st5 * c_im(W[0]);
+	       st4 = st4 + st8;
+	       st5 = st5 + st7;
+	       st1 = st1 - st6;
+	       c_re(inout[3 * iostride]) = st3;
+	       c_im(inout[3 * iostride]) = st4;
+	       c_re(inout[iostride]) = st5;
+	       c_im(inout[iostride]) = st1;
+	  }
+	  i = i - 1, inout = inout + 1, W = W + 2;
      } while (i > 0);
 }
 
@@ -3168,143 +3528,163 @@ static void PFFTWI(twiddle_4) (fftw_complex * A, const fftw_complex * W, uint16_
      fftw_complex *inout;
      inout = A;
      {
-      fftw_real st1;
-      fftw_real st2;
-      fftw_real st3;
-      fftw_real st4;
-      fftw_real st5;
-      fftw_real st6;
-      fftw_real st7;
-      fftw_real st8;
-      st8 = c_re(inout[0]);
-      st8 = st8 + c_re(inout[2 * iostride]);
-      st7 = c_re(inout[iostride]);
-      st7 = st7 + c_re(inout[3 * iostride]);
-      st6 = st8 - st7;
-      st8 = st8 + st7;
-      st5 = c_im(inout[0]);
-      st5 = st5 + c_im(inout[2 * iostride]);
-      st4 = c_im(inout[iostride]);
-      st4 = st4 + c_im(inout[3 * iostride]);
-      st3 = st5 - st4;
-      st5 = st5 + st4;
-      st2 = c_re(inout[iostride]);
-      st2 = st2 - c_re(inout[3 * iostride]);
-      st1 = c_im(inout[0]);
-      st1 = st1 - c_im(inout[2 * iostride]);
-      st7 = st2 + st1;
-      st1 = st1 - st2;
-      st4 = c_re(inout[0]);
-      st4 = st4 - c_re(inout[2 * iostride]);
-      c_re(inout[2 * iostride]) = st6;
-      st6 = c_im(inout[iostride]);
-      st6 = st6 - c_im(inout[3 * iostride]);
-      c_re(inout[0]) = st8;
-      st8 = st4 - st6;
-      st4 = st4 + st6;
-      c_im(inout[0]) = st5;
-      c_im(inout[2 * iostride]) = st3;
-      c_im(inout[iostride]) = st7;
-      c_im(inout[3 * iostride]) = st1;
-      c_re(inout[iostride]) = st8;
-      c_re(inout[3 * iostride]) = st4;
+	  fftw_real st1;
+	  fftw_real st2;
+	  fftw_real st3;
+	  fftw_real st4;
+	  fftw_real st5;
+	  fftw_real st6;
+	  fftw_real st7;
+	  fftw_real st8;
+	  st8 = c_re(inout[0]);
+	  st8 = st8 + c_re(inout[2 * iostride]);
+	  st7 = c_re(inout[iostride]);
+	  st7 = st7 + c_re(inout[3 * iostride]);
+	  st6 = st8 - st7;
+	  st8 = st8 + st7;
+	  st5 = c_im(inout[0]);
+	  st5 = st5 + c_im(inout[2 * iostride]);
+	  st4 = c_im(inout[iostride]);
+	  st4 = st4 + c_im(inout[3 * iostride]);
+	  st3 = st5 - st4;
+	  st5 = st5 + st4;
+	  st2 = c_re(inout[iostride]);
+	  st2 = st2 - c_re(inout[3 * iostride]);
+	  st1 = c_im(inout[0]);
+	  st1 = st1 - c_im(inout[2 * iostride]);
+	  st7 = st2 + st1;
+	  st1 = st1 - st2;
+	  st4 = c_re(inout[0]);
+	  st4 = st4 - c_re(inout[2 * iostride]);
+	  c_re(inout[2 * iostride]) = st6;
+	  st6 = c_im(inout[iostride]);
+	  st6 = st6 - c_im(inout[3 * iostride]);
+	  c_re(inout[0]) = st8;
+	  st8 = st4 - st6;
+	  st4 = st4 + st6;
+	  c_im(inout[0]) = st5;
+	  c_im(inout[2 * iostride]) = st3;
+	  c_im(inout[iostride]) = st7;
+	  c_im(inout[3 * iostride]) = st1;
+	  c_re(inout[iostride]) = st8;
+	  c_re(inout[3 * iostride]) = st4;
      }
      inout = inout + 1;
      i = iostride - 1;
      do {
-      {
-           fftw_real st1;
-           fftw_real st2;
-           fftw_real st3;
-           fftw_real st4;
-           fftw_real st5;
-           fftw_real st6;
-           fftw_real st7;
-           fftw_real st8;
-           st8 = c_re(inout[2 * iostride]);
-           st8 = st8 * c_re(W[1]);
-           st7 = c_im(inout[2 * iostride]);
-           st7 = st7 * c_im(W[1]);
-           st8 = st8 - st7;
-           st6 = st8 + c_re(inout[0]);
-           st8 = c_re(inout[0]) - st8;
-           st5 = c_re(inout[2 * iostride]);
-           st5 = st5 * c_im(W[1]);
-           st4 = c_im(inout[2 * iostride]);
-           st4 = st4 * c_re(W[1]);
-           st5 = st5 + st4;
-           st3 = st5 + c_im(inout[0]);
-           st5 = c_im(inout[0]) - st5;
-           st2 = c_re(inout[iostride]);
-           st2 = st2 * c_re(W[0]);
-           st1 = c_im(inout[iostride]);
-           st1 = st1 * c_im(W[0]);
-           st2 = st2 - st1;
-           st7 = c_re(inout[3 * iostride]);
-           st7 = st7 * c_re(W[0]);
-           st4 = c_im(inout[3 * iostride]);
-           st4 = st4 * c_im(W[0]);
-           st7 = st7 + st4;
-           st1 = st2 + st7;
-           st2 = st2 - st7;
-           st4 = st6 - st1;
-           st6 = st6 + st1;
-           st7 = st2 + st5;
-           st5 = st5 - st2;
-           st1 = c_re(inout[iostride]);
-           st1 = st1 * c_im(W[0]);
-           st2 = c_im(inout[iostride]);
-           st2 = st2 * c_re(W[0]);
-           st1 = st1 + st2;
-           c_re(inout[2 * iostride]) = st4;
-           st4 = c_im(inout[3 * iostride]);
-           st4 = st4 * c_re(W[0]);
-           c_re(inout[0]) = st6;
-           st6 = c_re(inout[3 * iostride]);
-           st6 = st6 * c_im(W[0]);
-           st4 = st4 - st6;
-           c_im(inout[iostride]) = st7;
-           st7 = st1 - st4;
-           st1 = st1 + st4;
-           c_im(inout[3 * iostride]) = st5;
-           st5 = st8 - st7;
-           st8 = st8 + st7;
-           st2 = st1 + st3;
-           st3 = st3 - st1;
-           c_re(inout[iostride]) = st5;
-           c_re(inout[3 * iostride]) = st8;
-           c_im(inout[0]) = st2;
-           c_im(inout[2 * iostride]) = st3;
-      }
-      i = i - 1, inout = inout + 1, W = W + 2;
+	  {
+	       fftw_real st1;
+	       fftw_real st2;
+	       fftw_real st3;
+	       fftw_real st4;
+	       fftw_real st5;
+	       fftw_real st6;
+	       fftw_real st7;
+	       fftw_real st8;
+	       st8 = c_re(inout[2 * iostride]);
+	       st8 = st8 * c_re(W[1]);
+	       st7 = c_im(inout[2 * iostride]);
+	       st7 = st7 * c_im(W[1]);
+	       st8 = st8 - st7;
+	       st6 = st8 + c_re(inout[0]);
+	       st8 = c_re(inout[0]) - st8;
+	       st5 = c_re(inout[2 * iostride]);
+	       st5 = st5 * c_im(W[1]);
+	       st4 = c_im(inout[2 * iostride]);
+	       st4 = st4 * c_re(W[1]);
+	       st5 = st5 + st4;
+	       st3 = st5 + c_im(inout[0]);
+	       st5 = c_im(inout[0]) - st5;
+	       st2 = c_re(inout[iostride]);
+	       st2 = st2 * c_re(W[0]);
+	       st1 = c_im(inout[iostride]);
+	       st1 = st1 * c_im(W[0]);
+	       st2 = st2 - st1;
+	       st7 = c_re(inout[3 * iostride]);
+	       st7 = st7 * c_re(W[0]);
+	       st4 = c_im(inout[3 * iostride]);
+	       st4 = st4 * c_im(W[0]);
+	       st7 = st7 + st4;
+	       st1 = st2 + st7;
+	       st2 = st2 - st7;
+	       st4 = st6 - st1;
+	       st6 = st6 + st1;
+	       st7 = st2 + st5;
+	       st5 = st5 - st2;
+	       st1 = c_re(inout[iostride]);
+	       st1 = st1 * c_im(W[0]);
+	       st2 = c_im(inout[iostride]);
+	       st2 = st2 * c_re(W[0]);
+	       st1 = st1 + st2;
+	       c_re(inout[2 * iostride]) = st4;
+	       st4 = c_im(inout[3 * iostride]);
+	       st4 = st4 * c_re(W[0]);
+	       c_re(inout[0]) = st6;
+	       st6 = c_re(inout[3 * iostride]);
+	       st6 = st6 * c_im(W[0]);
+	       st4 = st4 - st6;
+	       c_im(inout[iostride]) = st7;
+	       st7 = st1 - st4;
+	       st1 = st1 + st4;
+	       c_im(inout[3 * iostride]) = st5;
+	       st5 = st8 - st7;
+	       st8 = st8 + st7;
+	       st2 = st1 + st3;
+	       st3 = st3 - st1;
+	       c_re(inout[iostride]) = st5;
+	       c_re(inout[3 * iostride]) = st8;
+	       c_im(inout[0]) = st2;
+	       c_im(inout[2 * iostride]) = st3;
+	  }
+	  i = i - 1, inout = inout + 1, W = W + 2;
      } while (i > 0);
+}
+
+uint16_t PFFTW(permutation_16) (uint16_t i)
+{
+    return i;
+}
+
+uint16_t PFFTW(permutation_32) (uint16_t i)
+{
+     return i;
 }
 
 static uint16_t PFFTW(permutation_64)(uint16_t i)
 {
     uint16_t i1 = i % 4;
     uint16_t i2 = i / 4;
-    if (i1 <= 2)
-       return (i1 * 16 + i2);
+    if (i1 <= (4 / 2))
+       return (i1 * 16 + PFFTW(permutation_16)(i2));
     else
-       return (i1 * 16 + ((i2 + 1) % 16));
+       return (i1 * 16 + PFFTW(permutation_16)((i2 + 1) % 16));
 }
 
 static uint16_t PFFTW(permutation_128)(uint16_t i)
 {
     uint16_t i1 = i % 4;
     uint16_t i2 = i / 4;
-    if (i1 <= 2)
-       return (i1 * 32 + i2);
+    if (i1 <= (4 / 2))
+       return (i1 * 32 + PFFTW(permutation_32)(i2));
     else
-       return (i1 * 32 + ((i2 + 1) % 32));
+       return (i1 * 32 + PFFTW(permutation_32)((i2 + 1) % 32));
+}
+
+static uint16_t PFFTW(permutation_256)(uint16_t i)
+{
+    uint16_t i1 = i % 4;
+    uint16_t i2 = i / 4;
+    if (i1 <= (4 / 2))
+       return (i1 * 64 + PFFTW(permutation_64)(i2));
+    else
+       return (i1 * 64 + PFFTW(permutation_64)((i2 + 1) % 64));
 }
 
 static uint16_t PFFTW(permutation_512)(uint16_t i)
 {
     uint16_t i1 = i % 4;
     uint16_t i2 = i / 4;
-    if (i1 <= 2)
+    if (i1 <= (4 / 2))
        return (i1 * 128 + PFFTW(permutation_128)(i2));
     else
        return (i1 * 128 + PFFTW(permutation_128)((i2 + 1) % 128));
@@ -3319,6 +3699,10 @@ static void make_fft_order(uint16_t *unscrambled, uint16_t len)
     case 64:
         for (i = 0; i < len; i++)
             unscrambled[i] = PFFTW(permutation_64)(i);
+        break;
+    case 256:
+        for (i = 0; i < len; i++)
+            unscrambled[i] = PFFTW(permutation_256)(i);
         break;
     case 512:
         for (i = 0; i < len; i++)

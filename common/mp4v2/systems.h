@@ -20,18 +20,17 @@
  *		Bill May		wmay@cisco.com
  */
 
+#ifndef __SYSTEMS_H__
+#define __SYSTEMS_H__
+
 #ifdef _WIN32
 #define HAVE_IN_PORT_T
 #define HAVE_SOCKLEN_T
-#include "win32_ver.h"
+#include <win32_ver.h>
 #else
-#ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
-#endif
 
-#ifndef __SYSTEMS_H__
-#define __SYSTEMS_H__
 
 
 
@@ -142,6 +141,8 @@ int gettimeofday(struct timeval *t, void *);
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <syslog.h>
 #include <string.h>
 #include <ctype.h>
@@ -215,4 +216,9 @@ char *strsep(char **strp, const char *delim);
 #ifndef MAX
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #endif
+
+#ifndef INADDR_NONE
+#define INADDR_NONE (-1)
+#endif
+
 #endif /* __SYSTEMS_H__ */

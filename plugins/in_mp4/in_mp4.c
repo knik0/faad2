@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.8 2002/02/18 10:01:05 menno Exp $
+** $Id: in_mp4.c,v 1.9 2002/02/25 19:58:33 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -110,11 +110,11 @@ int GetAACTrack(MP4FileHandle infile)
 {
     /* find AAC track */
     int i, rc;
-	int numTracks = MP4GetNumberOfTracks(infile, NULL);
+	int numTracks = MP4GetNumberOfTracks(infile, NULL, 0);
 
 	for (i = 0; i < numTracks; i++)
     {
-        MP4TrackId trackId = MP4FindTrackId(infile, i, NULL);
+        MP4TrackId trackId = MP4FindTrackId(infile, i, NULL, 0);
         const char* trackType = MP4GetTrackType(infile, trackId);
 
         if (!strcmp(trackType, MP4_AUDIO_TRACK_TYPE))
@@ -145,11 +145,11 @@ int GetAudioTrack(MP4FileHandle infile)
 {
     /* find AAC track */
     int i;
-	int numTracks = MP4GetNumberOfTracks(infile, NULL);
+	int numTracks = MP4GetNumberOfTracks(infile, NULL, 0);
 
 	for (i = 0; i < numTracks; i++)
     {
-        MP4TrackId trackId = MP4FindTrackId(infile, i, NULL);
+        MP4TrackId trackId = MP4FindTrackId(infile, i, NULL, 0);
         const char* trackType = MP4GetTrackType(infile, trackId);
 
         if (!strcmp(trackType, MP4_AUDIO_TRACK_TYPE))
@@ -166,11 +166,11 @@ int GetVideoTrack(MP4FileHandle infile)
 {
     /* find AAC track */
     int i;
-	int numTracks = MP4GetNumberOfTracks(infile, NULL);
+	int numTracks = MP4GetNumberOfTracks(infile, NULL, 0);
 
 	for (i = 0; i < numTracks; i++)
     {
-        MP4TrackId trackId = MP4FindTrackId(infile, i, NULL);
+        MP4TrackId trackId = MP4FindTrackId(infile, i, NULL, 0);
         const char* trackType = MP4GetTrackType(infile, trackId);
 
         if (!strcmp(trackType, MP4_VIDEO_TRACK_TYPE))
@@ -272,9 +272,25 @@ BOOL CALLBACK info_dialog_proc(HWND hwndDlg, UINT message,
         "Reserved",
         "Reserved",
         "MPEG-4 TTSI",
+        "MPEG-4 Main synthetic",
         "MPEG-4 Wavetable synthesis",
         "MPEG-4 General MIDI",
         "MPEG-4 Algorithmic Synthesis and Audio FX",
+        /* defined in MPEG-4 version 2 */
+        "MPEG-4 ER AAC LC",
+        "Reserved",
+        "MPEG-4 ER AAC LTP",
+        "MPEG-4 ER AAC Scalable",
+        "MPEG-4 ER TwinVQ",
+        "MPEG-4 ER BSAC",
+        "MPEG-4 ER AAC LD",
+        "MPEG-4 ER CELP",
+        "MPEG-4 ER HVXC",
+        "MPEG-4 ER HILN",
+        "MPEG-4 ER Parametric",
+        "Reserved",
+        "Reserved",
+        "Reserved",
         "Reserved"
     };
     static int numMpeg4AudioTypes = 

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.13 2002/02/18 10:01:05 menno Exp $
+** $Id: main.c,v 1.14 2002/02/25 19:58:32 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -138,7 +138,11 @@ void usage(void)
     fprintf(stderr, "        3:  32 bit PCM data.\n");
     fprintf(stderr, "        4:  32 bit floats.\n");
     fprintf(stderr, " -s X  Force the samplerate to X (for RAW files).\n");
-    fprintf(stderr, " -l    Use Long Term Prediction (for RAW files).\n");
+    fprintf(stderr, " -l X  Set object type. Supported object types:\n");
+    fprintf(stderr, "        0:  Main object type.\n");
+    fprintf(stderr, "        1:  LC (Low Complexity) object type.\n");
+    fprintf(stderr, "        3:  LTP (Long Term Prediction) object type.\n");
+    fprintf(stderr, "        23: LD (Low Delay) object type.\n");
     fprintf(stderr, " -w    Write output to stdio instead of a file.\n");
     fprintf(stderr, "Example:\n");
     fprintf(stderr, "       faad infile.aac\n");
@@ -148,9 +152,8 @@ void usage(void)
     return;
 }
 
-
 int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
-                  int def_srate, int use_ltp, int outputFormat, int fileType)
+                  int def_srate, int object_type, int outputFormat, int fileType)
 {
     int tagsize;
     unsigned long samplerate;
@@ -196,8 +199,7 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
     config = faacDecGetCurrentConfiguration(hDecoder);
     if (def_srate)
         config->defSampleRate = def_srate;
-    if (use_ltp)
-        config->defObjectType = LTP;
+    config->defObjectType = object_type;
     config->outputFormat = outputFormat;
 
     faacDecSetConfiguration(hDecoder, config);
@@ -277,7 +279,8 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
 
     fclose(infile);
 
-    close_audio_file(aufile);
+    if (!first_time)
+        close_audio_file(aufile);
 
     END_BUFF
 
@@ -288,11 +291,11 @@ int GetAACTrack(MP4FileHandle infile)
 {
     /* find AAC track */
     int i, rc;
-	int numTracks = MP4GetNumberOfTracks(infile, NULL);
+	int numTracks = MP4GetNumberOfTracks(infile, NULL, /* subType */ 0);
 
 	for (i = 0; i < numTracks; i++)
     {
-        MP4TrackId trackId = MP4FindTrackId(infile, i, NULL);
+        MP4TrackId trackId = MP4FindTrackId(infile, i, NULL, /* subType */ 0);
         const char* trackType = MP4GetTrackType(infile, trackId);
 
         if (!strcmp(trackType, MP4_AUDIO_TRACK_TYPE))
@@ -457,7 +460,8 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
 
     MP4Close(infile);
 
-    close_audio_file(aufile);
+    if (!first_time)
+        close_audio_file(aufile);
 
     return frameInfo.error;
 }
@@ -481,7 +485,7 @@ int main(int argc, char *argv[])
 {
     int result;
     int writeToStdio = 0;
-    int use_ltp = 0;
+    int object_type = LC;
     int def_srate = 0;
     int format = 1;
     int outputFormat = FAAD_FMT_16BIT;
@@ -491,8 +495,6 @@ int main(int argc, char *argv[])
     char *fnp;
     char aacFileName[255];
     char audioFileName[255];
-
-    FILE *infile;
 
 /* System dependant types */
 #ifdef _WIN32
@@ -515,12 +517,12 @@ int main(int argc, char *argv[])
             { "format",     0, 0, 'f' },
             { "bits",       0, 0, 'b' },
             { "samplerate", 0, 0, 's' },
-            { "ltp",        0, 0, 'l' },
+            { "objecttype", 0, 0, 'l' },
             { "stdio",      0, 0, 'w' },
             { "help",       0, 0, 'h' }
         };
 
-        c = getopt_long(argc, argv, "o:s:f:b:lwh",
+        c = getopt_long(argc, argv, "o:s:f:b:l:wh",
             long_options, &option_index);
 
         if (c == -1)
@@ -568,7 +570,21 @@ int main(int argc, char *argv[])
             }
             break;
         case 'l':
-            use_ltp = 1;
+            if (optarg) {
+                char dr[10];
+                if (sscanf(optarg, "%s", dr) < 1) {
+                    object_type = LC; /* default */
+                } else {
+                    object_type = atoi(dr);
+                    if ((object_type != LC) &&
+                        (object_type != MAIN) &&
+                        (object_type != LTP) &&
+                        (object_type != LD))
+                    {
+                        showHelp = 1;
+                    }
+                }
+            }
             break;
         case 'w':
             writeToStdio = 1;
@@ -624,7 +640,7 @@ int main(int argc, char *argv[])
             outputFormat, format);
     } else {
         result = decodeAACfile(aacFileName, audioFileName, writeToStdio,
-            def_srate, use_ltp, outputFormat, format);
+            def_srate, object_type, outputFormat, format);
     }
 
 

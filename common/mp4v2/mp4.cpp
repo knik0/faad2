@@ -492,7 +492,7 @@ extern "C" MP4TrackId MP4AddTrack(
 {
 	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
 		try {
-			return ((MP4File*)hFile)->AddTrack(type);
+			return ((MP4File*)hFile)->AddSystemsTrack(type);
 		}
 		catch (MP4Error* e) {
 			PRINT_ERROR(e);
@@ -610,11 +610,13 @@ extern "C" bool MP4DeleteTrack(
 }
 
 extern "C" u_int32_t MP4GetNumberOfTracks(
-	MP4FileHandle hFile, const char* type)
+	MP4FileHandle hFile, 
+	const char* type,
+	u_int8_t subType)
 {
 	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
 		try {
-			return ((MP4File*)hFile)->GetNumberOfTracks(type);
+			return ((MP4File*)hFile)->GetNumberOfTracks(type, subType);
 		}
 		catch (MP4Error* e) {
 			PRINT_ERROR(e);
@@ -625,11 +627,14 @@ extern "C" u_int32_t MP4GetNumberOfTracks(
 }
 
 extern "C" MP4TrackId MP4FindTrackId(
-	MP4FileHandle hFile, u_int16_t index, const char* type)
+	MP4FileHandle hFile, 
+	u_int16_t index, 
+	const char* type,
+	u_int8_t subType)
 {
 	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
 		try {
-			return ((MP4File*)hFile)->FindTrackId(index, type);
+			return ((MP4File*)hFile)->FindTrackId(index, type, subType);
 		}
 		catch (MP4Error* e) {
 			PRINT_ERROR(e);

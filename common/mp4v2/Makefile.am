@@ -1,6 +1,6 @@
-INCLUDES = -I$(top_srcdir)/include
+SUBDIRS = . test util
 
-include_HEADERS = mp4.h mpeg4ip.h systems.h
+INCLUDES = -I$(top_srcdir)/include
 
 AM_CXXFLAGS = -Wall 
 

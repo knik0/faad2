@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.5 2002/02/18 10:01:05 menno Exp $
+** $Id: syntax.h,v 1.6 2002/02/25 19:58:33 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -32,6 +32,7 @@ extern "C" {
 #define LC   1
 #define SSR  2
 #define LTP  3
+#define LD   23
 
 
 /* Bitstream */
@@ -152,6 +153,7 @@ typedef struct
     uint8_t last_band;
     uint8_t data_present;
     uint16_t lag;
+    uint8_t lag_update;
     uint8_t coef;
     uint8_t long_used[51];
     uint8_t short_used[8];
@@ -257,7 +259,13 @@ typedef struct
 } element; /* syntax element (SCE, CPE, LFE) */
 
 
-uint8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration);
+uint8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration,
+                         uint8_t object_type);
+uint8_t raw_data_block(bitfile *ld, int16_t ***spec_data, real_t ***spec_coef,
+                       element ***syntax_elements,
+                       uint8_t *channels, uint8_t *ele, uint8_t *ch_ele,
+                       uint16_t frame_len, uint8_t sf_index, uint8_t object_type,
+                       drc_info *drc);
 uint8_t single_lfe_channel_element(element *sce, bitfile *ld, int16_t *spec_data,
                                uint8_t sf_index, uint8_t object_type);
 uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
@@ -278,11 +286,13 @@ static uint8_t ics_info(ic_stream *ics, bitfile *ld,
                     uint8_t common_window, uint8_t fs_index, uint8_t object_type);
 static void section_data(ic_stream *ics, bitfile *ld);
 static uint8_t scale_factor_data(ic_stream *ics, bitfile *ld);
-static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data);
+static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data,
+                             uint16_t frame_len);
 static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count);
 static void pulse_data(pulse_info *pul, bitfile *ld);
 static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld);
-static void ltp_data(ic_stream *ics, ltp_info *ltp, bitfile *ld);
+static void ltp_data(ic_stream *ics, ltp_info *ltp, bitfile *ld,
+                     uint8_t object_type);
 static uint8_t adts_fixed_header(adts_header *adts, bitfile *ld);
 static void adts_variable_header(adts_header *adts, bitfile *ld);
 static void adts_error_check(adts_header *adts, bitfile *ld);

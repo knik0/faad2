@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: output.c,v 1.4 2002/02/20 13:05:57 menno Exp $
+** $Id: output.c,v 1.5 2002/02/25 19:58:33 menno Exp $
 **/
 
 #include "common.h"
@@ -40,7 +40,7 @@
 
 
 void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
-                    uint8_t format)
+                    uint16_t frame_len, uint8_t format)
 {
     uint8_t ch;
     uint16_t i;
@@ -55,7 +55,7 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
     case FAAD_FMT_16BIT:
         for (ch = 0; ch < channels; ch++)
         {
-            for(i = 0; i < 1024; i++)
+            for(i = 0; i < frame_len; i++)
             {
                 int32_t tmp;
                 real_t ftemp;
@@ -68,7 +68,7 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
     case FAAD_FMT_24BIT:
         for (ch = 0; ch < channels; ch++)
         {
-            for(i = 0; i < 1024; i++)
+            for(i = 0; i < frame_len; i++)
             {
                 int_sample_buffer[(i*channels)+ch] = ROUND(input[ch][i]*(1<<8));
             }
@@ -79,7 +79,7 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
         {
             real_t floattmp;
 
-            for(i = 0; i < 1024; i++)
+            for(i = 0; i < frame_len; i++)
             {
                 int_sample_buffer[(i*channels)+ch] = ROUND32(input[ch][i]*(1<<16));
             }
@@ -88,7 +88,7 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
     case FAAD_FMT_FLOAT:
         for (ch = 0; ch < channels; ch++)
         {
-            for(i = 0; i < 1024; i++)
+            for(i = 0; i < frame_len; i++)
             {
                 float_sample_buffer[(i*channels)+ch] = input[ch][i]*FLOAT_SCALE;
             }

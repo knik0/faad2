@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: specrec.c,v 1.4 2002/02/20 13:05:57 menno Exp $
+** $Id: specrec.c,v 1.5 2002/02/25 19:58:33 menno Exp $
 **/
 
 /*
@@ -48,7 +48,8 @@
     in section named section. This offset depends on window_sequence and
     scale_factor_grouping and is needed to decode the spectral_data().
 */
-uint8_t window_grouping_info(ic_stream *ics, uint8_t fs_index)
+uint8_t window_grouping_info(ic_stream *ics, uint8_t fs_index,
+                             uint8_t object_type)
 {
     uint8_t i, g;
 
@@ -59,24 +60,38 @@ uint8_t window_grouping_info(ic_stream *ics, uint8_t fs_index)
         ics->num_windows = 1;
         ics->num_window_groups = 1;
         ics->window_group_length[ics->num_window_groups-1] = 1;
-        ics->num_swb = num_swb_long_window[fs_index];
+        if (object_type == LD)
+        {
+            ics->num_swb = num_swb_512_window[fs_index];
+        } else {
+            ics->num_swb = num_swb_1024_window[fs_index];
+        }
 
         /* preparation of sect_sfb_offset for long blocks */
         /* also copy the last value! */
-        for (i = 0; i < ics->num_swb + 1; i++)
+        if (object_type == LD)
         {
-            ics->sect_sfb_offset[0][i] = swb_offset_long_window[fs_index][i];
-            ics->swb_offset[i] = swb_offset_long_window[fs_index][i];
+            for (i = 0; i < ics->num_swb + 1; i++)
+            {
+                ics->sect_sfb_offset[0][i] = swb_offset_512_window[fs_index][i];
+                ics->swb_offset[i] = swb_offset_512_window[fs_index][i];
+            }
+        } else {
+            for (i = 0; i < ics->num_swb + 1; i++)
+            {
+                ics->sect_sfb_offset[0][i] = swb_offset_1024_window[fs_index][i];
+                ics->swb_offset[i] = swb_offset_1024_window[fs_index][i];
+            }
         }
         return 0;
     case EIGHT_SHORT_SEQUENCE:
         ics->num_windows = 8;
         ics->num_window_groups = 1;
         ics->window_group_length[ics->num_window_groups-1] = 1;
-        ics->num_swb = num_swb_short_window[fs_index];
+        ics->num_swb = num_swb_128_window[fs_index];
 
         for (i = 0; i < ics->num_swb + 1; i++)
-            ics->swb_offset[i] = swb_offset_short_window[fs_index][i];
+            ics->swb_offset[i] = swb_offset_128_window[fs_index][i];
 
         for (i = 0; i < ics->num_windows-1; i++) {
             if (bit_set(ics->scale_factor_grouping, 6-i) == 0)
@@ -97,8 +112,8 @@ uint8_t window_grouping_info(ic_stream *ics, uint8_t fs_index)
 
             for (i = 0; i < ics->num_swb; i++)
             {
-                width = swb_offset_short_window[fs_index][i+1] -
-                    swb_offset_short_window[fs_index][i];
+                width = swb_offset_128_window[fs_index][i+1] -
+                    swb_offset_128_window[fs_index][i];
                 width *= ics->window_group_length[g];
                 ics->sect_sfb_offset[g][sect_sfb++] = offset;
                 offset += width;
@@ -131,7 +146,7 @@ uint8_t window_grouping_info(ic_stream *ics, uint8_t fs_index)
   - Within a scalefactor window band, the coefficients are in ascending
     spectral order.
 */
-void quant_to_spec(ic_stream *ics, real_t *spec_data)
+void quant_to_spec(ic_stream *ics, real_t *spec_data, uint16_t frame_len)
 {
     int8_t i;
     uint8_t g, sfb, win;
@@ -142,7 +157,7 @@ void quant_to_spec(ic_stream *ics, real_t *spec_data)
     real_t *tmp_spec_ptr, *spec_ptr;
 
     tmp_spec_ptr = tmp_spec;
-    for (i = 1024/16-1; i >= 0; --i)
+    for (i = frame_len/16-1; i >= 0; --i)
     {
         *tmp_spec_ptr++ = 0; *tmp_spec_ptr++ = 0;
         *tmp_spec_ptr++ = 0; *tmp_spec_ptr++ = 0;
@@ -195,7 +210,7 @@ void quant_to_spec(ic_stream *ics, real_t *spec_data)
     spec_ptr = spec_data;
     tmp_spec_ptr = tmp_spec;
 
-    for (i = 1024/16 - 1; i >= 0; --i)
+    for (i = frame_len/16 - 1; i >= 0; --i)
     {
         *spec_ptr++ = *tmp_spec_ptr++; *spec_ptr++ = *tmp_spec_ptr++;
         *spec_ptr++ = *tmp_spec_ptr++; *spec_ptr++ = *tmp_spec_ptr++;
@@ -244,13 +259,14 @@ static INLINE real_t iquant(int16_t q, real_t *iq_table)
     }
 }
 
-void inverse_quantization(real_t *x_invquant, int16_t *x_quant, real_t *iq_table)
+void inverse_quantization(real_t *x_invquant, int16_t *x_quant, real_t *iq_table,
+                          uint16_t frame_len)
 {
     int8_t i;
     int16_t *in_ptr = x_quant;
     real_t *out_ptr = x_invquant;
 
-    for(i = 1024/8-1; i >= 0; --i)
+    for(i = frame_len/8-1; i >= 0; --i)
     {
         *out_ptr++ = iquant(*in_ptr++, iq_table);
         *out_ptr++ = iquant(*in_ptr++, iq_table);

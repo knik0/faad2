@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.9 2002/02/20 13:05:57 menno Exp $
+** $Id: decoder.c,v 1.10 2002/02/25 19:58:33 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -55,6 +55,7 @@ faacDecHandle FAADAPI faacDecOpen()
         return NULL;
 
     memset(hDecoder, 0, sizeof(faacDecStruct));
+    memset(&hDecoder->fb, 0, sizeof(fb_info));
 
     hDecoder->config.outputFormat  = FAAD_FMT_16BIT;
     hDecoder->config.defObjectType = MAIN;
@@ -68,6 +69,7 @@ faacDecHandle FAADAPI faacDecOpen()
     for (i = 0; i < MAX_CHANNELS; i++)
     {
         hDecoder->window_shape_prev[i] = 0;
+        hDecoder->ltp_lag[i] = 0;
         hDecoder->time_state[i] = NULL;
         hDecoder->time_out[i] = NULL;
         hDecoder->pred_stat[i] = NULL;
@@ -126,12 +128,15 @@ static uint8_t get_sr_index(uint32_t samplerate)
 int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
                         uint32_t *samplerate, uint8_t *channels)
 {
+    uint32_t bits = 0;
     bitfile ld;
     adif_header adif;
     adts_header adts;
 
     hDecoder->sf_index = get_sr_index(hDecoder->config.defSampleRate);
     hDecoder->object_type = hDecoder->config.defObjectType;
+    *samplerate = sample_rates[hDecoder->sf_index];
+    *channels = 2;
 
     if (buffer != NULL)
     {
@@ -151,7 +156,7 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
             *samplerate = sample_rates[hDecoder->sf_index];
             *channels = adif.pce.channels;
 
-            return bit2byte(faad_get_processed_bits(&ld));
+            bits = bit2byte(faad_get_processed_bits(&ld));
 
         /* Check if an ADTS header is present */
         } else if (faad_showbits(&ld, 12) == 0xfff) {
@@ -165,21 +170,16 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
             *samplerate = sample_rates[hDecoder->sf_index];
             *channels = (adts.channel_configuration > 6) ?
                 2 : adts.channel_configuration;
-
-            return 0;
         }
     }
 
-    *samplerate = sample_rates[hDecoder->sf_index];
-    *channels = 2;
-
-    return 0;
+    return bits;
 }
 
 /* Init the library using a DecoderSpecificInfo */
 int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
-                         uint32_t SizeOfDecoderSpecificInfo,
-                         uint32_t *samplerate, uint8_t *channels)
+                            uint32_t SizeOfDecoderSpecificInfo,
+                            uint32_t *samplerate, uint8_t *channels)
 {
     int8_t rc;
 
@@ -197,11 +197,13 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
 
     rc = AudioSpecificConfig(pBuffer, samplerate, channels,
         &hDecoder->sf_index, &hDecoder->object_type);
-    hDecoder->object_type--; /* For AAC differs from MPEG-4 */
+    if (hDecoder->object_type != LD)
+        hDecoder->object_type--; /* For AAC differs from MPEG-4 */
     if (rc != 0)
     {
         return rc;
     }
+    hDecoder->channelConfiguration = *channels;
 
     return 0;
 }
@@ -225,6 +227,50 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
     if (hDecoder) free(hDecoder);
 }
 
+#define decode_sce_lfe() \
+    spec_data[channels]   = (int16_t*)malloc(frame_len*sizeof(int16_t)); \
+    spec_coef[channels]   = (real_t*)malloc(frame_len*sizeof(real_t)); \
+ \
+    syntax_elements[ch_ele] = (element*)malloc(sizeof(element)); \
+    memset(syntax_elements[ch_ele], 0, sizeof(element)); \
+    syntax_elements[ch_ele]->ele_id  = id_syn_ele; \
+    syntax_elements[ch_ele]->channel = channels; \
+ \
+    if ((hInfo->error = single_lfe_channel_element(syntax_elements[ch_ele], \
+        ld, spec_data[channels], sf_index, object_type)) > 0) \
+    { \
+        /* to make sure everything gets deallocated */ \
+        channels++; ch_ele++; \
+        goto error; \
+    } \
+ \
+    channels++; \
+    ch_ele++;
+
+#define decode_cpe() \
+    spec_data[channels]   = (int16_t*)malloc(frame_len*sizeof(int16_t)); \
+    spec_data[channels+1] = (int16_t*)malloc(frame_len*sizeof(int16_t)); \
+    spec_coef[channels]   = (real_t*)malloc(frame_len*sizeof(real_t)); \
+    spec_coef[channels+1] = (real_t*)malloc(frame_len*sizeof(real_t)); \
+ \
+    syntax_elements[ch_ele] = (element*)malloc(sizeof(element)); \
+    memset(syntax_elements[ch_ele], 0, sizeof(element)); \
+    syntax_elements[ch_ele]->ele_id         = id_syn_ele; \
+    syntax_elements[ch_ele]->channel        = channels; \
+    syntax_elements[ch_ele]->paired_channel = channels+1; \
+ \
+    if ((hInfo->error = channel_pair_element(syntax_elements[ch_ele], \
+        ld, spec_data[channels], spec_data[channels+1], \
+        sf_index, object_type)) > 0) \
+    { \
+        /* to make sure everything gets deallocated */ \
+        channels+=2; ch_ele++; \
+        goto error; \
+    } \
+ \
+    channels += 2; \
+    ch_ele++;
+
 void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                             faacDecFrameInfo *hInfo,
                             uint8_t *buffer)
@@ -238,6 +284,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     /* local copys of globals */
     uint8_t sf_index       =  hDecoder->sf_index;
     uint8_t object_type    =  hDecoder->object_type;
+    uint8_t channelConfiguration = hDecoder->channelConfiguration;
     pred_state **pred_stat =  hDecoder->pred_stat;
     real_t **lt_pred_stat  =  hDecoder->lt_pred_stat;
 #if IQ_TABLE_SIZE
@@ -256,11 +303,15 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     fb_info *fb            = &hDecoder->fb;
     drc_info *drc          = &hDecoder->drc;
     uint8_t outputFormat   =  hDecoder->config.outputFormat;
+    uint16_t *ltp_lag      =  hDecoder->ltp_lag;
 
     program_config pce;
     element *syntax_elements[MAX_SYNTAX_ELEMENTS];
     int16_t *spec_data[MAX_CHANNELS];
     real_t *spec_coef[MAX_CHANNELS];
+
+    /* frame length is different for Low Delay AAC */
+    uint16_t frame_len = (object_type == LD) ? 512 : 1024;
 
     void *sample_buffer;
 
@@ -288,73 +339,105 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     dbg_count = 0;
 #endif
 
-    /* Table 4.4.3: raw_data_block() */
-    while ((id_syn_ele = (uint8_t)faad_getbits(ld, LEN_SE_ID
-        DEBUGVAR(1,4,"faacDecDecode(): id_syn_ele"))) != ID_END)
+    if (object_type != LD)
     {
-        switch (id_syn_ele) {
-        case ID_SCE:
-        case ID_LFE:
-            spec_data[channels]   = (int16_t*)malloc(1024*sizeof(int16_t));
-            spec_coef[channels]   = (real_t*)malloc(1024*sizeof(real_t));
-
-            syntax_elements[ch_ele] = (element*)malloc(sizeof(element));
-            memset(syntax_elements[ch_ele], 0, sizeof(element));
-            syntax_elements[ch_ele]->ele_id  = id_syn_ele;
-            syntax_elements[ch_ele]->channel = channels;
-
-            if ((hInfo->error = single_lfe_channel_element(syntax_elements[ch_ele],
-                ld, spec_data[channels], sf_index, object_type)) > 0)
-            {
-                /* to make sure everything gets deallocated */
-                channels++; ch_ele++;
+        /* Table 4.4.3: raw_data_block() */
+        while ((id_syn_ele = (uint8_t)faad_getbits(ld, LEN_SE_ID
+            DEBUGVAR(1,4,"faacDecDecode(): id_syn_ele"))) != ID_END)
+        {
+            switch (id_syn_ele) {
+            case ID_SCE:
+            case ID_LFE:
+                decode_sce_lfe();
+                break;
+            case ID_CPE:
+                decode_cpe();
+                break;
+            case ID_CCE: /* not implemented yet */
+                hInfo->error = 6;
                 goto error;
+                break;
+            case ID_DSE:
+                data_stream_element(ld);
+                break;
+            case ID_PCE:
+                if ((hInfo->error = program_config_element(&pce, ld)) > 0)
+                    goto error;
+                break;
+            case ID_FIL:
+                if ((hInfo->error = fill_element(ld, drc)) > 0)
+                    goto error;
+                break;
             }
-
-            channels++;
-            ch_ele++;
-            break;
-        case ID_CPE:
-            spec_data[channels]   = (int16_t*)malloc(1024*sizeof(int16_t));
-            spec_data[channels+1] = (int16_t*)malloc(1024*sizeof(int16_t));
-            spec_coef[channels]   = (real_t*)malloc(1024*sizeof(real_t));
-            spec_coef[channels+1] = (real_t*)malloc(1024*sizeof(real_t));
-
-            syntax_elements[ch_ele] = (element*)malloc(sizeof(element));
-            memset(syntax_elements[ch_ele], 0, sizeof(element));
-            syntax_elements[ch_ele]->ele_id         = id_syn_ele;
-            syntax_elements[ch_ele]->channel        = channels;
-            syntax_elements[ch_ele]->paired_channel = channels+1;
-
-            if ((hInfo->error = channel_pair_element(syntax_elements[ch_ele],
-                ld, spec_data[channels], spec_data[channels+1],
-                sf_index, object_type)) > 0)
-            {
-                /* to make sure everything gets deallocated */
-                channels+=2; ch_ele++;
-                goto error;
-            }
-
-            channels += 2;
-            ch_ele++;
-            break;
-        case ID_CCE: /* not implemented yet */
-            hInfo->error = 6;
-            goto error;
-            break;
-        case ID_DSE:
-            data_stream_element(ld);
-            break;
-        case ID_PCE:
-            if ((hInfo->error = program_config_element(&pce, ld)) > 0)
-                goto error;
-            break;
-        case ID_FIL:
-            if ((hInfo->error = fill_element(ld, drc)) > 0)
-                goto error;
-            break;
+            ele++;
         }
-        ele++;
+    } else {
+        /* Table 262: er_raw_data_block() */
+        switch (channelConfiguration)
+        {
+        case 1:
+            id_syn_ele = ID_SCE;
+            decode_sce_lfe();
+            break;
+        case 2:
+            id_syn_ele = ID_CPE;
+            decode_cpe();
+            break;
+        case 3:
+            id_syn_ele = ID_SCE;
+            decode_sce_lfe();
+            id_syn_ele = ID_CPE;
+            decode_cpe();
+            break;
+        case 4:
+            id_syn_ele = ID_SCE;
+            decode_sce_lfe();
+            id_syn_ele = ID_CPE;
+            decode_cpe();
+            id_syn_ele = ID_SCE;
+            decode_sce_lfe();
+            break;
+        case 5:
+            id_syn_ele = ID_SCE;
+            decode_sce_lfe();
+            id_syn_ele = ID_CPE;
+            decode_cpe();
+            id_syn_ele = ID_CPE;
+            decode_cpe();
+            break;
+        case 6:
+            id_syn_ele = ID_SCE;
+            decode_sce_lfe();
+            id_syn_ele = ID_CPE;
+            decode_cpe();
+            id_syn_ele = ID_CPE;
+            decode_cpe();
+            id_syn_ele = ID_LFE;
+            decode_sce_lfe();
+            break;
+        case 7:
+            id_syn_ele = ID_SCE;
+            decode_sce_lfe();
+            id_syn_ele = ID_CPE;
+            decode_cpe();
+            id_syn_ele = ID_CPE;
+            decode_cpe();
+            id_syn_ele = ID_CPE;
+            decode_cpe();
+            id_syn_ele = ID_LFE;
+            decode_sce_lfe();
+            break;
+        default:
+            hInfo->error = 7;
+            goto error;
+        }
+#if 0
+        cnt = bits_to_decode() / 8;
+        while (cnt >= 1)
+        {
+            cnt -= extension_payload(cnt);
+        }
+#endif
     }
     /* no more bit reading after this */
     faad_byte_align(ld);
@@ -363,12 +446,12 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     ld = NULL;
 
     /* number of samples in this frame */
-    hInfo->samples = 1024*channels;
+    hInfo->samples = frame_len*channels;
     /* number of samples in this frame */
     hInfo->channels = channels;
 
     if (hDecoder->sample_buffer == NULL)
-        hDecoder->sample_buffer = malloc(1024*channels*sizeof(float32_t));
+        hDecoder->sample_buffer = malloc(frame_len*channels*sizeof(float32_t));
 
     sample_buffer = hDecoder->sample_buffer;
 
@@ -391,14 +474,15 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         }
 
         /* inverse quantization */
-        inverse_quantization(spec_coef[ch], spec_data[ch], iq_table);
+        inverse_quantization(spec_coef[ch], spec_data[ch], iq_table,
+            frame_len);
 
         /* apply scalefactors */
         apply_scalefactors(ics, spec_coef[ch], pow2_table);
 
         /* deinterleave short block grouping */
         if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
-            quant_to_spec(ics, spec_coef[ch]);
+            quant_to_spec(ics, spec_coef[ch], frame_len);
     }
 
     /* Because for ms and is both channels spectral coefficients are needed
@@ -445,38 +529,43 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         if (object_type == MAIN)
         {
             /* allocate the state only when needed */
-            if ((pred_stat[ch] == NULL) && ics->predictor_data_present)
+            if (pred_stat[ch] == NULL)
             {
-                pred_stat[ch] = malloc(1024 * sizeof(pred_state));
+                pred_stat[ch] = malloc(frame_len * sizeof(pred_state));
                 reset_all_predictors(pred_stat[ch]);
             }
 
             /* intra channel prediction */
-            if (pred_stat[ch] != NULL)
-            {
-                ic_prediction(ics, spec_coef[ch], pred_stat[ch]);
+            ic_prediction(ics, spec_coef[ch], pred_stat[ch]);
 
-                /* In addition, for scalefactor bands coded by perceptual
-                   noise substitution the predictors belonging to the
-                   corresponding spectral coefficients are reset.
-                 */
-                pns_reset_pred_state(ics, pred_stat[ch]);
-            }
-        } else if (object_type == LTP) {
-            /* allocate the state only when needed */
-            if ((lt_pred_stat[ch] == NULL) && ics->predictor_data_present)
+            /* In addition, for scalefactor bands coded by perceptual
+               noise substitution the predictors belonging to the
+               corresponding spectral coefficients are reset.
+            */
+            pns_reset_pred_state(ics, pred_stat[ch]);
+        } else if ((object_type == LTP) || (object_type == LD)) {
+            if (object_type == LD)
             {
-                lt_pred_stat[ch] = malloc(1024*3 * sizeof(real_t));
-                memset(lt_pred_stat[ch], 0, 1024*3 * sizeof(real_t));
+                if (ltp->data_present)
+                {
+                    if (!ltp->lag_update)
+                        ltp->lag = ltp_lag[ch];
+                    else
+                        ltp_lag[ch] = ltp->lag;
+                }
+            }
+
+            /* allocate the state only when needed */
+            if (lt_pred_stat[ch] == NULL)
+            {
+                lt_pred_stat[ch] = malloc(frame_len*4 * sizeof(real_t));
+                memset(lt_pred_stat[ch], 0, frame_len*4 * sizeof(real_t));
             }
 
             /* long term prediction */
-            if (lt_pred_stat[ch] != NULL)
-            {
-                lt_prediction(ics, ltp, spec_coef[ch], lt_pred_stat[ch], fb,
-                    ics->window_shape, window_shape_prev[ch],
-                    sf_index, object_type);
-            }
+            lt_prediction(ics, ltp, spec_coef[ch], lt_pred_stat[ch], fb,
+                ics->window_shape, window_shape_prev[ch],
+                sf_index, object_type, frame_len);
         }
 
         /* tns decoding */
@@ -493,9 +582,9 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         {
             real_t *tp;
 
-            time_state[ch] = malloc(1024*sizeof(real_t));
+            time_state[ch] = malloc(frame_len*sizeof(real_t));
             tp = time_state[ch];
-            for (i = 1024/16-1; i >= 0; --i)
+            for (i = frame_len/16-1; i >= 0; --i)
             {
                 *tp++ = 0; *tp++ = 0; *tp++ = 0; *tp++ = 0;
                 *tp++ = 0; *tp++ = 0; *tp++ = 0; *tp++ = 0;
@@ -505,22 +594,25 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         }
         if (time_out[ch] == NULL)
         {
-            time_out[ch] = malloc(1024*2*sizeof(real_t));
+            time_out[ch] = malloc(frame_len*2*sizeof(real_t));
         }
 
         /* filter bank */
         ifilter_bank(fb, ics->window_sequence, ics->window_shape,
             window_shape_prev[ch], spec_coef[ch], time_state[ch],
-            time_out[ch]);
+            time_out[ch], object_type);
         /* save window shape for next frame */
         window_shape_prev[ch] = ics->window_shape;
 
-        if ((object_type == LTP) && (lt_pred_stat[ch] != NULL))
-            lt_update_state(lt_pred_stat[ch], time_out[ch], time_state[ch]);
+        if (((object_type == LTP) || (object_type == LD)) && (lt_pred_stat[ch] != NULL))
+        {
+            lt_update_state(lt_pred_stat[ch], time_out[ch], time_state[ch],
+                frame_len, object_type);
+        }
     }
 
     sample_buffer = output_to_PCM(time_out, sample_buffer, channels,
-        outputFormat);
+        frame_len, outputFormat);
 
     hDecoder->frame++;
     if (hDecoder->frame <= 1)

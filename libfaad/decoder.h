@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.h,v 1.3 2002/02/18 10:01:05 menno Exp $
+** $Id: decoder.h,v 1.4 2002/02/25 19:58:33 menno Exp $
 **/
 
 #ifndef __DECODER_H__
@@ -70,12 +70,14 @@ typedef struct
     uint8_t adif_header_present;
     uint8_t sf_index;
     uint8_t object_type;
+    uint8_t channelConfiguration;
 
     uint32_t frame;
 
     void *sample_buffer;
 
     uint8_t window_shape_prev[MAX_CHANNELS];
+    uint16_t ltp_lag[MAX_CHANNELS];
     fb_info fb;
     drc_info drc;
 

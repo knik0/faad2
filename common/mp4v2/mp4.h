@@ -107,6 +107,7 @@ typedef u_int64_t	MP4Duration;
 #define MP4_MPEG2_AAC_AUDIO_TYPE		MP4_MPEG2_AAC_MAIN_AUDIO_TYPE
 #define MP4_MPEG4_AUDIO_TYPE			0x40
 #define MP4_PRIVATE_AUDIO_TYPE			0xC0
+#define MP4_PCM16_AUDIO_TYPE			0xD0	/* a private definition */
 
 /* MP4 Video track types - see MP4AddVideoTrack() */
 #define MP4_INVALID_VIDEO_TYPE			0x00
@@ -121,6 +122,7 @@ typedef u_int64_t	MP4Duration;
 #define MP4_MPEG4_VIDEO_TYPE			0x20
 #define MP4_JPEG_VIDEO_TYPE				0x6C
 #define MP4_PRIVATE_VIDEO_TYPE			0xC1
+#define MP4_YUV12_VIDEO_TYPE			0xD1	/* a private definition */
 
 
 /* MP4 API declarations */
@@ -146,7 +148,7 @@ MP4FileHandle MP4Read(const char* fileName,
 bool MP4Close(MP4FileHandle hFile);
 
 bool MP4Optimize(const char* existingFileName, 
-	const char* newFileName, 
+	const char* newFileName DEFAULT(NULL), 
 	u_int32_t verbosity DEFAULT(0));
 
 bool MP4Dump(MP4FileHandle hFile, 
@@ -245,13 +247,19 @@ bool MP4DeleteTrack(
 	MP4FileHandle hFile, MP4TrackId trackId);
 
 u_int32_t MP4GetNumberOfTracks(
-	MP4FileHandle hFile, const char* type DEFAULT(NULL));
+	MP4FileHandle hFile, 
+	const char* type DEFAULT(NULL),
+	u_int8_t subType DEFAULT(0));
 
 MP4TrackId MP4FindTrackId(
-	MP4FileHandle hFile, u_int16_t index, const char* type DEFAULT(NULL));
+	MP4FileHandle hFile, 
+	u_int16_t index, 
+	const char* type DEFAULT(NULL),
+	u_int8_t subType DEFAULT(0));
 
 u_int16_t MP4FindTrackIndex(
-	MP4FileHandle hFile, MP4TrackId trackId);
+	MP4FileHandle hFile, 
+	MP4TrackId trackId);
 
 /* track properties */
 

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: error.c,v 1.2 2002/02/18 10:01:05 menno Exp $
+** $Id: error.c,v 1.3 2002/02/25 19:58:33 menno Exp $
 **/
 
 #include "common.h"
@@ -30,4 +30,5 @@ extern uint8_t *err_msg[] = {
     "Negative scalefactor found, should be impossible",
     "Unable to find ADTS syncword",
     "Channel coupling not yet implemented",
+    "Channel configuration not allowed in error resilient frame"
 };

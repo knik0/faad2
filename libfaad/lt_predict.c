@@ -16,10 +16,11 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: lt_predict.c,v 1.2 2002/02/18 10:01:05 menno Exp $
+** $Id: lt_predict.c,v 1.3 2002/02/25 19:58:33 menno Exp $
 **/
 
 #include "common.h"
+#include <stdlib.h>
 #include "syntax.h"
 #include "lt_predict.h"
 #include "filtbank.h"
@@ -33,29 +34,33 @@ static real_t codebook[8] =
 
 void lt_prediction(ic_stream *ics, ltp_info *ltp, real_t *spec,
                    real_t *lt_pred_stat, fb_info *fb, uint8_t win_shape,
-                   uint8_t win_shape_prev, uint8_t sr_index, uint8_t object_type)
+                   uint8_t win_shape_prev, uint8_t sr_index,
+                   uint8_t object_type, uint16_t frame_len)
 {
     uint8_t sfb;
     uint16_t bin, i, num_samples;
-    real_t x_est[2*1024];
-    real_t X_est[2*1024];
+    real_t *x_est;
+    real_t *X_est;
 
     if (ics->window_sequence != EIGHT_SHORT_SEQUENCE)
     {
         if (ltp->data_present)
         {
-            if (ltp->lag < 1024)
-                num_samples = 1024 + ltp->lag;
-            else
-                num_samples = 2*1024;
+            num_samples = frame_len << 1;
+
+            x_est = malloc(num_samples*sizeof(real_t));
+            X_est = malloc(num_samples*sizeof(real_t));
 
             for(i = 0; i < num_samples; i++)
-                x_est[i] = codebook[ltp->coef] * lt_pred_stat[i - ltp->lag + 2*1024];
-            for( ; i < 2*1024; i++)
-                x_est[i] = 0.0f;
+            {
+                /* The extra lookback M (N/2 for LD, 0 for LTP) is handled
+                   in the buffer updating */
+                x_est[i] = codebook[ltp->coef] *
+                    lt_pred_stat[num_samples + i - ltp->lag];
+            }
 
             filter_bank_ltp(fb, ics->window_sequence, win_shape, win_shape_prev,
-                x_est, X_est);
+                x_est, X_est, object_type);
 
             tns_encode_frame(ics, &(ics->tns), sr_index, object_type, X_est);
 
@@ -72,18 +77,47 @@ void lt_prediction(ic_stream *ics, ltp_info *ltp, real_t *spec,
                     }
                 }
             }
+
+            free(x_est);
+            free(X_est);
         }
     }
 }
 
-void lt_update_state(real_t *lt_pred_stat, real_t *time, real_t *overlap)
+void lt_update_state(real_t *lt_pred_stat, real_t *time, real_t *overlap,
+                     uint16_t frame_len, uint8_t object_type)
 {
     uint16_t i;
 
-    for (i = 0; i < 1024; i++)
+    /*
+     * The reference point for index i and the content of the buffer
+     * lt_pred_stat are arranged so that lt_pred_stat(0 ... N/2 - 1) contains the
+     * last aliased half window from the IMDCT, and lt_pred_stat(N/2 ... N-1)
+     * is always all zeros. The rest of lt_pred_stat (i<0) contains the previous
+     * fully reconstructed time domain samples, i.e., output of the decoder.
+     *
+     * These values are shifted up by N*2 to avoid (i<0)
+     *
+     * For the LD object type an extra 512 samples lookback is accomodated here.
+     */
+    if (object_type == LD)
     {
-        lt_pred_stat[i]          = lt_pred_stat[i + 1024];
-        lt_pred_stat[1024 + i]   = time[i];
-        lt_pred_stat[2*1024 + i] = overlap[i];
+        for (i = 0; i < frame_len; i++)
+        {
+            lt_pred_stat[i]  /* extra 512 */  = lt_pred_stat[i + frame_len];
+            lt_pred_stat[frame_len + i]       = lt_pred_stat[i + (frame_len * 2)];
+            lt_pred_stat[(frame_len * 2) + i] = time[i];
+            lt_pred_stat[(frame_len * 3) + i] = overlap[i];
+        }
+    } else {
+        for (i = 0; i < frame_len; i++)
+        {
+            lt_pred_stat[i]                   = lt_pred_stat[i + frame_len];
+            lt_pred_stat[frame_len + i]       = time[i];
+            lt_pred_stat[(frame_len * 2) + i] = overlap[i];
+#if 0 /* set to zero once upon initialisation */
+            lt_pred_stat[(frame_len * 3) + i] = 0;
+#endif
+        }
     }
 }

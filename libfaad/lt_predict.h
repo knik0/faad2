@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: lt_predict.h,v 1.2 2002/02/18 10:01:05 menno Exp $
+** $Id: lt_predict.h,v 1.3 2002/02/25 19:58:33 menno Exp $
 **/
 
 #ifndef __LT_PREDICT_H__
@@ -36,11 +36,14 @@ void lt_prediction(ic_stream *ics,
                    uint8_t win_shape,
                    uint8_t win_shape_prev,
                    uint8_t sr_index,
-                   uint8_t object_type);
+                   uint8_t object_type,
+                   uint16_t frame_len);
 
 void lt_update_state(real_t *lt_pred_stat,
                      real_t *time,
-                     real_t *overlap);
+                     real_t *overlap,
+                     uint16_t frame_len,
+                     uint8_t object_type);
 
 #ifdef __cplusplus
 }

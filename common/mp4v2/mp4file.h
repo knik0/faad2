@@ -40,7 +40,7 @@ public: /* equivalent to MP4 library API */
 	void Create(const char* fileName, bool use64bits);
 	void Modify(const char* fileName);
 	void Optimize(const char* orgFileName, 
-		const char* newFileName);
+		const char* newFileName = NULL);
 	void MakeIsmaCompliant(bool addIsmaComplianceSdp = true);
 	void Dump(FILE* pDumpFile = NULL, bool dumpImplicits = false);
 	void Close();
@@ -104,10 +104,11 @@ public: /* equivalent to MP4 library API */
 	MP4TrackId AddTrack(const char* type, u_int32_t timeScale = 1);
 	void DeleteTrack(MP4TrackId trackId);
 
-	u_int32_t GetNumberOfTracks(const char* type = NULL);
+	u_int32_t GetNumberOfTracks(const char* type = NULL, u_int8_t subType = 0);
 
 	MP4TrackId AllocTrackId();
-	MP4TrackId FindTrackId(u_int16_t trackIndex, const char* type = NULL);
+	MP4TrackId FindTrackId(u_int16_t trackIndex, 
+		const char* type = NULL, u_int8_t subType = 0);
 	u_int16_t FindTrackIndex(MP4TrackId trackId);
 	u_int16_t FindTrakAtomIndex(MP4TrackId trackId);
 
@@ -421,6 +422,9 @@ protected:
 	void FinishWrite();
 	void CacheProperties();
 	void RewriteMdat(FILE* pReadFile, FILE* pWriteFile);
+
+	const char* TempFileName();
+	void Rename(const char* existingFileName, const char* newFileName);
 
 	void ProtectWriteOperation(char* where);
 

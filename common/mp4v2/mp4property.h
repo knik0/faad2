@@ -150,7 +150,7 @@ public:
 		void DeleteValue(u_int32_t index) { \
 			m_values.Delete(index); \
 		} \
-		void IncrementValue(u_int32_t increment = 1, u_int32_t index = 0) { \
+		void IncrementValue(int32_t increment = 1, u_int32_t index = 0) { \
 			m_values[index] += increment; \
 		} \
 		void Read(MP4File* pFile, u_int32_t index = 0) { \

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.7 2002/02/18 10:01:05 menno Exp $
+** $Id: syntax.c,v 1.8 2002/02/25 19:58:33 menno Exp $
 **/
 
 /*
@@ -40,7 +40,8 @@
 
 
 /* Table 4.4.1 */
-uint8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration)
+uint8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration,
+                         uint8_t object_type)
 {
     uint8_t frameLengthFlag, dependsOnCoreCoder, extensionFlag;
     uint16_t coreCoderDelay;
@@ -70,7 +71,25 @@ uint8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration)
 
     if (extensionFlag == 1)
     {
-        /* defined in mpeg4 phase 2 */
+        /* Error resilience not supported yet */
+        if (object_type == 23)
+        {
+            uint8_t tmp;
+            tmp = faad_get1bit(ld
+                DEBUGVAR(1,144,"GASpecificConfig(): aacSectionDataResilienceFlag"));
+            if (tmp)
+                return -6;
+            tmp = faad_get1bit(ld
+                DEBUGVAR(1,145,"GASpecificConfig(): aacScalefactorDataResilienceFlag"));
+            if (tmp)
+                return -6;
+            tmp = faad_get1bit(ld
+                DEBUGVAR(1,146,"GASpecificConfig(): aacSpectralDataResilienceFlag"));
+            if (tmp)
+                return -6;
+
+            /* 1 bit: extensionFlag3 */
+        }
     }
 
     return 0;
@@ -295,28 +314,10 @@ static uint8_t ics_info(ic_stream *ics, bitfile *ld, uint8_t common_window,
         ics->max_sfb = (uint8_t)faad_getbits(ld, 6
             DEBUGVAR(1,48,"ics_info(): max_sfb (long)"));
 
-        if (object_type == LTP)
+        if ((ics->predictor_data_present = faad_get1bit(ld
+            DEBUGVAR(1,49,"ics_info(): predictor_data_present"))) & 1)
         {
-            if ((ics->predictor_data_present = faad_get1bit(ld
-                DEBUGVAR(1,49,"ics_info(): predictor_data_present"))) & 1)
-            {
-                if ((ics->ltp.data_present = faad_get1bit(ld
-                    DEBUGVAR(1,50,"ics_info(): ltp.data_present"))) & 1)
-                {
-                    ltp_data(ics, &(ics->ltp), ld);
-                }
-                if (common_window)
-                {
-                    if ((ics->ltp2.data_present = faad_get1bit(ld
-                        DEBUGVAR(1,51,"ics_info(): ltp2.data_present"))) & 1)
-                    {
-                        ltp_data(ics, &(ics->ltp2), ld);
-                    }
-                }
-            }
-        } else { /* MPEG2 style AAC predictor */
-            if ((ics->predictor_data_present = faad_get1bit(ld
-                DEBUGVAR(1,52,"ics_info(): predictor_data_present"))) & 1)
+            if (object_type == MAIN) /* MPEG2 style AAC predictor */
             {
                 uint8_t sfb;
 
@@ -334,12 +335,26 @@ static uint8_t ics_info(ic_stream *ics, bitfile *ld, uint8_t common_window,
                     ics->pred.prediction_used[sfb] = faad_get1bit(ld
                         DEBUGVAR(1,55,"ics_info(): pred.prediction_used"));
                 }
+            } else { /* Long Term Prediction */
+                if ((ics->ltp.data_present = faad_get1bit(ld
+                    DEBUGVAR(1,50,"ics_info(): ltp.data_present"))) & 1)
+                {
+                    ltp_data(ics, &(ics->ltp), ld, object_type);
+                }
+                if (common_window)
+                {
+                    if ((ics->ltp2.data_present = faad_get1bit(ld
+                        DEBUGVAR(1,51,"ics_info(): ltp2.data_present"))) & 1)
+                    {
+                        ltp_data(ics, &(ics->ltp2), ld, object_type);
+                    }
+                }
             }
         }
     }
 
     /* get the grouping information */
-    return window_grouping_info(ics, sf_index);
+    return window_grouping_info(ics, sf_index, object_type);
 }
 
 /* Table 4.4.7 */
@@ -417,6 +432,7 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
                                      uint8_t object_type)
 {
     uint8_t result;
+    uint16_t frame_len = (object_type == LD) ? 512 : 1024;
 
     ics->global_gain = (uint8_t)faad_getbits(ld, 8
         DEBUGVAR(1,67,"individual_channel_stream(): global_gain"));
@@ -433,6 +449,11 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
 
     if (!scal_flag)
     {
+        /**
+         **  NOTE: It could be that pulse data is available in scalable AAC too,
+         **        as said in Amendment 1, this could be only the case for ER AAC,
+         **        though. (have to check this out later)
+         **/
         /* get pulse data */
         if ((ics->pulse_data_present = faad_get1bit(ld
             DEBUGVAR(1,68,"individual_channel_stream(): pulse_data_present"))) & 1)
@@ -456,7 +477,7 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
     }
 
     /* decode the spectral data */
-    if ((result = spectral_data(ics, ld, spec_data)) > 0)
+    if ((result = spectral_data(ics, ld, spec_data, frame_len)) > 0)
         return result;
 
     /* pulse coding reconstruction */
@@ -646,12 +667,25 @@ static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld)
    The limit MAX_LTP_SFB is not defined in 14496-3, this is a bug in the document
    and will be corrected in one of the corrigenda.
 */
-static void ltp_data(ic_stream *ics, ltp_info *ltp, bitfile *ld)
+static void ltp_data(ic_stream *ics, ltp_info *ltp, bitfile *ld,
+                     uint8_t object_type)
 {
     uint8_t sfb, w;
 
-    ltp->lag = (uint16_t)faad_getbits(ld, 11
-        DEBUGVAR(1,81,"ltp_data(): lag"));
+    if (object_type == LD)
+    {
+        ltp->lag_update = (uint8_t)faad_getbits(ld, 1
+            DEBUGVAR(1,142,"ltp_data(): lag_update"));
+
+        if (ltp->lag_update)
+        {
+            ltp->lag = (uint16_t)faad_getbits(ld, 10
+                DEBUGVAR(1,81,"ltp_data(): lag"));
+        }
+    } else {
+        ltp->lag = (uint16_t)faad_getbits(ld, 11
+            DEBUGVAR(1,81,"ltp_data(): lag"));
+    }
     ltp->coef = (uint8_t)faad_getbits(ld, 3
         DEBUGVAR(1,82,"ltp_data(): coef"));
 
@@ -669,7 +703,7 @@ static void ltp_data(ic_stream *ics, ltp_info *ltp, bitfile *ld)
                     ltp->short_lag[w] = (uint8_t)faad_getbits(ld, 4
                         DEBUGVAR(1,85,"ltp_data(): short_lag"));
                 }
-			}
+            }
         }
     } else {
         ltp->last_band = (ics->max_sfb < MAX_LTP_SFB ? ics->max_sfb : MAX_LTP_SFB);
@@ -687,7 +721,8 @@ static void ltp_data(ic_stream *ics, ltp_info *ltp, bitfile *ld)
 static uint8_t unsigned_cb[] = { 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0 };
 
 /* Table 4.4.29 */
-static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data)
+static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data,
+                             uint16_t frame_len)
 {
     int8_t i;
     uint8_t g, inc;
@@ -697,7 +732,7 @@ static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data
     uint8_t sect_cb;
 
     sp = spectral_data;
-    for (i = 1024/16-1; i >= 0; --i)
+    for (i = frame_len/16-1; i >= 0; --i)
     {
         *sp++ = 0; *sp++ = 0; *sp++ = 0; *sp++ = 0;
         *sp++ = 0; *sp++ = 0; *sp++ = 0; *sp++ = 0;

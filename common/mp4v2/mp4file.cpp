@@ -198,7 +198,14 @@ void MP4File::Optimize(const char* orgFileName, const char* newFileName)
 
 	// now switch over to writing the new file
 	MP4Free(m_fileName);
-	m_fileName = MP4Stralloc(newFileName);
+
+	// create a temporary file if necessary
+	if (newFileName == NULL) {
+		m_fileName = MP4Stralloc(TempFileName());
+	} else {
+		m_fileName = MP4Stralloc(newFileName);
+	}
+
 	FILE* pReadFile = m_pFile;
 	m_pFile = NULL;
 	m_mode = 'w';
@@ -221,6 +228,11 @@ void MP4File::Optimize(const char* orgFileName, const char* newFileName)
 	fclose(m_pFile);
 	m_pFile = NULL;
 	fclose(pReadFile);
+
+	// move temporary file into place
+	if (newFileName == NULL) {
+		Rename(m_fileName, orgFileName);
+	}
 }
 
 void MP4File::RewriteMdat(FILE* pReadFile, FILE* pWriteFile)
@@ -305,7 +317,33 @@ void MP4File::RewriteMdat(FILE* pReadFile, FILE* pWriteFile)
 void MP4File::Open(const char* fmode)
 {
 	ASSERT(m_pFile == NULL);
+
+#ifdef O_LARGEFILE
+	// UGH! fopen doesn't open a file in 64-bit mode, period.
+	// So we need to use open() and then fdopen()
+	int fd;
+	int flags = O_LARGEFILE;
+
+	if (strchr(fmode, '+')) {
+		flags |= O_CREAT | O_RDWR;
+		if (fmode[0] == 'w') {
+			flags |= O_TRUNC;
+		}
+	} else {
+		if (fmode[0] == 'w') {
+			flags |= O_CREAT | O_TRUNC | O_WRONLY;
+		} else {
+			flags |= O_RDONLY;
+		}
+	}
+	fd = open(m_fileName, flags, 0666); 
+
+	if (fd >= 0) {
+		m_pFile = fdopen(fd, fmode);
+	}
+#else
 	m_pFile = fopen(m_fileName, fmode);
+#endif
 	if (m_pFile == NULL) {
 		throw new MP4Error(errno, "failed", "MP4Open");
 	}
@@ -479,6 +517,50 @@ void MP4File::Close()
 
 	fclose(m_pFile);
 	m_pFile = NULL;
+}
+
+const char* MP4File::TempFileName()
+{
+	// there are so many attempts in libc to get this right
+	// that for portablity reasons, it's best just to roll our own
+#ifndef _WIN32
+	static char tempFileName[64];
+	u_int32_t i;
+	for (i = getpid(); i < 0xFFFFFFFF; i++) {
+		sprintf(tempFileName, "./tmp%u.mp4", i);
+		if (access(tempFileName, F_OK) != 0) {
+			break;
+		}
+	}
+	if (i == 0xFFFFFFFF) {
+		throw new MP4Error("can't create temporary file", "TempFileName");
+	}
+#else
+	static char tempFileName[MAX_PATH + 3];
+	GetTempFileName(".", // dir. for temp. files 
+					"mp4",                // temp. filename prefix 
+					0,                    // create unique name 
+					tempFileName);        // buffer for name 
+#endif
+
+	return tempFileName;
+}
+
+void MP4File::Rename(const char* oldFileName, const char* newFileName)
+{
+	int rc;
+
+#ifdef _WIN32
+	rc = remove(newFileName);
+	if (rc == 0) {
+		rc = rename(oldFileName, newFileName);
+	}
+#else
+	rc = rename(oldFileName, newFileName);
+#endif
+	if (rc != 0) {
+		throw new MP4Error(errno, "can't overwrite existing file", "Rename");
+	}
 }
 
 void MP4File::ProtectWriteOperation(char* where)
@@ -757,6 +839,13 @@ MP4TrackId MP4File::AddTrack(const char* type, u_int32_t timeScale)
 	// set track type
 	const char* normType = MP4Track::NormalizeTrackType(type);
 
+	// sanity check for user defined types
+	if (strlen(normType) > 4) {
+		VERBOSE_WARNING(m_verbosity, 
+			printf("AddTrack: type truncated to four characters\n"));
+		// StringProperty::SetValue() will do the actual truncation
+	}
+
 	MP4StringProperty* pStringProperty = NULL;
 	pTrakAtom->FindProperty(
 		"trak.mdia.hdlr.handlerType", (MP4Property**)&pStringProperty);
@@ -908,7 +997,7 @@ void MP4File::RemoveTrackReference(const char* trefName, MP4TrackId refTrackId)
 	for (u_int32_t i = 0; i < pCountProperty->GetValue(); i++) {
 		if (refTrackId == pTrackIdProperty->GetValue(i)) {
 			pTrackIdProperty->DeleteValue(i);
-			pCountProperty->SetValue(pCountProperty->GetValue() - 1);
+			pCountProperty->IncrementValue(-1);
 		}
 	}
 }
@@ -943,6 +1032,8 @@ void MP4File::AddDataReference(MP4TrackId trackId, const char* url)
 MP4TrackId MP4File::AddSystemsTrack(const char* type)
 {
 	const char* normType = MP4Track::NormalizeTrackType(type); 
+
+	// TBD if user type, fix name to four chars, and warn
 
 	MP4TrackId trackId = AddTrack(type, MP4_MSECS_TIME_SCALE);
 
@@ -1155,21 +1246,33 @@ void MP4File::DeleteTrack(MP4TrackId trackId)
 	delete pTrakAtom;
 }
 
-u_int32_t MP4File::GetNumberOfTracks(const char* type)
+u_int32_t MP4File::GetNumberOfTracks(const char* type, u_int8_t subType)
 {
 	if (type == NULL) {
 		return m_pTracks.Size();
-	} else {
-		u_int16_t typeSeen = 0;
-		const char* normType = MP4Track::NormalizeTrackType(type);
+	} 
 
-		for (u_int16_t i = 0; i < m_pTracks.Size(); i++) {
-			if (!strcmp(normType, m_pTracks[i]->GetType())) {
-				typeSeen++;
+	u_int16_t typeSeen = 0;
+	const char* normType = MP4Track::NormalizeTrackType(type);
+
+	for (u_int16_t i = 0; i < m_pTracks.Size(); i++) {
+		if (!strcmp(normType, m_pTracks[i]->GetType())) {
+			if (subType) {
+				if (normType == MP4_AUDIO_TRACK_TYPE) {
+					if (subType != GetTrackAudioType(m_pTracks[i]->GetId())) {
+						continue;
+					}
+				} else if (normType == MP4_VIDEO_TRACK_TYPE) {
+					if (subType != GetTrackVideoType(m_pTracks[i]->GetId())) {
+						continue;
+					}
+				} 
+				// else unknown subtype, ignore it
 			}
+			typeSeen++;
 		}
-		return typeSeen;
 	}
+	return typeSeen;
 }
 
 MP4TrackId MP4File::AllocTrackId()
@@ -1198,25 +1301,41 @@ MP4TrackId MP4File::AllocTrackId()
 	return trackId;
 }
 
-MP4TrackId MP4File::FindTrackId(u_int16_t trackIndex, const char* type)
+MP4TrackId MP4File::FindTrackId(
+	u_int16_t trackIndex, const char* type, u_int8_t subType)
 {
 	if (type == NULL) {
 		return m_pTracks[trackIndex]->GetId();
-	} else {
-		u_int16_t typeSeen = 0;
-		const char* normType = MP4Track::NormalizeTrackType(type);
+	} 
 
-		for (u_int16_t i = 0; i < m_pTracks.Size(); i++) {
-			if (!strcmp(normType, m_pTracks[i]->GetType())) {
-				if (trackIndex == typeSeen) {
-					return m_pTracks[i]->GetId();
-				}
-				typeSeen++;
+	u_int16_t typeSeen = 0;
+	const char* normType = MP4Track::NormalizeTrackType(type);
+
+	for (u_int16_t i = 0; i < m_pTracks.Size(); i++) {
+		if (!strcmp(normType, m_pTracks[i]->GetType())) {
+			if (subType) {
+				if (normType == MP4_AUDIO_TRACK_TYPE) {
+					if (subType != GetTrackAudioType(m_pTracks[i]->GetId())) {
+						continue;
+					}
+				} else if (normType == MP4_VIDEO_TRACK_TYPE) {
+					if (subType != GetTrackVideoType(m_pTracks[i]->GetId())) {
+						continue;
+					}
+				} 
+				// else unknown subtype, ignore it
 			}
+
+			if (trackIndex == typeSeen) {
+				return m_pTracks[i]->GetId();
+			}
+
+			typeSeen++;
 		}
-		throw new MP4Error("Track index doesn't exist", "FindTrackId"); 
-		return MP4_INVALID_TRACK_ID; // satisfy MS compiler
 	}
+
+	throw new MP4Error("Track index doesn't exist", "FindTrackId"); 
+	return MP4_INVALID_TRACK_ID; // satisfy MS compiler
 }
 
 u_int16_t MP4File::FindTrackIndex(MP4TrackId trackId)

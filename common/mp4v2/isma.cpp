@@ -241,7 +241,7 @@ void MP4File::CreateIsmaIod(
 
 	// bufferSizeDB needs to be set appropriately
 	MP4BitfieldProperty* pBufferSizeProperty = NULL;
-	pOdEsd->FindProperty("slConfigDescr.predefined", 
+	pOdEsd->FindProperty("decConfigDescr.bufferSizeDB",
 		(MP4Property**)&pBufferSizeProperty);
 	ASSERT(pBufferSizeProperty);
 	pBufferSizeProperty->SetValue(numBytes);
@@ -300,7 +300,7 @@ void MP4File::CreateIsmaIod(
 
 	// bufferSizeDB needs to be set
 	pBufferSizeProperty = NULL;
-	pSceneEsd->FindProperty("slConfigDescr.predefined", 
+	pSceneEsd->FindProperty("decConfigDescr.bufferSizeDB",
 		(MP4Property**)&pBufferSizeProperty);
 	ASSERT(pBufferSizeProperty);
 	pBufferSizeProperty->SetValue(numBytes);

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: tns.h,v 1.2 2002/02/18 10:01:05 menno Exp $
+** $Id: tns.h,v 1.3 2002/02/25 19:58:33 menno Exp $
 **/
 
 #ifndef __TNS_H__
@@ -41,7 +41,7 @@ static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
                           uint8_t order);
 static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *lpc,
                           uint8_t order);
-static uint8_t tns_max_bands(ic_stream *ics, uint8_t sr_index);
+static uint8_t tns_max_bands(ic_stream *ics, uint8_t sr_index, uint8_t object_type);
 static uint8_t tns_max_order(ic_stream *ics, uint8_t sr_index,
                          uint8_t object_type);
 
