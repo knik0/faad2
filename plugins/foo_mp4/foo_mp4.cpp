@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.21 2003/04/26 13:57:56 menno Exp $
+** $Id: foo_mp4.cpp,v 1.22 2003/04/27 11:56:58 menno Exp $
 **/
 
 #include <mp4.h>
@@ -35,7 +35,7 @@ char *STRIP_REVISION(const char *str)
 }
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           STRIP_REVISION("$Revision: 1.21 $"),
+                           STRIP_REVISION("$Revision: 1.22 $"),
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -44,19 +44,16 @@ public:
 
     virtual int test_filename(const char * fn,const char * ext)
     {
-        int is_mp4 = !stricmp(ext,"MP4");
-        int is_aac = !stricmp(ext,"AAC");
-
-        if (is_aac)
-            m_stream_type = 1;
-        else if (is_mp4)
-            m_stream_type = 0;
-
-        return is_mp4 || is_aac;
+        return !stricmp(ext,"MP4");
     }
 
     virtual int open(reader *r, file_info *info, int full_open)
     {
+        unsigned __int8 *buffer;
+        unsigned __int32 buffer_size;
+        unsigned __int8 channels;
+        unsigned __int32 samplerate;
+
         faacDecConfigurationPtr config;
 
         m_reader = r;
@@ -71,105 +68,6 @@ public:
         config = faacDecGetCurrentConfiguration(hDecoder);
         config->outputFormat = FAAD_FMT_DOUBLE;
         faacDecSetConfiguration(hDecoder, config);
-
-        if (m_stream_type == 0)
-            return open_mp4(info, full_open);
-        else if (m_stream_type == 1)
-            return open_aac(info, full_open);
-        else
-            return 0;
-    }
-
-    input_mp4()
-    {
-        m_stream_type = -1;
-        hFile = MP4_INVALID_FILE_HANDLE;
-        hDecoder = NULL;
-        m_aac_buffer = NULL;
-    }
-
-    ~input_mp4()
-    {
-        if (hFile != MP4_INVALID_FILE_HANDLE)
-            MP4Close(hFile);
-        if (hDecoder)
-            faacDecClose(hDecoder);
-        if (m_aac_buffer)
-            free(m_aac_buffer);
-    }
-
-    virtual int run(audio_chunk * chunk)
-    {
-        if (m_stream_type == 0)
-            return decode_chunk_mp4(chunk);
-        else if (m_stream_type == 1)
-            return decode_chunk_aac(chunk);
-        else
-            return 0;
-    }
-
-    virtual int set_info(reader *r,const file_info * info)
-    {
-        m_reader = r;
-
-        if (m_stream_type == 0)
-            return set_info_mp4(info);
-//        else if (m_stream_type == 1)
-//            return set_info_aac(info);
-        else
-            return 0;
-    }
-
-    virtual int seek(double seconds)
-    {
-        if (m_stream_type == 0)
-        {
-            MP4Duration duration;
-
-            duration = MP4ConvertToTrackDuration(hFile,
-                track, seconds, MP4_SECS_TIME_SCALE);
-            sampleId = MP4GetSampleIdFromTime(hFile,
-                track, duration, 0);
-
-            return 1;
-        } else {
-            return 0;
-        }
-    }
-    
-    virtual int is_our_content_type(const char *url, const char *type)
-    {
-        return !strcmp(type, "audio/mp4") || !strcmp(type, "audio/x-mp4") ||
-            !strcmp(type, "audio/aac") || !strcmp(type, "audio/x-aac");
-    }
-
-private:
-
-    reader *m_reader;
-    int m_stream_type;
-
-    faacDecHandle hDecoder;
-
-    /* MP4 file stuff */
-    MP4FileHandle hFile;
-    MP4SampleId sampleId, numSamples;
-    MP4TrackId track;
-    /* end MP4 file stuff */
-
-    /* AAC file stuff */
-    long m_aac_bytes_read;
-    long m_aac_bytes_into_buffer;
-    long m_aac_bytes_consumed;
-    unsigned char *m_aac_buffer;
-    int m_at_eof;
-    /* end AAC file stuff */
-
-    int open_mp4(file_info *info, int full_open)
-    {
-        unsigned __int8 *buffer;
-        unsigned __int32 buffer_size;
-        unsigned __int8 channels;
-        unsigned __int32 samplerate;
 
         hFile = MP4ReadCb(0, open_cb, close_cb, read_cb, write_cb,
             setpos_cb, getpos_cb, filesize_cb, (void*)m_reader);
@@ -223,60 +121,21 @@ private:
         return 1;
     }
 
-    int open_aac(file_info *info, int full_open)
+    input_mp4()
     {
-        int tagsize = 0, tmp = 0;
-        int bread = 0;
-        unsigned char channels = 0;
-        unsigned long samplerate = 0;
-
-        tag_reader::process_file(m_reader, info);
-
-        m_at_eof = 0;
-
-        if (!(m_aac_buffer = (unsigned char*)malloc(768*6)))
-        {
-            console::error("Memory allocation error.", "foo_mp4");
-            return 0;
-        }
-        memset(m_aac_buffer, 0, 768*6);
-
-        bread = m_reader->read(m_aac_buffer, 768*6);
-        m_aac_bytes_read = bread;
-        m_aac_bytes_into_buffer = bread;
-
-        if (bread != 768*6)
-            m_at_eof = 1;
-
-        if (!stricmp((const char*)m_aac_buffer, "ID3"))
-        {
-            /* high bit is not used */
-            tagsize = (m_aac_buffer[6] << 21) | (m_aac_buffer[7] << 14) |
-                (m_aac_buffer[8] <<  7) | (m_aac_buffer[9] <<  0);
-
-            tagsize += 10;
-        }
-
-        if ((m_aac_bytes_consumed = faacDecInit(hDecoder,
-            m_aac_buffer+tagsize, m_aac_bytes_into_buffer,
-            &samplerate, &channels)) < 0)
-        {
-            console::error("Can't initialize decoder library.", "foo_mp4");
-            return 0;
-        }
-        m_aac_bytes_consumed += tagsize;
-        m_aac_bytes_into_buffer -= m_aac_bytes_consumed;
-
-        info->set_length(0);
-
-        info->info_set_int("bitrate", 0);
-        info->info_set_int("channels", (__int64)channels);
-        info->info_set_int("samplerate", (__int64)samplerate);
-
-        return 1;
+        hFile = MP4_INVALID_FILE_HANDLE;
+        hDecoder = NULL;
     }
 
-    int decode_chunk_mp4(audio_chunk * chunk)
+    ~input_mp4()
+    {
+        if (hFile != MP4_INVALID_FILE_HANDLE)
+            MP4Close(hFile);
+        if (hDecoder)
+            faacDecClose(hDecoder);
+    }
+
+    virtual int run(audio_chunk * chunk)
     {
         faacDecFrameInfo frameInfo;
         unsigned char *buffer;
@@ -319,64 +178,10 @@ private:
         return 1;
     }
 
-    int decode_chunk_aac(audio_chunk * chunk)
+    virtual int set_info(reader *r,const file_info * info)
     {
-        int bread = 0;
-        faacDecFrameInfo frameInfo;
-        void *sample_buffer;
+        m_reader = r;
 
-        do
-        {
-            if (m_aac_bytes_consumed > 0)
-            {
-                if (m_aac_bytes_into_buffer)
-                {
-                    memmove((void*)m_aac_buffer, (void*)(m_aac_buffer + m_aac_bytes_consumed),
-                        m_aac_bytes_into_buffer*sizeof(unsigned char));
-                }
-
-                if (!m_at_eof)
-                {
-                    bread = m_reader->read((void*)(m_aac_buffer + m_aac_bytes_into_buffer),
-                        m_aac_bytes_consumed);
-
-                    if (bread != m_aac_bytes_consumed)
-                        m_at_eof = 1;
-
-                    m_aac_bytes_read += bread;
-                    m_aac_bytes_into_buffer += bread;
-                }
-
-                m_aac_bytes_consumed = 0;
-            }
-
-            sample_buffer = faacDecDecode(hDecoder, &frameInfo,
-                m_aac_buffer, m_aac_bytes_into_buffer);
-
-            m_aac_bytes_consumed = frameInfo.bytesconsumed;
-            m_aac_bytes_into_buffer -= frameInfo.bytesconsumed;
-
-        } while (!frameInfo.samples && !frameInfo.error);
-
-        if (frameInfo.error || (m_aac_bytes_into_buffer == 0))
-        {
-            if (frameInfo.error == 5)
-                console::warning(faacDecGetErrorMessage(frameInfo.error), "foo_mp4");
-            else if (frameInfo.error)
-                console::error(faacDecGetErrorMessage(frameInfo.error), "foo_mp4");
-            return 0;
-        }
-
-        chunk->data = (audio_sample*)sample_buffer;
-        chunk->samples = frameInfo.samples/frameInfo.channels;
-        chunk->nch = frameInfo.channels;
-        chunk->srate = frameInfo.samplerate;
-
-        return 1;
-    }
-
-    int set_info_mp4(const file_info * info)
-    {
         hFile = MP4ModifyCb(0, 0, open_cb, close_cb, read_cb, write_cb,
             setpos_cb, getpos_cb, filesize_cb, (void*)m_reader);
         if (hFile == MP4_INVALID_FILE_HANDLE) return 0;
@@ -424,6 +229,34 @@ private:
         /* end */
         return 1;
     }
+
+    virtual int seek(double seconds)
+    {
+        MP4Duration duration;
+
+        duration = MP4ConvertToTrackDuration(hFile,
+            track, seconds, MP4_SECS_TIME_SCALE);
+        sampleId = MP4GetSampleIdFromTime(hFile,
+            track, duration, 0);
+
+        return 1;
+    }
+    
+    virtual int is_our_content_type(const char *url, const char *type)
+    {
+        return !strcmp(type, "audio/mp4") || !strcmp(type, "audio/x-mp4") ||
+            !strcmp(type, "audio/mp4a");
+    }
+
+private:
+
+    reader *m_reader;
+
+    faacDecHandle hDecoder;
+
+    MP4FileHandle hFile;
+    MP4SampleId sampleId, numSamples;
+    MP4TrackId track;
 
     int ReadMP4Tag(file_info *info)
     {
@@ -538,4 +371,205 @@ private:
     }
 };
 
-static service_factory_t<input,input_mp4> foo;
+class input_aac : public input
+{
+public:
+
+    virtual int test_filename(const char * fn,const char * ext)
+    {
+        return !stricmp(ext,"AAC");
+    }
+
+    virtual int open(reader *r, file_info *info, int full_open)
+    {
+        int tagsize = 0, tmp = 0;
+        int bread = 0;
+        unsigned char channels = 0;
+        unsigned long samplerate = 0;
+
+        faacDecConfigurationPtr config;
+
+        m_reader = r;
+
+        hDecoder = faacDecOpen();
+        if (!hDecoder)
+        {
+            console::error("Failed to open FAAD2 library.", "foo_mp4");
+            return 0;
+        }
+
+        config = faacDecGetCurrentConfiguration(hDecoder);
+        config->outputFormat = FAAD_FMT_DOUBLE;
+        faacDecSetConfiguration(hDecoder, config);
+
+        tag_reader::process_file(m_reader, info);
+
+        m_at_eof = 0;
+
+        if (!(m_aac_buffer = (unsigned char*)malloc(768*6)))
+        {
+            console::error("Memory allocation error.", "foo_mp4");
+            return 0;
+        }
+        memset(m_aac_buffer, 0, 768*6);
+
+        bread = m_reader->read(m_aac_buffer, 768*6);
+        m_aac_bytes_read = bread;
+        m_aac_bytes_into_buffer = bread;
+
+        if (bread != 768*6)
+            m_at_eof = 1;
+
+        if (!stricmp((const char*)m_aac_buffer, "ID3"))
+        {
+            /* high bit is not used */
+            tagsize = (m_aac_buffer[6] << 21) | (m_aac_buffer[7] << 14) |
+                (m_aac_buffer[8] <<  7) | (m_aac_buffer[9] <<  0);
+
+            tagsize += 10;
+        }
+
+        if ((m_aac_bytes_consumed = faacDecInit(hDecoder,
+            m_aac_buffer+tagsize, m_aac_bytes_into_buffer,
+            &samplerate, &channels)) < 0)
+        {
+            console::error("Can't initialize decoder library.", "foo_mp4");
+            return 0;
+        }
+        m_aac_bytes_consumed += tagsize;
+        m_aac_bytes_into_buffer -= m_aac_bytes_consumed;
+
+        info->set_length(0);
+
+        info->info_set_int("bitrate", 0);
+        info->info_set_int("channels", (__int64)channels);
+        info->info_set_int("samplerate", (__int64)samplerate);
+
+        return 1;
+    }
+
+    input_aac()
+    {
+        hDecoder = NULL;
+        m_aac_buffer = NULL;
+    }
+
+    ~input_aac()
+    {
+        if (hDecoder)
+            faacDecClose(hDecoder);
+        if (m_aac_buffer)
+            free(m_aac_buffer);
+    }
+
+    virtual int run(audio_chunk * chunk)
+    {
+        int bread = 0;
+        faacDecFrameInfo frameInfo;
+        void *sample_buffer;
+
+        do
+        {
+            if (m_aac_bytes_consumed > 0)
+            {
+                if (m_aac_bytes_into_buffer)
+                {
+                    memmove((void*)m_aac_buffer, (void*)(m_aac_buffer + m_aac_bytes_consumed),
+                        m_aac_bytes_into_buffer*sizeof(unsigned char));
+                }
+
+                if (!m_at_eof)
+                {
+                    bread = m_reader->read((void*)(m_aac_buffer + m_aac_bytes_into_buffer),
+                        m_aac_bytes_consumed);
+
+                    if (bread != m_aac_bytes_consumed)
+                        m_at_eof = 1;
+
+                    m_aac_bytes_read += bread;
+                    m_aac_bytes_into_buffer += bread;
+                }
+
+                m_aac_bytes_consumed = 0;
+
+                if (m_aac_bytes_into_buffer > 3)
+                {
+                    if (memcmp(m_aac_buffer, "TAG", 3) == 0)
+                        m_aac_bytes_into_buffer = 0;
+                }
+                if (m_aac_bytes_into_buffer > 11)
+                {
+                    if (memcmp(m_aac_buffer, "LYRICSBEGIN", 11) == 0)
+                        m_aac_bytes_into_buffer = 0;
+                }
+                if (m_aac_bytes_into_buffer > 8)
+                {
+                    if (memcmp(m_aac_buffer, "APETAGEX", 8) == 0)
+                        m_aac_bytes_into_buffer = 0;
+                }
+            }
+
+            {
+                char tmp[1024];
+                wsprintf(tmp, "%d", m_aac_bytes_into_buffer);
+                console::warning(tmp, "foo_mp4");
+            }
+
+            if (m_aac_bytes_into_buffer != 0)
+            {
+                sample_buffer = faacDecDecode(hDecoder, &frameInfo,
+                    m_aac_buffer, m_aac_bytes_into_buffer);
+
+                m_aac_bytes_consumed = frameInfo.bytesconsumed;
+                m_aac_bytes_into_buffer -= frameInfo.bytesconsumed;
+            } else {
+                break;
+            }
+
+        } while (!frameInfo.samples && !frameInfo.error);
+
+        if (frameInfo.error || (m_aac_bytes_into_buffer == 0))
+        {
+            if (frameInfo.error)
+                console::error(faacDecGetErrorMessage(frameInfo.error), "foo_mp4");
+            return 0;
+        }
+
+        chunk->data = (audio_sample*)sample_buffer;
+        chunk->samples = frameInfo.samples/frameInfo.channels;
+        chunk->nch = frameInfo.channels;
+        chunk->srate = frameInfo.samplerate;
+
+        return 1;
+    }
+
+    virtual int set_info(reader *r,const file_info * info)
+    {
+        return 0;
+    }
+
+    virtual int seek(double seconds)
+    {
+        return 0;
+    }
+    
+    virtual int is_our_content_type(const char *url, const char *type)
+    {
+        return !strcmp(type, "audio/aac") || !strcmp(type, "audio/x-aac");
+    }
+
+private:
+
+    reader *m_reader;
+
+    faacDecHandle hDecoder;
+
+    long m_aac_bytes_read;
+    long m_aac_bytes_into_buffer;
+    long m_aac_bytes_consumed;
+    unsigned char *m_aac_buffer;
+    int m_at_eof;
+};
+
+static service_factory_t<input,input_mp4> foo_mp4;
+static service_factory_t<input,input_aac> foo_aac;
