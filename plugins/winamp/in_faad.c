@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_faad.c,v 1.1 2002/01/20 23:19:13 menno Exp $
+** $Id: in_faad.c,v 1.2 2002/01/21 22:58:14 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -126,6 +126,12 @@ void config_read()
     char stream_buffer_size[10];
 
 	config_init();
+
+    strcpy(variable_bitrate_display, "1");
+    strcpy(priority, "4");
+    strcpy(memmap_file, "0");
+    strcpy(local_buffer_size, "128");
+    strcpy(stream_buffer_size, "64");
 
     RS(variable_bitrate_display);
     RS(priority);
