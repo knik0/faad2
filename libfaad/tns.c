@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: tns.c,v 1.8 2002/03/27 19:09:29 menno Exp $
+** $Id: tns.c,v 1.9 2002/05/14 13:40:31 menno Exp $
 **/
 
 #include "common.h"
@@ -65,8 +65,9 @@ void tns_decode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
             {
                 inc = -1;
                 start = end - 1;
-            } else
+            } else {
                 inc = 1;
+            }
 
             tns_ar_filter(&spec[(w*128)+start], size, inc, lpc, tns_order);
         }
@@ -113,8 +114,9 @@ void tns_encode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
             {
                 inc = -1;
                 start = end - 1;
-            } else
+            } else {
                 inc = 1;
+            }
 
             tns_ma_filter(&spec[(w*128)+start], size, inc, lpc, tns_order);
         }
@@ -127,7 +129,6 @@ static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_c
 {
     uint8_t i, m;
     uint8_t coef_res2, s_mask, n_mask;
-    int8_t tmp[TNS_MAX_ORDER+1];
     real_t tmp2[TNS_MAX_ORDER+1], b[TNS_MAX_ORDER+1];
     real_t iqfac;
 
@@ -142,16 +143,17 @@ static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_c
 
     /* Conversion to signed integer */
     for (i = 0; i < order; i++)
-        tmp[i] = (coef[i] & s_mask) ? (coef[i] | n_mask) : coef[i];
+    {
+        int8_t tmp = (coef[i] & s_mask) ? (coef[i] | n_mask) : coef[i];
 
-    /* Inverse quantization */
-    if (tmp[i] >= 0)
-        iqfac = ((1 << (coef_res_bits-1)) - 0.5f) / M_PI_2;
-    else
-        iqfac = ((1 << (coef_res_bits-1)) + 0.5f) / M_PI_2;
+        /* Inverse quantization */
+        if (tmp >= 0)
+            iqfac = ((1 << (coef_res_bits-1)) - 0.5f) / M_PI_2;
+        else
+            iqfac = ((1 << (coef_res_bits-1)) + 0.5f) / M_PI_2;
 
-    for (i = 0; i < order; i++)
-        tmp2[i] = (real_t)sin(tmp[i] / iqfac);
+        tmp2[i] = (real_t)sin(tmp / iqfac);
+    }
 
     /* Conversion to LPC coefficients */
     a[0] = 1;
