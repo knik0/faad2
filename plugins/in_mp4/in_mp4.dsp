@@ -92,12 +92,24 @@ LINK32=xilink6.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=.\config.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\in_mp4.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\utils.c
 # End Source File
 # End Group
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=.\config.h
+# End Source File
 # Begin Source File
 
 SOURCE=..\..\include\faad.h
@@ -109,6 +121,10 @@ SOURCE=.\in2.h
 # Begin Source File
 
 SOURCE=.\out.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\utils.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"

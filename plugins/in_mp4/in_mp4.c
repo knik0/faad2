@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.12 2002/08/07 08:14:31 menno Exp $
+** $Id: in_mp4.c,v 1.13 2002/08/09 21:48:12 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -28,8 +28,9 @@
 
 #include "resource.h"
 #include "in2.h"
+#include "utils.h"
+#include "config.h"
 
-static char app_name[] = "AudioCoding.com MPEG-4 General Audio player";
 static long priority_table[] = {
     0,
     THREAD_PRIORITY_HIGHEST,
@@ -55,23 +56,31 @@ static char info_fn[_MAX_PATH];
 
 typedef struct state
 {
+    /* general stuff */
     faacDecHandle hDecoder;
-    MP4FileHandle mp4file;
-    int mp4track;
-    MP4SampleId numSamples;
-    MP4SampleId sampleId;
     int samplerate;
     unsigned char channels;
     int decode_pos_ms; // current decoding position, in milliseconds
     int paused; // are we paused?
     int seek_needed; // if != -1, it is the point that the decode thread should seek to, in ms.
     char filename[_MAX_PATH];
-} state;
+    int filetype; /* 0: MP4; 1: AAC */
 
-static char INI_FILE[MAX_PATH];
-static int m_priority = 3;
-static int m_resolution = 0;
-static int m_show_errors = 1;
+    /* MP4 stuff */
+    MP4FileHandle mp4file;
+    int mp4track;
+    MP4SampleId numSamples;
+    MP4SampleId sampleId;
+
+    /* AAC stuff */
+    FILE *aacfile;
+    long filesize;
+    long bytes_read;
+    long bytes_into_buffer;
+    long bytes_consumed;
+    unsigned char *buffer;
+    long lengthMs;
+} state;
 
 static state mp4state;
 
@@ -82,124 +91,19 @@ static int PlayThreadAlive = 0; // 1=play thread still running
 HANDLE play_thread_handle = INVALID_HANDLE_VALUE; // the handle to the decode thread
 
 /* Function definitions */
-DWORD WINAPI PlayThread(void *b); // the decode thread procedure
+DWORD WINAPI MP4PlayThread(void *b); // the decode thread procedure
+DWORD WINAPI AACPlayThread(void *b); // the decode thread procedure
 
-void show_error(HWND hwnd, char *message, ...)
+static void show_error(HWND hwnd, char *message, ...)
 {
     if (m_show_errors)
         MessageBox(hwnd, message, "Error", MB_OK);
 }
 
-int StringComp(char const *str1, char const *str2, unsigned long len)
-{
-    signed int c1 = 0, c2 = 0;
-
-    while (len--)
-    {
-        c1 = *str1++;
-        c2 = *str2++;
-
-        if (c1 == 0 || c1 != c2)
-            break;
-    }
-
-    return c1 - c2;
-}
-
-int GetAACTrack(MP4FileHandle infile)
-{
-    /* find AAC track */
-    int i, rc;
-	int numTracks = MP4GetNumberOfTracks(infile, NULL, 0);
-
-	for (i = 0; i < numTracks; i++)
-    {
-        MP4TrackId trackId = MP4FindTrackId(infile, i, NULL, 0);
-        const char* trackType = MP4GetTrackType(infile, trackId);
-
-        if (!strcmp(trackType, MP4_AUDIO_TRACK_TYPE))
-        {
-            unsigned char *buff = NULL;
-            int buff_size = 0;
-            unsigned char dummy2_8, dummy3_8, dummy4_8, dummy5_8, dummy6_8,
-                dummy7_8, dummy8_8;
-            unsigned int dummy1_32;
-            MP4GetTrackESConfiguration(infile, trackId, &buff, &buff_size);
-
-            if (buff)
-            {
-                rc = AudioSpecificConfig(buff, &dummy1_32, &dummy2_8, &dummy3_8, &dummy4_8,
-                    &dummy5_8, &dummy6_8, &dummy7_8, &dummy8_8);
-                free(buff);
-
-                if (rc < 0)
-                    return -1;
-                return trackId;
-            }
-        }
-    }
-
-    /* can't decode this */
-    return -1;
-}
-
-int GetAudioTrack(MP4FileHandle infile)
-{
-    /* find AAC track */
-    int i;
-	int numTracks = MP4GetNumberOfTracks(infile, NULL, 0);
-
-	for (i = 0; i < numTracks; i++)
-    {
-        MP4TrackId trackId = MP4FindTrackId(infile, i, NULL, 0);
-        const char* trackType = MP4GetTrackType(infile, trackId);
-
-        if (!strcmp(trackType, MP4_AUDIO_TRACK_TYPE))
-        {
-            return trackId;
-        }
-    }
-
-    /* can't decode this */
-    return -1;
-}
-
-int GetVideoTrack(MP4FileHandle infile)
-{
-    /* find AAC track */
-    int i;
-	int numTracks = MP4GetNumberOfTracks(infile, NULL, 0);
-
-	for (i = 0; i < numTracks; i++)
-    {
-        MP4TrackId trackId = MP4FindTrackId(infile, i, NULL, 0);
-        const char* trackType = MP4GetTrackType(infile, trackId);
-
-        if (!strcmp(trackType, MP4_VIDEO_TRACK_TYPE))
-        {
-            return trackId;
-        }
-    }
-
-    /* can't decode this */
-    return -1;
-}
-
-static void _r_s(char *name,char *data, int mlen)
-{
-	char buf[10];
-	strcpy(buf,data);
-	GetPrivateProfileString(app_name,name,buf,data,mlen,INI_FILE);
-}
-#define RS(x) (_r_s(#x,x,sizeof(x)))
-#define WS(x) (WritePrivateProfileString(app_name,#x,x,INI_FILE))
-
-
-
 static void config_init()
 {
 	char *p=INI_FILE;
-	GetModuleFileName(NULL,INI_FILE,sizeof(INI_FILE));
+	GetModuleFileName(NULL,INI_FILE,_MAX_PATH);
 	while (*p) p++;
 	while (p >= INI_FILE && *p != '.') p--;
 	strcpy(p+1,"ini");
@@ -250,8 +154,8 @@ void quit()
 {
 }
 
-BOOL CALLBACK info_dialog_proc(HWND hwndDlg, UINT message,
-                               WPARAM wParam, LPARAM lParam)
+BOOL CALLBACK mp4_info_dialog_proc(HWND hwndDlg, UINT message,
+                                   WPARAM wParam, LPARAM lParam)
 {
     int i, width, height, numFrames;
     unsigned char ch, sf, dummy8;
@@ -466,10 +370,19 @@ BOOL CALLBACK info_dialog_proc(HWND hwndDlg, UINT message,
 
 int infoDlg(char *fn, HWND hwndParent)
 {
-    lstrcpy(info_fn, fn);
+    if(StringComp(fn + strlen(fn) - 3, "aac", 3) == 0)
+    {
+        MessageBox(hwndParent,
+            "Sorry, no support for AAC info.\n"
+            "AudioCoding.com MPEG-4 General Audio player.",
+            "About",
+            MB_OK);
+    } else {
+        lstrcpy(info_fn, fn);
 
-    DialogBox(module.hDllInstance, MAKEINTRESOURCE(IDD_INFO),
-        hwndParent, info_dialog_proc);
+        DialogBox(module.hDllInstance, MAKEINTRESOURCE(IDD_INFO),
+            hwndParent, mp4_info_dialog_proc);
+    }
 
     return 0;
 }
@@ -539,6 +452,10 @@ int isourfile(char *fn)
     {
         return 1;
     }
+    if(StringComp(fn + strlen(fn) - 3, "aac", 3) == 0)
+    {
+        return 1;
+    }
 
     return 0;
 }
@@ -556,45 +473,121 @@ int play(char *fn)
 
     mp4state.channels = 0;
     mp4state.samplerate = 0;
+    mp4state.filetype = 0;
 
     strcpy(mp4state.filename, fn);
 
-    mp4state.mp4file = MP4Read(fn, 0);
-    if (!mp4state.mp4file)
-    {
-        show_error(module.hMainWindow, "Unable to open file.");
-        return -1;
-    }
-
-    if ((mp4state.mp4track = GetAACTrack(mp4state.mp4file)) < 0)
-    {
-        show_error(module.hMainWindow, "Unsupported Audio track type.");
-        MP4Close(mp4state.mp4file);
-        return -1;
-    }
+    if(StringComp(fn + strlen(fn) - 3, "aac", 3) == 0)
+        mp4state.filetype = 1;
 
     mp4state.hDecoder = faacDecOpen();
-
-    buffer = NULL;
-    buffer_size = 0;
-    MP4GetTrackESConfiguration(mp4state.mp4file, mp4state.mp4track,
-        &buffer, &buffer_size);
-    if (!buffer)
+    if (!mp4state.hDecoder)
     {
-        faacDecClose(mp4state.hDecoder);
-        MP4Close(mp4state.mp4file);
+        show_error(module.hMainWindow, "Unable to open decoder library.");
         return -1;
     }
 
-    if(faacDecInit2(mp4state.hDecoder, buffer, buffer_size,
-                    &mp4state.samplerate, &mp4state.channels) < 0)
+    if (mp4state.filetype)
     {
-        /* If some error initializing occured, skip the file */
-        faacDecClose(mp4state.hDecoder);
-        MP4Close(mp4state.mp4file);
-        return -1;
+        long pos, tmp, read;
+
+        mp4state.aacfile = fopen(fn, "rb");
+        if (!mp4state.aacfile)
+        {
+            show_error(module.hMainWindow, "Unable to open file.");
+            faacDecClose(mp4state.hDecoder);
+            return -1;
+        }
+
+        pos = ftell(mp4state.aacfile);
+        fseek(mp4state.aacfile, 0, SEEK_END);
+        mp4state.filesize = ftell(mp4state.aacfile);
+        fseek(mp4state.aacfile, pos, SEEK_SET);
+
+        if(!(mp4state.buffer=(unsigned char*)malloc(768*48)))
+        {
+            show_error(module.hMainWindow, "Memory allocation error.");
+            faacDecClose(mp4state.hDecoder);
+            fclose(mp4state.aacfile);
+            return -1;
+        }
+        memset(mp4state.buffer, 0, 768*48);
+
+        if(mp4state.filesize < 768*48)
+            tmp = mp4state.filesize;
+        else
+            tmp = 768*48;
+        read = fread(mp4state.buffer, 1, tmp, mp4state.aacfile);
+        if(read == tmp)
+        {
+            mp4state.bytes_read = read;
+            mp4state.bytes_into_buffer = read;
+        } else {
+            show_error(module.hMainWindow, "Error reading from file.");
+            faacDecClose(mp4state.hDecoder);
+            fclose(mp4state.aacfile);
+            return -1;
+        }
+
+        if((mp4state.bytes_consumed=faacDecInit(mp4state.hDecoder,
+            mp4state.buffer, &mp4state.samplerate, &mp4state.channels)) < 0)
+        {
+            show_error(module.hMainWindow, "Can't initialize library.");
+            faacDecClose(mp4state.hDecoder);
+            fclose(mp4state.aacfile);
+            return -1;
+        }
+        mp4state.bytes_into_buffer -= mp4state.bytes_consumed;
+
+        avg_bitrate = 0;
+
+        module.is_seekable = 0;
+    } else {
+        mp4state.mp4file = MP4Read(fn, 0);
+        if (!mp4state.mp4file)
+        {
+            show_error(module.hMainWindow, "Unable to open file.");
+            faacDecClose(mp4state.hDecoder);
+            return -1;
+        }
+
+        if ((mp4state.mp4track = GetAACTrack(mp4state.mp4file)) < 0)
+        {
+            show_error(module.hMainWindow, "Unsupported Audio track type.");
+            faacDecClose(mp4state.hDecoder);
+            MP4Close(mp4state.mp4file);
+            return -1;
+        }
+
+        buffer = NULL;
+        buffer_size = 0;
+        MP4GetTrackESConfiguration(mp4state.mp4file, mp4state.mp4track,
+            &buffer, &buffer_size);
+        if (!buffer)
+        {
+            faacDecClose(mp4state.hDecoder);
+            MP4Close(mp4state.mp4file);
+            return -1;
+        }
+
+        if(faacDecInit2(mp4state.hDecoder, buffer, buffer_size,
+            &mp4state.samplerate, &mp4state.channels) < 0)
+        {
+            /* If some error initializing occured, skip the file */
+            faacDecClose(mp4state.hDecoder);
+            MP4Close(mp4state.mp4file);
+            return -1;
+        }
+        free(buffer);
+
+        avg_bitrate = MP4GetTrackIntegerProperty(mp4state.mp4file, mp4state.mp4track,
+            "mdia.minf.stbl.stsd.mp4a.esds.decConfigDescr.avgBitrate");
+
+        mp4state.numSamples = MP4GetTrackNumberOfSamples(mp4state.mp4file, mp4state.mp4track);
+        mp4state.sampleId = 1;
+
+        module.is_seekable = 1;
     }
-    free(buffer);
 
     config = faacDecGetCurrentConfiguration(mp4state.hDecoder);
     config->outputFormat = m_resolution + 1;
@@ -604,7 +597,10 @@ int play(char *fn)
     {
         show_error(module.hMainWindow, "Number of channels not supported for playback.");
         faacDecClose(mp4state.hDecoder);
-        MP4Close(mp4state.mp4file);
+        if (mp4state.filetype)
+            fclose(mp4state.aacfile);
+        else
+            MP4Close(mp4state.mp4file);
         return -1;
     }
 
@@ -613,21 +609,16 @@ int play(char *fn)
     if (maxlatency < 0) // error opening device
     {
         faacDecClose(mp4state.hDecoder);
-        MP4Close(mp4state.mp4file);
+        if (mp4state.filetype)
+            fclose(mp4state.aacfile);
+        else
+            MP4Close(mp4state.mp4file);
         return -1;
     }
-
-    avg_bitrate = MP4GetTrackIntegerProperty(mp4state.mp4file, mp4state.mp4track,
-        "mdia.minf.stbl.stsd.mp4a.esds.decConfigDescr.avgBitrate");
-
-    mp4state.numSamples = MP4GetTrackNumberOfSamples(mp4state.mp4file, mp4state.mp4track);
-    mp4state.sampleId = 1;
 
     mp4state.paused        =  0;
     mp4state.decode_pos_ms =  0;
     mp4state.seek_needed   = -1;
-
-    module.is_seekable = 1;
 
     // initialize vis stuff
     module.SAVSAInit(maxlatency, mp4state.samplerate);
@@ -639,12 +630,25 @@ int play(char *fn)
 
     killPlayThread = 0;
 
-    if((play_thread_handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)PlayThread, (void *)&killPlayThread, 0, &thread_id)) == NULL)
+    if (mp4state.filetype)
     {
-        show_error(module.hMainWindow, "Cannot create playback thread");
-        faacDecClose(mp4state.hDecoder);
-        MP4Close(mp4state.mp4file);
-        return -1;
+        if((play_thread_handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AACPlayThread,
+            (void *)&killPlayThread, 0, &thread_id)) == NULL)
+        {
+            show_error(module.hMainWindow, "Cannot create playback thread");
+            faacDecClose(mp4state.hDecoder);
+            fclose(mp4state.aacfile);
+            return -1;
+        }
+    } else {
+        if((play_thread_handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)MP4PlayThread,
+            (void *)&killPlayThread, 0, &thread_id)) == NULL)
+        {
+            show_error(module.hMainWindow, "Cannot create playback thread");
+            faacDecClose(mp4state.hDecoder);
+            MP4Close(mp4state.mp4file);
+            return -1;
+        }
     }
 
     if (m_priority != 3)
@@ -693,55 +697,66 @@ void stop()
     }
 
     faacDecClose(mp4state.hDecoder);
-    MP4Close(mp4state.mp4file);
+    if (mp4state.filetype)
+        fclose(mp4state.aacfile);
+    else
+        MP4Close(mp4state.mp4file);
     module.outMod->Close();
     module.SAVSADeInit();
 }
 
 int getsonglength(char *fn)
 {
-    int track;
-    long msDuration;
-	MP4Duration length;
-    MP4FileHandle file;
+    long msDuration = 0;
 
-    file = MP4Read(fn, 0);
-    if (!file)
-        return 0;
-
-    if ((track = GetAACTrack(file)) < 0)
+    if(StringComp(fn + strlen(fn) - 3, "mp4", 3) == 0)
     {
+        int track;
+        MP4Duration length;
+        MP4FileHandle file;
+
+        file = MP4Read(fn, 0);
+        if (!file)
+            return 0;
+
+        if ((track = GetAACTrack(file)) < 0)
+        {
+            MP4Close(file);
+            return -1;
+        }
+
+        length = MP4GetTrackDuration(file, track);
+
+        msDuration = MP4ConvertFromTrackDuration(file, track,
+            length, MP4_MSECS_TIME_SCALE);
+
         MP4Close(file);
-        return -1;
     }
-
-    length = MP4GetTrackDuration(file, track);
-
-	msDuration = MP4ConvertFromTrackDuration(file, track,
-        length, MP4_MSECS_TIME_SCALE);
-
-    MP4Close(file);
 
     return msDuration;
 }
 
 int getlength()
 {
-    int track;
-    long msDuration;
-	MP4Duration length;
-
-    if ((track = GetAACTrack(mp4state.mp4file)) < 0)
+    if (!mp4state.filetype)
     {
-        return -1;
+        int track;
+        long msDuration;
+        MP4Duration length;
+
+        if ((track = GetAACTrack(mp4state.mp4file)) < 0)
+        {
+            return -1;
+        }
+
+        length = MP4GetTrackDuration(mp4state.mp4file, track);
+
+        msDuration = MP4ConvertFromTrackDuration(mp4state.mp4file, track,
+            length, MP4_MSECS_TIME_SCALE);
+
+        return msDuration;
     }
-
-    length = MP4GetTrackDuration(mp4state.mp4file, track);
-
-	msDuration = MP4ConvertFromTrackDuration(mp4state.mp4file, track,
-        length, MP4_MSECS_TIME_SCALE);
-
-    return msDuration;
+    return 0;
 }
 
 int getoutputtime()
@@ -752,18 +767,6 @@ int getoutputtime()
 void setoutputtime(int time_in_ms)
 {
     mp4state.seek_needed = time_in_ms;
-}
-
-LPTSTR PathFindFileName(LPCTSTR pPath)
-{
-    LPCTSTR pT;
-
-    for (pT = pPath; *pPath; pPath = CharNext(pPath)) {
-        if ((pPath[0] == TEXT('\\') || pPath[0] == TEXT(':')) && pPath[1] && (pPath[1] != TEXT('\\')))
-            pT = pPath + 1;
-    }
-
-    return (LPTSTR)pT;   // const -> non const
 }
 
 void getfileinfo(char *filename, char *title, int *length_in_ms)
@@ -779,7 +782,7 @@ void getfileinfo(char *filename, char *title, int *length_in_ms)
             strcpy(title, tmp);
         }
     }
-    else // some other file
+    else /* some other file */
     {
         if (length_in_ms)
             *length_in_ms = getsonglength(filename);
@@ -798,14 +801,10 @@ void eq_set(int on, char data[10], int preamp)
 
 int last_frame;
 
-DWORD WINAPI PlayThread(void *b)
+DWORD WINAPI MP4PlayThread(void *b)
 {
     int done = 0;
     int l;
-	int decoded_frames=0;
-	int br_calc_frames=0;
-	int br_bytes_consumed=0;
-    unsigned long bytesconsumed;
 
     void *sample_buffer;
     unsigned char *buffer;
@@ -900,9 +899,124 @@ DWORD WINAPI PlayThread(void *b)
                     module.outMod->Write(sample_buffer, l);
                 }
             }
+        } else {
+            Sleep(10);
         }
-        else
+    }
+
+	PlayThreadAlive = 0;
+	
+    return 0;
+}
+
+DWORD WINAPI AACPlayThread(void *b)
+{
+    int done = 0;
+    int l;
+
+    void *sample_buffer;
+    faacDecFrameInfo frameInfo;
+
+    PlayThreadAlive = 1;
+    last_frame = 0;
+
+    while (!*((int *)b))
+    {
+        if (done)
         {
+            module.outMod->CanWrite();
+
+            if (!module.outMod->IsPlaying())
+            {
+                PostMessage(module.hMainWindow, WM_WA_AAC_EOF, 0, 0);
+                PlayThreadAlive = 0;
+                return 0;
+            }
+
+            Sleep(10);
+        }
+        else if (module.outMod->CanWrite() >=
+            ((1024*mp4state.channels*sizeof(short))<<(module.dsp_isactive()?1:0)))
+        {
+            if(last_frame)
+            {
+                done = 1;
+            } else {
+                long tmp, read;
+                unsigned char *buffer = mp4state.buffer;
+
+                do
+                {
+                    if (mp4state.bytes_consumed>0)
+                    {
+                        if (mp4state.bytes_into_buffer)
+                        {
+                            memcpy(buffer, buffer+mp4state.bytes_consumed,
+                                mp4state.bytes_into_buffer);
+                        }
+
+                        if (mp4state.bytes_read < mp4state.filesize)
+                        {
+                            if (mp4state.bytes_read + mp4state.bytes_consumed < mp4state.filesize)
+                                tmp = mp4state.bytes_consumed;
+                            else
+                                tmp = mp4state.filesize - mp4state.bytes_read;
+                            read = fread(buffer + mp4state.bytes_into_buffer, 1, tmp, mp4state.aacfile);
+                            if (read == tmp)
+                            {
+                                mp4state.bytes_read += read;
+                                mp4state.bytes_into_buffer += read;
+                            }
+                        } else {
+                            if (mp4state.bytes_into_buffer)
+                            {
+                                memset(buffer + mp4state.bytes_into_buffer, 0,
+                                    mp4state.bytes_consumed);
+                            }
+                        }
+
+                        mp4state.bytes_consumed = 0;
+                    }
+
+                    if (mp4state.bytes_into_buffer < 1)
+                    {
+                        if (mp4state.bytes_read < mp4state.filesize)
+                        {
+                            show_error(module.hMainWindow, faacDecGetErrorMessage(frameInfo.error));
+                            last_frame = 1;
+                        } else {
+                            last_frame = 1;
+                        }
+                    }
+
+                    sample_buffer = faacDecDecode(mp4state.hDecoder, &frameInfo, buffer);
+
+                    mp4state.bytes_consumed += frameInfo.bytesconsumed;
+                    mp4state.bytes_into_buffer -= mp4state.bytes_consumed;
+                } while (!frameInfo.samples && !frameInfo.error);
+
+                if (!killPlayThread && (frameInfo.samples > 0))
+                {
+                    module.SAAddPCMData(sample_buffer, mp4state.channels, res_table[m_resolution],
+                        mp4state.decode_pos_ms);
+                    module.VSAAddPCMData(sample_buffer, mp4state.channels, res_table[m_resolution],
+                        mp4state.decode_pos_ms);
+                    mp4state.decode_pos_ms += (1024*1000)/mp4state.samplerate;
+
+                    if (module.dsp_isactive())
+                    {
+                        l = module.dsp_dosamples((short*)sample_buffer,
+                            frameInfo.samples*sizeof(short)/mp4state.channels/(res_table[m_resolution]/8),
+                            res_table[m_resolution],
+                            mp4state.channels,mp4state.samplerate)*(mp4state.channels*(res_table[m_resolution]/8));
+                    } else {
+                        l = frameInfo.samples*(res_table[m_resolution]/8);
+                    }
+
+                    module.outMod->Write(sample_buffer, l);
+                }
+            }
+        } else {
             Sleep(10);
         }
     }
@@ -918,7 +1032,7 @@ static In_Module module =
     "AudioCoding.com MPEG-4 General Audio player: " __DATE__,
     0,  // hMainWindow
     0,  // hDllInstance
-    "MP4\0MPEG-4 Files (*.MP4)\0"
+    "MP4\0MPEG-4 Files (*.MP4)\0AAC\0AAC Files (*.AAC)\0"
     ,
     1, // is_seekable
     1, // uses output
