@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /MT /GX /O2 /I "..\..\include" /I "..\..\common\libsndfile\src" /I "..\..\common\mp4v2" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /YX /FD /c
+# ADD CPP /nologo /G6 /MT /GX /Ot /I "..\..\include" /I "..\..\common\libsndfile\src" /I "..\..\common\mp4v2" /I "..\..\common\libsndfile\win32" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /YX /FD /QaxK /GA /Qwp_ipo /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x809 /d "NDEBUG"
@@ -53,7 +53,12 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=xilink6.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib winmm.lib ws2_32.lib /nologo /subsystem:windows /machine:I386 /nodefaultlib:"LIBCMT.lib"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib winmm.lib ws2_32.lib svml_disp.lib /nologo /subsystem:windows /machine:I386 /nodefaultlib:"LIBCMT.lib"
+# Begin Special Build Tool
+SOURCE="$(InputPath)"
+PostBuild_Desc=Compressing using UPX...
+PostBuild_Cmds=upx --best .\release\aacDECdrop.exe
+# End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "aacDECdrop - Win32 Debug"
 
@@ -68,7 +73,7 @@ LINK32=xilink6.exe
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /YX /FD /GZ /c
+# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "..\common\libsndfile\src" /I "..\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /YX /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x809 /d "_DEBUG"
@@ -131,19 +136,7 @@ SOURCE=..\decthread.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\include\faad.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\misc.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\common\mp4v2\mp4.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\common\mp4v2\mpeg4ip.h
 # End Source File
 # Begin Source File
 
@@ -151,60 +144,12 @@ SOURCE=..\resource.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\common\libsndfile\src\sndfile.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\common\mp4v2\systems.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\wave_out.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\common\mp4v2\win32_ver.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
-# Begin Source File
-
-SOURCE=..\resource\AAC01.bmp
-# End Source File
-# Begin Source File
-
-SOURCE=..\resource\AAC01.ico
-# End Source File
-# Begin Source File
-
-SOURCE=..\resource\AAC02.bmp
-# End Source File
-# Begin Source File
-
-SOURCE=..\resource\AAC03.bmp
-# End Source File
-# Begin Source File
-
-SOURCE=..\resource\AAC04.bmp
-# End Source File
-# Begin Source File
-
-SOURCE=..\resource\AAC05.bmp
-# End Source File
-# Begin Source File
-
-SOURCE=..\resource\AAC06.bmp
-# End Source File
-# Begin Source File
-
-SOURCE=..\resource\AAC07.bmp
-# End Source File
-# Begin Source File
-
-SOURCE=..\resource\AAC08.bmp
-# End Source File
 # Begin Source File
 
 SOURCE=..\Script.rc
