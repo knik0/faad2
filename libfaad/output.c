@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: output.c,v 1.26 2003/11/06 14:08:58 menno Exp $
+** $Id: output.c,v 1.27 2003/11/06 15:43:59 menno Exp $
 **/
 
 #include "common.h"
@@ -183,9 +183,20 @@ void* output_to_PCM(faacDecHandle hDecoder,
             for(i = 0; i < frame_len; i++)
             {
                 int32_t tmp = input[ch][i];
-                if (tmp > REAL_CONST(32767)) tmp = REAL_CONST(32767);
-                else if (tmp <= REAL_CONST(-32768)) tmp = REAL_CONST(-32768);
-                tmp += (1 << (REAL_BITS-1));
+                if (tmp >= 0)
+                {
+                    tmp += (1 << (REAL_BITS-1));
+                    if (tmp >= REAL_CONST(32768))
+                    {
+                        tmp = REAL_CONST(32767);
+                    }
+                } else {
+                    tmp += -(1 << (REAL_BITS-1));
+                    if (tmp <= REAL_CONST(-32769))
+                    {
+                        tmp = REAL_CONST(-32768);
+                    }
+                }
                 tmp >>= REAL_BITS;
                 short_sample_buffer[(i*channels)+ch] = (int16_t)tmp;
             }
@@ -194,10 +205,22 @@ void* output_to_PCM(faacDecHandle hDecoder,
             for(i = 0; i < frame_len; i++)
             {
                 int32_t tmp = input[ch][i];
-                if (tmp > REAL_CONST(32767)) tmp = REAL_CONST(32767);
-                else if (tmp <= REAL_CONST(-32768)) tmp = REAL_CONST(-32768);
-                tmp += (1 << (REAL_BITS-9));
-                tmp >>= (REAL_BITS-8);
+                if (tmp >= 0)
+                {
+                    tmp += (1 << (REAL_BITS-9));
+                    tmp >>= (REAL_BITS-8);
+                    if (tmp >= 8388608)
+                    {
+                        tmp = 8388607;
+                    }
+                } else {
+                    tmp += -(1 << (REAL_BITS-9));
+                    tmp >>= (REAL_BITS-8);
+                    if (tmp <= -8388609)
+                    {
+                        tmp = -8388608;
+                    }
+                }
                 int_sample_buffer[(i*channels)+ch] = (int32_t)tmp;
             }
             break;
@@ -205,15 +228,14 @@ void* output_to_PCM(faacDecHandle hDecoder,
             for(i = 0; i < frame_len; i++)
             {
                 int32_t tmp = input[ch][i];
-                if (tmp > REAL_CONST(32767)) tmp = REAL_CONST(32767);
-                else if (tmp <= REAL_CONST(-32768)) tmp = REAL_CONST(-32768);
-#if ((REAL_BITS - 16) < 0)
-                tmp += (1 >> -(REAL_BITS-16));
-                tmp <<= -(REAL_BITS-16);
-#else
-                tmp += (1 << (REAL_BITS-16));
-                tmp >>= (REAL_BITS-16);
-#endif
+                if (tmp >= 0)
+                {
+                    tmp += (1 << (16-REAL_BITS-1));
+                    tmp <<= (16-REAL_BITS);
+                } else {
+                    tmp += -(1 << (16-REAL_BITS-1));
+                    tmp <<= (16-REAL_BITS);
+                }
                 int_sample_buffer[(i*channels)+ch] = (int32_t)tmp;
             }
             break;
