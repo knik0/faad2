@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.6 2002/01/15 19:55:09 menno Exp $
+** $Id: main.c,v 1.7 2002/01/16 08:18:30 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -416,6 +416,8 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
 		}
 
         sample_buffer = faacDecDecode(hDecoder, &frameInfo, buffer);
+
+        if (buffer) free(buffer);
 
         percent = min((int)(sampleId*100)/numSamples, 100);
         if (percent > old_percent)
