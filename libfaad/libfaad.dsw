@@ -15,21 +15,6 @@ Package=<4>
 
 ###############################################################################
 
-Project: "volker"=.\volker\volker.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name libfaad
-    End Project Dependency
-}}}
-
-###############################################################################
-
 Global:
 
 Package=<5>
