@@ -212,31 +212,13 @@ static void *mp4Decode(void *args)
 
       decoder = faacDecOpen();
       MP4GetTrackESConfiguration(mp4file, mp4track, &buffer, &bufferSize);
-      if(!buffer){
-	g_free(args);
-	faacDecClose(decoder);
-	MP4Close(mp4file);
-	bPlaying = FALSE;
-	pthread_mutex_unlock(&mutex);
-	pthread_exit(NULL);
-      }
       if(faacDecInit2(decoder, buffer, bufferSize, &samplerate, &channels)<0){
-	g_free(args);
-	faacDecClose(decoder);
-	MP4Close(mp4file);
-	bPlaying = FALSE;
-	pthread_mutex_unlock(&mutex);
-	pthread_exit(NULL);
+          goto end;
       }
       g_free(buffer);
       if(channels == 0){
 	g_print("Number of Channels not supported\n");
-	g_free(args);
-	faacDecClose(decoder);
-	MP4Close(mp4file);
-	bPlaying = FALSE;
-	pthread_mutex_unlock(&mutex);
-	pthread_exit(NULL);
+          goto end;
       }
       duration = MP4GetTrackDuration(mp4file, mp4track);
       msDuration = MP4ConvertFromTrackDuration(mp4file, mp4track, duration,
@@ -263,15 +245,6 @@ static void *mp4Decode(void *args)
 	}
 	buffer=NULL;
 	bufferSize=0;
-	if(sampleID > numSamples){
-	  mp4_ip.output->close_audio();
-	  g_free(args);
-	  faacDecClose(decoder);
-	  MP4Close(mp4file);
-	  bPlaying = FALSE;
-	  pthread_mutex_unlock(&mutex);
-	  pthread_exit(NULL);
-	}
 	rc = MP4ReadSample(mp4file, mp4track, sampleID++, &buffer, &bufferSize,
 			   NULL, NULL, NULL, NULL);
 	//g_print("%d/%d\n", sampleID-1, numSamples);
@@ -280,25 +253,13 @@ static void *mp4Decode(void *args)
 	  sampleBuffer = NULL;
 	  sampleID=0;
 	  mp4_ip.output->buffer_free();
-	  mp4_ip.output->close_audio();
-	  g_free(args);
-	  faacDecClose(decoder);
-	  MP4Close(mp4file);
-	  bPlaying = FALSE;
-	  pthread_mutex_unlock(&mutex);
-	  pthread_exit(NULL);
+            goto end;
 	}else{
 	  sampleBuffer = faacDecDecode(decoder, &frameInfo, buffer, bufferSize);
 	  if(frameInfo.error > 0){
 	    g_print("MP4: %s\n",
 		    faacDecGetErrorMessage(frameInfo.error));
-	    mp4_ip.output->close_audio();
-	    g_free(args);
-	    faacDecClose(decoder);
-	    MP4Close(mp4file);
-	    bPlaying = FALSE;
-	    pthread_mutex_unlock(&mutex);
-	    pthread_exit(NULL);
+          goto end;
 	  }
 	  if(buffer){
 	    g_free(buffer); buffer=NULL; bufferSize=0;
@@ -313,9 +274,14 @@ static void *mp4Decode(void *args)
 			   sampleBuffer);
 	mp4_ip.output->write_audio(sampleBuffer, frameInfo.samples<<1);
       }
-      while(bPlaying && mp4_ip.output->buffer_free()){
+
+      if(sampleID > numSamples){
+          break;
+      }
+      while(bPlaying && mp4_ip.output->buffer_playing() && mp4_ip.output->buffer_free()){
 	xmms_usleep(10000);
       }
+end:
       mp4_ip.output->close_audio();
       g_free(args);
       faacDecClose(decoder);
