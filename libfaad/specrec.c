@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: specrec.c,v 1.9 2002/08/17 12:27:33 menno Exp $
+** $Id: specrec.c,v 1.10 2002/08/20 16:59:58 menno Exp $
 **/
 
 /*
@@ -248,13 +248,13 @@ void build_tables(real_t *iq_table, real_t *pow2_table)
     /* build pow(x, 4/3) table for inverse quantization */
     for(i = 0; i < IQ_TABLE_SIZE; i++)
     {
-        iq_table[i] = REAL_CONST(exp(log(i) * 4.0/3.0));
+        iq_table[i] = (real_t)pow(i, 4.0/3.0);
     }
 
     /* build pow(2, 0.25*x) table for scalefactors */
     for(i = 0; i < POW_TABLE_SIZE; i++)
     {
-        pow2_table[i] = REAL_CONST(exp(LN2 * 0.25 * (i-100)));
+        pow2_table[i] = (real_t)pow(2.0, 0.25 * (i-100));
     }
 }
 
