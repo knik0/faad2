@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: sbr_syntax.c,v 1.1 2002/04/20 14:45:13 menno Exp $
+** $Id: sbr_syntax.c,v 1.2 2002/04/20 22:20:15 menno Exp $
 **/
 
 /*
@@ -26,12 +26,18 @@
    Bandwidth Extension for General Audio Coding (N4611)
 */
 
+/*
+    Mind the sbr_extension() function, it is not defined in the text
+    obviously it just reads some bytes.
+ */
+
 
 #include "common.h"
 
 #ifdef SBR
 
 #include "sbr_syntax.h"
+#include "syntax.h"
 #include "sbr_huff.h"
 #include "bits.h"
 #include "analysis.h"
@@ -50,16 +56,18 @@ uint8_t sbr_bitstream(bitfile *ld, sbr_info *sbr, uint8_t id_aac,
 
     if (bs_extension_type == SBR_HDR)
     {
-        sbr_header(sbr, id_aac);
-        sbr_data(sbr, id_aac);
+        sbr_header(ld, sbr, id_aac);
+        sbr_data(ld, sbr, id_aac);
     } else if (bs_extension_type == SBR_STD) {
-        sbr_data(sbr, id_aac);
+        sbr_data(ld, sbr, id_aac);
     }
 }
 
 /* table 3 */
 static void sbr_header(bitfile *ld, sbr_info *sbr, uint8_t id_aac)
 {
+    uint8_t bs_header_extra_1, bs_header_extra_2;
+
     sbr->bs_protocol_version = faad_getbits(ld, 2
         DEBUGVAR(1,202,"sbr_header(): bs_protocol_version"));
     sbr->bs_amp_res = faad_get1bit(ld
@@ -72,9 +80,9 @@ static void sbr_header(bitfile *ld, sbr_info *sbr, uint8_t id_aac)
         DEBUGVAR(1,206,"sbr_header(): bs_xover_band"));
     faad_getbits(ld, 3
         DEBUGVAR(1,207,"sbr_header(): bs_reserved"));
-    sbr->bs_header_extra_1 = faad_get1bit(ld
+    bs_header_extra_1 = faad_get1bit(ld
         DEBUGVAR(1,208,"sbr_header(): bs_header_extra_1"));
-    sbr->bs_header_extra_2 = faad_get1bit(ld
+    bs_header_extra_2 = faad_get1bit(ld
         DEBUGVAR(1,209,"sbr_header(): bs_header_extra_2"));
 
     if (id_aac == ID_SCE)
@@ -83,7 +91,7 @@ static void sbr_header(bitfile *ld, sbr_info *sbr, uint8_t id_aac)
            DEBUGVAR(1,210,"sbr_header(): bs_reserved"));
     }
 
-    if (sbr->bs_header_extra_1)
+    if (bs_header_extra_1)
     {
         sbr->bs_freq_scale = faad_getbits(ld, 2
             DEBUGVAR(1,211,"sbr_header(): bs_freq_scale"));
@@ -92,7 +100,7 @@ static void sbr_header(bitfile *ld, sbr_info *sbr, uint8_t id_aac)
         sbr->bs_noise_bands = faad_getbits(ld, 2
             DEBUGVAR(1,213,"sbr_header(): bs_noise_bands"));
     }
-    if (sbr->bs_header_extra_2)
+    if (bs_header_extra_2)
     {
         sbr->bs_limiter_bands = faad_getbits(ld, 2
             DEBUGVAR(1,214,"sbr_header(): bs_limiter_bands"));
@@ -116,10 +124,10 @@ static void sbr_data(bitfile *ld, sbr_info *sbr, uint8_t id_aac)
     switch (id_aac)
     {
     case ID_SCE:
-        sbr_single_channel_element(sbr);
+        sbr_single_channel_element(ld, sbr);
         break;
     case ID_CPE:
-        sbr_channel_pair_element(sbr);
+        sbr_channel_pair_element(ld, sbr);
         break;
     }
 }
@@ -130,15 +138,15 @@ static void sbr_single_channel_element(bitfile *ld, sbr_info *sbr)
     faad_get1bit(ld
         DEBUGVAR(1,220,"sbr_single_channel_element(): bs_reserved"));
 
-    sbr_grid(sbr, 0);
-    sbr_dtdf(sbr, 0);
-    invf_mode(sbr, 0);
+    sbr_grid(ld, sbr, 0);
+    sbr_dtdf(ld, sbr, 0);
+    invf_mode(ld, sbr, 0);
 
     faad_getbits(ld, 2
         DEBUGVAR(1,221,"sbr_single_channel_element(): bs_reserved"));
 
-    sbr_envelope(sbr, 0, 0);
-    sbr_noise(sbr, 0, 0);
+    sbr_envelope(ld, sbr, 0);
+    sbr_noise(ld, sbr, 0);
 
     faad_get1bit(ld
         DEBUGVAR(1,222,"sbr_single_channel_element(): bs_reserved"));
@@ -149,13 +157,14 @@ static void sbr_single_channel_element(bitfile *ld, sbr_info *sbr)
     sbr->bs_add_harmonic_flag[0] = faad_get1bit(ld
         DEBUGVAR(1,223,"sbr_single_channel_element(): bs_add_harmonic_flag[0]"));
     if (sbr->bs_add_harmonic_flag[0])
-        sinusoidal_coding(sbr, 0);
+        sinusoidal_coding(ld, sbr, 0);
 
     sbr->bs_extended_data[0] = faad_get1bit(ld
         DEBUGVAR(1,224,"sbr_single_channel_element(): bs_extended_data[0]"));
     if (sbr->bs_extended_data[0])
     {
-        cnt = faad_getbits(ld, 4
+        uint16_t nr_bits_left;
+        uint16_t cnt = faad_getbits(ld, 4
             DEBUGVAR(1,225,"sbr_single_channel_element(): bs_extension_size"));
         if (cnt == 15)
         {
@@ -169,7 +178,9 @@ static void sbr_single_channel_element(bitfile *ld, sbr_info *sbr)
             sbr->bs_extension_id = faad_getbits(ld, 2
                 DEBUGVAR(1,227,"sbr_single_channel_element(): bs_extension_id"));
             nr_bits_left -= 2;
-            sbr_extension(sbr, 0, nr_bits_left);
+            /* sbr_extension(ld, sbr, 0, nr_bits_left); */
+            faad_getbits(ld, 6
+                DEBUGVAR(1,279,"sbr_single_channel_element(): bs_extension_data"));
         }
     }
 }
@@ -182,18 +193,18 @@ static void sbr_channel_pair_element(bitfile *ld, sbr_info *sbr)
 
     if (sbr->bs_coupling)
     {
-        sbr_grid(sbr, 0);
-        sbr_dtdf(sbr, 0);
-        sbr_dtdf(sbr, 1);
-        invf_mode(sbr, 0);
+        sbr_grid(ld, sbr, 0);
+        sbr_dtdf(ld, sbr, 0);
+        sbr_dtdf(ld, sbr, 1);
+        invf_mode(ld, sbr, 0);
 
         faad_getbits(ld, 2
             DEBUGVAR(1,229,"sbr_channel_pair_element(): bs_reserved"));
 
-        sbr_envelope(sbr, 0, 1);
-        sbr_noise(sbr, 0, 1);
-        sbr_envelope(sbr, 1, 1);
-        sbr_noise(sbr, 1, 1);
+        sbr_envelope(ld, sbr, 0);
+        sbr_noise(ld, sbr, 0);
+        sbr_envelope(ld, sbr, 1);
+        sbr_noise(ld, sbr, 1);
 
         faad_getbits(ld, 2
             DEBUGVAR(1,230,"sbr_channel_pair_element(): bs_reserved"));
@@ -201,18 +212,19 @@ static void sbr_channel_pair_element(bitfile *ld, sbr_info *sbr)
         sbr->bs_add_harmonic_flag[0] = faad_get1bit(ld
             DEBUGVAR(1,231,"sbr_channel_pair_element(): bs_add_harmonic_flag[0]"));
         if (sbr->bs_add_harmonic_flag[0])
-            sinusoidal_coding(sbr, 0);
+            sinusoidal_coding(ld, sbr, 0);
 
         sbr->bs_add_harmonic_flag[1] = faad_get1bit(ld
             DEBUGVAR(1,232,"sbr_channel_pair_element(): bs_add_harmonic_flag[1]"));
         if (sbr->bs_add_harmonic_flag[1])
-            sinusoidal_coding(sbr, 1);
+            sinusoidal_coding(ld, sbr, 1);
 
         sbr->bs_extended_data[0] = faad_get1bit(ld
             DEBUGVAR(1,233,"sbr_channel_pair_element(): bs_extended_data[0]"));
-        if (bs_extended_data[0])
+        if (sbr->bs_extended_data[0])
         {
-            cnt = faad_getbits(ld, 4
+            uint16_t nr_bits_left;
+            uint16_t cnt = faad_getbits(ld, 4
                 DEBUGVAR(1,234,"sbr_channel_pair_element(): bs_extension_size"));
             if (cnt == 15)
             {
@@ -226,43 +238,46 @@ static void sbr_channel_pair_element(bitfile *ld, sbr_info *sbr)
                 sbr->bs_extension_id = faad_getbits(ld, 2
                     DEBUGVAR(1,236,"sbr_channel_pair_element(): bs_extension_id"));
                 nr_bits_left -= 2;
-                sbr_extension(sbr, 0, nr_bits_left);
+                /* sbr_extension(ld, sbr, 0, nr_bits_left); */
+                faad_getbits(ld, 6
+                    DEBUGVAR(1,280,"sbr_single_channel_element(): bs_extension_data"));
             }
         }
     } else {
-        sbr_grid(sbr, 0);
-        sbr_grid(sbr, 1);
-        sbr_dtdf(sbr, 0);
-        sbr_dtdf(sbr, 1);
-        invf_mode(sbr, 0);
-        invf_mode(sbr, 1);
+        sbr_grid(ld, sbr, 0);
+        sbr_grid(ld, sbr, 1);
+        sbr_dtdf(ld, sbr, 0);
+        sbr_dtdf(ld, sbr, 1);
+        invf_mode(ld, sbr, 0);
+        invf_mode(ld, sbr, 1);
 
         faad_getbits(ld, 4
             DEBUGVAR(1,237,"sbr_channel_pair_element(): bs_reserved"));
 
-        sbr_envelope(sbr, 0, 0);
-        sbr_envelope(sbr, 1, 0);
-        sbr_noise(sbr, 0, 0);
-        sbr_noise(sbr, 1, 0);
+        sbr_envelope(ld, sbr, 0);
+        sbr_envelope(ld, sbr, 1);
+        sbr_noise(ld, sbr, 0);
+        sbr_noise(ld, sbr, 1);
 
         faad_getbits(ld, 2
             DEBUGVAR(1,238,"sbr_channel_pair_element(): bs_reserved"));
 
         sbr->bs_add_harmonic_flag[0] = faad_get1bit(ld
             DEBUGVAR(1,239,"sbr_channel_pair_element(): bs_add_harmonic_flag[0]"));
-        if (bs_add_harmonic_flag[0])
-            sinusoidal_coding(sbr, 0);
+        if (sbr->bs_add_harmonic_flag[0])
+            sinusoidal_coding(ld, sbr, 0);
 
         sbr->bs_add_harmonic_flag[1] = faad_get1bit(ld
             DEBUGVAR(1,240,"sbr_channel_pair_element(): bs_add_harmonic_flag[1]"));
-        if (bs_add_harmonic_flag[1])
-            sinusoidal_coding(sbr, 1);
+        if (sbr->bs_add_harmonic_flag[1])
+            sinusoidal_coding(ld, sbr, 1);
 
         sbr->bs_extended_data[0] = faad_get1bit(ld
             DEBUGVAR(1,241,"sbr_channel_pair_element(): bs_extended_data[0]"));
-        if (bs_extended_data[0])
+        if (sbr->bs_extended_data[0])
         {
-            cnt = faad_getbits(ld, 4
+            uint16_t nr_bits_left;
+            uint16_t cnt = faad_getbits(ld, 4
                 DEBUGVAR(1,242,"sbr_channel_pair_element(): bs_extension_size"));
             if (cnt == 15)
             {
@@ -276,15 +291,18 @@ static void sbr_channel_pair_element(bitfile *ld, sbr_info *sbr)
                 sbr->bs_extension_id = faad_getbits(ld, 2
                     DEBUGVAR(1,244,"sbr_channel_pair_element(): bs_extension_id"));
                 nr_bits_left -= 2;
-                sbr_extension(sbr, 0, nr_bits_left);
+                /* sbr_extension(ld, sbr, 0, nr_bits_left); */
+                faad_getbits(ld, 6
+                    DEBUGVAR(1,281,"sbr_single_channel_element(): bs_extension_data"));
             }
         }
 
         sbr->bs_extended_data[1] = faad_get1bit(ld
             DEBUGVAR(1,245,"sbr_channel_pair_element(): bs_extended_data[1]"));
-        if (bs_extended_data[1])
+        if (sbr->bs_extended_data[1])
         {
-            cnt = faad_getbits(ld, 4
+            uint16_t nr_bits_left;
+            uint16_t cnt = faad_getbits(ld, 4
                 DEBUGVAR(1,246,"sbr_channel_pair_element(): bs_extension_size"));
             if (cnt == 15)
             {
@@ -298,7 +316,9 @@ static void sbr_channel_pair_element(bitfile *ld, sbr_info *sbr)
                 sbr->bs_extension_id = faad_getbits(ld, 2
                     DEBUGVAR(1,248,"sbr_channel_pair_element(): bs_extension_id"));
                 nr_bits_left -= 2;
-                sbr_extension(sbr, 1, nr_bits_left);
+                /* sbr_extension(ld, sbr, 0, nr_bits_left); */
+                faad_getbits(ld, 6
+                    DEBUGVAR(1,282,"sbr_single_channel_element(): bs_extension_data"));
             }
         }
     }
@@ -307,23 +327,25 @@ static void sbr_channel_pair_element(bitfile *ld, sbr_info *sbr)
 /* table 7 */
 static void sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch)
 {
+    uint8_t i, env, rel;
+
     sbr->bs_frame_class = faad_getbits(ld, 2
         DEBUGVAR(1,248,"sbr_grid(): bs_frame_class"));
 
     switch (sbr->bs_frame_class)
     {
     case FIXFIX:
-        uint8_t bs_num_env_raw = faad_getbits(ld, 2
+        i = faad_getbits(ld, 2
             DEBUGVAR(1,249,"sbr_grid(): bs_num_env_raw"));
 
-        sbr->bs_num_env[ch] = min(1 << bs_num_env_raw, 5);
+        sbr->bs_num_env[ch] = min(1 << i, 5);
         if (sbr->bs_num_env[ch] == 1)
             sbr->bs_amp_res = 0;
 
-        temp = faad_get1bit(ld
+        i = faad_get1bit(ld
             DEBUGVAR(1,250,"sbr_grid(): bs_freq_res_flag"));
         for (env = 0; env < sbr->bs_num_env[ch]; env++)
-            bs_freq_res[ch][env] = temp;
+            sbr->bs_freq_res[ch][env] = i;
         break;
 
     case FIXVAR:
@@ -334,11 +356,11 @@ static void sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch)
 
         for (rel = 0; rel < sbr->bs_num_env[ch]-1; rel++)
         {
-            bs_rel_bord[ch][rel] = 2 * faad_getbits(ld, 2
+            sbr->bs_rel_bord[ch][rel] = 2 * faad_getbits(ld, 2
                 DEBUGVAR(1,253,"sbr_grid(): bs_rel_bord")) + 2;
         }
-        bs_ptr_bits = int_log2(bs_num_env[ch] + 1);
-        sbr->bs_pointer[ch] = faad_getbits(ld, bs_ptr_bits
+        i = int_log2((uint32_t)(sbr->bs_num_env[ch] + 1));
+        sbr->bs_pointer[ch] = faad_getbits(ld, i
             DEBUGVAR(1,254,"sbr_grid(): bs_pointer"));
 
         for (env = 0; env < sbr->bs_num_env[ch]; env++)
@@ -359,8 +381,8 @@ static void sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch)
             sbr->bs_rel_bord[ch][rel] = 2 * faad_getbits(ld, 2
                 DEBUGVAR(1,258,"sbr_grid(): bs_rel_bord")) + 2;
         }
-        ptr_bits = int_log2(bs_num_env[ch] + 1);
-        sbr->bs_pointer[ch] = faad_getbits(ld, bs_ptr_bits
+        i = int_log2((uint32_t)(sbr->bs_num_env[ch] + 1));
+        sbr->bs_pointer[ch] = faad_getbits(ld, i
             DEBUGVAR(1,259,"sbr_grid(): bs_pointer"));
 
         for (env = 0; env < sbr->bs_num_env[ch]; env++)
@@ -375,24 +397,24 @@ static void sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch)
             DEBUGVAR(1,261,"sbr_grid(): bs_abs_bord_0"));
         sbr->bs_abs_bord_1[ch] = faad_getbits(ld, 3
             DEBUGVAR(1,262,"sbr_grid(): bs_abs_bord_1")) + NO_TIME_SLOTS;
-        bs_num_rel_0[ch] = faad_getbits(ld, 2
+        sbr->bs_num_rel_0[ch] = faad_getbits(ld, 2
             DEBUGVAR(1,263,"sbr_grid(): bs_num_rel_0"));
-        bs_num_rel_1[ch] = faad_getbits(ld, 2
+        sbr->bs_num_rel_1[ch] = faad_getbits(ld, 2
             DEBUGVAR(1,264,"sbr_grid(): bs_num_rel_1"));
-        sbr->bs_num_env[ch] = bs_num_rel_0[ch] + bs_num_rel_1[ch] + 1;
+        sbr->bs_num_env[ch] = sbr->bs_num_rel_0[ch] + sbr->bs_num_rel_1[ch] + 1;
 
-        for (rel = 0; rel < bs_num_rel_0[ch]; rel++)
+        for (rel = 0; rel < sbr->bs_num_rel_0[ch]; rel++)
         {
             sbr->bs_rel_bord_0[ch][rel] = 2 * faad_getbits(ld, 2
                 DEBUGVAR(1,265,"sbr_grid(): bs_rel_bord")) + 2;
         }
-        for(rel = 0; rel < bs_num_rel_1[ch]; rel++)
+        for(rel = 0; rel < sbr->bs_num_rel_1[ch]; rel++)
         {
             sbr->bs_rel_bord_1[ch][rel] = 2 * faad_getbits(ld, 2
                 DEBUGVAR(1,266,"sbr_grid(): bs_rel_bord")) + 2;
         }
-        bs_ptr_bits = int_log2(bs_num_rel_0[ch] + bs_num_rel_1[ch] + 2);
-        sbr->bs_pointer[ch] = faad_getbits(ld, bs_ptr_bits
+        i = int_log2((uint32_t)(sbr->bs_num_rel_0[ch] + sbr->bs_num_rel_1[ch] + 2));
+        sbr->bs_pointer[ch] = faad_getbits(ld, i
             DEBUGVAR(1,267,"sbr_grid(): bs_pointer"));
 
         for (env = 0; env < sbr->bs_num_env[ch]; env++)
@@ -439,6 +461,7 @@ static void invf_mode(bitfile *ld, sbr_info *sbr, uint8_t ch)
     }
 }
 
+#if 0
 /* table 10 */
 static void sbr_envelope(bitfile *ld, sbr_info *sbr, uint8_t ch)
 {
@@ -500,12 +523,12 @@ static void sbr_envelope(bitfile *ld, sbr_info *sbr, uint8_t ch)
                 }
                 for (band = 1; band < num_env_bands[bs_freq_res[ch][env]]; band++)
                 {
-                    sbr->bs_data_env[ch][env][band] = huff_dec(f_huff, bs_codeword);
+                    sbr->bs_data_env[ch][env][band] = huff_dec(ld, f_huff, bs_codeword);
                 }
             }
         } else {
             for (band = 0; band < sbr->num_env_bands[bs_freq_res[ch][env]]; band++)
-                sbr->bs_data_env[ch][env][band] = huff_dec(t_huff, bs_codeword);
+                sbr->bs_data_env[ch][env][band] = huff_dec(ld, t_huff, bs_codeword);
         }
     }
 }
@@ -541,23 +564,24 @@ static void sbr_noise(bitfile *ld, sbr_info *sbr, uint8_t ch)
             }
             for (band = 1; band < sbr->num_noise_bands[ch]; band++)
             {
-                sbr->bs_data_noise[ch][noise][band] = huff_dec(f_huff, bs_codeword);
+                sbr->bs_data_noise[ch][noise][band] = huff_dec(ld, f_huff, bs_codeword);
             }
         } else {
             for (band = 0; band < sbr->num_noise_bands[ch]; band++)
             {
-                sbr->bs_data_noise[ch][noise][band] = huff_dec(t_huff, bs_codeword);
+                sbr->bs_data_noise[ch][noise][band] = huff_dec(ld, t_huff, bs_codeword);
             }
         }
     }
 }
+#endif
 
 /* table 12 */
 static void sinusoidal_coding(bitfile *ld, sbr_info *sbr, uint8_t ch)
 {
     uint8_t n;
 
-    for (n = 0; n < num_high_res[ch]; n++)
+    for (n = 0; n < sbr->num_high_res[ch]; n++)
     {
         sbr->bs_add_harmonic[ch][n] = faad_get1bit(ld
             DEBUGVAR(1,278,"sinusoidal_coding(): bs_add_harmonic"));

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.7 2002/04/20 14:45:13 menno Exp $
+** $Id: common.h,v 1.8 2002/04/20 22:20:15 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -78,6 +78,8 @@ extern "C" {
 #define LTP_DEC
 #endif
 #endif
+
+//#define SBR
 
 /* END COMPILE TIME DEFINITIONS */
 

@@ -497,6 +497,10 @@ SOURCE=.\pulse.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\sbr_dec.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\sbr_huff.c
 # End Source File
 # Begin Source File
@@ -618,6 +622,10 @@ SOURCE=.\pns.h
 # Begin Source File
 
 SOURCE=.\pulse.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_dec.h
 # End Source File
 # Begin Source File
 
