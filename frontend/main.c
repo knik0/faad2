@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.48 2003/09/23 08:12:29 menno Exp $
+** $Id: main.c,v 1.49 2003/09/30 08:07:47 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -221,30 +221,30 @@ void print_channel_info(faacDecFrameInfo *frameInfo)
     int i;
     long channelMask = aacChannelConfig2wavexChannelMask(frameInfo);
 
-    printf("  ---------------------\n");
+    fprintf(stderr, "  ---------------------\n");
     if (frameInfo->num_lfe_channels > 0)
     {
-        printf(" | Config: %2d.%d Ch     |", frameInfo->channels-frameInfo->num_lfe_channels, frameInfo->num_lfe_channels);
+        fprintf(stderr, " | Config: %2d.%d Ch     |", frameInfo->channels-frameInfo->num_lfe_channels, frameInfo->num_lfe_channels);
     } else {
-        printf(" | Config: %2d Ch       |", frameInfo->channels);
+        fprintf(stderr, " | Config: %2d Ch       |", frameInfo->channels);
     }
     if (channelMask)
-        printf(" WARNING: channels are reordered according to\n");
+        fprintf(stderr, " WARNING: channels are reordered according to\n");
     else
-        printf("\n");
-    printf("  ---------------------");
+        fprintf(stderr, "\n");
+    fprintf(stderr, "  ---------------------");
     if (channelMask)
-        printf("  MS defaults defined in WAVE_FORMAT_EXTENSIBLE\n");
+        fprintf(stderr, "  MS defaults defined in WAVE_FORMAT_EXTENSIBLE\n");
     else
-        printf("\n");
-    printf(" | Ch |    Position    |\n");
-    printf("  ---------------------\n");
+        fprintf(stderr, "\n");
+    fprintf(stderr, " | Ch |    Position    |\n");
+    fprintf(stderr, "  ---------------------\n");
     for (i = 0; i < frameInfo->channels; i++)
     {
-        printf(" | %.2d | %-14s |\n", i, position2string((int)frameInfo->channel_position[i]));
+        fprintf(stderr, " | %.2d | %-14s |\n", i, position2string((int)frameInfo->channel_position[i]));
     }
-    printf("  ---------------------\n");
-    printf("\n");
+    fprintf(stderr, "  ---------------------\n");
+    fprintf(stderr, "\n");
 }
 
 int FindAdtsSRIndex(int sr)
