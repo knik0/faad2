@@ -1,5 +1,13 @@
 if HAVE_MPEG4IP
-SUBDIRS = mpeg4ip
+if HAVE_XMMS
+SUBDIRS = mpeg4ip xmms
 else
-SUBDIRS = 
+SUBDIRS = mpeg4ip
+endif
+else
+if HAVE_XMMS
+SUBDIRS = xmms
+else
+SUBDIRS =
+endif
 endif

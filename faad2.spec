@@ -1,13 +1,13 @@
 Summary:    C library and frontend for decoding MPEG2/4 AAC
 Name:       faad2
-Version:    2.0.rc3
+Version:    @VERSION@
 Release:    1
 License:    GPL
 Group:      Applications/Multimedia
 Source0:    http://download.sourceforge.net/faad/%{name}-%{version}.tar.gz
 #Patch:                faad2-%{version}.patch
 BuildRequires: autoconf, automake, libtool, gcc-c++
-BuildRequires: xmms-devel, id3lib-devel, gtk+-devel
+BuildRequires: xmms-devel, id3lib-devel, gtk-devel
 URL:        http://www.audiocoding.com/
 BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-root
 Packager:   a.kurpiers@nt.tu-darmstadt.de
@@ -15,6 +15,9 @@ Packager:   a.kurpiers@nt.tu-darmstadt.de
 %description
 FAAD 2 is a LC, MAIN and LTP profile, MPEG2 and MPEG-4 AAC decoder, completely
 written from scratch. FAAD 2 is licensed under the GPL.
+
+Includes libmp4ff, a Quicktime library for UNIX in a freely redistributable,
+statically linkable library.
 
 %package devel
 Summary: Development libraries the FAAD 2 AAC decoder.
@@ -27,7 +30,7 @@ Header files and development documentation for libfaad.
 %package xmms
 Group: Applications/Multimedia
 Summary: AAC and MP4 input plugin for xmms
-Requires: %{name}, %{name}-libmp4ff, xmms, id3lib
+Requires: %{name}, %{name}-libmp4v2, xmms, id3lib
 
 
 %description xmms
@@ -44,15 +47,6 @@ Group: Development/Libraries
 
 %description libmp4v2
 C++ library to handle MP4 (Quicktime) content
-
-
-%package libmp4ff
-Summary: Library to handle MP4 (Quicktime)
-Group: Development/Libraries
-
-%description libmp4ff
-This is a Quicktime library for UNIX in a freely redistributable,
-statically linkable library.
 
 %prep
 #%setup -n %{name}
@@ -81,12 +75,16 @@ rm -rf %{buildroot}
 %doc AUTHORS COPYING ChangeLog NEWS README TODO
 %{_bindir}/*
 %{_libdir}/libfaad.so*
+%{_libdir}/libmp4ff.so*
 
 %files devel
 %defattr(-, root, root)
 %{_libdir}/libfaad.a
 %{_libdir}/libfaad.la
+%{_libdir}/libmp4ff.a
+%{_libdir}/libmp4ff.la
 %{_includedir}/faad.h
+%{_includedir}/mp4ff.h
 
 %files xmms
 %defattr(-,root,root)
@@ -98,13 +96,12 @@ rm -rf %{buildroot}
 %{_libdir}/libmp4v2.*
 %{_includedir}/mp4.h
 %{_includedir}/mpeg4ip.h
-
-%files libmp4ff
-%defattr(-, root, root)
-%{_libdir}/libmp4ff.*
-%{_includedir}/mp4ff.h
+%{_includedir}/systems.h
 
 %changelog
+* Fri Feb 06 2004 Alexander Kurpiers <a.kurpiers@nt.tu-darmstadt.de>
+- remove seperate libmp4ff target
+
 * Wed Nov 05 2003 Alexander Kurpiers <a.kurpiers@nt.tu-darmstadt.de>
 - include xmms plugins/libmp4v2/libmp4ff into RPM
 
