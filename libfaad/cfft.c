@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: cfft.c,v 1.23 2004/01/05 14:05:11 menno Exp $
+** $Id: cfft.c,v 1.24 2004/01/05 14:47:27 menno Exp $
 **/
 
 /*
@@ -190,7 +190,7 @@ static void passf2pos(const uint16_t ido, const uint16_t l1, const complex_t *cc
                 IM(ch[ah+i]) = IM(cc[ac+i]) + IM(cc[ac+i+ido]);
                 IM(t2)       = IM(cc[ac+i]) - IM(cc[ac+i+ido]);
 
-#if 0
+#if 1
                 ComplexMult(&IM(ch[ah+i+l1*ido]), &RE(ch[ah+i+l1*ido]),
                     IM(t2), RE(t2), RE(wa[i]), IM(wa[i]));
 #else
@@ -235,7 +235,7 @@ static void passf2neg(const uint16_t ido, const uint16_t l1, const complex_t *cc
                 IM(ch[ah+i]) = IM(cc[ac+i]) + IM(cc[ac+i+ido]);
                 IM(t2)       = IM(cc[ac+i]) - IM(cc[ac+i+ido]);
 
-#if 0
+#if 1
                 ComplexMult(&RE(ch[ah+i+l1*ido]), &IM(ch[ah+i+l1*ido]),
                     RE(t2), IM(t2), RE(wa[i]), IM(wa[i]));
 #else
@@ -331,7 +331,7 @@ static void passf3(const uint16_t ido, const uint16_t l1, const complex_t *cc,
                     RE(d3) = RE(c2) + IM(c3);
                     IM(d2) = IM(c2) + RE(c3);
 
-#if 0
+#if 1
                     ComplexMult(&IM(ch[ah+l1*ido]), &RE(ch[ah+l1*ido]),
                         IM(d2), RE(d2), RE(wa1[i]), IM(wa1[i]));
                     ComplexMult(&IM(ch[ah+2*l1*ido]), &RE(ch[ah+2*l1*ido]),
@@ -368,7 +368,7 @@ static void passf3(const uint16_t ido, const uint16_t l1, const complex_t *cc,
                     RE(d3) = RE(c2) - IM(c3);
                     IM(d2) = IM(c2) - RE(c3);
 
-#if 0
+#if 1
                     ComplexMult(&RE(ch[ah+l1*ido]), &IM(ch[ah+l1*ido]),
                         RE(d2), IM(d2), RE(wa1[i]), IM(wa1[i]));
                     ComplexMult(&RE(ch[ah+2*l1*ido]), &IM(ch[ah+2*l1*ido]),
@@ -665,7 +665,7 @@ static void passf4pos(const uint16_t ido, const uint16_t l1, const complex_t *cc
                 IM(ch[ah+i]) = IM(t2) + IM(t3);
                 IM(c3)       = IM(t2) - IM(t3);
 
-#if 0
+#if 1
                 ComplexMult(&IM(ch[ah+i+l1*ido]), &RE(ch[ah+i+l1*ido]),
                     IM(c2), RE(c2), RE(wa1[i]), IM(wa1[i]));
                 ComplexMult(&IM(ch[ah+i+2*l1*ido]), &RE(ch[ah+i+2*l1*ido]),
@@ -752,7 +752,7 @@ static void passf4neg(const uint16_t ido, const uint16_t l1, const complex_t *cc
                 IM(ch[ah+i]) = IM(t2) + IM(t3);
                 IM(c3)       = IM(t2) - IM(t3);
 
-#if 0
+#if 1
                 ComplexMult(&RE(ch[ah+i+l1*ido]), &IM(ch[ah+i+l1*ido]),
                     RE(c2), IM(c2), RE(wa1[i]), IM(wa1[i]));
                 ComplexMult(&RE(ch[ah+i+2*l1*ido]), &IM(ch[ah+i+2*l1*ido]),
@@ -902,7 +902,7 @@ static void passf5(const uint16_t ido, const uint16_t l1, const complex_t *cc,
                     RE(d3) = RE(c3) - IM(c4);
                     IM(d4) = IM(c3) - RE(c4);
 
-#if 0
+#if 1
                     ComplexMult(&IM(ch[ah+l1*ido]), &RE(ch[ah+l1*ido]),
                         IM(d2), RE(d2), RE(wa1[i]), IM(wa1[i]));
                     ComplexMult(&IM(ch[ah+2*l1*ido]), &RE(ch[ah+2*l1*ido]),
@@ -962,7 +962,7 @@ static void passf5(const uint16_t ido, const uint16_t l1, const complex_t *cc,
                     RE(d3) = RE(c3) + IM(c4);
                     IM(d4) = IM(c3) + RE(c4);
 
-#if 0
+#if 1
                     ComplexMult(&RE(ch[ah+l1*ido]), &IM(ch[ah+l1*ido]),
                         RE(d2), IM(d2), RE(wa1[i]), IM(wa1[i]));
                     ComplexMult(&RE(ch[ah+2*l1*ido]), &IM(ch[ah+2*l1*ido]),
@@ -1341,7 +1341,7 @@ startloop:
                 fi++;
                 arg = fi * argld;
                 RE(wa[i]) = (real_t)cos(arg);
-#if 0
+#if 1
                 IM(wa[i]) = (real_t)sin(arg);
 #else
                 IM(wa[i]) = (real_t)-sin(arg);
