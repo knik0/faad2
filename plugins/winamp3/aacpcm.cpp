@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: aacpcm.cpp,v 1.1 2002/01/21 20:38:34 menno Exp $
+** $Id: aacpcm.cpp,v 1.2 2002/02/19 15:31:56 menno Exp $
 **/
 
 #include <stdio.h>
@@ -49,7 +49,8 @@ int AacPcm::getInfos(MediaInfo *infos)
 
 int AacPcm::processData(MediaInfo *infos, ChunkList *chunk_list, bool *killswitch)
 {
-    unsigned long sr, ch;
+    unsigned long sr;
+    unsigned char ch;
     short *samplebuffer;
     faacDecFrameInfo frameInfo;
     int k, last_frame = 0;
@@ -64,7 +65,7 @@ int AacPcm::processData(MediaInfo *infos, ChunkList *chunk_list, bool *killswitc
     if (!init_called)
     {
         buffercount = 0;
-        reader->read(buffer, 768*2);
+        reader->read((char*)buffer, 768*2);
         bytecount += 768*2;
 
         buffercount = faacDecInit(hDecoder, buffer, &sr, &ch);
@@ -81,11 +82,11 @@ int AacPcm::processData(MediaInfo *infos, ChunkList *chunk_list, bool *killswitc
         for (k = 0; k < (768*2 - buffercount); k++)
             buffer[k] = buffer[k + buffercount];
 
-        reader->read(buffer + (768*2) - buffercount, buffercount);
+        reader->read((char*)(buffer + (768*2) - buffercount), buffercount);
         buffercount = 0;
     }
 
-    samplebuffer = faacDecDecode(hDecoder, &frameInfo, buffer);
+    samplebuffer = (short*)faacDecDecode(hDecoder, &frameInfo, (unsigned char*)buffer);
     if (frameInfo.error)
     {
         last_frame = 1;
