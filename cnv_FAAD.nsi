@@ -1,5 +1,5 @@
 Name "FAAD Winamp3 AAC plugin"
-OutFile cnv_aacpcm.exe
+OutFile cnv_FAAD.exe
 CRCCheck on
 LicenseText "You must read the following license before installing."
 LicenseData COPYING
@@ -17,5 +17,7 @@ DirText "The installer has detected the path to Winamp. If it is not correct, pl
 Section "FAAD2 Winamp3 AAC plugin"
 SectionIn 1
 SetOutPath $INSTDIR\Wacs
-File plugins\winamp3\Release\cnv_aacpcm.wac
+File plugins\winamp3\Release\cnv_FAAD.wac
+SetOutPath $INSTDIR\Wacs\xml\FAAD
+File plugins\winamp3\FAAD_config.xml
 SectionEnd
