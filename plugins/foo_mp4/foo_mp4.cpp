@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.42 2003/08/07 18:58:10 menno Exp $
+** $Id: foo_mp4.cpp,v 1.43 2003/08/07 19:06:11 menno Exp $
 **/
 
 #include <mp4.h>
@@ -238,6 +238,7 @@ public:
                     samples = m_samples - m_samplepos;
                 }
                 chunk->set_data(sample_buffer, samples, frameInfo.channels, frameInfo.samplerate);
+                m_samplepos += samples;
             } else {
                 chunk->set_data(sample_buffer, frameInfo.samples/frameInfo.channels,
                     frameInfo.channels, frameInfo.samplerate);
