@@ -22,12 +22,13 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.58 2003/09/12 18:52:57 ca5e Exp $
+** $Id: foo_mp4.cpp,v 1.59 2003/09/20 11:11:19 ca5e Exp $
 **/
 
 #include <mp4.h>
 #include <faad.h>
 #include "foobar2000/SDK/foobar2000.h"
+#include "foobar2000/foo_input_std/id3v2_hacks.h"
 
 //#define DBG_OUT(A) OutputDebugString(A)
 #define DBG_OUT(A)
@@ -46,7 +47,7 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "1.57",
+                           "1.58",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -607,46 +608,70 @@ public:
         unsigned char channels = 0;
         unsigned long samplerate = 0;
 
-        faacDecConfigurationPtr config;
-
         m_reader = r;
-
-        hDecoder = faacDecOpen();
-        if (!hDecoder)
-        {
-            console::error("Failed to open FAAD2 library.");
-            return 0;
-        }
-
-        config = faacDecGetCurrentConfiguration(hDecoder);
-        config->outputFormat = FAAD_FMT_DOUBLE;
-        faacDecSetConfiguration(hDecoder, config);
-
-        m_at_eof = 0;
+        tagsize = (int)id3v2_calc_size(m_reader);
+        if (tagsize<0) return 0;
 
         if (!(m_aac_buffer = (unsigned char*)malloc(768*6)))
         {
             console::error("Memory allocation error.");
             return 0;
         }
-        memset(m_aac_buffer, 0, 768*6);
 
-        bread = m_reader->read(m_aac_buffer, 768*6);
-        m_aac_bytes_into_buffer = bread;
-        m_aac_bytes_consumed = 0;
-        m_file_offset = 0;
-
-        if (bread != 768*6)
-            m_at_eof = 1;
-
-        if (!memcmp(m_aac_buffer, "ID3", 3))
+        for (int init=0; init<2; init++)
         {
-            /* high bit is not used */
-            tagsize = (m_aac_buffer[6] << 21) | (m_aac_buffer[7] << 14) |
-                (m_aac_buffer[8] <<  7) | (m_aac_buffer[9] <<  0);
+            faacDecConfigurationPtr config;
 
-            tagsize += 10;
-            advance_buffer(tagsize);
+            hDecoder = faacDecOpen();
+            if (!hDecoder)
+            {
+                console::error("Failed to open FAAD2 library.");
+                return 0;
+            }
+
+            config = faacDecGetCurrentConfiguration(hDecoder);
+            config->outputFormat = FAAD_FMT_DOUBLE;
+            faacDecSetConfiguration(hDecoder, config);
+
+            memset(m_aac_buffer, 0, 768*6);
+            bread = m_reader->read(m_aac_buffer, 768*6);
+            m_aac_bytes_into_buffer = bread;
+            m_aac_bytes_consumed = 0;
+            m_file_offset = 0;
+            m_at_eof = (bread != 768*6) ? 1 : 0;
+
+            if (init==0)
+            {
+                faacDecFrameInfo frameInfo;
+
+                fill_buffer();
+                if ((m_aac_bytes_consumed = faacDecInit(hDecoder,
+                    m_aac_buffer, m_aac_bytes_into_buffer,
+                    &samplerate, &channels)) < 0)
+                {
+                    console::error("Can't initialize decoder library.");
+                    return 0;
+                }
+                advance_buffer(m_aac_bytes_consumed);
+
+                do {
+                    memset(&frameInfo, 0, sizeof(faacDecFrameInfo));
+                    fill_buffer();
+                    faacDecDecode(hDecoder, &frameInfo, m_aac_buffer, m_aac_bytes_into_buffer);
+
+                    m_samplerate = frameInfo.samplerate;
+                    m_framesize = (frameInfo.channels != 0) ? frameInfo.samples/frameInfo.channels : 0;
+                } while (!frameInfo.samples && !frameInfo.error);
+
+                if (frameInfo.error)
+                {
+                    console::error(faacDecGetErrorMessage(frameInfo.error));
+                    return 0;
+                }
+
+                faacDecClose(hDecoder);
+                m_reader->seek(tagsize);
+            }
         }
 
         m_head = (struct seek_list*)malloc(sizeof(struct seek_list));
@@ -706,25 +731,14 @@ public:
         }
         advance_buffer(m_aac_bytes_consumed);
 
-        m_samplerate = samplerate;
-        m_framesize = 1024;
         m_length = length;
 
         if (flags & OPEN_FLAG_GET_INFO) {
-            // decode first frame to get accurate info
-            faacDecFrameInfo frameInfo;
-            memset(&frameInfo, 0, sizeof(faacDecFrameInfo));
-            fill_buffer();
-            faacDecDecode(hDecoder, &frameInfo, m_aac_buffer, m_aac_bytes_into_buffer);
-
-            m_samplerate = frameInfo.samplerate;
-            m_framesize = (frameInfo.channels != 0) ? frameInfo.samples/frameInfo.channels : 0;
-
             info->info_set_int("bitrate", bitrate);
             info->info_set_int("channels", (__int64)channels);
             info->info_set_int("samplerate", (__int64)m_samplerate);
 
-            if (m_samplerate != samplerate)
+            if (m_framesize > 1024) //if (m_samplerate != samplerate)
                 info->info_set("codec", "AAC+SBR");
             else
                 info->info_set("codec", "AAC");
@@ -734,15 +748,6 @@ public:
                 info->info_set("stream type", "ADTS");
             else if (m_header_type == 2)
                 info->info_set("stream type", "ADIF");
-
-            if (flags & OPEN_FLAG_DECODE) {
-                if (hDecoder)
-                    faacDecClose(hDecoder);
-                if (m_aac_buffer)
-                    free(m_aac_buffer);
-                r->seek(0);
-                return open(r, info, flags & (~OPEN_FLAG_GET_INFO));
-            }
         }
 
         tag_reader::g_run_multi(m_reader, info, "ape|id3v2|lyrics3|id3v1");
