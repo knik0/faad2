@@ -40,8 +40,8 @@ RSC=rc.exe
 # PROP Output_Dir "Release"
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
-MTL=midl.exe
 F90=df.exe
+MTL=midl.exe
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
 # ADD CPP /nologo /MD /W3 /GX /O1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
 # ADD BASE RSC /l 0x413 /d "NDEBUG"
@@ -65,8 +65,8 @@ LIB32=link.exe -lib
 # PROP Output_Dir "Debug"
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
-MTL=midl.exe
 F90=df.exe
+MTL=midl.exe
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /GZ /c
 # ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /GZ /c
 # ADD BASE RSC /l 0x413 /d "_DEBUG"
@@ -89,63 +89,7 @@ LIB32=link.exe -lib
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=.\atom.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\ctts.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\dinf.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\dref.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\edts.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\elst.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\esds.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\hdlr.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\iods.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\matrix.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\mdat.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\mdhd.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\mdia.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\minf.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\moov.c
+SOURCE=.\mp4atom.c
 # End Source File
 # Begin Source File
 
@@ -153,63 +97,11 @@ SOURCE=.\mp4ff.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\mvhd.c
+SOURCE=.\mp4sample.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\smhd.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\stbl.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\stco.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\stsc.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\stsd.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\stsdtable.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\stss.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\stsz.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\stts.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\tkhd.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\trak.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\udta.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\util.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\vmhd.c
+SOURCE=.\mp4util.c
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -217,15 +109,7 @@ SOURCE=.\vmhd.c
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\funcprotos.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\mp4ff.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\private.h
 # End Source File
 # End Group
 # End Target
