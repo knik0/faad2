@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: huffman.c,v 1.13 2004/01/14 20:32:30 menno Exp $
+** $Id: huffman.c,v 1.14 2004/01/14 20:39:59 menno Exp $
 **/
 
 #include "common.h"
@@ -168,7 +168,7 @@ static uint8_t huffman_2step_quad(uint8_t cb, bitfile *ld, int16_t *sp)
     {
         /* we know for sure it's more than hcbN[cb] bits long */
         faad_flushbits(ld, hcbN[cb]);
-#if 0
+#if 1
         offset += (uint16_t)faad_showbits(ld, extra_bits);
         faad_flushbits(ld, hcb_2_quad_table[cb][offset].bits - hcbN[cb]);
 #else
@@ -215,7 +215,7 @@ static uint8_t huffman_2step_pair(uint8_t cb, bitfile *ld, int16_t *sp)
     {
         /* we know for sure it's more than hcbN[cb] bits long */
         faad_flushbits(ld, hcbN[cb]);
-#if 0
+#if 1
         offset += (uint16_t)faad_showbits(ld, extra_bits);
         faad_flushbits(ld, hcb_2_pair_table[cb][offset].bits - hcbN[cb]);
 #else
