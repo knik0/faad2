@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.35 2003/06/25 15:03:24 menno Exp $
+** $Id: main.c,v 1.36 2003/07/07 09:48:31 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -46,7 +46,7 @@
 typedef struct {
     long bytes_into_buffer;
     long bytes_consumed;
-    __int64 file_offset;
+    long file_offset;
     unsigned char *buffer;
     int at_eof;
     FILE *infile;

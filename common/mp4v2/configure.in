@@ -11,6 +11,8 @@ AM_CONFIG_HEADER(config.h)
 
 AC_CHECK_HEADERS(stdint.h)
 AC_CHECK_HEADERS(inttypes.h)
+AC_CHECK_HEADERS(sys/time.h)
+AC_HEADER_TIME
 
 AC_CHECK_FUNCS(strsep)
 AC_DEFUN(MY_CHECK_TYPEDEF_FROM_INCLUDE,
@@ -36,6 +38,6 @@ MY_CHECK_TYPEDEF_FROM_INCLUDE([socklen_t temp],
 MY_CHECK_TYPEDEF_FROM_INCLUDE([fpos_t foo; foo.__pos = 0;],
         [#include <stdio.h>],
         [HAVE_FPOS_T_POS])
-	
+    
 
 AC_OUTPUT(Makefile)

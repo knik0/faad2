@@ -1,7 +1,7 @@
 lib_LTLIBRARIES = libfaad.la
 include_HEADERS = ../include/faad.h
 
-libfaad_la_SOURCES = bits.c cfft.c data.c decoder.c dither.c drc.c \
+libfaad_la_SOURCES = bits.c cfft.c decoder.c dither.c drc.c \
 error.c filtbank.c \
 ic_predict.c is.c lt_predict.c mdct.c mp4.c ms.c output.c pns.c \
 pulse.c specrec.c syntax.c tns.c hcr.c \
