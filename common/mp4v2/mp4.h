@@ -133,11 +133,13 @@ typedef u_int32_t	MP4EditId;
 #define MP4_MPEG2_AAC_AUDIO_TYPE		MP4_MPEG2_AAC_MAIN_AUDIO_TYPE
 #define MP4_MPEG4_AUDIO_TYPE			0x40
 #define MP4_PRIVATE_AUDIO_TYPE			0xC0
-#define MP4_PCM16_AUDIO_TYPE			0xE0	/* a private definition */
+#define MP4_PCM16_LITTLE_ENDIAN_AUDIO_TYPE	0xE0	/* a private definition */
 #define MP4_VORBIS_AUDIO_TYPE			0xE1	/* a private definition */
 #define MP4_AC3_AUDIO_TYPE				0xE2	/* a private definition */
 #define MP4_ALAW_AUDIO_TYPE				0xE3	/* a private definition */
 #define MP4_ULAW_AUDIO_TYPE				0xE4	/* a private definition */
+#define MP4_G723_AUDIO_TYPE                             0xE5    /* a private definition */
+#define MP4_PCM16_BIG_ENDIAN_AUDIO_TYPE         0xE6 /* a private definition */
 
 /* MP4 MPEG-4 Audio types from 14496-3 Table 1.5.1 */
 #define MP4_MPEG4_INVALID_AUDIO_TYPE		0
@@ -605,14 +607,18 @@ bool MP4GetHintTrackRtpPayload(
 	MP4TrackId hintTrackId,
 	char** ppPayloadName DEFAULT(NULL),
 	u_int8_t* pPayloadNumber DEFAULT(NULL),
-	u_int16_t* pMaxPayloadSize DEFAULT(NULL));
+	u_int16_t* pMaxPayloadSize DEFAULT(NULL),
+	char **ppEncodingParams DEFAULT(NULL));
+
+#define MP4_SET_DYNAMIC_PAYLOAD 0xff
 
 bool MP4SetHintTrackRtpPayload(
 	MP4FileHandle hFile,
 	MP4TrackId hintTrackId,
 	const char* pPayloadName,
 	u_int8_t* pPayloadNumber,
-	u_int16_t maxPayloadSize DEFAULT(0));
+	u_int16_t maxPayloadSize DEFAULT(0),
+	const char *encode_params DEFAULT(NULL));
 
 const char* MP4GetSessionSdp(
 	MP4FileHandle hFile);

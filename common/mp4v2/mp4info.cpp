@@ -49,10 +49,12 @@ static char* PrintAudioInfo(
 		MP4_MPEG2_AAC_SSR_AUDIO_TYPE,	// 0x68
 		MP4_MPEG2_AUDIO_TYPE,			// 0x69
 		MP4_MPEG1_AUDIO_TYPE,			// 0x6B
-		MP4_PCM16_AUDIO_TYPE,
+		MP4_PCM16_LITTLE_ENDIAN_AUDIO_TYPE,
 		MP4_VORBIS_AUDIO_TYPE,
 		MP4_ALAW_AUDIO_TYPE,
 		MP4_ULAW_AUDIO_TYPE,
+		MP4_G723_AUDIO_TYPE,
+		MP4_PCM16_BIG_ENDIAN_AUDIO_TYPE,
 	};
 	static const char* mpegAudioNames[] = {
 		"MPEG-2 AAC Main",
@@ -60,10 +62,12 @@ static char* PrintAudioInfo(
 		"MPEG-2 AAC SSR",
 		"MPEG-2 (MP3)",
 		"MPEG-1 (MP3)",
-		"PCM16",
+		"PCM16 (little endian)",
 		"OGG VORBIS",
 		"G.711 aLaw",
 		"G.711 uLaw",
+		"G.723.1",
+		"PCM16 (big endian)",
 	};
 	static u_int8_t numMpegAudioTypes = 
 		sizeof(mpegAudioTypes) / sizeof(u_int8_t);

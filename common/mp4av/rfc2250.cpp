@@ -65,7 +65,8 @@ extern "C" bool MP4AV_Rfc2250Hinter(
 		return false;
 	}
 
-	u_int8_t payloadNumber = 0; // use dynamic payload number
+	u_int8_t payloadNumber = MP4_SET_DYNAMIC_PAYLOAD; 
+	// use dynamic payload number
 
 	if (MP4GetTrackTimeScale(mp4File, mediaTrackId) == 90000) {
 	  payloadNumber = 14;

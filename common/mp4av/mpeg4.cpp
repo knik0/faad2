@@ -128,7 +128,7 @@ extern "C" bool MP4AV_Mpeg4ParseVol(
 
 		vol.SkipBits(1);				// random accessible vol
 		vol.SkipBits(8);				// object type id
-		u_int8_t verid = 0;
+		u_int8_t verid = 1;
 		if (vol.GetBits(1)) {			// is object layer id
 			verid = vol.GetBits(4);			// object layer verid
 			vol.SkipBits(3);				// object layer priority

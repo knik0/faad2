@@ -276,13 +276,15 @@ public: /* equivalent to MP4 library API */
 		MP4TrackId hintTrackId,
 		char** ppPayloadName = NULL,
 		u_int8_t* pPayloadNumber = NULL,
-		u_int16_t* pMaxPayloadSize = NULL);
+		u_int16_t* pMaxPayloadSize = NULL,
+		char **ppEncodingParams = NULL);
 
 	void SetHintTrackRtpPayload(
 		MP4TrackId hintTrackId,
 		const char* payloadName,
 		u_int8_t* pPayloadNumber,
-		u_int16_t maxPayloadSize);
+		u_int16_t maxPayloadSize,
+		const char *encoding_params);
 
 	MP4TrackId GetHintTrackReferenceTrackId(
 		MP4TrackId hintTrackId);

@@ -1261,10 +1261,10 @@ u_int32_t MP4File::GetNumberOfTracks(const char* type, u_int8_t subType)
 		return m_pTracks.Size();
 	} 
 
-	u_int16_t typeSeen = 0;
+	u_int32_t typeSeen = 0;
 	const char* normType = MP4Track::NormalizeTrackType(type);
 
-	for (u_int16_t i = 0; i < m_pTracks.Size(); i++) {
+	for (u_int32_t i = 0; i < m_pTracks.Size(); i++) {
 		if (!strcmp(normType, m_pTracks[i]->GetType())) {
 			if (subType) {
 				if (normType == MP4_AUDIO_TRACK_TYPE) {
@@ -1317,7 +1317,7 @@ MP4TrackId MP4File::AllocTrackId()
 	}
 
 	// extreme case where mp4 file has 2^16 tracks in it
-	throw new MP4Error("too many exising tracks", "AddTrack");
+	throw new MP4Error("too many existing tracks", "AddTrack");
 	return MP4_INVALID_TRACK_ID;		// to keep MSVC happy
 }
 
@@ -1328,10 +1328,10 @@ MP4TrackId MP4File::FindTrackId(
 		return m_pTracks[trackIndex]->GetId();
 	} 
 
-	u_int16_t typeSeen = 0;
+	u_int32_t typeSeen = 0;
 	const char* normType = MP4Track::NormalizeTrackType(type);
 
-	for (u_int16_t i = 0; i < m_pTracks.Size(); i++) {
+	for (u_int32_t i = 0; i < m_pTracks.Size(); i++) {
 		if (!strcmp(normType, m_pTracks[i]->GetType())) {
 			if (subType) {
 				if (normType == MP4_AUDIO_TRACK_TYPE) {
@@ -1362,9 +1362,9 @@ MP4TrackId MP4File::FindTrackId(
 
 u_int16_t MP4File::FindTrackIndex(MP4TrackId trackId)
 {
-	for (u_int16_t i = 0; i < m_pTracks.Size(); i++) {
+	for (u_int32_t i = 0; i < m_pTracks.Size() && i <= 0xFFFF; i++) {
 		if (m_pTracks[i]->GetId() == trackId) {
-			return i;
+			return (u_int16_t)i;
 		}
 	}
 	
@@ -1818,7 +1818,8 @@ void MP4File::GetHintTrackRtpPayload(
 	MP4TrackId hintTrackId,
 	char** ppPayloadName,
 	u_int8_t* pPayloadNumber,
-	u_int16_t* pMaxPayloadSize)
+	u_int16_t* pMaxPayloadSize,
+	char **ppEncodingParams)
 {
 	MP4Track* pTrack = m_pTracks[FindTrackIndex(hintTrackId)];
 
@@ -1828,11 +1829,12 @@ void MP4File::GetHintTrackRtpPayload(
 	}
 
 	((MP4RtpHintTrack*)pTrack)->GetPayload(
-		ppPayloadName, pPayloadNumber, pMaxPayloadSize);
+		ppPayloadName, pPayloadNumber, pMaxPayloadSize, ppEncodingParams);
 }
 
 void MP4File::SetHintTrackRtpPayload(MP4TrackId hintTrackId,
-	const char* payloadName, u_int8_t* pPayloadNumber, u_int16_t maxPayloadSize)
+	const char* payloadName, u_int8_t* pPayloadNumber, u_int16_t maxPayloadSize,
+				     const char *encoding_params)
 {
 	MP4Track* pTrack = m_pTracks[FindTrackIndex(hintTrackId)];
 
@@ -1842,7 +1844,7 @@ void MP4File::SetHintTrackRtpPayload(MP4TrackId hintTrackId,
 	}
 
 	u_int8_t payloadNumber;
-	if (pPayloadNumber && *pPayloadNumber != 0) {
+	if (pPayloadNumber && *pPayloadNumber != MP4_SET_DYNAMIC_PAYLOAD) {
 		payloadNumber = *pPayloadNumber;
 	} else {
 		payloadNumber = AllocRtpPayloadNumber();
@@ -1852,7 +1854,7 @@ void MP4File::SetHintTrackRtpPayload(MP4TrackId hintTrackId,
 	}
 
 	((MP4RtpHintTrack*)pTrack)->SetPayload(
-		payloadName, payloadNumber, maxPayloadSize);
+		payloadName, payloadNumber, maxPayloadSize, encoding_params);
 }
 
 u_int8_t MP4File::AllocRtpPayloadNumber()

@@ -252,12 +252,14 @@ public:
 	void GetPayload(
 		char** ppPayloadName = NULL,
 		u_int8_t* pPayloadNumber = NULL,
-		u_int16_t* pMaxPayloadSize = NULL);
+		u_int16_t* pMaxPayloadSize = NULL,
+		char **ppEncodingParams = NULL);
 
 	void SetPayload(
 		const char* payloadName,
 		u_int8_t payloadNumber,
-		u_int16_t maxPayloadSize);
+		u_int16_t maxPayloadSize,
+		const char *encoding_parms);
 
 	void ReadHint(
 		MP4SampleId hintSampleId,

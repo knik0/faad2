@@ -251,7 +251,7 @@ extern "C" bool MP4AV_RfcIsmaHinter(
 		return false;
 	}
 
-	u_int8_t payloadNumber = 0;
+	u_int8_t payloadNumber = MP4_SET_DYNAMIC_PAYLOAD;
 	char buffer[10];
 	if (channels != 1) {
 	  snprintf(buffer, sizeof(buffer), "%u", channels);

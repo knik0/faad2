@@ -687,6 +687,7 @@ extern "C" MP4TrackId MP4CloneTrack(
 		// but caller can adjust later to fit their desires
 
 		char* payloadName = NULL;
+		char *encodingParms = NULL;
 		u_int8_t payloadNumber;
 		u_int16_t maxPayloadSize;
 
@@ -695,14 +696,16 @@ extern "C" MP4TrackId MP4CloneTrack(
 			srcTrackId,
 			&payloadName,
 			&payloadNumber,
-			&maxPayloadSize);
+			&maxPayloadSize,
+			&encodingParms);
 
 		MP4SetHintTrackRtpPayload(
 			dstFile,
 			dstTrackId,
 			payloadName,
 			&payloadNumber,
-			maxPayloadSize);
+			maxPayloadSize,
+			encodingParms);
 
 		MP4SetHintTrackSdp(
 			dstFile,
@@ -1667,12 +1670,14 @@ extern "C" bool MP4GetHintTrackRtpPayload(
 	MP4TrackId hintTrackId,
 	char** ppPayloadName,
 	u_int8_t* pPayloadNumber,
-	u_int16_t* pMaxPayloadSize)
+	u_int16_t* pMaxPayloadSize,
+	char **ppEncodingParams)
 {
 	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
 		try {
 			((MP4File*)hFile)->GetHintTrackRtpPayload(
-				hintTrackId, ppPayloadName, pPayloadNumber, pMaxPayloadSize);
+				hintTrackId, ppPayloadName, pPayloadNumber, pMaxPayloadSize,
+				ppEncodingParams);
 			return true;
 		}
 		catch (MP4Error* e) {
@@ -1688,12 +1693,13 @@ extern "C" bool MP4SetHintTrackRtpPayload(
 	MP4TrackId hintTrackId,
 	const char* pPayloadName,
 	u_int8_t* pPayloadNumber,
-	u_int16_t maxPayloadSize)
+	u_int16_t maxPayloadSize,
+	const char *encode_params)
 {
 	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
 		try {
 			((MP4File*)hFile)->SetHintTrackRtpPayload(
-				hintTrackId, pPayloadName, pPayloadNumber, maxPayloadSize);
+				hintTrackId, pPayloadName, pPayloadNumber, maxPayloadSize, encode_params);
 			return true;
 		}
 		catch (MP4Error* e) {

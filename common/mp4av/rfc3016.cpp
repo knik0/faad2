@@ -46,7 +46,7 @@ extern "C" bool MP4AV_Rfc3016Hinter(
 		return false;
 	}
 
-	u_int8_t payloadNumber = 0;
+	u_int8_t payloadNumber = MP4_SET_DYNAMIC_PAYLOAD;
 
 	MP4SetHintTrackRtpPayload(mp4File, hintTrackId, 
 		"MP4V-ES", &payloadNumber, 0);

@@ -64,6 +64,7 @@ void MP4File::SetPosition(u_int64_t pos, FILE* pFile)
 		}
 	} else {
 		if (pos >= m_memoryBufferSize) {
+		  //		  abort();
 			throw new MP4Error("position out of range", "MP4SetPosition");
 		}
 		m_memoryBufferPosition = pos;
@@ -139,7 +140,7 @@ void MP4File::EnableMemoryBuffer(u_int8_t* pBytes, u_int64_t numBytes)
 		if (numBytes) {	
 			m_memoryBufferSize = numBytes;
 		} else {
-			m_memoryBufferSize = 1024;
+			m_memoryBufferSize = 4096;
 		}
 		m_memoryBuffer = (u_int8_t*)MP4Malloc(m_memoryBufferSize);
 	}

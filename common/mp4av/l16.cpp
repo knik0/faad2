@@ -91,7 +91,7 @@ extern "C" bool L16Hinter (MP4FileHandle mp4file,
     return false;
   }
 
-  payload = 0;
+  payload = MP4_SET_DYNAMIC_PAYLOAD;
   if (MP4GetTrackTimeScale(mp4file, trackid) == 44100) {
     if (chans == 1) payload = 11;
     else if (chans == 2) payload = 10;

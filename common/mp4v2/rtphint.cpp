@@ -310,11 +310,16 @@ void MP4RtpHintTrack::InitPayload()
 void MP4RtpHintTrack::GetPayload(
 	char** ppPayloadName,
 	u_int8_t* pPayloadNumber,
-	u_int16_t* pMaxPayloadSize)
+	u_int16_t* pMaxPayloadSize,
+	char **ppEncodingParams)
 {
 	InitPayload();
 
-	if (ppPayloadName) {
+	if (ppPayloadName || ppEncodingParams) {
+	  if (ppPayloadName) 
+	    *ppPayloadName = NULL;
+	  if (ppEncodingParams)
+	    *ppEncodingParams = NULL;
 		if (m_pRtpMapProperty) {
 			const char* pRtpMap = m_pRtpMapProperty->GetValue();
 			char* pSlash = strchr(pRtpMap, '/');
@@ -326,11 +331,22 @@ void MP4RtpHintTrack::GetPayload(
 				length = strlen(pRtpMap);
 			}
 
-			*ppPayloadName = (char*)MP4Calloc(length + 1);
-			strncpy(*ppPayloadName, pRtpMap, length); 
-		} else {
-			*ppPayloadName = NULL;
-		}
+			if (ppPayloadName) {
+			  *ppPayloadName = (char*)MP4Calloc(length + 1);
+			  strncpy(*ppPayloadName, pRtpMap, length); 
+			}
+			if (pSlash && ppEncodingParams) {
+			  pSlash = strchr(pSlash, '/');
+			  if (pSlash != NULL) {
+			    pSlash++;
+			    if (pSlash != '\0') {
+			      length = strlen(pRtpMap) - (pSlash - pRtpMap);
+			      *ppEncodingParams = (char *)MP4Calloc(length + 1);
+			      strncpy(*ppEncodingParams, pSlash, length);
+			    }
+			  }
+			}
+		} 
 	}
 
 	if (pPayloadNumber) {
@@ -353,7 +369,8 @@ void MP4RtpHintTrack::GetPayload(
 void MP4RtpHintTrack::SetPayload(
 	const char* payloadName,
 	u_int8_t payloadNumber,
-	u_int16_t maxPayloadSize)
+	u_int16_t maxPayloadSize, 
+	const char *encoding_parms)
 {
 	InitRefTrack();
 	InitPayload();
@@ -361,9 +378,23 @@ void MP4RtpHintTrack::SetPayload(
 	ASSERT(m_pRtpMapProperty);
 	ASSERT(m_pPayloadNumberProperty);
 	ASSERT(m_pMaxPacketSizeProperty);
+	
+	size_t len = strlen(payloadName) + 16;
+	if (encoding_parms != NULL) {
+	  size_t temp = strlen(encoding_parms);
+	  if (temp == 0) {
+	    encoding_parms = NULL;
+	  } else {
+	    len += temp;
+	  }
+	}
 
-	char* rtpMapBuf = (char*)MP4Malloc(strlen(payloadName) + 16);
-	sprintf(rtpMapBuf, "%s/%u", payloadName, GetTimeScale());
+	char* rtpMapBuf = (char*)MP4Malloc(len);
+	sprintf(rtpMapBuf, "%s/%u%c%s", 
+		payloadName, 
+		GetTimeScale(),
+		encoding_parms != NULL ? '/' : '\0',
+		encoding_parms == NULL ? "" : encoding_parms);
 	m_pRtpMapProperty->SetValue(rtpMapBuf);
 	
 	m_pPayloadNumberProperty->SetValue(payloadNumber);
