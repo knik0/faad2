@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.c,v 1.30 2004/03/10 19:45:41 menno Exp $
+** $Id: sbr_dec.c,v 1.31 2004/03/12 13:31:25 menno Exp $
 **/
 
 
@@ -480,7 +480,7 @@ uint8_t sbrDecodeSingleFramePS(sbr_info *sbr, real_t *left_channel, real_t *righ
     }
 
     /* perform parametric stereo */
-#ifdef DRM
+#ifdef DRM_PS
     if (sbr->Is_DRM_SBR)
     {
         drm_ps_decode(sbr->drm_ps, sbr->sample_rate, X_left, X_right);
@@ -489,7 +489,7 @@ uint8_t sbrDecodeSingleFramePS(sbr_info *sbr, real_t *left_channel, real_t *righ
 #ifdef PS_DEC
         ps_decode(sbr->ps, X_left, X_right);
 #endif
-#ifdef DRM
+#ifdef DRM_PS
     }
 #endif
 
