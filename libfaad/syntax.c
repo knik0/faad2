@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.29 2002/09/27 08:37:22 menno Exp $
+** $Id: syntax.c,v 1.30 2002/10/26 11:43:12 menno Exp $
 **/
 
 /*
@@ -38,9 +38,6 @@
 #include "data.h"
 #include "pulse.h"
 #include "analysis.h"
-#ifdef SBR
-#include "sbr_syntax.h"
-#endif
 #ifdef ERROR_RESILIENCE
 #include "rvlc_scale_factors.h"
 #endif
@@ -760,17 +757,9 @@ static uint16_t data_stream_element(bitfile *ld)
 }
 
 /* Table 4.4.11 */
-static uint8_t fill_element(bitfile *ld, drc_info *drc
-#ifdef SBR
-                     ,uint8_t next_ele_id
-#endif
-                     )
+static uint8_t fill_element(bitfile *ld, drc_info *drc)
 {
     uint16_t count;
-#ifdef SBR
-    uint8_t bs_extension_type;
-    uint32_t btot;
-#endif
 
     count = (uint16_t)faad_getbits(ld, 4
         DEBUGVAR(1,65,"fill_element(): count"));
@@ -780,43 +769,10 @@ static uint8_t fill_element(bitfile *ld, drc_info *drc
             DEBUGVAR(1,66,"fill_element(): extra count")) - 1;
     }
 
-#ifdef SBR
-    bs_extension_type = (uint8_t)faad_showbits(ld, 4);
-
-    if (bs_extension_type == SBR_HDR || bs_extension_type == SBR_STD)
+    while (count > 0)
     {
-        uint16_t i;
-        uint16_t bytes, bits;
-
-        /* flush the extension type and the fill nibble */
-        faad_flushbits(ld, 8);
-
-        btot = faad_get_processed_bits(ld);
-
-        /* SBR bitstream reading function */
-        sbr_bitstream(next_ele_id, bs_extension_type);
-
-        btot = faad_get_processed_bits(ld) - btot;
-
-        /* there might still be some fill bits left to read */
-        bits = (8*(count-1) - btot) % 8;
-        bytes = ((8*(count-1) - btot) - bits) / 8;
-
-        if (bits > 0)
-            faad_flushbits(ld, bits);
-        for (i = 0; i < bytes; i++)
-        {
-            faad_flushbits(ld, 8);
-        }
-    } else {
-#endif
-        while (count > 0)
-        {
-            count -= extension_payload(ld, drc, count);
-        }
-#ifdef SBR
+        count -= extension_payload(ld, drc, count);
     }
-#endif
 
     return 0;
 }

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.c,v 1.12 2002/09/29 10:34:00 menno Exp $
+** $Id: bits.c,v 1.13 2002/10/26 11:43:11 menno Exp $
 **/
 
 #include "common.h"
@@ -88,9 +88,7 @@ uint8_t *faad_getbitbuffer(bitfile *ld, uint32_t bits
     return buffer;
 }
 
-/* reversed bit reading routines, used for
-   RVLC, HCR and SBR in DRM
-*/
+/* reversed bit reading routines, used for RVLC and HCR */
 void faad_initbits_rev(bitfile *ld, void *buffer,
                        uint32_t bits_in_buffer)
 {

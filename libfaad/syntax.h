@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.21 2002/10/02 18:49:55 menno Exp $
+** $Id: syntax.h,v 1.22 2002/10/26 11:43:12 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -316,11 +316,7 @@ static uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_dat
                                     );
 static uint16_t data_stream_element(bitfile *ld);
 static uint8_t program_config_element(program_config *pce, bitfile *ld);
-static uint8_t fill_element(bitfile *ld, drc_info *drc
-#ifdef SBR
-                            ,uint8_t next_ele_id
-#endif
-                            );
+static uint8_t fill_element(bitfile *ld, drc_info *drc);
 static uint8_t individual_channel_stream(element *ele, bitfile *ld,
                                      ic_stream *ics, uint8_t scal_flag,
                                      int16_t *spec_data, uint8_t sf_index,

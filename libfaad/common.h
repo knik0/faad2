@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.24 2002/10/01 21:55:49 menno Exp $
+** $Id: common.h,v 1.25 2002/10/26 11:43:12 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -52,7 +52,6 @@ extern "C" {
 /* use fixed point reals */
 //#define FIXED_POINT
 
-//#define SBR
 #define ERROR_RESILIENCE
 
 
