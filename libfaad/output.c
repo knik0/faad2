@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: output.c,v 1.25 2003/11/04 21:43:30 menno Exp $
+** $Id: output.c,v 1.26 2003/11/06 14:08:58 menno Exp $
 **/
 
 #include "common.h"
@@ -33,14 +33,6 @@
 
 #ifndef FIXED_POINT
 
-
-
-#define ftol(A,B) {tmp = *(int32_t*) & A - 0x4B7F8000; \
-                   B = (int16_t)((tmp==(int16_t)tmp) ? tmp : (tmp>>31)^0x7FFF);}
-
-#define ROUND(x) ((x >= 0) ? (int32_t)floor((x) + 0.5) : (int32_t)ceil((x) + 0.5))
-
-#define ROUND32(x) ROUND(x)
 
 #define FLOAT_SCALE (1.0f/(1<<15))
 
@@ -87,37 +79,66 @@ void* output_to_PCM(faacDecHandle hDecoder,
         case FAAD_FMT_16BIT:
             for(i = 0; i < frame_len; i++)
             {
-                int32_t tmp;
-                real_t ftemp;
-                //real_t inp = input[internal_channel][i];
                 real_t inp = get_sample(input, ch, i, hDecoder->downMatrix, hDecoder->internal_channel);
-
-                ftemp = inp + 0xff8000;
-                ftol(ftemp, short_sample_buffer[(i*channels)+ch]);
+                if (inp >= 0.0f)
+                {
+                    inp += 0.5f;
+                    if (inp >= 32768.0f)
+                    {
+                        inp = 32767.0f;
+                    }
+                } else {
+                    inp += -0.5f;
+                    if (inp <= -32769.0f)
+                    {
+                        inp = -32768.0f;
+                    }
+                }
+                short_sample_buffer[(i*channels)+ch] = (int16_t)inp;
             }
             break;
         case FAAD_FMT_24BIT:
             for(i = 0; i < frame_len; i++)
             {
-                //real_t inp = input[internal_channel][i];
                 real_t inp = get_sample(input, ch, i, hDecoder->downMatrix, hDecoder->internal_channel);
-                if (inp > (1<<15)-1)
-                    inp = (1<<15)-1;
-                else if (inp < -(1<<15))
-                    inp = -(1<<15);
-                int_sample_buffer[(i*channels)+ch] = ROUND(inp*(1<<8));
+                inp *= 256.0f;
+                if (inp >= 0.0f)
+                {
+                    inp += 0.5f;
+                    if (inp >= 8388608.0f)
+                    {
+                        inp = 8388607.0f;
+                    }
+                } else {
+                    inp += -0.5f;
+                    if (inp <= -8388609.0f)
+                    {
+                        inp = -8388608.0f;
+                    }
+                }
+                int_sample_buffer[(i*channels)+ch] = (int32_t)inp;
             }
             break;
         case FAAD_FMT_32BIT:
             for(i = 0; i < frame_len; i++)
             {
-                //real_t inp = input[internal_channel][i];
                 real_t inp = get_sample(input, ch, i, hDecoder->downMatrix, hDecoder->internal_channel);
-                if (inp > (1<<15)-1)
-                    inp = (1<<15)-1;
-                else if (inp < -(1<<15))
-                    inp = -(1<<15);
-                int_sample_buffer[(i*channels)+ch] = ROUND32(inp*(1<<16));
+                inp *= 65536.0f;
+                if (inp >= 0.0f)
+                {
+                    inp += 0.5f;
+                    if (inp >= 2147483648.0f)
+                    {
+                        inp = 2147483647.0f;
+                    }
+                } else {
+                    inp += -0.5f;
+                    if (inp <= -2147483649.0f)
+                    {
+                        inp = -2147483648.0f;
+                    }
+                }
+                int_sample_buffer[(i*channels)+ch] = (int32_t)inp;
             }
             break;
         case FAAD_FMT_FLOAT:

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mdct.c,v 1.32 2003/11/04 21:43:30 menno Exp $
+** $Id: mdct.c,v 1.33 2003/11/06 14:08:58 menno Exp $
 **/
 
 /*
@@ -61,33 +61,7 @@
     3: cos(2 * PI * (1/8) / N)
     4: sin(2 * PI * (1/8) / N)
  */
-#ifndef FIXED_POINT
-#ifdef _MSC_VER
-#pragma warning(disable:4305)
-#pragma warning(disable:4244)
-#endif
-real_t const_tab[][5] =
-{
-    { COEF_CONST(0.0312500000), COEF_CONST(0.9999952938), COEF_CONST(0.0030679568),
-        COEF_CONST(0.9999999265), COEF_CONST(0.0003834952) }, /* 2048 */
-    { COEF_CONST(0.0322748612), COEF_CONST(0.9999946356), COEF_CONST(0.0032724866),
-        COEF_CONST(0.9999999404), COEF_CONST(0.0004090615) }, /* 1920 */
-    { COEF_CONST(0.0441941738), COEF_CONST(0.9999811649), COEF_CONST(0.0061358847),
-        COEF_CONST(0.9999997020), COEF_CONST(0.0007669903) }, /* 1024 */
-    { COEF_CONST(0.0456435465), COEF_CONST(0.9999786019), COEF_CONST(0.0065449383),
-        COEF_CONST(0.9999996424), COEF_CONST(0.0008181230) }, /* 960 */
-    { COEF_CONST(0.0883883476), COEF_CONST(0.9996988177), COEF_CONST(0.0245412290),
-        COEF_CONST(0.9999952912), COEF_CONST(0.0030679568) }, /* 256 */
-    { COEF_CONST(0.0912870929), COEF_CONST(0.9996573329), COEF_CONST(0.0261769500),
-        COEF_CONST(0.9999946356), COEF_CONST(0.0032724866) }  /* 240 */
-#ifdef SSR_DEC
-   ,{ COEF_CONST(0.062500000), COEF_CONST(0.999924702), COEF_CONST(0.012271538),
-        COEF_CONST(0.999998823), COEF_CONST(0.00153398) }, /* 512 */
-    { COEF_CONST(0.176776695), COEF_CONST(0.995184727), COEF_CONST(0.09801714),
-        COEF_CONST(0.999924702), COEF_CONST(0.012271538) }  /* 64 */
-#endif
-};
-#else
+#ifdef FIXED_POINT
 real_t const_tab[][5] =
 {
     { COEF_CONST(1), COEF_CONST(0.9999952938), COEF_CONST(0.0030679568),
@@ -134,8 +108,11 @@ uint8_t map_N_to_idx(uint16_t N)
 
 mdct_info *faad_mdct_init(uint16_t N)
 {
-    uint16_t k, N_idx;
+    uint16_t k;
+#ifdef FIXED_POINT
+    uint16_t N_idx;
     real_t cangle, sangle, c, s, cold;
+#endif
 	real_t scale;
 
     mdct_info *mdct = (mdct_info*)malloc(sizeof(mdct_info));
@@ -145,6 +122,7 @@ mdct_info *faad_mdct_init(uint16_t N)
     mdct->N = N;
     mdct->sincos = (complex_t*)malloc(N/4*sizeof(complex_t));
 
+#ifdef FIXED_POINT
     N_idx = map_N_to_idx(N);
 
     scale = const_tab[N_idx][0];
@@ -152,13 +130,16 @@ mdct_info *faad_mdct_init(uint16_t N)
     sangle = const_tab[N_idx][2];
     c = const_tab[N_idx][3];
     s = const_tab[N_idx][4];
+#else
+    scale = (real_t)sqrt(2.0 / (real_t)N);
+#endif
 
     /* (co)sine table build using recurrence relations */
     /* this can also be done using static table lookup or */
     /* some form of interpolation */
     for (k = 0; k < N/4; k++)
     {
-#if 1
+#ifdef FIXED_POINT
         RE(mdct->sincos[k]) = -1*MUL_C_C(c,scale);
         IM(mdct->sincos[k]) = -1*MUL_C_C(s,scale);
 
@@ -167,8 +148,8 @@ mdct_info *faad_mdct_init(uint16_t N)
         s = MUL_C_C(s,cangle) + MUL_C_C(cold,sangle);
 #else
         /* no recurrence, just sines */
-        RE(mdct->sincos[k]) = -scale*cos(2.0*M_PI*(k+1./8.) / (float)N);
-        IM(mdct->sincos[k]) = -scale*sin(2.0*M_PI*(k+1./8.) / (float)N);
+        RE(mdct->sincos[k]) = -scale*(real_t)(cos(2.0*M_PI*(k+1./8.) / (real_t)N));
+        IM(mdct->sincos[k]) = -scale*(real_t)(sin(2.0*M_PI*(k+1./8.) / (real_t)N));
 #endif
     }
 
@@ -221,6 +202,7 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
 
         RE(Z1[k]) = MUL_R_C(RE(x), RE(sincos[k])) - MUL_R_C(IM(x), IM(sincos[k]));
         IM(Z1[k]) = MUL_R_C(IM(x), RE(sincos[k])) + MUL_R_C(RE(x), IM(sincos[k]));
+#ifdef FIXED_POINT
 #if (REAL_BITS == 16)
         if (abs(RE(Z1[k])) > REAL_CONST(16383.5))
         {
@@ -237,6 +219,7 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
             IM(Z1[k]) *= 2;
         }
 #endif
+#endif
     }
 
     /* reordering */
@@ -251,19 +234,6 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
         X_out[N2 + N4 +     2*k] = -IM(Z1[         k]);
         X_out[N2 + N4 + 1 + 2*k] =  RE(Z1[N4 - 1 - k]);
     }
-
-#if 0
-    {
-        float max_fp = 0;
-        for (k = 0; k < N; k++)
-        {
-            if (fabs(X_out[k]/(float)(REAL_PRECISION)) > max_fp)
-                max_fp = fabs(X_out[k]/(float)(REAL_PRECISION));
-        }
-        if (max_fp > 32767>>1)
-            printf("m: %f\n", max_fp);
-    }
-#endif
 }
 
 #ifdef LTP_DEC

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.31 2003/11/04 21:43:30 menno Exp $
+** $Id: specrec.c,v 1.32 2003/11/06 14:08:58 menno Exp $
 **/
 
 /*
@@ -556,13 +556,13 @@ static INLINE real_t get_scale_factor_gain(uint16_t scale_factor, real_t *pow2_t
 #else
 static real_t pow2_table[] =
 {
-    COEF_CONST(0.59460355750136),
-    COEF_CONST(0.70710678118655),
-    COEF_CONST(0.84089641525371),
+    COEF_CONST(0.59460355750136053335874998528024), /* 2^-0.75 */
+    COEF_CONST(0.70710678118654752440084436210485), /* 2^-0.5 */
+    COEF_CONST(0.84089641525371454303112547623321), /* 2^-0.25 */
     COEF_CONST(1.0),
-    COEF_CONST(1.18920711500272),
-    COEF_CONST(1.41421356237310),
-    COEF_CONST(1.68179283050743)
+    COEF_CONST(1.1892071150027210667174999705605), /* 2^0.25 */
+    COEF_CONST(1.4142135623730950488016887242097), /* 2^0.5 */
+    COEF_CONST(1.6817928305074290860622509524664) /* 2^0.75 */
 };
 #endif
 

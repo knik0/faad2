@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.80 2003/11/05 09:32:04 menno Exp $
+** $Id: decoder.c,v 1.81 2003/11/06 14:08:58 menno Exp $
 **/
 
 #include "common.h"
@@ -38,6 +38,9 @@
 #include "output.h"
 #ifdef SBR_DEC
 #include "sbr_dec.h"
+#endif
+#ifdef SSR_DEC
+#include "ssr.h"
 #endif
 
 #ifdef ANALYSIS
