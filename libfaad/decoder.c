@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.46 2002/12/22 19:58:31 menno Exp $
+** $Id: decoder.c,v 1.47 2003/01/17 14:56:15 menno Exp $
 **/
 
 #include "common.h"
@@ -413,11 +413,11 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     elements = raw_data_block(hDecoder, hInfo, ld, syntax_elements,
         spec_data, spec_coef, &pce, drc);
 
-    if (hInfo->error > 0)
-        goto error;
-
     ch_ele = hDecoder->fr_ch_ele;
     channels = hDecoder->fr_channels;
+
+    if (hInfo->error > 0)
+        goto error;
 
 
     /* no more bit reading after this */

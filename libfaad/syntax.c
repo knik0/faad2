@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.37 2002/12/22 19:58:31 menno Exp $
+** $Id: syntax.c,v 1.38 2003/01/17 14:56:18 menno Exp $
 **/
 
 /*
@@ -613,7 +613,6 @@ static uint8_t channel_pair_element(faacDecHandle hDecoder, element *cpe,
 
         if ((result = faad_check_CRC( ld )) > 0)
         {
-            printf("CRC wrong!\n");
             return result;
         }
         /* error resilient spectral data decoding */
