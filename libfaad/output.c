@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: output.c,v 1.1 2002/01/14 19:15:56 menno Exp $
+** $Id: output.c,v 1.2 2002/01/25 20:15:07 menno Exp $
 **/
 
 #ifdef __ICL
@@ -30,10 +30,18 @@
 #define ftol(A,B) {tmp = *(int*) & A - 0x4B7F8000; \
                    B = (short)((tmp==(short)tmp) ? tmp : (tmp>>31)^0x7FFF);}
 #ifdef __ICL
-#define ROUND(x) ((int)floorf((x) + 0.5f))
+#define ROUND(x) ((long)floorf((x) + 0.5f))
 #else
-#define ROUND(x) ((int)floor((x) + 0.5))
+#define ROUND(x) ((long)floor((x) + 0.5))
 #endif
+
+#define HAVE_IEEE754_FLOAT
+#ifdef HAVE_IEEE754_FLOAT
+#define ROUND32(x) (floattmp = (x) + (long)0x00FD8000L, *(long*)(&floattmp) - (long)0x4B7D8000L)
+#else
+#define ROUND32(x) ROUND(x)
+#endif
+
 #define FLOAT_SCALE (1.0f/(1<<15))
 
 
@@ -74,9 +82,11 @@ void* output_to_PCM(float **input, void *sample_buffer, int channels,
     case FAAD_FMT_32BIT:
         for (ch = 0; ch < channels; ch++)
         {
+            float floattmp;
+
             for(i = 0; i < 1024; i++)
             {
-                int_sample_buffer[(i*channels)+ch] = ROUND(input[ch][i]*(1<<16));
+                int_sample_buffer[(i*channels)+ch] = ROUND32(input[ch][i]*(1<<16));
             }
         }
         break;

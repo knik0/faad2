@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: pns.c,v 1.1 2002/01/14 19:15:56 menno Exp $
+** $Id: pns.c,v 1.2 2002/01/25 20:15:07 menno Exp $
 **/
 
 #ifdef __ICL
@@ -44,11 +44,13 @@
 
 
 
-static __inline long random2(long *seed)
+static __inline long random2()
 {
-    *seed = (1664525L * *seed) + 1013904223L;  /* Numerical recipes */
+    static long state = 1;
 
-    return *seed;
+    state = (1664525L * state) + 1013904223L;  /* Numerical recipes */
+
+    return state;
 }
 
 /* The function gen_rand_vector(addr, size) generates a vector of length
@@ -56,25 +58,38 @@ static __inline long random2(long *seed)
    value. A suitable random number generator can be realized using one
    multiplication/accumulation per random value.
 */
-static __inline void gen_rand_vector(float *spec, int size, long *state)
+static __inline void gen_rand_vector(float *spec, int scale_factor, int size)
 {
     int i;
+    float scale;
 
     for (i = 0; i < size; i++)
     {
-        spec[i] = (float)random2(state);
+        spec[i] = (float)random2();
     }
+
+    /* 14496-3 says:
+       scale = 1.0f/(size * (float)sqrt(MEAN_NRG));
+    */
+#ifdef __ICL
+    scale = 1.0f/sqrtf(size * MEAN_NRG);
+    scale *= powf(2.0f, 0.25f*scale_factor);
+#else
+    scale = 1.0f/(float)sqrt(size * MEAN_NRG);
+    scale *= (float)pow(2.0, 0.25*scale_factor);
+#endif
+
+    /* Scale random vector to desired target energy */
+    for (i = 0; i < size; i++)
+        spec[i] *= scale;
 }
 
 void pns_decode(ic_stream *ics, float *spec)
 {
     int g, sfb, b, i;
     int size, offs;
-    float scale;
 
     int group = 0;
-
-    static int state = 1;
 
     for (g = 0; g < ics->num_window_groups; g++)
     {
@@ -102,22 +117,8 @@ void pns_decode(ic_stream *ics, float *spec)
                     size = ics->swb_offset[sfb+1] - offs;
 
                     /* Generate random vector */
-                    gen_rand_vector(&spec[(group*128)+offs], size, &state);
-
-                    /* 14496-3 says:
-                       scale = 1.0f/(size * (float)sqrt(MEAN_NRG));
-                     */
-#ifdef __ICL
-                    scale = 1.0f/sqrtf(size * MEAN_NRG);
-                    scale *= powf(2.0f, 0.25f*ics->scale_factors[g][sfb]);
-#else
-                    scale = 1.0f/(float)sqrt(size * MEAN_NRG);
-                    scale *= (float)pow(2.0, 0.25*ics->scale_factors[g][sfb]);
-#endif
-
-                    /* Scale random vector to desired target energy */
-                    for (i = 0; i < size; i++)
-                        spec[(group*128)+offs+i] *= scale;
+                    gen_rand_vector(&spec[(group*128)+offs],
+                        ics->scale_factors[g][sfb], size);
                 }
             }
             group++;

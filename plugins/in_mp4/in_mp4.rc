@@ -91,8 +91,8 @@ BEGIN
                     TBS_NOTICKS | WS_TABSTOP,13,15,18,39
     CONTROL         "16 bits",IDC_16BITS,"Button",BS_AUTORADIOBUTTON,77,18,
                     37,10
-    CONTROL         "24 bits",IDC_24BITS,"Button",BS_AUTORADIOBUTTON,77,30,
-                    37,10
+    CONTROL         "24 bits",IDC_24BITS,"Button",BS_AUTORADIOBUTTON | 
+                    WS_DISABLED,77,30,37,10
     CONTROL         "32 bits",IDC_32BITS,"Button",BS_AUTORADIOBUTTON,77,42,
                     37,10
     CONTROL         "Show errors",IDC_ERROR,"Button",BS_AUTOCHECKBOX | 
