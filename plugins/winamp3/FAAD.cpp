@@ -23,8 +23,8 @@ kreel@tiscali.it
 #include <stdio.h>
 #include <process.h>
 #include "resource.h"
-#include "FAAD.h"
-//#include <faad.h>
+//#include "FAAD.h"
+#include <faad.h>
 #include "..\..\..\faac\include\faac.h"
 //#include "..\..\include\faad.h"
 /*#include <faad.h>

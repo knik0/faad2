@@ -22,7 +22,7 @@ kreel@tiscali.it
 #include <stdlib.h>
 #include "..\..\..\faac\include\faac.h"
 #include "cnv_FAAD.h"
-#include "FAAD.h"
+#include <faad.h>
 #include "CRegistry.h"
 #include "Defines.h"
 

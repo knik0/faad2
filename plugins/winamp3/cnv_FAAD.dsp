@@ -201,10 +201,6 @@ SOURCE=.\Defines.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\FAAD.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\resource.h
 # End Source File
 # End Group
