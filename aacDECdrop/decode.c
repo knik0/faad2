@@ -16,8 +16,8 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decode.c,v 1.4 2002/07/25 12:30:57 menno Exp $
-** $Id: decode.c,v 1.4 2002/07/25 12:30:57 menno Exp $
+** $Id: decode.c,v 1.5 2002/08/07 08:37:15 menno Exp $
+** $Id: decode.c,v 1.5 2002/08/07 08:37:15 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -278,13 +278,15 @@ int GetAACTrack(MP4FileHandle infile)
 		{
 			unsigned char *buff = NULL;
 			int buff_size = 0;
-			unsigned long dummy32; unsigned char dummy8;
+			unsigned long dummy1_32;
+            unsigned char dummy2_8, dummy3_8, dummy4_8, dummy5_8, dummy6_8,
+                dummy7_8, dummy8_8;
 			MP4GetTrackESConfiguration(infile, trackId, &buff, &buff_size);
 
 			if (buff)
 			{
-				rc = AudioSpecificConfig(buff, &dummy32, &dummy8, &dummy8, &dummy8,
-                    &dummy8, &dummy8, &dummy8, &dummy8);
+				rc = AudioSpecificConfig(buff, &dummy1_32, &dummy2_8, &dummy3_8, &dummy4_8,
+                    &dummy5_8, &dummy6_8, &dummy7_8, &dummy8_8);
 				free(buff);
 
 				if (rc < 0)

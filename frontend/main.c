@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.17 2002/08/05 20:33:38 menno Exp $
+** $Id: main.c,v 1.18 2002/08/07 08:37:15 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -506,7 +506,8 @@ int main(int argc, char *argv[])
     clock_t begin;
 #endif
 
-    fprintf(stderr, "FAAD (Freeware AAC Decoder) Compiled on: " __DATE__ "\n");
+    fprintf(stderr, "FAAD2 (Freeware AAC Decoder) Compiled on: " __DATE__ "\n");
+    fprintf(stderr, "Version:     %s\n", FAAD2_VERSION);
     fprintf(stderr, "Copyright:   M. Bakker\n");
     fprintf(stderr, "             http://www.audiocoding.com\n\n");
 

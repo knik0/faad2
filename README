@@ -1,5 +1,5 @@
 
-Freeware Advanced Audio Decoder version 2
+Freeware Advanced Audio Decoder 2
 http://www.audiocoding.com/
 
 FAAD 2 is a LC, MAIN and LTP profile, MPEG2 and MPEG-4 AAC decoder, completely
@@ -45,6 +45,21 @@ FAAD2 is written by:
  - menno (menno@audiocoding.com).
 
 
+_______________
+VERSION HISTORY
+
+Version 1.1: 8 aug 2002
+ - Almost 50% speedup, due to new Huffman decoding
+ - Better error handling
+ - LD (Low Delay) AAC supported
+ - ER (Error Resilient) AAC profiles supported
+ - Complete new MDCT code
+ - Bug fixes
+
+Version 1.0: 14 jan 2002
+ - Initial revision of completely rewritten FAAD 2 library
+
+
 __________________________________
 REDISTRIBUTED OPEN SOURCE PACKAGES
 
@@ -52,7 +67,7 @@ This is the list of redistributed open source packages that are included
 in FAAD2:
 
 Name:       libsndfile
-Version:    0.0.27
+Version:    1.0.0rc2
 Origin:     http://www.zip.com.au/~erikd/libsndfile
 Author:     Erik de Castro Lopo
 Directory:  common/libsndfile
@@ -66,8 +81,8 @@ Directory:  common/id3lib
 License:    GNU Library General Public License, version 2, June 1991
 
 Name:       mp4v2
-Version:    0.9.2
-Origin:     http://mpeg4ip.sourceforge.net
+Version:    0.9.5
+Origin:     http://www.mpeg4ip.net
 Author:     David Mackie
 Directory:  common/mp4v2
 License:    MPL, Mozilla Public License, version 1.1
@@ -77,6 +92,8 @@ ___________________
 DIRECTORY STRUCTURE
 
 faad2 - top level directory.
+
+   aacDECdrop - windows decoder/player with drag'n'drop functionality
 
    common - generally used libraries and code.
 
@@ -95,6 +112,8 @@ faad2 - top level directory.
    include - inlude file for teh FAAD2 library.
 
    libfaad - the FAAD2 AAC decoder library.
+   
+      codebook - Huffman codebooks
 
    plugins - plugins for all kinds of pograms.
 
@@ -103,4 +122,6 @@ faad2 - top level directory.
       winamp - winamp2 AAC input plugin.
 
       winamp3 - winamp3 AAC input plugin.
+      
+      xmms - xmms AAC plugin
 
