@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.c,v 1.15 2004/01/05 14:05:11 menno Exp $
+** $Id: common.c,v 1.16 2004/02/26 09:29:26 menno Exp $
 **/
 
 /* just some common functions that could be used anywhere */

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfgen.c,v 1.12 2004/01/05 14:05:12 menno Exp $
+** $Id: sbr_hfgen.c,v 1.13 2004/02/26 09:29:28 menno Exp $
 **/
 
 /* High Frequency generation */
@@ -76,6 +76,9 @@ void hf_generation(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][32],
     {
         memset(Xhigh[i + offset], 0, 64 * sizeof(qmf_t));
     }
+#ifdef SBR_LOW_POWER
+    memset(deg, 0, 64*sizeof(real_t));
+#endif
 
     if ((ch == 0) && (sbr->Reset))
         patch_construction(sbr);
@@ -212,7 +215,7 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac,
     RE(ac->r02) = r02;
     RE(ac->r11) = r11;
 
-    ac->det = MUL_R(RE(ac->r11), RE(ac->r22)) - MUL_C(MUL_R(RE(ac->r12), RE(ac->r12)), rel);
+    ac->det = MUL_R(RE(ac->r11), RE(ac->r22)) - MUL_F(MUL_R(RE(ac->r12), RE(ac->r12)), rel);
 }
 #else
 static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t buffer[MAX_NTSRHFG][32],
@@ -291,6 +294,8 @@ static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][32],
             RE(alpha_0[k]) = -SBR_DIV(tmp, RE(ac.r11));
         }
 
+        //printf("%G\n", RE(alpha_0[k])/(float)(REAL_PRECISION));
+
         if ((RE(alpha_0[k]) >= REAL_CONST(4)) || (RE(alpha_1[k]) >= REAL_CONST(4)))
         {
             RE(alpha_0[k]) = REAL_CONST(0);
@@ -300,11 +305,12 @@ static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][32],
         /* reflection coefficient */
         if (RE(ac.r11) == 0)
         {
-            rxx[k] = REAL_CONST(0.0);
+            rxx[k] = COEF_CONST(0.0);
         } else {
-            rxx[k] = -SBR_DIV(RE(ac.r01), RE(ac.r11));
-            if (rxx[k] > REAL_CONST(1.0)) rxx[k] = REAL_CONST(1.0);
-            if (rxx[k] < REAL_CONST(-1.0)) rxx[k] = REAL_CONST(-1.0);
+            rxx[k] = RE(ac.r01) / RE(ac.r11);
+            rxx[k] = -rxx[k];
+            if (rxx[k] > COEF_CONST(1.0)) rxx[k] = COEF_CONST(1.0);
+            if (rxx[k] < COEF_CONST(-1.0)) rxx[k] = COEF_CONST(-1.0);
         }
 #else
         if (ac.det == 0)
@@ -344,40 +350,40 @@ static void calc_aliasing_degree(sbr_info *sbr, real_t *rxx, real_t *deg)
 {
     uint8_t k;
 
-    rxx[0] = REAL_CONST(0.0);
-    deg[1] = REAL_CONST(0.0);
+    rxx[0] = COEF_CONST(0.0);
+    deg[1] = COEF_CONST(0.0);
 
     for (k = 2; k < sbr->k0; k++)
     {
         deg[k] = 0.0;
 
-        if ((k % 2 == 0) && (rxx[k] < REAL_CONST(0.0)))
+        if ((k % 2 == 0) && (rxx[k] < COEF_CONST(0.0)))
         {
             if (rxx[k-1] < 0.0)
             {
-                deg[k] = REAL_CONST(1.0);
+                deg[k] = COEF_CONST(1.0);
 
-                if (rxx[k-2] > REAL_CONST(0.0))
+                if (rxx[k-2] > COEF_CONST(0.0))
                 {
-                    deg[k-1] = REAL_CONST(1.0) - MUL_R(rxx[k-1], rxx[k-1]);
+                    deg[k-1] = COEF_CONST(1.0) - MUL_C(rxx[k-1], rxx[k-1]);
                 }
-            } else if (rxx[k-2] > REAL_CONST(0.0)) {
-                deg[k]   = REAL_CONST(1.0) - MUL_R(rxx[k-1], rxx[k-1]);
+            } else if (rxx[k-2] > COEF_CONST(0.0)) {
+                deg[k] = COEF_CONST(1.0) - MUL_C(rxx[k-1], rxx[k-1]);
             }
         }
 
-        if ((k % 2 == 1) && (rxx[k] > REAL_CONST(0.0)))
+        if ((k % 2 == 1) && (rxx[k] > COEF_CONST(0.0)))
         {
-            if (rxx[k-1] > REAL_CONST(0.0))
+            if (rxx[k-1] > COEF_CONST(0.0))
             {
-                deg[k] = REAL_CONST(1.0);
+                deg[k] = COEF_CONST(1.0);
 
-                if (rxx[k-2] < REAL_CONST(0.0))
+                if (rxx[k-2] < COEF_CONST(0.0))
                 {
-                    deg[k-1] = REAL_CONST(1.0) - MUL_R(rxx[k-1], rxx[k-1]);
+                    deg[k-1] = COEF_CONST(1.0) - MUL_C(rxx[k-1], rxx[k-1]);
                 }
-            } else if (rxx[k-2] < REAL_CONST(0.0)) {
-                deg[k] = REAL_CONST(1.0) - MUL_R(rxx[k-1], rxx[k-1]);
+            } else if (rxx[k-2] < COEF_CONST(0.0)) {
+                deg[k] = COEF_CONST(1.0) - MUL_C(rxx[k-1], rxx[k-1]);
             }
         }
     }

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4.c,v 1.26 2004/01/05 14:05:12 menno Exp $
+** $Id: mp4.c,v 1.27 2004/02/26 09:29:27 menno Exp $
 **/
 
 #include "common.h"
@@ -180,9 +180,15 @@ int8_t FAADAPI AudioSpecificConfig2(uint8_t *pBuffer,
     mp4ASC->sbr_present_flag = -1;
     if (mp4ASC->objectTypeIndex == 5)
     {
+        uint8_t tmp;
+
         mp4ASC->sbr_present_flag = 1;
-        mp4ASC->samplingFrequencyIndex = (uint8_t)faad_getbits(&ld, 4
+        tmp = (uint8_t)faad_getbits(&ld, 4
             DEBUGVAR(1,5,"parse_audio_decoder_specific_info(): extensionSamplingFrequencyIndex"));
+        /* check for downsampled SBR */
+        if (tmp == mp4ASC->samplingFrequencyIndex)
+            mp4ASC->downSampledSBR = 1;
+        mp4ASC->samplingFrequencyIndex = tmp;
         if (mp4ASC->samplingFrequencyIndex == 15)
         {
             mp4ASC->samplingFrequency = (uint32_t)faad_getbits(&ld, 24
@@ -243,8 +249,15 @@ int8_t FAADAPI AudioSpecificConfig2(uint8_t *pBuffer,
 
                 if (mp4ASC->sbr_present_flag)
                 {
-                    mp4ASC->samplingFrequencyIndex = (uint8_t)faad_getbits(&ld, 4
+                    uint8_t tmp;
+                    tmp = (uint8_t)faad_getbits(&ld, 4
                         DEBUGVAR(1,12,"parse_audio_decoder_specific_info(): extensionSamplingFrequencyIndex"));
+
+                    /* check for downsampled SBR */
+                    if (tmp == mp4ASC->samplingFrequencyIndex)
+                        mp4ASC->downSampledSBR = 1;
+                    mp4ASC->samplingFrequencyIndex = tmp;
+
                     if (mp4ASC->samplingFrequencyIndex == 15)
                     {
                         mp4ASC->samplingFrequency = (uint32_t)faad_getbits(&ld, 24
@@ -265,6 +278,8 @@ int8_t FAADAPI AudioSpecificConfig2(uint8_t *pBuffer,
         {
             mp4ASC->samplingFrequency *= 2;
             mp4ASC->forceUpSampling = 1;
+        } else /* > 24000*/ {
+            mp4ASC->downSampledSBR = 1;
         }
     }
 #endif

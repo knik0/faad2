@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: fixed.h,v 1.18 2004/01/28 19:17:25 menno Exp $
+** $Id: fixed.h,v 1.19 2004/02/26 09:29:26 menno Exp $
 **/
 
 #ifndef __FIXED_H__
@@ -53,6 +53,10 @@ typedef int32_t real_t;
 #define REAL_CONST(A) (((A) >= 0) ? ((real_t)((A)*(REAL_PRECISION)+0.5)) : ((real_t)((A)*(REAL_PRECISION)-0.5)))
 #define COEF_CONST(A) (((A) >= 0) ? ((real_t)((A)*(COEF_PRECISION)+0.5)) : ((real_t)((A)*(COEF_PRECISION)-0.5)))
 #define FRAC_CONST(A) (((A) == 1.00) ? ((real_t)FRAC_MAX) : (((A) >= 0) ? ((real_t)((A)*(FRAC_PRECISION)+0.5)) : ((real_t)((A)*(FRAC_PRECISION)-0.5))))
+
+#define Q2_BITS 22
+#define Q2_PRECISION (1 << Q2_BITS)
+#define Q2_CONST(A) (((A) >= 0) ? ((real_t)((A)*(Q2_PRECISION)+0.5)) : ((real_t)((A)*(Q2_PRECISION)-0.5)))
 
 #if defined(_WIN32) && !defined(_WIN32_WCE)
 

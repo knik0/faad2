@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.71 2004/02/04 19:55:03 menno Exp $
+** $Id: syntax.c,v 1.72 2004/02/26 09:29:28 menno Exp $
 **/
 
 /*
@@ -997,6 +997,14 @@ static uint8_t fill_element(faacDecHandle hDecoder, bitfile *ld, drc_info *drc
 
             /* parse the SBR data */
             hDecoder->sbr[sbr_ele]->ret = sbr_extension_data(ld, hDecoder->sbr[sbr_ele], count);
+
+#if 0
+            if (hDecoder->sbr[sbr_ele]->ret > 0)
+            {
+                printf("%s\n", faacDecGetErrorMessage(hDecoder->sbr[sbr_ele]->ret));
+            }
+#endif
+
 #if (defined(PS_DEC) || defined(DRM_PS))
             if (hDecoder->sbr[sbr_ele]->ps_used)
             {

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.h,v 1.23 2004/02/04 20:07:24 menno Exp $
+** $Id: sbr_dec.h,v 1.24 2004/02/26 09:29:28 menno Exp $
 **/
 
 #ifndef __SBR_DEC_H__
@@ -53,6 +53,7 @@ typedef struct {
     real_t *v[2];
     uint8_t v_index;
     uint8_t channels;
+    complex_t *pre_twiddle;
 #ifdef USE_SSE
     void (*qmf_func)(void *a, void *b, void *c, void *d);
 #endif
@@ -111,8 +112,9 @@ typedef struct
     real_t E_orig[2][64][5];
     real_t E_curr[2][64][5];
     int32_t Q[2][64][2];
+    real_t Q_div[2][64][2];
+    real_t Q_div2[2][64][2];
     int32_t Q_prev[2][64];
-    real_t Q_orig[2][64][2];
 
     int8_t l_A[2];
     int8_t l_A_prev[2];
@@ -159,7 +161,7 @@ typedef struct
 	uint8_t bs_dataextra;
     uint8_t Is_DRM_SBR;
 #ifdef DRM_PS
-    drm_ps_info drm_ps;
+    drm_ps_info *drm_ps;
 #endif
 #endif
 
@@ -169,7 +171,7 @@ typedef struct
 	uint8_t tHFAdj;
 
 #ifdef PS_DEC
-    ps_info ps;
+    ps_info *ps;
 #endif
 #if (defined(PS_DEC) || defined(DRM_PS))
     uint8_t ps_used;
@@ -223,12 +225,12 @@ sbr_info *sbrDecodeInit(uint16_t framelength, uint8_t id_aac,
 void sbrDecodeEnd(sbr_info *sbr);
 
 uint8_t sbrDecodeCoupleFrame(sbr_info *sbr, real_t *left_chan, real_t *right_chan,
-                             const uint8_t just_seeked, const uint8_t upsample_only);
+                             const uint8_t just_seeked, const uint8_t downSampledSBR);
 uint8_t sbrDecodeSingleFrame(sbr_info *sbr, real_t *channel,
-                             const uint8_t just_seeked, const uint8_t upsample_only);
+                             const uint8_t just_seeked, const uint8_t downSampledSBR);
 #if (defined(PS_DEC) || defined(DRM_PS))
 uint8_t sbrDecodeSingleFramePS(sbr_info *sbr, real_t *left_channel, real_t *right_channel,
-                               const uint8_t just_seeked, const uint8_t upsample_only);
+                               const uint8_t just_seeked, const uint8_t downSampledSBR);
 #endif
 
 

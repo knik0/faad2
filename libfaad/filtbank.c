@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: filtbank.c,v 1.35 2004/01/13 14:24:10 menno Exp $
+** $Id: filtbank.c,v 1.36 2004/02/26 09:29:26 menno Exp $
 **/
 
 #include "common.h"

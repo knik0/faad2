@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: error.c,v 1.21 2004/01/28 19:17:25 menno Exp $
+** $Id: error.c,v 1.22 2004/02/26 09:29:26 menno Exp $
 **/
 
 #include "common.h"
@@ -33,7 +33,7 @@ int8_t *err_msg[] = {
     "Gain control not yet implemented",
     "Pulse coding not allowed in short blocks",
     "Invalid huffman codebook",
-    "Negative scalefactor found, should be impossible",
+    "Scalefactor out of range",
     "Unable to find ADTS syncword",
     "Channel coupling not yet implemented",
     "Channel configuration not allowed in error resilient frame",

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: faad.h,v 1.39 2004/02/06 10:23:28 menno Exp $
+** $Id: faad.h,v 1.40 2004/02/26 09:29:26 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -129,6 +129,7 @@ typedef struct mp4AudioSpecificConfig
 
     char sbr_present_flag;
     char forceUpSampling;
+    char downSampledSBR;
 } mp4AudioSpecificConfig;
 
 typedef struct faacDecConfiguration

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.43 2004/01/29 11:31:11 menno Exp $
+** $Id: specrec.c,v 1.44 2004/02/26 09:29:28 menno Exp $
 **/
 
 /*
@@ -467,6 +467,9 @@ static void quant_to_spec(ic_stream *ics, real_t *spec_data, uint16_t frame_len)
     memcpy(spec_data, tmp_spec, frame_len*sizeof(real_t));
 }
 
+/* iquant() *
+/* output = sign(input)*abs(input)^(4/3) */
+/**/
 static INLINE real_t iquant(int16_t q, const real_t *tab, uint8_t *error)
 {
 #ifdef FIXED_POINT
@@ -554,22 +557,16 @@ ALIGN static const real_t pow2sf_tab[] = {
 };
 #endif
 
-ALIGN static real_t pow2_table[] =
-{
-#if 0
-    COEF_CONST(0.59460355750136053335874998528024), /* 2^-0.75 */
-    COEF_CONST(0.70710678118654752440084436210485), /* 2^-0.5 */
-    COEF_CONST(0.84089641525371454303112547623321), /* 2^-0.25 */
-#endif
-    COEF_CONST(1.0),
-    COEF_CONST(1.1892071150027210667174999705605), /* 2^0.25 */
-    COEF_CONST(1.4142135623730950488016887242097), /* 2^0.5 */
-    COEF_CONST(1.6817928305074290860622509524664) /* 2^0.75 */
-};
-
 void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics,
                         real_t *x_invquant, uint16_t frame_len)
 {
+    ALIGN static const real_t pow2_table[] =
+    {
+        COEF_CONST(1.0),
+        COEF_CONST(1.1892071150027210667174999705605), /* 2^0.25 */
+        COEF_CONST(1.4142135623730950488016887242097), /* 2^0.5 */
+        COEF_CONST(1.6817928305074290860622509524664) /* 2^0.75 */
+    };
     uint8_t g, sfb;
     uint16_t top;
     int32_t exp, frac;
@@ -597,6 +594,7 @@ void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics,
             } else {
                 /* ics->scale_factors[g][sfb] must be between 0 and 255 */
                 exp = (ics->scale_factors[g][sfb] /* - 100 */) >> 2;
+                /* frac must always be > 0 */
                 frac = (ics->scale_factors[g][sfb] /* - 100 */) & 3;
             }
 
@@ -637,10 +635,10 @@ void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics,
                 x_invquant[k+(groups*nshort)+3] = x_invquant[k+(groups*nshort)+3] * pow2sf_tab[exp/*+25*/];
 #endif
 
-                x_invquant[k+(groups*nshort)]   = MUL_C(x_invquant[k+(groups*nshort)],pow2_table[frac /* + 3*/]);
-                x_invquant[k+(groups*nshort)+1] = MUL_C(x_invquant[k+(groups*nshort)+1],pow2_table[frac /* + 3*/]);
-                x_invquant[k+(groups*nshort)+2] = MUL_C(x_invquant[k+(groups*nshort)+2],pow2_table[frac /* + 3*/]);
-                x_invquant[k+(groups*nshort)+3] = MUL_C(x_invquant[k+(groups*nshort)+3],pow2_table[frac /* + 3*/]);
+                x_invquant[k+(groups*nshort)]   = MUL_C(x_invquant[k+(groups*nshort)],pow2_table[frac]);
+                x_invquant[k+(groups*nshort)+1] = MUL_C(x_invquant[k+(groups*nshort)+1],pow2_table[frac]);
+                x_invquant[k+(groups*nshort)+2] = MUL_C(x_invquant[k+(groups*nshort)+2],pow2_table[frac]);
+                x_invquant[k+(groups*nshort)+3] = MUL_C(x_invquant[k+(groups*nshort)+3],pow2_table[frac]);
             }
         }
         groups += ics->window_group_length[g];
@@ -1047,12 +1045,12 @@ uint8_t reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
         {
 #endif
             retval = sbrDecodeSingleFrame(hDecoder->sbr[ele], hDecoder->time_out[ch],
-                hDecoder->postSeekResetFlag, hDecoder->forceUpSampling);
+                hDecoder->postSeekResetFlag, hDecoder->downSampledSBR);
 #if (defined(PS_DEC) || defined(DRM_PS))
         } else {
             retval = sbrDecodeSingleFramePS(hDecoder->sbr[ele], hDecoder->time_out[ch],
                 hDecoder->time_out[ch+1], hDecoder->postSeekResetFlag,
-                hDecoder->forceUpSampling);
+                hDecoder->downSampledSBR);
         }
 #endif
         if (retval > 0)
@@ -1268,7 +1266,7 @@ uint8_t reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_str
 
         retval = sbrDecodeCoupleFrame(hDecoder->sbr[ele],
             hDecoder->time_out[ch0], hDecoder->time_out[ch1],
-            hDecoder->postSeekResetFlag, hDecoder->forceUpSampling);
+            hDecoder->postSeekResetFlag, hDecoder->downSampledSBR);
         if (retval > 0)
             return retval;
     } else if (((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1))

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.h,v 1.35 2004/01/05 14:05:11 menno Exp $
+** $Id: decoder.h,v 1.36 2004/02/26 09:29:26 menno Exp $
 **/
 
 #ifndef __DECODER_H__
@@ -42,13 +42,6 @@ extern "C" {
     #define FAADAPI
   #endif
 #endif
-
-#include "bits.h"
-#include "syntax.h"
-#include "drc.h"
-#include "specrec.h"
-#include "filtbank.h"
-#include "ic_predict.h"
 
 
 /* library output formats */

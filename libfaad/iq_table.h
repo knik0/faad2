@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: iq_table.h,v 1.12 2004/01/05 14:05:12 menno Exp $
+** $Id: iq_table.h,v 1.13 2004/02/26 09:29:27 menno Exp $
 **/
 
 #ifndef IQ_TABLE_H__

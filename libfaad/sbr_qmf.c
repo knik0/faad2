@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_qmf.c,v 1.19 2004/01/05 14:05:12 menno Exp $
+** $Id: sbr_qmf.c,v 1.20 2004/02/26 09:29:28 menno Exp $
 **/
 
 #include "common.h"
@@ -83,7 +83,7 @@ void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const real_t *input,
         for (n = 32 - 1; n >= 0; n--)
         {
 #ifdef FIXED_POINT
-            qmfa->x[n] = (input[in++]) >> 5;
+            qmfa->x[n] = (input[in++]) >> 4;
 #else
             qmfa->x[n] = input[in++];
 #endif
@@ -114,7 +114,7 @@ void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const real_t *input,
             if (n < kx)
             {
 #ifdef FIXED_POINT
-                QMF_RE(X[l + offset][n]) = u[n] << 1;
+                QMF_RE(X[l + offset][n]) = u[n] /*<< 1*/;
 #else
                 QMF_RE(X[l + offset][n]) = 2. * u[n];
 #endif
@@ -138,8 +138,8 @@ void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const real_t *input,
             if (n < kx)
             {
 #ifdef FIXED_POINT
-                QMF_RE(X[l + offset][n]) = y[n] << 1;
-                QMF_IM(X[l + offset][n]) = -y[63-n] << 1;
+                QMF_RE(X[l + offset][n]) = y[n] /*<< 1*/;
+                QMF_IM(X[l + offset][n]) = -y[63-n] /*<< 1*/;
 #else
                 QMF_RE(X[l + offset][n]) = 2. * y[n];
                 QMF_IM(X[l + offset][n]) = -2. * y[63-n];
@@ -162,6 +162,20 @@ qmfs_info *qmfs_init(uint8_t channels)
     memset(qmfs->v[0], 0, channels * 10 * sizeof(real_t));
     qmfs->v[1] = (real_t*)faad_malloc(channels * 10 * sizeof(real_t));
     memset(qmfs->v[1], 0, channels * 10 * sizeof(real_t));
+
+    if (channels == 32)
+    {
+        /* downsampled filterbank */
+        uint8_t k;
+
+        qmfs->pre_twiddle = (complex_t*)faad_malloc(channels * sizeof(complex_t));
+        /* calculate pre-twiddle factors */
+        for (k = 0; k < channels; k++)
+        {
+            RE(qmfs->pre_twiddle[k]) = cos(-M_PI*(0.5*k + 0.25)/64.);
+            IM(qmfs->pre_twiddle[k]) = sin(-M_PI*(0.5*k + 0.25)/64.);
+        }
+    }
 #else
     qmfs->v[0] = (real_t*)faad_malloc(channels * 20 * sizeof(real_t));
     memset(qmfs->v[0], 0, channels * 20 * sizeof(real_t));
@@ -188,6 +202,10 @@ void qmfs_end(qmfs_info *qmfs)
 {
     if (qmfs)
     {
+        if (qmfs->channels == 32)
+        {
+            if (qmfs->pre_twiddle) faad_free(qmfs->pre_twiddle);
+        }
         if (qmfs->v[0]) faad_free(qmfs->v[0]);
 #ifndef SBR_LOW_POWER
         if (qmfs->v[1]) faad_free(qmfs->v[1]);
@@ -197,6 +215,91 @@ void qmfs_end(qmfs_info *qmfs)
 }
 
 #ifdef SBR_LOW_POWER
+
+void sbr_qmf_synthesis_32(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][64],
+                          real_t *output)
+{
+    ALIGN real_t x[16];
+    ALIGN real_t y[16];
+    int16_t n, k, out = 0;
+    uint8_t l;
+
+    /* qmf subsample l */
+    for (l = 0; l < sbr->numTimeSlotsRate; l++)
+    {
+        //real_t *v0, *v1;
+
+        /* shift buffers */
+        //memmove(qmfs->v[0] + 64, qmfs->v[0], (640-64)*sizeof(real_t));
+        //memmove(qmfs->v[1] + 64, qmfs->v[1], (640-64)*sizeof(real_t));
+        memmove(qmfs->v[0] + 64, qmfs->v[0], (640-64)*sizeof(real_t));
+
+        //v0 = qmfs->v[qmfs->v_index];
+        //v1 = qmfs->v[(qmfs->v_index + 1) & 0x1];
+        //qmfs->v_index = (qmfs->v_index + 1) & 0x1;
+
+        /* calculate 64 samples */
+        for (k = 0; k < 16; k++)
+        {
+#ifdef FIXED_POINT
+            y[k] = (QMF_RE(X[l][k]) - QMF_RE(X[l][31 - k]));
+            x[k] = (QMF_RE(X[l][k]) + QMF_RE(X[l][31 - k]));
+#else
+            y[k] = (QMF_RE(X[l][k]) - QMF_RE(X[l][31 - k])) / 32.0;
+            x[k] = (QMF_RE(X[l][k]) + QMF_RE(X[l][31 - k])) / 32.0;
+#endif
+        }
+
+        /* even n samples */
+        DCT2_16_unscaled(x, x);
+        /* uneven n samples */
+        DCT4_16(y, y);
+
+        for (n = 8; n < 24; n++)
+        {
+            qmfs->v[0][n*2] = x[n-8];
+            qmfs->v[0][n*2+1] = y[n-8];
+        }
+        for (n = 0; n < 16; n++)
+        {
+            qmfs->v[0][n] = qmfs->v[0][32-n];
+        }
+        qmfs->v[0][48] = 0;
+        for (n = 1; n < 16; n++)
+        {
+            qmfs->v[0][48+n] = -qmfs->v[0][48-n];
+        }
+
+        /* calculate 32 output samples and window */
+        for (k = 0; k < 32; k++)
+        {
+#if 1
+            output[out++] = MUL_F(qmfs->v[0][k], qmf_c[2*k]) +
+                MUL_F(qmfs->v[0][96 + k], qmf_c[64 + 2*k]) +
+                MUL_F(qmfs->v[0][128 + k], qmf_c[128 + 2*k]) +
+                MUL_F(qmfs->v[0][224 + k], qmf_c[192 + 2*k]) +
+                MUL_F(qmfs->v[0][256 + k], qmf_c[256 + 2*k]) +
+                MUL_F(qmfs->v[0][352 + k], qmf_c[320 + 2*k]) +
+                MUL_F(qmfs->v[0][384 + k], qmf_c[384 + 2*k]) +
+                MUL_F(qmfs->v[0][480 + k], qmf_c[448 + 2*k]) +
+                MUL_F(qmfs->v[0][512 + k], qmf_c[512 + 2*k]) +
+                MUL_F(qmfs->v[0][608 + k], qmf_c[576 + 2*k]);
+#else
+            output[out++] = MUL_F(v0[k], qmf_c[2*k]) +
+                MUL_F(v0[32 + k], qmf_c[64 + 2*k]) +
+                MUL_F(v0[64 + k], qmf_c[128 + 2*k]) +
+                MUL_F(v0[96 + k], qmf_c[192 + 2*k]) +
+                MUL_F(v0[128 + k], qmf_c[256 + 2*k]) +
+                MUL_F(v0[160 + k], qmf_c[320 + 2*k]) +
+                MUL_F(v0[192 + k], qmf_c[384 + 2*k]) +
+                MUL_F(v0[224 + k], qmf_c[448 + 2*k]) +
+                MUL_F(v0[256 + k], qmf_c[512 + 2*k]) +
+                MUL_F(v0[288 + k], qmf_c[576 + 2*k]);
+#endif
+        }
+    }
+}
+
 void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][64],
                           real_t *output)
 {
@@ -221,52 +324,51 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
         //qmfs->v_index = (qmfs->v_index + 1) & 0x1;
 
         /* calculate 128 samples */
-        for (k = 0; k < 64; k++)
+        for (k = 0; k < 32; k++)
         {
 #ifdef FIXED_POINT
-            x[k] = QMF_RE(X[l][k]);
+            y[k] = (QMF_RE(X[l][k]) - QMF_RE(X[l][63 - k]));
+            x[k] = (QMF_RE(X[l][k]) + QMF_RE(X[l][63 - k]));
 #else
-            x[k] = QMF_RE(X[l][k]) / 32.;
+            y[k] = (QMF_RE(X[l][k]) - QMF_RE(X[l][63 - k])) / 32.0;
+            x[k] = (QMF_RE(X[l][k]) + QMF_RE(X[l][63 - k])) / 32.0;
 #endif
         }
 
+        /* even n samples */
+        DCT2_32_unscaled(x, x);
+        /* uneven n samples */
+        DCT4_32(y, y);
+
+        for (n = 16; n < 48; n++)
+        {
+            qmfs->v[0][n*2] = x[n-16];
+            qmfs->v[0][n*2+1] = y[n-16];
+        }
         for (n = 0; n < 32; n++)
         {
-            y[2*n]   = -x[2*n];
-            y[2*n+1] =  x[2*n+1];
+            qmfs->v[0][n] = qmfs->v[0][64-n];
         }
-
-        DCT2_64_unscaled(x, x);
-
-        for (n = 0; n < 64; n++)
-        {
-            qmfs->v[0][n+32] = x[n];
-        }
-        for (n = 0; n < 32; n++)
-        {
-            qmfs->v[0][31 - n] = x[n + 1];
-        }
-        DST2_64_unscaled(x, y);
         qmfs->v[0][96] = 0;
         for (n = 1; n < 32; n++)
         {
-            qmfs->v[0][n + 96] = x[n-1];
+            qmfs->v[0][96+n] = -qmfs->v[0][96-n];
         }
 
         /* calculate 64 output samples and window */
         for (k = 0; k < 64; k++)
         {
 #if 1
-             output[out++] = MUL_F(qmfs->v[0][k], qmf_c[k]) +
-                 MUL_F(qmfs->v[0][192 + k], qmf_c[64 + k]) +
-                 MUL_F(qmfs->v[0][256 + k], qmf_c[128 + k]) +
-                 MUL_F(qmfs->v[0][256 + 192 + k], qmf_c[128 + 64 + k]) +
-                 MUL_F(qmfs->v[0][512 + k], qmf_c[256 + k]) +
-                 MUL_F(qmfs->v[0][512 + 192 + k], qmf_c[256 + 64 + k]) +
-                 MUL_F(qmfs->v[0][768 + k], qmf_c[384 + k]) +
-                 MUL_F(qmfs->v[0][768 + 192 + k], qmf_c[384 + 64 + k]) +
-                 MUL_F(qmfs->v[0][1024 + k], qmf_c[512 + k]) +
-                 MUL_F(qmfs->v[0][1024 + 192 + k], qmf_c[512 + 64 + k]);
+            output[out++] = MUL_F(qmfs->v[0][k], qmf_c[k]) +
+                MUL_F(qmfs->v[0][192 + k], qmf_c[64 + k]) +
+                MUL_F(qmfs->v[0][256 + k], qmf_c[128 + k]) +
+                MUL_F(qmfs->v[0][256 + 192 + k], qmf_c[128 + 64 + k]) +
+                MUL_F(qmfs->v[0][512 + k], qmf_c[256 + k]) +
+                MUL_F(qmfs->v[0][512 + 192 + k], qmf_c[256 + 64 + k]) +
+                MUL_F(qmfs->v[0][768 + k], qmf_c[384 + k]) +
+                MUL_F(qmfs->v[0][768 + 192 + k], qmf_c[384 + 64 + k]) +
+                MUL_F(qmfs->v[0][1024 + k], qmf_c[512 + k]) +
+                MUL_F(qmfs->v[0][1024 + 192 + k], qmf_c[512 + 64 + k]);
 #else
             output[out++] = MUL_F(v0[k], qmf_c[k]) +
                 MUL_F(v0[64 + k], qmf_c[64 + k]) +
@@ -282,94 +384,67 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
         }
     }
 }
-
-void sbr_qmf_synthesis_64_sse(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][64],
-                              real_t *output)
+#else
+void sbr_qmf_synthesis_32(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][64],
+                          real_t *output)
 {
-    ALIGN real_t x[64];
-    ALIGN real_t y[64];
-    ALIGN real_t y2[64];
+    ALIGN real_t x1[32], x2[32];
+    real_t scale = 1.f/64.f;
     int16_t n, k, out = 0;
     uint8_t l;
+
 
     /* qmf subsample l */
     for (l = 0; l < sbr->numTimeSlotsRate; l++)
     {
-        //real_t *v0, *v1;
+        real_t *v0, *v1;
 
         /* shift buffers */
-        //memmove(qmfs->v[0] + 64, qmfs->v[0], (640-64)*sizeof(real_t));
-        //memmove(qmfs->v[1] + 64, qmfs->v[1], (640-64)*sizeof(real_t));
-        memmove(qmfs->v[0] + 128, qmfs->v[0], (1280-128)*sizeof(real_t));
+        memmove(qmfs->v[0] + 32, qmfs->v[0], (320-32)*sizeof(real_t));
+        memmove(qmfs->v[1] + 32, qmfs->v[1], (320-32)*sizeof(real_t));
 
-        //v0 = qmfs->v[qmfs->v_index];
-        //v1 = qmfs->v[(qmfs->v_index + 1) & 0x1];
-        //qmfs->v_index = (qmfs->v_index + 1) & 0x1;
+        v0 = qmfs->v[qmfs->v_index];
+        v1 = qmfs->v[(qmfs->v_index + 1) & 0x1];
+        qmfs->v_index = (qmfs->v_index + 1) & 0x1;
 
-        /* calculate 128 samples */
-        for (k = 0; k < 64; k++)
+        /* calculate 64 samples */
+        /* complex pre-twiddle */
+        for (k = 0; k < 32; k++)
         {
-#ifdef FIXED_POINT
-            x[k] = QMF_RE(X[l][k]);
-#else
-            x[k] = QMF_RE(X[l][k]) / 32.;
-#endif
+            x1[k] = QMF_RE(X[l][k]) * RE(qmfs->pre_twiddle[k]) - QMF_IM(X[l][k]) * IM(qmfs->pre_twiddle[k]);
+            x2[k] = QMF_IM(X[l][k]) * RE(qmfs->pre_twiddle[k]) + QMF_RE(X[l][k]) * IM(qmfs->pre_twiddle[k]);
+
+            x1[k] *= scale;
+            x2[k] *= scale;
         }
+
+        /* transform */
+        DCT4_32(x1, x1);
+        DST4_32(x2, x2);
 
         for (n = 0; n < 32; n++)
         {
-            y[2*n]   = -x[2*n];
-            y[2*n+1] =  x[2*n+1];
+            v0[n]    = -x1[n] + x2[n];
+            v1[31-n] =  x1[n] + x2[n];
         }
 
-        DCT2_64_unscaled(x, x);
-
-        for (n = 0; n < 64; n++)
+        /* calculate 32 output samples and window */
+        for (k = 0; k < 32; k++)
         {
-            qmfs->v[0][n+32] = x[n];
-        }
-        for (n = 0; n < 32; n++)
-        {
-            qmfs->v[0][31 - n] = x[n + 1];
-        }
-
-        DST2_64_unscaled(x, y);
-        qmfs->v[0][96] = 0;
-        for (n = 1; n < 32; n++)
-        {
-            qmfs->v[0][n + 96] = x[n-1];
-        }
-
-        /* calculate 64 output samples and window */
-        for (k = 0; k < 64; k++)
-        {
-#if 1
-             output[out++] = MUL_F(qmfs->v[0][k], qmf_c[k]) +
-                 MUL_F(qmfs->v[0][192 + k], qmf_c[64 + k]) +
-                 MUL_F(qmfs->v[0][256 + k], qmf_c[128 + k]) +
-                 MUL_F(qmfs->v[0][256 + 192 + k], qmf_c[128 + 64 + k]) +
-                 MUL_F(qmfs->v[0][512 + k], qmf_c[256 + k]) +
-                 MUL_F(qmfs->v[0][512 + 192 + k], qmf_c[256 + 64 + k]) +
-                 MUL_F(qmfs->v[0][768 + k], qmf_c[384 + k]) +
-                 MUL_F(qmfs->v[0][768 + 192 + k], qmf_c[384 + 64 + k]) +
-                 MUL_F(qmfs->v[0][1024 + k], qmf_c[512 + k]) +
-                 MUL_F(qmfs->v[0][1024 + 192 + k], qmf_c[512 + 64 + k]);
-#else
-            output[out++] = MUL_F(v0[k], qmf_c[k]) +
-                MUL_F(v0[64 + k], qmf_c[64 + k]) +
-                MUL_F(v0[128 + k], qmf_c[128 + k]) +
-                MUL_F(v0[192 + k], qmf_c[192 + k]) +
-                MUL_F(v0[256 + k], qmf_c[256 + k]) +
-                MUL_F(v0[320 + k], qmf_c[320 + k]) +
-                MUL_F(v0[384 + k], qmf_c[384 + k]) +
-                MUL_F(v0[448 + k], qmf_c[448 + k]) +
-                MUL_F(v0[512 + k], qmf_c[512 + k]) +
-                MUL_F(v0[576 + k], qmf_c[576 + k]);
-#endif
+            output[out++] = MUL_F(v0[k], qmf_c[2*k]) +
+                MUL_F(v0[32 + k], qmf_c[64 + 2*k]) +
+                MUL_F(v0[64 + k], qmf_c[128 + 2*k]) +
+                MUL_F(v0[96 + k], qmf_c[192 + 2*k]) +
+                MUL_F(v0[128 + k], qmf_c[256 + 2*k]) +
+                MUL_F(v0[160 + k], qmf_c[320 + 2*k]) +
+                MUL_F(v0[192 + k], qmf_c[384 + 2*k]) +
+                MUL_F(v0[224 + k], qmf_c[448 + 2*k]) +
+                MUL_F(v0[256 + k], qmf_c[512 + 2*k]) +
+                MUL_F(v0[288 + k], qmf_c[576 + 2*k]);
         }
     }
 }
-#else
+
 void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][64],
                           real_t *output)
 {

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_syntax.c,v 1.25 2004/01/29 11:31:11 menno Exp $
+** $Id: sbr_syntax.c,v 1.26 2004/02/26 09:29:28 menno Exp $
 **/
 
 #include "common.h"
@@ -488,7 +488,7 @@ static uint8_t sbr_channel_pair_element(bitfile *ld, sbr_info *sbr)
             sbr->bs_extension_id = (uint8_t)faad_getbits(ld, 2
                 DEBUGVAR(1,236,"sbr_channel_pair_element(): bs_extension_id"));
             nr_bits_left -= 2;
-            sbr_extension(ld, sbr, sbr->bs_extension_id, nr_bits_left);
+            nr_bits_left -= sbr_extension(ld, sbr, sbr->bs_extension_id, nr_bits_left);
         }
 
         /* Corrigendum */
@@ -653,6 +653,13 @@ static uint8_t sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch)
         return result;
     noise_floor_time_border_vector(sbr, ch);
 
+#if 0
+    for (env = 0; env < bs_num_env; env++)
+    {
+        printf("freq_res[ch:%d][env:%d]: %d\n", ch, env, sbr->f[ch][env]);
+    }
+#endif
+
     return 0;
 }
 
@@ -694,12 +701,20 @@ static uint16_t sbr_extension(bitfile *ld, sbr_info *sbr,
 #ifdef PS_DEC
     case EXTENSION_ID_PS:
         sbr->ps_used = 1;
-        return ps_data(&(sbr->ps), ld);
+        if (!sbr->ps)
+        {
+            sbr->ps = ps_init();
+        }
+        return ps_data(sbr->ps, ld);
 #endif
 #ifdef DRM_PS
     case DRM_PARAMETRIC_STEREO:
         sbr->ps_used = 1;
-        return drm_ps_data(&(sbr->drm_ps), ld);
+        if (!sbr->drm_ps)
+        {
+            sbr->drm_ps = drm_ps_init();
+        }
+        return drm_ps_data(sbr->drm_ps, ld);
 #endif
     default:
         sbr->bs_extension_data = (uint8_t)faad_getbits(ld, 6

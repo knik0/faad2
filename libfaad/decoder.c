@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.94 2004/02/04 20:07:24 menno Exp $
+** $Id: decoder.c,v 1.95 2004/02/26 09:29:26 menno Exp $
 **/
 
 #include "common.h"
@@ -261,6 +261,8 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
     {
         *samplerate *= 2;
         hDecoder->forceUpSampling = 1;
+    } else if (*samplerate > 24000 && !(hDecoder->config.dontUpSampleImplicitSBR)) {
+        hDecoder->downSampledSBR = 1;
     }
 #endif
 
@@ -325,13 +327,14 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
 #endif
 #ifdef SBR_DEC
     hDecoder->sbr_present_flag = mp4ASC.sbr_present_flag;
+    hDecoder->downSampledSBR = mp4ASC.downSampledSBR;
     if (hDecoder->config.dontUpSampleImplicitSBR == 0)
         hDecoder->forceUpSampling = mp4ASC.forceUpSampling;
     else
         hDecoder->forceUpSampling = 0;
 
     /* AAC core decoder samplerate is 2 times as low */
-    if (hDecoder->sbr_present_flag == 1 || hDecoder->forceUpSampling == 1)
+    if (((hDecoder->sbr_present_flag == 1)&&(!hDecoder->downSampledSBR)) || hDecoder->forceUpSampling == 1)
     {
         hDecoder->sf_index = get_sr_index(mp4ASC.samplingFrequency / 2);
     }
@@ -762,7 +765,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     if (hDecoder->object_type == DRM_ER_LC)
     {
         /* We do not support stereo right now */
-        if (hDecoder->channelConfiguration == 2)
+        if (0) //(hDecoder->channelConfiguration == 2)
         {
             hInfo->error = 8; // Throw CRC error
             goto error;
@@ -829,7 +832,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
     if (!hDecoder->adts_header_present && !hDecoder->adif_header_present)
     {
-        if (channels != hDecoder->channelConfiguration)
+        if (hDecoder->channelConfiguration == 0)
             hDecoder->channelConfiguration = channels;
 
         if (channels == 8) /* 7.1 */
@@ -883,8 +886,10 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         };
         uint8_t stride = str[hDecoder->config.outputFormat-1];
 #ifdef SBR_DEC
-        if ((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1))
+        if (((hDecoder->sbr_present_flag == 1)&&(!hDecoder->downSampledSBR)) || (hDecoder->forceUpSampling == 1))
+        {
             stride = 2 * stride;
+        }
 #endif
         if (hDecoder->sample_buffer)
             faad_free(hDecoder->sample_buffer);
@@ -901,9 +906,12 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         uint8_t ele;
 
         /* this data is different when SBR is used or when the data is upsampled */
-        frame_len *= 2;
-        hInfo->samples *= 2;
-        hInfo->samplerate *= 2;
+        if (!hDecoder->downSampledSBR)
+        {
+            frame_len *= 2;
+            hInfo->samples *= 2;
+            hInfo->samplerate *= 2;
+        }
 
         /* check if every element was provided with SBR data */
         for (ele = 0; ele < hDecoder->fr_ch_ele; ele++)
@@ -922,6 +930,10 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             hInfo->sbr = SBR_UPSAMPLED;
         } else {
             hInfo->sbr = NO_SBR_UPSAMPLED;
+        }
+        if (hDecoder->downSampledSBR)
+        {
+            hInfo->sbr = SBR_DOWNSAMPLED;
         }
     }
 #endif
