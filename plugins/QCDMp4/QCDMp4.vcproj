@@ -83,6 +83,7 @@
 			ATLMinimizesCRunTimeLibraryUsage="FALSE">
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="1"
 				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="1"
 				EnableIntrinsicFunctions="TRUE"
@@ -91,7 +92,7 @@
 				AdditionalIncludeDirectories="..\..\include,..\..\common\mp4v2,..\..\common\mp4av"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="TRUE"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="TRUE"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\Release/QCDMp4.pch"
@@ -110,6 +111,7 @@
 				OutputFile=".\Release/QCDMp4.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
+				IgnoreDefaultLibraryNames=""
 				ProgramDatabaseFile=".\Release/QCDMp4.pdb"
 				SubSystem="2"
 				ImportLibrary=".\Release/QCDMp4.lib"/>
@@ -149,12 +151,6 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath="aac2mp4.cpp">
-			</File>
-			<File
-				RelativePath="aacinfo.c">
-			</File>
-			<File
 				RelativePath=".\config.c">
 			</File>
 			<File
@@ -170,12 +166,6 @@
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
-			<File
-				RelativePath="aac2mp4.h">
-			</File>
-			<File
-				RelativePath="aacinfo.h">
-			</File>
 			<File
 				RelativePath=".\config.h">
 			</File>
