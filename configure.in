@@ -58,10 +58,18 @@ MY_CHECK_TYPEDEF_FROM_INCLUDE([fpos_t foo; foo.__pos = 0;],
         [HAVE_FPOS_T_POS])
 
 
-AC_OUTPUT_COMMANDS(,[cd common/mp4v2; aclocal -I .; autoheader; libtoolize --automake; automake --add-missing; autoconf; cd -])
+AC_CHECK_LIB(mp4v2, MP4Create,
+  [AM_CONDITIONAL(HAVE_MPEG4IP, true)
+  MPEG4IP_PLAYER_PLUGIN_DIR=`mpeg4ip-config --player-plugin-dir`  
+  AC_SUBST(MPEG4IP_PLAYER_PLUGIN_DIR)
+  ],
+  [AM_CONDITIONAL(HAVE_MPEG4IP, false)
+   AC_OUTPUT_COMMANDS(,[cd common/mp4v2; aclocal -I .; autoheader; libtoolize --automake; automake --add-missing; autoconf; cd -])
+  ], 
+  -lstdc++)
 
 AC_OUTPUT_COMMANDS(,[cd plugins/xmms; libtoolize; aclocal; autoconf; automake --add-missing; cd -])
 
 AC_CONFIG_SUBDIRS(common/mp4v2 plugins/xmms)
 
-AC_OUTPUT(libfaad/Makefile common/Makefile  frontend/Makefile Makefile plugins/Makefile)
+AC_OUTPUT(libfaad/Makefile common/Makefile  frontend/Makefile Makefile plugins/Makefile plugins/mpeg4ip/Makefile)
