@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.44 2003/08/08 09:24:08 menno Exp $
+** $Id: foo_mp4.cpp,v 1.45 2003/08/08 11:10:35 menno Exp $
 **/
 
 #include <mp4.h>
@@ -125,6 +125,10 @@ public:
         numSamples = MP4GetTrackNumberOfSamples(hFile, track);
         sampleId = 1;
 
+        m_samplerate = samplerate;
+        m_framesize = 1024;
+        if (mp4ASC.frameLengthFlag == 1) m_framesize = 960;
+
         unsigned __int64 length = MP4GetTrackDuration(hFile, track);
         __int64 msDuration = MP4ConvertFromTrackDuration(hFile, track,
             length, MP4_MSECS_TIME_SCALE);
@@ -136,20 +140,17 @@ public:
         info->info_set_int("samplerate", (__int64)samplerate);
         if (mp4ASC.sbr_present_flag == 1) {
             info->info_set("codec", "AAC+SBR");
-            m_framesize = 2048;
+            m_framesize *= 2;
         } else {
             info->info_set("codec", "AAC");
-            m_framesize = 1024;
         }
 
         ReadMP4Tag(info);
 
         if (m_samples > 0) {
-            info->set_length((double)m_samples/(double)samplerate);
+            info->set_length((double)(signed __int64)m_samples/(double)samplerate);
             info->info_set_int("samples", (__int64)m_samples);
         }
-
-        m_samplerate = samplerate;
 
         return 1;
     }
@@ -238,7 +239,7 @@ public:
                 unsigned int samples = frameInfo.samples/frameInfo.channels;
 
                 if (m_samples > 0) { // gapless playback
-                    if (m_samplepos + samples > m_samples) samples = m_samples - m_samplepos;
+                    if (m_samplepos + samples > m_samples) samples = (unsigned int)(m_samples - m_samplepos);
                 }
 
                 if (m_seekskip < samples) {
@@ -285,18 +286,33 @@ public:
 
         m_samples = 0;
         p = info->info_get("samples");
-        if (p) m_samples = (unsigned int)_atoi64(p);
+        if (p) m_samples = (unsigned __int64)_atoi64(p);
 
         if (m_samples > 0)
         {
-            unsigned __int8 length[4];
+            if (m_samples < ((unsigned __int64)1<<32)) {
+                unsigned __int8 length[4];
 
-            length[0] = (unsigned __int8)((unsigned int)(m_samples >> 24) & 0xFF);
-            length[1] = (unsigned __int8)((unsigned int)(m_samples >> 16) & 0xFF);
-            length[2] = (unsigned __int8)((unsigned int)(m_samples >>  8) & 0xFF);
-            length[3] = (unsigned __int8)((unsigned int)(m_samples      ) & 0xFF);
+                length[0] = (unsigned __int8)((unsigned int)(m_samples >> 24) & 0xFF);
+                length[1] = (unsigned __int8)((unsigned int)(m_samples >> 16) & 0xFF);
+                length[2] = (unsigned __int8)((unsigned int)(m_samples >>  8) & 0xFF);
+                length[3] = (unsigned __int8)((unsigned int)(m_samples      ) & 0xFF);
 
-            MP4SetMetadataFreeForm(hFile, "NDFL", length, 4);
+                MP4SetMetadataFreeForm(hFile, "NDFL", length, 4);
+            } else {
+                unsigned __int8 length[8];
+
+                length[0] = (unsigned __int8)((unsigned __int64)(m_samples >> 56) & 0xFF);
+                length[1] = (unsigned __int8)((unsigned __int64)(m_samples >> 48) & 0xFF);
+                length[2] = (unsigned __int8)((unsigned __int64)(m_samples >> 40) & 0xFF);
+                length[3] = (unsigned __int8)((unsigned __int64)(m_samples >> 32) & 0xFF);
+                length[4] = (unsigned __int8)((unsigned __int64)(m_samples >> 24) & 0xFF);
+                length[5] = (unsigned __int8)((unsigned __int64)(m_samples >> 16) & 0xFF);
+                length[6] = (unsigned __int8)((unsigned __int64)(m_samples >>  8) & 0xFF);
+                length[7] = (unsigned __int8)((unsigned __int64)(m_samples      ) & 0xFF);
+
+                MP4SetMetadataFreeForm(hFile, "NDFL", length, 8);
+            }
         }
 
         int numItems = info->meta_get_count();
@@ -355,14 +371,18 @@ public:
     {
         MP4Duration duration;
 
-        double secs = (seconds >= 1) ? seconds-1 : seconds;
-        duration = MP4ConvertToTrackDuration(hFile,
-            track, secs, MP4_SECS_TIME_SCALE);
-        sampleId = MP4GetSampleIdFromTime(hFile,
-            track, duration, 0);
+        double msecs = seconds * 1.0e3;
 
-        m_samplepos = (unsigned int)sampleId * m_framesize;
-        m_seekskip = (unsigned int)(seconds * m_samplerate + 0.5) - m_samplepos;
+        do {
+            if (msecs > 10.0) msecs -= 10.0; else msecs = 0;
+            duration = MP4ConvertToTrackDuration(hFile,
+                track, msecs, MP4_MSECS_TIME_SCALE);
+            sampleId = MP4GetSampleIdFromTime(hFile,
+                track, duration, 0);
+            m_samplepos = (unsigned __int64)sampleId * m_framesize;
+            m_seekskip = (int)((unsigned __int64)(seconds * m_samplerate + 0.5) - m_samplepos);
+            if (msecs == 0) break;
+        } while (m_seekskip < 0);
 
         return true;
     }
@@ -381,11 +401,11 @@ private:
     MP4FileHandle hFile;
     MP4SampleId sampleId, numSamples;
     MP4TrackId track;
-    unsigned int m_samples;
+    unsigned __int64 m_samples;
     unsigned int m_samplerate;
     unsigned int m_framesize;
-    unsigned int m_samplepos;
-    unsigned int m_seekskip;
+    unsigned __int64 m_samplepos;
+    int m_seekskip;
 
     int ReadMP4Tag(file_info *info)
     {
@@ -463,6 +483,11 @@ private:
                     {
                         // len = number of samples in whole file per channel
                         m_samples = ((data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3]);
+                    }
+                    else if (data && valueSize == 8)
+                    {
+                        // len = number of samples in whole file per channel
+                        m_samples = ((data[0] << 56) | (data[1] << 48) | (data[2] << 40) | (data[3] << 32) | (data[4] << 24) | (data[5] << 16) | (data[6] << 8) | data[7]);
                     }
                 } else {
                     float f = 0;
