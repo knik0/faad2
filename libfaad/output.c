@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: output.c,v 1.27 2003/11/06 15:43:59 menno Exp $
+** $Id: output.c,v 1.28 2003/11/07 21:04:14 menno Exp $
 **/
 
 #include "common.h"
@@ -37,6 +37,7 @@
 #define FLOAT_SCALE (1.0f/(1<<15))
 
 #define DM_MUL ((real_t)1.0/((real_t)1.0+(real_t)sqrt(2.0)))
+
 
 static INLINE real_t get_sample(real_t **input, uint8_t channel, uint16_t sample,
                                 uint8_t downMatrix, uint8_t *internal_channel)
@@ -82,19 +83,23 @@ void* output_to_PCM(faacDecHandle hDecoder,
                 real_t inp = get_sample(input, ch, i, hDecoder->downMatrix, hDecoder->internal_channel);
                 if (inp >= 0.0f)
                 {
+#ifndef HAS_LRINTF
                     inp += 0.5f;
+#endif
                     if (inp >= 32768.0f)
                     {
                         inp = 32767.0f;
                     }
                 } else {
+#ifndef HAS_LRINTF
                     inp += -0.5f;
+#endif
                     if (inp <= -32769.0f)
                     {
                         inp = -32768.0f;
                     }
                 }
-                short_sample_buffer[(i*channels)+ch] = (int16_t)inp;
+                short_sample_buffer[(i*channels)+ch] = (int16_t)lrintf(inp);
             }
             break;
         case FAAD_FMT_24BIT:
@@ -104,19 +109,23 @@ void* output_to_PCM(faacDecHandle hDecoder,
                 inp *= 256.0f;
                 if (inp >= 0.0f)
                 {
+#ifndef HAS_LRINTF
                     inp += 0.5f;
+#endif
                     if (inp >= 8388608.0f)
                     {
                         inp = 8388607.0f;
                     }
                 } else {
+#ifndef HAS_LRINTF
                     inp += -0.5f;
+#endif
                     if (inp <= -8388609.0f)
                     {
                         inp = -8388608.0f;
                     }
                 }
-                int_sample_buffer[(i*channels)+ch] = (int32_t)inp;
+                int_sample_buffer[(i*channels)+ch] = lrintf(inp);
             }
             break;
         case FAAD_FMT_32BIT:
@@ -126,19 +135,23 @@ void* output_to_PCM(faacDecHandle hDecoder,
                 inp *= 65536.0f;
                 if (inp >= 0.0f)
                 {
+#ifndef HAS_LRINTF
                     inp += 0.5f;
+#endif
                     if (inp >= 2147483648.0f)
                     {
                         inp = 2147483647.0f;
                     }
                 } else {
+#ifndef HAS_LRINTF
                     inp += -0.5f;
+#endif
                     if (inp <= -2147483649.0f)
                     {
                         inp = -2147483648.0f;
                     }
                 }
-                int_sample_buffer[(i*channels)+ch] = (int32_t)inp;
+                int_sample_buffer[(i*channels)+ch] = lrintf(inp);
             }
             break;
         case FAAD_FMT_FLOAT:

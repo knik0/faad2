@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.36 2003/11/04 21:43:30 menno Exp $
+** $Id: common.h,v 1.37 2003/11/07 21:04:14 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -261,6 +261,22 @@ char *strchr(), *strrchr();
   #define REAL_CONST(A) ((real_t)(A))
   #define COEF_CONST(A) ((real_t)(A))
 
+
+  #ifdef _WIN32
+    #define HAS_LRINTF
+    __inline int lrintf(float f)
+    {
+        int i;
+        __asm
+        {
+            fld   f
+            fistp i
+        }
+        return i;
+    }
+  #endif
+
+
   #ifdef __ICL /* only Intel C compiler has fmath ??? */
 
     #include <mathf.h>
@@ -273,6 +289,14 @@ char *strchr(), *strrchr();
     #define sqrt sqrtf
 
   #else
+
+#ifdef HAVE_LRINTF
+#  define HAS_LRINTF
+#  define _ISOC9X_SOURCE 1
+#  define _ISOC99_SOURCE 1
+#  define __USE_ISOC9X   1
+#  define __USE_ISOC99   1
+#endif
 
     #include <math.h>
 
@@ -301,6 +325,11 @@ char *strchr(), *strrchr();
 
   #endif
 
+#endif
+
+#ifndef HAS_LRINTF
+/* standard cast */
+#define lrintf(f) ((int32_t)(f))
 #endif
 
 typedef real_t complex_t[2];

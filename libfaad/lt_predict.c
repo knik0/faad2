@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: lt_predict.c,v 1.16 2003/11/04 21:43:30 menno Exp $
+** $Id: lt_predict.c,v 1.17 2003/11/07 21:04:14 menno Exp $
 **/
 
 
@@ -97,7 +97,7 @@ void lt_prediction(ic_stream *ics, ltp_info *ltp, real_t *spec,
                 /* lt_pred_stat is a 16 bit int, multiplied with the fixed point real
                    this gives a real for x_est
                 */
-                x_est[i] = lt_pred_stat[num_samples + i - ltp->lag] * codebook[ltp->coef];
+                x_est[i] = (real_t)lt_pred_stat[num_samples + i - ltp->lag] * codebook[ltp->coef];
 #endif
             }
 
@@ -124,28 +124,43 @@ void lt_prediction(ic_stream *ics, ltp_info *ltp, real_t *spec,
     }
 }
 
-static int16_t real_to_int16(real_t sig_in)
+#ifdef FIXED_POINT
+INLINE int16_t real_to_int16(real_t sig_in)
 {
-    int16_t sig_out = 0;
+    if (sig_in >= 0)
+    {
+        sig_in += (1 << (REAL_BITS-1));
+        if (sig_in > REAL_CONST(32767))
+            sig_in = 32767.0f;
+    } else {
+        sig_in += -(1 << (REAL_BITS-1));
+        if (sig_in < REAL_CONST(-32768))
+            sig_in = -32768.0f;
+    }
 
-    if (sig_in > REAL_CONST(32767))
-        sig_out = 32767;
-    else if (sig_in < REAL_CONST(-32768))
-        sig_out = -32768;
-#ifndef FIXED_POINT
-    else if (sig_in > 0.0)
-        sig_out = (int16_t)(sig_in + 0.5);
-    else if (sig_in <= 0.0)
-        sig_out = (int16_t)(sig_in - 0.5);
-#else
-    else if (sig_in > 0)
-        sig_out = (int16_t)((sig_in + (1 << (REAL_BITS-1))) >> REAL_BITS);
-    else if (sig_in <= 0)
-        sig_out = (int16_t)((sig_in - (1 << (REAL_BITS-1))) >> REAL_BITS);
-#endif
-
-    return sig_out;
+    return (sig_in >> REAL_BITS);
 }
+#else
+INLINE int16_t real_to_int16(real_t sig_in)
+{
+    if (sig_in >= 0)
+    {
+#ifndef HAS_LRINTF
+        sig_in += 0.5f;
+#endif
+        if (sig_in > REAL_CONST(32767))
+            sig_in = 32767.0f;
+    } else {
+#ifndef HAS_LRINTF
+        sig_in -= 0.5f;
+#endif
+        if (sig_in < REAL_CONST(-32768))
+            sig_in = -32768.0f;
+    }
+
+    return lrintf(sig_in);
+}
+#endif
 
 void lt_update_state(int16_t *lt_pred_stat, real_t *time, real_t *overlap,
                      uint16_t frame_len, uint8_t object_type)
