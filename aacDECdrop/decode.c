@@ -16,8 +16,8 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decode.c,v 1.12 2003/02/09 20:42:46 menno Exp $
-** $Id: decode.c,v 1.12 2003/02/09 20:42:46 menno Exp $
+** $Id: decode.c,v 1.13 2003/05/07 18:30:48 menno Exp $
+** $Id: decode.c,v 1.13 2003/05/07 18:30:48 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -472,6 +472,7 @@ int aac_decode(aac_dec_opt *opt)
     int mp4file = 0;
     char *fnp;
     char audioFileName[MAX_PATH];
+    MP4FileHandle infile;
 
 
     /* point to the specified file name */
@@ -484,9 +485,11 @@ int aac_decode(aac_dec_opt *opt)
 
     strcat(audioFileName, file_ext[opt->file_type]);
 
-    fnp = (char *)strrchr(opt->filename, '.');
-    if (!str_no_case_comp(fnp, ".MP4", 4))
-        mp4file = 1;
+    mp4file = 1;
+    infile = MP4Read(audioFileName, 0);
+    if (!infile)
+        mp4file = 0;
+    if (infile) MP4Close(infile);
 
     if (mp4file)
     {

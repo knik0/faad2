@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.30 2003/04/02 20:07:44 menno Exp $
+** $Id: main.c,v 1.31 2003/05/07 18:30:49 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -476,21 +476,6 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
     return frameInfo.error;
 }
 
-int str_no_case_comp(char const *str1, char const *str2, unsigned long len)
-{
-    signed int c1 = 0, c2 = 0;
-
-    while (len--) {
-        c1 = tolower(*str1++);
-        c2 = tolower(*str2++);
-
-        if (c1 == 0 || c1 != c2)
-            break;
-    }
-
-    return c1 - c2;
-}
-
 int main(int argc, char *argv[])
 {
     int result;
@@ -505,6 +490,7 @@ int main(int argc, char *argv[])
     char *fnp;
     char aacFileName[255];
     char audioFileName[255];
+    MP4FileHandle infile;
 
 /* System dependant types */
 #ifdef _WIN32
@@ -649,9 +635,11 @@ int main(int argc, char *argv[])
         strcat(audioFileName, file_ext[format]);
     }
 
-    fnp = (char *)strrchr(aacFileName, '.');
-    if (!str_no_case_comp(fnp, ".MP4", 4))
-        mp4file = 1;
+    mp4file = 1;
+    infile = MP4Read(aacFileName, 0);
+    if (!infile)
+        mp4file = 0;
+    if (infile) MP4Close(infile);
 
     if (mp4file)
     {

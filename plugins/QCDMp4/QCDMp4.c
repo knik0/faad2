@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: QCDMp4.c,v 1.1 2003/04/28 19:07:57 menno Exp $
+** $Id: QCDMp4.c,v 1.2 2003/05/07 18:30:49 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -192,7 +192,7 @@ PLUGIN_API BOOL QInputModule(QCDModInitIn *ModInit, QCDModInfo *ModInfo)
 	config_read();
 
 	ModInfo->moduleString = "MPEG-4 General Audio Plugin v1.0";
-	ModInfo->moduleExtensions = m_use_for_aac ? "MP4:AAC" : "MP4";
+	ModInfo->moduleExtensions = m_use_for_aac ? "MP4:M4A:AAC" : "MP4:M4A";
 
 	hwndPlayer = (HWND)ModInit->Service(opGetParentWnd, 0, 0, 0);
 	mp4state.filename[0] = 0;
@@ -242,7 +242,7 @@ int Initialize(QCDModInfo *ModInfo, int flags)
     config_read();
 
 	ModInfo->moduleString = "MPEG-4 General Audio Plugin v1.0";
-	ModInfo->moduleExtensions = m_use_for_aac ? "MP4:AAC" : "MP4";
+	ModInfo->moduleExtensions = m_use_for_aac ? "MP4:M4A:AAC" : "MP4:M4A";
 
 	// insert menu item into plugin menu
 //	QCDCallbacks->Service(opSetPluginMenuItem, hInstance, IDD_CONFIG, (long)"Mp4 Plug-in");

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.28 2003/04/28 10:16:03 menno Exp $
+** $Id: foo_mp4.cpp,v 1.29 2003/05/07 18:30:49 menno Exp $
 **/
 
 #include <mp4.h>
@@ -35,7 +35,7 @@ char *STRIP_REVISION(const char *str)
 }
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           STRIP_REVISION("$Revision: 1.28 $"),
+                           STRIP_REVISION("$Revision: 1.29 $"),
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -44,7 +44,7 @@ public:
 
     virtual int test_filename(const char * fn,const char * ext)
     {
-        return !stricmp(ext,"MP4");
+        return (!stricmp(ext,"MP4") || !stricmp(ext,"M4A"));
     }
 
     virtual int open(reader *r, file_info *info, int full_open)

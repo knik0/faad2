@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.26 2003/02/25 17:45:03 menno Exp $
+** $Id: in_mp4.c,v 1.27 2003/05/07 18:30:49 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -1132,7 +1132,7 @@ static In_Module module =
     "AudioCoding.com MPEG-4 General Audio player: " FAAD2_VERSION " compiled on " __DATE__,
     0,  // hMainWindow
     0,  // hDllInstance
-    "MP4\0MPEG-4 Files (*.MP4)\0AAC\0AAC Files (*.AAC)\0"
+    "MP4\0MPEG-4 Files (*.MP4)\0M4A\0MPEG-4 Files (*.M4A)\0AAC\0AAC Files (*.AAC)\0"
     ,
     1, // is_seekable
     1, // uses output
