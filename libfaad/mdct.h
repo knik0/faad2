@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.h,v 1.1 2002/01/14 19:15:56 menno Exp $
+** $Id: mdct.h,v 1.2 2002/02/18 10:01:05 menno Exp $
 **/
 
 #ifndef __MDCT_H__
@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 
-typedef float fftw_real;
+typedef real_t fftw_real;
 
 typedef struct {
      fftw_real re, im;
@@ -38,7 +38,7 @@ typedef struct {
 #define DEFINE_PFFTW(size)          \
  void pfftwi_##size(fftw_complex *input);   \
  void pfftw_##size(fftw_complex *input);    \
- int  pfftw_permutation_##size(int i);
+ uint16_t pfftw_permutation_##size(uint16_t i);
 
 DEFINE_PFFTW(16)
 DEFINE_PFFTW(32)
@@ -46,12 +46,12 @@ DEFINE_PFFTW(64)
 DEFINE_PFFTW(128)
 DEFINE_PFFTW(512)
 
-void make_fft_order(short *unscrambled64, short *unscrambled512);
-void IMDCT_long(fftw_real *in_data, fftw_real *out_data, short *unscrambled);
-void IMDCT_short(fftw_real *in_data, fftw_real *out_data, short *unscrambled);
+void make_fft_order(uint16_t *unscrambled64, uint16_t *unscrambled512);
+void IMDCT_long(fftw_real *in_data, fftw_real *out_data, uint16_t *unscrambled);
+void IMDCT_short(fftw_real *in_data, fftw_real *out_data, uint16_t *unscrambled);
 
-void MDCT_long(fftw_real *in_data, fftw_real *out_data, short *unscrambled);
-void MDCT_short(fftw_real *in_data, fftw_real *out_data, short *unscrambled);
+void MDCT_long(fftw_real *in_data, fftw_real *out_data, uint16_t *unscrambled);
+void MDCT_short(fftw_real *in_data, fftw_real *out_data, uint16_t *unscrambled);
 
 #define PFFTW(name)  CONCAT(pfftw_, name)
 #define PFFTWI(name)  CONCAT(pfftwi_, name)
@@ -59,8 +59,8 @@ void MDCT_short(fftw_real *in_data, fftw_real *out_data, short *unscrambled);
 #define CONCAT(a, b) CONCAT_AUX(a,b)
 #define FFTW_KONST(x) ((fftw_real) x)
 
-void PFFTW(twiddle_4)(fftw_complex *A, const fftw_complex *W, int iostride);
-void PFFTWI(twiddle_4)(fftw_complex *A, const fftw_complex *W, int iostride);
+void PFFTW(twiddle_4)(fftw_complex *A, const fftw_complex *W, uint16_t iostride);
+void PFFTWI(twiddle_4)(fftw_complex *A, const fftw_complex *W, uint16_t iostride);
 
 #ifdef __cplusplus
 }

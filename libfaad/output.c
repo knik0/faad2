@@ -16,10 +16,12 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: output.c,v 1.2 2002/01/25 20:15:07 menno Exp $
+** $Id: output.c,v 1.3 2002/02/18 10:01:05 menno Exp $
 **/
 
-#ifdef __ICL
+#include "common.h"
+
+#ifdef USE_FMATH
 #include <mathf.h>
 #else
 #include <math.h>
@@ -27,17 +29,18 @@
 #include "output.h"
 #include "decoder.h"
 
-#define ftol(A,B) {tmp = *(int*) & A - 0x4B7F8000; \
-                   B = (short)((tmp==(short)tmp) ? tmp : (tmp>>31)^0x7FFF);}
-#ifdef __ICL
-#define ROUND(x) ((long)floorf((x) + 0.5f))
+
+#define ftol(A,B) {tmp = *(int32_t*) & A - 0x4B7F8000; \
+                   B = (int16_t)((tmp==(int16_t)tmp) ? tmp : (tmp>>31)^0x7FFF);}
+#ifdef USE_FMATH
+#define ROUND(x) ((int32_t)floorf((x) + 0.5f))
 #else
-#define ROUND(x) ((long)floor((x) + 0.5))
+#define ROUND(x) ((int32_t)floor((x) + 0.5))
 #endif
 
 #define HAVE_IEEE754_FLOAT
 #ifdef HAVE_IEEE754_FLOAT
-#define ROUND32(x) (floattmp = (x) + (long)0x00FD8000L, *(long*)(&floattmp) - (long)0x4B7D8000L)
+#define ROUND32(x) (floattmp = (x) + (int32_t)0x00FD8000L, *(int32_t*)(&floattmp) - (int32_t)0x4B7D8000L)
 #else
 #define ROUND32(x) ROUND(x)
 #endif
@@ -45,14 +48,15 @@
 #define FLOAT_SCALE (1.0f/(1<<15))
 
 
-void* output_to_PCM(float **input, void *sample_buffer, int channels,
-                    int format)
+void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
+                    uint8_t format)
 {
-    int ch, i;
+    uint8_t ch;
+    uint16_t i;
 
-    short *short_sample_buffer = (short*)sample_buffer;
-    int   *int_sample_buffer = (int*)sample_buffer;
-    float *float_sample_buffer = (float*)sample_buffer;
+    int16_t   *short_sample_buffer = (int16_t*)sample_buffer;
+    int32_t   *int_sample_buffer = (int32_t*)sample_buffer;
+    float32_t *float_sample_buffer = (float32_t*)sample_buffer;
 
     /* Copy output to a standard PCM buffer */
     switch (format)
@@ -62,8 +66,8 @@ void* output_to_PCM(float **input, void *sample_buffer, int channels,
         {
             for(i = 0; i < 1024; i++)
             {
-                int tmp;
-                float ftemp;
+                int32_t tmp;
+                real_t ftemp;
 
                 ftemp = input[ch][i] + 0xff8000;
                 ftol(ftemp, short_sample_buffer[(i*channels)+ch]);
@@ -82,7 +86,7 @@ void* output_to_PCM(float **input, void *sample_buffer, int channels,
     case FAAD_FMT_32BIT:
         for (ch = 0; ch < channels; ch++)
         {
-            float floattmp;
+            real_t floattmp;
 
             for(i = 0; i < 1024; i++)
             {

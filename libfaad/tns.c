@@ -16,10 +16,12 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: tns.c,v 1.1 2002/01/14 19:15:57 menno Exp $
+** $Id: tns.c,v 1.2 2002/02/18 10:01:05 menno Exp $
 **/
 
-#ifdef __ICL
+#include "common.h"
+
+#ifdef USE_FMATH
 #include <mathf.h>
 #else
 #include <math.h>
@@ -29,12 +31,13 @@
 
 
 /* TNS decoding for one channel and frame */
-void tns_decode_frame(ic_stream *ics, tns_info *tns, int sr_index,
-                      int object_type, float *spec)
+void tns_decode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
+                      uint8_t object_type, real_t *spec)
 {
-    int w, bottom, f, top, start, end, size, inc;
-    int tns_order;
-    float lpc[TNS_MAX_ORDER+1];
+    uint8_t w, f, tns_order;
+    int8_t inc;
+    uint16_t bottom, top, start, end, size;
+    real_t lpc[TNS_MAX_ORDER+1];
 
     if (!ics->tns_data_present)
         return;
@@ -76,12 +79,13 @@ void tns_decode_frame(ic_stream *ics, tns_info *tns, int sr_index,
 }
 
 /* TNS encoding for one channel and frame */
-void tns_encode_frame(ic_stream *ics, tns_info *tns, int sr_index,
-                      int object_type, float *spec)
+void tns_encode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
+                      uint8_t object_type, real_t *spec)
 {
-    int w, bottom, f, top, start, end, size, inc;
-    int tns_order;
-    float lpc[TNS_MAX_ORDER+1];
+    uint8_t w, f, tns_order;
+    int8_t inc;
+    uint16_t bottom, top, start, end, size;
+    real_t lpc[TNS_MAX_ORDER+1];
 
     if (!ics->tns_data_present)
         return;
@@ -123,18 +127,18 @@ void tns_encode_frame(ic_stream *ics, tns_info *tns, int sr_index,
 }
 
 /* Decoder transmitted coefficients for one TNS filter */
-static void tns_decode_coef(int order, int coef_res_bits, int coef_compress,
-                            int *coef, float *a)
+static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_compress,
+                            uint8_t *coef, real_t *a)
 {
-    int i, m;
-    int coef_res2, s_mask, n_mask;
-    int tmp[TNS_MAX_ORDER+1];
-    float tmp2[TNS_MAX_ORDER+1], b[TNS_MAX_ORDER+1];
-    float iqfac, iqfac_m;
+    uint8_t i, m;
+    uint8_t coef_res2, s_mask, n_mask;
+    int8_t tmp[TNS_MAX_ORDER+1];
+    real_t tmp2[TNS_MAX_ORDER+1], b[TNS_MAX_ORDER+1];
+    real_t iqfac, iqfac_m;
 
     /* Some internal tables */
-    int sgn_mask[] = { 0x2, 0x4, 0x8 };
-    int neg_mask[] = { ~0x3, ~0x7, ~0xf };
+    static uint8_t sgn_mask[] = { 0x2, 0x4, 0x8 };
+    static uint8_t neg_mask[] = { ~0x3, ~0x7, ~0xf };
 
     /* size used for transmission */
     coef_res2 = coef_res_bits - coef_compress;
@@ -150,10 +154,10 @@ static void tns_decode_coef(int order, int coef_res_bits, int coef_compress,
     iqfac_m = ((1 << (coef_res_bits-1)) + 0.5f) / (M_PI/2.0f);
 
     for (i = 0; i < order; i++)
-#ifdef __ICL
+#ifdef USE_FMATH
         tmp2[i] = sinf(tmp[i] / ((tmp[i] >= 0) ? iqfac : iqfac_m));
 #else
-        tmp2[i] = (float)sin(tmp[i] / ((tmp[i] >= 0) ? iqfac : iqfac_m));
+        tmp2[i] = (real_t)sin(tmp[i] / ((tmp[i] >= 0) ? iqfac : iqfac_m));
 #endif
 
     /* Conversion to LPC coefficients */
@@ -170,8 +174,8 @@ static void tns_decode_coef(int order, int coef_res_bits, int coef_compress,
     }
 }
 
-static void tns_ar_filter(float *spectrum, int size, int inc, float *lpc,
-                          int order)
+static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *lpc,
+                          uint8_t order)
 {
     /*
      - Simple all-pole filter of order "order" defined by
@@ -182,8 +186,9 @@ static void tns_ar_filter(float *spectrum, int size, int inc, float *lpc,
        to the next data sample is given by "inc"
     */
 
-    int i, j;
-    float y, state[TNS_MAX_ORDER];
+    uint8_t j;
+    uint16_t i;
+    real_t y, state[TNS_MAX_ORDER];
 
     for (i = 0; i < order; i++)
         state[i] = 0;
@@ -204,8 +209,8 @@ static void tns_ar_filter(float *spectrum, int size, int inc, float *lpc,
     }
 }
 
-static void tns_ma_filter(float *spectrum, int size, int inc, float *lpc,
-                          int order)
+static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *lpc,
+                          uint8_t order)
 {
     /*
      - Simple all-zero filter of order "order" defined by
@@ -216,8 +221,9 @@ static void tns_ma_filter(float *spectrum, int size, int inc, float *lpc,
        to the next data sample is given by "inc"
     */
 
-    int i, j;
-    float y, state[TNS_MAX_ORDER];
+    uint8_t j;
+    uint16_t i;
+    real_t y, state[TNS_MAX_ORDER];
 
     for (i = 0; i < order; i++)
         state[i] = 0;
@@ -238,7 +244,7 @@ static void tns_ma_filter(float *spectrum, int size, int inc, float *lpc,
     }
 }
 
-static int tns_max_bands_table[12][4] =
+static uint8_t tns_max_bands_table[12][4] =
 {
     /* entry for each sampling rate
      * 1    Main/LC long window
@@ -260,17 +266,17 @@ static int tns_max_bands_table[12][4] =
     { 39, 14, 19, 7 },       /* 8000  */
 };
 
-static int tns_max_bands(ic_stream *ics, int sr_index)
+static uint8_t tns_max_bands(ic_stream *ics, uint8_t sr_index)
 {
-    int i;
+    uint8_t i;
 
     i = (ics->window_sequence == EIGHT_SHORT_SEQUENCE) ? 1 : 0;
 
     return tns_max_bands_table[sr_index][i];
 }
 
-static int tns_max_order(ic_stream *ics, int sr_index,
-                         int object_type)
+static uint8_t tns_max_order(ic_stream *ics, uint8_t sr_index,
+                         uint8_t object_type)
 {
     /* Correction in 14496-3 Cor. 1
        Works like MPEG2-AAC (13818-7) now

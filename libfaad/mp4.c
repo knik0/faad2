@@ -16,16 +16,17 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mp4.c,v 1.1 2002/01/20 16:57:55 menno Exp $
+** $Id: mp4.c,v 1.2 2002/02/18 10:01:05 menno Exp $
 **/
 
+#include "common.h"
 #include "bits.h"
 #include "mp4.h"
 #include "data.h"
 #include "syntax.h"
 
 /* defines if an object type can be decoded by this library or not */
-static unsigned long ObjectTypesTable[32] = {
+static uint8_t ObjectTypesTable[32] = {
     0, /* NULL */
     1, /* AAC Main */
     1, /* AAC LC */
@@ -46,26 +47,25 @@ static unsigned long ObjectTypesTable[32] = {
 };
 
 /* Table 1.6.1 */
-int FAADAPI AudioSpecificConfig(unsigned char *pBuffer,
-                                unsigned long *samplerate,
-                                unsigned long *channels,
-                                unsigned long *sf_index,
-                                unsigned long *object_type)
+int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
+                                uint32_t *samplerate,
+                                uint8_t *channels,
+                                uint8_t *sf_index,
+                                uint8_t *object_type)
 {
     bitfile ld;
-    unsigned long ObjectTypeIndex, SamplingFrequencyIndex,
-        ChannelsConfiguration;
+    uint8_t ObjectTypeIndex, SamplingFrequencyIndex, ChannelsConfiguration;
 
     faad_initbits(&ld, pBuffer);
     faad_byte_align(&ld);
 
-    ObjectTypeIndex = faad_getbits(&ld, 5
+    ObjectTypeIndex = (uint8_t)faad_getbits(&ld, 5
         DEBUGVAR(1,1,"parse_audio_decoder_specific_info(): ObjectTypeIndex"));
 
-    SamplingFrequencyIndex = faad_getbits(&ld, 4
+    SamplingFrequencyIndex = (uint8_t)faad_getbits(&ld, 4
         DEBUGVAR(1,2,"parse_audio_decoder_specific_info(): SamplingFrequencyIndex"));
 
-    ChannelsConfiguration = faad_getbits(&ld, 4
+    ChannelsConfiguration = (uint8_t)faad_getbits(&ld, 4
         DEBUGVAR(1,3,"parse_audio_decoder_specific_info(): ChannelsConfiguration"));
 
     *samplerate = sample_rates[SamplingFrequencyIndex];

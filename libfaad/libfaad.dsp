@@ -221,6 +221,10 @@ SOURCE=.\bits.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\common.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\data.h
 # End Source File
 # Begin Source File

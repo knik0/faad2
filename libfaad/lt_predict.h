@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: lt_predict.h,v 1.1 2002/01/14 19:15:56 menno Exp $
+** $Id: lt_predict.h,v 1.2 2002/02/18 10:01:05 menno Exp $
 **/
 
 #ifndef __LT_PREDICT_H__
@@ -28,10 +28,19 @@ extern "C" {
 
 #include "filtbank.h"
 
-void lt_prediction(ic_stream *ics, ltp_info *ltp, float *spec,
-                   float *lt_pred_stat, fb_info *fb, int win_shape,
-                   int win_shape_prev, int sr_index, int object_type);
-void lt_update_state(float *lt_pred_stat, float *time, float *overlap);
+void lt_prediction(ic_stream *ics,
+                   ltp_info *ltp,
+                   real_t *spec,
+                   real_t *lt_pred_stat,
+                   fb_info *fb,
+                   uint8_t win_shape,
+                   uint8_t win_shape_prev,
+                   uint8_t sr_index,
+                   uint8_t object_type);
+
+void lt_update_state(real_t *lt_pred_stat,
+                     real_t *time,
+                     real_t *overlap);
 
 #ifdef __cplusplus
 }

@@ -16,11 +16,13 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.c,v 1.1 2002/01/14 19:15:55 menno Exp $
+** $Id: filtbank.c,v 1.2 2002/02/18 10:01:05 menno Exp $
 **/
 
+#include "common.h"
+
 #include <stdlib.h>
-#ifdef __ICL
+#ifdef USE_FMATH
 #include <mathf.h>
 #else
 #include <math.h>
@@ -31,31 +33,18 @@
 #include "kbd_win.h"
 #include "mdct.h"
 
-#ifndef PI
-#define PI 3.14159265359f
-#endif
 
-#ifdef LINUX
-#define INLINE inline
-#else
-#ifdef WIN32
-#define INLINE __inline
-#else
-#define INLINE
-#endif
-#endif
-
-float *long_window[2];
-float *short_window[2];
+real_t *long_window[2];
+real_t *short_window[2];
 
 void filter_bank_init(fb_info *fb)
 {
-    int i;
+    uint16_t i;
 
     make_fft_order(fb->unscrambled64, fb->unscrambled512);
 
-    fb->sin_long  = malloc(BLOCK_LEN_LONG*sizeof(float));
-    fb->sin_short = malloc(BLOCK_LEN_SHORT*sizeof(float));
+    fb->sin_long  = malloc(BLOCK_LEN_LONG*sizeof(real_t));
+    fb->sin_short = malloc(BLOCK_LEN_SHORT*sizeof(real_t));
 
     long_window[0]  = fb->sin_long;
     long_window[1]  = kbd_long;
@@ -64,16 +53,16 @@ void filter_bank_init(fb_info *fb)
 
     /* calculate the sine windows */
     for (i = 0; i < BLOCK_LEN_LONG; i++)
-#ifdef __ICL
-        fb->sin_long[i] = sinf(PI / (2.0f * BLOCK_LEN_LONG) * (i + 0.5));
+#ifdef USE_FMATH
+        fb->sin_long[i] = sinf(M_PI / (2.0f * BLOCK_LEN_LONG) * (i + 0.5));
 #else
-        fb->sin_long[i] = (float)sin(PI / (2.0 * BLOCK_LEN_LONG) * (i + 0.5));
+        fb->sin_long[i] = (real_t)sin(M_PI / (2.0 * BLOCK_LEN_LONG) * (i + 0.5));
 #endif
     for (i = 0; i < BLOCK_LEN_SHORT; i++)
-#ifdef __ICL
-        fb->sin_short[i] = sinf(PI / (2.0f * BLOCK_LEN_SHORT) * (i + 0.5));
+#ifdef USE_FMATH
+        fb->sin_short[i] = sinf(M_PI / (2.0f * BLOCK_LEN_SHORT) * (i + 0.5));
 #else
-        fb->sin_short[i] = (float)sin(PI / (2.0 * BLOCK_LEN_SHORT) * (i + 0.5));
+        fb->sin_short[i] = (real_t)sin(M_PI / (2.0 * BLOCK_LEN_SHORT) * (i + 0.5));
 #endif
 }
 
@@ -83,9 +72,9 @@ void filter_bank_end(fb_info *fb)
     if (fb->sin_short) free(fb->sin_short);
 }
 
-static INLINE void vcopy(float *src, float *dest, int vlen)
+static INLINE void vcopy(real_t *src, real_t *dest, uint16_t vlen)
 {
-    int i;
+    int16_t i;
 
     assert(vlen % 16 == 0);
 
@@ -98,9 +87,9 @@ static INLINE void vcopy(float *src, float *dest, int vlen)
     }
 }
 
-static INLINE void vzero(float *dest, int vlen)
+static INLINE void vzero(real_t *dest, uint16_t vlen)
 {
-    int i;
+    int16_t i;
 
     assert(vlen % 16 == 0);
 
@@ -113,9 +102,9 @@ static INLINE void vzero(float *dest, int vlen)
     }
 }
 
-static INLINE void vmult1(float *src1, float *src2, float *dest, int vlen)
+static INLINE void vmult1(real_t *src1, real_t *src2, real_t *dest, uint16_t vlen)
 {
-    int i;
+    int16_t i;
 
     assert(vlen % 16 == 0);
 
@@ -132,9 +121,9 @@ static INLINE void vmult1(float *src1, float *src2, float *dest, int vlen)
     }
 }
 
-static INLINE void vmult2(float *src1, float *src2, float *dest, int vlen)
+static INLINE void vmult2(real_t *src1, real_t *src2, real_t *dest, uint16_t vlen)
 {
-    int i;
+    int16_t i;
 
     assert(vlen % 16 == 0);
 
@@ -151,9 +140,9 @@ static INLINE void vmult2(float *src1, float *src2, float *dest, int vlen)
     }
 }
 
-static INLINE void vadd(float *src1, float *src2, float *dest, int vlen)
+static INLINE void vadd(real_t *src1, real_t *src2, real_t *dest, uint16_t vlen)
 {
-    int i;
+    int16_t i;
 
     assert(vlen % 16 == 0);
 
@@ -170,7 +159,7 @@ static INLINE void vadd(float *src1, float *src2, float *dest, int vlen)
     }
 }
 
-static INLINE void imdct(fb_info *fb, float *in_data, float *out_data, int len)
+static INLINE void imdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_t len)
 {
     switch (len)
     {
@@ -183,7 +172,7 @@ static INLINE void imdct(fb_info *fb, float *in_data, float *out_data, int len)
     }
 }
 
-static INLINE void mdct(fb_info *fb, float *in_data, float *out_data, int len)
+static INLINE void mdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_t len)
 {
     switch (len)
     {
@@ -196,24 +185,24 @@ static INLINE void mdct(fb_info *fb, float *in_data, float *out_data, int len)
     }
 }
 
-void ifilter_bank(fb_info *fb, int window_sequence, int window_shape,
-                  int window_shape_prev, float *freq_in, float *time_buff,
-                  float *time_out)
+void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
+                  uint8_t window_shape_prev, real_t *freq_in, real_t *time_buff,
+                  real_t *time_out)
 {
-    float *o_buf, transf_buf[2*BLOCK_LEN_LONG];
+    real_t *o_buf, transf_buf[2*BLOCK_LEN_LONG];
 
-    float *window_long;
-    float *window_long_prev;
-    float *window_short;
-    float *window_short_prev;
-    float *window_short_prev_ptr;
+    real_t *window_long;
+    real_t *window_long_prev;
+    real_t *window_short;
+    real_t *window_short_prev;
+    real_t *window_short_prev_ptr;
 
-    float *fp;
-    int win;
-    int nlong = 1024;
-    int nshort = 128;
+    real_t *fp;
+    int8_t win;
+    uint16_t nlong = 1024;
+    uint16_t nshort = 128;
 
-    int nflat_ls = (nlong-nshort)/2;
+    uint16_t nflat_ls = (nlong-nshort)/2;
 
     window_long       =  long_window[window_shape];
     window_long_prev  =  long_window[window_shape_prev];
@@ -322,22 +311,22 @@ void ifilter_bank(fb_info *fb, int window_sequence, int window_shape,
 }
 
 /* only works for LTP -> no overlapping */
-void filter_bank_ltp(fb_info *fb, int window_sequence, int window_shape,
-                     int window_shape_prev, float *in_data, float *out_mdct)
+void filter_bank_ltp(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
+                     uint8_t window_shape_prev, real_t *in_data, real_t *out_mdct)
 {
-    int win;
-    float windowed_buf[2*1024];
-    float *p_o_buf;
+    int8_t win;
+    real_t windowed_buf[2*1024];
+    real_t *p_o_buf;
 
-    float *window_long;
-    float *window_long_prev;
-    float *window_short;
-    float *window_short_prev;
-    float *window_short_prev_ptr;
+    real_t *window_long;
+    real_t *window_long_prev;
+    real_t *window_short;
+    real_t *window_short_prev;
+    real_t *window_short_prev_ptr;
 
-    int nlong = 1024;
-    int nshort = 128;
-    int nflat_ls = (nlong-nshort)/2;
+    uint16_t nlong = 1024;
+    uint16_t nshort = 128;
+    uint16_t nflat_ls = (nlong-nshort)/2;
 
 
     window_long       =  long_window[window_shape];

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: analysis.h,v 1.1 2002/01/22 09:11:24 menno Exp $
+** $Id: analysis.h,v 1.2 2002/02/18 10:01:05 menno Exp $
 **/
 
 #ifndef __ANALYSIS_H__
@@ -28,9 +28,9 @@ extern "C" {
 
 
 #ifdef ANALYSIS
-#define DEBUGDEC        ,int print,int var,char *dbg
+#define DEBUGDEC        ,uint8_t print,uint16_t var,uint8_t *dbg
 #define DEBUGVAR(A,B,C) ,A,B,C
-extern int dbg_count;
+extern uint16_t dbg_count;
 #else
 #define DEBUGDEC
 #define DEBUGVAR(A,B,C)

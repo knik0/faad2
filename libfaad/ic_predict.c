@@ -16,49 +16,45 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ic_predict.c,v 1.1 2002/01/14 19:15:56 menno Exp $
+** $Id: ic_predict.c,v 1.2 2002/02/18 10:01:05 menno Exp $
 **/
 
-#ifdef __ICL
-#include <mathf.h>
-#else
-#include <math.h>
-#endif
+#include "common.h"
 #include "syntax.h"
 #include "ic_predict.h"
 #include "pns.h"
 
-static void flt_round_inf(float *pf)
+static void flt_round_inf(real_t *pf)
 {
-    int flg;
-    unsigned long tmp;
-    float *pt = (float *)&tmp;
+    int32_t flg;
+    uint32_t tmp;
+    real_t *pt = (real_t *)&tmp;
 
     *pt = *pf;
-    flg = tmp & (unsigned long)0x00008000;
-    tmp &= (unsigned long)0xffff0000;
+    flg = tmp & (uint32_t)0x00008000;
+    tmp &= (uint32_t)0xffff0000;
     *pf = *pt;
 
     /* round 1/2 lsb toward infinity */
     if (flg)
     {
-        tmp &= (unsigned long)0xff800000; /* extract exponent and sign */
-        tmp |= (unsigned long)0x00010000; /* insert 1 lsb */
-        *pf += *pt;                       /* add 1 lsb and elided one */
-        tmp &= (unsigned long)0xff800000; /* extract exponent and sign */
-        *pf -= *pt;                       /* subtract elided one */
+        tmp &= (uint32_t)0xff800000; /* extract exponent and sign */
+        tmp |= (uint32_t)0x00010000; /* insert 1 lsb */
+        *pf += *pt;                  /* add 1 lsb and elided one */
+        tmp &= (uint32_t)0xff800000; /* extract exponent and sign */
+        *pf -= *pt;                  /* subtract elided one */
     }
 }
 
-static void ic_predict(pred_state *state, float input, float *output, int pred)
+static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t pred)
 {
-    float dr1, predictedvalue;
-    float e0, e1;
-    float k1, k2;
+    real_t dr1, predictedvalue;
+    real_t e0, e1;
+    real_t k1, k2;
 
-    float *r;
-    float *KOR;
-    float *VAR;
+    real_t *r;
+    real_t *KOR;
+    real_t *VAR;
 
     r   = state->r;   /* delay elements */
     KOR = state->KOR; /* correlations */
@@ -106,8 +102,8 @@ static void reset_pred_state(pred_state *state)
 
 void pns_reset_pred_state(ic_stream *ics, pred_state *state)
 {
-    int sfb, g, b, i;
-    int offs, size;
+    uint8_t sfb, g, b;
+    uint16_t i, offs, size;
 
     /* prediction only for long blocks */
     if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
@@ -134,16 +130,17 @@ void pns_reset_pred_state(ic_stream *ics, pred_state *state)
 
 void reset_all_predictors(pred_state *state)
 {
-    int i;
+    uint16_t i;
 
     for (i = 0; i < 1024; i++)
         reset_pred_state(&state[i]);
 }
 
 /* intra channel prediction */
-void ic_prediction(ic_stream *ics, float *spec, pred_state *state)
+void ic_prediction(ic_stream *ics, real_t *spec, pred_state *state)
 {
-    int sfb, bin;
+    uint8_t sfb;
+    uint16_t bin;
 
     if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
     {
@@ -151,8 +148,8 @@ void ic_prediction(ic_stream *ics, float *spec, pred_state *state)
     } else {
         for (sfb = 0; sfb < ics->pred.limit; sfb++)
         {
-            int low  = ics->swb_offset[sfb];
-            int high = ics->swb_offset[sfb+1];
+            uint16_t low  = ics->swb_offset[sfb];
+            uint16_t high = ics->swb_offset[sfb+1];
 
             for (bin = low; bin < high; bin++)
             {

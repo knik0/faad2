@@ -16,9 +16,10 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: hcb_11.c,v 1.1 2002/02/15 20:52:10 menno Exp $
+** $Id: hcb_11.c,v 1.2 2002/02/18 10:01:05 menno Exp $
 **/
 
+#include "../common.h"
 #include "hcb.h"
 
 /* 2-step huffman table HCB_11 */

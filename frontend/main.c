@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.12 2002/02/04 09:17:43 menno Exp $
+** $Id: main.c,v 1.13 2002/02/18 10:01:05 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -153,7 +153,8 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
                   int def_srate, int use_ltp, int outputFormat, int fileType)
 {
     int tagsize;
-    unsigned long samplerate, channels;
+    unsigned long samplerate;
+    unsigned char channels;
     void *sample_buffer;
 
     FILE *infile;
@@ -297,12 +298,13 @@ int GetAACTrack(MP4FileHandle infile)
         if (!strcmp(trackType, MP4_AUDIO_TRACK_TYPE))
         {
             unsigned char *buff = NULL;
-            int buff_size = 0, dummy;
+            int buff_size = 0;
+            unsigned long dummy32; unsigned char dummy8;
             MP4GetTrackESConfiguration(infile, trackId, &buff, &buff_size);
 
             if (buff)
             {
-                rc = AudioSpecificConfig(buff, &dummy, &dummy, &dummy, &dummy);
+                rc = AudioSpecificConfig(buff, &dummy32, &dummy8, &dummy8, &dummy8);
                 free(buff);
 
                 if (rc < 0)
@@ -326,7 +328,8 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
                   int outputFormat, int fileType)
 {
     int track;
-    unsigned long samplerate, channels;
+    unsigned long samplerate;
+    unsigned char channels;
     void *sample_buffer;
 
     MP4FileHandle infile;

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.4 2002/01/25 20:26:33 menno Exp $
+** $Id: syntax.h,v 1.5 2002/02/18 10:01:05 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -27,10 +27,6 @@ extern "C" {
 #endif
 
 #include "bits.h"
-
-#ifndef min
-#define min(a,b) ((a) < (b) ? (a) : (b))
-#endif
 
 #define MAIN 0
 #define LC   1
@@ -83,161 +79,161 @@ extern "C" {
 
 typedef struct
 {
-    int element_instance_tag;
-    int object_type;
-    int sf_index;
-    int num_front_channel_elements;
-    int num_side_channel_elements;
-    int num_back_channel_elements;
-    int num_lfe_channel_elements;
-    int num_assoc_data_elements;
-    int num_valid_cc_elements;
-    int mono_mixdown_present;
-    int mono_mixdown_element_number;
-    int stereo_mixdown_present;
-    int stereo_mixdown_element_number;
-    int matrix_mixdown_idx_present;
-    int pseudo_surround_enable;
-    int matrix_mixdown_idx;
-    int front_element_is_cpe[16];
-    int front_element_tag_select[16];
-    int side_element_is_cpe[16];
-    int side_element_tag_select[16];
-    int back_element_is_cpe[16];
-    int back_element_tag_select[16];
-    int lfe_element_tag_select[16];
-    int assoc_data_element_tag_select[16];
-    int cc_element_is_ind_sw[16];
-    int valid_cc_element_tag_select[16];
+    uint8_t element_instance_tag;
+    uint8_t object_type;
+    uint8_t sf_index;
+    uint8_t num_front_channel_elements;
+    uint8_t num_side_channel_elements;
+    uint8_t num_back_channel_elements;
+    uint8_t num_lfe_channel_elements;
+    uint8_t num_assoc_data_elements;
+    uint8_t num_valid_cc_elements;
+    uint8_t mono_mixdown_present;
+    uint8_t mono_mixdown_element_number;
+    uint8_t stereo_mixdown_present;
+    uint8_t stereo_mixdown_element_number;
+    uint8_t matrix_mixdown_idx_present;
+    uint8_t pseudo_surround_enable;
+    uint8_t matrix_mixdown_idx;
+    uint8_t front_element_is_cpe[16];
+    uint8_t front_element_tag_select[16];
+    uint8_t side_element_is_cpe[16];
+    uint8_t side_element_tag_select[16];
+    uint8_t back_element_is_cpe[16];
+    uint8_t back_element_tag_select[16];
+    uint8_t lfe_element_tag_select[16];
+    uint8_t assoc_data_element_tag_select[16];
+    uint8_t cc_element_is_ind_sw[16];
+    uint8_t valid_cc_element_tag_select[16];
 
-    int channels;
+    uint8_t channels;
 
-    int comment_field_bytes;
-    unsigned char comment_field_data[257];
+    uint8_t comment_field_bytes;
+    uint8_t comment_field_data[257];
 } program_config;
 
 typedef struct
 {
-    int syncword;
-    int id;
-    int layer;
-    int protection_absent;
-    int profile;
-    int sf_index;
-    int private_bit;
-    int channel_configuration;
-    int original;
-    int home;
-    int emphasis;
-    int copyright_identification_bit;
-    int copyright_identification_start;
-    int aac_frame_length;
-    int adts_buffer_fullness;
-    int no_raw_data_blocks_in_frame;
-    int crc_check;
+    uint16_t syncword;
+    uint8_t id;
+    uint8_t layer;
+    uint8_t protection_absent;
+    uint8_t profile;
+    uint8_t sf_index;
+    uint8_t private_bit;
+    uint8_t channel_configuration;
+    uint8_t original;
+    uint8_t home;
+    uint8_t emphasis;
+    uint8_t copyright_identification_bit;
+    uint8_t copyright_identification_start;
+    uint16_t aac_frame_length;
+    uint16_t adts_buffer_fullness;
+    uint8_t no_raw_data_blocks_in_frame;
+    uint16_t crc_check;
 } adts_header;
 
 typedef struct
 {
-    int copyright_id_present;
-    char copyright_id[10];
-    int original_copy;
-    int home;
-    int bitstream_type;
-    int bitrate;
-    int num_program_config_elements;
-    int adif_buffer_fullness;
+    uint8_t copyright_id_present;
+    int8_t copyright_id[10];
+    uint8_t original_copy;
+    uint8_t home;
+    uint8_t bitstream_type;
+    uint32_t bitrate;
+    uint8_t num_program_config_elements;
+    uint32_t adif_buffer_fullness;
 
     program_config pce;
 } adif_header;
 
 typedef struct
 {
-    int last_band;
-    int data_present;
-    int lag;
-    int coef;
-    int short_used[8];
-    int short_lag_present[8];
-    int short_lag[8];
-    int long_used[51];
+    uint8_t last_band;
+    uint8_t data_present;
+    uint16_t lag;
+    uint8_t coef;
+    uint8_t long_used[51];
+    uint8_t short_used[8];
+    uint8_t short_lag_present[8];
+    uint8_t short_lag[8];
 } ltp_info;
 
 typedef struct
 {
-    int limit;
-    int predictor_reset;
-    int predictor_reset_group_number;
-    int prediction_used[41];
+    uint8_t limit;
+    uint8_t predictor_reset;
+    uint8_t predictor_reset_group_number;
+    uint8_t prediction_used[41];
 } pred_info;
 
 typedef struct
 {
-    int number_pulse;
-    int pulse_start_sfb;
-    int pulse_offset[4];
-    int pulse_amp[4];
+    uint8_t number_pulse;
+    uint8_t pulse_start_sfb;
+    uint8_t pulse_offset[4];
+    uint8_t pulse_amp[4];
 } pulse_info;
 
 typedef struct
 {
-    int n_filt[8];
-    int coef_res[8];
-    int length[8][4];
-    int order[8][4];
-    int direction[8][4];
-    int coef_compress[8][4];
-    int coef[8][4][32];
+    uint8_t n_filt[8];
+    uint8_t coef_res[8];
+    uint8_t length[8][4];
+    uint8_t order[8][4];
+    uint8_t direction[8][4];
+    uint8_t coef_compress[8][4];
+    uint8_t coef[8][4][32];
 } tns_info;
 
 typedef struct
 {
-    float ctrl1;
-    float ctrl2;
+    uint8_t present;
 
-    int present;
+    uint8_t num_bands;
+    uint8_t pce_instance_tag;
+    uint8_t excluded_chns_present;
+    uint8_t band_top[17];
+    uint8_t prog_ref_level;
+    uint8_t dyn_rng_sgn[17];
+    uint8_t dyn_rng_ctl[17];
+    uint8_t exclude_mask[MAX_CHANNELS];
+    uint8_t additional_excluded_chns[MAX_CHANNELS];
 
-    int num_bands;
-    int pce_instance_tag;
-    int excluded_chns_present;
-    int band_top[17];
-    int prog_ref_level;
-    int dyn_rng_sgn[17];
-    int dyn_rng_ctl[17];
-    int exclude_mask[MAX_CHANNELS];
-    int additional_excluded_chns[MAX_CHANNELS];
+    real_t ctrl1;
+    real_t ctrl2;
 } drc_info;
 
 typedef struct
 {
-    int max_sfb;
+    uint8_t max_sfb;
 
-    int num_swb;
-    int num_window_groups;
-    int num_windows;
-    int window_sequence;
-    int window_group_length[8];
-    int window_shape;
-    int scale_factor_grouping;
-    int sect_sfb_offset[8][15*8];
-    int swb_offset[51];
+    uint8_t num_swb;
+    uint8_t num_window_groups;
+    uint8_t num_windows;
+    uint8_t window_sequence;
+    uint8_t window_group_length[8];
+    uint8_t window_shape;
+    uint8_t scale_factor_grouping;
+    uint16_t sect_sfb_offset[8][15*8];
+    uint16_t swb_offset[51];
 
-    int sect_cb[8][15*8];
-    int sect_start[8][15*8];
-    int sect_end[8][15*8];
-    int sfb_cb[8][8*15];
-    int num_sec[8]; /* number of sections in a group */
+    uint8_t sect_cb[8][15*8];
+    uint16_t sect_start[8][15*8];
+    uint16_t sect_end[8][15*8];
+    uint8_t sfb_cb[8][8*15];
+    uint8_t num_sec[8]; /* number of sections in a group */
 
-    int global_gain;
+    uint8_t global_gain;
+    uint16_t scale_factors[8][51];
 
-    int ms_mask_present;
-    int ms_used[MAX_WINDOW_GROUPS][MAX_SFB];
+    uint8_t ms_mask_present;
+    uint8_t ms_used[MAX_WINDOW_GROUPS][MAX_SFB];
 
-    int pulse_data_present;
-    int tns_data_present;
-    int gain_control_data_present;
-    int predictor_data_present;
-    int scale_factors[8][51];
+    uint8_t pulse_data_present;
+    uint8_t tns_data_present;
+    uint8_t gain_control_data_present;
+    uint8_t predictor_data_present;
 
     pulse_info pul;
     tns_info tns;
@@ -248,49 +244,50 @@ typedef struct
 
 typedef struct
 {
-    int ele_id;
+    uint8_t ele_id;
 
-    int channel;
-    int paired_channel;
+    uint8_t channel;
+    uint8_t paired_channel;
 
-    int element_instance_tag;
-    int common_window;
+    uint8_t element_instance_tag;
+    uint8_t common_window;
 
     ic_stream ics1;
     ic_stream ics2;
 } element; /* syntax element (SCE, CPE, LFE) */
 
-int GASpecificConfig(bitfile *ld, unsigned long *channelConfiguration);
-int single_lfe_channel_element(element *sce, bitfile *ld, short *spec_data,
-                               int sf_index, int object_type);
-int channel_pair_element(element *cpe, bitfile *ld, short *spec_data1,
-                         short *spec_data2, int sf_index, int object_type);
-int data_stream_element(bitfile *ld);
-int program_config_element(program_config *pce, bitfile *ld);
-int fill_element(bitfile *ld, drc_info *drc);
-int adts_frame(adts_header *adts, bitfile *ld);
+
+uint8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration);
+uint8_t single_lfe_channel_element(element *sce, bitfile *ld, int16_t *spec_data,
+                               uint8_t sf_index, uint8_t object_type);
+uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
+                         int16_t *spec_data2, uint8_t sf_index, uint8_t object_type);
+uint16_t data_stream_element(bitfile *ld);
+uint8_t program_config_element(program_config *pce, bitfile *ld);
+uint8_t fill_element(bitfile *ld, drc_info *drc);
+uint8_t adts_frame(adts_header *adts, bitfile *ld);
 void get_adif_header(adif_header *adif, bitfile *ld);
 
 
 /* static functions */
-static int individual_channel_stream(element *ele, bitfile *ld,
-                                     ic_stream *ics, int scal_flag,
-                                     short *spec_data, int sf_index,
-                                     int object_type);
-static int ics_info(ic_stream *ics, bitfile *ld,
-                    int common_window, int fs_index, int object_type);
+static uint8_t individual_channel_stream(element *ele, bitfile *ld,
+                                     ic_stream *ics, uint8_t scal_flag,
+                                     int16_t *spec_data, uint8_t sf_index,
+                                     uint8_t object_type);
+static uint8_t ics_info(ic_stream *ics, bitfile *ld,
+                    uint8_t common_window, uint8_t fs_index, uint8_t object_type);
 static void section_data(ic_stream *ics, bitfile *ld);
-static int scale_factor_data(ic_stream *ics, bitfile *ld);
-static int spectral_data(ic_stream *ics, bitfile *ld, short *spectral_data);
-static int extension_payload(bitfile *ld, drc_info *drc, int count);
+static uint8_t scale_factor_data(ic_stream *ics, bitfile *ld);
+static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data);
+static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count);
 static void pulse_data(pulse_info *pul, bitfile *ld);
 static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld);
 static void ltp_data(ic_stream *ics, ltp_info *ltp, bitfile *ld);
-static int adts_fixed_header(adts_header *adts, bitfile *ld);
+static uint8_t adts_fixed_header(adts_header *adts, bitfile *ld);
 static void adts_variable_header(adts_header *adts, bitfile *ld);
 static void adts_error_check(adts_header *adts, bitfile *ld);
-static int dynamic_range_info(bitfile *ld, drc_info *drc);
-static int excluded_channels(bitfile *ld, drc_info *drc);
+static uint8_t dynamic_range_info(bitfile *ld, drc_info *drc);
+static uint8_t excluded_channels(bitfile *ld, drc_info *drc);
 
 
 #ifdef __cplusplus

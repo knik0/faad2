@@ -16,28 +16,29 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: lt_predict.c,v 1.1 2002/01/14 19:15:56 menno Exp $
+** $Id: lt_predict.c,v 1.2 2002/02/18 10:01:05 menno Exp $
 **/
 
+#include "common.h"
 #include "syntax.h"
 #include "lt_predict.h"
 #include "filtbank.h"
 #include "tns.h"
 
-static float codebook[8] =
+static real_t codebook[8] =
 {
     0.570829f, 0.696616f, 0.813004f, 0.911304f, 0.984900f, 1.067894f,
     1.194601f, 1.369533f
 };
 
-void lt_prediction(ic_stream *ics, ltp_info *ltp, float *spec,
-                   float *lt_pred_stat, fb_info *fb, int win_shape,
-                   int win_shape_prev, int sr_index, int object_type)
+void lt_prediction(ic_stream *ics, ltp_info *ltp, real_t *spec,
+                   real_t *lt_pred_stat, fb_info *fb, uint8_t win_shape,
+                   uint8_t win_shape_prev, uint8_t sr_index, uint8_t object_type)
 {
-    int sfb, i, bin;
-    int num_samples;
-    float x_est[2*1024];
-    float X_est[2*1024];
+    uint8_t sfb;
+    uint16_t bin, i, num_samples;
+    real_t x_est[2*1024];
+    real_t X_est[2*1024];
 
     if (ics->window_sequence != EIGHT_SHORT_SEQUENCE)
     {
@@ -62,8 +63,8 @@ void lt_prediction(ic_stream *ics, ltp_info *ltp, float *spec,
             {
                 if (ltp->long_used[sfb])
                 {
-                    int low  = ics->swb_offset[sfb];
-                    int high = ics->swb_offset[sfb+1];
+                    uint16_t low  = ics->swb_offset[sfb];
+                    uint16_t high = ics->swb_offset[sfb+1];
 
                     for (bin = low; bin < high; bin++)
                     {
@@ -75,11 +76,11 @@ void lt_prediction(ic_stream *ics, ltp_info *ltp, float *spec,
     }
 }
 
-void lt_update_state(float *lt_pred_stat, float *time, float *overlap)
+void lt_update_state(real_t *lt_pred_stat, real_t *time, real_t *overlap)
 {
-    int i;
+    uint16_t i;
 
-    for(i = 0; i < 1024; i++)
+    for (i = 0; i < 1024; i++)
     {
         lt_pred_stat[i]          = lt_pred_stat[i + 1024];
         lt_pred_stat[1024 + i]   = time[i];

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: pns.h,v 1.3 2002/01/25 20:15:07 menno Exp $
+** $Id: pns.h,v 1.4 2002/02/18 10:01:05 menno Exp $
 **/
 
 #ifndef __PNS_H__
@@ -27,17 +27,18 @@ extern "C" {
 #endif
 
 #include "syntax.h"
+#include "common.h"
 
 #define NOISE_OFFSET 90
 #define MEAN_NRG 1.537228e+18 /* (2^31)^2 / 3 */
 
 
-void pns_decode(ic_stream *ics, float *spec);
+void pns_decode(ic_stream *ics, real_t *spec);
 
-static __inline long random2();
-static void gen_rand_vector(float *spec, int scale_factor, int size);
+static INLINE int32_t random2();
+static void gen_rand_vector(real_t *spec, uint16_t scale_factor, uint16_t size);
 
-static __inline int is_noise(ic_stream *ics, int group, int sfb)
+static INLINE uint8_t is_noise(ic_stream *ics, uint8_t group, uint8_t sfb)
 {
     if (ics->sfb_cb[group][sfb] == NOISE_HCB)
         return 1;

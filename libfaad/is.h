@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: is.h,v 1.2 2002/01/19 09:39:41 menno Exp $
+** $Id: is.h,v 1.3 2002/02/18 10:01:05 menno Exp $
 **/
 
 #ifndef __IS_H__
@@ -28,9 +28,9 @@ extern "C" {
 
 #include "syntax.h"
 
-void is_decode(ic_stream *ics, ic_stream *icsr, float *l_spec, float *r_spec);
+void is_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec);
 
-static __inline int is_intensity(ic_stream *ics, int group, int sfb)
+static INLINE int8_t is_intensity(ic_stream *ics, uint8_t group, uint8_t sfb)
 {
     switch (ics->sfb_cb[group][sfb])
     {
@@ -43,7 +43,7 @@ static __inline int is_intensity(ic_stream *ics, int group, int sfb)
     }
 }
 
-static __inline int invert_intensity(ic_stream *ics, int group, int sfb)
+static INLINE int8_t invert_intensity(ic_stream *ics, uint8_t group, uint8_t sfb)
 {
     if (ics->ms_mask_present == 1)
         return (1-2*ics->ms_used[group][sfb]);

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.h,v 1.1 2002/01/14 19:15:55 menno Exp $
+** $Id: filtbank.h,v 1.2 2002/02/18 10:01:05 menno Exp $
 **/
 
 #ifndef __FILTBANK_H__
@@ -33,21 +33,30 @@ extern "C" {
 
 typedef struct
 {
-    short unscrambled64[64];
-    short unscrambled512[512];
+    uint16_t unscrambled64[64];
+    uint16_t unscrambled512[512];
 
-    float *sin_long;
-    float *sin_short;
+    real_t *sin_long;
+    real_t *sin_short;
 } fb_info;
 
 void filter_bank_init(fb_info *fb);
 void filter_bank_end(fb_info *fb);
 
-void filter_bank_ltp(fb_info *fb, int window_sequence, int window_shape,
-                     int window_shape_prev, float *in_data, float *out_mdct);
-void ifilter_bank(fb_info *fb, int window_sequence, int window_shape, 
-                  int window_shape_prev, float *freq_in, float *time_buff,
-                  float *time_out);
+void filter_bank_ltp(fb_info *fb,
+                     uint8_t window_sequence,
+                     uint8_t window_shape,
+                     uint8_t window_shape_prev,
+                     real_t *in_data,
+                     real_t *out_mdct);
+
+void ifilter_bank(fb_info *fb,
+                  uint8_t window_sequence,
+                  uint8_t window_shape,
+                  uint8_t window_shape_prev,
+                  real_t *freq_in,
+                  real_t *time_buff,
+                  real_t *time_out);
 
 #ifdef __cplusplus
 }

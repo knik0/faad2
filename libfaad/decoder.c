@@ -16,11 +16,12 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.7 2002/01/27 09:10:46 menno Exp $
+** $Id: decoder.c,v 1.8 2002/02/18 10:01:05 menno Exp $
 **/
 
 #include <stdlib.h>
 #include <memory.h>
+#include "common.h"
 #include "decoder.h"
 #include "mp4.h"
 #include "syntax.h"
@@ -37,17 +38,17 @@
 #include "output.h"
 
 #ifdef ANALYSIS
-int dbg_count;
+uint16_t dbg_count;
 #endif
 
-char* FAADAPI faacDecGetErrorMessage(int errcode)
+uint8_t* FAADAPI faacDecGetErrorMessage(uint8_t errcode)
 {
     return err_msg[errcode];
 }
 
 faacDecHandle FAADAPI faacDecOpen()
 {
-    int i;
+    uint8_t i;
     faacDecHandle hDecoder = NULL;
 
     if ((hDecoder = (faacDecHandle)malloc(sizeof(faacDecStruct))) == NULL)
@@ -93,7 +94,7 @@ faacDecConfigurationPtr FAADAPI faacDecGetCurrentConfiguration(faacDecHandle hDe
     return config;
 }
 
-int FAADAPI faacDecSetConfiguration(faacDecHandle hDecoder,
+uint8_t FAADAPI faacDecSetConfiguration(faacDecHandle hDecoder,
                                     faacDecConfigurationPtr config)
 {
     hDecoder->config.defObjectType = config->defObjectType;
@@ -105,7 +106,7 @@ int FAADAPI faacDecSetConfiguration(faacDecHandle hDecoder,
 }
 
 /* Returns the sample rate index */
-static int get_sr_index(unsigned long samplerate)
+static uint8_t get_sr_index(uint32_t samplerate)
 {
     if (92017 <= samplerate) return 0;
     if (75132 <= samplerate) return 1;
@@ -122,8 +123,8 @@ static int get_sr_index(unsigned long samplerate)
     return 11;
 }
 
-int FAADAPI faacDecInit(faacDecHandle hDecoder, unsigned char *buffer,
-                        unsigned long *samplerate, unsigned long *channels)
+int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
+                        uint32_t *samplerate, uint8_t *channels)
 {
     bitfile ld;
     adif_header adif;
@@ -176,11 +177,11 @@ int FAADAPI faacDecInit(faacDecHandle hDecoder, unsigned char *buffer,
 }
 
 /* Init the library using a DecoderSpecificInfo */
-int FAADAPI faacDecInit2(faacDecHandle hDecoder, unsigned char *pBuffer,
-                         unsigned long SizeOfDecoderSpecificInfo,
-                         unsigned long *samplerate, unsigned long *channels)
+int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
+                         uint32_t SizeOfDecoderSpecificInfo,
+                         uint32_t *samplerate, uint8_t *channels)
 {
-    int rc;
+    int8_t rc;
 
     hDecoder->adif_header_present = 0;
     hDecoder->adts_header_present = 0;
@@ -207,7 +208,7 @@ int FAADAPI faacDecInit2(faacDecHandle hDecoder, unsigned char *pBuffer,
 
 void FAADAPI faacDecClose(faacDecHandle hDecoder)
 {
-    int i;
+    uint8_t i;
 
     for (i = 0; i < MAX_CHANNELS; i++)
     {
@@ -226,39 +227,40 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
 
 void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                             faacDecFrameInfo *hInfo,
-                            unsigned char *buffer)
+                            uint8_t *buffer)
 {
-    int id_syn_ele, ele, ch, i;
+    int32_t i;
+    uint8_t id_syn_ele, ele, ch;
     adts_header adts;
-    int channels, ch_ele;
+    uint8_t channels, ch_ele;
     bitfile *ld = malloc(sizeof(bitfile));
 
     /* local copys of globals */
-    int sf_index           =  hDecoder->sf_index;
-    int object_type        =  hDecoder->object_type;
+    uint8_t sf_index       =  hDecoder->sf_index;
+    uint8_t object_type    =  hDecoder->object_type;
     pred_state **pred_stat =  hDecoder->pred_stat;
-    float **lt_pred_stat   =  hDecoder->lt_pred_stat;
+    real_t **lt_pred_stat  =  hDecoder->lt_pred_stat;
 #if IQ_TABLE_SIZE
-    float *iq_table        =  hDecoder->iq_table;
+    real_t *iq_table       =  hDecoder->iq_table;
 #else
-    float *iq_table        =  NULL;
+    real_t *iq_table       =  NULL;
 #endif
 #if POW_TABLE_SIZE
-    float *pow2_table      =  hDecoder->pow2_table;
+    real_t *pow2_table     =  hDecoder->pow2_table;
 #else
-    float *pow2_table      =  NULL;
+    real_t *pow2_table     =  NULL;
 #endif
-    int *window_shape_prev =  hDecoder->window_shape_prev;
-    float **time_state     =  hDecoder->time_state;
-    float **time_out       =  hDecoder->time_out;
+    uint8_t *window_shape_prev =  hDecoder->window_shape_prev;
+    real_t **time_state    =  hDecoder->time_state;
+    real_t **time_out      =  hDecoder->time_out;
     fb_info *fb            = &hDecoder->fb;
     drc_info *drc          = &hDecoder->drc;
-    int outputFormat       =  hDecoder->config.outputFormat;
+    uint8_t outputFormat   =  hDecoder->config.outputFormat;
 
     program_config pce;
     element *syntax_elements[MAX_SYNTAX_ELEMENTS];
-    short *spec_data[MAX_CHANNELS];
-    float *spec_coef[MAX_CHANNELS];
+    int16_t *spec_data[MAX_CHANNELS];
+    real_t *spec_coef[MAX_CHANNELS];
 
     void *sample_buffer;
 
@@ -287,14 +289,14 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #endif
 
     /* Table 4.4.3: raw_data_block() */
-    while ((id_syn_ele = faad_getbits(ld, LEN_SE_ID
+    while ((id_syn_ele = (uint8_t)faad_getbits(ld, LEN_SE_ID
         DEBUGVAR(1,4,"faacDecDecode(): id_syn_ele"))) != ID_END)
     {
         switch (id_syn_ele) {
         case ID_SCE:
         case ID_LFE:
-            spec_data[channels]   = (short*)malloc(1024*sizeof(short));
-            spec_coef[channels]   = (float*)malloc(1024*sizeof(float));
+            spec_data[channels]   = (int16_t*)malloc(1024*sizeof(int16_t));
+            spec_coef[channels]   = (real_t*)malloc(1024*sizeof(real_t));
 
             syntax_elements[ch_ele] = (element*)malloc(sizeof(element));
             memset(syntax_elements[ch_ele], 0, sizeof(element));
@@ -313,10 +315,10 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             ch_ele++;
             break;
         case ID_CPE:
-            spec_data[channels]   = (short*)malloc(1024*sizeof(short));
-            spec_data[channels+1] = (short*)malloc(1024*sizeof(short));
-            spec_coef[channels]   = (float*)malloc(1024*sizeof(float));
-            spec_coef[channels+1] = (float*)malloc(1024*sizeof(float));
+            spec_data[channels]   = (int16_t*)malloc(1024*sizeof(int16_t));
+            spec_data[channels+1] = (int16_t*)malloc(1024*sizeof(int16_t));
+            spec_coef[channels]   = (real_t*)malloc(1024*sizeof(real_t));
+            spec_coef[channels+1] = (real_t*)malloc(1024*sizeof(real_t));
 
             syntax_elements[ch_ele] = (element*)malloc(sizeof(element));
             memset(syntax_elements[ch_ele], 0, sizeof(element));
@@ -366,7 +368,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     hInfo->channels = channels;
 
     if (hDecoder->sample_buffer == NULL)
-        hDecoder->sample_buffer = malloc(1024*channels*sizeof(float));
+        hDecoder->sample_buffer = malloc(1024*channels*sizeof(float32_t));
 
     sample_buffer = hDecoder->sample_buffer;
 
@@ -380,10 +382,10 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         {
             if (syntax_elements[i]->channel == ch)
             {
-                ics = &syntax_elements[i]->ics1;
+                ics = &(syntax_elements[i]->ics1);
                 break;
             } else if (syntax_elements[i]->paired_channel == ch) {
-                ics = &syntax_elements[i]->ics2;
+                ics = &(syntax_elements[i]->ics2);
                 break;
             }
         }
@@ -404,8 +406,8 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     */
     for (ch = 0; ch < channels; ch++)
     {
-        int pch = 0;
-        int right_channel;
+        uint8_t pch = 0;
+        uint8_t right_channel;
         ic_stream *ics, *icsr;
         ltp_info *ltp;
 
@@ -414,14 +416,14 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         {
             if (syntax_elements[i]->channel == ch)
             {
-                ics = &syntax_elements[i]->ics1;
-                icsr = &syntax_elements[i]->ics2;
+                ics = &(syntax_elements[i]->ics1);
+                icsr = &(syntax_elements[i]->ics2);
                 ltp = &(ics->ltp);
                 pch = syntax_elements[i]->paired_channel;
                 right_channel = 0;
                 break;
             } else if (syntax_elements[i]->paired_channel == ch) {
-                ics = &syntax_elements[i]->ics2;
+                ics = &(syntax_elements[i]->ics2);
                 ltp = &(ics->ltp2);
                 right_channel = 1;
                 break;
@@ -464,8 +466,8 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             /* allocate the state only when needed */
             if ((lt_pred_stat[ch] == NULL) && ics->predictor_data_present)
             {
-                lt_pred_stat[ch] = malloc(1024*3 * sizeof(float));
-                memset(lt_pred_stat[ch], 0, 1024*3 * sizeof(float));
+                lt_pred_stat[ch] = malloc(1024*3 * sizeof(real_t));
+                memset(lt_pred_stat[ch], 0, 1024*3 * sizeof(real_t));
             }
 
             /* long term prediction */
@@ -478,7 +480,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         }
 
         /* tns decoding */
-        tns_decode_frame(ics, &ics->tns, sf_index, object_type, spec_coef[ch]);
+        tns_decode_frame(ics, &(ics->tns), sf_index, object_type, spec_coef[ch]);
 
         /* drc decoding */
         if (drc->present)
@@ -489,9 +491,9 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
         if (time_state[ch] == NULL)
         {
-            float *tp;
+            real_t *tp;
 
-            time_state[ch] = malloc(1024*sizeof(float));
+            time_state[ch] = malloc(1024*sizeof(real_t));
             tp = time_state[ch];
             for (i = 1024/16-1; i >= 0; --i)
             {
@@ -503,7 +505,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         }
         if (time_out[ch] == NULL)
         {
-            time_out[ch] = malloc(1024*2*sizeof(float));
+            time_out[ch] = malloc(1024*2*sizeof(real_t));
         }
 
         /* filter bank */

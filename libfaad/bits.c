@@ -16,43 +16,43 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.c,v 1.4 2002/02/15 20:52:09 menno Exp $
+** $Id: bits.c,v 1.5 2002/02/18 10:01:05 menno Exp $
 **/
 
+#include "common.h"
 #include "bits.h"
-
 
 /* initialize buffer, call once before first getbits or showbits */
 void faad_initbits(bitfile *ld, void *buffer)
 {
-    unsigned long tmp;
+    uint32_t tmp;
 
-    ld->start = (unsigned long*)buffer;
+    ld->start = (uint32_t*)buffer;
 
-    tmp = *(unsigned long*)buffer;
+    tmp = *(uint32_t*)buffer;
 #ifndef ARCH_IS_BIG_ENDIAN
     BSWAP(tmp);
 #endif
     ld->bufa = tmp;
 
-    tmp = *((unsigned long*)buffer + 1);
+    tmp = *((uint32_t*)buffer + 1);
 #ifndef ARCH_IS_BIG_ENDIAN
     BSWAP(tmp);
 #endif
     ld->bufb = tmp;
 
     ld->pos = 0;
-    ld->tail = ((unsigned long*)buffer + 2);
+    ld->tail = ((uint32_t*)buffer + 2);
 }
 
-int faad_get_processed_bits(bitfile *ld)
+uint32_t faad_get_processed_bits(bitfile *ld)
 {
     return 8 * (4*(ld->tail - ld->start) - 4) - (32 - ld->pos);
 }
 
-unsigned int faad_byte_align(bitfile *ld)
+uint8_t faad_byte_align(bitfile *ld)
 {
-    unsigned long remainder = ld->pos % 8;
+    uint8_t remainder = (uint8_t)(ld->pos % 8);
 
     if (remainder)
     {

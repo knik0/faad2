@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: huffman.h,v 1.4 2002/02/15 20:52:09 menno Exp $
+** $Id: huffman.h,v 1.5 2002/02/18 10:01:05 menno Exp $
 **/
 
 #ifndef __HUFFMAN_H__
@@ -34,21 +34,13 @@ extern "C" {
 #include "codebook/hcb.h"
 
 
-#if defined(LINUX)
-#define huff_inline inline
-#elif defined(_WIN32)
-#define huff_inline __inline
-#else
-#define huff_inline
-#endif
-
-static huff_inline int huffman_scale_factor(bitfile *ld)
+static INLINE uint8_t huffman_scale_factor(bitfile *ld)
 {
-    unsigned int offset = 0;
+    uint16_t offset = 0;
 
     while (hcb_sf[offset][1])
     {
-        int b = faad_get1bit(ld);
+        uint8_t b = faad_get1bit(ld);
         offset += hcb_sf[offset][b];
     }
     return hcb_sf[offset][0];
@@ -71,14 +63,14 @@ static hcb_bin_pair *hcb_bin_table[] = {
     0, 0, 0, 0, 0, hcb5, 0, hcb7, 0, hcb9, 0, 0
 };
 
-static int hcbN[] = { 0, 5, 5, 0, 5, 0, 5, 0, 5, 0, 6, 5 };
+static uint8_t hcbN[] = { 0, 5, 5, 0, 5, 0, 5, 0, 5, 0, 6, 5 };
 
 
-static huff_inline void huffman_spectral_data(int cb, bitfile *ld, short *sp)
+static INLINE void huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
 {
-    unsigned int cw;
-    unsigned int offset = 0;
-    unsigned int extra_bits;
+    uint32_t cw;
+    uint16_t offset = 0;
+    uint8_t extra_bits;
 
     switch (cb)
     {
@@ -94,7 +86,7 @@ static huff_inline void huffman_spectral_data(int cb, bitfile *ld, short *sp)
         {
             /* we know for sure it's more than hcbN[cb] bits long */
             faad_flushbits(ld, hcbN[cb]);
-            offset += faad_showbits(ld, extra_bits);
+            offset += (uint16_t)faad_showbits(ld, extra_bits);
             faad_flushbits(ld, hcb_2_quad_table[cb][offset].bits - hcbN[cb]);
         } else {
             faad_flushbits(ld, hcb_2_quad_table[cb][offset].bits);
@@ -119,7 +111,7 @@ static huff_inline void huffman_spectral_data(int cb, bitfile *ld, short *sp)
         {
             /* we know for sure it's more than hcbN[cb] bits long */
             faad_flushbits(ld, hcbN[cb]);
-            offset += faad_showbits(ld, extra_bits);
+            offset += (uint16_t)faad_showbits(ld, extra_bits);
             faad_flushbits(ld, hcb_2_pair_table[cb][offset].bits - hcbN[cb]);
         } else {
             faad_flushbits(ld, hcb_2_pair_table[cb][offset].bits);
@@ -133,7 +125,7 @@ static huff_inline void huffman_spectral_data(int cb, bitfile *ld, short *sp)
 
         while (!hcb3[offset].is_leaf)
         {
-            int b = faad_get1bit(ld);
+            uint8_t b = faad_get1bit(ld);
             offset += hcb3[offset].data[b];
         }
 
@@ -150,7 +142,7 @@ static huff_inline void huffman_spectral_data(int cb, bitfile *ld, short *sp)
 
         while (!hcb_bin_table[cb][offset].is_leaf)
         {
-            int b = faad_get1bit(ld);
+            uint8_t b = faad_get1bit(ld);
             offset += hcb_bin_table[cb][offset].data[b];
         }
 
@@ -161,9 +153,9 @@ static huff_inline void huffman_spectral_data(int cb, bitfile *ld, short *sp)
     }
 }
 
-static huff_inline void huffman_sign_bits(bitfile *ld, short *sp, int len)
+static INLINE void huffman_sign_bits(bitfile *ld, int16_t *sp, uint8_t len)
 {
-    int i;
+    uint8_t i;
 
     for(i = 0; i < len; i++)
     {
@@ -178,9 +170,10 @@ static huff_inline void huffman_sign_bits(bitfile *ld, short *sp, int len)
     }
 }
 
-static huff_inline short huffman_getescape(bitfile *ld, short sp)
+static INLINE int32_t huffman_getescape(bitfile *ld, int16_t sp)
 {
-    int i, off, neg;
+    uint8_t neg, i;
+    int32_t j, off;
 
     if (sp < 0) {
         if(sp != -16)
@@ -210,10 +203,10 @@ static huff_inline short huffman_getescape(bitfile *ld, short sp)
             DEBUGVAR(1,9,"huffman_getescape(): escape"));
     }
 
-    i = off + (1<<i);
+    j = off + (1<<i);
     if (neg)
-        i = -i;
-    return i;
+        j = -j;
+    return j;
 }
 
 #ifdef __cplusplus

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: hcb.h,v 1.1 2002/02/15 20:52:10 menno Exp $
+** $Id: hcb.h,v 1.2 2002/02/18 10:01:05 menno Exp $
 **/
 
 #ifndef __HCB_H__
@@ -74,38 +74,38 @@ extern "C" {
 /* 1st step table */
 typedef struct
 {
-    unsigned char offset;
-    unsigned char extra_bits;
+    uint8_t offset;
+    uint8_t extra_bits;
 } hcb;
 
 /* 2nd step table with quadruple data */
 typedef struct
 {
-    unsigned char bits;
-    char x;
-    char y;
+    uint8_t bits;
+    int8_t x;
+    int8_t y;
 } hcb_2_pair;
 
 typedef struct
 {
-    unsigned char bits;
-    char x;
-    char y;
-    char v;
-    char w;
+    uint8_t bits;
+    int8_t x;
+    int8_t y;
+    int8_t v;
+    int8_t w;
 } hcb_2_quad;
 
 /* binary search table */
 typedef struct
 {
-    unsigned char is_leaf;
-    char data[4];
+    uint8_t is_leaf;
+    int8_t data[4];
 } hcb_bin_quad;
 
 typedef struct
 {
-    unsigned char is_leaf;
-    char data[2];
+    uint8_t is_leaf;
+    int8_t data[2];
 } hcb_bin_pair;
 
 extern hcb hcb1_1[];
@@ -129,7 +129,7 @@ extern hcb_bin_pair hcb5[];
 extern hcb_bin_pair hcb7[];
 extern hcb_bin_pair hcb9[];
 
-extern char hcb_sf[][2];
+extern uint8_t hcb_sf[][2];
 
 #ifdef __cplusplus
 }

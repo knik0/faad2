@@ -16,21 +16,22 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ms.c,v 1.1 2002/01/14 19:15:56 menno Exp $
+** $Id: ms.c,v 1.2 2002/02/18 10:01:05 menno Exp $
 **/
 
+#include "common.h"
 #include "syntax.h"
 #include "ms.h"
 #include "is.h"
 #include "pns.h"
 
-void ms_decode(ic_stream *ics, ic_stream *icsr, float *l_spec, float *r_spec)
+void ms_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec)
 {
-    int g, b, sfb, i;
-    int group = 0;
+    uint8_t g, b, sfb;
+    uint8_t group = 0;
 
-    int k;
-    float tmp;
+    uint16_t i, k;
+    real_t tmp;
 
     if (ics->ms_mask_present >= 1)
     {

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_faad.c,v 1.2 2002/01/21 22:58:14 menno Exp $
+** $Id: in_faad.c,v 1.3 2002/02/18 10:01:05 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -334,12 +334,9 @@ int play_memmap(char *fn)
 
     memmap_buffer = (char*)LocalAlloc(LPTR, fileread);
     read_buffer_filestream(infile, memmap_buffer, fileread);
-    memmap_index = 0;
 
-    tagsize = id3v2_tag(memmap_buffer);
-
-	/* If we find a tag, run right over it */
-    memmap_index += tagsize;
+    /* skip id3v2 tag */
+    memmap_index = id3v2_tag(memmap_buffer);
 
     hDecoder = faacDecOpen();
 

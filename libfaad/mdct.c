@@ -16,37 +16,32 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.c,v 1.1 2002/01/14 19:15:56 menno Exp $
+** $Id: mdct.c,v 1.2 2002/02/18 10:01:05 menno Exp $
 **/
 
-#ifdef __ICL
+#include "common.h"
+
+#ifdef USE_FMATH
 #include <mathf.h>
 #else
 #include <math.h>
 #endif
 #include "mdct.h"
 
-#ifndef M_PI /* PI */
-#define M_PI 3.14159265358979323846
-#endif
 
-#ifndef M_PI_2 /* PI/2 */
-#define M_PI_2 1.57079632679489661923
-#endif
-
-void MDCT_long(fftw_real *in_data, fftw_real *out_data, short *unscrambled)
+void MDCT_long(fftw_real *in_data, fftw_real *out_data, uint16_t *unscrambled)
 {
     fftw_complex FFTarray[512];
     fftw_real tempr, tempi, c, s, cold, cfreq, sfreq;
     fftw_real fac,cosfreq8,sinfreq8;
-    int i;
-    int b = 2048 >> 1;
-    int N4 = 2048 >> 2;
-    int N2 = 2048 >> 1;
-    int a = 2048 - b;
-    int a2 = a >> 1;
-    int a4 = a >> 2;
-    int b4 = b >> 2;
+    uint16_t i;
+    uint16_t b = 2048 >> 1;
+    uint16_t N4 = 2048 >> 2;
+    uint16_t N2 = 2048 >> 1;
+    uint16_t a = 2048 - b;
+    uint16_t a2 = a >> 1;
+    uint16_t a4 = a >> 2;
+    uint16_t b4 = b >> 2;
 
 
     fac = 2.; /* 2 from MDCT inverse  to forward */
@@ -62,7 +57,7 @@ void MDCT_long(fftw_real *in_data, fftw_real *out_data, short *unscrambled)
 
     for (i = 0; i < N4; i++)
     {
-        int n = 2048 / 2 - 1 - 2 * i;
+        uint16_t n = 2048 / 2 - 1 - 2 * i;
         if (i < b4)
             tempr = in_data[a2 + n] + in_data[2048 + a2 - 1 - n];
         else
@@ -96,7 +91,7 @@ void MDCT_long(fftw_real *in_data, fftw_real *out_data, short *unscrambled)
     for (i = 0; i < N4; i++)
     {
         /* get post-twiddled FFT output  */
-        int unscr = unscrambled[i];
+        uint16_t unscr = unscrambled[i];
 
         tempr = fac * (FFTarray[unscr].re * c + FFTarray[unscr].im * s);
         tempi = fac * (FFTarray[unscr].im * c - FFTarray[unscr].re * s);
@@ -114,19 +109,19 @@ void MDCT_long(fftw_real *in_data, fftw_real *out_data, short *unscrambled)
     }
 }
 
-void MDCT_short(fftw_real *in_data, fftw_real *out_data, short *unscrambled)
+void MDCT_short(fftw_real *in_data, fftw_real *out_data, uint16_t *unscrambled)
 {
     fftw_complex FFTarray[64];    /* the array for in-place FFT */
     fftw_real tempr, tempi, c, s, cold, cfreq, sfreq; /* temps for pre and post twiddle */
     fftw_real fac,cosfreq8,sinfreq8;
-    int i;
-    int b = 256 >> 1;
-    int N4 = 256 >> 2;
-    int N2 = 256 >> 1;
-    int a = 256 - b;
-    int a2 = a >> 1;
-    int a4 = a >> 2;
-    int b4 = b >> 2;
+    uint16_t i;
+    uint16_t b = 256 >> 1;
+    uint16_t N4 = 256 >> 2;
+    uint16_t N2 = 256 >> 1;
+    uint16_t a = 256 - b;
+    uint16_t a2 = a >> 1;
+    uint16_t a4 = a >> 2;
+    uint16_t b4 = b >> 2;
 
 
     /* Choosing to allocate 2/N factor to Inverse Xform! */
@@ -143,7 +138,7 @@ void MDCT_short(fftw_real *in_data, fftw_real *out_data, short *unscrambled)
 
     for (i = 0; i < N4; i++)
     {
-        int n = 256 / 2 - 1 - 2 * i;
+        uint16_t n = 256 / 2 - 1 - 2 * i;
         if (i < b4)
             tempr = in_data[a2 + n] + in_data[256 + a2 - 1 - n];
         else
@@ -175,7 +170,7 @@ void MDCT_short(fftw_real *in_data, fftw_real *out_data, short *unscrambled)
     /* post-twiddle FFT output and then get output data */
     for (i = 0; i < N4; i++)
     {
-        int unscr = unscrambled[i];
+        uint16_t unscr = unscrambled[i];
 
         tempr = fac * (FFTarray[unscr].re * c + FFTarray[unscr].im * s);
         tempi = fac * (FFTarray[unscr].im * c - FFTarray[unscr].re * s);
@@ -193,16 +188,16 @@ void MDCT_short(fftw_real *in_data, fftw_real *out_data, short *unscrambled)
     }
 }
 
-void IMDCT_long(fftw_real *in_data, fftw_real *out_data, short *unscrambled)
+void IMDCT_long(fftw_real *in_data, fftw_real *out_data, uint16_t *unscrambled)
 {
     fftw_complex FFTarray[512];    /* the array for in-place FFT */
     fftw_real tempr, tempi, c, s, cold, cfreq, sfreq; /* temps for pre and post twiddle */
 
     fftw_real fac, cosfreq8, sinfreq8;
-    int i;
-    int Nd2 = 2048 >> 1;
-    int Nd4 = 2048 >> 2;
-    int Nd8 = 2048 >> 3;
+    uint16_t i;
+    uint16_t Nd2 = 2048 >> 1;
+    uint16_t Nd4 = 2048 >> 2;
+    uint16_t Nd8 = 2048 >> 3;
 
     /* Choosing to allocate 2/N factor to Inverse Xform! */
     fac = 0.0009765625f;
@@ -218,7 +213,7 @@ void IMDCT_long(fftw_real *in_data, fftw_real *out_data, short *unscrambled)
 
     for (i = 0; i < Nd4; i++)
     {
-        int unscr = unscrambled[i];
+        uint16_t unscr = unscrambled[i];
 
         tempr = -in_data[2 * i];
         tempi =  in_data[Nd2 - 1 - 2 * i];
@@ -267,15 +262,15 @@ void IMDCT_long(fftw_real *in_data, fftw_real *out_data, short *unscrambled)
     }
 }
 
-void IMDCT_short(fftw_real *in_data, fftw_real *out_data, short *unscrambled)
+void IMDCT_short(fftw_real *in_data, fftw_real *out_data, uint16_t *unscrambled)
 {
     fftw_complex FFTarray[64];    /* the array for in-place FFT */
     fftw_real tempr, tempi, c, s, cold, cfreq, sfreq; /* temps for pre and post twiddle */
     fftw_real fac, cosfreq8, sinfreq8;
-    int i;
-    int Nd2 = 256 >> 1;
-    int Nd4 = 256 >> 2;
-    int Nd8 = 256 >> 3;
+    uint16_t i;
+    uint16_t Nd2 = 256 >> 1;
+    uint16_t Nd4 = 256 >> 2;
+    uint16_t Nd8 = 256 >> 3;
 
     /* Choosing to allocate 2/N factor to Inverse Xform! */
     fac = 0.0078125f; /* remaining 2/N from 4/N IFFT factor */
@@ -291,7 +286,7 @@ void IMDCT_short(fftw_real *in_data, fftw_real *out_data, short *unscrambled)
 
     for (i = 0; i < Nd4; i++)
     {
-        int unscr = unscrambled[i];
+        uint16_t unscr = unscrambled[i];
 
         tempr = -in_data[2 * i];
         tempi = in_data[Nd2 - 1 - 2 * i];
@@ -2952,8 +2947,8 @@ void PFFTWI(512)(fftw_complex *input)
      PFFTWI(twiddle_4)(input, PFFTW(W_512), 128);
 }
 
-void  PFFTW(twiddle_4) (fftw_complex * A, const fftw_complex * W, int iostride) {
-     int i;
+void  PFFTW(twiddle_4) (fftw_complex * A, const fftw_complex * W, uint16_t iostride) {
+     uint16_t i;
      fftw_complex *inout;
      inout = A;
      {
@@ -3065,8 +3060,8 @@ void  PFFTW(twiddle_4) (fftw_complex * A, const fftw_complex * W, int iostride) 
      } while (i > 0);
 }
 
-void PFFTWI(twiddle_4) (fftw_complex * A, const fftw_complex * W, int iostride) {
-     int i;
+void PFFTWI(twiddle_4) (fftw_complex * A, const fftw_complex * W, uint16_t iostride) {
+     uint16_t i;
      fftw_complex *inout;
      inout = A;
      {
@@ -3182,39 +3177,39 @@ void PFFTWI(twiddle_4) (fftw_complex * A, const fftw_complex * W, int iostride) 
      } while (i > 0);
 }
 
-int PFFTW(permutation_64)(int i)
+uint16_t PFFTW(permutation_64)(uint16_t i)
 {
-    int i1 = i % 4;
-    int i2 = i / 4;
+    uint16_t i1 = i % 4;
+    uint16_t i2 = i / 4;
     if (i1 <= 2)
        return (i1 * 16 + i2);
     else
        return (i1 * 16 + ((i2 + 1) % 16));
 }
 
-int PFFTW(permutation_128)(int i)
+uint16_t PFFTW(permutation_128)(uint16_t i)
 {
-    int i1 = i % 4;
-    int i2 = i / 4;
+    uint16_t i1 = i % 4;
+    uint16_t i2 = i / 4;
     if (i1 <= 2)
        return (i1 * 32 + i2);
     else
        return (i1 * 32 + ((i2 + 1) % 32));
 }
 
-int PFFTW(permutation_512)(int i)
+uint16_t PFFTW(permutation_512)(uint16_t i)
 {
-    int i1 = i % 4;
-    int i2 = i / 4;
+    uint16_t i1 = i % 4;
+    uint16_t i2 = i / 4;
     if (i1 <= 2)
        return (i1 * 128 + PFFTW(permutation_128)(i2));
     else
        return (i1 * 128 + PFFTW(permutation_128)((i2 + 1) % 128));
 }
 
-void make_fft_order(short *unscrambled64, short *unscrambled512)
+void make_fft_order(uint16_t *unscrambled64, uint16_t *unscrambled512)
 {
-    int i;
+    uint16_t i;
 
     for (i = 0; i < 64; i++)
         unscrambled64[i] = PFFTW(permutation_64)(i);

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: faad.h,v 1.3 2002/01/20 17:00:48 menno Exp $
+** $Id: faad.h,v 1.4 2002/02/18 10:01:05 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -29,7 +29,7 @@ extern "C" {
 #ifdef _WIN32
   #pragma pack(push, 8)
   #ifndef FAADAPI
-    #define FAADAPI __stdcall
+    #define FAADAPI __cdecl
   #endif
 #else
   #ifndef FAADAPI
@@ -54,54 +54,54 @@ extern "C" {
 
 
 typedef void *faacDecHandle;
-typedef void *faacProgConfig;
+
 
 typedef struct faacDecConfiguration
 {
-    short defObjectType;
+    unsigned char defObjectType;
     unsigned long defSampleRate;
-    unsigned long outputFormat;
+    unsigned char outputFormat;
 } faacDecConfiguration, *faacDecConfigurationPtr;
 
 typedef struct faacDecFrameInfo
 {
-    int bytesconsumed;
-    int samples;
-    int channels;
-    int error;
+    unsigned long bytesconsumed;
+    unsigned long samples;
+    unsigned char channels;
+    unsigned char error;
 } faacDecFrameInfo;
 
-char* FAADAPI faacDecGetErrorMessage(int errcode);
+unsigned char* FAADAPI faacDecGetErrorMessage(unsigned char errcode);
 
 faacDecHandle FAADAPI faacDecOpen();
 
 faacDecConfigurationPtr FAADAPI faacDecGetCurrentConfiguration(faacDecHandle hDecoder);
 
-int FAADAPI faacDecSetConfiguration(faacDecHandle hDecoder,
+unsigned char FAADAPI faacDecSetConfiguration(faacDecHandle hDecoder,
                                     faacDecConfigurationPtr config);
 
 /* Init the library based on info from the AAC file (ADTS/ADIF) */
-int FAADAPI faacDecInit(faacDecHandle hDecoder,
+long FAADAPI faacDecInit(faacDecHandle hDecoder,
                         unsigned char *buffer,
                         unsigned long *samplerate,
-                        unsigned long *channels);
+                        unsigned char *channels);
 
 /* Init the library using a DecoderSpecificInfo */
-int FAADAPI faacDecInit2(faacDecHandle hDecoder, unsigned char *pBuffer,
+char FAADAPI faacDecInit2(faacDecHandle hDecoder, unsigned char *pBuffer,
                          unsigned long SizeOfDecoderSpecificInfo,
-                         unsigned long *samplerate, unsigned long *channels);
+                         unsigned long *samplerate, unsigned char *channels);
+
+void FAADAPI faacDecClose(faacDecHandle hDecoder);
 
 void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                             faacDecFrameInfo *hInfo,
                             unsigned char *buffer);
 
-void FAADAPI faacDecClose(faacDecHandle hDecoder);
-
-int FAADAPI AudioSpecificConfig(unsigned char *pBuffer,
+char FAADAPI AudioSpecificConfig(unsigned char *pBuffer,
                                 unsigned long *samplerate,
-                                unsigned long *channels,
-                                unsigned long *sf_index,
-                                unsigned long *object_type);
+                                unsigned char *channels,
+                                unsigned char *sf_index,
+                                unsigned char *object_type);
 
 #ifdef _WIN32
   #pragma pack(pop)

@@ -16,16 +16,18 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: pulse.c,v 1.1 2002/01/14 19:15:57 menno Exp $
+** $Id: pulse.c,v 1.2 2002/02/18 10:01:05 menno Exp $
 **/
 
+#include "common.h"
 #include "syntax.h"
 #include "pulse.h"
 
-void pulse_decode(ic_stream *ics, short *spec_data)
+void pulse_decode(ic_stream *ics, int16_t *spec_data)
 {
-    int i, k;
-    pulse_info *pul = &ics->pul;
+    uint8_t i;
+    uint16_t k;
+    pulse_info *pul = &(ics->pul);
 
     k = ics->swb_offset[pul->pulse_start_sfb];
 

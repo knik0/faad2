@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.6 2002/02/11 11:34:18 menno Exp $
+** $Id: syntax.c,v 1.7 2002/02/18 10:01:05 menno Exp $
 **/
 
 /*
@@ -29,6 +29,7 @@
 
 #include <stdlib.h>
 #include <memory.h>
+#include "common.h"
 #include "syntax.h"
 #include "specrec.h"
 #include "huffman.h"
@@ -39,10 +40,10 @@
 
 
 /* Table 4.4.1 */
-int GASpecificConfig(bitfile *ld, unsigned long *channelConfiguration)
+uint8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration)
 {
-    int frameLengthFlag, dependsOnCoreCoder, coreCoderDelay;
-    int extensionFlag;
+    uint8_t frameLengthFlag, dependsOnCoreCoder, extensionFlag;
+    uint16_t coreCoderDelay;
     program_config pce;
 
     /* 1024 or 960 */
@@ -53,7 +54,7 @@ int GASpecificConfig(bitfile *ld, unsigned long *channelConfiguration)
         DEBUGVAR(1,139,"GASpecificConfig(): DependsOnCoreCoder"));
     if (dependsOnCoreCoder == 1)
     {
-        coreCoderDelay = faad_getbits(ld, 14
+        coreCoderDelay = (uint16_t)faad_getbits(ld, 14
             DEBUGVAR(1,140,"GASpecificConfig(): CoreCoderDelay"));
     }
 
@@ -82,37 +83,37 @@ int GASpecificConfig(bitfile *ld, unsigned long *channelConfiguration)
    PCEs transmitted in raw data blocks cannot be used to convey decoder
    configuration information.
 */
-int program_config_element(program_config *pce, bitfile *ld)
+uint8_t program_config_element(program_config *pce, bitfile *ld)
 {
-    int i;
+    uint8_t i;
 
     pce->channels = 0;
 
-    pce->element_instance_tag = faad_getbits(ld, 4
+    pce->element_instance_tag = (uint8_t)faad_getbits(ld, 4
         DEBUGVAR(1,10,"program_config_element(): element_instance_tag"));
 
-    pce->object_type = faad_getbits(ld, 2
+    pce->object_type = (uint8_t)faad_getbits(ld, 2
         DEBUGVAR(1,11,"program_config_element(): object_type"));
-    pce->sf_index = faad_getbits(ld, 4
+    pce->sf_index = (uint8_t)faad_getbits(ld, 4
         DEBUGVAR(1,12,"program_config_element(): sf_index"));
-    pce->num_front_channel_elements = faad_getbits(ld, 4
+    pce->num_front_channel_elements = (uint8_t)faad_getbits(ld, 4
         DEBUGVAR(1,13,"program_config_element(): num_front_channel_elements"));
-    pce->num_side_channel_elements = faad_getbits(ld, 4
+    pce->num_side_channel_elements = (uint8_t)faad_getbits(ld, 4
         DEBUGVAR(1,14,"program_config_element(): num_side_channel_elements"));
-    pce->num_back_channel_elements = faad_getbits(ld, 4
+    pce->num_back_channel_elements = (uint8_t)faad_getbits(ld, 4
         DEBUGVAR(1,15,"program_config_element(): num_back_channel_elements"));
-    pce->num_lfe_channel_elements = faad_getbits(ld, 2
+    pce->num_lfe_channel_elements = (uint8_t)faad_getbits(ld, 2
         DEBUGVAR(1,16,"program_config_element(): num_lfe_channel_elements"));
-    pce->num_assoc_data_elements = faad_getbits(ld, 3
+    pce->num_assoc_data_elements = (uint8_t)faad_getbits(ld, 3
         DEBUGVAR(1,17,"program_config_element(): num_assoc_data_elements"));
-    pce->num_valid_cc_elements = faad_getbits(ld, 4
+    pce->num_valid_cc_elements = (uint8_t)faad_getbits(ld, 4
         DEBUGVAR(1,18,"program_config_element(): num_valid_cc_elements"));
 
     pce->mono_mixdown_present = faad_get1bit(ld
         DEBUGVAR(1,19,"program_config_element(): mono_mixdown_present"));
     if (pce->mono_mixdown_present == 1)
     {
-        pce->mono_mixdown_element_number = faad_getbits(ld, 4
+        pce->mono_mixdown_element_number = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,20,"program_config_element(): mono_mixdown_element_number"));
     }
 
@@ -120,7 +121,7 @@ int program_config_element(program_config *pce, bitfile *ld)
         DEBUGVAR(1,21,"program_config_element(): stereo_mixdown_present"));
     if (pce->stereo_mixdown_present == 1)
     {
-        pce->stereo_mixdown_element_number = faad_getbits(ld, 4
+        pce->stereo_mixdown_element_number = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,22,"program_config_element(): stereo_mixdown_element_number"));
     }
 
@@ -128,7 +129,7 @@ int program_config_element(program_config *pce, bitfile *ld)
         DEBUGVAR(1,23,"program_config_element(): matrix_mixdown_idx_present"));
     if (pce->matrix_mixdown_idx_present == 1)
     {
-        pce->matrix_mixdown_idx = faad_getbits(ld, 2
+        pce->matrix_mixdown_idx = (uint8_t)faad_getbits(ld, 2
             DEBUGVAR(1,24,"program_config_element(): matrix_mixdown_idx"));
         pce->pseudo_surround_enable = faad_get1bit(ld
             DEBUGVAR(1,25,"program_config_element(): pseudo_surround_enable"));
@@ -143,7 +144,7 @@ int program_config_element(program_config *pce, bitfile *ld)
         } else {
             pce->channels++;
         }
-        pce->front_element_tag_select[i] = faad_getbits(ld, 4
+        pce->front_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,27,"program_config_element(): front_element_tag_select"));
     }
 
@@ -156,7 +157,7 @@ int program_config_element(program_config *pce, bitfile *ld)
         } else {
             pce->channels++;
         }
-        pce->side_element_tag_select[i] = faad_getbits(ld, 4
+        pce->side_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,29,"program_config_element(): side_element_tag_select"));
     }
 
@@ -169,19 +170,19 @@ int program_config_element(program_config *pce, bitfile *ld)
         } else {
             pce->channels++;
         }
-        pce->back_element_tag_select[i] = faad_getbits(ld, 4
+        pce->back_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,31,"program_config_element(): back_element_tag_select"));
     }
 
     for (i = 0; i < pce->num_lfe_channel_elements; i++)
     {
         pce->channels++;
-        pce->lfe_element_tag_select[i] = faad_getbits(ld, 4
+        pce->lfe_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,32,"program_config_element(): lfe_element_tag_select"));
     }
 
     for (i = 0; i < pce->num_assoc_data_elements; i++)
-        pce->assoc_data_element_tag_select[i] = faad_getbits(ld, 4
+        pce->assoc_data_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
         DEBUGVAR(1,33,"program_config_element(): assoc_data_element_tag_select"));
 
     for (i = 0; i < pce->num_valid_cc_elements; i++)
@@ -191,18 +192,18 @@ int program_config_element(program_config *pce, bitfile *ld)
 
         pce->cc_element_is_ind_sw[i] = faad_get1bit(ld
             DEBUGVAR(1,34,"program_config_element(): cc_element_is_ind_sw"));
-        pce->valid_cc_element_tag_select[i] = faad_getbits(ld, 4
+        pce->valid_cc_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,35,"program_config_element(): valid_cc_element_tag_select"));
     }
 
     faad_byte_align(ld);
 
-    pce->comment_field_bytes = faad_getbits(ld, 8
+    pce->comment_field_bytes = (uint8_t)faad_getbits(ld, 8
         DEBUGVAR(1,36,"program_config_element(): comment_field_bytes"));
-    i = 0;
+
     for (i = 0; i < pce->comment_field_bytes; i++)
     {
-        pce->comment_field_data[i] = faad_getbits(ld, 8
+        pce->comment_field_data[i] = (uint8_t)faad_getbits(ld, 8
             DEBUGVAR(1,37,"program_config_element(): comment_field_data"));
     }
     pce->comment_field_data[i] = 0;
@@ -212,12 +213,12 @@ int program_config_element(program_config *pce, bitfile *ld)
 
 /* Table 4.4.4 and */
 /* Table 4.4.9 */
-int single_lfe_channel_element(element *sce, bitfile *ld, short *spec_data,
-                               int sf_index, int object_type)
+uint8_t single_lfe_channel_element(element *sce, bitfile *ld, int16_t *spec_data,
+                               uint8_t sf_index, uint8_t object_type)
 {
-    ic_stream *ics = &sce->ics1;
+    ic_stream *ics = &(sce->ics1);
 
-    sce->element_instance_tag = faad_getbits(ld, LEN_TAG
+    sce->element_instance_tag = (uint8_t)faad_getbits(ld, LEN_TAG
         DEBUGVAR(1,38,"single_lfe_channel_element(): element_instance_tag"));
 
     return individual_channel_stream(sce, ld, ics, 0, spec_data, sf_index,
@@ -225,15 +226,14 @@ int single_lfe_channel_element(element *sce, bitfile *ld, short *spec_data,
 }
 
 /* Table 4.4.5 */
-int channel_pair_element(element *cpe, bitfile *ld, short *spec_data1,
-                         short *spec_data2, int sf_index, int object_type)
+uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
+                         int16_t *spec_data2, uint8_t sf_index, uint8_t object_type)
 {
-    int result;
+    uint8_t result;
+    ic_stream *ics1 = &(cpe->ics1);
+    ic_stream *ics2 = &(cpe->ics2);
 
-    ic_stream *ics1 = &cpe->ics1;
-    ic_stream *ics2 = &cpe->ics2;
-
-    cpe->element_instance_tag = faad_getbits(ld, LEN_TAG
+    cpe->element_instance_tag = (uint8_t)faad_getbits(ld, LEN_TAG
         DEBUGVAR(1,39,"channel_pair_element(): element_instance_tag"));
 
     if ((cpe->common_window = faad_get1bit(ld
@@ -244,11 +244,11 @@ int channel_pair_element(element *cpe, bitfile *ld, short *spec_data1,
             object_type)) > 0)
             return result;
 
-        ics1->ms_mask_present = faad_getbits(ld, 2
+        ics1->ms_mask_present = (uint8_t)faad_getbits(ld, 2
             DEBUGVAR(1,41,"channel_pair_element(): ms_mask_present"));
         if (ics1->ms_mask_present == 1)
         {
-            int g, sfb;
+            uint8_t g, sfb;
             for (g = 0; g < ics1->num_window_groups; g++)
             {
                 for (sfb = 0; sfb < ics1->max_sfb; sfb++)
@@ -275,24 +275,24 @@ int channel_pair_element(element *cpe, bitfile *ld, short *spec_data1,
 }
 
 /* Table 4.4.6 */
-static int ics_info(ic_stream *ics, bitfile *ld, int common_window,
-                    int sf_index, int object_type)
+static uint8_t ics_info(ic_stream *ics, bitfile *ld, uint8_t common_window,
+                    uint8_t sf_index, uint8_t object_type)
 {
     /* ics->ics_reserved_bit = */ faad_get1bit(ld
         DEBUGVAR(1,43,"ics_info(): ics_reserved_bit"));
-    ics->window_sequence = faad_getbits(ld, 2
+    ics->window_sequence = (uint8_t)faad_getbits(ld, 2
         DEBUGVAR(1,44,"ics_info(): window_sequence"));
     ics->window_shape = faad_get1bit(ld
         DEBUGVAR(1,45,"ics_info(): window_shape"));
 
     if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
     {
-        ics->max_sfb = faad_getbits(ld, 4
+        ics->max_sfb = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,46,"ics_info(): max_sfb (short)"));
-        ics->scale_factor_grouping = faad_getbits(ld, 7
+        ics->scale_factor_grouping = (uint8_t)faad_getbits(ld, 7
             DEBUGVAR(1,47,"ics_info(): scale_factor_grouping"));
     } else {
-        ics->max_sfb = faad_getbits(ld, 6
+        ics->max_sfb = (uint8_t)faad_getbits(ld, 6
             DEBUGVAR(1,48,"ics_info(): max_sfb (long)"));
 
         if (object_type == LTP)
@@ -303,14 +303,14 @@ static int ics_info(ic_stream *ics, bitfile *ld, int common_window,
                 if ((ics->ltp.data_present = faad_get1bit(ld
                     DEBUGVAR(1,50,"ics_info(): ltp.data_present"))) & 1)
                 {
-                    ltp_data(ics, &ics->ltp, ld);
+                    ltp_data(ics, &(ics->ltp), ld);
                 }
                 if (common_window)
                 {
                     if ((ics->ltp2.data_present = faad_get1bit(ld
                         DEBUGVAR(1,51,"ics_info(): ltp2.data_present"))) & 1)
                     {
-                        ltp_data(ics, &ics->ltp2, ld);
+                        ltp_data(ics, &(ics->ltp2), ld);
                     }
                 }
             }
@@ -318,13 +318,14 @@ static int ics_info(ic_stream *ics, bitfile *ld, int common_window,
             if ((ics->predictor_data_present = faad_get1bit(ld
                 DEBUGVAR(1,52,"ics_info(): predictor_data_present"))) & 1)
             {
-                int sfb;
+                uint8_t sfb;
+
                 ics->pred.limit = min(ics->max_sfb, pred_sfb_max[sf_index]);
 
                 if ((ics->pred.predictor_reset = faad_get1bit(ld
                     DEBUGVAR(1,53,"ics_info(): pred.predictor_reset"))) & 1)
                 {
-                    ics->pred.predictor_reset_group_number = faad_getbits(ld, 5
+                    ics->pred.predictor_reset_group_number = (uint8_t)faad_getbits(ld, 5
                         DEBUGVAR(1,54,"ics_info(): pred.predictor_reset_group_number"));
                 }
 
@@ -344,26 +345,26 @@ static int ics_info(ic_stream *ics, bitfile *ld, int common_window,
 /* Table 4.4.7 */
 static void pulse_data(pulse_info *pul, bitfile *ld)
 {
-    int i;
+    uint8_t i;
 
-    pul->number_pulse = faad_getbits(ld, 2
+    pul->number_pulse = (uint8_t)faad_getbits(ld, 2
         DEBUGVAR(1,56,"pulse_data(): number_pulse"));
-    pul->pulse_start_sfb = faad_getbits(ld, 6
+    pul->pulse_start_sfb = (uint8_t)faad_getbits(ld, 6
         DEBUGVAR(1,57,"pulse_data(): pulse_start_sfb"));
 
     for (i = 0; i < pul->number_pulse+1; i++) {
-        pul->pulse_offset[i] = faad_getbits(ld, 5
+        pul->pulse_offset[i] = (uint8_t)faad_getbits(ld, 5
             DEBUGVAR(1,58,"pulse_data(): pulse_offset"));
-        pul->pulse_amp[i] = faad_getbits(ld, 4
+        pul->pulse_amp[i] = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,59,"pulse_data(): pulse_amp"));
     }
 }
 
 /* Table 4.4.10 */
-int data_stream_element(bitfile *ld)
+uint16_t data_stream_element(bitfile *ld)
 {
-    int i, byte_aligned, count;
-    char data_stream_byte;
+    uint8_t byte_aligned;
+    uint16_t i, count;
 
     /* element_instance_tag = */ faad_getbits(ld, LEN_TAG
         DEBUGVAR(1,60,"data_stream_element(): element_instance_tag"));
@@ -381,7 +382,7 @@ int data_stream_element(bitfile *ld)
 
     for (i = 0; i < count; i++)
     {
-        data_stream_byte = faad_getbits(ld, LEN_BYTE
+        faad_getbits(ld, LEN_BYTE
             DEBUGVAR(1,64,"data_stream_element(): data_stream_byte"));
     }
 
@@ -389,15 +390,15 @@ int data_stream_element(bitfile *ld)
 }
 
 /* Table 4.4.11 */
-int fill_element(bitfile *ld, drc_info *drc)
+uint8_t fill_element(bitfile *ld, drc_info *drc)
 {
-    int count;
+    uint16_t count;
 
-    count = faad_getbits(ld, 4
+    count = (uint16_t)faad_getbits(ld, 4
         DEBUGVAR(1,65,"fill_element(): count"));
     if (count == 15)
     {
-        count += faad_getbits(ld, 8
+        count += (uint16_t)faad_getbits(ld, 8
             DEBUGVAR(1,66,"fill_element(): extra count")) - 1;
     }
 
@@ -410,14 +411,14 @@ int fill_element(bitfile *ld, drc_info *drc)
 }
 
 /* Table 4.4.24 */
-static int individual_channel_stream(element *ele, bitfile *ld,
-                                     ic_stream *ics, int scal_flag,
-                                     short *spec_data, int sf_index,
-                                     int object_type)
+static uint8_t individual_channel_stream(element *ele, bitfile *ld,
+                                     ic_stream *ics, uint8_t scal_flag,
+                                     int16_t *spec_data, uint8_t sf_index,
+                                     uint8_t object_type)
 {
-    int result;
+    uint8_t result;
 
-    ics->global_gain = faad_getbits(ld, 8
+    ics->global_gain = (uint8_t)faad_getbits(ld, 8
         DEBUGVAR(1,67,"individual_channel_stream(): global_gain"));
 
     if (!ele->common_window && !scal_flag)
@@ -436,14 +437,14 @@ static int individual_channel_stream(element *ele, bitfile *ld,
         if ((ics->pulse_data_present = faad_get1bit(ld
             DEBUGVAR(1,68,"individual_channel_stream(): pulse_data_present"))) & 1)
         {
-            pulse_data(&ics->pul, ld);
+            pulse_data(&(ics->pul), ld);
         }
 
         /* get tns data */
         if ((ics->tns_data_present = faad_get1bit(ld
             DEBUGVAR(1,69,"individual_channel_stream(): tns_data_present"))) & 1)
         {
-            tns_data(ics, &ics->tns, ld);
+            tns_data(ics, &(ics->tns), ld);
         }
 
         /* get gain control data */
@@ -473,8 +474,8 @@ static int individual_channel_stream(element *ele, bitfile *ld,
 /* Table 4.4.25 */
 static void section_data(ic_stream *ics, bitfile *ld)
 {
-    int g;
-    int sect_esc_val, sect_bits;
+    uint8_t g;
+    uint8_t sect_esc_val, sect_bits;
 
     if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
         sect_bits = 3;
@@ -484,19 +485,19 @@ static void section_data(ic_stream *ics, bitfile *ld)
 
     for (g = 0; g < ics->num_window_groups; g++)
     {
-        int k = 0;
-        int i = 0;
+        uint16_t k = 0;
+        uint8_t i = 0;
 
         while (k < ics->max_sfb)
         {
-            int sfb;
-            int sect_len_incr;
-            int sect_len = 0;
+            uint8_t sfb;
+            uint8_t sect_len_incr;
+            uint16_t sect_len = 0;
 
-            ics->sect_cb[g][i] = faad_getbits(ld, 4
+            ics->sect_cb[g][i] = (uint8_t)faad_getbits(ld, 4
                 DEBUGVAR(1,71,"section_data(): sect_cb"));
 
-            while ((sect_len_incr = faad_getbits(ld, sect_bits
+            while ((sect_len_incr = (uint8_t)faad_getbits(ld, sect_bits
                 DEBUGVAR(1,72,"section_data(): sect_len_incr"))) == sect_esc_val)
             {
                 sect_len += sect_esc_val;
@@ -524,13 +525,14 @@ static void section_data(ic_stream *ics, bitfile *ld)
   differentially coded relative to the global gain.
 */
 /* Table 4.4.26 */
-static int scale_factor_data(ic_stream *ics, bitfile *ld)
+static uint8_t scale_factor_data(ic_stream *ics, bitfile *ld)
 {
-    int g, sfb, t;
-    int noise_pcm_flag = 1;
-    int scale_factor = ics->global_gain;
-    int is_position = 0;
-    int noise_energy = ics->global_gain - 90;
+    uint8_t g, sfb;
+    int8_t t;
+    uint8_t noise_pcm_flag = 1;
+    int16_t scale_factor = ics->global_gain;
+    int16_t is_position = 0;
+    int16_t noise_energy = ics->global_gain - 90;
 
     for (g = 0; g < ics->num_window_groups; g++)
     {
@@ -587,10 +589,10 @@ static int scale_factor_data(ic_stream *ics, bitfile *ld)
 /* Table 4.4.27 */
 static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld)
 {
-    int w, filt, i, start_coef_bits, coef_bits;
-    int n_filt_bits = 2;
-    int length_bits = 6;
-    int order_bits = 5;
+    uint8_t w, filt, i, start_coef_bits, coef_bits;
+    uint8_t n_filt_bits = 2;
+    uint8_t length_bits = 6;
+    uint8_t order_bits = 5;
 
     if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
     {
@@ -601,7 +603,7 @@ static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld)
 
     for (w = 0; w < ics->num_windows; w++)
     {
-        tns->n_filt[w] = faad_getbits(ld, n_filt_bits
+        tns->n_filt[w] = (uint8_t)faad_getbits(ld, n_filt_bits
             DEBUGVAR(1,74,"tns_data(): n_filt"));
 
         if (tns->n_filt[w])
@@ -617,9 +619,9 @@ static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld)
 
         for (filt = 0; filt < tns->n_filt[w]; filt++)
         {
-            tns->length[w][filt] = faad_getbits(ld, length_bits
+            tns->length[w][filt] = (uint8_t)faad_getbits(ld, length_bits
                 DEBUGVAR(1,76,"tns_data(): length"));
-            tns->order[w][filt]  = faad_getbits(ld, order_bits
+            tns->order[w][filt]  = (uint8_t)faad_getbits(ld, order_bits
                 DEBUGVAR(1,77,"tns_data(): order"));
             if (tns->order[w][filt])
             {
@@ -631,7 +633,7 @@ static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld)
                 coef_bits = start_coef_bits - tns->coef_compress[w][filt];
                 for (i = 0; i < tns->order[w][filt]; i++)
                 {
-                    tns->coef[w][filt][i] = faad_getbits(ld, coef_bits
+                    tns->coef[w][filt][i] = (uint8_t)faad_getbits(ld, coef_bits
                         DEBUGVAR(1,80,"tns_data(): coef"));
                 }
             }
@@ -646,11 +648,11 @@ static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld)
 */
 static void ltp_data(ic_stream *ics, ltp_info *ltp, bitfile *ld)
 {
-    int sfb, w;
+    uint8_t sfb, w;
 
-    ltp->lag = faad_getbits(ld, 11
+    ltp->lag = (uint16_t)faad_getbits(ld, 11
         DEBUGVAR(1,81,"ltp_data(): lag"));
-    ltp->coef = faad_getbits(ld, 3
+    ltp->coef = (uint8_t)faad_getbits(ld, 3
         DEBUGVAR(1,82,"ltp_data(): coef"));
 
     if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
@@ -664,7 +666,7 @@ static void ltp_data(ic_stream *ics, ltp_info *ltp, bitfile *ld)
                     DEBUGVAR(1,84,"ltp_data(): short_lag_present"));
                 if (ltp->short_lag_present[w])
                 {
-                    ltp->short_lag[w] = faad_getbits(ld, 4
+                    ltp->short_lag[w] = (uint8_t)faad_getbits(ld, 4
                         DEBUGVAR(1,85,"ltp_data(): short_lag"));
                 }
 			}
@@ -682,16 +684,17 @@ static void ltp_data(ic_stream *ics, ltp_info *ltp, bitfile *ld)
 
 /* defines whether a huffman codebook is unsigned or not */
 /* Table 4.6.2 */
-static int unsigned_cb[] = { 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0 };
+static uint8_t unsigned_cb[] = { 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0 };
 
 /* Table 4.4.29 */
-static int spectral_data(ic_stream *ics, bitfile *ld, short *spectral_data)
+static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data)
 {
-    int g, i, k, inc;
-    short *sp;
-    int p = 0;
-    int groups = 0;
-    int sect_cb;
+    int8_t i;
+    uint8_t g, inc;
+    int16_t *sp;
+    uint16_t k, p = 0;
+    uint8_t groups = 0;
+    uint8_t sect_cb;
 
     sp = spectral_data;
     for (i = 1024/16-1; i >= 0; --i)
@@ -745,10 +748,10 @@ static int spectral_data(ic_stream *ics, bitfile *ld, short *spectral_data)
 }
 
 /* Table 4.4.30 */
-static int extension_payload(bitfile *ld, drc_info *drc, int count)
+static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count)
 {
-    int i, n;
-    int extension_type = faad_getbits(ld, 4
+    uint16_t i, n;
+    uint8_t extension_type = faad_getbits(ld, 4
         DEBUGVAR(1,87,"extension_payload(): extension_type"));
 
     switch (extension_type)
@@ -779,17 +782,17 @@ static int extension_payload(bitfile *ld, drc_info *drc, int count)
 }
 
 /* Table 4.4.31 */
-static int dynamic_range_info(bitfile *ld, drc_info *drc)
+static uint8_t dynamic_range_info(bitfile *ld, drc_info *drc)
 {
-    int i, n = 1;
-    int band_incr;
+    uint8_t i, n = 1;
+    uint8_t band_incr;
 
     drc->num_bands = 1;
 
     if (faad_get1bit(ld
         DEBUGVAR(1,90,"dynamic_range_info(): has instance_tag")) & 1)
     {
-        drc->pce_instance_tag = faad_getbits(ld, 4
+        drc->pce_instance_tag = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,91,"dynamic_range_info(): pce_instance_tag"));
         /* drc->drc_tag_reserved_bits = */ faad_getbits(ld, 4
             DEBUGVAR(1,92,"dynamic_range_info(): drc_tag_reserved_bits"));
@@ -815,7 +818,7 @@ static int dynamic_range_info(bitfile *ld, drc_info *drc)
 
         for (i = 0; i < drc->num_bands; i++);
         {
-            drc->band_top[i] = faad_getbits(ld, 8
+            drc->band_top[i] = (uint8_t)faad_getbits(ld, 8
                 DEBUGVAR(1,97,"dynamic_range_info(): band_top"));
             n++;
         }
@@ -824,7 +827,7 @@ static int dynamic_range_info(bitfile *ld, drc_info *drc)
     if (faad_get1bit(ld
         DEBUGVAR(1,98,"dynamic_range_info(): has prog_ref_level")) & 1)
     {
-        drc->prog_ref_level = faad_getbits(ld, 7
+        drc->prog_ref_level = (uint8_t)faad_getbits(ld, 7
             DEBUGVAR(1,99,"dynamic_range_info(): prog_ref_level"));
         /* drc->prog_ref_level_reserved_bits = */ faad_get1bit(ld
             DEBUGVAR(1,100,"dynamic_range_info(): prog_ref_level_reserved_bits"));
@@ -835,7 +838,7 @@ static int dynamic_range_info(bitfile *ld, drc_info *drc)
     {
         drc->dyn_rng_sgn[i] = faad_get1bit(ld
             DEBUGVAR(1,101,"dynamic_range_info(): dyn_rng_sgn"));
-        drc->dyn_rng_ctl[i] = faad_getbits(ld, 7
+        drc->dyn_rng_ctl[i] = (uint8_t)faad_getbits(ld, 7
             DEBUGVAR(1,102,"dynamic_range_info(): dyn_rng_ctl"));
         n++;
     }
@@ -844,10 +847,10 @@ static int dynamic_range_info(bitfile *ld, drc_info *drc)
 }
 
 /* Table 4.4.32 */
-static int excluded_channels(bitfile *ld, drc_info *drc)
+static uint8_t excluded_channels(bitfile *ld, drc_info *drc)
 {
-    int i, n = 0;
-    int num_excl_chan = 7;
+    uint8_t i, n = 0;
+    uint8_t num_excl_chan = 7;
 
     for (i = 0; i < 7; i++)
     {
@@ -876,7 +879,7 @@ static int excluded_channels(bitfile *ld, drc_info *drc)
 /* Table 1.A.2 */
 void get_adif_header(adif_header *adif, bitfile *ld)
 {
-    int i;
+    uint8_t i;
 
     /* adif_id[0] = */ faad_getbits(ld, 8
         DEBUGVAR(1,106,"get_adif_header(): adif_id[0]"));
@@ -892,7 +895,7 @@ void get_adif_header(adif_header *adif, bitfile *ld)
     {
         for (i = 0; i < 72/8; i++)
         {
-            adif->copyright_id[i] = faad_getbits(ld, 8
+            adif->copyright_id[i] = (int8_t)faad_getbits(ld, 8
                 DEBUGVAR(1,111,"get_adif_header(): copyright_id"));
         }
         adif->copyright_id[i] = 0;
@@ -905,7 +908,7 @@ void get_adif_header(adif_header *adif, bitfile *ld)
         DEBUGVAR(1,114,"get_adif_header(): bitstream_type"));
     adif->bitrate = faad_getbits(ld, 23
         DEBUGVAR(1,115,"get_adif_header(): bitrate"));
-    adif->num_program_config_elements = faad_getbits(ld, 4
+    adif->num_program_config_elements = (uint8_t)faad_getbits(ld, 4
         DEBUGVAR(1,116,"get_adif_header(): num_program_config_elements"));
 
     for (i = 0; i < adif->num_program_config_elements + 1; i++)
@@ -923,7 +926,7 @@ void get_adif_header(adif_header *adif, bitfile *ld)
 }
 
 /* Table 1.A.5 */
-int adts_frame(adts_header *adts, bitfile *ld)
+uint8_t adts_frame(adts_header *adts, bitfile *ld)
 {
     /* faad_byte_align(ld); */
     if (adts_fixed_header(adts, ld))
@@ -935,14 +938,15 @@ int adts_frame(adts_header *adts, bitfile *ld)
 }
 
 /* Table 1.A.6 */
-static int adts_fixed_header(adts_header *adts, bitfile *ld)
+static uint8_t adts_fixed_header(adts_header *adts, bitfile *ld)
 {
-    int i, sync_err = 1;
+    uint16_t i;
+    uint8_t sync_err = 1;
 
     /* try to recover from sync errors */
     for (i = 0; i < 768; i++)
     {
-        adts->syncword = faad_showbits(ld, 12);
+        adts->syncword = (uint16_t)faad_showbits(ld, 12);
         if (adts->syncword != 0xFFF)
         {
             faad_getbits(ld, 8
@@ -959,17 +963,17 @@ static int adts_fixed_header(adts_header *adts, bitfile *ld)
 
     adts->id = faad_get1bit(ld
         DEBUGVAR(1,119,"adts_fixed_header(): id"));
-    adts->layer = faad_getbits(ld, 2
+    adts->layer = (uint8_t)faad_getbits(ld, 2
         DEBUGVAR(1,120,"adts_fixed_header(): layer"));
     adts->protection_absent = faad_get1bit(ld
         DEBUGVAR(1,121,"adts_fixed_header(): protection_absent"));
-    adts->profile = faad_getbits(ld, 2
+    adts->profile = (uint8_t)faad_getbits(ld, 2
         DEBUGVAR(1,122,"adts_fixed_header(): profile"));
-    adts->sf_index = faad_getbits(ld, 4
+    adts->sf_index = (uint8_t)faad_getbits(ld, 4
         DEBUGVAR(1,123,"adts_fixed_header(): sf_index"));
     adts->private_bit = faad_get1bit(ld
         DEBUGVAR(1,124,"adts_fixed_header(): private_bit"));
-    adts->channel_configuration = faad_getbits(ld, 3
+    adts->channel_configuration = (uint8_t)faad_getbits(ld, 3
         DEBUGVAR(1,125,"adts_fixed_header(): channel_configuration"));
     adts->original = faad_get1bit(ld
         DEBUGVAR(1,126,"adts_fixed_header(): original"));
@@ -977,7 +981,7 @@ static int adts_fixed_header(adts_header *adts, bitfile *ld)
         DEBUGVAR(1,127,"adts_fixed_header(): home"));
     if (adts->id == 0)
     {
-        adts->emphasis = faad_getbits(ld, 2
+        adts->emphasis = (uint8_t)faad_getbits(ld, 2
             DEBUGVAR(1,128,"adts_fixed_header(): emphasis"));
     }
 
@@ -991,11 +995,11 @@ static void adts_variable_header(adts_header *adts, bitfile *ld)
         DEBUGVAR(1,129,"adts_variable_header(): copyright_identification_bit"));
     adts->copyright_identification_start = faad_get1bit(ld
         DEBUGVAR(1,130,"adts_variable_header(): copyright_identification_start"));
-    adts->aac_frame_length = faad_getbits(ld, 13
+    adts->aac_frame_length = (uint16_t)faad_getbits(ld, 13
         DEBUGVAR(1,131,"adts_variable_header(): aac_frame_length"));
-    adts->adts_buffer_fullness = faad_getbits(ld, 11
+    adts->adts_buffer_fullness = (uint16_t)faad_getbits(ld, 11
         DEBUGVAR(1,132,"adts_variable_header(): adts_buffer_fullness"));
-    adts->no_raw_data_blocks_in_frame = faad_getbits(ld, 2
+    adts->no_raw_data_blocks_in_frame = (uint8_t)faad_getbits(ld, 2
         DEBUGVAR(1,133,"adts_variable_header(): no_raw_data_blocks_in_frame"));
 }
 
@@ -1004,7 +1008,7 @@ static void adts_error_check(adts_header *adts, bitfile *ld)
 {
     if (adts->protection_absent == 0)
     {
-        adts->crc_check = faad_getbits(ld, 16
+        adts->crc_check = (uint16_t)faad_getbits(ld, 16
             DEBUGVAR(1,134,"adts_error_check(): crc_check"));
     }
 }

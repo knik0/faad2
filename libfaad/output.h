@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: output.h,v 1.1 2002/01/14 19:15:56 menno Exp $
+** $Id: output.h,v 1.2 2002/02/18 10:01:05 menno Exp $
 **/
 
 #ifndef __OUTPUT_H__
@@ -26,8 +26,10 @@
 extern "C" {
 #endif
 
-void* output_to_PCM(float **input, void *samplebuffer, int channels,
-                    int format);
+void* output_to_PCM(real_t **input,
+                    void *samplebuffer,
+                    uint8_t channels,
+                    uint8_t format);
 
 
 #ifdef __cplusplus

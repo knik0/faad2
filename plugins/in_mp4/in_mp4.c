@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.7 2002/01/25 23:20:42 menno Exp $
+** $Id: in_mp4.c,v 1.8 2002/02/18 10:01:05 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -61,7 +61,7 @@ typedef struct state
     MP4SampleId numSamples;
     MP4SampleId sampleId;
     int samplerate;
-    int channels;
+    unsigned char channels;
     int decode_pos_ms; // current decoding position, in milliseconds
     int paused; // are we paused?
     int seek_needed; // if != -1, it is the point that the decode thread should seek to, in ms.
@@ -120,12 +120,14 @@ int GetAACTrack(MP4FileHandle infile)
         if (!strcmp(trackType, MP4_AUDIO_TRACK_TYPE))
         {
             unsigned char *buff = NULL;
-            int buff_size = 0, dummy;
+            int buff_size = 0;
+            unsigned char dummy8;
+            unsigned int dummy32;
             MP4GetTrackESConfiguration(infile, trackId, &buff, &buff_size);
 
             if (buff)
             {
-                rc = AudioSpecificConfig(buff, &dummy, &dummy, &dummy, &dummy);
+                rc = AudioSpecificConfig(buff, &dummy32, &dummy8, &dummy8, &dummy8);
                 free(buff);
 
                 if (rc < 0)
@@ -249,7 +251,8 @@ void quit()
 BOOL CALLBACK info_dialog_proc(HWND hwndDlg, UINT message,
                                WPARAM wParam, LPARAM lParam)
 {
-    int i, width, height, numFrames, ch, sf;
+    int i, width, height, numFrames;
+    unsigned char ch, sf;
     float fps;
     MP4FileHandle file;
     int track;
@@ -323,7 +326,7 @@ BOOL CALLBACK info_dialog_proc(HWND hwndDlg, UINT message,
     unsigned long msDuration;
     MP4Duration trackDuration;
     unsigned int timeScale, avgBitRate;
-    int type;
+    unsigned char type;
     const char* typeName;
 
     switch (message) {

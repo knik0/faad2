@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: specrec.c,v 1.2 2002/02/11 11:34:18 menno Exp $
+** $Id: specrec.c,v 1.3 2002/02/18 10:01:05 menno Exp $
 **/
 
 /*
@@ -26,7 +26,9 @@
    - applying scalefactors
 */
 
-#ifdef __ICL
+#include "common.h"
+
+#ifdef USE_FMATH
 #include <mathf.h>
 #else
 #include <math.h>
@@ -51,9 +53,9 @@
     in section named section. This offset depends on window_sequence and
     scale_factor_grouping and is needed to decode the spectral_data().
 */
-int window_grouping_info(ic_stream *ics, int fs_index)
+uint8_t window_grouping_info(ic_stream *ics, uint8_t fs_index)
 {
-    int i, g;
+    uint8_t i, g;
 
     switch (ics->window_sequence) {
     case ONLY_LONG_SEQUENCE:
@@ -94,9 +96,10 @@ int window_grouping_info(ic_stream *ics, int fs_index)
         /* preparation of sect_sfb_offset for short blocks */
         for (g = 0; g < ics->num_window_groups; g++)
         {
-            int width;
-            int sect_sfb = 0;
-            int offset = 0;
+            uint16_t width;
+            uint8_t sect_sfb = 0;
+            uint16_t offset = 0;
+
             for (i = 0; i < ics->num_swb; i++)
             {
                 width = swb_offset_short_window[fs_index][i+1] -
@@ -133,16 +136,18 @@ int window_grouping_info(ic_stream *ics, int fs_index)
   - Within a scalefactor window band, the coefficients are in ascending
     spectral order.
 */
-void quant_to_spec(ic_stream *ics, float *spec_data)
+void quant_to_spec(ic_stream *ics, real_t *spec_data)
 {
-    int g, width, sfb, win, bin;
-    float *start_inptr, *start_win_ptr, *win_ptr;
+    int8_t i;
+    uint8_t g, sfb, win;
+    uint16_t width, bin;
+    real_t *start_inptr, *start_win_ptr, *win_ptr;
 
-    float tmp_spec[1024];
-    float *tmp_spec_ptr, *spec_ptr;
+    real_t tmp_spec[1024];
+    real_t *tmp_spec_ptr, *spec_ptr;
 
     tmp_spec_ptr = tmp_spec;
-    for (g = 1024/16-1; g >= 0; --g)
+    for (i = 1024/16-1; i >= 0; --i)
     {
         *tmp_spec_ptr++ = 0; *tmp_spec_ptr++ = 0;
         *tmp_spec_ptr++ = 0; *tmp_spec_ptr++ = 0;
@@ -160,8 +165,8 @@ void quant_to_spec(ic_stream *ics, float *spec_data)
 
     for (g = 0; g < ics->num_window_groups; g++)
     {
-        int j = 0;
-        int win_inc = 0;
+        uint16_t j = 0;
+        uint16_t win_inc = 0;
 
         start_inptr = spec_ptr;
 
@@ -195,7 +200,7 @@ void quant_to_spec(ic_stream *ics, float *spec_data)
     spec_ptr = spec_data;
     tmp_spec_ptr = tmp_spec;
 
-    for (g = 1024/16 - 1; g >= 0; --g)
+    for (i = 1024/16 - 1; i >= 0; --i)
     {
         *spec_ptr++ = *tmp_spec_ptr++; *spec_ptr++ = *tmp_spec_ptr++;
         *spec_ptr++ = *tmp_spec_ptr++; *spec_ptr++ = *tmp_spec_ptr++;
@@ -208,86 +213,99 @@ void quant_to_spec(ic_stream *ics, float *spec_data)
     }
 }
 
-void build_tables(float *iq_table, float *pow2_table)
+void build_tables(real_t *iq_table, real_t *pow2_table)
 {
-    int i;
+    uint16_t i;
 
     /* build pow() table for inverse quantization */
     for(i = 0; i < IQ_TABLE_SIZE; i++)
     {
-#ifdef __ICL
+#ifdef USE_FMATH
         iq_table[i] = powf(i, 4.0f/3.0f);
 #else
-        iq_table[i] = (float)pow(i, 4.0/3.0);
+        iq_table[i] = (real_t)pow(i, 4.0/3.0);
 #endif
     }
 
     /* build pow(2, 0.25) table for scalefactors */
     for(i = 0; i < POW_TABLE_SIZE; i++)
     {
-#ifdef __ICL
+#ifdef USE_FMATH
         pow2_table[i] = powf(2.0f, 0.25f * (i-100));
 #else
-        pow2_table[i] = (float)pow(2.0, 0.25 * (i-100));
+        pow2_table[i] = (real_t)pow(2.0, 0.25 * (i-100));
 #endif
     }
 }
 
-void inverse_quantization(float *x_invquant, short *x_quant, float *iq_table)
+static INLINE real_t iquant(int16_t q, real_t *iq_table)
 {
-    int i;
-
-    for(i = 0; i < 1024; i++)
+    if (q > 0)
     {
-        short q = x_quant[i];
-
-        if (q > 0)
-        {
-            if (q < IQ_TABLE_SIZE)
-                x_invquant[i] = iq_table[q];
-            else
-#ifdef __ICL
-                x_invquant[i] = powf(q, 4.0f/3.0f);
+        if (q < IQ_TABLE_SIZE)
+            return iq_table[q];
+        else
+#ifdef USE_FMATH
+            return powf(q, 4.0f/3.0f);
 #else
-                x_invquant[i] = (float)pow(q, 4.0/3.0);
+            return (real_t)pow(q, 4.0/3.0);
 #endif
-        } else if (q < 0) {
-            q = -q;
-            if (q < IQ_TABLE_SIZE)
-                x_invquant[i] = -iq_table[q];
-            else
-#ifdef __ICL
-                x_invquant[i] = -powf(q, 4.0f/3.0f);
+    } else if (q < 0) {
+        q = -q;
+        if (q < IQ_TABLE_SIZE)
+            return -iq_table[q];
+        else
+#ifdef USE_FMATH
+            return -powf(q, 4.0f/3.0f);
 #else
-                x_invquant[i] = -(float)pow(q, 4.0/3.0);
+            return -(real_t)pow(q, 4.0/3.0);
 #endif
-        } else {
-            x_invquant[i] = 0.0f;
-        }
+    } else {
+        return 0.0f;
     }
 }
 
-static __inline float get_scale_factor_gain(int scale_factor, float *pow2_table)
+void inverse_quantization(real_t *x_invquant, int16_t *x_quant, real_t *iq_table)
 {
-    if ((scale_factor >= 0) && (scale_factor < POW_TABLE_SIZE))
+    int8_t i;
+    int16_t *in_ptr = x_quant;
+    real_t *out_ptr = x_invquant;
+
+    for(i = 1024/8-1; i >= 0; --i)
+    {
+        *out_ptr++ = iquant(*in_ptr++, iq_table);
+        *out_ptr++ = iquant(*in_ptr++, iq_table);
+        *out_ptr++ = iquant(*in_ptr++, iq_table);
+        *out_ptr++ = iquant(*in_ptr++, iq_table);
+        *out_ptr++ = iquant(*in_ptr++, iq_table);
+        *out_ptr++ = iquant(*in_ptr++, iq_table);
+        *out_ptr++ = iquant(*in_ptr++, iq_table);
+        *out_ptr++ = iquant(*in_ptr++, iq_table);
+    }
+}
+
+static INLINE real_t get_scale_factor_gain(uint16_t scale_factor, real_t *pow2_table)
+{
+    if (scale_factor < POW_TABLE_SIZE)
         return pow2_table[scale_factor];
     else
-#ifdef __ICL
+#ifdef USE_FMATH
         return powf(2.0f, 0.25f * (scale_factor - 100));
 #else
-        return (float)pow(2.0, 0.25 * (scale_factor - 100));
+        return (real_t)pow(2.0, 0.25 * (scale_factor - 100));
 #endif
 }
 
-void apply_scalefactors(ic_stream *ics, float *x_invquant, float *pow2_table)
+void apply_scalefactors(ic_stream *ics, real_t *x_invquant, real_t *pow2_table)
 {
-    int g, sfb, top;
-    float *fp, scale;
-    int groups = 0;
+    uint8_t g, sfb;
+    uint16_t top;
+    real_t *fp, scale;
+    uint8_t groups = 0;
 
     for (g = 0; g < ics->num_window_groups; g++)
     {
-        int k = 0;
+        uint16_t k = 0;
 
         /* using this 128*groups doesn't hurt long blocks, because
            long blocks only have 1 group, so that means 'groups' is

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ic_predict.h,v 1.1 2002/01/14 19:15:56 menno Exp $
+** $Id: ic_predict.h,v 1.2 2002/02/18 10:01:05 menno Exp $
 **/
 
 #ifndef __IC_PREDICT_H__
@@ -33,15 +33,15 @@ extern "C" {
 
 /* used to save the state */
 typedef struct {
-    float r[2];
-    float KOR[2];
-    float VAR[2];
+    real_t r[2];
+    real_t KOR[2];
+    real_t VAR[2];
 } pred_state;
 
 
 void pns_reset_pred_state(ic_stream *ics, pred_state *state);
 void reset_all_predictors(pred_state *state);
-void ic_prediction(ic_stream *ics, float *spec, pred_state *state);
+void ic_prediction(ic_stream *ics, real_t *spec, pred_state *state);
 
 
 #ifdef __cplusplus

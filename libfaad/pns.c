@@ -16,10 +16,12 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: pns.c,v 1.2 2002/01/25 20:15:07 menno Exp $
+** $Id: pns.c,v 1.3 2002/02/18 10:01:05 menno Exp $
 **/
 
-#ifdef __ICL
+#include "common.h"
+
+#ifdef USE_FMATH
 #include <mathf.h>
 #else
 #include <math.h>
@@ -44,9 +46,9 @@
 
 
 
-static __inline long random2()
+static INLINE int32_t random2()
 {
-    static long state = 1;
+    static int32_t state = 1;
 
     state = (1664525L * state) + 1013904223L;  /* Numerical recipes */
 
@@ -58,25 +60,25 @@ static __inline long random2()
    value. A suitable random number generator can be realized using one
    multiplication/accumulation per random value.
 */
-static __inline void gen_rand_vector(float *spec, int scale_factor, int size)
+static INLINE void gen_rand_vector(real_t *spec, uint16_t scale_factor, uint16_t size)
 {
-    int i;
-    float scale;
+    uint16_t i;
+    real_t scale;
 
     for (i = 0; i < size; i++)
     {
-        spec[i] = (float)random2();
+        spec[i] = (real_t)random2();
     }
 
     /* 14496-3 says:
-       scale = 1.0f/(size * (float)sqrt(MEAN_NRG));
+       scale = 1.0f/(size * (real_t)sqrt(MEAN_NRG));
     */
-#ifdef __ICL
+#ifdef USE_FMATH
     scale = 1.0f/sqrtf(size * MEAN_NRG);
     scale *= powf(2.0f, 0.25f*scale_factor);
 #else
-    scale = 1.0f/(float)sqrt(size * MEAN_NRG);
-    scale *= (float)pow(2.0, 0.25*scale_factor);
+    scale = 1.0f/(real_t)sqrt(size * MEAN_NRG);
+    scale *= (real_t)pow(2.0, 0.25*scale_factor);
 #endif
 
     /* Scale random vector to desired target energy */
@@ -84,12 +86,12 @@ static __inline void gen_rand_vector(float *spec, int scale_factor, int size)
         spec[i] *= scale;
 }
 
-void pns_decode(ic_stream *ics, float *spec)
+void pns_decode(ic_stream *ics, real_t *spec)
 {
-    int g, sfb, b, i;
-    int size, offs;
+    uint8_t g, sfb, b;
+    uint16_t size, offs;
 
-    int group = 0;
+    uint8_t group = 0;
 
     for (g = 0; g < ics->num_window_groups; g++)
     {

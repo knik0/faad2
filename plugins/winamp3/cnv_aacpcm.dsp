@@ -165,6 +165,162 @@ SOURCE=.\cnv_aacpcm.cpp
 # Begin Group "wa3sdk_h"
 
 # PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\sdk\studio\api.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\studio\apihelp.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\attribs\attrcb.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\attribs\attribute.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\attribs\attrint.h
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\..\..\..\Program Files\Microsoft Visual Studio\VC98\Include\BASETSD.H"
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\basewnd.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\attribs\cfgitem.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\attribs\cfgitemi.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\studio\chunklist.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\common.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\compdb.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\studio\corecb.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\depend.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\drag.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\guid.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\map.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\studio\mediainfo.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\memblock.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\multimap.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\named.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\nsGUID.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\pair.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\pathparse.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\platform\platform.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\ptrlist.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\rootcomp.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\rootwnd.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\scriptvar.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\studio\services\service.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\studio\services\servicei.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\studio\services\services.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\std.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\studio\services\svc_fileread.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\studio\services\svc_mediaconverter.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\tlist.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\vcputypes.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\common\virtualwnd.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sdk\studio\wac.h
+# End Source File
 # End Group
 # Begin Source File
 
