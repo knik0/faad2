@@ -40,8 +40,8 @@ RSC=rc.exe
 # PROP Output_Dir "CB_Release"
 # PROP Intermediate_Dir "CB_Release"
 # PROP Target_Dir ""
-F90=df.exe
 MTL=midl.exe
+F90=df.exe
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
 # ADD CPP /nologo /MD /W3 /GX /O1 /I ".\\" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "USE_FILE_CALLBACKS" /YX /FD /c
 # ADD BASE RSC /l 0x413 /d "NDEBUG"
@@ -65,8 +65,8 @@ LIB32=link.exe -lib
 # PROP Output_Dir "CB_Debug"
 # PROP Intermediate_Dir "CB_Debug"
 # PROP Target_Dir ""
-F90=df.exe
 MTL=midl.exe
+F90=df.exe
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /GZ /c
 # ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I ".\\" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "USE_FILE_CALLBACKS" /YX /FD /GZ /c
 # ADD BASE RSC /l 0x413 /d "_DEBUG"

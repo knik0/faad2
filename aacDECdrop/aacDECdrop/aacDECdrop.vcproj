@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding = "Windows-1252"?>
+<?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.00"
+	Version="7.10"
 	Name="aacDECdrop"
 	SccProjectName=""
 	SccLocalPath="">
@@ -20,7 +20,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/QaxK /GA /Qwp_ipo"
+				AdditionalOptions="/QaxK /GA /Qwp_ipo &lt;?ICLPrjArgs?&gt; /Qvc7 /Qlocation,link,&quot;$(VCInstallDir)bin&quot; /c  /I &quot;..\..\include&quot; /I &quot;..\..\common\libsndfile\src&quot; /I &quot;..\..\common\mp4v2&quot; /I &quot;..\..\common\libsndfile\win32&quot; /nologo /W3 /O2 /Og /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/aacDECdrop.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /QaxK /GA /Qwp_ipo &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseIntelTool #$BinPath:&quot;C:\Program Files\Intel\Compiler70\ia32\bin;C:\Program Files\Common Files\Intel\Shared Files\ia32\bin;$(VSInstallDir)Common7\IDE&quot; #$LibPath:&quot;C:\Program Files\Intel\Compiler70\ia32\lib;C:\Program Files\Common Files\Intel\Shared Files\ia32\lib&quot; #$IncPath:&quot;C:\Program Files\Intel\Compiler70\ia32\include&quot; &lt;?/IVCSpawnPrjArgs?&gt;"
 				Optimization="2"
 				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="1"
@@ -39,33 +39,19 @@
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				CompileAs="0">
-				<IntelOptions
-					Optimization="2"
-					GlobalOptimizations="1"
-					InlineFuncExpansion="1"
-					OmitFramePtrs="1"
-					StringPooling="1"
-					RuntimeLibrary="0"
-					BufferSecurityCheck="1"
-					FunctionLevelLinking="1"
-					AllOptions="/c  /I &quot;..\..\include&quot; /I &quot;..\..\common\libsndfile\src&quot; /I &quot;..\..\common\mp4v2&quot; /I &quot;..\..\common\libsndfile\win32&quot; /nologo /W3 /O2 /Og /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/aacDECdrop.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /QaxK /GA /Qwp_ipo"/>
-			</Tool>
+				CompileAs="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
+				AdditionalOptions="/MACHINE:I386 &lt;?ICLPrjArgs?&gt; /NOLOGO /OUT:&quot;.\Release/aacDECdrop.exe&quot; /INCREMENTAL:NO odbc32.lib odbccp32.lib winmm.lib ws2_32.lib /PDB:&quot;.\Release/aacDECdrop.pdb&quot; /SUBSYSTEM:WINDOWS /TLBID:1 /MACHINE:I386 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseIntelTool #$BinPath:&quot;C:\Program Files\Intel\Compiler70\ia32\bin;C:\Program Files\Common Files\Intel\Shared Files\ia32\bin;$(VSInstallDir)Common7\IDE&quot; #$LibPath:&quot;C:\Program Files\Intel\Compiler70\ia32\lib;C:\Program Files\Common Files\Intel\Shared Files\ia32\lib&quot; #$IncPath:&quot;C:\Program Files\Intel\Compiler70\ia32\include&quot; &lt;?/IVCSpawnPrjArgs?&gt;"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib ws2_32.lib"
 				OutputFile=".\Release/aacDECdrop.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				IgnoreDefaultLibraryNames=""
 				ProgramDatabaseFile=".\Release/aacDECdrop.pdb"
-				SubSystem="2">
-				<IntelOptions
-					AllOptions="/NOLOGO /OUT:&quot;.\Release/aacDECdrop.exe&quot; /INCREMENTAL:NO odbc32.lib odbccp32.lib winmm.lib ws2_32.lib /PDB:&quot;.\Release/aacDECdrop.pdb&quot; /SUBSYSTEM:WINDOWS /TLBID:1 /MACHINE:I386 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"/>
-			</Tool>
+				SubSystem="2"/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="NDEBUG"
@@ -88,7 +74,13 @@
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
 				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
@@ -100,6 +92,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="&lt;?ICLPrjArgs?&gt; /Qvc7 /Qlocation,link,&quot;$(VCInstallDir)bin&quot; /c  /I &quot;..\..\include&quot; /I &quot;..\..\common\libsndfile\src&quot; /I &quot;..\..\common\mp4v2&quot; /I &quot;..\..\common\libsndfile\win32&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MLd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/aacDECdrop.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseIntelTool #$BinPath:&quot;C:\Program Files\Intel\Compiler70\ia32\bin;C:\Program Files\Common Files\Intel\Shared Files\ia32\bin;$(VSInstallDir)Common7\IDE&quot; #$LibPath:&quot;C:\Program Files\Intel\Compiler70\ia32\lib;C:\Program Files\Common Files\Intel\Shared Files\ia32\lib&quot; #$IncPath:&quot;C:\Program Files\Intel\Compiler70\ia32\include&quot; &lt;?/IVCSpawnPrjArgs?&gt;"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\include,..\..\common\libsndfile\src,..\..\common\mp4v2,..\..\common\libsndfile\win32"
 				PreprocessorDefinitions="WIN32,_DEBUG,_WINDOWS"
@@ -113,29 +106,19 @@
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				DebugInformationFormat="4"
-				CompileAs="0">
-				<IntelOptions
-					Optimization="0"
-					MinimalRebuild="1"
-					BasicRuntimeChecks="3"
-					RuntimeLibrary="5"
-					AllOptions="/c  /I &quot;..\..\include&quot; /I &quot;..\..\common\libsndfile\src&quot; /I &quot;..\..\common\mp4v2&quot; /I &quot;..\..\common\libsndfile\win32&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MLd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/aacDECdrop.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd"/>
-			</Tool>
+				CompileAs="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
+				AdditionalOptions="/MACHINE:I386 &lt;?ICLPrjArgs?&gt; /NOLOGO /OUT:&quot;.\Debug/aacDECdrop.exe&quot; /INCREMENTAL odbc32.lib odbccp32.lib winmm.lib ws2_32.lib svml_disp.lib /DEBUG /PDB:&quot;.\Debug/aacDECdrop.pdb&quot; /SUBSYSTEM:WINDOWS /TLBID:1 /MACHINE:I386 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseIntelTool #$BinPath:&quot;C:\Program Files\Intel\Compiler70\ia32\bin;C:\Program Files\Common Files\Intel\Shared Files\ia32\bin;$(VSInstallDir)Common7\IDE&quot; #$LibPath:&quot;C:\Program Files\Intel\Compiler70\ia32\lib;C:\Program Files\Common Files\Intel\Shared Files\ia32\lib&quot; #$IncPath:&quot;C:\Program Files\Intel\Compiler70\ia32\include&quot; &lt;?/IVCSpawnPrjArgs?&gt;"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib ws2_32.lib svml_disp.lib"
 				OutputFile=".\Debug/aacDECdrop.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile=".\Debug/aacDECdrop.pdb"
-				SubSystem="2">
-				<IntelOptions
-					AllOptions="/NOLOGO /OUT:&quot;.\Debug/aacDECdrop.exe&quot; /INCREMENTAL odbc32.lib odbccp32.lib winmm.lib ws2_32.lib svml_disp.lib /DEBUG /PDB:&quot;.\Debug/aacDECdrop.pdb&quot; /SUBSYSTEM:WINDOWS /TLBID:1 /MACHINE:I386 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"/>
-			</Tool>
+				SubSystem="2"/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="_DEBUG"
@@ -156,63 +139,92 @@
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
 				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 	</Configurations>
+	<References>
+	</References>
 	<Files>
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath="..\audio.c"/>
+				RelativePath="..\audio.c">
+			</File>
 			<File
-				RelativePath="..\decode.c"/>
+				RelativePath="..\decode.c">
+			</File>
 			<File
-				RelativePath="..\decthread.c"/>
+				RelativePath="..\decthread.c">
+			</File>
 			<File
-				RelativePath="..\main.c"/>
+				RelativePath="..\main.c">
+			</File>
 			<File
-				RelativePath="..\misc.c"/>
+				RelativePath="..\misc.c">
+			</File>
 			<File
-				RelativePath="..\wave_out.c"/>
+				RelativePath="..\wave_out.c">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
 			<File
-				RelativePath="..\audio.h"/>
+				RelativePath="..\audio.h">
+			</File>
 			<File
-				RelativePath="..\decode.h"/>
+				RelativePath="..\decode.h">
+			</File>
 			<File
-				RelativePath="..\decthread.h"/>
+				RelativePath="..\decthread.h">
+			</File>
 			<File
-				RelativePath="..\misc.h"/>
+				RelativePath="..\misc.h">
+			</File>
 			<File
-				RelativePath="..\resource.h"/>
+				RelativePath="..\resource.h">
+			</File>
 			<File
-				RelativePath="..\wave_out.h"/>
+				RelativePath="..\wave_out.h">
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 			<File
-				RelativePath="..\resource\AAC01.bmp"/>
+				RelativePath="..\resource\AAC01.bmp">
+			</File>
 			<File
-				RelativePath="..\resource\AAC01.ico"/>
+				RelativePath="..\resource\AAC01.ico">
+			</File>
 			<File
-				RelativePath="..\resource\AAC02.bmp"/>
+				RelativePath="..\resource\AAC02.bmp">
+			</File>
 			<File
-				RelativePath="..\resource\AAC03.bmp"/>
+				RelativePath="..\resource\AAC03.bmp">
+			</File>
 			<File
-				RelativePath="..\resource\AAC04.bmp"/>
+				RelativePath="..\resource\AAC04.bmp">
+			</File>
 			<File
-				RelativePath="..\resource\AAC05.bmp"/>
+				RelativePath="..\resource\AAC05.bmp">
+			</File>
 			<File
-				RelativePath="..\resource\AAC06.bmp"/>
+				RelativePath="..\resource\AAC06.bmp">
+			</File>
 			<File
-				RelativePath="..\resource\AAC07.bmp"/>
+				RelativePath="..\resource\AAC07.bmp">
+			</File>
 			<File
-				RelativePath="..\resource\AAC08.bmp"/>
+				RelativePath="..\resource\AAC08.bmp">
+			</File>
 			<File
 				RelativePath="..\Script.rc">
 				<FileConfiguration
@@ -230,5 +242,6 @@
 			</File>
 		</Filter>
 	</Files>
-	<Globals/>
+	<Globals>
+	</Globals>
 </VisualStudioProject>

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="Windows-1252"?>
+<?xml version="1.0" encoding = "Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
@@ -20,9 +20,8 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="&lt;?ICLPrjArgs?&gt; /Qvc7 /Qlocation,link,&quot;$(VCInstallDir)bin&quot; /c  /I &quot;../include&quot; /I &quot;../common/mp4v2&quot; /I &quot;../common/faad&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_CONSOLE&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/faad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseNonIntelTool #$BinPath:&quot;C:\Program Files\Intel\Compiler70\ia32\bin;C:\Program Files\Common Files\Intel\Shared Files\ia32\bin;$(VSInstallDir)Common7\IDE&quot; #$LibPath:&quot;C:\Program Files\Intel\Compiler70\ia32\lib;C:\Program Files\Common Files\Intel\Shared Files\ia32\lib&quot; #$IncPath:&quot;C:\Program Files\Intel\Compiler70\ia32\include&quot; &lt;?/IVCSpawnPrjArgs?&gt;"
 				Optimization="0"
-				AdditionalIncludeDirectories="../include,../common/mp4v2,../common/faad"
+				AdditionalIncludeDirectories="../include,../common/mp4ff,../common/faad"
 				PreprocessorDefinitions="WIN32,_DEBUG,_CONSOLE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -34,19 +33,29 @@
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				DebugInformationFormat="4"
-				CompileAs="0"/>
+				CompileAs="0">
+				<IntelOptions
+					Optimization="0"
+					MinimalRebuild="1"
+					BasicRuntimeChecks="3"
+					RuntimeLibrary="1"
+					AllOptions="/c  /I &quot;../include&quot; /I &quot;../common/mp4ff&quot; /I &quot;../common/faad&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_CONSOLE&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/faad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd"/>
+			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386 &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot; &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot; &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot; &lt;?ICLPrjArgs?&gt; /NOLOGO /OUT:&quot;.\Debug/faad.exe&quot; /INCREMENTAL ws2_32.lib odbc32.lib odbccp32.lib /DEBUG /PDB:&quot;.\Debug/faad.pdb&quot; /SUBSYSTEM:CONSOLE /TLBID:1 /MACHINE:I386 &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot; &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot; &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot; kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseNonIntelTool #$BinPath:&quot;C:\Program Files\Intel\Compiler70\ia32\bin;C:\Program Files\Common Files\Intel\Shared Files\ia32\bin;$(VSInstallDir)Common7\IDE&quot; #$LibPath:&quot;C:\Program Files\Intel\Compiler70\ia32\lib;C:\Program Files\Common Files\Intel\Shared Files\ia32\lib&quot; #$IncPath:&quot;C:\Program Files\Intel\Compiler70\ia32\include&quot; &lt;?/IVCSpawnPrjArgs?&gt;"
+				AdditionalOptions="/MACHINE:I386 &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot; &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot; &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot;"
 				AdditionalDependencies="ws2_32.lib odbc32.lib odbccp32.lib"
 				OutputFile=".\Debug/faad.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile=".\Debug/faad.pdb"
-				SubSystem="1"/>
+				SubSystem="1">
+				<IntelOptions
+					AllOptions="/NOLOGO /OUT:&quot;.\Debug/faad.exe&quot; /INCREMENTAL ws2_32.lib odbc32.lib odbccp32.lib /DEBUG /PDB:&quot;.\Debug/faad.pdb&quot; /SUBSYSTEM:CONSOLE /TLBID:1 /MACHINE:I386 &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot; &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot; &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot; kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"/>
+			</Tool>
 			<Tool
 				Name="VCMIDLTool"
 				TypeLibraryName=".\Debug/faad.tlb"/>
@@ -70,6 +79,8 @@
 				Name="VCManagedWrapperGeneratorTool"/>
 			<Tool
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+			<IntelOptions
+				CompilerName="1"/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
@@ -81,16 +92,16 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="&lt;?ICLPrjArgs?&gt; /Qvc7 /Qlocation,link,&quot;$(VCInstallDir)bin&quot; /c  /I &quot;../include&quot; /I &quot;../common/mp4v2&quot; /I &quot;../common/faad&quot; /nologo /W3 /O2 /Og /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_CONSOLE&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/faad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseIntelTool #$BinPath:&quot;C:\Program Files\Intel\Compiler70\ia32\bin;C:\Program Files\Common Files\Intel\Shared Files\ia32\bin;$(VSInstallDir)Common7\IDE&quot; #$LibPath:&quot;C:\Program Files\Intel\Compiler70\ia32\lib;C:\Program Files\Common Files\Intel\Shared Files\ia32\lib&quot; #$IncPath:&quot;C:\Program Files\Intel\Compiler70\ia32\include&quot; &lt;?/IVCSpawnPrjArgs?&gt;"
+				Optimization="1"
 				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="1"
 				EnableIntrinsicFunctions="TRUE"
 				FavorSizeOrSpeed="1"
-				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="../include,../common/mp4v2,../common/faad"
+				OptimizeForProcessor="0"
+				AdditionalIncludeDirectories="../include,../common/mp4ff,../common/faad"
 				PreprocessorDefinitions="WIN32,NDEBUG,_CONSOLE"
 				StringPooling="TRUE"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="TRUE"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\Release/faad.pch"
@@ -99,17 +110,34 @@
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				CompileAs="0"/>
+				CompileAs="0">
+				<IntelOptions
+					Optimization="1"
+					GlobalOptimizations="1"
+					InlineFunctionExpansion="1"
+					EnableIntrinsicFunctions="1"
+					FavorSizeOrSpeed="1"
+					OmitFramePointers="1"
+					OptimizeForProcessor="0"
+					StringPooling="1"
+					RuntimeLibrary="2"
+					BufferSecurityCheck="1"
+					EnableFunctionLevelLinking="1"
+					AllOptions="/c  /I &quot;../include&quot; /I &quot;../common/mp4ff&quot; /I &quot;../common/faad&quot; /nologo /W3 /O1 /Og /Ob1 /Oi /Ot /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_CONSOLE&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/faad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd"/>
+			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386 &quot;..\libfaad\Release\libfaad.lib&quot; &quot;..\common\mp4v2\ST_Release\libmp4v2_st60.lib&quot; &quot;e:\cvs\audiocoding\faad2\libfaad\Release\libfaad.lib&quot; &quot;e:\cvs\audiocoding\faad2\common\mp4v2\ST_Release\libmp4v2_st60.lib&quot; &lt;?ICLPrjArgs?&gt; /NOLOGO /OUT:&quot;.\Release/faad.exe&quot; /INCREMENTAL:NO ws2_32.lib /SUBSYSTEM:CONSOLE /TLBID:1 /MACHINE:I386 &quot;..\libfaad\Release\libfaad.lib&quot; &quot;..\common\mp4v2\ST_Release\libmp4v2_st60.lib&quot; kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseIntelTool #$BinPath:&quot;C:\Program Files\Intel\Compiler70\ia32\bin;C:\Program Files\Common Files\Intel\Shared Files\ia32\bin;$(VSInstallDir)Common7\IDE&quot; #$LibPath:&quot;C:\Program Files\Intel\Compiler70\ia32\lib;C:\Program Files\Common Files\Intel\Shared Files\ia32\lib&quot; #$IncPath:&quot;C:\Program Files\Intel\Compiler70\ia32\include&quot; &lt;?/IVCSpawnPrjArgs?&gt;"
+				AdditionalOptions="/MACHINE:I386 &quot;..\libfaad\Release\libfaad.lib&quot; &quot;..\common\mp4v2\ST_Release\libmp4v2_st60.lib&quot; &quot;e:\cvs\audiocoding\faad2\libfaad\Release\libfaad.lib&quot; &quot;e:\cvs\audiocoding\faad2\common\mp4v2\ST_Release\libmp4v2_st60.lib&quot;"
 				AdditionalDependencies="ws2_32.lib"
 				OutputFile=".\Release/faad.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				SubSystem="1"/>
+				SubSystem="1">
+				<IntelOptions
+					AllOptions="/NOLOGO /OUT:&quot;.\Release/faad.exe&quot; /INCREMENTAL:NO ws2_32.lib /SUBSYSTEM:CONSOLE /TLBID:1 /MACHINE:I386 &quot;..\libfaad\Release\libfaad.lib&quot; &quot;..\common\mp4v2\ST_Release\libmp4v2_st60.lib&quot; &quot;e:\cvs\audiocoding\faad2\libfaad\Release\libfaad.lib&quot; &quot;e:\cvs\audiocoding\faad2\common\mp4v2\ST_Release\libmp4v2_st60.lib&quot; kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"/>
+			</Tool>
 			<Tool
 				Name="VCMIDLTool"
 				TypeLibraryName=".\Release/faad.tlb"/>
@@ -133,50 +161,40 @@
 				Name="VCManagedWrapperGeneratorTool"/>
 			<Tool
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+			<IntelOptions
+				CompilerName="1"/>
 		</Configuration>
 	</Configurations>
-	<References>
-	</References>
+	<References/>
 	<Files>
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath=".\audio.c">
-			</File>
+				RelativePath=".\audio.c"/>
 			<File
-				RelativePath="..\common\faad\getopt.c">
-			</File>
+				RelativePath="..\common\faad\getopt.c"/>
 			<File
-				RelativePath=".\main.c">
-			</File>
+				RelativePath=".\main.c"/>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
 			<File
-				RelativePath=".\audio.h">
-			</File>
+				RelativePath=".\audio.h"/>
 			<File
-				RelativePath="..\include\faad.h">
-			</File>
+				RelativePath="..\include\faad.h"/>
 			<File
-				RelativePath="..\common\faad\getopt.h">
-			</File>
+				RelativePath="..\common\faad\getopt.h"/>
 			<File
-				RelativePath="..\common\mp4v2\mp4.h">
-			</File>
+				RelativePath="..\common\mp4v2\mp4.h"/>
 			<File
-				RelativePath="..\common\mp4v2\mpeg4ip.h">
-			</File>
+				RelativePath="..\common\mp4v2\mpeg4ip.h"/>
 			<File
-				RelativePath="..\common\mp4v2\systems.h">
-			</File>
+				RelativePath="..\common\mp4v2\systems.h"/>
 			<File
-				RelativePath="..\common\mp4v2\win32_ver.h">
-			</File>
+				RelativePath="..\common\mp4v2\win32_ver.h"/>
 		</Filter>
 	</Files>
-	<Globals>
-	</Globals>
+	<Globals/>
 </VisualStudioProject>
