@@ -1,5 +1,5 @@
 Name "AudioCoding.com MP4 Winamp plugin"
-OutFile in_mp4.exe
+OutFile in_mpeg4aac.exe
 CRCCheck on
 LicenseText "You must read the following license before installing."
 LicenseData COPYING
@@ -17,5 +17,5 @@ DirText "The installer has detected the path to Winamp. If it is not correct, pl
 Section "AudioCoding.com MP4 Winamp plugin"
 SectionIn 1
 SetOutPath $INSTDIR\Plugins
-File plugins\in_mp4\Release\in_mp4.dll
+File plugins\in_mp4\Release\in_mpeg4aac.dll
 SectionEnd
