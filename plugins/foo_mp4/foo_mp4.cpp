@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.8 2002/12/29 10:46:50 menno Exp $
+** $Id: foo_mp4.cpp,v 1.9 2002/12/29 11:05:13 menno Exp $
 **/
 
 #include <mp4.h>
@@ -147,14 +147,18 @@ public:
         if (track < 1) return 0;
 
         MP4TagDelete(hFile, track);
-        MP4TagCreate(hFile, track);
 
         int numItems = info->meta_get_count();
-        for (int i = 0; i < numItems; i++)
+        if (numItems > 0)
         {
-            const char *n = info->meta_enum_name(i);
-            const char *v = info->meta_enum_value(i);
-            MP4TagAddEntry(hFile, track, n, v);
+            MP4TagCreate(hFile, track);
+
+            for (int i = 0; i < numItems; i++)
+            {
+                const char *n = info->meta_enum_name(i);
+                const char *v = info->meta_enum_value(i);
+                MP4TagAddEntry(hFile, track, n, v);
+            }
         }
 
         return 1;
