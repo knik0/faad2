@@ -70,7 +70,7 @@
 				AdditionalIncludeDirectories="fftw"
 				PreprocessorDefinitions="NDEBUG,WIN32,_LIB,FFTW_ENABLE_FLOAT"
 				StringPooling="TRUE"
-				RuntimeLibrary="4"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="TRUE"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\Release/libfaad.pch"
@@ -250,9 +250,6 @@
 				RelativePath=".\error.h">
 			</File>
 			<File
-				RelativePath=".\fftw\f77_func.h">
-			</File>
-			<File
 				RelativePath=".\filtbank.h">
 			</File>
 			<File
@@ -293,21 +290,6 @@
 			</File>
 			<File
 				RelativePath=".\rvlc_scale_factors.h">
-			</File>
-			<File
-				RelativePath=".\sbr_dec.h">
-			</File>
-			<File
-				RelativePath=".\sbr_huff.h">
-			</File>
-			<File
-				RelativePath=".\sbr_qmf.h">
-			</File>
-			<File
-				RelativePath=".\sbr_syntax.h">
-			</File>
-			<File
-				RelativePath=".\sbr_util.h">
 			</File>
 			<File
 				RelativePath=".\specrec.h">

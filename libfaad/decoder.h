@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.h,v 1.16 2002/09/27 08:37:22 menno Exp $
+** $Id: decoder.h,v 1.17 2002/11/01 11:19:35 menno Exp $
 **/
 
 #ifndef __DECODER_H__
@@ -124,9 +124,10 @@ uint8_t FAADAPI faacDecSetConfiguration(faacDecHandle hDecoder,
 
 /* Init the library based on info from the AAC file (ADTS/ADIF) */
 int32_t FAADAPI faacDecInit(faacDecHandle hDecoder,
-                        uint8_t *buffer,
-                        uint32_t *samplerate,
-                        uint8_t *channels);
+                            uint8_t *buffer,
+                            uint32_t buffer_size,
+                            uint32_t *samplerate,
+                            uint8_t *channels);
 
 /* Init the library using a DecoderSpecificInfo */
 int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
@@ -137,7 +138,8 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder);
 
 void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                             faacDecFrameInfo *hInfo,
-                            uint8_t *buffer);
+                            uint8_t *buffer,
+                            uint32_t buffer_size);
 
 /* these functions are in syntax.c */
 element *decode_sce_lfe(faacDecHandle hDecoder,

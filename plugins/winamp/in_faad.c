@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_faad.c,v 1.3 2002/02/18 10:01:05 menno Exp $
+** $Id: in_faad.c,v 1.4 2002/11/01 11:19:36 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -343,7 +343,8 @@ int play_memmap(char *fn)
 	/* Copy the configuration dialog setting and use it as the default */
 	/* initialize the decoder, and get samplerate and channel info */
 
-    if((buffercount = faacDecInit(hDecoder, memmap_buffer + memmap_index, &samplerate, &channels)) < 0)
+    if ((buffercount = faacDecInit(hDecoder, memmap_buffer + memmap_index,
+        fileread - memmap_index - 1, &samplerate, &channels)) < 0)
     {
 		MessageBox(mod.hMainWindow, "Error opening input file\n", "FAAD Error", MB_OK);
 		return 1;
@@ -403,7 +404,7 @@ int play_file(char *fn)
 	/* Copy the configuration dialog setting and use it as the default */
 	/* initialize the decoder, and get samplerate and channel info */
 
-    if((buffercount = faacDecInit(hDecoder, buffer, &samplerate, &channels)) < 0)
+    if((buffercount = faacDecInit(hDecoder, buffer, 768*2, &samplerate, &channels)) < 0)
     {
 		MessageBox(mod.hMainWindow, "Error opening input file\n", "FAAD Error", MB_OK);
 		return 1;
@@ -781,7 +782,8 @@ int last_frame;
 
 int PlayThread_memmap()
 {
-    sample_buffer = (char*)faacDecDecode(hDecoder, &frameInfo, memmap_buffer + memmap_index);
+    sample_buffer = (char*)faacDecDecode(hDecoder, &frameInfo,
+        memmap_buffer + memmap_index, fileread - memmap_index - 1);
     if (frameInfo.error)
     {
         MessageBox(NULL, faacDecGetErrorMessage(frameInfo.error), "FAAD Error", MB_OK);
@@ -807,7 +809,7 @@ int PlayThread_file()
         buffercount = 0;
     }
 
-    sample_buffer = (char*)faacDecDecode(hDecoder, &frameInfo, buffer);
+    sample_buffer = (char*)faacDecDecode(hDecoder, &frameInfo, buffer, 768*2);
     if (frameInfo.error)
     {
         MessageBox(NULL, faacDecGetErrorMessage(frameInfo.error), "FAAD Error", MB_OK);

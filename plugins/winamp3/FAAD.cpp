@@ -138,8 +138,8 @@ int numTracks = MP4GetNumberOfTracks(infile, NULL, 0);
 
             if (buff)
             {
-                rc = AudioSpecificConfig(buff, &dummy1_32, &dummy2_8, &dummy3_8, &dummy4_8,
-                    &dummy5_8, &dummy6_8, &dummy7_8, &dummy8_8);
+                rc = AudioSpecificConfig(buff, buff_size,&dummy1_32, &dummy2_8,
+                    &dummy3_8, &dummy4_8, &dummy5_8, &dummy6_8, &dummy7_8, &dummy8_8);
                 free(buff);
 
                 if (rc < 0)
@@ -235,7 +235,8 @@ DWORD	tmp;
 		MP4GetTrackESConfiguration(mp4File, track, (unsigned __int8 **)&buffer, &buffer_size);
 		if(!buffer)
 			ERROR_getInfos("MP4GetTrackESConfiguration");
-		AudioSpecificConfig(buffer, &timeScale, &Channels, &sf, &type, &dummy8, &dummy8, &dummy8, &dummy8);
+		AudioSpecificConfig(buffer, buffer_size, &timeScale, &Channels, &sf, &type,
+            &dummy8, &dummy8, &dummy8, &dummy8);
 		if(faacDecInit2(hDecoder, buffer, buffer_size, &Samplerate, &Channels) < 0)
 			ERROR_getInfos("Error initializing decoder library");
 		FREE_ARRAY(buffer);
@@ -379,7 +380,8 @@ DWORD	tmp;
 			DWORD	Samples,
 					BytesConsumed;
 
-				if((bytes_consumed=faacDecInit(hDecoder, buffer, &Samplerate, &Channels))<0)
+				if((bytes_consumed=faacDecInit(hDecoder, buffer, bytes_into_buffer,
+                    &Samplerate, &Channels))<0)
 					ERROR_getInfos("Can't init library");
 				bytes_into_buffer-=bytes_consumed;
 				if(!processData(infos,0,0))
@@ -396,7 +398,7 @@ DWORD	tmp;
 			}
 		}
 
-		if((bytes_consumed=faacDecInit(hDecoder, buffer, &Samplerate, &Channels))<0)
+		if((bytes_consumed=faacDecInit(hDecoder, buffer, bytes_into_buffer, &Samplerate, &Channels))<0)
 			ERROR_getInfos("faacDecInit failed!")
 		bytes_into_buffer-=bytes_consumed;
 
@@ -472,7 +474,7 @@ svc_fileReader *reader = infos->getReader();
 				ERROR_processData("MP4ReadSample")
 			}
 
-			bufout=(char *)faacDecDecode(hDecoder,&frameInfo,buffer);
+			bufout=(char *)faacDecDecode(hDecoder,&frameInfo,buffer,buffer_size);
 			BytesDecoded=frameInfo.samples*sizeof(short);
 			FREE_ARRAY(buffer);
 			// to update the slider
@@ -536,7 +538,7 @@ svc_fileReader *reader = infos->getReader();
 				else
 					ERROR_processData(0);
 
-			bufout=(char *)faacDecDecode(hDecoder,&frameInfo,buffer);
+			bufout=(char *)faacDecDecode(hDecoder,&frameInfo,buffer,bytes_into_buffer);
 			BytesDecoded=frameInfo.samples*sizeof(short);
 			bytes_consumed+=frameInfo.bytesconsumed;
 			bytes_into_buffer-=bytes_consumed;

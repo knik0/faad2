@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.37 2002/10/16 19:18:09 menno Exp $
+** $Id: decoder.c,v 1.38 2002/11/01 11:19:35 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -123,6 +123,7 @@ uint8_t FAADAPI faacDecSetConfiguration(faacDecHandle hDecoder,
 }
 
 int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
+                            uint32_t buffer_size,
                         uint32_t *samplerate, uint8_t *channels)
 {
     uint32_t bits = 0;
@@ -137,7 +138,7 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
 
     if (buffer != NULL)
     {
-        faad_initbits(&ld, buffer);
+        faad_initbits(&ld, buffer, buffer_size);
 
 #ifdef DRM
         if (hDecoder->object_type != DRM_ER_LC)
@@ -213,7 +214,8 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
         return -1;
     }
 
-    rc = AudioSpecificConfig(pBuffer, samplerate, channels,
+    rc = AudioSpecificConfig(pBuffer, SizeOfDecoderSpecificInfo,
+        samplerate, channels,
         &hDecoder->sf_index, &hDecoder->object_type,
 #ifdef ERROR_RESILIENCE
         &hDecoder->aacSectionDataResilienceFlag,
@@ -281,7 +283,7 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
 
 void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                             faacDecFrameInfo *hInfo,
-                            uint8_t *buffer)
+                            uint8_t *buffer, uint32_t buffer_size)
 {
     int32_t i;
     uint8_t ch;
@@ -334,7 +336,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     memset(hInfo, 0, sizeof(faacDecFrameInfo));
 
     /* initialize the bitstream */
-    faad_initbits(ld, buffer);
+    faad_initbits(ld, buffer, buffer_size);
 
     if (hDecoder->adts_header_present)
     {

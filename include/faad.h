@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: faad.h,v 1.15 2002/10/11 18:05:01 menno Exp $
+** $Id: faad.h,v 1.16 2002/11/01 11:19:35 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -99,6 +99,7 @@ unsigned char FAADAPI faacDecSetConfiguration(faacDecHandle hDecoder,
 /* Init the library based on info from the AAC file (ADTS/ADIF) */
 long FAADAPI faacDecInit(faacDecHandle hDecoder,
                         unsigned char *buffer,
+                        unsigned long buffer_size,
                         unsigned long *samplerate,
                         unsigned char *channels);
 
@@ -111,9 +112,11 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder);
 
 void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                             faacDecFrameInfo *hInfo,
-                            unsigned char *buffer);
+                            unsigned char *buffer,
+                            unsigned long buffer_size);
 
 char FAADAPI AudioSpecificConfig(unsigned char *pBuffer,
+                                 unsigned long buffer_size,
                                  unsigned long *samplerate,
                                  unsigned char *channels,
                                  unsigned char *sf_index,

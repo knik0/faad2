@@ -84,7 +84,7 @@
 				AdditionalIncludeDirectories="..\..\include,..\..\common\faad,..\..\plugins\winamp,..\..\common\id3lib\include"
 				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;ID3LIB_COMPILATION"
 				StringPooling="TRUE"
-				RuntimeLibrary="4"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="TRUE"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\Release/in_faad.pch"

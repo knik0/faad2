@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.24 2002/09/24 09:23:55 menno Exp $
+** $Id: main.c,v 1.25 2002/11/01 11:19:35 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -47,7 +47,8 @@
 #define DEC_BUFF_VARS \
     int fileread, bytesconsumed, k; \
     int buffercount = 0, buffer_index = 0; \
-    unsigned char *buffer;
+    unsigned char *buffer; \
+    unsigned int bytes_in_buffer = 0;
 
 /* initialise buffering */
 #define INIT_BUFF(file) \
@@ -56,28 +57,29 @@
     fseek(file, 0, SEEK_SET); \
     buffer = (unsigned char*)malloc(FAAD_MIN_STREAMSIZE*MAX_CHANNELS); \
     memset(buffer, 0, FAAD_MIN_STREAMSIZE*MAX_CHANNELS); \
-    fread(buffer, 1, FAAD_MIN_STREAMSIZE*MAX_CHANNELS, file);
+    bytes_in_buffer = fread(buffer, 1, FAAD_MIN_STREAMSIZE*MAX_CHANNELS, file);
 
 /* skip bytes in buffer */
 #define UPDATE_BUFF_SKIP(bytes) \
     fseek(infile, bytes, SEEK_SET); \
     buffer_index += bytes; \
     buffercount = 0; \
-    fread(buffer, 1, FAAD_MIN_STREAMSIZE*MAX_CHANNELS, infile);
+    bytes_in_buffer = fread(buffer, 1, FAAD_MIN_STREAMSIZE*MAX_CHANNELS, infile);
 
 /* update buffer */
 #define UPDATE_BUFF_READ \
     if (bytesconsumed > 0) { \
         for (k = 0; k < (FAAD_MIN_STREAMSIZE*MAX_CHANNELS - bytesconsumed); k++) \
             buffer[k] = buffer[k + bytesconsumed]; \
-        fread(buffer + (FAAD_MIN_STREAMSIZE*MAX_CHANNELS) - bytesconsumed, 1, bytesconsumed, infile); \
+        bytes_in_buffer += fread(buffer + (FAAD_MIN_STREAMSIZE*MAX_CHANNELS) - bytesconsumed, 1, bytesconsumed, infile); \
         bytesconsumed = 0; \
     }
 
 /* update buffer indices after faacDecDecode */
 #define UPDATE_BUFF_IDX(frame) \
     bytesconsumed += frame.bytesconsumed; \
-    buffer_index += frame.bytesconsumed;
+    buffer_index += frame.bytesconsumed; \
+    bytes_in_buffer -= frame.bytesconsumed;
 
 /* true if decoding has to stop because of EOF */
 #define IS_FILE_END buffer_index >= fileread
@@ -204,8 +206,8 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
 
     faacDecSetConfiguration(hDecoder, config);
 
-    if((bytesconsumed = faacDecInit(hDecoder, buffer, &samplerate,
-        &channels)) < 0)
+    if ((bytesconsumed = faacDecInit(hDecoder, buffer, bytes_in_buffer,
+        &samplerate, &channels)) < 0)
     {
         /* If some error initializing occured, skip the file */
         fprintf(stderr, "Error initializing decoder library.\n");
@@ -221,7 +223,8 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
         /* update buffer */
         UPDATE_BUFF_READ
 
-        sample_buffer = faacDecDecode(hDecoder, &frameInfo, buffer);
+        sample_buffer = faacDecDecode(hDecoder, &frameInfo,
+            buffer, bytes_in_buffer);
 
         /* update buffer indices */
         UPDATE_BUFF_IDX(frameInfo)
@@ -309,8 +312,8 @@ int GetAACTrack(MP4FileHandle infile)
 
             if (buff)
             {
-                rc = AudioSpecificConfig(buff, &dummy1_32, &dummy2_8, &dummy3_8,
-                    &dummy4_8, &dummy5_8, &dummy6_8, &dummy7_8, &dummy8_8);
+                rc = AudioSpecificConfig(buff, buff_size, &dummy1_32, &dummy2_8,
+                    &dummy3_8, &dummy4_8, &dummy5_8, &dummy6_8, &dummy7_8, &dummy8_8);
                 free(buff);
 
                 if (rc < 0)
@@ -412,7 +415,7 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
             return 1;
 		}
 
-        sample_buffer = faacDecDecode(hDecoder, &frameInfo, buffer);
+        sample_buffer = faacDecDecode(hDecoder, &frameInfo, buffer, buffer_size);
 
         if (buffer) free(buffer);
 

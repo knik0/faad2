@@ -16,19 +16,20 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.c,v 1.13 2002/10/26 11:43:11 menno Exp $
+** $Id: bits.c,v 1.14 2002/11/01 11:19:35 menno Exp $
 **/
 
 #include "common.h"
 #include <stdlib.h>
+#include <memory.h>
 #include "bits.h"
 
 /* initialize buffer, call once before first getbits or showbits */
-void faad_initbits(bitfile *ld, void *buffer)
+void faad_initbits(bitfile *ld, void *buffer, uint32_t buffer_size)
 {
     uint32_t tmp;
 
-    ld->start = (uint32_t*)buffer;
+    ld->buffer_size = buffer_size;
 
     tmp = *(uint32_t*)buffer;
 #ifndef ARCH_IS_BIG_ENDIAN
@@ -42,8 +43,10 @@ void faad_initbits(bitfile *ld, void *buffer)
 #endif
     ld->bufb = tmp;
 
-    ld->bits_left = 32;
+    ld->start = (uint32_t*)buffer;
     ld->tail = ((uint32_t*)buffer + 2);
+
+    ld->bits_left = 32;
 }
 
 uint32_t faad_get_processed_bits(bitfile *ld)
@@ -94,6 +97,8 @@ void faad_initbits_rev(bitfile *ld, void *buffer,
 {
     uint32_t tmp;
     int32_t index;
+
+    ld->buffer_size = bit2byte(bits_in_buffer);
 
     index = (bits_in_buffer+31)/32 - 1;
 

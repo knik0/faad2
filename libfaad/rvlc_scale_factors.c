@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: rvlc_scale_factors.c,v 1.5 2002/09/29 10:34:00 menno Exp $
+** $Id: rvlc_scale_factors.c,v 1.6 2002/11/01 11:19:36 menno Exp $
 **/
 
 /* RVLC scalefactor decoding
@@ -102,7 +102,7 @@ uint8_t rvlc_decode_scale_factors(ic_stream *ics, bitfile *ld)
         rvlc_sf_buffer = faad_getbitbuffer(ld, ics->length_of_rvlc_sf
             DEBUGVAR(1,156,"rvlc_decode_scale_factors(): bitbuffer: length_of_rvlc_sf"));
 
-        faad_initbits(&ld_rvlc_sf, (void*)rvlc_sf_buffer);
+        faad_initbits(&ld_rvlc_sf, (void*)rvlc_sf_buffer, bit2byte(ics->length_of_rvlc_sf));
 //        faad_initbits_rev(&ld_rvlc_sf_rev, (void*)rvlc_sf_buffer,
 //            ics->length_of_rvlc_sf);
     }
@@ -115,7 +115,7 @@ uint8_t rvlc_decode_scale_factors(ic_stream *ics, bitfile *ld)
         rvlc_esc_buffer = faad_getbitbuffer(ld, ics->length_of_rvlc_escapes
             DEBUGVAR(1,157,"rvlc_decode_scale_factors(): bitbuffer: length_of_rvlc_escapes"));
 
-        faad_initbits(&ld_rvlc_esc, (void*)rvlc_esc_buffer);
+        faad_initbits(&ld_rvlc_esc, (void*)rvlc_esc_buffer, bit2byte(ics->length_of_rvlc_escapes));
 //        faad_initbits_rev(&ld_rvlc_esc_rev, (void*)rvlc_esc_buffer,
 //            ics->length_of_rvlc_escapes);
     }

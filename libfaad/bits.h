@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.h,v 1.10 2002/09/28 21:57:37 menno Exp $
+** $Id: bits.h,v 1.11 2002/11/01 11:19:35 menno Exp $
 **/
 
 #ifndef __BITS_H__
@@ -40,6 +40,7 @@ typedef struct _bitfile
     uint32_t bufa;
     uint32_t bufb;
     uint32_t bits_left;
+    uint32_t buffer_size; /* size of the buffer in bytes */
     uint32_t *tail;
     uint32_t *start;
 } bitfile;
@@ -62,7 +63,7 @@ static uint32_t bitmask[] = {
     0xFFFFFFF, 0x1FFFFFFF, 0x3FFFFFFF, 0x7FFFFFFF
 };
 
-void faad_initbits(bitfile *ld, void *buffer);
+void faad_initbits(bitfile *ld, void *buffer, uint32_t buffer_size);
 void faad_initbits_rev(bitfile *ld, void *buffer,
                        uint32_t bits_in_buffer);
 uint8_t faad_byte_align(bitfile *ld);

@@ -24,7 +24,7 @@
 				AdditionalIncludeDirectories="../include,../common/mp4v2,../common/faad"
 				PreprocessorDefinitions="WIN32,_DEBUG,_CONSOLE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="5"
+				RuntimeLibrary="1"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\Debug/faad.pch"
 				AssemblerListingLocation=".\Debug/"

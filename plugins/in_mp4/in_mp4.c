@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.19 2002/09/03 21:22:53 menno Exp $
+** $Id: in_mp4.c,v 1.20 2002/11/01 11:19:36 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -491,7 +491,8 @@ int play(char *fn)
         }
 
         if ((mp4state.bytes_consumed = faacDecInit(mp4state.hDecoder,
-            mp4state.buffer+tagsize, &mp4state.samplerate, &mp4state.channels)) < 0)
+            mp4state.buffer+tagsize, mp4state.bytes_into_buffer,
+            &mp4state.samplerate, &mp4state.channels)) < 0)
         {
             show_error(module.hMainWindow, "Can't initialize library.");
             faacDecClose(mp4state.hDecoder);
@@ -832,7 +833,8 @@ DWORD WINAPI MP4PlayThread(void *b)
                     sample_buffer = NULL;
                     frameInfo.samples = 0;
                 } else {
-                    sample_buffer = faacDecDecode(mp4state.hDecoder, &frameInfo, buffer);
+                    sample_buffer = faacDecDecode(mp4state.hDecoder, &frameInfo,
+                        buffer, buffer_size);
                 }
                 if (frameInfo.error > 0)
                 {
@@ -988,7 +990,8 @@ DWORD WINAPI AACPlayThread(void *b)
                         }
                     }
 
-                    sample_buffer = faacDecDecode(mp4state.hDecoder, &frameInfo, buffer);
+                    sample_buffer = faacDecDecode(mp4state.hDecoder, &frameInfo,
+                        buffer, mp4state.bytes_into_buffer);
 
                     mp4state.bytes_consumed += frameInfo.bytesconsumed;
                     mp4state.bytes_into_buffer -= mp4state.bytes_consumed;

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mp4.c,v 1.11 2002/09/27 08:37:22 menno Exp $
+** $Id: mp4.c,v 1.12 2002/11/01 11:19:35 menno Exp $
 **/
 
 #include "common.h"
@@ -95,6 +95,7 @@ static uint8_t ObjectTypesTable[32] = {
 
 /* Table 1.6.1 */
 int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
+                                   uint32_t buffer_size,
                                    uint32_t *samplerate,
                                    uint8_t *channels,
                                    uint8_t *sf_index,
@@ -107,7 +108,7 @@ int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
     bitfile ld;
     uint8_t ObjectTypeIndex, SamplingFrequencyIndex, ChannelsConfiguration;
 
-    faad_initbits(&ld, pBuffer);
+    faad_initbits(&ld, pBuffer, buffer_size);
     faad_byte_align(&ld);
 
     ObjectTypeIndex = (uint8_t)faad_getbits(&ld, 5

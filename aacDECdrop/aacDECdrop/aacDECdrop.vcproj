@@ -30,6 +30,7 @@
 				OptimizeForWindowsApplication="TRUE"
 				AdditionalIncludeDirectories="..\..\include,..\..\common\libsndfile\src,..\..\common\mp4v2,..\..\common\libsndfile\win32"
 				PreprocessorDefinitions="WIN32,NDEBUG,_WINDOWS"
+				StringPooling="TRUE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\Release/aacDECdrop.pch"
@@ -48,7 +49,7 @@
 				OutputFile=".\Release/aacDECdrop.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				IgnoreDefaultLibraryNames="LIBCMT.lib"
+				IgnoreDefaultLibraryNames=""
 				ProgramDatabaseFile=".\Release/aacDECdrop.pdb"
 				SubSystem="2"/>
 			<Tool
