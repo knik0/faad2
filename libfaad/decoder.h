@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.h,v 1.4 2002/02/25 19:58:33 menno Exp $
+** $Id: decoder.h,v 1.5 2002/03/16 13:38:37 menno Exp $
 **/
 
 #ifndef __DECODER_H__
@@ -77,22 +77,26 @@ typedef struct
     void *sample_buffer;
 
     uint8_t window_shape_prev[MAX_CHANNELS];
+#ifdef LTP_DEC
     uint16_t ltp_lag[MAX_CHANNELS];
+#endif
     fb_info fb;
     drc_info drc;
 
     real_t *time_state[MAX_CHANNELS];
     real_t *time_out[MAX_CHANNELS];
 
+#ifdef MAIN_DEC
     pred_state *pred_stat[MAX_CHANNELS];
+#endif
+#ifdef LTP_DEC
     real_t *lt_pred_stat[MAX_CHANNELS];
+#endif
 
     real_t exp_table[256];
     real_t mnt_table[128];
 
-#if IQ_TABLE_SIZE
     real_t iq_table[IQ_TABLE_SIZE];
-#endif
 #if POW_TABLE_SIZE
     real_t pow2_table[POW_TABLE_SIZE];
 #endif

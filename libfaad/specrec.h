@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: specrec.h,v 1.3 2002/02/25 19:58:33 menno Exp $
+** $Id: specrec.h,v 1.4 2002/03/16 13:38:36 menno Exp $
 **/
 
 #ifndef __SPECREC_H__
@@ -28,7 +28,9 @@ extern "C" {
 
 #include "syntax.h"
 
-#define IQ_TABLE_SIZE   200
+/* !!!DON'T CHANGE IQ_TABLE_SIZE!!! */
+#define IQ_TABLE_SIZE   1026
+
 #define POW_TABLE_SIZE  200
 
 

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.2 2002/02/20 13:05:57 menno Exp $
+** $Id: common.h,v 1.3 2002/03/16 13:38:37 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -51,6 +51,13 @@ extern "C" {
 #define M_PI_2 1.57079632679489661923
 #endif
 
+#ifndef LN2
+#define LN2 0.6931471805599453
+#endif
+
+#ifndef LN05
+#define LN05 -LN2
+#endif
 
 /* COMPILE TIME DEFINITIONS */
 
@@ -60,6 +67,20 @@ extern "C" {
 /* use table lookup twiddle factors in MDCT [more memory, higher speed],
    otherwise recurrence relations are used [no memory usage, lower speed] */
 #define USE_TWIDDLE_TABLE
+
+/* Allow decoding of MAIN profile AAC */
+#define MAIN_DEC
+/* Allow decoding of LTP profile AAC */
+#define LTP_DEC
+/* Allow decoding of LD profile AAC */
+#define LD_DEC
+
+/* LD can't do without LTP */
+#ifdef LD_DEC
+#ifndef LTP_DEC
+#define LTP_DEC
+#endif
+#endif
 
 /* END COMPILE TIME DEFINITIONS */
 
@@ -110,7 +131,8 @@ typedef float float32_t;
 
     #define sin sinf
     #define cos cosf
-    #define pow powf
+    #define log logf
+    #define exp expf
     #define floor floorf
     #define sqrt sqrtf
 
@@ -124,8 +146,11 @@ typedef float float32_t;
 #ifdef HAVE_COSF
 #  define cos cosf
 #endif
-#ifdef HAVE_POWF
-#  define pow powf
+#ifdef HAVE_LOGF
+#  define log logf
+#endif
+#ifdef HAVE_EXPF
+#  define exp expf
 #endif
 #ifdef HAVE_FLOORF
 #  define floor floorf

@@ -16,10 +16,14 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: lt_predict.c,v 1.3 2002/02/25 19:58:33 menno Exp $
+** $Id: lt_predict.c,v 1.4 2002/03/16 13:38:37 menno Exp $
 **/
 
+
 #include "common.h"
+
+#ifdef LTP_DEC
+
 #include <stdlib.h>
 #include "syntax.h"
 #include "lt_predict.h"
@@ -100,6 +104,7 @@ void lt_update_state(real_t *lt_pred_stat, real_t *time, real_t *overlap,
      *
      * For the LD object type an extra 512 samples lookback is accomodated here.
      */
+#ifdef LD_DEC
     if (object_type == LD)
     {
         for (i = 0; i < frame_len; i++)
@@ -110,6 +115,7 @@ void lt_update_state(real_t *lt_pred_stat, real_t *time, real_t *overlap,
             lt_pred_stat[(frame_len * 3) + i] = overlap[i];
         }
     } else {
+#endif
         for (i = 0; i < frame_len; i++)
         {
             lt_pred_stat[i]                   = lt_pred_stat[i + frame_len];
@@ -119,5 +125,9 @@ void lt_update_state(real_t *lt_pred_stat, real_t *time, real_t *overlap,
             lt_pred_stat[(frame_len * 3) + i] = 0;
 #endif
         }
+#ifdef LD_DEC
     }
+#endif
 }
+
+#endif

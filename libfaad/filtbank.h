@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.h,v 1.4 2002/02/25 19:58:33 menno Exp $
+** $Id: filtbank.h,v 1.5 2002/03/16 13:38:37 menno Exp $
 **/
 
 #ifndef __FILTBANK_H__
@@ -37,10 +37,14 @@ typedef struct
 {
     real_t *long_window[2];
     real_t *short_window[2];
+#ifdef LD_DEC
     real_t *ld_window[2];
+#endif
 
     mdct_info mdct256;
+#ifdef LD_DEC
     mdct_info mdct1024;
+#endif
     mdct_info mdct2048;
 } fb_info;
 

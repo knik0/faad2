@@ -16,16 +16,18 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: data.c,v 1.3 2002/02/25 19:58:33 menno Exp $
+** $Id: data.c,v 1.4 2002/03/16 13:38:37 menno Exp $
 **/
 
 #include "common.h"
 #include "data.h"
 
+#ifdef LD_DEC
 extern uint8_t num_swb_512_window[] =
 {
     0, 0, 0, 35, 35, 36, 30, 30, 0, 0, 0, 0
 };
+#endif
 
 extern uint8_t num_swb_1024_window[] =
 {
@@ -71,12 +73,14 @@ static uint16_t swb_offset_1024_48[] =
     768, 800, 832, 864, 896, 928, 1024
 };
 
+#ifdef LD_DEC
 static uint16_t swb_offset_512_48[] =
 {
     0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 68, 76, 84,
     92, 100, 112, 124, 136, 148, 164, 184, 208, 236, 268, 300, 332, 364, 396,
     428, 460, 512
 };
+#endif
 
 static uint16_t swb_offset_128_48[] =
 {
@@ -91,12 +95,14 @@ static uint16_t swb_offset_1024_32[] =
     768, 800, 832, 864, 896, 928, 960, 992, 1024
 };
 
+#ifdef LD_DEC
 static uint16_t swb_offset_512_32[] =
 {
     0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 64, 72, 80,
     88, 96, 108, 120, 132, 144, 160, 176, 192, 212, 236, 260, 288, 320, 352,
     384, 416, 448, 480, 512
 };
+#endif
 
 static uint16_t swb_offset_1024_24[] =
 {
@@ -106,12 +112,14 @@ static uint16_t swb_offset_1024_24[] =
     768, 832, 896, 960, 1024
 };
 
+#ifdef LD_DEC
 static uint16_t swb_offset_512_24[] =
 {
     0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 52, 60, 68,
     80, 92, 104, 120, 140, 164, 192, 224, 256, 288, 320, 352, 384, 416,
     448, 480, 512
 };
+#endif
 
 static uint16_t swb_offset_128_24[] =
 {
@@ -158,6 +166,7 @@ extern uint16_t *swb_offset_1024_window[] =
     swb_offset_1024_8        /* 8000  */
 };
 
+#ifdef LD_DEC
 extern uint16_t *swb_offset_512_window[] =
 {
     0,                       /* 96000 */
@@ -173,6 +182,7 @@ extern uint16_t *swb_offset_512_window[] =
     0,                       /* 11025 */
     0                        /* 8000  */
 };
+#endif
 
 extern uint16_t *swb_offset_128_window[] =
 {

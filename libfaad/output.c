@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: output.c,v 1.5 2002/02/25 19:58:33 menno Exp $
+** $Id: output.c,v 1.6 2002/03/16 13:38:36 menno Exp $
 **/
 
 #include "common.h"
@@ -45,6 +45,7 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
     uint8_t ch;
     uint16_t i;
 
+    uint8_t   *p = (uint8_t*)sample_buffer;
     int16_t   *short_sample_buffer = (int16_t*)sample_buffer;
     int32_t   *int_sample_buffer = (int32_t*)sample_buffer;
     float32_t *float_sample_buffer = (float32_t*)sample_buffer;

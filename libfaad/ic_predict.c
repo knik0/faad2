@@ -16,10 +16,13 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ic_predict.c,v 1.2 2002/02/18 10:01:05 menno Exp $
+** $Id: ic_predict.c,v 1.3 2002/03/16 13:38:37 menno Exp $
 **/
 
 #include "common.h"
+
+#ifdef MAIN_DEC
+
 #include "syntax.h"
 #include "ic_predict.h"
 #include "pns.h"
@@ -172,3 +175,5 @@ void ic_prediction(ic_stream *ics, real_t *spec, pred_state *state)
         }
     }
 }
+
+#endif

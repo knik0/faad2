@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: is.c,v 1.3 2002/02/20 13:05:57 menno Exp $
+** $Id: is.c,v 1.4 2002/03/16 13:38:37 menno Exp $
 **/
 
 #include "common.h"
@@ -50,7 +50,7 @@ void is_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec)
 
                     scale = is_intensity(icsr, g, sfb) *
                         invert_intensity(ics, g, sfb) *
-                        (real_t)pow(0.5, (0.25*icsr->scale_factors[g][sfb]));
+                        (real_t)exp(LN05 * (0.25*icsr->scale_factors[g][sfb]));
 
                     /* Scale from left to right channel,
                        do not touch left channel */

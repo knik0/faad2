@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: specrec.c,v 1.5 2002/02/25 19:58:33 menno Exp $
+** $Id: specrec.c,v 1.6 2002/03/16 13:38:36 menno Exp $
 **/
 
 /*
@@ -60,15 +60,20 @@ uint8_t window_grouping_info(ic_stream *ics, uint8_t fs_index,
         ics->num_windows = 1;
         ics->num_window_groups = 1;
         ics->window_group_length[ics->num_window_groups-1] = 1;
+#ifdef LD_DEC
         if (object_type == LD)
         {
             ics->num_swb = num_swb_512_window[fs_index];
         } else {
+#endif
             ics->num_swb = num_swb_1024_window[fs_index];
+#ifdef LD_DEC
         }
+#endif
 
         /* preparation of sect_sfb_offset for long blocks */
         /* also copy the last value! */
+#ifdef LD_DEC
         if (object_type == LD)
         {
             for (i = 0; i < ics->num_swb + 1; i++)
@@ -77,12 +82,15 @@ uint8_t window_grouping_info(ic_stream *ics, uint8_t fs_index,
                 ics->swb_offset[i] = swb_offset_512_window[fs_index][i];
             }
         } else {
+#endif
             for (i = 0; i < ics->num_swb + 1; i++)
             {
                 ics->sect_sfb_offset[0][i] = swb_offset_1024_window[fs_index][i];
                 ics->swb_offset[i] = swb_offset_1024_window[fs_index][i];
             }
+#ifdef LD_DEC
         }
+#endif
         return 0;
     case EIGHT_SHORT_SEQUENCE:
         ics->num_windows = 8;
@@ -227,16 +235,16 @@ void build_tables(real_t *iq_table, real_t *pow2_table)
 {
     uint16_t i;
 
-    /* build pow() table for inverse quantization */
+    /* build pow(x, 4/3) table for inverse quantization */
     for(i = 0; i < IQ_TABLE_SIZE; i++)
     {
-        iq_table[i] = (real_t)pow(i, 4.0/3.0);
+        iq_table[i] = (real_t)exp(log(i) * 4.0/3.0);
     }
 
-    /* build pow(2, 0.25) table for scalefactors */
+    /* build pow(2, 0.25*x) table for scalefactors */
     for(i = 0; i < POW_TABLE_SIZE; i++)
     {
-        pow2_table[i] = (real_t)pow(2.0, 0.25 * (i-100));
+        pow2_table[i] = (real_t)exp(LN2 * 0.25 * (i-100));
     }
 }
 
@@ -247,13 +255,13 @@ static INLINE real_t iquant(int16_t q, real_t *iq_table)
         if (q < IQ_TABLE_SIZE)
             return iq_table[q];
         else
-            return (real_t)pow(q, 4.0/3.0);
+            return iq_table[q>>3]*16;
     } else if (q < 0) {
         q = -q;
         if (q < IQ_TABLE_SIZE)
             return -iq_table[q];
         else
-            return -(real_t)pow(q, 4.0/3.0);
+          return -iq_table[q>>3]*16;
     } else {
         return 0.0f;
     }
@@ -284,7 +292,7 @@ static INLINE real_t get_scale_factor_gain(uint16_t scale_factor, real_t *pow2_t
     if (scale_factor < POW_TABLE_SIZE)
         return pow2_table[scale_factor];
     else
-        return (real_t)pow(2.0, 0.25 * (scale_factor - 100));
+        return (real_t)exp(LN2 * 0.25 * (scale_factor - 100));
 }
 
 void apply_scalefactors(ic_stream *ics, real_t *x_invquant, real_t *pow2_table)

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mp4.c,v 1.3 2002/02/25 19:58:33 menno Exp $
+** $Id: mp4.c,v 1.4 2002/03/16 13:38:36 menno Exp $
 **/
 
 #include "common.h"
@@ -52,7 +52,11 @@ static uint8_t ObjectTypesTable[32] = {
     0, /* ER AAC scalable */
     0, /* ER TwinVQ */
     0, /* ER BSAC */
+#ifdef LD_DEC
     1, /* ER AAC LD */     /* !!! Supported, but only with ER turned off !!! */
+#else
+    0, /* ER AAC LD */
+#endif
     0, /* ER CELP */
     0, /* ER HVXC */
     0, /* ER HILN */
@@ -114,6 +118,7 @@ int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
         ObjectTypeIndex == 6 || ObjectTypeIndex == 7)
     {
         return GASpecificConfig(&ld, channels, ObjectTypeIndex);
+#ifdef LD_DEC
     } else if (ObjectTypeIndex == 23) { /* ER AAC LD */
         uint8_t result = GASpecificConfig(&ld, channels, ObjectTypeIndex);
         uint8_t ep_config = (uint8_t)faad_getbits(&ld, 2
@@ -122,6 +127,7 @@ int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
             return -5;
 
         return result;
+#endif
     } else {
         return -4;
     }

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: data.h,v 1.3 2002/02/25 19:58:33 menno Exp $
+** $Id: data.h,v 1.4 2002/03/16 13:38:37 menno Exp $
 **/
 
 #ifndef __DATA_H__
@@ -27,10 +27,14 @@ extern "C" {
 #endif
 
 extern uint8_t num_swb_1024_window[];
+#ifdef LD_DEC
 extern uint8_t num_swb_512_window[];
+#endif
 extern uint8_t num_swb_128_window[];
 extern uint16_t *swb_offset_1024_window[];
+#ifdef LD_DEC
 extern uint16_t *swb_offset_512_window[];
+#endif
 extern uint16_t *swb_offset_128_window[];
 extern uint8_t pred_sfb_max[];
 extern uint32_t sample_rates[];

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: tns.c,v 1.5 2002/02/27 17:38:34 menno Exp $
+** $Id: tns.c,v 1.6 2002/03/16 13:38:36 menno Exp $
 **/
 
 #include "common.h"
@@ -264,7 +264,9 @@ static uint8_t tns_max_bands(ic_stream *ics, uint8_t sr_index,
     uint8_t i;
 
     i = (ics->window_sequence == EIGHT_SHORT_SEQUENCE) ? 1 : 0;
+#ifdef LD_DEC
     i = (object_type == LD) ? 4 : i;
+#endif
 
     return tns_max_bands_table[sr_index][i];
 }
@@ -287,9 +289,13 @@ static uint8_t tns_max_order(ic_stream *ics, uint8_t sr_index,
         switch (object_type)
         {
         case MAIN:
+            return 20;
         case LTP:
+            return 20;
+#ifdef LD_DEC
         case LD:
             return 20;
+#endif
         case LC:
         case SSR:
             return 12;

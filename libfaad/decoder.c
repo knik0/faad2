@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.11 2002/02/25 20:46:00 menno Exp $
+** $Id: decoder.c,v 1.12 2002/03/16 13:38:37 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -69,20 +69,22 @@ faacDecHandle FAADAPI faacDecOpen()
     for (i = 0; i < MAX_CHANNELS; i++)
     {
         hDecoder->window_shape_prev[i] = 0;
-        hDecoder->ltp_lag[i] = 0;
         hDecoder->time_state[i] = NULL;
         hDecoder->time_out[i] = NULL;
+#ifdef MAIN_DEC
         hDecoder->pred_stat[i] = NULL;
+#endif
+#ifdef LTP_DEC
+        hDecoder->ltp_lag[i] = 0;
         hDecoder->lt_pred_stat[i] = NULL;
+#endif
     }
 
     init_drc(&hDecoder->drc, 1.0f, 1.0f);
     filter_bank_init(&hDecoder->fb);
 #if IQ_TABLE_SIZE && POW_TABLE_SIZE
     build_tables(hDecoder->iq_table, hDecoder->pow2_table);
-#elif !IQ_TABLE_SIZE && POW_TABLE_SIZE
-    build_tables(NULL, hDecoder->pow2_table);
-#elif IQ_TABLE_SIZE && !POW_TABLE_SIZE
+#elif !POW_TABLE_SIZE
     build_tables(hDecoder->iq_table, NULL);
 #endif
 
@@ -198,7 +200,9 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
 
     rc = AudioSpecificConfig(pBuffer, samplerate, channels,
         &hDecoder->sf_index, &hDecoder->object_type);
+#ifdef LD_DEC
     if (hDecoder->object_type != LD)
+#endif
         hDecoder->object_type--; /* For AAC differs from MPEG-4 */
     if (rc != 0)
     {
@@ -217,8 +221,12 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
     {
         if (hDecoder->time_state[i]) free(hDecoder->time_state[i]);
         if (hDecoder->time_out[i]) free(hDecoder->time_out[i]);
+#ifdef MAIN_DEC
         if (hDecoder->pred_stat[i]) free(hDecoder->pred_stat[i]);
+#endif
+#ifdef LTP_DEC
         if (hDecoder->lt_pred_stat[i]) free(hDecoder->lt_pred_stat[i]);
+#endif
     }
 
     filter_bank_end(&hDecoder->fb);
@@ -286,13 +294,13 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     uint8_t sf_index       =  hDecoder->sf_index;
     uint8_t object_type    =  hDecoder->object_type;
     uint8_t channelConfiguration = hDecoder->channelConfiguration;
+#ifdef MAIN_DEC
     pred_state **pred_stat =  hDecoder->pred_stat;
-    real_t **lt_pred_stat  =  hDecoder->lt_pred_stat;
-#if IQ_TABLE_SIZE
-    real_t *iq_table       =  hDecoder->iq_table;
-#else
-    real_t *iq_table       =  NULL;
 #endif
+#ifdef LTP_DEC
+    real_t **lt_pred_stat  =  hDecoder->lt_pred_stat;
+#endif
+    real_t *iq_table       =  hDecoder->iq_table;
 #if POW_TABLE_SIZE
     real_t *pow2_table     =  hDecoder->pow2_table;
 #else
@@ -304,7 +312,9 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     fb_info *fb            = &hDecoder->fb;
     drc_info *drc          = &hDecoder->drc;
     uint8_t outputFormat   =  hDecoder->config.outputFormat;
+#ifdef LTP_DEC
     uint16_t *ltp_lag      =  hDecoder->ltp_lag;
+#endif
 
     program_config pce;
     element *syntax_elements[MAX_SYNTAX_ELEMENTS];
@@ -312,7 +322,11 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     real_t *spec_coef[MAX_CHANNELS];
 
     /* frame length is different for Low Delay AAC */
-    uint16_t frame_len = (object_type == LD) ? 512 : 1024;
+    uint16_t frame_len =
+#ifdef LD_DEC
+        (object_type == LD) ? 512 :
+#endif
+        1024;
 
     void *sample_buffer;
 
@@ -340,8 +354,10 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     dbg_count = 0;
 #endif
 
+#ifdef LD_DEC
     if (object_type != LD)
     {
+#endif
         /* Table 4.4.3: raw_data_block() */
         while ((id_syn_ele = (uint8_t)faad_getbits(ld, LEN_SE_ID
             DEBUGVAR(1,4,"faacDecDecode(): id_syn_ele"))) != ID_END)
@@ -372,6 +388,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             }
             ele++;
         }
+#ifdef LD_DEC
     } else {
         /* Table 262: er_raw_data_block() */
         switch (channelConfiguration)
@@ -440,6 +457,8 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         }
 #endif
     }
+#endif
+
     /* no more bit reading after this */
     faad_byte_align(ld);
     hInfo->bytesconsumed = bit2byte(faad_get_processed_bits(ld));
@@ -526,6 +545,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         if (!right_channel)
             is_decode(ics, icsr, spec_coef[ch], spec_coef[pch]);
 
+#ifdef MAIN_DEC
         /* MAIN object type prediction */
         if (object_type == MAIN)
         {
@@ -544,7 +564,16 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                corresponding spectral coefficients are reset.
             */
             pns_reset_pred_state(ics, pred_stat[ch]);
-        } else if ((object_type == LTP) || (object_type == LD)) {
+        }
+#endif
+#ifdef LTP_DEC
+        else if ((object_type == LTP)
+#ifdef LD_DEC
+            || (object_type == LD)
+#endif
+            )
+        {
+#ifdef LD_DEC
             if (object_type == LD)
             {
                 if (ltp->data_present)
@@ -555,6 +584,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                         ltp_lag[ch] = ltp->lag;
                 }
             }
+#endif
 
             /* allocate the state only when needed */
             if (lt_pred_stat[ch] == NULL)
@@ -568,6 +598,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                 ics->window_shape, window_shape_prev[ch],
                 sf_index, object_type, frame_len);
         }
+#endif
 
         /* tns decoding */
         tns_decode_frame(ics, &(ics->tns), sf_index, object_type, spec_coef[ch]);
@@ -605,19 +636,36 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         /* save window shape for next frame */
         window_shape_prev[ch] = ics->window_shape;
 
-        if (((object_type == LTP) || (object_type == LD)) && (lt_pred_stat[ch] != NULL))
+#ifdef LTP_DEC
+        if ((object_type == LTP)
+#ifdef LD_DEC
+            || (object_type == LD)
+#endif
+            )
         {
             lt_update_state(lt_pred_stat[ch], time_out[ch], time_state[ch],
                 frame_len, object_type);
         }
+#endif
     }
 
     sample_buffer = output_to_PCM(time_out, sample_buffer, channels,
         frame_len, outputFormat);
 
     hDecoder->frame++;
-    if (hDecoder->frame <= 1)
-        hInfo->samples = 0;
+#ifdef LD_DEC
+    if (object_type != LD)
+    {
+#endif
+        if (hDecoder->frame <= 1)
+            hInfo->samples = 0;
+#ifdef LD_DEC
+    } else {
+        /* LD encoders will give lower delay */
+        if (hDecoder->frame <= 0)
+            hInfo->samples = 0;
+    }
+#endif
 
     /* cleanup */
     for (ch = 0; ch < channels; ch++)

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.c,v 1.4 2002/02/25 19:58:33 menno Exp $
+** $Id: mdct.c,v 1.5 2002/03/16 13:38:36 menno Exp $
 **/
 
 /*
@@ -75,7 +75,7 @@ void mdct_end(mdct_info *mdct)
 #endif
 }
 
-void MDCT_long(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
+void MDCT_2048(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
 {
     fftw_complex FFTarray[512];
     real_t tempr, tempi, fac;
@@ -172,7 +172,8 @@ void MDCT_long(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
     }
 }
 
-void MDCT_LD(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
+#ifdef LD_DEC
+void MDCT_1024(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
 {
     fftw_complex FFTarray[256];
     real_t tempr, tempi, fac;
@@ -268,8 +269,9 @@ void MDCT_LD(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
 #endif
     }
 }
+#endif
 
-void MDCT_short(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
+void MDCT_256(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
 {
     fftw_complex FFTarray[64];    /* the array for in-place FFT */
     real_t tempr, tempi, fac;
@@ -365,7 +367,7 @@ void MDCT_short(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
     }
 }
 
-void IMDCT_long(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
+void IMDCT_2048(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
 {
     fftw_complex FFTarray[512];    /* the array for in-place FFT */
     real_t tempr, tempi, fac;
@@ -460,7 +462,8 @@ void IMDCT_long(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
     }
 }
 
-void IMDCT_LD(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
+#ifdef LD_DEC
+void IMDCT_1024(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
 {
     fftw_complex FFTarray[256];    /* the array for in-place FFT */
     real_t tempr, tempi, fac;
@@ -554,8 +557,9 @@ void IMDCT_LD(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
 #endif
     }
 }
+#endif
 
-void IMDCT_short(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
+void IMDCT_256(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
 {
     fftw_complex FFTarray[64];    /* the array for in-place FFT */
     real_t tempr, tempi, fac;

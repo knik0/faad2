@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.8 2002/02/25 19:58:33 menno Exp $
+** $Id: syntax.c,v 1.9 2002/03/16 13:38:36 menno Exp $
 **/
 
 /*
@@ -335,7 +335,9 @@ static uint8_t ics_info(ic_stream *ics, bitfile *ld, uint8_t common_window,
                     ics->pred.prediction_used[sfb] = faad_get1bit(ld
                         DEBUGVAR(1,55,"ics_info(): pred.prediction_used"));
                 }
-            } else { /* Long Term Prediction */
+            }
+#ifdef LTP_DEC
+            else { /* Long Term Prediction */
                 if ((ics->ltp.data_present = faad_get1bit(ld
                     DEBUGVAR(1,50,"ics_info(): ltp.data_present"))) & 1)
                 {
@@ -350,6 +352,7 @@ static uint8_t ics_info(ic_stream *ics, bitfile *ld, uint8_t common_window,
                     }
                 }
             }
+#endif
         }
     }
 
@@ -432,7 +435,11 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
                                      uint8_t object_type)
 {
     uint8_t result;
-    uint16_t frame_len = (object_type == LD) ? 512 : 1024;
+    uint16_t frame_len =
+#ifdef LD_DEC
+        (object_type == LD) ? 512 :
+#endif
+        1024;
 
     ics->global_gain = (uint8_t)faad_getbits(ld, 8
         DEBUGVAR(1,67,"individual_channel_stream(): global_gain"));
@@ -662,6 +669,7 @@ static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld)
     }
 }
 
+#ifdef LTP_DEC
 /* Table 4.4.28 */
 /*
    The limit MAX_LTP_SFB is not defined in 14496-3, this is a bug in the document
@@ -672,6 +680,7 @@ static void ltp_data(ic_stream *ics, ltp_info *ltp, bitfile *ld,
 {
     uint8_t sfb, w;
 
+#ifdef LD_DEC
     if (object_type == LD)
     {
         ltp->lag_update = (uint8_t)faad_getbits(ld, 1
@@ -683,9 +692,12 @@ static void ltp_data(ic_stream *ics, ltp_info *ltp, bitfile *ld,
                 DEBUGVAR(1,81,"ltp_data(): lag"));
         }
     } else {
+#endif
         ltp->lag = (uint16_t)faad_getbits(ld, 11
             DEBUGVAR(1,81,"ltp_data(): lag"));
+#ifdef LD_DEC
     }
+#endif
     ltp->coef = (uint8_t)faad_getbits(ld, 3
         DEBUGVAR(1,82,"ltp_data(): coef"));
 
@@ -715,6 +727,7 @@ static void ltp_data(ic_stream *ics, ltp_info *ltp, bitfile *ld,
         }
     }
 }
+#endif
 
 /* defines whether a huffman codebook is unsigned or not */
 /* Table 4.6.2 */

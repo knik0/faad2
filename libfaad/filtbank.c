@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.c,v 1.4 2002/02/25 19:58:33 menno Exp $
+** $Id: filtbank.c,v 1.5 2002/03/16 13:38:37 menno Exp $
 **/
 
 #include "common.h"
@@ -33,6 +33,7 @@ void filter_bank_init(fb_info *fb)
 {
     uint16_t i;
 
+#ifdef LD_DEC
     /* LD */
     mdct_init(&(fb->mdct1024), 1024);
 
@@ -50,6 +51,7 @@ void filter_bank_init(fb_info *fb)
         fb->ld_window[1][i] = (real_t)sin((i-3*(BLOCK_LEN_LD>>3)+0.5) * M_PI / (BLOCK_LEN_LD>>1));
     for (; i < BLOCK_LEN_LD; i++)
         fb->ld_window[1][i] = 1.0;
+#endif
 
     /* normal */
     mdct_init(&(fb->mdct256), 256);
@@ -70,13 +72,17 @@ void filter_bank_init(fb_info *fb)
 void filter_bank_end(fb_info *fb)
 {
     mdct_end(&(fb->mdct256));
+#ifdef LD_DEC
     mdct_end(&(fb->mdct1024));
+#endif
     mdct_end(&(fb->mdct2048));
 
     if (fb->long_window[0]) free(fb->long_window[0]);
     if (fb->short_window[0]) free(fb->short_window[0]);
+#ifdef LD_DEC
     if (fb->ld_window[0]) free(fb->ld_window[0]);
     if (fb->ld_window[1]) free(fb->ld_window[1]);
+#endif
 }
 
 static INLINE void vcopy(real_t *src, real_t *dest, uint16_t vlen)
@@ -171,13 +177,15 @@ static INLINE void imdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_
     switch (len)
     {
     case 2048:
-        IMDCT_long(&(fb->mdct2048), in_data, out_data);
+        IMDCT_2048(&(fb->mdct2048), in_data, out_data);
         return;
+#ifdef LD_DEC
     case 1024:
-        IMDCT_LD(&(fb->mdct1024), in_data, out_data);
+        IMDCT_1024(&(fb->mdct1024), in_data, out_data);
         return;
+#endif
     case 256:
-        IMDCT_short(&(fb->mdct256), in_data, out_data);
+        IMDCT_256(&(fb->mdct256), in_data, out_data);
         return;
     }
 }
@@ -187,13 +195,15 @@ static INLINE void mdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_t
     switch (len)
     {
     case 2048:
-        MDCT_long(&(fb->mdct2048), in_data, out_data);
+        MDCT_2048(&(fb->mdct2048), in_data, out_data);
         return;
+#ifdef LD_DEC
     case 1024:
-        MDCT_LD(&(fb->mdct1024), in_data, out_data);
+        MDCT_1024(&(fb->mdct1024), in_data, out_data);
         return;
+#endif
     case 256:
-        MDCT_short(&(fb->mdct256), in_data, out_data);
+        MDCT_256(&(fb->mdct256), in_data, out_data);
         return;
     }
 }
@@ -212,23 +222,31 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
 
     real_t *fp;
     int8_t win;
-    uint16_t nlong = (object_type == LD) ? 512 : 1024;
+    uint16_t nlong =
+#ifdef LD_DEC
+        (object_type == LD) ? 512 :
+#endif
+        1024;
     uint16_t nshort = 128;
 
     uint16_t nflat_ls = (nlong-nshort)/2;
 
     transf_buf = malloc(2*nlong*sizeof(real_t));
 
+#ifdef LD_DEC
     if (object_type == LD)
     {
         window_long       = fb->ld_window[window_shape];
         window_long_prev  = fb->ld_window[window_shape_prev];
     } else {
+#endif
         window_long       = fb->long_window[window_shape];
         window_long_prev  = fb->long_window[window_shape_prev];
         window_short      = fb->short_window[window_shape];
         window_short_prev = fb->short_window[window_shape_prev];
+#ifdef LD_DEC
     }
+#endif
 
     /* pointer to previous window function */
     window_short_prev_ptr = window_short_prev;
@@ -348,22 +366,30 @@ void filter_bank_ltp(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
     real_t *window_short_prev;
     real_t *window_short_prev_ptr;
 
-    uint16_t nlong = (object_type == LD) ? 512 : 1024;
+    uint16_t nlong =
+#ifdef LD_DEC
+        (object_type == LD) ? 512 :
+#endif
+        1024;
     uint16_t nshort = 128;
     uint16_t nflat_ls = (nlong-nshort)/2;
 
     windowed_buf = malloc(nlong*2*sizeof(real_t));
 
+#ifdef LD_DEC
     if (object_type == LD)
     {
         window_long       = fb->ld_window[window_shape];
         window_long_prev  = fb->ld_window[window_shape_prev];
     } else {
+#endif
         window_long       = fb->long_window[window_shape];
         window_long_prev  = fb->long_window[window_shape_prev];
         window_short      = fb->short_window[window_shape];
         window_short_prev = fb->short_window[window_shape_prev];
+#ifdef LD_DEC
     }
+#endif
 
     window_short_prev_ptr = window_short_prev;
   
