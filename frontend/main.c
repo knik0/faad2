@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.65 2003/11/22 15:30:19 menno Exp $
+** $Id: main.c,v 1.66 2003/11/25 13:16:09 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -625,7 +625,6 @@ int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_stdout,
 
     } while (sample_buffer != NULL);
 
-
     faacDecClose(hDecoder);
 
     if (adts_out == 1)
@@ -720,6 +719,7 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
 
     /* initialise the callback structure */
     mp4ff_callback_t *mp4cb = malloc(sizeof(mp4ff_callback_t));
+
     mp4File = fopen(mp4file, "rb");
     mp4cb->read = read_callback;
     mp4cb->seek = seek_callback;
@@ -810,6 +810,8 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
         fprintf(stderr, "%s\t%.3f secs, %d ch, %d Hz\n\n", ot[(mp4ASC.objectTypeIndex > 5)?0:mp4ASC.objectTypeIndex],
             seconds, mp4ASC.channelsConfiguration, mp4ASC.samplingFrequency);
 
+#define PRINT_MP4_METADATA
+#ifdef PRINT_MP4_METADATA
         j = mp4ff_meta_get_num_items(infile);
         for (k = 0; k < j; k++)
         {
@@ -824,6 +826,7 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
             }
         }
         if (j > 0) printf("\n");
+#endif
     }
 
     if (infoOnly)

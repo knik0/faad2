@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ff.c,v 1.4 2003/11/22 15:30:19 menno Exp $
+** $Id: mp4ff.c,v 1.5 2003/11/25 13:16:09 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -41,6 +41,44 @@ mp4ff_t *mp4ff_open_read(mp4ff_callback_t *f)
 
     return ff;
 }
+
+#ifdef USE_TAGGING
+mp4ff_t *mp4ff_open_edit(mp4ff_callback_t *f)
+{
+    mp4ff_t *ff = malloc(sizeof(mp4ff_t));
+
+    memset(ff, 0, sizeof(mp4ff_t));
+
+    ff->stream = f;
+
+    parse_atoms(ff);
+
+    /* copy moov atom to end of the file */
+    if (ff->last_atom != ATOM_MOOV)
+    {
+        char *free_data = "free";
+        char *moov_data;
+
+        moov_data = (unsigned char*)malloc(ff->moov_size);
+
+        /* read the moov atom */
+        mp4ff_set_position(ff, ff->moov_offset);
+        mp4ff_read_data(ff, moov_data, ff->moov_size);
+
+        /* rename old moov to free */
+        mp4ff_set_position(ff, ff->moov_offset + 4);
+        mp4ff_write_data(ff, free_data, 4);
+
+        /* write old moov at end of file */
+        mp4ff_set_position(ff, ff->file_size);
+        mp4ff_write_data(ff, moov_data, ff->moov_size);
+
+        free(moov_data);
+    }
+
+    return ff;
+}
+#endif
 
 void mp4ff_close(mp4ff_t *ff)
 {
@@ -70,7 +108,9 @@ void mp4ff_close(mp4ff_t *ff)
         }
     }
 
+#ifdef USE_TAGGING
     mp4ff_tag_delete(&(ff->tags));
+#endif
 
     if (ff) free(ff);
 }
@@ -126,25 +166,24 @@ static int32_t parse_atoms(mp4ff_t *f)
     int32_t size;
     uint8_t atom_type = 0;
 
+    f->file_size = 0;
+
     while ((size = mp4ff_atom_read_header(f, &atom_type)) != 0)
     {
+        f->file_size += size;
+        f->last_atom = atom_type;
+
         if (atom_type == ATOM_MDAT && f->moov_read)
         {
             /* moov atom is before mdat, we can stop reading when mdat is encountered */
             /* file position will stay at beginning of mdat data */
-            break;
+//            break;
         }
 
-        if (atom_type == ATOM_MDAT && size > 8)
-        {
-            f->mdat_read = 1;
-            f->mdat_offset = mp4ff_position(f);
-            f->mdat_size = size;
-        }
         if (atom_type == ATOM_MOOV && size > 8)
         {
             f->moov_read = 1;
-            f->moov_offset = mp4ff_position(f);
+            f->moov_offset = mp4ff_position(f)-8;
             f->moov_size = size;
         }
 

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4atom.c,v 1.4 2003/11/22 15:30:19 menno Exp $
+** $Id: mp4atom.c,v 1.5 2003/11/25 13:16:09 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -429,6 +429,7 @@ static int32_t mp4ff_read_mvhd(mp4ff_t *f)
     return 0;
 }
 
+#ifdef USE_TAGGING
 static int32_t mp4ff_read_meta(mp4ff_t *f, const int32_t size)
 {
     int32_t subsize, sumsize = 0;
@@ -451,6 +452,7 @@ static int32_t mp4ff_read_meta(mp4ff_t *f, const int32_t size)
 
     return 0;
 }
+#endif
 
 int32_t mp4ff_atom_read(mp4ff_t *f, const int32_t size, const uint8_t atom_type)
 {
@@ -473,9 +475,11 @@ int32_t mp4ff_atom_read(mp4ff_t *f, const int32_t size, const uint8_t atom_type)
     } else if (atom_type == ATOM_MVHD) {
         /* movie header box */
         mp4ff_read_mvhd(f);
+#ifdef USE_TAGGING
     } else if (atom_type == ATOM_META) {
         /* iTunes Metadata box */
         mp4ff_read_meta(f, size);
+#endif
     } else {
         /* skip this atom: not needed for reading */
         mp4ff_set_position(f, mp4ff_position(f)+size-8);

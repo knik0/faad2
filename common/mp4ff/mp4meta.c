@@ -22,8 +22,10 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4meta.c,v 1.1 2003/11/22 15:38:31 menno Exp $
+** $Id: mp4meta.c,v 1.2 2003/11/25 13:16:09 menno Exp $
 **/
+
+#ifdef USE_TAGGING
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -434,3 +436,5 @@ int32_t mp4ff_meta_get_tempo(const mp4ff_t *f, char **value)
 {
     return mp4ff_meta_find_by_name(f, "tempo", value);
 }
+
+#endif

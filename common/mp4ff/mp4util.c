@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4util.c,v 1.3 2003/11/22 15:30:19 menno Exp $
+** $Id: mp4util.c,v 1.4 2003/11/25 13:16:09 menno Exp $
 **/
 
 #include "mp4ffint.h"
@@ -32,6 +32,17 @@ int32_t mp4ff_read_data(mp4ff_t *f, int8_t *data, const int32_t size)
     int32_t result = 1;
 
     result = f->stream->read(f->stream->user_data, data, size);
+
+    f->current_position += size;
+
+    return result;
+}
+
+int32_t mp4ff_write_data(mp4ff_t *f, int8_t *data, const int32_t size)
+{
+    int32_t result = 1;
+
+    result = f->stream->write(f->stream->user_data, data, size);
 
     f->current_position += size;
 

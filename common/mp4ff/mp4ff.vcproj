@@ -22,7 +22,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="1"
 				InlineFunctionExpansion="1"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
+				PreprocessorDefinitions="USE_TAGGING"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="TRUE"
@@ -41,7 +41,7 @@
 					RuntimeLibrary="2"
 					BufferSecurityCheck="1"
 					EnableFunctionLevelLinking="1"
-					AllOptions="/c  /nologo /W3 /O1 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/mp4ff.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TP"/>
+					AllOptions="/c  /nologo /W3 /O1 /Ob1 /Oy /D &quot;USE_TAGGING&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/mp4ff.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TP"/>
 			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -85,7 +85,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
+				PreprocessorDefinitions="USE_TAGGING"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
@@ -101,7 +101,7 @@
 					MinimalRebuild="1"
 					BasicRuntimeChecks="3"
 					RuntimeLibrary="3"
-					AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/mp4ff.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TP"/>
+					AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;USE_TAGGING&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/mp4ff.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TP"/>
 			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -151,7 +151,7 @@
 						PreprocessorDefinitions="">
 						<IntelOptions
 							Optimization="1"
-							AllOptions="/c  /nologo /W3 /O1 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/mp4ff.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
+							AllOptions="/c  /nologo /W3 /O1 /Ob1 /Oy /D &quot;USE_TAGGING&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/mp4ff.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
 					</Tool>
 				</FileConfiguration>
 				<FileConfiguration
@@ -164,7 +164,7 @@
 						<IntelOptions
 							Optimization="0"
 							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/mp4ff.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
+							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;USE_TAGGING&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/mp4ff.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
 					</Tool>
 				</FileConfiguration>
 			</File>
@@ -178,7 +178,7 @@
 						PreprocessorDefinitions="">
 						<IntelOptions
 							Optimization="1"
-							AllOptions="/c  /nologo /W3 /O1 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/mp4ff.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
+							AllOptions="/c  /nologo /W3 /O1 /Ob1 /Oy /D &quot;USE_TAGGING&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/mp4ff.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
 					</Tool>
 				</FileConfiguration>
 				<FileConfiguration
@@ -191,7 +191,7 @@
 						<IntelOptions
 							Optimization="0"
 							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/mp4ff.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
+							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;USE_TAGGING&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/mp4ff.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
 					</Tool>
 				</FileConfiguration>
 			</File>
@@ -205,7 +205,7 @@
 						PreprocessorDefinitions="">
 						<IntelOptions
 							Optimization="1"
-							AllOptions="/c  /nologo /W3 /O1 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/mp4ff.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
+							AllOptions="/c  /nologo /W3 /O1 /Ob1 /Oy /D &quot;USE_TAGGING&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/mp4ff.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
 					</Tool>
 				</FileConfiguration>
 				<FileConfiguration
@@ -218,7 +218,7 @@
 						<IntelOptions
 							Optimization="0"
 							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/mp4ff.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
+							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;USE_TAGGING&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/mp4ff.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
 					</Tool>
 				</FileConfiguration>
 			</File>
@@ -232,7 +232,7 @@
 						PreprocessorDefinitions="">
 						<IntelOptions
 							Optimization="1"
-							AllOptions="/c  /nologo /W3 /O1 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/mp4ff.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
+							AllOptions="/c  /nologo /W3 /O1 /Ob1 /Oy /D &quot;USE_TAGGING&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/mp4ff.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
 					</Tool>
 				</FileConfiguration>
 				<FileConfiguration
@@ -245,7 +245,7 @@
 						<IntelOptions
 							Optimization="0"
 							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/mp4ff.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
+							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;USE_TAGGING&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/mp4ff.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
 					</Tool>
 				</FileConfiguration>
 			</File>
@@ -259,7 +259,7 @@
 						PreprocessorDefinitions="">
 						<IntelOptions
 							Optimization="1"
-							AllOptions="/c  /nologo /W3 /O1 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/mp4ff.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
+							AllOptions="/c  /nologo /W3 /O1 /Ob1 /Oy /D &quot;USE_TAGGING&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/mp4ff.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
 					</Tool>
 				</FileConfiguration>
 				<FileConfiguration
@@ -272,7 +272,7 @@
 						<IntelOptions
 							Optimization="0"
 							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/mp4ff.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
+							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;USE_TAGGING&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/mp4ff.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
 					</Tool>
 				</FileConfiguration>
 			</File>

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ffint.h,v 1.1 2003/11/22 15:38:31 menno Exp $
+** $Id: mp4ffint.h,v 1.2 2003/11/25 13:16:09 menno Exp $
 **/
 
 #ifndef MP4FF_INTERNAL_H
@@ -104,6 +104,9 @@ typedef unsigned __int32 uint32_t;
 typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
 #else
+
+#define stricmp strcasecmp
+
 #ifdef HAVE_CONFIG_H
 #include "../../config.h"
 #endif
@@ -148,6 +151,7 @@ typedef struct
 typedef struct
 {
     int32_t (*read)(void *udata, void *buffer, int32_t length);
+    int32_t (*write)(void *udata, void *buffer, int32_t length);
     int32_t (*seek)(void *udata, int32_t position);
     void *user_data;
 } mp4ff_callback_t;
@@ -198,9 +202,8 @@ typedef struct
     int32_t moov_read;
     int32_t moov_offset;
     int32_t moov_size;
-    int32_t mdat_read;
-    int32_t mdat_offset;
-    int32_t mdat_size;
+    uint8_t last_atom;
+    int32_t file_size;
 
     /* mvhd */
     int32_t time_scale;
@@ -221,6 +224,7 @@ typedef struct
 
 /* mp4util.c */
 int32_t mp4ff_read_data(mp4ff_t *f, int8_t *data, const int32_t size);
+int32_t mp4ff_write_data(mp4ff_t *f, int8_t *data, const int32_t size);
 uint32_t mp4ff_read_int32(mp4ff_t *f);
 uint32_t mp4ff_read_int24(mp4ff_t *f);
 uint16_t mp4ff_read_int16(mp4ff_t *f);
@@ -242,7 +246,9 @@ static int32_t mp4ff_read_stsd(mp4ff_t *f);
 static int32_t mp4ff_read_stsc(mp4ff_t *f);
 static int32_t mp4ff_read_stco(mp4ff_t *f);
 static int32_t mp4ff_read_stts(mp4ff_t *f);
+#ifdef USE_TAGGING
 static int32_t mp4ff_read_meta(mp4ff_t *f, const int32_t size);
+#endif
 int32_t mp4ff_atom_read(mp4ff_t *f, const int32_t size, const uint8_t atom_type);
 
 /* mp4sample.c */
@@ -255,6 +261,7 @@ static int32_t mp4ff_sample_to_offset(const mp4ff_t *f, const int32_t track, con
 int32_t mp4ff_audio_frame_size(const mp4ff_t *f, const int32_t track, const int32_t sample);
 int32_t mp4ff_set_sample_position(mp4ff_t *f, const int32_t track, const int32_t sample);
 
+#ifdef USE_TAGGING
 /* mp4meta.c */
 static int32_t mp4ff_tag_add_field(mp4ff_metadata_t *tags, const char *item, const char *value);
 static int32_t mp4ff_tag_set_field(mp4ff_metadata_t *tags, const char *item, const char *value);
@@ -283,9 +290,13 @@ int32_t mp4ff_meta_get_track(const mp4ff_t *f, char **value);
 int32_t mp4ff_meta_get_disc(const mp4ff_t *f, char **value);
 int32_t mp4ff_meta_get_compilation(const mp4ff_t *f, char **value);
 int32_t mp4ff_meta_get_tempo(const mp4ff_t *f, char **value);
+#endif
 
 /* mp4ff.c */
 mp4ff_t *mp4ff_open_read(mp4ff_callback_t *f);
+#ifdef USE_TAGGING
+mp4ff_t *mp4ff_open_edit(mp4ff_callback_t *f);
+#endif
 void mp4ff_close(mp4ff_t *ff);
 static void mp4ff_track_add(mp4ff_t *f);
 static int32_t parse_sub_atoms(mp4ff_t *f, const int32_t total_size);
