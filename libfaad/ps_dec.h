@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: ps_dec.h,v 1.1 2004/03/10 19:53:40 menno Exp $
+** $Id: ps_dec.h,v 1.2 2004/04/03 10:49:14 menno Exp $
 **/
 
 #ifndef __PS_DEC_H__
@@ -133,6 +133,8 @@ uint16_t ps_data(ps_info *ps, bitfile *ld);
 
 /* ps_dec.c */
 ps_info *ps_init(uint8_t sr_index);
+void ps_free(ps_info *ps);
+
 uint8_t ps_decode(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64]);
 
 

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: structs.h,v 1.37 2004/03/27 11:14:49 menno Exp $
+** $Id: structs.h,v 1.40 2004/07/31 15:48:57 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -182,6 +182,7 @@ typedef struct
     program_config pce[16];
 } adif_header;
 
+#ifdef LTP_DEC
 typedef struct
 {
     uint8_t last_band;
@@ -194,7 +195,9 @@ typedef struct
     uint8_t short_lag_present[8];
     uint8_t short_lag[8];
 } ltp_info;
+#endif
 
+#ifdef MAIN_DEC
 typedef struct
 {
     uint8_t limit;
@@ -202,6 +205,7 @@ typedef struct
     uint8_t predictor_reset_group_number;
     uint8_t prediction_used[MAX_SFB];
 } pred_info;
+#endif
 
 typedef struct
 {
@@ -268,9 +272,13 @@ typedef struct
 
     pulse_info pul;
     tns_info tns;
+#ifdef MAIN_DEC
     pred_info pred;
+#endif
+#ifdef LTP_DEC
     ltp_info ltp;
     ltp_info ltp2;
+#endif
 #ifdef SSR_DEC
     ssr_info ssr;
 #endif

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: ps_dec.c,v 1.3 2004/03/27 11:14:49 menno Exp $
+** $Id: ps_dec.c,v 1.4 2004/04/03 10:49:14 menno Exp $
 **/
 
 #include "common.h"
@@ -250,6 +250,61 @@ static void channel_filter2(hyb_info *hyb, uint8_t frame_len, const real_t *filt
     }
 }
 
+/* complex filter, size 4 */
+static void channel_filter4(hyb_info *hyb, uint8_t frame_len, const real_t *filter,
+                            qmf_t *buffer, qmf_t **X_hybrid)
+{
+    uint8_t i;
+    real_t input_re1[2], input_re2[2], input_im1[2], input_im2[2];
+
+    for (i = 0; i < frame_len; i++)
+    {
+        input_re1[0] = -MUL_F(filter[2], (QMF_RE(buffer[i+2]) + QMF_RE(buffer[i+10]))) +
+            MUL_F(filter[6], QMF_RE(buffer[i+6]));
+        input_re1[1] = MUL_F(FRAC_CONST(-0.70710678118655),
+            (MUL_F(filter[1], (QMF_RE(buffer[i+1]) + QMF_RE(buffer[i+11]))) +
+            MUL_F(filter[3], (QMF_RE(buffer[i+3]) + QMF_RE(buffer[i+9]))) -
+            MUL_F(filter[5], (QMF_RE(buffer[i+5]) + QMF_RE(buffer[i+7])))));
+
+        input_im1[0] = MUL_F(filter[0], (QMF_IM(buffer[i+0]) - QMF_IM(buffer[i+12]))) -
+            MUL_F(filter[4], (QMF_IM(buffer[i+4]) - QMF_IM(buffer[i+8])));
+        input_im1[1] = MUL_F(FRAC_CONST(0.70710678118655),
+            (MUL_F(filter[1], (QMF_IM(buffer[i+1]) - QMF_IM(buffer[i+11]))) -
+            MUL_F(filter[3], (QMF_IM(buffer[i+3]) - QMF_IM(buffer[i+9]))) -
+            MUL_F(filter[5], (QMF_IM(buffer[i+5]) - QMF_IM(buffer[i+7])))));
+
+        input_re2[0] = MUL_F(filter[0], (QMF_RE(buffer[i+0]) - QMF_RE(buffer[i+12]))) -
+            MUL_F(filter[4], (QMF_RE(buffer[i+4]) - QMF_RE(buffer[i+8])));
+        input_re2[1] = MUL_F(FRAC_CONST(0.70710678118655),
+            (MUL_F(filter[1], (QMF_RE(buffer[i+1]) - QMF_RE(buffer[i+11]))) -
+            MUL_F(filter[3], (QMF_RE(buffer[i+3]) - QMF_RE(buffer[i+9]))) -
+            MUL_F(filter[5], (QMF_RE(buffer[i+5]) - QMF_RE(buffer[i+7])))));
+
+        input_im2[0] = -MUL_F(filter[2], (QMF_IM(buffer[i+2]) + QMF_IM(buffer[i+10]))) +
+            MUL_F(filter[6], QMF_IM(buffer[i+6]));
+        input_im2[1] = MUL_F(FRAC_CONST(-0.70710678118655),
+            (MUL_F(filter[1], (QMF_IM(buffer[i+1]) + QMF_IM(buffer[i+11]))) +
+            MUL_F(filter[3], (QMF_IM(buffer[i+3]) + QMF_IM(buffer[i+9]))) -
+            MUL_F(filter[5], (QMF_IM(buffer[i+5]) + QMF_IM(buffer[i+7])))));
+
+        /* q == 0 */
+        QMF_RE(X_hybrid[i][0]) =  input_re1[0] + input_re1[1] + input_im1[0] + input_im1[1];
+        QMF_IM(X_hybrid[i][0]) = -input_re2[0] - input_re2[1] + input_im2[0] + input_im2[1];
+
+        /* q == 1 */
+        QMF_RE(X_hybrid[i][1]) =  input_re1[0] - input_re1[1] - input_im1[0] + input_im1[1];
+        QMF_IM(X_hybrid[i][1]) =  input_re2[0] - input_re2[1] + input_im2[0] - input_im2[1];
+
+        /* q == 2 */
+        QMF_RE(X_hybrid[i][2]) =  input_re1[0] - input_re1[1] + input_im1[0] - input_im1[1];
+        QMF_IM(X_hybrid[i][2]) = -input_re2[0] + input_re2[1] + input_im2[0] - input_im2[1];
+
+        /* q == 3 */
+        QMF_RE(X_hybrid[i][3]) =  input_re1[0] + input_re1[1] - input_im1[0] - input_im1[1];
+        QMF_IM(X_hybrid[i][3]) =  input_re2[0] + input_re2[1] + input_im2[0] + input_im2[1];
+    }
+}
+
 static void INLINE DCT3_4_unscaled(real_t *y, real_t *x)
 {
     real_t f0, f1, f2, f3, f4, f5, f6, f7, f8;
@@ -341,6 +396,71 @@ static void channel_filter8(hyb_info *hyb, uint8_t frame_len, const real_t *filt
     }
 }
 
+static void INLINE DCT3_6_unscaled(real_t *y, real_t *x)
+{
+    real_t f0, f1, f2, f3, f4, f5, f6, f7;
+
+    f0 = MUL_F(x[3], FRAC_CONST(0.70710678118655));
+    f1 = x[0] + f0;
+    f2 = x[0] - f0;
+    f3 = MUL_F((x[1] - x[5]), FRAC_CONST(0.70710678118655));
+    f4 = MUL_F(x[2], FRAC_CONST(0.86602540378444)) + MUL_F(x[4], FRAC_CONST(0.5));
+    f5 = f4 - x[4];
+    f6 = MUL_F(x[1], FRAC_CONST(0.96592582628907)) + MUL_F(x[5], FRAC_CONST(0.25881904510252));
+    f7 = f6 - f3;
+    y[0] = f1 + f6 + f4;
+    y[1] = f2 + f3 - x[4];
+    y[2] = f7 + f2 - f5;
+    y[3] = f1 - f7 - f5;
+    y[4] = f1 - f3 - x[4];
+    y[5] = f2 - f6 + f4;
+}
+
+/* complex filter, size 12 */
+static void channel_filter12(hyb_info *hyb, uint8_t frame_len, const real_t *filter,
+                             qmf_t *buffer, qmf_t **X_hybrid)
+{
+    uint8_t i, n;
+    real_t input_re1[6], input_re2[6], input_im1[6], input_im2[6];
+    real_t out_re1[6], out_re2[6], out_im1[6], out_im2[6];
+
+    for (i = 0; i < frame_len; i++)
+    {
+        for (n = 0; n < 6; n++)
+        {
+            if (n == 0)
+            {
+                input_re1[0] = filter[6] * QMF_RE(buffer[6+i]);
+                input_re2[0] = filter[6] * QMF_IM(buffer[6+i]);
+            } else {
+                input_re1[6-n] = filter[n] * (QMF_RE(buffer[n+i]) + QMF_RE(buffer[12-n+i]));
+                input_re2[6-n] = filter[n] * (QMF_IM(buffer[n+i]) + QMF_IM(buffer[12-n+i]));
+            }
+            input_im2[n] = filter[n] * (QMF_RE(buffer[n+i]) - QMF_RE(buffer[12-n+i]));
+            input_im1[n] = filter[n] * (QMF_IM(buffer[n+i]) - QMF_IM(buffer[12-n+i]));
+        }
+
+        DCT3_6_unscaled(out_re1, input_re1);
+        DCT3_6_unscaled(out_re2, input_re2);
+
+        DCT3_6_unscaled(out_im1, input_im1);
+        DCT3_6_unscaled(out_im2, input_im2);
+
+        for (n = 0; n < 6; n += 2)
+        {
+            QMF_RE(X_hybrid[i][n]) = out_re1[n] - out_im1[n];
+            QMF_IM(X_hybrid[i][n]) = out_re2[n] + out_im2[n];
+            QMF_RE(X_hybrid[i][n+1]) = out_re1[n+1] + out_im1[n+1];
+            QMF_IM(X_hybrid[i][n+1]) = out_re2[n+1] - out_im2[n+1];
+
+            QMF_RE(X_hybrid[i][10-n]) = out_re1[n+1] - out_im1[n+1];
+            QMF_IM(X_hybrid[i][10-n]) = out_re2[n+1] + out_im2[n+1];
+            QMF_RE(X_hybrid[i][11-n]) = out_re1[n] + out_im1[n];
+            QMF_IM(X_hybrid[i][11-n]) = out_re2[n] - out_im2[n];
+        }
+    }
+}
+
 /* Hybrid analysis: further split up QMF subbands
  * to improve frequency resolution
  */
@@ -371,17 +491,21 @@ static void hybrid_analysis(hyb_info *hyb, qmf_t X[32][64], qmf_t X_hybrid[32][3
         switch(resolution[band])
         {
         case 2:
+            /* Type B real filter, Q[p] = 2 */
             channel_filter2(hyb, hyb->frame_len, p2_13_20, hyb->work, hyb->temp);
             break;
         case 4:
-            channel_filter2(hyb, hyb->frame_len, p4_13_34, hyb->work, hyb->temp);
+            /* Type A complex filter, Q[p] = 4 */
+            channel_filter4(hyb, hyb->frame_len, p4_13_34, hyb->work, hyb->temp);
             break;
         case 8:
+            /* Type A complex filter, Q[p] = 8 */
             channel_filter8(hyb, hyb->frame_len, (use34) ? p8_13_34 : p8_13_20,
                 hyb->work, hyb->temp);
             break;
         case 12:
-            channel_filter2(hyb, hyb->frame_len, p12_13_34, hyb->work, hyb->temp);
+            /* Type A complex filter, Q[p] = 12 */
+            channel_filter12(hyb, hyb->frame_len, p12_13_34, hyb->work, hyb->temp);
             break;
         }
 
@@ -1420,6 +1544,11 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
             }
         }
     }
+}
+
+void ps_free(ps_info *ps)
+{
+    faad_free(ps);
 }
 
 ps_info *ps_init(uint8_t sr_index)

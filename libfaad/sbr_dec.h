@@ -1,19 +1,19 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.h,v 1.29 2004/03/27 11:14:49 menno Exp $
+** $Id: sbr_dec.h,v 1.30 2004/04/03 10:49:15 menno Exp $
 **/
 
 #ifndef __SBR_DEC_H__
@@ -46,7 +46,7 @@ extern "C" {
 
 typedef struct {
     real_t *x;
-	int16_t x_index;
+    int16_t x_index;
     uint8_t channels;
 } qmfa_info;
 
@@ -160,17 +160,16 @@ typedef struct
     qmf_t Xcodec[2][MAX_NTSRHFG][32];
 
 #ifdef DRM
-	uint8_t bs_dataextra;
     uint8_t Is_DRM_SBR;
 #ifdef DRM_PS
     drm_ps_info *drm_ps;
 #endif
 #endif
 
-	uint8_t numTimeSlotsRate;
-	uint8_t numTimeSlots;
-	uint8_t tHFGen;
-	uint8_t tHFAdj;
+    uint8_t numTimeSlotsRate;
+    uint8_t numTimeSlots;
+    uint8_t tHFGen;
+    uint8_t tHFAdj;
 
 #ifdef PS_DEC
     ps_info *ps;
@@ -221,9 +220,9 @@ typedef struct
 sbr_info *sbrDecodeInit(uint16_t framelength, uint8_t id_aac,
                         uint32_t sample_rate, uint8_t downSampledSBR
 #ifdef DRM
-						, uint8_t IsDRM
+                        , uint8_t IsDRM
 #endif
-						);
+                        );
 void sbrDecodeEnd(sbr_info *sbr);
 
 uint8_t sbrDecodeCoupleFrame(sbr_info *sbr, real_t *left_chan, real_t *right_chan,

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_syntax.c,v 1.29 2004/03/19 10:37:55 menno Exp $
+** $Id: sbr_syntax.c,v 1.30 2004/04/03 10:49:15 menno Exp $
 **/
 
 #include "common.h"
@@ -231,6 +231,11 @@ uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint16_t cnt)
 #endif
     {
         num_sbr_bits = (uint16_t)faad_get_processed_bits(ld) - num_sbr_bits;
+
+        /* check if we read more bits then were available for sbr */
+        if (8*cnt < num_sbr_bits)
+            return 1;
+
         /* -4 does not apply, bs_extension_type is re-read in this function */
         num_align_bits = 8*cnt /*- 4*/ - num_sbr_bits;
 
@@ -390,6 +395,7 @@ static uint8_t sbr_single_channel_element(bitfile *ld, sbr_info *sbr)
 
     sbr->bs_extended_data = faad_get1bit(ld
         DEBUGVAR(1,224,"sbr_single_channel_element(): bs_extended_data[0]"));
+
     if (sbr->bs_extended_data)
     {
         uint16_t nr_bits_left;
@@ -404,10 +410,18 @@ static uint8_t sbr_single_channel_element(bitfile *ld, sbr_info *sbr)
         nr_bits_left = 8 * cnt;
         while (nr_bits_left > 7)
         {
+            uint16_t tmp_nr_bits = 0;
+
             sbr->bs_extension_id = (uint8_t)faad_getbits(ld, 2
                 DEBUGVAR(1,227,"sbr_single_channel_element(): bs_extension_id"));
-            nr_bits_left -= 2;
-            nr_bits_left -= sbr_extension(ld, sbr, sbr->bs_extension_id, nr_bits_left);
+            tmp_nr_bits += 2;
+            tmp_nr_bits += sbr_extension(ld, sbr, sbr->bs_extension_id, nr_bits_left);
+
+            /* check if the data read is bigger than the number of available bits */
+            if (tmp_nr_bits > nr_bits_left)
+                return 1;
+
+            nr_bits_left -= tmp_nr_bits;
         }
 
         /* Corrigendum */
@@ -552,10 +566,18 @@ static uint8_t sbr_channel_pair_element(bitfile *ld, sbr_info *sbr)
         nr_bits_left = 8 * cnt;
         while (nr_bits_left > 7)
         {
+            uint16_t tmp_nr_bits = 0;
+
             sbr->bs_extension_id = (uint8_t)faad_getbits(ld, 2
                 DEBUGVAR(1,236,"sbr_channel_pair_element(): bs_extension_id"));
-            nr_bits_left -= 2;
-            nr_bits_left -= sbr_extension(ld, sbr, sbr->bs_extension_id, nr_bits_left);
+            tmp_nr_bits += 2;
+            tmp_nr_bits += sbr_extension(ld, sbr, sbr->bs_extension_id, nr_bits_left);
+
+            /* check if the data read is bigger than the number of available bits */
+            if (tmp_nr_bits > nr_bits_left)
+                return 1;
+
+            nr_bits_left -= tmp_nr_bits;
         }
 
         /* Corrigendum */

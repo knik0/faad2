@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.77 2004/03/19 10:37:55 menno Exp $
+** $Id: syntax.c,v 1.78 2004/04/03 10:49:15 menno Exp $
 **/
 
 /*
@@ -85,7 +85,9 @@ static uint8_t spectral_data(NeAACDecHandle hDecoder, ic_stream *ics, bitfile *l
 static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count);
 static uint8_t pulse_data(ic_stream *ics, pulse_info *pul, bitfile *ld);
 static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld);
+#ifdef LTP_DEC
 static uint8_t ltp_data(NeAACDecHandle hDecoder, ic_stream *ics, ltp_info *ltp, bitfile *ld);
+#endif
 static uint8_t adts_fixed_header(adts_header *adts, bitfile *ld);
 static void adts_variable_header(adts_header *adts, bitfile *ld);
 static void adts_error_check(adts_header *adts, bitfile *ld);
@@ -641,13 +643,20 @@ static uint8_t channel_pair_element(NeAACDecHandle hDecoder, bitfile *ld,
 #ifdef ERROR_RESILIENCE
         if ((hDecoder->object_type >= ER_OBJECT_START) && (ics1->predictor_data_present))
         {
-            if ((ics1->ltp.data_present = faad_get1bit(ld
-                DEBUGVAR(1,50,"channel_pair_element(): ltp.data_present"))) & 1)
+            if ((
+#ifdef LTP_DEC
+                ics1->ltp.data_present =
+#endif
+                faad_get1bit(ld DEBUGVAR(1,50,"channel_pair_element(): ltp.data_present"))) & 1)
             {
+#ifdef LTP_DEC
                 if ((result = ltp_data(hDecoder, ics1, &(ics1->ltp), ld)) > 0)
                 {
                     return result;
                 }
+#else
+                return 26;
+#endif
             }
         }
 #endif
@@ -667,13 +676,20 @@ static uint8_t channel_pair_element(NeAACDecHandle hDecoder, bitfile *ld,
     if (cpe.common_window && (hDecoder->object_type >= ER_OBJECT_START) &&
         (ics1->predictor_data_present))
     {
-        if ((ics1->ltp2.data_present = faad_get1bit(ld
-            DEBUGVAR(1,50,"channel_pair_element(): ltp.data_present"))) & 1)
+        if ((
+#ifdef LTP_DEC
+            ics1->ltp2.data_present =
+#endif
+            faad_get1bit(ld DEBUGVAR(1,50,"channel_pair_element(): ltp.data_present"))) & 1)
         {
+#ifdef LTP_DEC
             if ((result = ltp_data(hDecoder, ics1, &(ics1->ltp2), ld)) > 0)
             {
                 return result;
             }
+#else
+            return 26;
+#endif
         }
     }
 #endif
@@ -751,19 +767,29 @@ static uint8_t ics_info(NeAACDecHandle hDecoder, ic_stream *ics, bitfile *ld,
             {
                 uint8_t sfb;
 
-                ics->pred.limit = min(ics->max_sfb, max_pred_sfb(hDecoder->sf_index));
+                uint8_t limit = min(ics->max_sfb, max_pred_sfb(hDecoder->sf_index));
+#ifdef MAIN_DEC
+                ics->pred.limit = limit;
+#endif
 
-                if ((ics->pred.predictor_reset = faad_get1bit(ld
-                    DEBUGVAR(1,53,"ics_info(): pred.predictor_reset"))) & 1)
+                if ((
+#ifdef MAIN_DEC
+                    ics->pred.predictor_reset =
+#endif
+                    faad_get1bit(ld DEBUGVAR(1,53,"ics_info(): pred.predictor_reset"))) & 1)
                 {
-                    ics->pred.predictor_reset_group_number = (uint8_t)faad_getbits(ld, 5
-                        DEBUGVAR(1,54,"ics_info(): pred.predictor_reset_group_number"));
+#ifdef MAIN_DEC
+                    ics->pred.predictor_reset_group_number =
+#endif
+                        (uint8_t)faad_getbits(ld, 5 DEBUGVAR(1,54,"ics_info(): pred.predictor_reset_group_number"));
                 }
 
-                for (sfb = 0; sfb < ics->pred.limit; sfb++)
+                for (sfb = 0; sfb < limit; sfb++)
                 {
-                    ics->pred.prediction_used[sfb] = faad_get1bit(ld
-                        DEBUGVAR(1,55,"ics_info(): pred.prediction_used"));
+#ifdef MAIN_DEC
+                    ics->pred.prediction_used[sfb] =
+#endif
+                        faad_get1bit(ld DEBUGVAR(1,55,"ics_info(): pred.prediction_used"));
                 }
             }
 #ifdef LTP_DEC
@@ -1358,13 +1384,20 @@ static int8_t aac_scalable_main_header(NeAACDecHandle hDecoder, ic_stream *ics1,
                 diff_control_data_lr();
         } else {
 #endif
-            if ((ics->ltp.data_present = faad_get1bit(ld
-                DEBUGVAR(1,310,"aac_scalable_main_header(): ltp.data_present"))) & 1)
+            if ((
+#ifdef LTP_DEC
+                ics->ltp.data_present =
+#endif
+                faad_get1bit(ld DEBUGVAR(1,310,"aac_scalable_main_header(): ltp.data_present"))) & 1)
             {
+#ifdef LTP_DEC
                 if ((retval = ltp_data(hDecoder, ics, &(ics->ltp), ld)) > 0)
                 {
                     return retval;
                 }
+#else
+                return 26;
+#endif
             }
 #if 0
         }

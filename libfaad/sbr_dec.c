@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.c,v 1.33 2004/03/27 11:14:49 menno Exp $
+** $Id: sbr_dec.c,v 1.34 2004/04/03 10:49:15 menno Exp $
 **/
 
 
@@ -159,6 +159,16 @@ void sbrDecodeEnd(sbr_info *sbr)
             if (sbr->G_temp_prev[1][j]) faad_free(sbr->G_temp_prev[1][j]);
             if (sbr->Q_temp_prev[1][j]) faad_free(sbr->Q_temp_prev[1][j]);
         }
+
+#ifdef PS_DEC
+        if (sbr->ps != NULL) 
+            ps_free(sbr->ps);
+#endif
+
+#ifdef DRM_PS
+        if (sbr->drm_ps != NULL)
+            drm_ps_free(sbr->drm_ps);
+#endif
 
         faad_free(sbr);
     }

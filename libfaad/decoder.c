@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.101 2004/03/19 15:35:35 menno Exp $
+** $Id: decoder.c,v 1.102 2004/04/03 10:49:14 menno Exp $
 **/
 
 #include "common.h"
@@ -392,89 +392,42 @@ int8_t NEAACDECAPI NeAACDecInit2(NeAACDecHandle hDecoder, uint8_t *pBuffer,
 }
 
 #ifdef DRM
-int8_t NEAACDECAPI NeAACDecInitDRM(NeAACDecHandle hDecoder, uint32_t samplerate,
+int8_t NEAACDECAPI NeAACDecInitDRM(NeAACDecHandle *hDecoder, uint32_t samplerate,
                                    uint8_t channels)
 {
-    uint8_t i;
-
     if (hDecoder == NULL)
         return 1; /* error */
 
-    /* Special object type defined for DRM */
-    hDecoder->config.defObjectType = DRM_ER_LC;
+    NeAACDecClose(*hDecoder);
 
-    hDecoder->config.defSampleRate = samplerate;
+    *hDecoder = NeAACDecOpen();
+
+    /* Special object type defined for DRM */
+    (*hDecoder)->config.defObjectType = DRM_ER_LC;
+
+    (*hDecoder)->config.defSampleRate = samplerate;
 #ifdef ERROR_RESILIENCE // This shoudl always be defined for DRM
-    hDecoder->aacSectionDataResilienceFlag = 1; /* VCB11 */
-    hDecoder->aacScalefactorDataResilienceFlag = 0; /* no RVLC */
-    hDecoder->aacSpectralDataResilienceFlag = 1; /* HCR */
+    (*hDecoder)->aacSectionDataResilienceFlag = 1; /* VCB11 */
+    (*hDecoder)->aacScalefactorDataResilienceFlag = 0; /* no RVLC */
+    (*hDecoder)->aacSpectralDataResilienceFlag = 1; /* HCR */
 #endif
-    hDecoder->frameLength = 960;
-    hDecoder->sf_index = get_sr_index(hDecoder->config.defSampleRate);
-    hDecoder->object_type = hDecoder->config.defObjectType;
+    (*hDecoder)->frameLength = 960;
+    (*hDecoder)->sf_index = get_sr_index((*hDecoder)->config.defSampleRate);
+    (*hDecoder)->object_type = (*hDecoder)->config.defObjectType;
 
     if ((channels == DRMCH_STEREO) || (channels == DRMCH_SBR_STEREO))
-        hDecoder->channelConfiguration = 2;
+        (*hDecoder)->channelConfiguration = 2;
     else
-        hDecoder->channelConfiguration = 1;
+        (*hDecoder)->channelConfiguration = 1;
 
 #ifdef SBR_DEC
     if ((channels == DRMCH_MONO) || (channels == DRMCH_STEREO))
-        hDecoder->sbr_present_flag = 0;
+        (*hDecoder)->sbr_present_flag = 0;
     else
-        hDecoder->sbr_present_flag = 1;
+        (*hDecoder)->sbr_present_flag = 1;    
+#endif        
 
-    /* Reset sbr for new initialization */
-    sbrDecodeEnd(hDecoder->sbr[0]);
-    hDecoder->sbr[0] = NULL;
-#endif
-
-    if (hDecoder->fb) filter_bank_end(hDecoder->fb);
-    hDecoder->fb = NULL;
-
-    /* Take care of buffers */
-    if (hDecoder->sample_buffer) faad_free(hDecoder->sample_buffer);
-    hDecoder->sample_buffer = NULL;
-    hDecoder->alloced_channels = 0;
-
-    for (i = 0; i < MAX_CHANNELS; i++)
-    {
-        hDecoder->window_shape_prev[i] = 0;
-
-        if (hDecoder->time_out[i]) faad_free(hDecoder->time_out[i]);
-        hDecoder->time_out[i] = NULL;
-        if (hDecoder->fb_intermed[i]) faad_free(hDecoder->fb_intermed[i]);
-        hDecoder->fb_intermed[i] = NULL;
-#ifdef SSR_DEC
-        if (hDecoder->ssr_overlap[i]) faad_free(hDecoder->ssr_overlap[i]);
-        hDecoder->ssr_overlap[i] = NULL;
-        if (hDecoder->prev_fmd[i]) faad_free(hDecoder->prev_fmd[i]);
-        hDecoder->prev_fmd[i] = NULL;
-#endif
-#ifdef MAIN_DEC
-        if (hDecoder->pred_stat[i]) faad_free(hDecoder->pred_stat[i]);
-        hDecoder->pred_stat[i] = NULL;
-#endif
-#ifdef LTP_DEC
-        hDecoder->ltp_lag[i] = 0;
-        if (hDecoder->lt_pred_stat[i]) faad_free(hDecoder->lt_pred_stat[i]);
-        hDecoder->lt_pred_stat[i] = NULL;
-#endif
-    }
-
-    for (i = 0; i < MAX_SYNTAX_ELEMENTS; i++)
-    {
-#ifdef SBR_DEC
-        if (hDecoder->sbr[i])
-            sbrDecodeEnd(hDecoder->sbr[i]);
-
-        hDecoder->sbr_alloced[i] = 0;
-#endif
-        hDecoder->element_alloced[i] = 0;
-        hDecoder->element_output_channels[i] = 0;
-    }
-
-    hDecoder->fb = filter_bank_init(hDecoder->frameLength);
+    (*hDecoder)->fb = filter_bank_init((*hDecoder)->frameLength);
 
     return 0;
 }

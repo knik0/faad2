@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfgen.c,v 1.15 2004/03/19 10:37:55 menno Exp $
+** $Id: sbr_hfgen.c,v 1.16 2004/04/03 10:49:15 menno Exp $
 **/
 
 /* High Frequency generation */
@@ -66,7 +66,6 @@ void hf_generation(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][32],
     uint8_t offset = sbr->tHFAdj;
     uint8_t first = sbr->t_E[ch][0];
     uint8_t last = sbr->t_E[ch][sbr->L_E[ch]];
-
 
     calc_chirp_factors(sbr, ch);
 
@@ -568,7 +567,7 @@ static void patch_construction(sbr_info *sbr)
     uint8_t odd, sb;
     uint8_t msb = sbr->k0;
     uint8_t usb = sbr->kx;
-    uint8_t goalSbTab[] = { 21, 23, 43, 46, 64, 85, 93, 128, 0, 0, 0 };
+    uint8_t goalSbTab[] = { 21, 23, 32, 43, 46, 64, 85, 93, 128, 0, 0, 0 };
     /* (uint8_t)(2.048e6/sbr->sample_rate + 0.5); */
     uint8_t goalSb = goalSbTab[get_sr_index(sbr->sample_rate)];
 

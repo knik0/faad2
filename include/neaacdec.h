@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: neaacdec.h,v 1.3 2004/03/19 15:35:59 menno Exp $
+** $Id: neaacdec.h,v 1.4 2004/04/03 10:49:14 menno Exp $
 **/
 
 #ifndef __NEAACDEC_H__
@@ -215,7 +215,7 @@ char NEAACDECAPI NeAACDecInit2(NeAACDecHandle hDecoder, unsigned char *pBuffer,
                                unsigned long *samplerate, unsigned char *channels);
 
 /* Init the library for DRM */
-char NEAACDECAPI NeAACDecInitDRM(NeAACDecHandle hDecoder, unsigned long samplerate,
+char NEAACDECAPI NeAACDecInitDRM(NeAACDecHandle *hDecoder, unsigned long samplerate,
                                  unsigned char channels);
 
 void NEAACDECAPI NeAACDecPostSeekReset(NeAACDecHandle hDecoder, long frame);
