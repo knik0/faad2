@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_qmf.c,v 1.9 2003/09/22 13:15:38 menno Exp $
+** $Id: sbr_qmf.c,v 1.10 2003/09/24 11:52:12 menno Exp $
 **/
 
 #include "common.h"
@@ -215,16 +215,18 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t *X,
         for (k = 0; k < 64; k++)
         {
             x1[k] = QMF_RE(X[(l<<6) + k])/64.;
-            x2[k] = QMF_IM(X[(l<<6) + k])/64.;
+            x2[63 - k] = QMF_IM(X[(l<<6) + k])/64.;
         }
 
         DCT4_64(x1, x1);
-        DST4_64(x2, x2);
+        DCT4_64(x2, x2);
 
-        for (n = 0; n < 64; n++)
+        for (n = 0; n < 64; n+=2)
         {
             qmfs->v[n] = x2[n] - x1[n];
+            qmfs->v[n+1] = -x2[n+1] - x1[n+1];
             qmfs->v[127-n] = x2[n] + x1[n];
+            qmfs->v[127-n-1] = -x2[n+1] + x1[n+1];
         }
 #endif
 
