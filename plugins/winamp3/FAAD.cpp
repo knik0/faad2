@@ -19,22 +19,12 @@ The author can be contacted at:
 kreel@tiscali.it
 */
 
-#include "SDK/bfc/std.h"
-#include "SDK/bfc/memblock.h"
-#include "SDK/bfc/timerclient.h"
-
 #include <windows.h>
 #include <stdio.h>
 #include <process.h>
 #include "resource.h"
-#include <faad.h>
-#include "faadwa3.h"
+#include "faad.h"
 #include "..\..\..\faac\include\faac.h"
-extern "C" {
-#include <aacinfo.h>	// get_AAC_format()
-}
-
-#include <mp4.h>
 #include "cnv_FAAD.h"
 #include "CRegistry.h"
 #include "Defines.h"
@@ -59,45 +49,6 @@ extern "C" {
 		free(ptr); \
 	ptr=0; \
 }
-
-// *********************************************************************************************
-
-static const char* mpeg4AudioNames[]=
-{
-	"Raw PCM",
-	"AAC Main",
-	"AAC Low Complexity",
-	"AAC SSR",
-	"AAC LTP",
-	"Reserved",
-	"AAC Scalable",
-	"TwinVQ",
-	"CELP",
-	"HVXC",
-	"Reserved",
-	"Reserved",
-	"TTSI",
-	"Main synthetic",
-	"Wavetable synthesis",
-	"General MIDI",
-	"Algorithmic Synthesis and Audio FX",
-// defined in MPEG-4 version 2
-	"ER AAC LC",
-	"Reserved",
-	"ER AAC LTP",
-	"ER AAC Scalable",
-	"ER TwinVQ",
-	"ER BSAC",
-	"ER AAC LD",
-	"ER CELP",
-	"ER HVXC",
-	"ER HILN",
-	"ER Parametric",
-	"Reserved",
-	"Reserved",
-	"Reserved",
-	"Reserved"
-};
 
 // *********************************************************************************************
 
@@ -165,6 +116,7 @@ AacPcm::AacPcm()
 	seek_table=0;
 	seek_table_length=0;
 	FindBitrate=FALSE;
+	BlockSeeking=false;
 }
 // -----------------------------------------------------------------------------------------------
 
@@ -192,6 +144,7 @@ AacPcm::~AacPcm()
 	infos->setTitle(Std::filename(infos->getFilename())); \
 	infos->setLength(len_ms); \
 }
+
 // -----------------------------------------------------------------------------------------------
 
 #define ERROR_getInfos(str) \
@@ -205,7 +158,8 @@ AacPcm::~AacPcm()
 
 int AacPcm::getInfos(MediaInfo *infos)
 {
-DWORD	tmp;
+	if(!infos)
+		return 1;
 
 	if(hDecoder)
 	{
@@ -219,14 +173,12 @@ DWORD	tmp;
 	{
 	MP4Duration			length;
 	unsigned __int32	buffer_size;
-	DWORD				timeScale;
-	BYTE				sf;
     mp4AudioSpecificConfig mp4ASC;
 
 		if(!(mp4File=MP4Read(infos->getFilename(), 0)))
 			ERROR_getInfos("Error opening file");
 
-		if ((track=GetAACTrack(mp4File))<0)
+		if((track=GetAACTrack(mp4File))<0)
 			ERROR_getInfos(0); //"Unable to find correct AAC sound track");
 
 		if(!(hDecoder=faacDecOpen()))
@@ -236,10 +188,8 @@ DWORD	tmp;
 		if(!buffer)
 			ERROR_getInfos("MP4GetTrackESConfiguration");
 		AudioSpecificConfig(buffer, buffer_size, &mp4ASC);
-        timeScale = mp4ASC.samplingFrequency;
-        Channels = mp4ASC.channelsConfiguration;
-        sf = mp4ASC.samplingFrequencyIndex;
-        type = mp4ASC.objectTypeIndex;
+        Channels=mp4ASC.channelsConfiguration;
+
 		if(faacDecInit2(hDecoder, buffer, buffer_size, &Samplerate, &Channels) < 0)
 			ERROR_getInfos("Error initializing decoder library");
 		FREE_ARRAY(buffer);
@@ -253,12 +203,10 @@ DWORD	tmp;
 	}
 	else // AAC file ------------------------------------------------------------------------------
 	{   
-	DWORD			read;
+	DWORD			read,
+					tmp;
 	BYTE			Channels4Raw=0;
-/*	svc_fileReader	*reader=infos->getReader();
-		if (!reader)
-			ERROR_getInfos("File doesn\'t exists")
-*/
+
 		if(!(aacFile=fopen(infos->getFilename(),"rb")))
 			ERROR_getInfos("Error opening file"); 
 
@@ -273,10 +221,8 @@ DWORD	tmp;
 		if(!(buffer=(BYTE *)malloc(FAAD_STREAMSIZE)))
 			ERROR_getInfos("Memory allocation error: buffer")
 
-//		src_size=reader->getLength();
 		tmp=src_size<FAAD_STREAMSIZE ? src_size : FAAD_STREAMSIZE;
 		read=fread(buffer, 1, tmp, aacFile);
-//		read=reader->read((char *)buffer, tmp);
 		if(read==tmp)
 		{
 			bytes_read=read;
@@ -300,14 +246,12 @@ DWORD	tmp;
 				bytes_into_buffer=0;
 				if(tagsize>bytes_into_buffer)
 					fseek(aacFile, tagsize, SEEK_SET);
-//					reader->seek(tagsize);
 			}
 			if(src_size<bytes_read+FAAD_STREAMSIZE-bytes_into_buffer)
 				tmp=src_size-bytes_read;
 			else
 				tmp=FAAD_STREAMSIZE-bytes_into_buffer;
 			read=fread(buffer+bytes_into_buffer, 1, tmp, aacFile);
-//			read=reader->read((char *)buffer+bytes_into_buffer, tmp);
 			if(read==tmp)
 			{
 				bytes_read+=read;
@@ -368,12 +312,9 @@ DWORD	tmp;
 				if(!(NewInst=new AacPcm()))
 					ERROR_getInfos("Memory allocation error: NewInst");
 
-//			DWORD pos=reader->getPos();
-//				reader->seek(0);
 				NewInst->FindBitrate=TRUE;
 				if(NewInst->getInfos(infos))
 					ERROR_getInfos(0);
-//				reader->seek(pos);
 				Channels4Raw=NewInst->frameInfo.channels;
 				file_info.bitrate=NewInst->file_info.bitrate*Channels4Raw;
 				delete NewInst;
@@ -383,8 +324,7 @@ DWORD	tmp;
 			DWORD	Samples,
 					BytesConsumed;
 
-				if((bytes_consumed=faacDecInit(hDecoder, buffer, bytes_into_buffer,
-                    &Samplerate, &Channels))<0)
+				if((bytes_consumed=faacDecInit(hDecoder,buffer,bytes_into_buffer,&Samplerate,&Channels))<0)
 					ERROR_getInfos("Can't init library");
 				bytes_into_buffer-=bytes_consumed;
 				if(!processData(infos,0,0))
@@ -429,27 +369,26 @@ DWORD	tmp;
 
 int AacPcm::processData(MediaInfo *infos, ChunkList *chunk_list, bool *killswitch)
 {
-DWORD		read,
-			tmp,
-			BytesDecoded=0;
-long		result=0;
-char		*bufout=0;
-ChunkInfosI *ci=0;
+DWORD			BytesDecoded=0;
+char			*bufout=0;
+ChunkInfosI		*ci=0;
+svc_fileReader	*reader=0;
+
+	if(!FindBitrate && !chunk_list)
+		ERROR_processData("chunk_list==NULL"); // is this case possible?
+
+	if(!(reader=infos->getReader()))
+		ERROR_processData("File doesn\'t exists");
 
 	if(chunk_list)
 	{
 		if(!(ci=new ChunkInfosI()))
 			ERROR_processData("Memory allocation error: ci");
 
-		ci->addInfo("srate", Samplerate); 
-		ci->addInfo("bps", bps); 
-		ci->addInfo("nch", Channels); 
+		ci->addInfo("srate", Samplerate);
+		ci->addInfo("bps", bps);
+		ci->addInfo("nch", Channels);
 	}
-
-svc_fileReader *reader = infos->getReader();
-	reader=infos->getReader();
-	if(!reader)
-		ERROR_processData("File doesn\'t exists");
 
 	if(!IsAAC) // MP4 file --------------------------------------------------------------------------
 	{   
@@ -461,7 +400,7 @@ svc_fileReader *reader = infos->getReader();
 		MP4Duration duration=MP4ConvertToTrackDuration(mp4File,track,newpos_ms,MP4_MSECS_TIME_SCALE);
             sampleId=MP4GetSampleIdFromTime(mp4File,track,duration,0);
 			bytes_read=(DWORD)(((float)newpos_ms*file_info.bitrate)/(8*1000));
-			reader->seek(bytes_read);
+			reader->seek(bytes_read);  // updates slider
 			newpos_ms=-1;
 		}
 		do
@@ -487,24 +426,29 @@ svc_fileReader *reader = infos->getReader();
 	}
 	else // AAC file --------------------------------------------------------------------------
 	{   
+	DWORD	read,
+			tmp;
+
 		if(BlockSeeking)
 		{
-			infos->setLength(0);
+			infos->setLength(-1);
 			BlockSeeking=false;
 		}
 		if(newpos_ms>-1)
+		{
 			if(IsSeekable)
 			{
-			DWORD normalize=(DWORD)(len_ms/(1000.0*(seek_table_length-1)));
-				if(normalize==0) normalize=1;
-				bytes_read=seek_table[DWORD(newpos_ms/(normalize*1000))];
-//				bytes_read=seek_table[newpos_ms/1000];
+			DWORD normalized=len_ms/(seek_table_length-1);
+				if(normalized<1000)
+					normalized=1000;
+				bytes_read=seek_table[newpos_ms/normalized];
 				fseek(aacFile, bytes_read, SEEK_SET);
-				reader->seek(bytes_read);
+				reader->seek(bytes_read); // updates slider
 				bytes_into_buffer=0;
 				bytes_consumed=FAAD_STREAMSIZE;
-				newpos_ms=-1;
 			}
+			newpos_ms=-1;
+		}
 		do
 		{
 			if(bytes_consumed>0 && bytes_into_buffer>=0)
@@ -519,7 +463,6 @@ svc_fileReader *reader = infos->getReader();
 					else
 						tmp=src_size-bytes_read;
 					read=fread(buffer+bytes_into_buffer, 1, tmp, aacFile);
-//					read=reader->read((char *)buffer+bytes_into_buffer, tmp);
 					if(read==tmp)
 					{
 						bytes_read+=read;
@@ -545,7 +488,8 @@ svc_fileReader *reader = infos->getReader();
 			BytesDecoded=frameInfo.samples*sizeof(short);
 			bytes_consumed+=frameInfo.bytesconsumed;
 			bytes_into_buffer-=bytes_consumed;
-			reader->seek(bytes_read-bytes_into_buffer+bytes_consumed);
+			// to update the slider
+			reader->seek(bytes_read-bytes_into_buffer+bytes_consumed); // updates slider
 		}while(!BytesDecoded && !frameInfo.error);
 	} // END AAC file --------------------------------------------------------------------------
 

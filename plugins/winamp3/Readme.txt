@@ -1,4 +1,4 @@
-+-----------------------------------------------------------------+
+﻿+-----------------------------------------------------------------+
 |                                                                 |
 |                          cnv_FAAD Readme                        |
 |                          ---------------                        |
@@ -18,9 +18,13 @@ it supports .aac/.mp4 files.
 
 To use it:
 ----------
+1) Put "Wasabi SDK" folder into the folder where my sources are placed;
 
-1) put "Wasabi SDK" folder into the folder where my sources are placed and rename it "SDK";
-2) copy cnv_FAAD.wac and Wacs folder into Winamp3\Wacs folder
+2) Build it;
+
+3) Copy cnv_FAAD.wac into "Winamp3\Wacs" folder;
+
+4) Copy FAAD_config.xml into "Winamp3\Wacs\xml\FAAD" folder.
 
 ----------------------------------------------------------------------------
 

@@ -19,17 +19,12 @@ The author can be contacted at:
 kreel@tiscali.it
 */
 
-#include "SDK/bfc/std.h"
-#include "SDK/bfc/memblock.h"
-#include "SDK/bfc/timerclient.h"
-
 #include <stdlib.h>
 #include "..\..\..\faac\include\faac.h"
 #include "cnv_FAAD.h"
-#include <faad.h>
+#include "faadwa3.h"
 #include "CRegistry.h"
 #include "Defines.h"
-#include "faadwa3.h"
 
 // *********************************************************************************************
 
