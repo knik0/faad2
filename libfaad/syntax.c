@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.48 2003/07/09 11:53:07 menno Exp $
+** $Id: syntax.c,v 1.49 2003/07/09 12:33:08 menno Exp $
 **/
 
 /*
@@ -230,9 +230,6 @@ uint8_t program_config_element(program_config *pce, bitfile *ld)
 
     for (i = 0; i < pce->num_valid_cc_elements; i++)
     {
-        /* have to count these as channels too?? (1 or 2) */
-        pce->channels += 2;
-
         pce->cc_element_is_ind_sw[i] = faad_get1bit(ld
             DEBUGVAR(1,34,"program_config_element(): cc_element_is_ind_sw"));
         pce->valid_cc_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4

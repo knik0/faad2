@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.36 2003/07/01 21:26:32 menno Exp $
+** $Id: foo_mp4.cpp,v 1.37 2003/07/09 12:33:08 menno Exp $
 **/
 
 #include <mp4.h>
@@ -44,7 +44,7 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "$Revision: 1.36 $",
+                           "$Revision: 1.37 $",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -70,14 +70,14 @@ public:
 
         if (!m_reader->can_seek())
         {
-            console::error("MP4 file needs seeking.", "foo_mp4");
+            console::error("MP4 file needs seeking.");
             return 0;
         }
 
         hDecoder = faacDecOpen();
         if (!hDecoder)
         {
-            console::error("Failed to open FAAD2 library.", "foo_mp4");
+            console::error("Failed to open FAAD2 library.");
             return 0;
         }
 
@@ -89,14 +89,14 @@ public:
             setpos_cb, getpos_cb, filesize_cb, (void*)m_reader);
         if (hFile == MP4_INVALID_FILE_HANDLE)
         {
-            console::error("Failed to open MP4 file.", "foo_mp4");
+            console::error("Failed to open MP4 file.");
             return 0;
         }
 
         track = GetAACTrack(hFile);
         if (track < 1)
         {
-            console::error("No valid AAC track found.", "foo_mp4");
+            console::error("No valid AAC track found.");
             return 0;
         }
 
@@ -105,7 +105,7 @@ public:
         MP4GetTrackESConfiguration(hFile, track, &buffer, &buffer_size);
         if (!buffer)
         {
-            console::error("Unable to read track specific configuration.", "foo_mp4");
+            console::error("Unable to read track specific configuration.");
             return 0;
         }
 
@@ -116,7 +116,7 @@ public:
         if (buffer) free(buffer);
         if (rc < 0)
         {
-            console::error("Unable to initialise FAAD2 library.", "foo_mp4");
+            console::error("Unable to initialise FAAD2 library.");
             return 0;
         }
 
@@ -165,11 +165,11 @@ public:
         faacDecFrameInfo frameInfo;
         unsigned char *buffer;
         unsigned __int32 buffer_size;
-        void *sample_buffer;
+        audio_sample *sample_buffer;
 
         if (sampleId == MP4_INVALID_SAMPLE_ID)
         {
-            console::error("Invalid sampleId.", "foo_mp4");
+            console::error("Invalid sampleId.");
             return 0;
         }
 
@@ -182,7 +182,7 @@ public:
                 NULL, NULL, NULL, NULL);
             sampleId++;
 
-            sample_buffer = faacDecDecode(hDecoder, &frameInfo, buffer, buffer_size);
+            sample_buffer = (audio_sample*)faacDecDecode(hDecoder, &frameInfo, buffer, buffer_size);
 
             if (buffer) free(buffer);
 
@@ -190,30 +190,51 @@ public:
 
         if (frameInfo.error)
         {
-            console::warning(faacDecGetErrorMessage(frameInfo.error), "foo_mp4");
-            console::warning("Skipping frame", "foo_mp4");
+            console::warning(faacDecGetErrorMessage(frameInfo.error));
+            console::warning("Skipping frame");
         }
         if (sampleId > numSamples)
             return 0;
 
+        if (frameInfo.channels == 6 && frameInfo.num_lfe_channels)
+        {
+            //channel order for 5.1: L/R/C/LF/BL/BR
+            audio_sample r1, r2, r3, r4, r5, r6;
+            for (int i = 0; i < frameInfo.samples; i += frameInfo.channels)
+            {
+                r1 = sample_buffer[i];
+                r2 = sample_buffer[i+1];
+                r3 = sample_buffer[i+2];
+                r4 = sample_buffer[i+3];
+                r5 = sample_buffer[i+4];
+                r6 = sample_buffer[i+5];
+                sample_buffer[i] = r2;
+                sample_buffer[i+1] = r3;
+                sample_buffer[i+2] = r1;
+                sample_buffer[i+3] = r6;
+                sample_buffer[i+4] = r4;
+                sample_buffer[i+5] = r5;
+            }
+        }
+
         if (frameInfo.channels == 0)
         {
-            chunk->set_data((audio_sample*)sample_buffer, 0, frameInfo.channels, frameInfo.samplerate);
+            chunk->set_data(sample_buffer, 0, frameInfo.channels, frameInfo.samplerate);
         } else {
-            chunk->set_data((audio_sample*)sample_buffer, frameInfo.samples/frameInfo.channels,
+            chunk->set_data(sample_buffer, frameInfo.samples/frameInfo.channels,
                 frameInfo.channels, frameInfo.samplerate);
         }
 
         return 1;
     }
 
-    virtual int set_info(reader *r,const file_info * info)
+    virtual set_info_t set_info(reader *r, const file_info * info)
     {
         m_reader = r;
 
         hFile = MP4ModifyCb(0, 0, open_cb, close_cb, read_cb, write_cb,
             setpos_cb, getpos_cb, filesize_cb, (void*)m_reader);
-        if (hFile == MP4_INVALID_FILE_HANDLE) return 0;
+        if (hFile == MP4_INVALID_FILE_HANDLE) return SET_INFO_FAILURE;
 
         MP4MetadataDelete(hFile);
 
@@ -241,36 +262,36 @@ public:
                 char *pName = (char*)info->meta_enum_name(i);
                 const char *val = info->meta_enum_value(i);
 
-                if (strcmp(pName, "TITLE") == 0)
+                if (stricmp(pName, "TITLE") == 0)
                 {
                     MP4SetMetadataName(hFile, val);
-                } else if (strcmp(pName, "ARTIST") == 0) {
+                } else if (stricmp(pName, "ARTIST") == 0) {
                     MP4SetMetadataArtist(hFile, val);
-                } else if (strcmp(pName, "WRITER") == 0) {
+                } else if (stricmp(pName, "WRITER") == 0) {
                     MP4SetMetadataWriter(hFile, val);
-                } else if (strcmp(pName, "ALBUM") == 0) {
+                } else if (stricmp(pName, "ALBUM") == 0) {
                     MP4SetMetadataAlbum(hFile, val);
-                } else if (strcmp(pName, "YEAR") == 0) {
+                } else if (stricmp(pName, "YEAR") == 0) {
                     MP4SetMetadataYear(hFile, val);
-                } else if (strcmp(pName, "TOOL") == 0) {
+                } else if (stricmp(pName, "TOOL") == 0) {
                     MP4SetMetadataTool(hFile, val);
-                } else if (strcmp(pName, "COMMENT") == 0) {
+                } else if (stricmp(pName, "COMMENT") == 0) {
                     MP4SetMetadataComment(hFile, val);
-                } else if (strcmp(pName, "GENRE") == 0) {
+                } else if (stricmp(pName, "GENRE") == 0) {
                     MP4SetMetadataGenre(hFile, val);
-                } else if (strcmp(pName, "TRACKNUMBER") == 0) {
+                } else if (stricmp(pName, "TRACKNUMBER") == 0) {
                     unsigned __int16 trkn = 0, tot = 0;
                     sscanf(val, "%d", &trkn);
                     MP4SetMetadataTrack(hFile, trkn, tot);
-                } else if (strcmp(pName, "DISKNUMBER") == 0) {
+                } else if (stricmp(pName, "DISKNUMBER") == 0) {
                     unsigned __int16 disk = 0, tot = 0;
                     sscanf(val, "%d", &disk);
                     MP4SetMetadataDisk(hFile, disk, tot);
-                } else if (strcmp(pName, "COMPILATION") == 0) {
+                } else if (stricmp(pName, "COMPILATION") == 0) {
                     unsigned __int8 cpil = 0;
                     sscanf(val, "%d", &cpil);
                     MP4SetMetadataCompilation(hFile, cpil);
-                } else if (strcmp(pName, "TEMPO") == 0) {
+                } else if (stricmp(pName, "TEMPO") == 0) {
                     unsigned __int16 tempo = 0;
                     sscanf(val, "%d", &tempo);
                     MP4SetMetadataTempo(hFile, tempo);
@@ -281,7 +302,7 @@ public:
         }
 
         /* end */
-        return 1;
+        return SET_INFO_SUCCESS;
     }
 
     virtual int seek(double seconds)
@@ -298,7 +319,7 @@ public:
 
     virtual int is_our_content_type(const char *url, const char *type)
     {
-        return !strcmp(type, "audio/mp4") || !strcmp(type, "audio/x-mp4");
+        return !stricmp(type, "audio/mp4") || !stricmp(type, "audio/x-mp4");
     }
 
 private:
@@ -381,17 +402,17 @@ private:
                     info->meta_add("TEMPO", t);
                 } else {
                     float f = 0;
-                    if (!strcmp(pName, "REPLAYGAIN_TRACK_PEAK"))
+                    if (!stricmp(pName, "REPLAYGAIN_TRACK_PEAK"))
                     {
                         sscanf(val, "%f", &f);
                         info->info_set_replaygain_track_peak((double)f);
-                    } else if (!strcmp(pName, "REPLAYGAIN_TRACK_GAIN")) {
+                    } else if (!stricmp(pName, "REPLAYGAIN_TRACK_GAIN")) {
                         sscanf(val, "%f", &f);
                         info->info_set_replaygain_track_gain((double)f);
-                    } else if (!strcmp(pName, "REPLAYGAIN_ALBUM_PEAK")) {
+                    } else if (!stricmp(pName, "REPLAYGAIN_ALBUM_PEAK")) {
                         sscanf(val, "%f", &f);
                         info->info_set_replaygain_album_peak((double)f);
-                    } else if (!strcmp(pName, "REPLAYGAIN_ALBUM_GAIN")) {
+                    } else if (!stricmp(pName, "REPLAYGAIN_ALBUM_GAIN")) {
                         sscanf(val, "%f", &f);
                         info->info_set_replaygain_album_gain((double)f);
                     } else {
@@ -526,7 +547,7 @@ public:
         hDecoder = faacDecOpen();
         if (!hDecoder)
         {
-            console::error("Failed to open FAAD2 library.", "foo_mp4");
+            console::error("Failed to open FAAD2 library.");
             return 0;
         }
 
@@ -540,7 +561,7 @@ public:
 
         if (!(m_aac_buffer = (unsigned char*)malloc(768*6)))
         {
-            console::error("Memory allocation error.", "foo_mp4");
+            console::error("Memory allocation error.");
             return 0;
         }
         memset(m_aac_buffer, 0, 768*6);
@@ -615,7 +636,7 @@ public:
             m_aac_buffer, m_aac_bytes_into_buffer,
             &samplerate, &channels)) < 0)
         {
-            console::error("Can't initialize decoder library.", "foo_mp4");
+            console::error("Can't initialize decoder library.");
             return 0;
         }
         advance_buffer(m_aac_bytes_consumed);
@@ -668,7 +689,7 @@ public:
     virtual int run(audio_chunk * chunk)
     {
         faacDecFrameInfo frameInfo;
-        void *sample_buffer;
+        audio_sample *sample_buffer;
 
         memset(&frameInfo, 0, sizeof(faacDecFrameInfo));
 
@@ -678,7 +699,7 @@ public:
 
             if (m_aac_bytes_into_buffer != 0)
             {
-                sample_buffer = faacDecDecode(hDecoder, &frameInfo,
+                sample_buffer = (audio_sample*)faacDecDecode(hDecoder, &frameInfo,
                     m_aac_buffer, m_aac_bytes_into_buffer);
 
                 if (m_header_type != 1)
@@ -701,18 +722,39 @@ public:
             if (frameInfo.error)
             {
                 if (faacDecGetErrorMessage(frameInfo.error) != NULL)
-                    console::error(faacDecGetErrorMessage(frameInfo.error), "foo_mp4");
+                    console::error(faacDecGetErrorMessage(frameInfo.error));
             }
             return 0;
+        }
+
+        if (frameInfo.channels == 6 && frameInfo.num_lfe_channels)
+        {
+            //channel order for 5.1: L/R/C/LF/BL/BR
+            audio_sample r1, r2, r3, r4, r5, r6;
+            for (int i = 0; i < frameInfo.samples; i += frameInfo.channels)
+            {
+                r1 = sample_buffer[i];
+                r2 = sample_buffer[i+1];
+                r3 = sample_buffer[i+2];
+                r4 = sample_buffer[i+3];
+                r5 = sample_buffer[i+4];
+                r6 = sample_buffer[i+5];
+                sample_buffer[i] = r2;
+                sample_buffer[i+1] = r3;
+                sample_buffer[i+2] = r1;
+                sample_buffer[i+3] = r6;
+                sample_buffer[i+4] = r4;
+                sample_buffer[i+5] = r5;
+            }
         }
 
         if (chunk)
         {
             if (frameInfo.channels == 0)
             {
-                chunk->set_data((audio_sample*)sample_buffer, 0, frameInfo.channels, frameInfo.samplerate);
+                chunk->set_data(sample_buffer, 0, frameInfo.channels, frameInfo.samplerate);
             } else {
-                chunk->set_data((audio_sample*)sample_buffer, frameInfo.samples/frameInfo.channels,
+                chunk->set_data(sample_buffer, frameInfo.samples/frameInfo.channels,
                     frameInfo.channels, frameInfo.samplerate);
             }
         }
@@ -723,9 +765,9 @@ public:
         return 1;
     }
 
-    virtual int set_info(reader *r,const file_info * info)
+    virtual set_info_t set_info(reader *r,const file_info * info)
     {
-        return tag_writer::g_run(r,info,"ape");
+        return tag_writer::g_run(r,info,"ape") ? SET_INFO_SUCCESS : SET_INFO_FAILURE;
     }
 
     virtual int seek(double seconds)
@@ -781,7 +823,7 @@ public:
 
     virtual int is_our_content_type(const char *url, const char *type)
     {
-        return !strcmp(type, "audio/aac") || !strcmp(type, "audio/x-aac");
+        return !stricmp(type, "audio/aac") || !stricmp(type, "audio/x-aac");
     }
 
 private:
