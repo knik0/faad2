@@ -1,19 +1,19 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
-**
+**  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**
+** 
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
+** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.48 2003/08/16 13:14:51 menno Exp $
+** $Id: foo_mp4.cpp,v 1.49 2003/08/17 19:36:54 menno Exp $
 **/
 
 #include <mp4.h>
@@ -46,7 +46,7 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "1.50",
+                           "1.51",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -125,17 +125,18 @@ public:
         numSamples = MP4GetTrackNumberOfSamples(hFile, track);
         sampleId = 1;
 
+        m_timescale = MP4GetTrackTimeScale(hFile, track);
         m_samplerate = samplerate;
+        m_seekto = 0;
         m_framesize = 1024;
         if (mp4ASC.frameLengthFlag == 1) m_framesize = 960;
 
         MP4Duration trackDuration = MP4GetTrackDuration(hFile, track);
-        m_samples = trackDuration;
-        m_length = (double)(__int64)trackDuration / (double)mp4ASC.samplingFrequency;
+        m_length = (double)(__int64)trackDuration / (double)m_timescale;
         info->set_length(m_length);
         info->info_set_int("bitrate",(__int64)(1.0/1000.0 *
             (double)(__int64)MP4GetTrackIntegerProperty(hFile,
-            track, "mdia.minf.stbl.stsd.mp4a.esds.decConfigDescr.avgBitrate")) + 0.5);
+            track, "mdia.minf.stbl.stsd.mp4a.esds.decConfigDescr.avgBitrate") + 0.5));
         info->info_set_int("channels", (__int64)channels);
         info->info_set_int("samplerate", (__int64)samplerate);
         if (mp4ASC.sbr_present_flag == 1) {
@@ -155,9 +156,6 @@ public:
     {
         hFile = MP4_INVALID_FILE_HANDLE;
         hDecoder = NULL;
-        m_samples = 0;
-        m_samplepos = 0;
-        m_seekskip = 0;
         m_eof = false;
     }
 
@@ -171,15 +169,16 @@ public:
 
     virtual int run(audio_chunk * chunk)
     {
+        faacDecFrameInfo frameInfo;
+        audio_sample *sample_buffer;
+        MP4Timestamp sample_pos;
+        MP4Duration sample_dur;
+        unsigned __int64 sample_count;
+        unsigned __int64 delay = 0;
+        bool initial = (sampleId == 1);
+
         do {
-            if (m_eof || (m_samples > 0 && m_samplepos >= m_samples)) return 0; // gapless playback
-
-            faacDecFrameInfo frameInfo;
-            unsigned char *buffer;
-            unsigned __int32 buffer_size;
-            audio_sample *sample_buffer;
-
-            if (sampleId > numSamples) return 0;
+            if (m_eof || (sampleId > numSamples)) return 0;
 
             if (sampleId == MP4_INVALID_SAMPLE_ID)
             {
@@ -188,70 +187,68 @@ public:
             }
 
             do {
-                buffer = NULL;
-                buffer_size = 0;
+                unsigned char *buffer = NULL;
+                unsigned __int32 buffer_size = 0;
 
                 MP4ReadSample(hFile, track, sampleId,
                     (unsigned __int8**)&buffer, &buffer_size,
-                    NULL, NULL, NULL, NULL);
+                    &sample_pos, &sample_dur, NULL, NULL);
                 sampleId++;
 
                 sample_buffer = (audio_sample*)faacDecDecode(hDecoder, &frameInfo, buffer, buffer_size);
 
                 if (buffer) free(buffer);
 
-            } while ((frameInfo.error == 0) && (frameInfo.samples == 0));
-
-            if (frameInfo.error)
-            {
-                console::warning(faacDecGetErrorMessage(frameInfo.error));
-                console::warning("Skipping frame");
-                if (sampleId > numSamples) return -1;
-            }
-
-            if (frameInfo.channels == 6 && frameInfo.num_lfe_channels)
-            {
-                //channel order for 5.1: L/R/C/LF/BL/BR
-                audio_sample r1, r2, r3, r4, r5, r6;
-                for (unsigned int i = 0; i < frameInfo.samples; i += frameInfo.channels)
-                {
-                    r1 = sample_buffer[i];
-                    r2 = sample_buffer[i+1];
-                    r3 = sample_buffer[i+2];
-                    r4 = sample_buffer[i+3];
-                    r5 = sample_buffer[i+4];
-                    r6 = sample_buffer[i+5];
-                    sample_buffer[i] = r2;
-                    sample_buffer[i+1] = r3;
-                    sample_buffer[i+2] = r1;
-                    sample_buffer[i+3] = r6;
-                    sample_buffer[i+4] = r4;
-                    sample_buffer[i+5] = r5;
-                }
-            }
-
-            if (frameInfo.channels == 0)
-            {
-                chunk->set_data(sample_buffer, 0, frameInfo.channels, frameInfo.samplerate);
-            } else {
-                unsigned int samples = frameInfo.samples/frameInfo.channels;
-
-                if (m_samples > 0) { // gapless playback
-                    if (m_samplepos + samples > m_samples) samples = (unsigned int)(m_samples - m_samplepos);
-                }
-
-                if (m_seekskip < samples) {
-                    samples -= m_seekskip;
-                    chunk->set_data((audio_sample*)sample_buffer + m_seekskip*frameInfo.channels,
-                        samples, frameInfo.channels, frameInfo.samplerate);
-                    m_seekskip = 0;
+                if (m_timescale != m_samplerate) {
+                    sample_count = frameInfo.channels ? frameInfo.samples/frameInfo.channels : 0;
                 } else {
-                    m_seekskip -= samples;
+                    sample_count = sample_dur;
                 }
 
-                m_samplepos += samples;
+                if (initial && (sample_count < m_framesize) && frameInfo.channels)
+                    delay = (frameInfo.samples/frameInfo.channels) - sample_count;
+
+                if (frameInfo.error)
+                {
+                    console::warning(faacDecGetErrorMessage(frameInfo.error));
+                    if (sampleId > numSamples) return -1;
+                    console::warning("Skipping frame");
+                }
+            } while (frameInfo.error || frameInfo.samples == 0 || frameInfo.channels == 0 || sample_count == 0);
+
+            unsigned __int64 skip = (sample_pos < m_seekto) ? (m_seekto - sample_pos) : 0;
+
+            if (skip < sample_count)
+            {
+                if (frameInfo.channels == 6 && frameInfo.num_lfe_channels)
+                {
+                    //channel order for 5.1: L/R/C/LF/BL/BR
+                    audio_sample r1, r2, r3, r4, r5, r6;
+                    for (unsigned int i = 0; i < frameInfo.samples; i += frameInfo.channels)
+                    {
+                        r1 = sample_buffer[i];
+                        r2 = sample_buffer[i+1];
+                        r3 = sample_buffer[i+2];
+                        r4 = sample_buffer[i+3];
+                        r5 = sample_buffer[i+4];
+                        r6 = sample_buffer[i+5];
+                        sample_buffer[i] = r2;
+                        sample_buffer[i+1] = r3;
+                        sample_buffer[i+2] = r1;
+                        sample_buffer[i+3] = r6;
+                        sample_buffer[i+4] = r4;
+                        sample_buffer[i+5] = r5;
+                    }
+                }
+
+                unsigned int samples = (unsigned int)(sample_count - skip);
+
+                chunk->set_data((audio_sample*)sample_buffer + (unsigned int)(skip+delay)*frameInfo.channels,
+                    samples, frameInfo.channels, frameInfo.samplerate);
+
+                m_seekto = 0;
             }
-        } while (m_seekskip > 0);
+        } while (sample_pos + sample_dur < m_seekto);
 
         return 1;
     }
@@ -269,6 +266,9 @@ public:
         /* replay gain writing */
         const char *p = NULL;
 
+        p = info->info_get("TOOL");
+        if (p)
+            MP4SetMetadataTool(hFile, p);
         p = info->info_get("REPLAYGAIN_TRACK_PEAK");
         if (p)
             MP4SetMetadataFreeForm(hFile, "REPLAYGAIN_TRACK_PEAK", (unsigned __int8*)p, strlen(p));
@@ -281,37 +281,6 @@ public:
         p = info->info_get("REPLAYGAIN_ALBUM_GAIN");
         if (p)
             MP4SetMetadataFreeForm(hFile, "REPLAYGAIN_ALBUM_GAIN", (unsigned __int8*)p, strlen(p));
-
-        m_samples = 0;
-        p = info->info_get("samples");
-        if (p) m_samples = (unsigned __int64)_atoi64(p);
-
-        if (m_samples > 0)
-        {
-            if (m_samples < ((unsigned __int64)1<<32)) {
-                unsigned __int8 length[4];
-
-                length[0] = (unsigned __int8)((unsigned int)(m_samples >> 24) & 0xFF);
-                length[1] = (unsigned __int8)((unsigned int)(m_samples >> 16) & 0xFF);
-                length[2] = (unsigned __int8)((unsigned int)(m_samples >>  8) & 0xFF);
-                length[3] = (unsigned __int8)((unsigned int)(m_samples      ) & 0xFF);
-
-                MP4SetMetadataFreeForm(hFile, "NDFL", length, 4);
-            } else {
-                unsigned __int8 length[8];
-
-                length[0] = (unsigned __int8)((unsigned __int64)(m_samples >> 56) & 0xFF);
-                length[1] = (unsigned __int8)((unsigned __int64)(m_samples >> 48) & 0xFF);
-                length[2] = (unsigned __int8)((unsigned __int64)(m_samples >> 40) & 0xFF);
-                length[3] = (unsigned __int8)((unsigned __int64)(m_samples >> 32) & 0xFF);
-                length[4] = (unsigned __int8)((unsigned __int64)(m_samples >> 24) & 0xFF);
-                length[5] = (unsigned __int8)((unsigned __int64)(m_samples >> 16) & 0xFF);
-                length[6] = (unsigned __int8)((unsigned __int64)(m_samples >>  8) & 0xFF);
-                length[7] = (unsigned __int8)((unsigned __int64)(m_samples      ) & 0xFF);
-
-                MP4SetMetadataFreeForm(hFile, "NDFL", length, 8);
-            }
-        }
 
         int numItems = info->meta_get_count();
         if (numItems > 0)
@@ -333,8 +302,6 @@ public:
                     MP4SetMetadataAlbum(hFile, val);
                 } else if (stricmp(pName, "YEAR") == 0 || stricmp(pName, "DATE") == 0) {
                     MP4SetMetadataYear(hFile, val);
-                } else if (stricmp(pName, "TOOL") == 0) {
-                    MP4SetMetadataTool(hFile, val);
                 } else if (stricmp(pName, "COMMENT") == 0) {
                     MP4SetMetadataComment(hFile, val);
                 } else if (stricmp(pName, "GENRE") == 0) {
@@ -343,7 +310,7 @@ public:
                     unsigned __int16 trkn = 0, tot = 0;
                     sscanf(val, "%d", &trkn);
                     MP4SetMetadataTrack(hFile, trkn, tot);
-                } else if (stricmp(pName, "DISKNUMBER") == 0) {
+                } else if (stricmp(pName, "DISKNUMBER") == 0 || stricmp(pName, "DISC") == 0) {
                     unsigned __int16 disk = 0, tot = 0;
                     sscanf(val, "%d", &disk);
                     MP4SetMetadataDisk(hFile, disk, tot);
@@ -372,18 +339,23 @@ public:
             return true;
         }
 
-        MP4Duration sample = (MP4Duration)(seconds * m_samplerate + 0.5);
+        unsigned int frame = (unsigned int)((double)m_framesize * ((double)m_samplerate / (double)m_timescale) + 0.5);
+        if (frame == 0) frame = 1;
 
-        do {
-            if (sample > 2048) sample -= 2048; else sample = 0;
-            MP4Duration duration = MP4ConvertToTrackDuration(hFile, track, sample, m_samplerate);
+        m_seekto = (unsigned __int64)(seconds * m_timescale + 0.5) + frame;
+        MP4Duration target = m_seekto - frame;
+
+        while (1) {
+            MP4Duration duration = MP4ConvertToTrackDuration(hFile, track, target, m_timescale);
             sampleId = MP4GetSampleIdFromTime(hFile, track, duration, 0);
-            m_samplepos = (unsigned __int64)sampleId * m_framesize;
-            m_seekskip = (int)((unsigned __int64)(seconds * m_samplerate + 0.5) - m_samplepos);
-            if (sample == 0) break;
-        } while (m_seekskip < 0);
+            if (sampleId == MP4_INVALID_SAMPLE_ID) return false;
+            MP4Timestamp position = MP4GetSampleTime(hFile, track, sampleId);
+            if (position <= m_seekto) break;
+            if (target == 0) return false;
+            if (target > frame) target -= frame; else target = 0;
+        }
 
-        if (sampleId == MP4_INVALID_SAMPLE_ID) return false;
+        faacDecPostSeekReset(hDecoder, -1);
 
         return true;
     }
@@ -402,11 +374,10 @@ private:
     MP4FileHandle hFile;
     MP4SampleId sampleId, numSamples;
     MP4TrackId track;
-    unsigned __int64 m_samples;
+    unsigned int m_timescale;
     unsigned int m_samplerate;
     unsigned int m_framesize;
-    unsigned __int64 m_samplepos;
-    int m_seekskip;
+    unsigned __int64 m_seekto;
     double m_length;
     bool m_eof;
 
@@ -442,7 +413,7 @@ private:
                     } else if (memcmp(pName, "©day", 4) == 0) {
                         info->meta_add("DATE", val);
                     } else if (memcmp(pName, "©too", 4) == 0) {
-                        info->info_set("TOOL", val);
+                        info->info_set("tool", val);
                     } else if (memcmp(pName, "©cmt", 4) == 0) {
                         info->meta_add("COMMENT", val);
                     } else if (memcmp(pName, "©gen", 4) == 0) {
@@ -465,7 +436,8 @@ private:
                     char t[200];
                     MP4GetMetadataDisk(hFile, &disk, &tot);
                     wsprintf(t, "%d", disk);
-                    info->meta_add("DISKNUMBER", t);
+                    //info->meta_add("DISKNUMBER", t);
+                    info->meta_add("DISC", t);
                 } else if (memcmp(pName, "cpil", 4) == 0) {
                     unsigned __int8 cpil = 0;
                     char t[200];
@@ -479,21 +451,7 @@ private:
                     wsprintf(t, "%d BPM", tempo);
                     info->meta_add("TEMPO", t);
                 } else if (memcmp(pName, "NDFL", 4) == 0) {
-                    /*
-                    unsigned __int8 *data = NULL;
-                    unsigned __int32 valueSize = 0;
-                    MP4GetMetadataFreeForm(hFile, "NDFL", &data, &valueSize);
-                    if (data && valueSize == 4)
-                    {
-                        // len = number of samples in whole file per channel
-                        m_samples = ((data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3]);
-                    }
-                    else if (data && valueSize == 8)
-                    {
-                        // len = number of samples in whole file per channel
-                        m_samples = ((data[0] << 56) | (data[1] << 48) | (data[2] << 40) | (data[3] << 32) | (data[4] << 24) | (data[5] << 16) | (data[6] << 8) | data[7]);
-                    }
-                    */
+                    /* Removed */
                 } else {
                     float f = 0;
                     if (!stricmp(pName, "REPLAYGAIN_TRACK_PEAK"))
@@ -802,7 +760,6 @@ public:
     {
         m_head = NULL;
         m_tail = NULL;
-        cur_pos_sec = 0.0;
         m_samplerate = 0;
         hDecoder = NULL;
         m_aac_buffer = NULL;
@@ -831,7 +788,7 @@ public:
 
     virtual int run(audio_chunk * chunk)
     {
-        do {
+        while (1) {
             if (m_eof || (m_samples > 0 && m_samplepos >= m_samples)) return 0; // gapless playback
 
             if (m_aac_bytes_into_buffer == 0) return 0;
@@ -859,70 +816,65 @@ public:
                     }
 
                     advance_buffer(frameInfo.bytesconsumed);
-                } else {
-                    break;
                 }
 
-            } while (!frameInfo.samples && !frameInfo.error);
-
-            if (frameInfo.error || !sample_buffer)
-            {
-                const char *msg = faacDecGetErrorMessage(frameInfo.error);
-                if (msg) console::warning(msg);
-                return -1;
-            }
-
-            if (frameInfo.channels == 6 && frameInfo.num_lfe_channels)
-            {
-                //channel order for 5.1: L/R/C/LF/BL/BR
-                audio_sample r1, r2, r3, r4, r5, r6;
-                for (unsigned int i = 0; i < frameInfo.samples; i += frameInfo.channels)
+                if (frameInfo.error || !sample_buffer)
                 {
-                    r1 = sample_buffer[i];
-                    r2 = sample_buffer[i+1];
-                    r3 = sample_buffer[i+2];
-                    r4 = sample_buffer[i+3];
-                    r5 = sample_buffer[i+4];
-                    r6 = sample_buffer[i+5];
-                    sample_buffer[i] = r2;
-                    sample_buffer[i+1] = r3;
-                    sample_buffer[i+2] = r1;
-                    sample_buffer[i+3] = r6;
-                    sample_buffer[i+4] = r4;
-                    sample_buffer[i+5] = r5;
+                    const char *msg = faacDecGetErrorMessage(frameInfo.error);
+                    if (msg) console::warning(msg);
+                    return -1;
                 }
-            }
 
-            unsigned int samples = (frameInfo.channels != 0) ? frameInfo.samples/frameInfo.channels : 0;
+                if (m_aac_bytes_into_buffer == 0) break;
+            } while (!frameInfo.samples || !frameInfo.channels);
 
-            m_samplerate = frameInfo.samplerate;
-            m_framesize = samples;
+            if (!frameInfo.samples || !frameInfo.channels) return 0;
 
             if (chunk)
             {
-                if (frameInfo.channels == 0)
-                {
-                    chunk->set_data(sample_buffer, 0, frameInfo.channels, frameInfo.samplerate);
+                unsigned int samples = frameInfo.samples/frameInfo.channels;
+
+                m_samplerate = frameInfo.samplerate;
+                m_framesize = samples;
+
+                if (m_samples > 0) { // gapless playback
+                    if (m_samplepos + samples > m_samples) samples = (unsigned int)(m_samples - m_samplepos);
+                }
+
+                m_samplepos += samples;
+
+                if ((unsigned)m_seekskip < samples) {
+                    if (frameInfo.channels == 6 && frameInfo.num_lfe_channels)
+                    {
+                        //channel order for 5.1: L/R/C/LF/BL/BR
+                        audio_sample r1, r2, r3, r4, r5, r6;
+                        for (unsigned int i = 0; i < frameInfo.samples; i += frameInfo.channels)
+                        {
+                            r1 = sample_buffer[i];
+                            r2 = sample_buffer[i+1];
+                            r3 = sample_buffer[i+2];
+                            r4 = sample_buffer[i+3];
+                            r5 = sample_buffer[i+4];
+                            r6 = sample_buffer[i+5];
+                            sample_buffer[i] = r2;
+                            sample_buffer[i+1] = r3;
+                            sample_buffer[i+2] = r1;
+                            sample_buffer[i+3] = r6;
+                            sample_buffer[i+4] = r4;
+                            sample_buffer[i+5] = r5;
+                        }
+                    }
+
+                    samples -= m_seekskip;
+                    chunk->set_data((audio_sample*)sample_buffer + m_seekskip*frameInfo.channels,
+                        samples, frameInfo.channels, frameInfo.samplerate);
+                    m_seekskip = 0;
+                    break;
                 } else {
-                    if (m_samples > 0) { // gapless playback
-                        if (m_samplepos + samples > m_samples) samples = (unsigned int)(m_samples - m_samplepos);
-                    }
-
-                    if (m_seekskip < samples) {
-                        samples -= m_seekskip;
-                        chunk->set_data((audio_sample*)sample_buffer + m_seekskip*frameInfo.channels,
-                            samples, frameInfo.channels, frameInfo.samplerate);
-                        m_seekskip = 0;
-                    } else {
-                        m_seekskip -= samples;
-                    }
-
-                    m_samplepos += samples;
+                    m_seekskip -= samples;
                 }
             }
-
-            cur_pos_sec += (double)m_framesize/(double)m_samplerate;
-        } while (m_seekskip > 0);
+        }
 
         return 1;
     }
@@ -950,9 +902,12 @@ public:
             return true;
         }
 
+        double cur_pos_sec = (double)(__int64)m_samplepos / (double)(__int64)m_samplerate;
+
         if (m_reader->can_seek() && ((m_header_type == 1) || (seconds < cur_pos_sec)))
         {
             frames = (unsigned int)(seconds*((double)m_samplerate/(double)m_framesize));
+            if (frames > 1) frames--;
 
             for (i = 0; i < frames; i++)
             {
@@ -963,7 +918,8 @@ public:
             }
             if (target->offset == 0 && frames > 0)
                 return false;
-            m_reader->seek(target->offset);
+            m_file_offset = target->offset;
+            m_reader->seek(m_file_offset);
 
             bread = m_reader->read(m_aac_buffer, 768*6);
             if (bread != 768*6)
@@ -972,9 +928,11 @@ public:
                 m_at_eof = 0;
             m_aac_bytes_into_buffer = bread;
             m_aac_bytes_consumed = 0;
-            m_samplepos = (unsigned __int64)frames * m_framesize;
-            m_seekskip = (int)((unsigned __int64)(seconds * m_samplerate + 0.5) - m_samplepos);
-            console::info ( string_printf ("seekskip: %i", m_seekskip) );
+            m_file_offset += bread;
+            m_samplepos = (frames > 1) ? (unsigned __int64)(frames-1) * m_framesize : 0;
+            m_seekskip = (int)((unsigned __int64)(seconds * m_samplerate + 0.5) - m_samplepos) + m_framesize;
+            if (m_seekskip < 0) return false; // should never happen
+            faacDecPostSeekReset(hDecoder, -1);
             return true;
         } else {
             if (seconds > cur_pos_sec)
@@ -990,9 +948,11 @@ public:
                     }
                 }
 
-                m_samplepos = (unsigned __int64)frames * m_framesize;
+                m_samplepos = (unsigned __int64)(seconds * m_samplerate) / m_framesize;
+                m_samplepos *= m_framesize;
                 m_seekskip = (int)((unsigned __int64)(seconds * m_samplerate + 0.5) - m_samplepos);
-                console::info ( string_printf ("seekskip: %i", m_seekskip) );
+                if (m_seekskip < 0) return false; // should never happen
+                faacDecPostSeekReset(hDecoder, -1);
             }
             return true;
         }
@@ -1017,7 +977,6 @@ private:
     int m_at_eof;
 
     unsigned long m_samplerate;
-    double cur_pos_sec;
     int m_header_type;
 
     struct seek_list *m_head;
