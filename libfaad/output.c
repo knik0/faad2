@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: output.c,v 1.6 2002/03/16 13:38:36 menno Exp $
+** $Id: output.c,v 1.7 2002/03/16 15:09:59 menno Exp $
 **/
 
 #include "common.h"
@@ -27,14 +27,9 @@
 
 #define ftol(A,B) {tmp = *(int32_t*) & A - 0x4B7F8000; \
                    B = (int16_t)((tmp==(int16_t)tmp) ? tmp : (tmp>>31)^0x7FFF);}
-#define ROUND(x) ((int32_t)floor((x) + 0.5))
+#define ROUND(x) ((x >= 0) ? (int32_t)floor((x) + 0.5) : (int32_t)ceil((x) + 0.5))
 
-#define HAVE_IEEE754_FLOAT
-#ifdef HAVE_IEEE754_FLOAT
-#define ROUND32(x) (floattmp = (x) + (int32_t)0x00FD8000L, *(int32_t*)(&floattmp) - (int32_t)0x4B7D8000L)
-#else
 #define ROUND32(x) ROUND(x)
-#endif
 
 #define FLOAT_SCALE (1.0f/(1<<15))
 
@@ -78,8 +73,6 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
     case FAAD_FMT_32BIT:
         for (ch = 0; ch < channels; ch++)
         {
-            real_t floattmp;
-
             for(i = 0; i < frame_len; i++)
             {
                 int_sample_buffer[(i*channels)+ch] = ROUND32(input[ch][i]*(1<<16));

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.3 2002/03/16 13:38:37 menno Exp $
+** $Id: common.h,v 1.4 2002/03/16 15:09:59 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -134,6 +134,7 @@ typedef float float32_t;
     #define log logf
     #define exp expf
     #define floor floorf
+    #define ceil ceilf
     #define sqrt sqrtf
 
   #else
@@ -154,6 +155,9 @@ typedef float float32_t;
 #endif
 #ifdef HAVE_FLOORF
 #  define floor floorf
+#endif
+#ifdef HAVE_FLOORF
+#  define ceil ceilf
 #endif
 #ifdef HAVE_SQRTF
 #  define sqrt sqrtf
