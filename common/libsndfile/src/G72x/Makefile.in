@@ -68,14 +68,23 @@ target_triplet = @target@
 AS = @AS@
 CC = @CC@
 DLLTOOL = @DLLTOOL@
+ECHO = @ECHO@
+EXEEXT = @EXEEXT@
+GETCONF = @GETCONF@
 LIBTOOL = @LIBTOOL@
 LN_S = @LN_S@
 MAKEINFO = @MAKEINFO@
 OBJDUMP = @OBJDUMP@
+OBJEXT = @OBJEXT@
+OS_SPECIFIC_INCLUDES = @OS_SPECIFIC_INCLUDES@
+OS_SPECIFIC_LINKS = @OS_SPECIFIC_LINKS@
 PACKAGE = @PACKAGE@
 RANLIB = @RANLIB@
 SHARED_VERSION_INFO = @SHARED_VERSION_INFO@
+STRIP = @STRIP@
 VERSION = @VERSION@
+ac_cv_sys_largefile_CFLAGS = @ac_cv_sys_largefile_CFLAGS@
+autogen = @autogen@
 subdirs = @subdirs@
 
 EXTRA_DIST = README README.original ChangeLog
@@ -83,9 +92,14 @@ EXTRA_DIST = README README.original ChangeLog
 noinst_HEADERS = g72x.h private.h
 noinst_LTLIBRARIES = libg72x.la
 
+noinst_PROGRAMS = g72x_test
+
 CFILES = g72x.c g721.c g723_16.c g723_24.c g723_40.c
 
 libg72x_la_SOURCES = $(CFILES) $(noinst_HEADERS)
+
+g72x_test_SOURCES = g72x_test.c $(CFILES)
+g72x_test_LDADD = -lm
 
 # Disable autoheader. 
 AUTOHEADER = echo
@@ -102,6 +116,13 @@ LIBS = @LIBS@
 libg72x_la_LDFLAGS = 
 libg72x_la_LIBADD = 
 libg72x_la_OBJECTS =  g72x.lo g721.lo g723_16.lo g723_24.lo g723_40.lo
+noinst_PROGRAMS =  g72x_test$(EXEEXT)
+PROGRAMS =  $(noinst_PROGRAMS)
+
+g72x_test_OBJECTS =  g72x_test.$(OBJEXT) g72x.$(OBJEXT) g721.$(OBJEXT) \
+g723_16.$(OBJEXT) g723_24.$(OBJEXT) g723_40.$(OBJEXT)
+g72x_test_DEPENDENCIES = 
+g72x_test_LDFLAGS = 
 CFLAGS = @CFLAGS@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -116,14 +137,14 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
 TAR = tar
 GZIP_ENV = --best
-SOURCES = $(libg72x_la_SOURCES)
-OBJECTS = $(libg72x_la_OBJECTS)
+SOURCES = $(libg72x_la_SOURCES) $(g72x_test_SOURCES)
+OBJECTS = $(libg72x_la_OBJECTS) $(g72x_test_OBJECTS)
 
 all: all-redirect
 .SUFFIXES:
-.SUFFIXES: .S .c .lo .o .s
+.SUFFIXES: .S .c .lo .o .obj .s
 $(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) 
-	cd $(top_srcdir) && $(AUTOMAKE) --gnu --include-deps src/G72x/Makefile
+	cd $(top_srcdir) && $(AUTOMAKE) --foreign --include-deps src/G72x/Makefile
 
 Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) \
@@ -142,6 +163,11 @@ maintainer-clean-noinstLTLIBRARIES:
 .c.o:
 	$(COMPILE) -c $<
 
+# FIXME: We should only use cygpath when building on Windows,
+# and only if it is available.
+.c.obj:
+	$(COMPILE) -c `cygpath -w $<`
+
 .s.o:
 	$(COMPILE) -c $<
 
@@ -150,6 +176,7 @@ maintainer-clean-noinstLTLIBRARIES:
 
 mostlyclean-compile:
 	-rm -f *.o core *.core
+	-rm -f *.$(OBJEXT)
 
 clean-compile:
 
@@ -179,6 +206,19 @@ maintainer-clean-libtool:
 
 libg72x.la: $(libg72x_la_OBJECTS) $(libg72x_la_DEPENDENCIES)
 	$(LINK)  $(libg72x_la_LDFLAGS) $(libg72x_la_OBJECTS) $(libg72x_la_LIBADD) $(LIBS)
+
+mostlyclean-noinstPROGRAMS:
+
+clean-noinstPROGRAMS:
+	-test -z "$(noinst_PROGRAMS)" || rm -f $(noinst_PROGRAMS)
+
+distclean-noinstPROGRAMS:
+
+maintainer-clean-noinstPROGRAMS:
+
+g72x_test$(EXEEXT): $(g72x_test_OBJECTS) $(g72x_test_DEPENDENCIES)
+	@rm -f g72x_test$(EXEEXT)
+	$(LINK) $(g72x_test_LDFLAGS) $(g72x_test_OBJECTS) $(g72x_test_LDADD) $(LIBS)
 
 tags: TAGS
 
@@ -224,12 +264,6 @@ distdir: $(DISTFILES)
 	    || cp -p $$d/$$file $(distdir)/$$file || :; \
 	  fi; \
 	done
-g721.lo g721.o : g721.c g72x.h private.h
-g723_16.lo g723_16.o : g723_16.c g72x.h private.h
-g723_24.lo g723_24.o : g723_24.c g72x.h private.h
-g723_40.lo g723_40.o : g723_40.c g72x.h private.h
-g72x.lo g72x.o : g72x.c g72x.h private.h
-
 info-am:
 info: info-am
 dvi-am:
@@ -249,7 +283,7 @@ install-am: all-am
 install: install-am
 uninstall-am:
 uninstall: uninstall-am
-all-am: Makefile $(LTLIBRARIES) $(HEADERS)
+all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(HEADERS)
 all-redirect: all-am
 install-strip:
 	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
@@ -266,27 +300,28 @@ distclean-generic:
 
 maintainer-clean-generic:
 mostlyclean-am:  mostlyclean-noinstLTLIBRARIES mostlyclean-compile \
-		mostlyclean-libtool mostlyclean-tags \
-		mostlyclean-generic
+		mostlyclean-libtool mostlyclean-noinstPROGRAMS \
+		mostlyclean-tags mostlyclean-generic
 
 mostlyclean: mostlyclean-am
 
 clean-am:  clean-noinstLTLIBRARIES clean-compile clean-libtool \
-		clean-tags clean-generic mostlyclean-am
+		clean-noinstPROGRAMS clean-tags clean-generic \
+		mostlyclean-am
 
 clean: clean-am
 
 distclean-am:  distclean-noinstLTLIBRARIES distclean-compile \
-		distclean-libtool distclean-tags distclean-generic \
-		clean-am
+		distclean-libtool distclean-noinstPROGRAMS \
+		distclean-tags distclean-generic clean-am
 	-rm -f libtool
 
 distclean: distclean-am
 
 maintainer-clean-am:  maintainer-clean-noinstLTLIBRARIES \
 		maintainer-clean-compile maintainer-clean-libtool \
-		maintainer-clean-tags maintainer-clean-generic \
-		distclean-am
+		maintainer-clean-noinstPROGRAMS maintainer-clean-tags \
+		maintainer-clean-generic distclean-am
 	@echo "This command is intended for maintainers to use;"
 	@echo "it deletes files that may require special tools to rebuild."
 
@@ -296,14 +331,19 @@ maintainer-clean: maintainer-clean-am
 clean-noinstLTLIBRARIES maintainer-clean-noinstLTLIBRARIES \
 mostlyclean-compile distclean-compile clean-compile \
 maintainer-clean-compile mostlyclean-libtool distclean-libtool \
-clean-libtool maintainer-clean-libtool tags mostlyclean-tags \
-distclean-tags clean-tags maintainer-clean-tags distdir info-am info \
-dvi-am dvi check check-am installcheck-am installcheck install-exec-am \
-install-exec install-data-am install-data install-am install \
-uninstall-am uninstall all-redirect all-am all installdirs \
-mostlyclean-generic distclean-generic clean-generic \
-maintainer-clean-generic clean mostlyclean distclean maintainer-clean
+clean-libtool maintainer-clean-libtool mostlyclean-noinstPROGRAMS \
+distclean-noinstPROGRAMS clean-noinstPROGRAMS \
+maintainer-clean-noinstPROGRAMS tags mostlyclean-tags distclean-tags \
+clean-tags maintainer-clean-tags distdir info-am info dvi-am dvi check \
+check-am installcheck-am installcheck install-exec-am install-exec \
+install-data-am install-data install-am install uninstall-am uninstall \
+all-redirect all-am all installdirs mostlyclean-generic \
+distclean-generic clean-generic maintainer-clean-generic clean \
+mostlyclean distclean maintainer-clean
 
+
+check: g72x_test
+	./g72x_test all
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

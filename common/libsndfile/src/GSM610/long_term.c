@@ -4,7 +4,7 @@
  * details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
  */
 
-/* $Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/long_term.c,v 1.1 2002/01/14 19:15:55 menno Exp $ */
+/* $Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/long_term.c,v 1.2 2002/07/25 12:22:13 menno Exp $ */
 
 #include <stdio.h>
 #include <assert.h>
@@ -12,7 +12,6 @@
 #include "private.h"
 
 #include "gsm.h"
-#include "proto.h"
 
 /*
  *  4.2.11 .. 4.2.12 LONG TERM PREDICTOR (LTP) SECTION
@@ -46,7 +45,7 @@
 
 #ifdef	LTP_CUT
 
-static void Cut_Calculation_of_the_LTP_parameters P5((st, d,dp,bc_out,Nc_out),
+static void Cut_Calculation_of_the_LTP_parameters (
 
 	struct gsm_state * st,
 
@@ -153,7 +152,7 @@ static void Cut_Calculation_of_the_LTP_parameters P5((st, d,dp,bc_out,Nc_out),
 
 #endif 	/* LTP_CUT */
 
-static void Calculation_of_the_LTP_parameters P4((d,dp,bc_out,Nc_out),
+static void Calculation_of_the_LTP_parameters (
 	register word	* d,		/* [0..39]	IN	*/
 	register word	* dp,		/* [-120..-1]	IN	*/
 	word		* bc_out,	/* 		OUT	*/
@@ -290,7 +289,7 @@ static void Calculation_of_the_LTP_parameters P4((d,dp,bc_out,Nc_out),
 
 #ifdef	LTP_CUT
 
-static void Cut_Calculation_of_the_LTP_parameters P5((st, d,dp,bc_out,Nc_out),
+static void Cut_Calculation_of_the_LTP_parameters (
 	struct gsm_state * st,		/*              IN 	*/
 	register word	* d,		/* [0..39]	IN	*/
 	register word	* dp,		/* [-120..-1]	IN	*/
@@ -468,7 +467,7 @@ static void Cut_Calculation_of_the_LTP_parameters P5((st, d,dp,bc_out,Nc_out),
 
 #endif /* LTP_CUT */
 
-static void Calculation_of_the_LTP_parameters P4((d,dp,bc_out,Nc_out),
+static void Calculation_of_the_LTP_parameters (
 	register word	* d,		/* [0..39]	IN	*/
 	register word	* dp,		/* [-120..-1]	IN	*/
 	word		* bc_out,	/* 		OUT	*/
@@ -634,8 +633,7 @@ static void Calculation_of_the_LTP_parameters P4((d,dp,bc_out,Nc_out),
 #ifdef	FAST
 #ifdef	LTP_CUT
 
-static void Cut_Fast_Calculation_of_the_LTP_parameters P5((st,
-							d,dp,bc_out,Nc_out),
+static void Cut_Fast_Calculation_of_the_LTP_parameters (
 	struct gsm_state * st,		/*              IN	*/
 	register word	* d,		/* [0..39]	IN	*/
 	register word	* dp,		/* [-120..-1]	IN	*/
@@ -709,7 +707,7 @@ static void Cut_Fast_Calculation_of_the_LTP_parameters P5((st,
 
 #endif /* LTP_CUT */
 
-static void Fast_Calculation_of_the_LTP_parameters P4((d,dp,bc_out,Nc_out),
+static void Fast_Calculation_of_the_LTP_parameters (
 	register word	* d,		/* [0..39]	IN	*/
 	register word	* dp,		/* [-120..-1]	IN	*/
 	word		* bc_out,	/* 		OUT	*/
@@ -831,7 +829,7 @@ static void Fast_Calculation_of_the_LTP_parameters P4((d,dp,bc_out,Nc_out),
 
 /* 4.2.12 */
 
-static void Long_term_analysis_filtering P6((bc,Nc,dp,d,dpp,e),
+static void Long_term_analysis_filtering (
 	word		bc,	/* 					IN  */
 	word		Nc,	/* 					IN  */
 	register word	* dp,	/* previous d	[-120..-1]		IN  */
@@ -864,7 +862,7 @@ static void Long_term_analysis_filtering P6((bc,Nc,dp,d,dpp,e),
 	}
 }
 
-void Gsm_Long_Term_Predictor P7((S,d,dp,e,dpp,Nc,bc), 	/* 4x for 160 samples */
+void Gsm_Long_Term_Predictor (	/* 4x for 160 samples */
 
 	struct gsm_state	* S,
 
@@ -902,7 +900,7 @@ void Gsm_Long_Term_Predictor P7((S,d,dp,e,dpp,Nc,bc), 	/* 4x for 160 samples */
 }
 
 /* 4.3.2 */
-void Gsm_Long_Term_Synthesis_Filtering P5((S,Ncr,bcr,erp,drp),
+void Gsm_Long_Term_Synthesis_Filtering (
 	struct gsm_state	* S,
 
 	word			Ncr,

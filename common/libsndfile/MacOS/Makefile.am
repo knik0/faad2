@@ -1,1 +1,3 @@
-EXTRA_DIST = 	config.h MacOS-readme.txt
+EXTRA_DIST = config.h MacOS-readme.txt
+
+DISTCLEANFILES = Makefile

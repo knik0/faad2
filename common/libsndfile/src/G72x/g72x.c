@@ -81,7 +81,15 @@ int fmult (int an, int srn)
 	    (anexp >= 0) ? anmag >> anexp : anmag << -anexp;
 	wanexp = anexp + ((srn >> 6) & 0xF) - 13;
 
-	wanmant = (anmant * (srn & 077) + 0x30) >> 4;
+	/*
+	** The original was :
+	**		wanmant = (anmant * (srn & 0x37) + 0x30) >> 4 ;
+	** but could see no valid reason for the + 0x30.
+	** Removed it and it improved the SNR of the codec.
+	*/
+
+	wanmant = (anmant * (srn & 0x37)) >> 4 ;
+	
 	retval = (wanexp >= 0) ? ((wanmant << wanexp) & 0x7FFF) :
 	    (wanmant >> -wanexp);
 
@@ -95,7 +103,6 @@ int fmult (int an, int srn)
  * pointed to by 'state_ptr'.
  * All the initial state values are specified in the CCITT G.721 document.
  */
-static
 void private_init_state (G72x_STATE *state_ptr)
 {
 	int		cnta;
@@ -217,7 +224,6 @@ int g72x_writer_init (G72x_DATA *data, int codec)
 	return 0 ;
 }	/* g72x_writer_init */
 
-static
 int unpack_bytes (G72x_DATA *data, int bits)
 {	unsigned int    in_buffer = 0 ;
 	unsigned char	in_byte ;
@@ -252,7 +258,6 @@ int g72x_decode_block (G72x_DATA *data)
 	return 0 ;
 }	/* g72x_decode_block */
 
-static
 int pack_bytes (G72x_DATA *data, int bits)
 {
 	unsigned int	out_buffer = 0 ;
@@ -617,5 +622,7 @@ update(
 		state_ptr->ap += (0x200 - state_ptr->ap) >> 4;
 	else
 		state_ptr->ap += (-state_ptr->ap) >> 4;
-}
+		
+	return ;
+} /* update */
 

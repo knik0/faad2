@@ -79,15 +79,15 @@ typedef struct private_g72x
 
 
 
-int	predictor_zero(G72x_STATE *state_ptr);
+int	predictor_zero (G72x_STATE *state_ptr);
 
-int	predictor_pole(G72x_STATE *state_ptr);
+int	predictor_pole (G72x_STATE *state_ptr);
 
-int	step_size(G72x_STATE *state_ptr);
+int	step_size (G72x_STATE *state_ptr);
 
-int	quantize(int d, int	y, short *table, int size);
+int	quantize (int d, int	y, short *table, int size);
 
-int	reconstruct(int sign, int dqln,	int y);
+int	reconstruct (int sign, int dqln,	int y);
 
 void update (int code_size, int y, int wi, int fi, int dq, int sr, int dqsez, G72x_STATE *state_ptr);
 
@@ -103,6 +103,9 @@ int g723_24_decoder	(int code, G72x_STATE *state_ptr);
 int g723_40_encoder	(int sample, G72x_STATE *state_ptr);
 int g723_40_decoder	(int code, G72x_STATE *state_ptr);
 
+int unpack_bytes (G72x_DATA *data, int bits) ;
+int pack_bytes (G72x_DATA *data, int bits) ;
 
+void private_init_state (G72x_STATE *state_ptr) ;
 
 #endif /* G72X_PRIVATE_H */

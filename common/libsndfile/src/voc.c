@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2001 Erik de Castro Lopo <erikd@zip.com.au>
+** Copyright (C) 2001-2002 Erik de Castro Lopo <erikd@zip.com.au>
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU Lesser General Public License as published by
@@ -16,12 +16,17 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
+/*	RANT:
+**	The VOC file format is the most brain damaged format I have yet had to deal 
+**	with. No one programmer could have bee stupid enough to put this together.
+**	Instead it looks like a series of manic, dyslexic assembly language programmers 
+**	hacked it to fit their needs.
+**	Utterly woeful.
+*/
 
 #include	<stdio.h>
 #include	<unistd.h>
 #include	<string.h>
-#include	<ctype.h>
-#include	<stdarg.h>
 
 #include	"sndfile.h"
 #include	"config.h"
@@ -30,51 +35,130 @@
 
 
 /*------------------------------------------------------------------------------
- * Macros to handle big/little endian issues.
-*/
-
-#if (CPU_IS_LITTLE_ENDIAN == 1)
-#	define	MAKE_MARKER(a,b,c,d)		((a)|((b)<<8)|((c)<<16)|((d)<<24))
-#elif (CPU_IS_BIG_ENDIAN == 1)
-#	define	MAKE_MARKER(a,b,c,d)		(((a)<<24)|((b)<<16)|((c)<<8)|(d))
-#else
-#	error "Cannot determine endian-ness of processor."
-#endif
-
-/*------------------------------------------------------------------------------
  * Typedefs for file chunks.
 */
 
+#define	VOC_MAX_SECTIONS	200
+
 enum
-{	VOC_TYPE_TERMINATOR		= 0,
-	VOC_TYPE_SOUND_DATA		= 1,
-	VOC_TYPE_SOUND_CONTINUE = 2,
-	VOC_TYPE_SILENCE		= 3,
-	VOC_TYPE_MARKER			= 4,
-	VOC_TYPE_ASCII			= 5,
-	VOC_TYPE_REPEAT			= 6,
-	VOC_TYPE_END_REPEAT		= 7,
-	VOC_TYPE_EXTENDED		= 8,
-	VOC_TYPE_9				= 9
+{	VOC_TERMINATOR		= 0,
+	VOC_SOUND_DATA		= 1,
+	VOC_SOUND_CONTINUE	= 2,
+	VOC_SILENCE			= 3,
+	VOC_MARKER			= 4,
+	VOC_ASCII			= 5,
+	VOC_REPEAT			= 6,
+	VOC_END_REPEAT		= 7,
+	VOC_EXTENDED		= 8,
+	VOC_EXTENDED_II		= 9
 } ;
+
+typedef struct
+{	int 	samples ;
+	int		offset ;	/* Offset of zero => silence. */
+} SND_DATA_BLOCKS ;
+
+typedef struct
+{	unsigned int 	sections, section_types ;
+	int				samplerate, channels, bitwidth ;
+	SND_DATA_BLOCKS	blocks [VOC_MAX_SECTIONS] ;
+} VOC_DATA ;
 
 /*------------------------------------------------------------------------------
  * Private static functions.
 */
 
-static	int		voc_close	(SF_PRIVATE  *psf) ;
+static	int	voc_close	(SF_PRIVATE  *psf) ;
+static	int voc_write_header (SF_PRIVATE *psf) ;
+static  int voc_read_header	(SF_PRIVATE *psf) ;
 
-/*------------------------------------------------------------------------------
-** Public functions.
+static const char* voc_encoding2str (int encoding) ;
+
+#if 0
+
+/*	These functions would be required for files with more than one VOC_SOUND_DATA 
+**	segment. Not sure whether to bother implementing this.
 */
 
-int
-voc_open_read	(SF_PRIVATE *psf)
-{	char	creative [20], type ;
-	short	version ;
+static int	voc_multi_init (SF_PRIVATE *psf, VOC_DATA *pvoc) ;
+
+static int	voc_multi_read_uc2s  (SF_PRIVATE *psf, short *ptr, int len) ;
+static int	voc_multi_read_les2s (SF_PRIVATE *psf, short *ptr, int len) ;
+
+static int	voc_multi_read_uc2i  (SF_PRIVATE *psf, int *ptr, int len) ;
+static int	voc_multi_read_les2i (SF_PRIVATE *psf, int *ptr, int len) ;
+
+static int	voc_multi_read_uc2f  (SF_PRIVATE *psf, float *ptr, int len) ;
+static int	voc_multi_read_les2f (SF_PRIVATE *psf, float *ptr, int len) ;
+
+static int	voc_multi_read_uc2d  (SF_PRIVATE *psf, double *ptr, int len) ;
+static int	voc_multi_read_les2d (SF_PRIVATE *psf, double *ptr, int len) ;
+#endif
+
+/*------------------------------------------------------------------------------
+** Public function.
+*/
+
+int 	
+voc_open	(SF_PRIVATE *psf)
+{	int subformat, error = 0 ;
+
+	if (psf->mode == SFM_READ || (psf->mode == SFM_RDWR && psf->filelength > 0))
+	{	if ((error = voc_read_header (psf)))
+			return error ;
+		} ;
+
+	subformat = psf->sf.format & SF_FORMAT_SUBMASK ;
+	
+	if (psf->mode == SFM_WRITE || psf->mode == SFM_RDWR)
+	{	if ((psf->sf.format & SF_FORMAT_TYPEMASK) != SF_FORMAT_VOC)
+			return	SFE_BAD_OPEN_FORMAT ;
+		
+		psf->endian = SF_ENDIAN_LITTLE ;
+	
+		if ((error = voc_write_header (psf)))
+			return error ;
+	
+		psf->write_header = voc_write_header ;
+		} ;
+		
+	psf->blockwidth = psf->bytewidth * psf->sf.channels ;
+	
+	psf->close = voc_close ;
+
+	switch (subformat)
+	{	case SF_FORMAT_PCM_U8 :
+		case SF_FORMAT_PCM_16 :
+				error = pcm_init (psf) ;
+				break ;
+
+		case SF_FORMAT_ALAW :
+				error = alaw_init (psf) ;
+				break ;
+			
+		case SF_FORMAT_ULAW :
+				error = ulaw_init (psf) ;
+				break ;
+			
+		default : return SFE_UNIMPLEMENTED ;
+		} ;
+		
+	return error ; 
+} /* voc_open */
+
+/*------------------------------------------------------------------------------
+*/
+
+static int
+voc_read_header	(SF_PRIVATE *psf)
+{	VOC_DATA	*pvoc ;
+	char	creative [20] ;
+	unsigned char block_type, rate_byte ;
+	short	version, checksum, encoding, dataoffset ;
+	int		offset ;
 
 	/* Set position to start of file to begin reading header. */
-	psf_binheader_readf (psf, "pB", 0, creative, sizeof (creative)) ;
+	offset = psf_binheader_readf (psf, "pb", 0, creative, sizeof (creative)) ;
 		
 	if (creative [sizeof (creative) - 1] != 0x1A)
 		return SFE_VOC_NO_CREATIVE ;
@@ -87,187 +171,460 @@ voc_open_read	(SF_PRIVATE *psf)
 
 	psf_log_printf (psf, "%s\n", creative) ;
 
-	psf_binheader_readf (psf, "ww", &(psf->dataoffset), &version) ;
+	offset += psf_binheader_readf (psf, "e222", &dataoffset, &version, &checksum) ;
 
-	psf_log_printf (psf, "dataoffset : %d\n", psf->dataoffset) ;
-	psf_log_printf (psf, "version    : %X\n", version) ;
+	psf->dataoffset = dataoffset ;
+
+	psf_log_printf (psf, 	"dataoffset : %d\n"
+							"version    : 0x%X\n"
+							"checksum   : 0x%X\n", psf->dataoffset, version, checksum) ;
 
 	if (version != 0x010A && version != 0x0114)
 		return SFE_VOC_BAD_VERSION ;
+	
+	if (! (psf->fdata = malloc (sizeof (VOC_DATA))))
+		return SFE_MALLOC_FAILED ;
 
-	psf_binheader_readf (psf, "w", &version) ;
-	psf_log_printf (psf, "version 2  : %X\n", version) ;
+	pvoc = (VOC_DATA*) psf->fdata ;
+	
+	memset (pvoc, 0, sizeof (VOC_DATA)) ;
+	
+	/* Set the default encoding now. */
+	psf->sf.format = SF_FORMAT_VOC ; /* Major format */
+	encoding = SF_FORMAT_PCM_U8 ; /* Minor format */
+	psf->endian = SF_ENDIAN_LITTLE ;
 	
 	while (1)
-	{	psf_binheader_readf (psf, "b", &type) ;
-	
-		switch (type)
-		{	case VOC_TYPE_TERMINATOR :
-					psf_log_printf (psf, " Terminator\n") ;
-					break ;
-
-			case VOC_TYPE_SOUND_DATA :
-					{	unsigned char rate_byte, compression ;
-						int		size ;
-
-						psf_binheader_readf (psf, "tbb", &size, &rate_byte, &compression) ;
-
-						psf_log_printf (psf, " Sound Data : %d\n", size) ;
-						psf_log_printf (psf, "  sr   : %d => %dHz\n", (rate_byte & 0xFF), 1000000 / (256 - rate_byte)) ;
-						psf_log_printf (psf, "  comp : %d\n", compression) ;
-	
-						psf_binheader_readf (psf, "j", size) ;
-						} ;
-					break ;
-
-			case VOC_TYPE_SOUND_CONTINUE :
-					{	int		size ;
-
-						psf_binheader_readf (psf, "t", &size) ;
-
-						psf_log_printf (psf, " Sound Continue : %d\n", size) ;
-	
-						psf_binheader_readf (psf, "j", size) ;
-						} ;
-					break ;
-
-			case VOC_TYPE_SILENCE :
-					{	unsigned char rate_byte ;
-						short length ;
+	{	offset += psf_binheader_readf (psf, "1", &block_type) ;
+		
+		switch (block_type)
+		{	case VOC_ASCII :
+					{	int size ;
+					
+						offset += psf_binheader_readf (psf, "e3", &size) ;
 						
-						psf_log_printf (psf, " Silence\n") ;
-						psf_binheader_readf (psf, "wb", &length, &rate_byte) ;
-						psf_log_printf (psf, "  length : %d\n", length) ;
-						psf_log_printf (psf, "  sr     : %d => %dHz\n", (rate_byte & 0xFF), 1000000 / (256 - rate_byte)) ;
-		  				} ;
-					break ;
-
-			case VOC_TYPE_MARKER :
-					{	int		size ;
-						short	value ;
-
-						psf_log_printf (psf, " Marker\n") ;
-
-						psf_binheader_readf (psf, "tw", &size, &value) ;
-						
-						psf_log_printf (psf, "  size  : %d\n", size) ;
-						psf_log_printf (psf, "  value : %d\n", value) ;
-						} ;
-					break ;
-
-			case VOC_TYPE_ASCII :
-					{	int		size ;
-
-						psf_binheader_readf (psf, "t", &size) ;
-
 						psf_log_printf (psf, " ASCII : %d\n", size) ;
 	
-						psf_binheader_readf (psf, "B", psf->header, size) ;
+						offset += psf_binheader_readf (psf, "b", psf->header, size) ;
 						psf->header [size] = 0 ;
 						psf_log_printf (psf, "  text : %s\n", psf->header) ;
 						} ;
+					continue ;
+		
+			case VOC_SOUND_DATA :
+			case VOC_EXTENDED :
+			case VOC_EXTENDED_II :
 					break ;
-
-			case VOC_TYPE_REPEAT :
-					{	int		size ;
-						short	count ;
-
-						psf_binheader_readf (psf, "tw", &size, &count) ;
-
-						psf_log_printf (psf, " Marker : %d\n", size) ;
-						psf_log_printf (psf, "  value : %d\n", count) ;
-						} ;
-					break ;
-
-			case VOC_TYPE_END_REPEAT :
-					psf_log_printf (psf, " End Repeat\n") ;
-					break ;
+			
+			default : psf_log_printf (psf, "*** Weird block marker (%d)\n", block_type) ;
+			} ;
+			
+		break ;
+		} ;
+	
+	if (block_type == VOC_SOUND_DATA)
+	{	unsigned char compression ;
+		int 	size ;
 						
-			case VOC_TYPE_EXTENDED :
-					{	unsigned char pack, mode ;
-						short 	rate_short ;
-						int		size, sample_rate ;
+		offset += psf_binheader_readf (psf, "e311", &size, &rate_byte, &compression) ;
 
-						psf_binheader_readf (psf, "t", &size) ;
-						psf_log_printf (psf, " Extended : %d\n", size) ;
+		psf->sf.samplerate = 1000000 / (256 - (rate_byte & 0xFF)) ;
 						
-						psf_binheader_readf (psf, "wbb", &rate_short, &pack, &mode) ;
-						psf_log_printf (psf, "  size : %d\n", size) ;
-						psf_log_printf (psf, "  pack : %d\n", pack) ;
-						psf_log_printf (psf, "  mode : %d\n", mode) ;
+		psf_log_printf (psf,	" Sound Data : %d\n"
+								"  sr   : %d => %dHz\n"
+								"  comp : %d\n", 
+								size, rate_byte, psf->sf.samplerate, compression) ;
+	
+		if (offset + size - 1 > psf->filelength)
+		{	psf_log_printf (psf, "Seems to be a truncated file.\n") ;
+			puts ("Seems to be a truncated file.\n") ;
+			psf_log_printf (psf, "offset : %d    size : %d    filelength : %d\n", offset, size, psf->filelength) ;
+			return SFE_VOC_BAD_SECTIONS ;
+			}
+		else if (offset + size - 1 < psf->filelength)
+		{	psf_log_printf (psf, "Seems to be a multi-segment file.\n") ;
+			psf_log_printf (psf, "offset : %d    size : %d    filelength : %d\n", offset, size, psf->filelength) ;
+			return SFE_VOC_BAD_SECTIONS ;
+			} ;
+			
+		psf->dataoffset = offset ;
+		psf->dataend    = psf->filelength - 1 ;
+
+		psf->sf.channels = 1 ;
+		psf->bytewidth = 1 ;
+
+		psf->sf.format = SF_FORMAT_VOC | SF_FORMAT_PCM_U8 ;
+		psf->chars = SF_CHARS_UNSIGNED ;
+		
+		return 0 ;
+		} ;
+	
+	if (block_type == VOC_EXTENDED)
+	{	unsigned char pack, stereo, compression ;
+		unsigned short rate_short ;
+		int		size ;
+
+		offset += psf_binheader_readf (psf, "e3211", &size, &rate_short, &pack, &stereo) ;
+		
+		psf_log_printf (psf, " Extended : %d\n", size) ;
+		if (size == 4)
+			psf_log_printf (psf, "  size   : 4\n") ;
+		else
+			psf_log_printf (psf, "  size   : %d (should be 4)\n", size) ;
+
+		psf_log_printf (psf,	"  pack   : %d\n"
+								"  stereo : %s\n", pack, (stereo ? "yes" : "no")) ;
 						
-						if (mode)
-							sample_rate = 128000000 / (65536 - rate_short) ;
-						else
-							sample_rate = 256000000 / (65536 - rate_short) ;
-
-						psf_log_printf (psf, "  sr   : %d => %dHz\n", (rate_short & 0xFFFF), sample_rate) ;
-						psf_binheader_readf (psf, "j", size) ;
-						} ;
-					break ;
-
-			case VOC_TYPE_9 :
-					{	unsigned char bitwidth, channels, byte6 ;
-						int sample_rate, size, bytecount = 0 ;
-						
-						psf_binheader_readf (psf, "t", &size) ;
-						psf_log_printf (psf, " Type 9 : %d\n", size) ;
-
-						bytecount = psf_binheader_readf (psf, "lbbb", &sample_rate, &bitwidth, &channels, &byte6) ;
-
-						psf_log_printf (psf, "  sample rate : %d\n", sample_rate) ;
-						psf_log_printf (psf, "  bit width   : %d\n", bitwidth) ;
-						psf_log_printf (psf, "  channels    : %d\n", channels) ;
-
-						psf_binheader_readf (psf, "j", size - bytecount) ;
-						} ;
-					break ;
-
-			default :
-				psf_log_printf (psf, "Unknown type : %d\n", type & 0xFF) ;
-				return SFE_VOC_BAD_MARKER ;
+		if (stereo)
+		{	psf->sf.channels = 2 ;
+			psf->sf.samplerate = 128000000 / (65536 - rate_short) ;
+			}
+		else
+		{	psf->sf.channels = 1 ;
+			psf->sf.samplerate = 256000000 / (65536 - rate_short) ;
 			} ;
 
-		if (ftell (psf->file) >= psf->filelength)
-			break ;
+		psf_log_printf (psf, "  sr     : %d => %dHz\n", (rate_short & 0xFFFF), psf->sf.samplerate) ;
+			
+		offset += psf_binheader_readf (psf, "1", &block_type) ;
+		
+		if (block_type != VOC_SOUND_DATA)
+		{	psf_log_printf (psf, "*** Expecting VOC_SOUND_DATA section.\n") ;
+			return SFE_VOC_BAD_FORMAT ;
+			} ;
+		
+		offset += psf_binheader_readf (psf, "e311", &size, &rate_byte, &compression) ;
+		
+		psf_log_printf (psf,	" Sound Data : %d\n"
+								"  sr     : %d\n"
+								"  comp   : %d\n", size, rate_byte, compression) ;
+
+
+		if (offset + size - 1 > psf->filelength)
+		{	psf_log_printf (psf, "Seems to be a truncated file.\n") ;
+			puts ("Seems to be a truncated file.\n") ;
+			/*-printf ("offset : %d    size : %d    filelength : %ld\n", offset, size, psf->filelength) ;-*/
+			return SFE_VOC_BAD_SECTIONS ;
+			}
+		else if (offset + size - 1 < psf->filelength)
+		{	/*-printf ("offset : %d    size : %d    filelength : %ld\n", offset, size, psf->filelength) ;-*/
+			psf_log_printf (psf, "Seems to be a multi-segment file.\n") ;
+			return SFE_VOC_BAD_SECTIONS ;
+			} ;
+			
+		psf->dataoffset = offset ;
+		psf->dataend = psf->filelength - 1 ;
+
+		psf->bytewidth = 1 ;
+
+		psf->sf.format = SF_FORMAT_VOC | SF_FORMAT_PCM_U8 ;						
+		psf->chars = SF_CHARS_UNSIGNED ;
+		
+		return 0 ;
+		}
+	
+	if (block_type == VOC_EXTENDED_II)
+	{	unsigned char bitwidth, channels ;
+		int size, fourbytes ;
+
+		offset += psf_binheader_readf (psf, "e341124", &size, &psf->sf.samplerate, 
+								&bitwidth, &channels, &encoding, &fourbytes) ;
+
+		if (size * 2 == psf->filelength - 39)
+		{	int temp_size = psf->filelength - 31 ;
+
+			psf_log_printf (psf, " Extended II : %d (SoX bug: should be %d)\n", size, temp_size) ;
+			size = temp_size ;
+			}
+		else
+			psf_log_printf (psf, " Extended II : %d\n", size) ;
+
+		psf_log_printf (psf,	"  sample rate : %d\n"
+								"  bit width   : %d\n"
+								"  channels    : %d\n", psf->sf.samplerate, bitwidth, channels) ;
+
+		if (bitwidth == 16 && encoding == 0)
+		{	encoding = 4 ;
+			psf_log_printf (psf, "  encoding    : 0 (SoX bug: should be 4 for 16 bit signed PCM)\n") ;
+			}
+		else
+			psf_log_printf (psf, "  encoding    : %d => %s\n", encoding, voc_encoding2str (encoding)) ;
+		
+		
+		psf_log_printf (psf, "  fourbytes   : %X\n", fourbytes) ;
+								
+		psf->sf.channels = channels ;
+
+		psf->dataoffset = offset ;
+		psf->dataend    = psf->filelength - 1 ;
+
+		if (size + 31 > psf->filelength)
+		{	psf_log_printf (psf, "Seems to be a truncated file.\n") ;
+			size = psf->filelength - 31 ;
+			}
+		else if (size + 31 < psf->filelength)
+			psf_log_printf (psf, "Seems to be a multi-segment file.\n") ;
+			
+		switch (encoding)
+		{	case 0 :
+					psf->sf.format = SF_FORMAT_VOC | SF_FORMAT_PCM_U8 ;
+					psf->bytewidth = 1 ;
+					break ;
+									
+			case 4 :
+					psf->sf.format = SF_FORMAT_VOC | SF_FORMAT_PCM_16 ;
+					psf->bytewidth = 2 ;
+					break ;
+									
+			case 6 :
+					psf->sf.format = SF_FORMAT_VOC | SF_FORMAT_ALAW ;
+					psf->bytewidth = 1 ;
+					break ;
+									
+			case 7 :
+					psf->sf.format = SF_FORMAT_VOC | SF_FORMAT_ULAW ;
+					psf->bytewidth = 1 ;
+					break ;
+									
+			default : /* Unknown */
+					return SFE_UNKNOWN_FORMAT ;
+					break ;
+			} ;
+
 		} ;
 
-
-
-	psf->sf.seekable = SF_TRUE ;
-
-	psf->close = (func_close) voc_close ;
-
 	return 0 ;
-} /* voc_open_read */
+} /* voc_read_header */
 
-int 	
-voc_open_write	(SF_PRIVATE *psf)
-{	
-
-	return 0 ;
-} /* voc_open_write */
-
-/*------------------------------------------------------------------------------
+/*====================================================================================
 */
+
+static int 
+voc_write_header (SF_PRIVATE *psf)
+{	int		rate_const, subformat ;
+	
+	subformat = psf->sf.format & SF_FORMAT_SUBMASK ;
+	/* Reset the current header length to zero. */
+	psf->header [0] = 0 ;
+	psf->headindex = 0 ;
+	psf_fseek (psf->filedes, 0, SEEK_SET) ;
+
+	/* VOC marker and 0x1A byte. */
+	psf_binheader_writef (psf, "eb1", "Creative Voice File", 19, 0x1A) ;
+	
+	/* Data offset, version and other. */
+	psf_binheader_writef (psf, "e222", 26, 0x0114, 0x111F) ;
+	
+	/*	Use same logic as SOX. 
+	**	If the file is mono 8 bit data, use VOC_SOUND_DATA.
+	**	If the file is mono 16 bit data, use VOC_EXTENED.
+	**	Otherwise use VOC_EXTENED_2.
+	*/
+
+	if (subformat == SF_FORMAT_PCM_U8 && psf->sf.channels == 1)
+	{	psf->chars = SF_CHARS_UNSIGNED ;
+	
+		/* samplerate = 1000000 / (256 - rate_const) ; */
+		rate_const = 256 - 1000000 / psf->sf.samplerate ;
+
+		/* First type marker, length, rate_const and compression */
+		psf_binheader_writef (psf, "e1311", VOC_SOUND_DATA, (int) (psf->datalength + 1), rate_const, 0) ;
+		}
+	else if (subformat == SF_FORMAT_PCM_U8 && psf->sf.channels == 2)
+	{	psf->chars = SF_CHARS_UNSIGNED ;
+	
+		/* sample_rate = 128000000 / (65536 - rate_short) ; */
+		rate_const = 65536 - 128000000 / psf->sf.samplerate ;
+	
+		/* First write the VOC_EXTENDED section
+		** 		marker, length, rate_const and compression 
+		*/
+		psf_binheader_writef (psf, "e13211", VOC_EXTENDED, 4, rate_const, 0, 1) ;
+
+		/* samplerate = 1000000 / (256 - rate_const) ; */
+		rate_const = 256 - 1000000 / psf->sf.samplerate ;
+
+		/*	Now write the VOC_SOUND_DATA section
+		** 		marker, length, rate_const and compression 
+		*/
+		psf_binheader_writef (psf, "e1311", VOC_SOUND_DATA, (int) (psf->datalength + 1), rate_const, 0) ;
+		}
+	else
+	{	int length ;
+	
+		if (psf->sf.channels < 1 || psf->sf.channels > 2)
+			return SFE_CHANNEL_COUNT ;
+	
+		switch (subformat)
+		{	case SF_FORMAT_PCM_U8 :
+					psf->bytewidth = 1 ;
+					length = psf->sf.samples * psf->sf.channels * psf->bytewidth + 12 ;
+					/* Marker, length, sample rate, bitwidth, stereo flag, encoding and fourt zero bytes. */
+					psf_binheader_writef (psf, "e1341124", VOC_EXTENDED_II, length, psf->sf.samplerate, 16, psf->sf.channels, 4, 0) ;
+					break ;
+
+			case SF_FORMAT_PCM_16 :
+					psf->bytewidth = 2 ;
+					length = psf->sf.samples * psf->sf.channels * psf->bytewidth + 12;
+					/* Marker, length, sample rate, bitwidth, stereo flag, encoding and fourt zero bytes. */
+					psf_binheader_writef (psf, "e1341124", VOC_EXTENDED_II, length, psf->sf.samplerate, 16, psf->sf.channels, 4, 0) ;
+					break ;
+
+			case SF_FORMAT_ALAW :
+					psf->bytewidth = 1 ;
+					length = psf->sf.samples * psf->sf.channels * psf->bytewidth + 12;
+					psf_binheader_writef (psf, "e1341124", VOC_EXTENDED_II, length, psf->sf.samplerate, 8, psf->sf.channels, 6, 0) ;
+					break ;
+				
+			case SF_FORMAT_ULAW :
+					psf->bytewidth = 1 ;
+					length = psf->sf.samples * psf->sf.channels * psf->bytewidth + 12 ;
+					psf_binheader_writef (psf, "e1341124", VOC_EXTENDED_II, length, psf->sf.samplerate, 8, psf->sf.channels, 7, 0) ;
+					break ;
+
+			default : return SFE_UNIMPLEMENTED ;
+			} ;
+		} ;
+		
+	psf_fwrite (psf->header, psf->headindex, 1, psf->filedes) ;
+	psf->dataoffset = psf->headindex ;
+
+	return 0 ;
+} /* voc_write_header */
 
 static int	
 voc_close	(SF_PRIVATE  *psf)
 {	
-	if (psf->mode == SF_MODE_WRITE)
+	if (psf->mode == SFM_WRITE || psf->mode == SFM_RDWR)
 	{	/*  Now we know for certain the length of the file we can re-write 
 		**	correct values for the FORM, 8SVX and BODY chunks.
 		*/
-                
+		unsigned byte = VOC_TERMINATOR ;
+		
+		
+		psf_fseek (psf->filedes, 0, SEEK_END) ;
+		
+		/* Write terminator */
+		psf_fwrite (&byte, 1, 1, psf->filedes) ;
+		
+		psf->filelength = psf_ftell (psf->filedes) ;
+		psf_fseek (psf->filedes, 0, SEEK_SET) ;
+		
+		psf->datalength = psf->filelength - psf->dataoffset ;
+ 		psf->sf.samples = psf->datalength / (psf->bytewidth * psf->sf.channels) ;
+		
+		voc_write_header (psf) ;
 		} ;
 
-	if (psf->fdata)
-		free (psf->fdata) ;
-	psf->fdata = NULL ;
-	
 	return 0 ;
 } /* voc_close */
 
+static const 	char* 
+voc_encoding2str (int encoding)
+{
+	switch (encoding)
+	{	case 0 :	return "8 bit unsigned PCM" ;
+		case 4 :	return "16 bit signed PCM" ;
+		case 6 :	return "A-law" ;
+		case 7 :	return "u-law" ;
+		default :	break ;
+		}
+	return "*** Unknown ***" ;
+} /* voc_encoding2str */
+
+/*====================================================================================
+*/
+
+#if 0
+static int 
+voc_multi_init (SF_PRIVATE *psf, VOC_DATA *pvoc)
+{
+	psf->sf.samples = 0 ;
+
+	if (pvoc->bitwidth == 8)
+	{	psf->read_short  = voc_multi_read_uc2s ;
+		psf->read_int    = voc_multi_read_uc2i ;
+		psf->read_float  = voc_multi_read_uc2f ;
+		psf->read_double = voc_multi_read_uc2d ;
+		return 0 ;
+		} ;
+		
+	if (pvoc->bitwidth == 16)
+	{	psf->read_short  = voc_multi_read_les2s ;
+		psf->read_int    = voc_multi_read_les2i ;
+		psf->read_float  = voc_multi_read_les2f ;
+		psf->read_double = voc_multi_read_les2d ;
+		return 0 ;
+		} ;
+
+	psf_log_printf (psf, "Error : bitwith != 8 && bitwidth != 16.\n") ;
+	
+	return SFE_UNIMPLEMENTED ;
+} /* voc_multi_read_int */
+
+/*------------------------------------------------------------------------------------
+*/
+
+static int
+voc_multi_read_uc2s  (SF_PRIVATE *psf, short *ptr, int len) 
+{
+
+	return 0 ;
+} /* voc_multi_read_uc2s */
+
+static int
+voc_multi_read_les2s (SF_PRIVATE *psf, short *ptr, int len) 
+{
+
+	return 0 ;
+} /* voc_multi_read_les2s */
+
+
+static int
+voc_multi_read_uc2i  (SF_PRIVATE *psf, int *ptr, int len) 
+{
+
+	return 0 ;
+} /* voc_multi_read_uc2i */
+
+static int
+voc_multi_read_les2i (SF_PRIVATE *psf, int *ptr, int len) 
+{
+
+	return 0 ;
+} /* voc_multi_read_les2i */
+
+
+static int
+voc_multi_read_uc2f  (SF_PRIVATE *psf, float *ptr, int len) 
+{
+
+	return 0 ;
+} /* voc_multi_read_uc2f */
+
+static int
+voc_multi_read_les2f (SF_PRIVATE *psf, float *ptr, int len) 
+{
+
+	return 0 ;
+} /* voc_multi_read_les2f */
+
+
+static int
+voc_multi_read_uc2d  (SF_PRIVATE *psf, double *ptr, int len) 
+{
+
+	return 0 ;
+} /* voc_multi_read_uc2d */
+
+static int
+voc_multi_read_les2d (SF_PRIVATE *psf, double *ptr, int len) 
+{
+
+	return 0 ;
+} /* voc_multi_read_les2d */
+
+#endif
 
 /*------------------------------------------------------------------------------------
 
@@ -374,3 +731,125 @@ Bytes 7-11: zero
 
 -------------------------------------------------------------------------------------*/
 
+/*=====================================================================================
+**=====================================================================================
+**=====================================================================================
+**=====================================================================================
+*/
+
+/*------------------------------------------------------------------------
+The following is taken from the Audio File Formats FAQ dated 2-Jan-1995
+and submitted by Guido van Rossum <guido@cwi.nl>.
+--------------------------------------------------------------------------
+Creative Voice (VOC) file format
+--------------------------------
+
+From: galt@dsd.es.com
+
+(byte numbers are hex!)
+
+    HEADER (bytes 00-19)
+    Series of DATA BLOCKS (bytes 1A+) [Must end w/ Terminator Block]
+
+- ---------------------------------------------------------------
+
+HEADER:
+-------
+     byte #     Description
+     ------     ------------------------------------------
+     00-12      "Creative Voice File"
+     13         1A (eof to abort printing of file)
+     14-15      Offset of first datablock in .voc file (std 1A 00
+                in Intel Notation)
+     16-17      Version number (minor,major) (VOC-HDR puts 0A 01)
+     18-19      2's Comp of Ver. # + 1234h (VOC-HDR puts 29 11)
+
+- ---------------------------------------------------------------
+
+DATA BLOCK:
+-----------
+
+   Data Block:  TYPE(1-byte), SIZE(3-bytes), INFO(0+ bytes)
+   NOTE: Terminator Block is an exception -- it has only the TYPE byte.
+
+      TYPE   Description     Size (3-byte int)   Info
+      ----   -----------     -----------------   -----------------------
+      00     Terminator      (NONE)              (NONE)
+      01     Sound data      2+length of data    *
+      02     Sound continue  length of data      Voice Data
+      03     Silence         3                   **
+      04     Marker          2                   Marker# (2 bytes)
+      05     ASCII           length of string    null terminated string
+      06     Repeat          2                   Count# (2 bytes)
+      07     End repeat      0                   (NONE)
+      08     Extended        4                   ***
+
+      *Sound Info Format:       **Silence Info Format:
+       ---------------------      ----------------------------
+       00   Sample Rate           00-01  Length of silence - 1
+       01   Compression Type      02     Sample Rate
+       02+  Voice Data
+
+    ***Extended Info Format:
+       ---------------------
+       00-01  Time Constant: Mono: 65536 - (256000000/sample_rate)
+                             Stereo: 65536 - (25600000/(2*sample_rate))
+       02     Pack
+       03     Mode: 0 = mono
+                    1 = stereo
+
+
+  Marker#           -- Driver keeps the most recent marker in a status byte
+  Count#            -- Number of repetitions + 1
+                         Count# may be 1 to FFFE for 0 - FFFD repetitions
+                         or FFFF for endless repetitions
+  Sample Rate       -- SR byte = 256-(1000000/sample_rate)
+  Length of silence -- in units of sampling cycle
+  Compression Type  -- of voice data
+                         8-bits    = 0
+                         4-bits    = 1
+                         2.6-bits  = 2
+                         2-bits    = 3
+                         Multi DAC = 3+(# of channels) [interesting--
+                                       this isn't in the developer's manual]
+
+Detailed description of new data blocks (VOC files version 1.20 and above):
+
+        (Source is fax from Barry Boone at Creative Labs, 405/742-6622)
+
+BLOCK 8 - digitized sound attribute extension, must preceed block 1.
+          Used to define stereo, 8 bit audio
+        BYTE bBlockID;       // = 8
+        BYTE nBlockLen[3];   // 3 byte length
+        WORD wTimeConstant;  // time constant = same as block 1
+        BYTE bPackMethod;    // same as in block 1
+        BYTE bVoiceMode;     // 0-mono, 1-stereo
+
+        Data is stored left, right
+
+BLOCK 9 - data block that supersedes blocks 1 and 8.  
+          Used for stereo, 16 bit.
+
+        BYTE bBlockID;          // = 9
+        BYTE nBlockLen[3];      // length 12 plus length of sound
+        DWORD dwSamplesPerSec;  // samples per second, not time const.
+        BYTE bBitsPerSample;    // e.g., 8 or 16
+        BYTE bChannels;         // 1 for mono, 2 for stereo
+        WORD wFormat;           // see below
+        BYTE reserved[4];       // pad to make block w/o data 
+                                // have a size of 16 bytes
+
+        Valid values of wFormat are:
+
+                0x0000  8-bit unsigned PCM
+                0x0001  Creative 8-bit to 4-bit ADPCM
+                0x0002  Creative 8-bit to 3-bit ADPCM
+                0x0003  Creative 8-bit to 2-bit ADPCM
+                0x0004  16-bit signed PCM
+                0x0006  CCITT a-Law
+                0x0007  CCITT u-Law
+                0x02000 Creative 16-bit to 4-bit ADPCM
+
+        Data is stored left, right
+
+------------------------------------------------------------------------*/

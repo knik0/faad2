@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1999-2001 Erik de Castro Lopo <erikd@zip.com.au>
+** Copyright (C) 1999-2002 Erik de Castro Lopo <erikd@zip.com.au>
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU Lesser General Public License as published by
@@ -16,161 +16,86 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-
 #include	<stdio.h>
-#include	<unistd.h>
-#include	<fcntl.h>
-#include	<string.h>
-#include	<ctype.h>
 
 #include	"sndfile.h"
 #include	"config.h"
-#include	"sfendian.h"
 #include	"common.h"
 
-static long	raw_seek   (SF_PRIVATE *psf, long offset, int whence) ;
+/*-static sf_count_t	raw_seek   (SF_PRIVATE *psf, sf_count_t offset, int whence) ;-*/
 
 /*------------------------------------------------------------------------------
-** Public functions.
+** Public function.
 */
 
-int 	raw_open_read	(SF_PRIVATE *psf)
-{	unsigned int subformat ;
-	int			error ;
-	
-	if(! psf->sf.channels || ! psf->sf.pcmbitwidth)
-		return SFE_RAW_READ_BAD_SPEC ;
+int 	
+raw_open	(SF_PRIVATE *psf)
+{	int	subformat, error = SFE_NO_ERROR ;
 		
 	subformat = psf->sf.format & SF_FORMAT_SUBMASK ;
 
-	psf->endian = 0 ;
+	psf->endian = psf->sf.format & SF_FORMAT_ENDMASK ;
 
-	if (subformat == SF_FORMAT_PCM_BE)
+	if (CPU_IS_BIG_ENDIAN && (psf->endian == 0 || psf->endian == SF_ENDIAN_CPU))
 		psf->endian = SF_ENDIAN_BIG ;
-	else if (subformat == SF_FORMAT_PCM_LE)
+	else if (CPU_IS_LITTLE_ENDIAN && (psf->endian == 0 || psf->endian == SF_ENDIAN_CPU))
 		psf->endian = SF_ENDIAN_LITTLE ;
-	else if (subformat == SF_FORMAT_PCM_S8)
-		psf->chars = SF_CHARS_SIGNED ;
-	else if (subformat == SF_FORMAT_PCM_U8)
-		psf->chars = SF_CHARS_UNSIGNED ;
-	else
-		return SFE_RAW_READ_BAD_SPEC ;
-		
-	psf->seek_func = (func_seek) raw_seek ;
 
-	psf->sf.seekable = SF_TRUE ;
-	psf->sf.sections = 1 ;
-
+	psf->blockwidth = psf->bytewidth * psf->sf.channels ;
 	psf->dataoffset = 0 ;
-	psf->bytewidth  = BITWIDTH2BYTES (psf->sf.pcmbitwidth) ;
-	psf->blockwidth = psf->sf.channels * psf->bytewidth ;
+	psf->datalength = psf->filelength ;
 
-	if ((error = pcm_read_init (psf)))
-		return error ;
-		
-	if (psf->blockwidth)
-		psf->sf.samples = psf->filelength / psf->blockwidth ;
+	switch (subformat)
+	{	case SF_FORMAT_PCM_S8 :
+				psf->chars = SF_CHARS_SIGNED ;
+				error = pcm_init (psf) ;
+				break ;
 
- 	psf->datalength = psf->filelength - psf->dataoffset ;
-
- 	psf->current  = 0 ;
-	
-	return 0 ;
-} /* raw_open_read */
-
-/*------------------------------------------------------------------------------
-*/
-
-int 	raw_open_write	(SF_PRIVATE *psf)
-{	unsigned int	subformat, big_endian_file ;
-	int error ;
-		
-	subformat = psf->sf.format & SF_FORMAT_SUBMASK ;
-
-	if (subformat == SF_FORMAT_PCM_BE)
-		big_endian_file = 1 ;
-	else if (subformat == SF_FORMAT_PCM_LE)
-		big_endian_file = 0 ;
-	else if (subformat == SF_FORMAT_PCM_S8 || subformat == SF_FORMAT_PCM_U8)
-		big_endian_file = 0 ;
-	else
-		return	SFE_BAD_OPEN_FORMAT ;
-		
-	psf->bytewidth = BITWIDTH2BYTES (psf->sf.pcmbitwidth) ;
-		
-	psf->endian      = big_endian_file ? SF_ENDIAN_BIG : SF_ENDIAN_LITTLE ;
-	psf->sf.seekable = SF_TRUE ;
-	psf->blockwidth  = psf->bytewidth * psf->sf.channels ;
- 	psf->dataoffset  = 0 ;
-	psf->datalength  = psf->blockwidth * psf->sf.samples ;
-	psf->filelength  = psf->datalength ;
-	psf->error       = 0 ;
-
-	if (subformat == SF_FORMAT_PCM_S8)
-		psf->chars = SF_CHARS_SIGNED ;
-	else if (subformat == SF_FORMAT_PCM_U8)
-		psf->chars = SF_CHARS_UNSIGNED ;
-	
-	if ((error = pcm_write_init (psf)))
-		return error ;
-		
-	return 0 ;
-} /* raw_open_write */
-
-/*------------------------------------------------------------------------------
-*/
-
-static long
-raw_seek   (SF_PRIVATE *psf, long offset, int whence)
-{	long position ;
-
-	if (! (psf->blockwidth && psf->datalength))
-	{	psf->error = SFE_BAD_SEEK ;
-		return	((long) -1) ;
-		} ;
-
-	position = ftell (psf->file) ;
-	offset = offset * psf->blockwidth ;
-		
-	switch (whence)
-	{	case SEEK_SET :
-				if (offset < 0 || offset > psf->datalength)
-				{	psf->error = SFE_BAD_SEEK ;
-					return	((long) -1) ;
-					} ;
+		case SF_FORMAT_PCM_U8 :
+				psf->chars = SF_CHARS_UNSIGNED ;
+				error = pcm_init (psf) ;
 				break ;
 				
-		case SEEK_CUR :
-				if (psf->current + offset < 0 || psf->current + offset > psf->datalength)
-				{	psf->error = SFE_BAD_SEEK ;
-					return	((long) -1) ;
-					} ;
-				offset = position + offset ;
+		case SF_FORMAT_PCM_16 :
+		case SF_FORMAT_PCM_24 :
+		case SF_FORMAT_PCM_32 :
+				error = pcm_init (psf) ;
 				break ;
-				
-		case SEEK_END :
-				if (offset > 0 || psf->datalength + offset < 0)
-				{	psf->error = SFE_BAD_SEEK ;
-					return	((long) -1) ;
-					} ;
-				offset = psf->datalength + offset ;
-				break ;
-				
-		default : 
-				psf->error = SFE_BAD_SEEK ;
-				return	((long) -1) ;
-		} ;
 		
-	if (psf->mode == SF_MODE_READ)
-		fseek (psf->file, offset, SEEK_SET) ;
-	else
-	{	/* What to do about write??? */ 
-		psf->error = SFE_BAD_SEEK ;
-		return	((long) -1) ;
+		case SF_FORMAT_ULAW :
+				error = ulaw_init (psf) ;
+				break ;
+		
+		case SF_FORMAT_ALAW :
+				error = alaw_init (psf) ;
+				break ;
+		
+		case SF_FORMAT_FLOAT :
+				error = float32_init (psf) ;
+				break ;
+
+		case SF_FORMAT_DOUBLE :
+				error = double64_init (psf) ;
+				break ;
+
+		case SF_FORMAT_DWVW_12 :
+				error = dwvw_init (psf, 12) ;
+				break ;
+
+		case SF_FORMAT_DWVW_16 :
+				error = dwvw_init (psf, 16) ;
+				break ;
+
+		case SF_FORMAT_DWVW_24 :
+				error = dwvw_init (psf, 24) ;
+				break ;
+
+		case SF_FORMAT_GSM610 :
+				error = gsm610_init (psf) ;
+				break ;
+
+		default : return SFE_BAD_OPEN_FORMAT ;
 		} ;
 
-	psf->current = offset / psf->blockwidth ;
-
-	return psf->current ;
-} /* raw_seek */
-
+	return error ;
+} /* raw_open */

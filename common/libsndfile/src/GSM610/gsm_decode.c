@@ -4,14 +4,13 @@
  * details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
  */
 
-/* $Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/gsm_decode.c,v 1.1 2002/01/14 19:15:54 menno Exp $ */
+/* $Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/gsm_decode.c,v 1.2 2002/07/25 12:22:13 menno Exp $ */
 
 #include "private.h"
 
 #include "gsm.h"
-#include "proto.h"
 
-int gsm_decode P3((s, c, target), gsm s, gsm_byte * c, gsm_signal * target)
+int gsm_decode (gsm s, gsm_byte * c, gsm_signal * target)
 {
 	word  	LARc[8], Nc[4], Mc[4], bc[4], xmaxc[4], xmc[13*4];
 

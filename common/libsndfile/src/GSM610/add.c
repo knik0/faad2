@@ -4,7 +4,7 @@
  * details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
  */
 
-/* $Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/add.c,v 1.1 2002/01/14 19:15:54 menno Exp $ */
+/* $Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/add.c,v 1.2 2002/07/25 12:22:13 menno Exp $ */
 
 /*
  *  See private.h for the more commonly used macro versions.
@@ -15,30 +15,29 @@
 
 #include	"private.h"
 #include	"gsm.h"
-#include	"proto.h"
 
 #define	saturate(x) 	\
 	((x) < MIN_WORD ? MIN_WORD : (x) > MAX_WORD ? MAX_WORD: (x))
 
-word gsm_add P2((a,b), word a, word b)
+word gsm_add ( word a, word b)
 {
 	longword sum = (longword)a + (longword)b;
 	return saturate(sum);
 }
 
-word gsm_sub P2((a,b), word a, word b)
+word gsm_sub ( word a, word b)
 {
 	longword diff = (longword)a - (longword)b;
 	return saturate(diff);
 }
 
-word gsm_mult P2((a,b), word a, word b)
+word gsm_mult ( word a, word b)
 {
 	if (a == MIN_WORD && b == MIN_WORD) return MAX_WORD;
 	else return SASR( (longword)a * (longword)b, 15 );
 }
 
-word gsm_mult_r P2((a,b), word a, word b)
+word gsm_mult_r ( word a, word b)
 {
 	if (b == MIN_WORD && a == MIN_WORD) return MAX_WORD;
 	else {
@@ -48,18 +47,18 @@ word gsm_mult_r P2((a,b), word a, word b)
 	}
 }
 
-word gsm_abs P1((a), word a)
+word gsm_abs (word a)
 {
 	return a < 0 ? (a == MIN_WORD ? MAX_WORD : -a) : a;
 }
 
-longword gsm_L_mult P2((a,b),word a, word b)
+longword gsm_L_mult (word a, word b)
 {
 	assert( a != MIN_WORD || b != MIN_WORD );
 	return ((longword)a * (longword)b) << 1;
 }
 
-longword gsm_L_add P2((a,b), longword a, longword b)
+longword gsm_L_add ( longword a, longword b)
 {
 	if (a < 0) {
 		if (b >= 0) return a + b;
@@ -75,7 +74,7 @@ longword gsm_L_add P2((a,b), longword a, longword b)
 	}
 }
 
-longword gsm_L_sub P2((a,b), longword a, longword b)
+longword gsm_L_sub ( longword a, longword b)
 {
 	if (a >= 0) {
 		if (b >= 0) return a - b;
@@ -114,7 +113,7 @@ static unsigned char const bitoff[ 256 ] = {
 	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-word gsm_norm P1((a), longword a )
+word gsm_norm (longword a )
 /*
  * the number of left shifts needed to normalize the 32 bit
  * variable L_var1 for positive values on the interval
@@ -219,7 +218,7 @@ longword gsm_L_asr (longword a, int n)
  *	  >= num > 0
  */
 
-word gsm_div P2((num,denum), word num, word denum)
+word gsm_div (word num, word denum)
 {
 	longword	L_num   = num;
 	longword	L_denum = denum;

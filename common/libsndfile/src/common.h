@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1999-2001 Erik de Castro Lopo <erikd@zip.com.au>
+** Copyright (C) 1999-2002 Erik de Castro Lopo <erikd@zip.com.au>
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU Lesser General Public License as published by
@@ -16,13 +16,14 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
+#include  "config.h"
+
 #ifndef COMMON_H_INCLUDED
 #define COMMON_H_INCLUDED
 
-#ifdef _WIN32
+#if (defined (WIN32) || defined (_WIN32))
 	#pragma pack(push,1)
 #endif
-
 
 #define	SF_BUFFER_LEN			(4096)
 #define	SF_FILENAME_LEN			(256)
@@ -33,66 +34,47 @@
 
 #define		PEAK_CHANNEL_COUNT	16
 
+/*	For some reason SIGNED_SIZEOF returns an unsigned  value which causes
+**	a warning when that value is added or subtracted from a signed
+**	value. Use SIGNED_SIZEOF instead.
+*/
+#define		SIGNED_SIZEOF(x)	((int) sizeof (x))
+
+#if (defined (WIN32) || defined (_WIN32))
+#	define	SF_MAX_COUNT		0x7FFFFFFFFFFFFFFFI64
+#elif (SIZEOF_OFF_T == 4)
+#	define	SF_MAX_COUNT		0x7FFFFFFF
+#elif (SIZEOF_OFF_T == 8)
+#	define	SF_MAX_COUNT		0x7FFFFFFFFFFFFFFFLL
+#else
+#	error "sizeof (long) != 4 && sizeof (long) != 8"
+#endif
+
+#define	SF_MAX_UINT				0xFFFFFFFF
+#define	SF_MAX_INT				0x7FFFFFFF
+
+#if (defined (WIN32) || defined (_WIN32))
+	#define	SIZEOF_SF_COUNT_T	8
+#else
+	#define	SIZEOF_SF_COUNT_T	SIZEOF_OFF_T
+#endif
+
 enum
-{	SF_MODE_READ		= 11, 
-	SF_MODE_WRITE		= 12,
-	SF_MODE_RW			= 13,	/* Unlikely that RW will ever be implemented. */ 
-	
-	/* PEAK chunk location. */
+{	/* PEAK chunk location. */
 	SF_PEAK_START		= 42,
 	SF_PEAK_END			= 43,
 
-	/* Two endian enums. */
-	SF_ENDIAN_LITTLE	= 100, 
-	SF_ENDIAN_BIG		= 101,
-	
+	/* PEAK chunk location. */
+	SF_SCALE_MAX		= 52,
+	SF_SCALE_MIN		= 53,
+
 	/* Char type for 8 bit files. */
 	SF_CHARS_SIGNED		= 200,
 	SF_CHARS_UNSIGNED	= 201
 } ; 
 
-/*	Processor floating point capabilities. float32_get_capabilities () in
-**	src/float32.c returns one of the latter three values.
-*/
-enum
-{	FLOAT_UNKNOWN		= 0x00,
-	FLOAT_CAN_RW_LE		= 0x23,
-	FLOAT_CAN_RW_BE		= 0x34,
-	FLOAT_BROKEN_LE		= 0x35,
-	FLOAT_BROKEN_BE		= 0x36
-} ;
-
-enum
-{	SF_FALSE = 0, 
-	SF_TRUE = 1
-} ; 
-
-/* Command values for sf_command (). These are obtained using the Python
-** script sf_command.py in the top level directory of the libsndfile sources.
-*/
-enum
-{	SFC_LIB_VERSION	= 0x1048C,
-	SFC_READ_TEXT	= 0x054F0,
-	SFC_WRITE_TEXT	= 0x0B990,
-	SFC_NORM_FLOAT	= 0x0914A,
-	SFC_NORM_DOUBLE	= 0x1226D,
-	SFC_SCALE_MODE	= 0x0A259,
-	SFC_ADD_PEAK	= 0x96F53
-} ;
-
-/*	Function pointer typedefs. */
-
-typedef	int	(*func_seek) 	(void*, long, int) ;
-
-typedef	int	(*func_short)	(void*, short *ptr, unsigned int len) ;
-typedef	int	(*func_int)		(void*, int *ptr, unsigned int len) ;
-typedef	int	(*func_float)	(void*, float *ptr, unsigned int len) ;
-typedef	int	(*func_double)	(void*, double *ptr, unsigned int len, int normalize) ;
-
-typedef	int	(*func_wr_hdr)	(void*) ;
-typedef	int	(*func_command)	(void*, int command, void *data, int datasize) ;
-
-typedef	int	(*func_close)	(void*) ;
+#define		SFM_MASK 	(SFM_READ | SFM_WRITE | SFM_RDWR)
+#define		SFM_UNMASK 	(~SFM_MASK)
 
 /*---------------------------------------------------------------------------------------
 **	PEAK_CHUNK - This chunk type is common to both AIFF and WAVE files although their 
@@ -116,7 +98,7 @@ typedef struct
 **	contents. 
 */
 
-typedef struct
+typedef struct sf_private_tag
 {	/* Force the compiler to double align the start of buffer. */
 	double			buffer		[SF_BUFFER_LEN/sizeof(double)] ;
 	char			filename	[SF_FILENAME_LEN] ;
@@ -125,7 +107,7 @@ typedef struct
 	** of common.c
 	*/
 	char			logbuffer	[SF_BUFFER_LEN] ;
-	unsigned char	header		[SF_HEADER_LEN] ;
+	unsigned char	header		[SF_HEADER_LEN] ; /* Must be unsigned */
 
 	/* For storing text from header. */
 	char			headertext	[SF_TEXT_LEN] ;
@@ -138,13 +120,13 @@ typedef struct
 	unsigned int	headindex, headcurrent ;
 	int				has_text ;
 	
-	FILE 			*file ;
+	int 			filedes ;
 	int				error ;
 	
-	int				mode ;			/* Open mode : SF_MODE_READ or SF_MODE_WRITE. */
+	int				mode ;			/* Open mode : SFM_READ, SFM_WRITE or SFM_RDWR. */
 	int				endian ;		/* File endianness : SF_ENDIAN_LITTLE or SF_ENDIAN_BIG. */
 	int				chars ;			/* Chars are SF_CHARS_SIGNED or SF_CHARS_UNSIGNED. */
-	int				fl32_endswap ;	/* Need to endswap float32s? */
+	int				float_endswap ;	/* Need to endswap float32s? */
 	
 	SF_INFO			sf ; 	
 
@@ -152,36 +134,41 @@ typedef struct
 	int				peak_loc ;		/* Write a PEAK chunk at the start or end of the file? */
 	PEAK_CHUNK		peak ;			
 	
-	long			dataoffset ;	/* Offset in number of bytes from beginning of file. */
-	long			datalength ;	/* Length in bytes of the audio data. */
-	long			tailstart ;		/* Offset to file tailer. */
-	unsigned int	blockwidth ;	/* Size in bytes of one set of interleaved samples. */
-	unsigned int	bytewidth ;		/* Size in bytes of one sample (one channel). */
+	sf_count_t		dataoffset ;	/* Offset in number of bytes from beginning of file. */
+	sf_count_t		datalength ;	/* Length in bytes of the audio data. */
+	sf_count_t		dataend ;		/* Offset to file tailer. */
 
-	long			filelength ;
-	long			current ;
+	int				blockwidth ;	/* Size in bytes of one set of interleaved samples. */
+	int				bytewidth ;		/* Size in bytes of one sample (one channel). */
 
-	void			*fdata ;
-	
-	int				scale_mode ;
+	sf_count_t		filelength ;
+
+	int				last_op ;		/* Last operation; either SFM_READ or SFM_WRITE */ 	
+	sf_count_t		read_current ;
+	sf_count_t		write_current ;
+
+	void			*fdata ;		/*	This is a pointer to dynamically allocated file format 
+									**	specific data. 
+									*/
 	int				norm_double ;
 	int				norm_float ;
+	
+	/* A set of file specific function pointers */
 
-	func_seek		seek_func ;
+	sf_count_t		(*read_short)	(struct sf_private_tag*, short *ptr, sf_count_t len) ;
+	sf_count_t		(*read_int)		(struct sf_private_tag*, int *ptr, sf_count_t len) ;
+	sf_count_t		(*read_float)	(struct sf_private_tag*, float *ptr, sf_count_t len) ;
+	sf_count_t		(*read_double)	(struct sf_private_tag*, double *ptr, sf_count_t len) ;
 
-	func_short		read_short ;
-	func_int		read_int ;
-	func_float		read_float ;
-	func_double		read_double ;
+	sf_count_t		(*write_short)	(struct sf_private_tag*, short *ptr, sf_count_t len) ;
+	sf_count_t		(*write_int)	(struct sf_private_tag*, int *ptr, sf_count_t len) ;
+	sf_count_t		(*write_float)	(struct sf_private_tag*, float *ptr, sf_count_t len) ;
+	sf_count_t		(*write_double)	(struct sf_private_tag*, double *ptr, sf_count_t len) ;
 
-	func_short		write_short ;
-	func_int		write_int ;
-	func_float		write_float ;
-	func_double		write_double ;
-
-	func_wr_hdr		write_header ;
-	func_command	command ;
-	func_close		close ;
+	sf_count_t		(*new_seek) 	(struct sf_private_tag*, int mode, sf_count_t samples_from_start) ;
+	int				(*write_header)	(struct sf_private_tag*) ;
+	int				(*command)		(struct sf_private_tag*, int command, void *data, int datasize) ;
+	int				(*close)		(struct sf_private_tag*) ;
 
 } SF_PRIVATE ;
 
@@ -189,15 +176,15 @@ enum
 {	SFE_NO_ERROR	= 0,
 
 	SFE_BAD_FILE,
+	SFE_BAD_FILE_READ,
 	SFE_OPEN_FAILED,
 	SFE_BAD_OPEN_FORMAT,
 	SFE_BAD_SNDFILE_PTR,
 	SFE_BAD_SF_INFO_PTR,
-	SFE_BAD_INT_FD,
+	SFE_BAD_SF_INCOMPLETE,
+	SFE_BAD_FILE_PTR,
 	SFE_BAD_INT_PTR,
 	SFE_MALLOC_FAILED, 
-	SFE_BAD_SEEK, 
-	SFE_NOT_SEEKABLE,
 	SFE_UNIMPLEMENTED,
 	SFE_BAD_READ_ALIGN,
 	SFE_BAD_WRITE_ALIGN,
@@ -209,8 +196,21 @@ enum
 	SFE_SHORT_READ,
 	SFE_SHORT_WRITE,
 	SFE_INTERNAL,
+	SFE_LOG_OVERRUN,
 	SFE_BAD_CONTROL_CMD,
+	SFE_BAD_ENDIAN,
+	SFE_CHANNEL_COUNT,
 	
+	SFE_BAD_SEEK, 
+	SFE_NOT_SEEKABLE,
+	SFE_AMBIGUOUS_SEEK,
+	SFE_WRONG_SEEK,
+	SFE_SEEK_FAILED,
+	
+	SFE_BAD_OPEN_MODE,
+	SFE_OPEN_PIPE_RDWR,
+	SFE_RDWR_POSITION,
+
 	SFE_WAV_NO_RIFF,
 	SFE_WAV_NO_WAVE,
 	SFE_WAV_NO_FMT,
@@ -262,33 +262,59 @@ enum
 	SFE_SMTD_NO_SAMR, 
 
 	SFE_VOC_NO_CREATIVE, 
+	SFE_VOC_BAD_FORMAT, 
 	SFE_VOC_BAD_VERSION, 
 	SFE_VOC_BAD_MARKER, 
+	SFE_VOC_BAD_SECTIONS, 
+	SFE_VOC_MULTI_SAMPLERATE, 
+	SFE_VOC_MULTI_SECTION, 
+	SFE_VOC_MULTI_PARAM, 
+	SFE_VOC_SECTION_COUNT, 
 
 	SFE_IRCAM_NO_MARKER,
 	SFE_IRCAM_BAD_CHANNELS,
 	SFE_IRCAM_UNKNOWN_FORMAT,
 
+	SFE_W64_64_BIT,
+	SFE_W64_NO_RIFF,
+	SFE_W64_NO_WAVE,
+	SFE_W64_NO_FMT,
+	SFE_W64_NO_DATA,
+	SFE_W64_FMT_SHORT,
+	SFE_W64_FMT_TOO_BIG,
+	SFE_W64_ADPCM_NOT4BIT,
+	SFE_W64_ADPCM_CHANNELS,
+	SFE_W64_GSM610_FORMAT,
+
+	SFE_DWVW_BAD_BITWIDTH,
+	
 	SFE_MAX_ERROR			/* This must be last in list. */
 } ;
 
-/* Get the float32 capability of the processor at run time.
-**	Implemented in src/float32.c.
+int subformat_to_bytewidth (int format) ;
+int s_bitwidth_to_subformat (int bits) ;
+int u_bitwidth_to_subformat (int bits) ;
+
+/*  Functions for reading and writing floats and doubles on processors
+**	with non-IEEE floats/doubles.
 */
-int		float32_get_capability (int endianness) ;
 float	float32_read  (unsigned char *cptr) ;
 void	float32_write (float in, unsigned char *out) ;
 
+double	double64_read  (unsigned char *cptr) ;
+void	double64_write (double in, unsigned char *out) ;
 
 /* Endian swapping routines implemented in src/common.h. */
 
-void	endswap_short_array	(short *ptr, int len) ;
-void	endswap_int_array 	(int *ptr, int len) ;
+void	endswap_short_array	(short *ptr, sf_count_t len) ;
+void	endswap_int_array 	(int *ptr, sf_count_t len) ;
+/* Always 8 byte values whether sizeof (long) == 8 or not. */
+void	endswap_long_array  (long *ptr, sf_count_t len) ; 
 
 /* Functions for writing to the internal logging buffer. */
 
 void	psf_log_printf		(SF_PRIVATE *psf, char *format, ...) ;
-void	psf_log_SF_INFO 		(SF_PRIVATE *psf) ;
+void	psf_log_SF_INFO 	(SF_PRIVATE *psf) ;
 
 /* Functions used when writing file headers. */
 
@@ -305,64 +331,102 @@ void	peak_update_short	(SF_PRIVATE *psf, short *ptr, size_t items) ;
 void	peak_update_int		(SF_PRIVATE *psf, int *ptr, size_t items) ;
 void	peak_update_double	(SF_PRIVATE *psf, double *ptr, size_t items) ;
 
-/* Init functions for a number of common data encodings. */
+/* Functions defined in command.c. */
 
-int 	pcm_read_init  (SF_PRIVATE *psf) ;
-int 	pcm_write_init (SF_PRIVATE *psf) ;
+int		psf_get_format_simple_count	(void) ;
+int		psf_get_format_simple		(SF_FORMAT_INFO *data) ;
 
-int 	ulaw_read_init  (SF_PRIVATE *psf) ;
-int 	ulaw_write_init (SF_PRIVATE *psf) ;
+int		psf_get_format_major_count	(void) ;
+int		psf_get_format_major		(SF_FORMAT_INFO *data) ;
 
-int 	alaw_read_init  (SF_PRIVATE *psf) ;
-int 	alaw_write_init (SF_PRIVATE *psf) ;
+int		psf_get_format_subtype_count	(void) ;
+int		psf_get_format_subtype		(SF_FORMAT_INFO *data) ;
 
-int 	float32_read_init  (SF_PRIVATE *psf) ;
-int 	float32_write_init (SF_PRIVATE *psf) ;
+double	psf_calc_signal_max 		(SF_PRIVATE *psf) ;
 
-/* Functions for reading and writing different file formats.*/
+/* Default seek function. Use for PCM and float encoded data. */
+sf_count_t  psf_default_seek (SF_PRIVATE *psf, int mode, sf_count_t samples_from_start) ;
 
-int		aiff_open_read	(SF_PRIVATE *psf) ;
-int		aiff_open_write	(SF_PRIVATE *psf) ;
+/*------------------------------------------------------------------------------------ 
+**	File I/O functions which will allow access to large files (> 2 Gig) on
+**	some 32 bit OSes. Implementation in file_io.c.
+*/ 
 
-int		au_open_read	(SF_PRIVATE *psf) ;
-int		au_nh_open_read	(SF_PRIVATE *psf) ;	/* Headerless version of AU. */
-int		au_open_write	(SF_PRIVATE *psf) ;
+int psf_open (const char *pathname, int flags) ;
 
-int		wav_open_read	(SF_PRIVATE *psf) ;
-int		wav_open_write	(SF_PRIVATE *psf) ;
+sf_count_t psf_fseek (int fd, sf_count_t offset, int whence) ;
+sf_count_t psf_fread (void *ptr, sf_count_t bytes, sf_count_t count, int fd) ;
+sf_count_t psf_fwrite (void *ptr, sf_count_t bytes, sf_count_t count, int fd) ;
+sf_count_t psf_fgets (char *buffer, sf_count_t bufsize, int fd) ;
+sf_count_t psf_ftell (int fd) ;
+sf_count_t psf_get_filelen (int fd) ;
 
-int		raw_open_read	(SF_PRIVATE *psf) ;
-int		raw_open_write	(SF_PRIVATE *psf) ;
+void psf_fclearerr (int fd) ;
 
-int		paf_open_read	(SF_PRIVATE *psf) ;
-int		paf_open_write	(SF_PRIVATE *psf) ;
+int psf_ferror (int fd) ;
+int psf_fclose (int fd) ;
 
-int		svx_open_read	(SF_PRIVATE *psf) ;
-int		svx_open_write	(SF_PRIVATE *psf) ;
-
-int		nist_open_read	(SF_PRIVATE *psf) ;
-int		nist_open_write	(SF_PRIVATE *psf) ;
-
-int		smpltd_open_read	(SF_PRIVATE *psf) ;
-int		smpltd_open_write	(SF_PRIVATE *psf) ;
-
-int		voc_open_read	(SF_PRIVATE *psf) ;
-int		voc_open_write	(SF_PRIVATE *psf) ;
-
-int		rx2_open_read	(SF_PRIVATE *psf) ;
-int		rx2_open_write	(SF_PRIVATE *psf) ;
-
-int		ircam_open_read		(SF_PRIVATE *psf) ;
-int		ircam_open_write	(SF_PRIVATE *psf) ;
-
-
-/*	Win32 does seem to have snprintf and vsnprintf but prepends
-**	the names with an underscore. Why?
+/*------------------------------------------------------------------------------------ 
+** Functions for reading and writing different file formats.
 */
 
-#ifdef	WIN32
-#define	snprintf	_snprintf
-#define	vsnprintf	_vsnprintf
+int		aiff_open	(SF_PRIVATE *psf) ;
+int		au_open		(SF_PRIVATE *psf) ;
+int		au_nh_open	(SF_PRIVATE *psf) ;	/* Headerless version of AU. */
+int		ircam_open	(SF_PRIVATE *psf) ;
+int		nist_open	(SF_PRIVATE *psf) ;
+int		paf_open	(SF_PRIVATE *psf) ;
+int		raw_open	(SF_PRIVATE *psf) ;
+int		svx_open	(SF_PRIVATE *psf) ;
+int		voc_open	(SF_PRIVATE *psf) ;
+int		w64_open	(SF_PRIVATE *psf) ;
+int		wav_open	(SF_PRIVATE *psf) ;
+
+/* In progress. Do not currently work. */
+
+int		rx2_open	(SF_PRIVATE *psf) ;
+int		sd2_open	(SF_PRIVATE *psf) ;
+int		smpltd_open	(SF_PRIVATE *psf) ;
+int		txw_open	(SF_PRIVATE *psf) ;
+
+/*------------------------------------------------------------------------------------ 
+**	Init functions for a number of common data encodings. 
+*/
+
+int 	pcm_init		(SF_PRIVATE *psf) ;
+int 	ulaw_init		(SF_PRIVATE *psf) ;
+int 	alaw_init		(SF_PRIVATE *psf) ;
+int 	float32_init	(SF_PRIVATE *psf) ;
+int 	double64_init	(SF_PRIVATE *psf) ;
+int 	dwvw_init		(SF_PRIVATE *psf, int bitwidth) ;
+int		gsm610_init 	(SF_PRIVATE *psf) ;
+
+int		wav_w64_ima_init (SF_PRIVATE *psf, int blockalign, int samplesperblock) ;
+int		wav_w64_msadpcm_init (SF_PRIVATE *psf, int blockalign, int samplesperblock) ;
+
+int		aiff_ima_init (SF_PRIVATE *psf, int blockalign, int samplesperblock) ;
+
+/*------------------------------------------------------------------------------------ 
+** Here's how we fix systems which don't snprintf / vsnprintf.
+** Systems without these functions should use the 
+*/
+
+#if (defined (WIN32) || defined (_WIN32))
+#define	LSF_SNPRINTF	_snprintf
+#elif		(HAVE_SNPRINTF && ! FORCE_MISSING_SNPRINTF)
+#define	LSF_SNPRINTF	snprintf
+#else
+int missing_snprintf (char *str, size_t n, char const *fmt, ...) ;
+#define	LSF_SNPRINTF	missing_snprintf
+#endif
+
+#if (defined (WIN32) || defined (_WIN32))
+#define	LSF_VSNPRINTF	_vsnprintf
+#elif		(HAVE_VSNPRINTF && ! FORCE_MISSING_SNPRINTF)
+#define	LSF_VSNPRINTF	vsnprintf
+#else
+int missing_vsnprintf (char *str, size_t n, const char *fmt, ...) ;
+#define	LSF_VSNPRINTF	missing_vsnprintf
 #endif
 
 #ifdef _WIN32

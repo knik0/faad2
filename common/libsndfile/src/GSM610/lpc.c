@@ -4,7 +4,7 @@
  * details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
  */
 
-/* $Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/lpc.c,v 1.1 2002/01/14 19:15:55 menno Exp $ */
+/* $Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/lpc.c,v 1.2 2002/07/25 12:22:13 menno Exp $ */
 
 #include <stdio.h>
 #include <assert.h>
@@ -12,9 +12,6 @@
 #include "private.h"
 
 #include "gsm.h"
-#include "proto.h"
-
-#undef	P
 
 /*
  *  4.2.4 .. 4.2.7 LPC ANALYSIS SECTION
@@ -23,7 +20,7 @@
 /* 4.2.4 */
 
 
-static void Autocorrelation P2((s, L_ACF),
+static void Autocorrelation (
 	word     * s,		/* [0..159]	IN/OUT  */
  	longword * L_ACF)	/* [0..8]	OUT     */
 /*
@@ -146,7 +143,7 @@ static void Autocorrelation P2((s, L_ACF),
 
 #if defined(USE_FLOAT_MUL) && defined(FAST)
 
-static void Fast_Autocorrelation P2((s, L_ACF),
+static void Fast_Autocorrelation (
 	word * s,		/* [0..159]	IN/OUT  */
  	longword * L_ACF)	/* [0..8]	OUT     */
 {
@@ -174,7 +171,7 @@ static void Fast_Autocorrelation P2((s, L_ACF),
 
 /* 4.2.5 */
 
-static void Reflection_coefficients P2( (L_ACF, r),
+static void Reflection_coefficients (
 	longword	* L_ACF,		/* 0...8	IN	*/
 	register word	* r			/* 0...7	OUT 	*/
 )
@@ -243,7 +240,7 @@ static void Reflection_coefficients P2( (L_ACF, r),
 
 /* 4.2.6 */
 
-static void Transformation_to_Log_Area_Ratios P1((r),
+static void Transformation_to_Log_Area_Ratios (
 	register word	* r 			/* 0..7	   IN/OUT */
 )
 /*
@@ -284,7 +281,7 @@ static void Transformation_to_Log_Area_Ratios P1((r),
 
 /* 4.2.7 */
 
-static void Quantization_and_coding P1((LAR),
+static void Quantization_and_coding (
 	register word * LAR    	/* [0..7]	IN/OUT	*/
 )
 {
@@ -323,7 +320,7 @@ static void Quantization_and_coding P1((LAR),
 #	undef	STEP
 }
 
-void Gsm_LPC_Analysis P3((S, s,LARc),
+void Gsm_LPC_Analysis (
 	struct gsm_state *S,
 	word 		 * s,		/* 0..159 signals	IN/OUT	*/
         word 		 * LARc)	/* 0..7   LARc's	OUT	*/

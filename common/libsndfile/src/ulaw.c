@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1999-2001 Erik de Castro Lopo <erikd@zip.com.au>
+** Copyright (C) 1999-2002 Erik de Castro Lopo <erikd@zip.com.au>
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU Lesser General Public License as published by
@@ -20,64 +20,69 @@
 #include	<unistd.h>
 
 #include	"sndfile.h"
-#include	"floatcast.h"
+#include	"float_cast.h"
 #include	"common.h"
 
-static int		ulaw_read_ulaw2s (SF_PRIVATE *psf, short *ptr, unsigned int len) ;
-static int		ulaw_read_ulaw2i (SF_PRIVATE *psf, int *ptr, unsigned int len) ;
-static int		ulaw_read_ulaw2f (SF_PRIVATE *psf, float *ptr, unsigned int len) ;
-static int		ulaw_read_ulaw2d (SF_PRIVATE *psf, double *ptr, unsigned int len, int normalize) ;
+static sf_count_t		ulaw_read_ulaw2s (SF_PRIVATE *psf, short *ptr, sf_count_t len) ;
+static sf_count_t		ulaw_read_ulaw2i (SF_PRIVATE *psf, int *ptr, sf_count_t len) ;
+static sf_count_t		ulaw_read_ulaw2f (SF_PRIVATE *psf, float *ptr, sf_count_t len) ;
+static sf_count_t		ulaw_read_ulaw2d (SF_PRIVATE *psf, double *ptr, sf_count_t len) ;
 
-static int		ulaw_write_s2ulaw (SF_PRIVATE *psf, short *ptr, unsigned int len) ;
-static int		ulaw_write_i2ulaw (SF_PRIVATE *psf, int *ptr, unsigned int len) ;
-static int		ulaw_write_f2ulaw (SF_PRIVATE *psf, float *ptr, unsigned int len) ;
-static int		ulaw_write_d2ulaw (SF_PRIVATE *psf, double *ptr, unsigned int len, int normalize) ;
+static sf_count_t		ulaw_write_s2ulaw (SF_PRIVATE *psf, short *ptr, sf_count_t len) ;
+static sf_count_t		ulaw_write_i2ulaw (SF_PRIVATE *psf, int *ptr, sf_count_t len) ;
+static sf_count_t		ulaw_write_f2ulaw (SF_PRIVATE *psf, float *ptr, sf_count_t len) ;
+static sf_count_t		ulaw_write_d2ulaw (SF_PRIVATE *psf, double *ptr, sf_count_t len) ;
 
-static  void    ulaw2s_array      (unsigned char *buffer, unsigned int count, short *ptr, unsigned int index) ;
-static  void    ulaw2i_array      (unsigned char *buffer, unsigned int count, int *ptr, unsigned int index) ;
-static  void    ulaw2f_array      (unsigned char *buffer, unsigned int count, float *ptr, unsigned int index, float normfact) ;
-static  void    ulaw2d_array      (unsigned char *buffer, unsigned int count, double *ptr, unsigned int index, double normfact) ;
+static  void    ulaw2s_array      (unsigned char *buffer, unsigned int count, short *ptr) ;
+static  void    ulaw2i_array      (unsigned char *buffer, unsigned int count, int *ptr) ;
+static  void    ulaw2f_array      (unsigned char *buffer, unsigned int count, float *ptr, float normfact) ;
+static  void    ulaw2d_array      (unsigned char *buffer, unsigned int count, double *ptr, double normfact) ;
 
-static  void    s2ulaw_array      (short *buffer, unsigned int count, unsigned char *ptr, unsigned int index) ;
-static  void    i2ulaw_array      (int *buffer, unsigned int count, unsigned char *ptr, unsigned int index) ;
-static  void    f2ulaw_array      (float *buffer, unsigned int count, unsigned char *ptr, unsigned int index, float normfact) ;
-static  void    d2ulaw_array      (double *buffer, unsigned int count, unsigned char *ptr, unsigned int index, double normfact) ;
+static  void    s2ulaw_array      (short *buffer, unsigned int count, unsigned char *ptr) ;
+static  void    i2ulaw_array      (int *buffer, unsigned int count, unsigned char *ptr) ;
+static  void    f2ulaw_array      (float *buffer, unsigned int count, unsigned char *ptr, float normfact) ;
+static  void    d2ulaw_array      (double *buffer, unsigned int count, unsigned char *ptr, double normfact) ;
 
-
-int 
-ulaw_read_init (SF_PRIVATE *psf)
-{
-	psf->read_short  = (func_short)  ulaw_read_ulaw2s ;
-	psf->read_int    = (func_int)    ulaw_read_ulaw2i ;
-	psf->read_float  = (func_float)  ulaw_read_ulaw2f ;
-	psf->read_double = (func_double) ulaw_read_ulaw2d ;
-
-	return 0 ;
-} /* ulaw_read_int */
 
 int 
-ulaw_write_init (SF_PRIVATE *psf)
+ulaw_init (SF_PRIVATE *psf)
 {
-	psf->write_short  = (func_short)  ulaw_write_s2ulaw ;
-	psf->write_int    = (func_int)    ulaw_write_i2ulaw ;
-	psf->write_float  = (func_float)  ulaw_write_f2ulaw ;
-	psf->write_double = (func_double) ulaw_write_d2ulaw ;
+	if (psf->mode == SFM_READ || psf->mode == SFM_RDWR)
+	{	psf->read_short  = ulaw_read_ulaw2s ;
+		psf->read_int    = ulaw_read_ulaw2i ;
+		psf->read_float  = ulaw_read_ulaw2f ;
+		psf->read_double = ulaw_read_ulaw2d ;
+		} ;
+		
+	if (psf->mode == SFM_WRITE || psf->mode == SFM_RDWR)
+	{	psf->write_short  = ulaw_write_s2ulaw ;
+		psf->write_int    = ulaw_write_i2ulaw ;
+		psf->write_float  = ulaw_write_f2ulaw ;
+		psf->write_double = ulaw_write_d2ulaw ;
+		} ;
+
+	psf->bytewidth  = 1 ;
+	psf->blockwidth = psf->sf.channels ;
+
+	psf->filelength = psf_get_filelen (psf->filedes) ;
+	psf->datalength = (psf->dataend) ? psf->dataend - psf->dataoffset : 
+							psf->filelength - psf->dataoffset ;
+	psf->sf.samples = psf->datalength / psf->blockwidth ;
 
 	return 0 ;
-} /* ulaw_write_int */
+} /* ulaw_init */
 
-static int
-ulaw_read_ulaw2s (SF_PRIVATE *psf, short *ptr, unsigned int len)
-{	unsigned int readcount, thisread, index = 0 ;
-	int		bytecount, bufferlen ;
-	int		total = 0 ;
+static sf_count_t
+ulaw_read_ulaw2s (SF_PRIVATE *psf, short *ptr, sf_count_t len)
+{	sf_count_t	readcount, thisread, index = 0, total = 0 ;
+	sf_count_t	bytecount, bufferlen ;
 
 	bufferlen = (SF_BUFFER_LEN / psf->blockwidth) * psf->blockwidth ;
 	bytecount = len * psf->bytewidth ;
 	while (bytecount > 0)
 	{	readcount = (bytecount >= bufferlen) ? bufferlen : bytecount ;
-		thisread = fread (psf->buffer, 1, readcount, psf->file) ;
-		ulaw2s_array ((unsigned char*) (psf->buffer), thisread / psf->bytewidth, ptr, index) ;
+		thisread = psf_fread (psf->buffer, 1, readcount, psf->filedes) ;
+		ulaw2s_array ((unsigned char*) (psf->buffer), thisread / psf->bytewidth, ptr + index) ;
 		total += thisread ;
 		if (thisread < readcount)
 			break ;
@@ -92,18 +97,17 @@ ulaw_read_ulaw2s (SF_PRIVATE *psf, short *ptr, unsigned int len)
 	return total ;
 } /* ulaw_read_ulaw2s */
 
-static int
-ulaw_read_ulaw2i (SF_PRIVATE *psf, int *ptr, unsigned int len)
-{	unsigned int readcount, thisread, index = 0 ;
-	int		bytecount, bufferlen ;
-	int		total = 0 ;
+static sf_count_t
+ulaw_read_ulaw2i (SF_PRIVATE *psf, int *ptr, sf_count_t len)
+{	sf_count_t	readcount, thisread, index = 0, total = 0 ;
+	sf_count_t	bytecount, bufferlen ;
 
 	bufferlen = (SF_BUFFER_LEN / psf->blockwidth) * psf->blockwidth ;
 	bytecount = len * psf->bytewidth ;
 	while (bytecount > 0)
 	{	readcount = (bytecount >= bufferlen) ? bufferlen : bytecount ;
-		thisread = fread (psf->buffer, 1, readcount, psf->file) ;
-		ulaw2i_array ((unsigned char*) (psf->buffer), thisread / psf->bytewidth, ptr, index) ;
+		thisread = psf_fread (psf->buffer, 1, readcount, psf->filedes) ;
+		ulaw2i_array ((unsigned char*) (psf->buffer), thisread / psf->bytewidth, ptr + index) ;
 		total += thisread ;
 		if (thisread < readcount)
 			break ;
@@ -118,11 +122,10 @@ ulaw_read_ulaw2i (SF_PRIVATE *psf, int *ptr, unsigned int len)
 	return total ;
 } /* ulaw_read_ulaw2i */
 
-static int
-ulaw_read_ulaw2f (SF_PRIVATE *psf, float *ptr, unsigned int len)
-{	unsigned int readcount, thisread, index = 0 ;
-	int		bytecount, bufferlen ;
-	int		total = 0 ;
+static sf_count_t
+ulaw_read_ulaw2f (SF_PRIVATE *psf, float *ptr, sf_count_t len)
+{	sf_count_t	readcount, thisread, index = 0, total = 0 ;
+	sf_count_t	bytecount, bufferlen ;
 	float	normfact ;
 
 	normfact = (psf->norm_float == SF_TRUE) ? 1.0 / ((float) 0x8000) : 1.0 ;
@@ -131,8 +134,8 @@ ulaw_read_ulaw2f (SF_PRIVATE *psf, float *ptr, unsigned int len)
 	bytecount = len * psf->bytewidth ;
 	while (bytecount > 0)
 	{	readcount = (bytecount >= bufferlen) ? bufferlen : bytecount ;
-		thisread = fread (psf->buffer, 1, readcount, psf->file) ;
-		ulaw2f_array ((unsigned char*) (psf->buffer), thisread / psf->bytewidth, ptr, index, normfact) ;
+		thisread = psf_fread (psf->buffer, 1, readcount, psf->filedes) ;
+		ulaw2f_array ((unsigned char*) (psf->buffer), thisread / psf->bytewidth, ptr + index, normfact) ;
 		total += thisread ;
 		if (thisread < readcount)
 			break ;
@@ -147,20 +150,19 @@ ulaw_read_ulaw2f (SF_PRIVATE *psf, float *ptr, unsigned int len)
 	return total ;
 } /* ulaw_read_ulaw2f */
 
-static int
-ulaw_read_ulaw2d (SF_PRIVATE *psf, double *ptr, unsigned int len, int normalize)
-{	unsigned int readcount, thisread, index = 0 ;
-	int		bytecount, bufferlen ;
-	int		total = 0 ;
+static sf_count_t
+ulaw_read_ulaw2d (SF_PRIVATE *psf, double *ptr, sf_count_t len)
+{	sf_count_t	readcount, thisread, index = 0, total = 0 ;
+	sf_count_t	bytecount, bufferlen ;
 	double	normfact ;
 	
-	normfact = (normalize ? 1.0 / ((double) 0x8000) : 1.0) ;
+	normfact = (psf->norm_double) ? 1.0 / ((double) 0x8000) : 1.0 ;
 	bufferlen = (SF_BUFFER_LEN / psf->blockwidth) * psf->blockwidth ;
 	bytecount = len * psf->bytewidth ;
 	while (bytecount > 0)
 	{	readcount = (bytecount >= bufferlen) ? bufferlen : bytecount ;
-		thisread = fread (psf->buffer, 1, readcount, psf->file) ;
-		ulaw2d_array ((unsigned char*) (psf->buffer), thisread / psf->bytewidth, ptr, index, normfact) ;
+		thisread = psf_fread (psf->buffer, 1, readcount, psf->filedes) ;
+		ulaw2d_array ((unsigned char*) (psf->buffer), thisread / psf->bytewidth, ptr + index, normfact) ;
 		total += thisread ;
 		if (thisread < readcount)
 			break ;
@@ -178,18 +180,17 @@ ulaw_read_ulaw2d (SF_PRIVATE *psf, double *ptr, unsigned int len, int normalize)
 /*=============================================================================================
 */
 
-static int
-ulaw_write_s2ulaw	(SF_PRIVATE *psf, short *ptr, unsigned int len)
-{	unsigned int	writecount, thiswrite, index = 0 ;
-	int		bytecount, bufferlen ;
-	int		total = 0 ;
+static sf_count_t
+ulaw_write_s2ulaw	(SF_PRIVATE *psf, short *ptr, sf_count_t len)
+{	sf_count_t	writecount, thiswrite, index = 0, total = 0 ;
+	sf_count_t	bytecount, bufferlen ;
 
 	bufferlen = (SF_BUFFER_LEN / psf->blockwidth) * psf->blockwidth ;
 	bytecount = len * psf->bytewidth ;
 	while (bytecount > 0)
 	{	writecount = (bytecount >= bufferlen) ? bufferlen : bytecount ;
-		s2ulaw_array (ptr, index, (unsigned char*) (psf->buffer), writecount / psf->bytewidth) ;
-		thiswrite = fwrite (psf->buffer, 1, writecount, psf->file) ;
+		s2ulaw_array (ptr + index, writecount / psf->bytewidth, (unsigned char*) (psf->buffer)) ;
+		thiswrite = psf_fwrite (psf->buffer, 1, writecount, psf->filedes) ;
 		total += thiswrite ;
 		if (thiswrite < writecount)
 			break ;
@@ -204,18 +205,17 @@ ulaw_write_s2ulaw	(SF_PRIVATE *psf, short *ptr, unsigned int len)
 	return total ;
 } /* ulaw_write_s2ulaw */
 
-static int
-ulaw_write_i2ulaw	(SF_PRIVATE *psf, int *ptr, unsigned int len)
-{	unsigned int	writecount, thiswrite, index = 0 ;
-	int		bytecount, bufferlen ;
-	int		total = 0 ;
+static sf_count_t
+ulaw_write_i2ulaw	(SF_PRIVATE *psf, int *ptr, sf_count_t len)
+{	sf_count_t	writecount, thiswrite, index = 0, total = 0 ;
+	sf_count_t	bytecount, bufferlen ;
 
 	bufferlen = (SF_BUFFER_LEN / psf->blockwidth) * psf->blockwidth ;
 	bytecount = len * psf->bytewidth ;
 	while (bytecount > 0)
 	{	writecount = (bytecount >= bufferlen) ? bufferlen : bytecount ;
-		i2ulaw_array (ptr, index, (unsigned char*) (psf->buffer), writecount / psf->bytewidth) ;
-		thiswrite = fwrite (psf->buffer, 1, writecount, psf->file) ;
+		i2ulaw_array (ptr + index, writecount / psf->bytewidth, (unsigned char*) (psf->buffer)) ;
+		thiswrite = psf_fwrite (psf->buffer, 1, writecount, psf->filedes) ;
 		total += thiswrite ;
 		if (thiswrite < writecount)
 			break ;
@@ -230,11 +230,10 @@ ulaw_write_i2ulaw	(SF_PRIVATE *psf, int *ptr, unsigned int len)
 	return total ;
 } /* ulaw_write_i2ulaw */
 
-static int
-ulaw_write_f2ulaw	(SF_PRIVATE *psf, float *ptr, unsigned int len)
-{	unsigned int	writecount, thiswrite, index = 0 ;
-	int		bytecount, bufferlen ;
-	int		total = 0 ;
+static sf_count_t
+ulaw_write_f2ulaw	(SF_PRIVATE *psf, float *ptr, sf_count_t len)
+{	sf_count_t	writecount, thiswrite, index = 0, total = 0 ;
+	sf_count_t	bytecount, bufferlen ;
 	float	normfact ;
 
 	normfact = (psf->norm_float == SF_TRUE) ? ((float) 0x8000) : 1.0 ;
@@ -243,8 +242,8 @@ ulaw_write_f2ulaw	(SF_PRIVATE *psf, float *ptr, unsigned int len)
 	bytecount = len * psf->bytewidth ;
 	while (bytecount > 0)
 	{	writecount = (bytecount >= bufferlen) ? bufferlen : bytecount ;
-		f2ulaw_array (ptr, index, (unsigned char*) (psf->buffer), writecount / psf->bytewidth, normfact) ;
-		thiswrite = fwrite (psf->buffer, 1, writecount, psf->file) ;
+		f2ulaw_array (ptr + index, writecount / psf->bytewidth, (unsigned char*) (psf->buffer), normfact) ;
+		thiswrite = psf_fwrite (psf->buffer, 1, writecount, psf->filedes) ;
 		total += thiswrite ;
 		if (thiswrite < writecount)
 			break ;
@@ -259,21 +258,20 @@ ulaw_write_f2ulaw	(SF_PRIVATE *psf, float *ptr, unsigned int len)
 	return total ;
 } /* ulaw_write_f2ulaw */
 
-static int
-ulaw_write_d2ulaw	(SF_PRIVATE *psf, double *ptr, unsigned int len, int normalize)
-{	unsigned int	writecount, thiswrite, index = 0 ;
-	int		bytecount, bufferlen ;
-	int		total = 0 ;
+static sf_count_t
+ulaw_write_d2ulaw	(SF_PRIVATE *psf, double *ptr, sf_count_t len)
+{	sf_count_t	writecount, thiswrite, index = 0, total = 0 ;
+	sf_count_t	bytecount, bufferlen ;
 	double	normfact ;
 	
-	normfact = (normalize ? ((double) 0x8000) : 1.0) ;
+	normfact = (psf->norm_double) ? ((double) 0x8000) : 1.0 ;
 
 	bufferlen = (SF_BUFFER_LEN / psf->blockwidth) * psf->blockwidth ;
 	bytecount = len * psf->bytewidth ;
 	while (bytecount > 0)
 	{	writecount = (bytecount >= bufferlen) ? bufferlen : bytecount ;
-		d2ulaw_array (ptr, index, (unsigned char*) (psf->buffer), writecount / psf->bytewidth, normfact) ;
-		thiswrite = fwrite (psf->buffer, 1, writecount, psf->file) ;
+		d2ulaw_array (ptr + index, writecount / psf->bytewidth, (unsigned char*) (psf->buffer), normfact) ;
+		thiswrite = psf_fwrite (psf->buffer, 1, writecount, psf->filedes) ;
 		total += thiswrite ;
 		if (thiswrite < writecount)
 			break ;
@@ -999,102 +997,90 @@ unsigned char	ulaw_encode [8193] =
 } ;
 
 static void	
-ulaw2s_array	(unsigned char *buffer, unsigned int count, short *ptr, unsigned int index)
-{	int 	k ;
-	for (k = 0 ; k < count ; k++)
-	{	if (buffer [k] & 0x80)
-			ptr [index] = -1 * ulaw_decode [((int) buffer [k]) & 0x7F] ;
+ulaw2s_array	(unsigned char *buffer, unsigned int count, short *ptr)
+{	while (count)
+	{	count -- ;
+		if (buffer [count] & 0x80)
+			ptr [count] = -1 * ulaw_decode [((int) buffer [count]) & 0x7F] ;
 		else
-			ptr [index] = ulaw_decode [((int) buffer [k]) & 0x7F] ;
-		index ++ ;
+			ptr [count] = ulaw_decode [((int) buffer [count]) & 0x7F] ;
 		} ;
 } /* ulaw2s_array */
 
 static void	
-ulaw2i_array	(unsigned char *buffer, unsigned int count, int *ptr, unsigned int index)
-{	int 	k ;
-	for (k = 0 ; k < count ; k++)
-	{	if (buffer [k] & 0x80)
-			ptr [index] = -1 * ulaw_decode [((int) buffer [k]) & 0x7F] ;
+ulaw2i_array	(unsigned char *buffer, unsigned int count, int *ptr)
+{	while (count)
+	{	count -- ;
+		if (buffer [count] & 0x80)
+			ptr [count] = -1 * ulaw_decode [buffer [count] & 0x7F] << 16 ;
 		else
-			ptr [index] = ulaw_decode [((int) buffer [k]) & 0x7F] ;
-		index ++ ;
+			ptr [count] = ulaw_decode [buffer [count] & 0x7F] << 16 ;
 		} ;
 } /* ulaw2i_array */
 
 static void	
-ulaw2f_array	(unsigned char *buffer, unsigned int count, float *ptr, unsigned int index, float normfact)
-{	int 	k ;
-	for (k = 0 ; k < count ; k++)
-	{	if (buffer [k] & 0x80)
-			ptr [index] = -normfact * ulaw_decode [((int) buffer [k]) & 0x7F] ;
+ulaw2f_array	(unsigned char *buffer, unsigned int count, float *ptr, float normfact)
+{	while (count)
+	{	count -- ;
+		if (buffer [count] & 0x80)
+			ptr [count] = -normfact * ulaw_decode [((int) buffer [count]) & 0x7F] ;
 		else
-			ptr [index] = normfact * ulaw_decode [((int) buffer [k]) & 0x7F] ;
-		index ++ ;
+			ptr [count] = normfact * ulaw_decode [((int) buffer [count]) & 0x7F] ;
 		} ;
 } /* ulaw2f_array */
 
 static void	
-ulaw2d_array	(unsigned char *buffer, unsigned int count, double *ptr, unsigned int index, double normfact)
-{	int 	k ;
-	for (k = 0 ; k < count ; k++)
-	{	if (buffer [k] & 0x80)
-			ptr [index] = -normfact * ulaw_decode [((int) buffer [k]) & 0x7F] ;
+ulaw2d_array	(unsigned char *buffer, unsigned int count, double *ptr, double normfact)
+{	while (count)
+	{	count -- ;
+		if (buffer [count] & 0x80)
+			ptr [count] = -normfact * ulaw_decode [((int) buffer [count]) & 0x7F] ;
 		else
-			ptr [index] = normfact * ulaw_decode [((int) buffer [k]) & 0x7F] ;
-		index ++ ;
+			ptr [count] = normfact * ulaw_decode [((int) buffer [count]) & 0x7F] ;
 		} ;
 } /* ulaw2d_array */
 
 static void    
-s2ulaw_array      (short *ptr, unsigned int index, unsigned char *buffer, unsigned int count)
-{	unsigned int	k ;
-
-	for (k = 0 ; k < count ; k++)
-	{	if (ptr [index] >= 0) 
-			buffer [k] = ulaw_encode [ptr [index] / 4] ;
+s2ulaw_array      (short *ptr, unsigned int count, unsigned char *buffer)
+{	while (count)
+	{	count -- ;
+		if (ptr [count] >= 0) 
+			buffer [count] = ulaw_encode [ptr [count] / 4] ;
 		else
-			buffer [k] = 0x7F & ulaw_encode [ptr [index] / -4] ;
-		index ++ ;
+			buffer [count] = 0x7F & ulaw_encode [ptr [count] / -4] ;
 		} ;
 } /* s2ulaw_array */
 
 static void    
-i2ulaw_array      (int *ptr, unsigned int index, unsigned char *buffer, unsigned int count)
-{	unsigned int	k ;
-
-	for (k = 0 ; k < count ; k++)
-	{	if (ptr [index] >= 0) 
-			buffer [k] = ulaw_encode [ptr [index] / 4] ;
+i2ulaw_array      (int *ptr, unsigned int count, unsigned char *buffer)
+{	while (count)
+	{	count -- ;
+		if (ptr [count] >= 0) 
+			buffer [count] = ulaw_encode [ptr [count] >> (16 + 2)] ;
 		else
-			buffer [k] = 0x7F & ulaw_encode [ptr [index] / -4] ;
-		index ++ ;
+			buffer [count] = 0x7F & ulaw_encode [-ptr [count] >> (16 + 2)] ;
 		} ;
 } /* i2ulaw_array */
 
 static void
-f2ulaw_array      (float *ptr, unsigned int index, unsigned char *buffer, unsigned int count, float normfact)
-{	unsigned int	k ;
-
-	for (k = 0 ; k < count ; k++)
-	{	if (ptr [index] >= 0) 
-			buffer [k] = ulaw_encode [(FLOAT_TO_INT (normfact * ptr [index])) / 4] ;
+f2ulaw_array      (float *ptr, unsigned int count, unsigned char *buffer, float normfact)
+{	while (count)
+	{	count -- ;
+		if (ptr [count] >= 0) 
+			buffer [count] = ulaw_encode [(lrintf (normfact * ptr [count])) / 4] ;
 		else
-			buffer [k] = 0x7F & ulaw_encode [(FLOAT_TO_INT (normfact * ptr [index])) / -4] ;
-		index ++ ;
+			buffer [count] = 0x7F & ulaw_encode [(lrintf (normfact * ptr [count])) / -4] ;
 		} ;
 } /* f2ulaw_array */
 
 static void
-d2ulaw_array      (double *ptr, unsigned int index, unsigned char *buffer, unsigned int count, double normfact)
-{	unsigned int	k ;
-
-	for (k = 0 ; k < count ; k++)
-	{	if (ptr [index] >= 0) 
-			buffer [k] = ulaw_encode [(DOUBLE_TO_INT (normfact * ptr [index])) / 4] ;
+d2ulaw_array      (double *ptr, unsigned int count, unsigned char *buffer, double normfact)
+{	while (count)
+	{	count -- ;
+		if (ptr [count] >= 0) 
+			buffer [count] = ulaw_encode [(lrint (normfact * ptr [count])) / 4] ;
 		else
-			buffer [k] = 0x7F & ulaw_encode [(DOUBLE_TO_INT (normfact * ptr [index])) / -4] ;
-		index ++ ;
+			buffer [count] = 0x7F & ulaw_encode [(lrint (normfact * ptr [count])) / -4] ;
 		} ;
 } /* d2ulaw_array */
 

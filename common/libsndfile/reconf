@@ -2,14 +2,32 @@
 
 rm -f config.cache
 
-if [ -d m4 ]; then
-	echo "Looking in m4 directory."
-	aclocal -I m4
+if [ -d $HOME/Proj/M4 ]; then
+
+	rm -f acinclude.m4.new
+	touch acinclude.m4.new
+	cat $HOME/Proj/M4/extra_largefile.m4 >>acinclude.m4.new
+	cat $HOME/Proj/M4/endian.m4 >>acinclude.m4.new
+	cat $HOME/Proj/M4/lrint.m4 >>acinclude.m4.new
+	cat $HOME/Proj/M4/lrintf.m4 >>acinclude.m4.new
+
+	cmp_data=`cmp acinclude.m4 acinclude.m4.new`
+	if [ x"$cmp_data" = "x" ]; then
+		echo "File acinclude.m4 unchanged."
+	else
+		echo "Updating acinclude.m4"
+		mv -f acinclude.m4.new acinclude.m4
+		fi
+
+	echo "Looking in $HOME/Proj/M4 directory."
+	aclocal -I $HOME/Proj/M4
 else
 	aclocal
 	fi
-	
+
+sed s/AM_PROG_INSTALL/AC_PROG_INSTALL/ aclocal.m4 >aclocal.m4.bak   
+mv -f aclocal.m4.bak aclocal.m4
+
 autoconf
-autoheader
-automake -a
+autoreconf -i --force --foreign
 exit

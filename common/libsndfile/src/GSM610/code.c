@@ -4,7 +4,7 @@
  * details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
  */
 
-/* $Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/code.c,v 1.1 2002/01/14 19:15:54 menno Exp $ */
+/* $Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/code.c,v 1.2 2002/07/25 12:22:13 menno Exp $ */
 
 
 
@@ -16,15 +16,14 @@
 
 #include	"private.h"
 #include	"gsm.h"
-#include	"proto.h"
 
 /* 
  *  4.2 FIXED POINT IMPLEMENTATION OF THE RPE-LTP CODER 
  */
 
-void Gsm_Coder P8((S,s,LARc,Nc,bc,Mc,xmaxc,xMc),
+void Gsm_Coder (
 
-	struct gsm_state	* S,
+	struct gsm_state	* State,
 
 	word	* s,	/* [0..159] samples		  	IN	*/
 
@@ -54,29 +53,27 @@ void Gsm_Coder P8((S,s,LARc,Nc,bc,Mc,xmaxc,xMc),
 )
 {
 	int	k;
-	word	* dp  = S->dp0 + 120;	/* [ -120...-1 ] */
+	word	* dp  = State->dp0 + 120;	/* [ -120...-1 ] */
 	word	* dpp = dp;		/* [ 0...39 ]	 */
-
-	static word e[50];
 
 	word	so[160];
 
-	Gsm_Preprocess			(S, s, so);
-	Gsm_LPC_Analysis		(S, so, LARc);
-	Gsm_Short_Term_Analysis_Filter	(S, LARc, so);
+	Gsm_Preprocess			(State, s, so);
+	Gsm_LPC_Analysis		(State, so, LARc);
+	Gsm_Short_Term_Analysis_Filter	(State, LARc, so);
 
 	for (k = 0; k <= 3; k++, xMc += 13) {
 
-		Gsm_Long_Term_Predictor	( S,
+		Gsm_Long_Term_Predictor	( State,
 					 so+k*40, /* d      [0..39] IN	*/
 					 dp,	  /* dp  [-120..-1] IN	*/
-					e + 5,	  /* e      [0..39] OUT	*/
+					State->e + 5,	  /* e      [0..39] OUT	*/
 					dpp,	  /* dpp    [0..39] OUT */
 					 Nc++,
 					 bc++);
 
-		Gsm_RPE_Encoding	( S,
-					e + 5,	/* e	  ][0..39][ IN/OUT */
+		Gsm_RPE_Encoding	( /*-S,-*/
+					State->e + 5,	/* e	  ][0..39][ IN/OUT */
 					  xmaxc++, Mc++, xMc );
 		/*
 		 * Gsm_Update_of_reconstructed_short_time_residual_signal
@@ -86,12 +83,12 @@ void Gsm_Coder P8((S,s,LARc,Nc,bc,Mc,xmaxc,xMc),
 		{ register int i;
 		  register longword ltmp;
 		  for (i = 0; i <= 39; i++)
-			dp[ i ] = GSM_ADD( e[5 + i], dpp[i] );
+			dp[ i ] = GSM_ADD( State->e[5 + i], dpp[i] );
 		}
 		dp  += 40;
 		dpp += 40;
 
 	}
-	(void)memcpy( (char *)S->dp0, (char *)(S->dp0 + 160),
-		120 * sizeof(*S->dp0) );
+	(void)memcpy( (char *)State->dp0, (char *)(State->dp0 + 160),
+		120 * sizeof(*State->dp0) );
 }

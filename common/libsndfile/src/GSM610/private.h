@@ -4,13 +4,12 @@
  * details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
  */
 
-/*$Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/private.h,v 1.1 2002/01/14 19:15:55 menno Exp $*/
+/*$Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/private.h,v 1.2 2002/07/25 12:22:13 menno Exp $*/
 
 #ifndef	PRIVATE_H
 #define	PRIVATE_H
 
 /* Added by Erik de Castro Lopo */
-#define	NeedFunctionPrototypes	1
 #define	SASR  
 #define	USE_FLOAT_MUL
 #define	FAST
@@ -25,31 +24,34 @@ typedef int					longword;	/* 32 bit signed int	*/
 typedef unsigned short		uword;		/* unsigned word	*/
 typedef unsigned int		ulongword;	/* unsigned longword	*/
 
-struct gsm_state {
+struct gsm_state 
+{	word			dp0[ 280 ];
 
-	word		dp0[ 280 ];
+	word			z1;			/* preprocessing.c, Offset_com. */
+	longword		L_z2;		/*                  Offset_com. */
+	int				mp;			/*                  Preemphasis	*/
 
-	word		z1;		/* preprocessing.c, Offset_com. */
-	longword	L_z2;		/*                  Offset_com. */
-	int			mp;		/*                  Preemphasis	*/
+	word			u[8];			/* short_term_aly_filter.c	*/
+	word			LARpp[2][8]; 	/*                              */
+	word			j;				/*                              */
 
-	word		u[8];		/* short_term_aly_filter.c	*/
-	word		LARpp[2][8]; 	/*                              */
-	word		j;		/*                              */
+	word	        ltp_cut;        /* long_term.c, LTP crosscorr.  */
+	word			nrp; 			/* 40 */	/* long_term.c, synthesis	*/
+	word			v[9];			/* short_term.c, synthesis	*/
+	word			msr;			/* decoder.c,	Postprocessing	*/
 
-	word        ltp_cut;        /* long_term.c, LTP crosscorr.  */
-	word		nrp; /* 40 */	/* long_term.c, synthesis	*/
-	word		v[9];		/* short_term.c, synthesis	*/
-	word		msr;		/* decoder.c,	Postprocessing	*/
+	char			verbose;		/* only used if !NDEBUG		*/
+	char			fast;			/* only used if FAST		*/
 
-	char		verbose;	/* only used if !NDEBUG		*/
-	char		fast;		/* only used if FAST		*/
-
-	char		wav_fmt;	/* only used if WAV49 defined	*/
+	char			wav_fmt;		/* only used if WAV49 defined	*/
 	unsigned char	frame_index;	/*            odd/even chaining	*/
 	unsigned char	frame_chain;	/*   half-byte to carry forward	*/
-};
 
+	/* Moved here from code.c where it was defined as static */
+	word e[50];
+} ;
+
+typedef struct gsm_state GSM_STATE ;
 
 #define	MIN_WORD	(-32767 - 1)
 #define	MAX_WORD	  32767
@@ -64,32 +66,30 @@ struct gsm_state {
 #define	SASR(x, by)	((x) >= 0 ? (x) >> (by) : (~(-((x) + 1) >> (by))))
 #endif	/* SASR */
 
-#include "proto.h"
-
 /*
  *	Prototypes from add.c
  */
-extern word	gsm_mult 		(word a, word b);
-extern longword gsm_L_mult 	(word a, word b);
-extern word	gsm_mult_r		(word a, word b);
+word	gsm_mult 		(word a, word b);
+longword gsm_L_mult 	(word a, word b);
+word	gsm_mult_r		(word a, word b);
 
-extern word	gsm_div  		(word num, word denum);
+word	gsm_div  		(word num, word denum);
 
-extern word	gsm_add 		(word a, word b );
-extern longword gsm_L_add 	(longword a, longword b );
+word	gsm_add 		(word a, word b );
+longword gsm_L_add 	(longword a, longword b );
 
-extern word	gsm_sub 		(word a, word b);
-extern longword gsm_L_sub 	(longword a, longword b);
+word	gsm_sub 		(word a, word b);
+longword gsm_L_sub 	(longword a, longword b);
 
-extern word	gsm_abs 		(word a);
+word	gsm_abs 		(word a);
 
-extern word	gsm_norm 		(longword a );
+word	gsm_norm 		(longword a );
 
-extern longword gsm_L_asl  	(longword a, int n);
-extern word	gsm_asl 		(word a, int n);
+longword gsm_L_asl  	(longword a, int n);
+word	gsm_asl 		(word a, int n);
 
-extern longword gsm_L_asr  	(longword a, int n);
-extern word	gsm_asr  		(word a, int n);
+longword gsm_L_asr  	(longword a, int n);
+word	gsm_asr  		(word a, int n);
 
 /*
  *  Inlined functions from add.h 
@@ -150,7 +150,7 @@ extern word	gsm_asr  		(word a, int n);
 /*
  *  More prototypes from implementations..
  */
-extern void Gsm_Coder P((
+void Gsm_Coder (
 		struct gsm_state	* S,
 		word	* s,	/* [0..159] samples		IN	*/
 		word	* LARc,	/* [0..7] LAR coefficients	OUT	*/
@@ -158,40 +158,40 @@ extern void Gsm_Coder P((
 		word	* bc,	/* [0..3] coded LTP gain	OUT 	*/
 		word	* Mc,	/* [0..3] RPE grid selection	OUT     */
 		word	* xmaxc,/* [0..3] Coded maximum amplitude OUT	*/
-		word	* xMc	/* [13*4] normalized RPE samples OUT	*/));
+		word	* xMc	/* [13*4] normalized RPE samples OUT	*/);
 
-extern void Gsm_Long_Term_Predictor P((		/* 4x for 160 samples */
+void Gsm_Long_Term_Predictor (		/* 4x for 160 samples */
 		struct gsm_state * S,
 		word	* d,	/* [0..39]   residual signal	IN	*/
 		word	* dp,	/* [-120..-1] d'		IN	*/
 		word	* e,	/* [0..40] 			OUT	*/
 		word	* dpp,	/* [0..40] 			OUT	*/
 		word	* Nc,	/* correlation lag		OUT	*/
-		word	* bc	/* gain factor			OUT	*/));
+		word	* bc	/* gain factor			OUT	*/);
 
-extern void Gsm_LPC_Analysis P((
+void Gsm_LPC_Analysis (
 		struct gsm_state * S,
 		word * s,	 /* 0..159 signals	IN/OUT	*/
-	        word * LARc));   /* 0..7   LARc's	OUT	*/
+	        word * LARc);   /* 0..7   LARc's	OUT	*/
 
-extern void Gsm_Preprocess P((
+void Gsm_Preprocess (
 		struct gsm_state * S,
-		word * s, word * so));
+		word * s, word * so);
 
-extern void Gsm_Encoding P((
+void Gsm_Encoding (
 		struct gsm_state * S,
 		word	* e,	
 		word	* ep,	
 		word	* xmaxc,
 		word	* Mc,	
-		word	* xMc));
+		word	* xMc);
 
-extern void Gsm_Short_Term_Analysis_Filter P((
+void Gsm_Short_Term_Analysis_Filter (
 		struct gsm_state * S,
 		word	* LARc,	/* coded log area ratio [0..7]  IN	*/
-		word	* d	/* st res. signal [0..159]	IN/OUT	*/));
+		word	* d	/* st res. signal [0..159]	IN/OUT	*/);
 
-extern void Gsm_Decoder P((
+void Gsm_Decoder (
 		struct gsm_state * S,
 		word	* LARcr,	/* [0..7]		IN	*/
 		word	* Ncr,		/* [0..3] 		IN 	*/
@@ -199,46 +199,46 @@ extern void Gsm_Decoder P((
 		word	* Mcr,		/* [0..3] 		IN 	*/
 		word	* xmaxcr,	/* [0..3]		IN 	*/
 		word	* xMcr,		/* [0..13*4]		IN	*/
-		word	* s));		/* [0..159]		OUT 	*/
+		word	* s);		/* [0..159]		OUT 	*/
 
-extern void Gsm_Decoding P((
+void Gsm_Decoding (
 		struct gsm_state * S,
 		word 	xmaxcr,
 		word	Mcr,
 		word	* xMcr,  	/* [0..12]		IN	*/
-		word	* erp)); 	/* [0..39]		OUT 	*/
+		word	* erp); 	/* [0..39]		OUT 	*/
 
-extern void Gsm_Long_Term_Synthesis_Filtering P((
+void Gsm_Long_Term_Synthesis_Filtering (
 		struct gsm_state* S,
 		word	Ncr,
 		word	bcr,
 		word	* erp,		/* [0..39]		  IN 	*/
-		word	* drp)); 	/* [-120..-1] IN, [0..40] OUT 	*/
+		word	* drp); 	/* [-120..-1] IN, [0..40] OUT 	*/
 
-void Gsm_RPE_Decoding P((
-	struct gsm_state *S,
+void Gsm_RPE_Decoding (
+	/*-struct gsm_state *S,-*/
 		word xmaxcr,
 		word Mcr,
 		word * xMcr,  /* [0..12], 3 bits             IN      */
-		word * erp)); /* [0..39]                     OUT     */
+		word * erp); /* [0..39]                     OUT     */
 
-void Gsm_RPE_Encoding P((
-		struct gsm_state * S,
+void Gsm_RPE_Encoding (
+		/*-struct gsm_state * S,-*/
 		word    * e,            /* -5..-1][0..39][40..44     IN/OUT  */
 		word    * xmaxc,        /*                              OUT */
 		word    * Mc,           /*                              OUT */
-		word    * xMc));        /* [0..12]                      OUT */
+		word    * xMc);        /* [0..12]                      OUT */
 
-extern void Gsm_Short_Term_Synthesis_Filter P((
+void Gsm_Short_Term_Synthesis_Filter (
 		struct gsm_state * S,
 		word	* LARcr, 	/* log area ratios [0..7]  IN	*/
 		word	* drp,		/* received d [0...39]	   IN	*/
-		word	* s));		/* signal   s [0..159]	  OUT	*/
+		word	* s);		/* signal   s [0..159]	  OUT	*/
 
-extern void Gsm_Update_of_reconstructed_short_time_residual_signal P((
+void Gsm_Update_of_reconstructed_short_time_residual_signal (
 		word	* dpp,		/* [0...39]	IN	*/
 		word	* ep,		/* [0...39]	IN	*/
-		word	* dp));		/* [-120...-1]  IN/OUT 	*/
+		word	* dp);		/* [-120...-1]  IN/OUT 	*/
 
 /*
  *  Tables from table.c
@@ -266,13 +266,11 @@ extern word gsm_FAC[8];
 
 #else	/* !NDEBUG => DEBUG */
 
-	extern void  gsm_debug_words     P((char * name, int, int, word *));
-	extern void  gsm_debug_longwords P((char * name, int, int, longword *));
-	extern void  gsm_debug_longword  P((char * name, longword));
-	extern void  gsm_debug_word      P((char * name, word));
+	void  gsm_debug_words     (char * name, int, int, word *);
+	void  gsm_debug_longwords (char * name, int, int, longword *);
+	void  gsm_debug_longword  (char * name, longword);
+	void  gsm_debug_word      (char * name, word);
 
 #endif /* !NDEBUG */
-
-#include "unproto.h"
 
 #endif	/* PRIVATE_H */

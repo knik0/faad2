@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2000-2001 Erik de Castro Lopo <erikd@zip.com.au>
+** Copyright (C) 2000-2001-2002 Erik de Castro Lopo <erikd@zip.com.au>
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU Lesser General Public License as published by
@@ -15,7 +15,6 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
-
 
 #include	<stdio.h>
 #include	<unistd.h>
@@ -70,7 +69,8 @@ static	int		smpltd_close	(SF_PRIVATE  *psf) ;
 ** Public functions.
 */
 
-int 	smpltd_open_read	(SF_PRIVATE *psf)
+int 	
+smpltd_open	(SF_PRIVATE *psf)
 {	RAP_CHUNK rap ;
 	
 	psf_binheader_readf (psf, "mm", &(rap.sekd), &(rap.samr)) ;
@@ -91,17 +91,10 @@ int 	smpltd_open_read	(SF_PRIVATE *psf)
 	printf ("channels        : %d\n", rap.channels) ;
 		
 -*/
-	psf->close = (func_close) smpltd_close ;
+	psf->close = smpltd_close ;
 
 	return 0 ;
-} /* smpltd_open_read */
-
-int 	
-smpltd_open_write	(SF_PRIVATE *psf)
-{	
-
-	return 0 ;
-} /* smpltd_open_write */
+} /* smpltd_open */
 
 /*------------------------------------------------------------------------------
 */
@@ -109,17 +102,13 @@ smpltd_open_write	(SF_PRIVATE *psf)
 static int	
 smpltd_close	(SF_PRIVATE  *psf)
 {	
-	if (psf->mode == SF_MODE_WRITE)
+	if (psf->mode == SFM_WRITE || psf->mode == SFM_RDWR)
 	{	/*  Now we know for certain the length of the file we can re-write 
 		**	correct values for the FORM, 8SVX and BODY chunks.
 		*/
                 
 		} ;
 
-	if (psf->fdata)
-		free (psf->fdata) ;
-	psf->fdata = NULL ;
-	
 	return 0 ;
 } /* smpltd_close */
 

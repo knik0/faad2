@@ -4,42 +4,35 @@
  * details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
  */
 
-static char const	ident[] = "$Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/gsm_create.c,v 1.1 2002/01/14 19:15:54 menno Exp $";
+static char const	ident[] = "$Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/gsm_create.c,v 1.2 2002/07/25 12:22:13 menno Exp $";
 
 #include	"config.h"
 
-#ifdef	HAS_STRING_H
+#include	<stdio.h>
+#include	<stdlib.h>
 #include	<string.h>
-#else
-#	include "proto.h"
-	extern char	* memset P((char *, int, int));
-#endif
 
-#ifdef	HAS_STDLIB_H
-#	include	<stdlib.h>
-#else
-#	ifdef	HAS_MALLOC_H
-#		include 	<malloc.h>
-#	else
-		extern char * malloc();
-#	endif
-#endif
 
-#include <stdio.h>
 
 #include "gsm.h"
 #include "private.h"
-#include "proto.h"
 
-gsm gsm_create P0()
+gsm gsm_create (void)
 {
 	gsm  r;
 
-	r = (gsm)malloc(sizeof(struct gsm_state));
+	r = malloc (sizeof(struct gsm_state));
 	if (!r) return r;
-
-	memset((char *)r, 0, sizeof(*r));
+	
+	memset((char *)r, 0, sizeof (struct gsm_state));
 	r->nrp = 40;
 
 	return r;
 }
+
+/* Added for libsndfile : May 6, 2002. Not sure if it works. */
+void gsm_init (gsm state)
+{
+	memset (state, 0, sizeof (struct gsm_state)) ;
+	state->nrp = 40 ;
+} 

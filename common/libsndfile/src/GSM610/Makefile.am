@@ -3,7 +3,7 @@
 
 EXTRA_DIST = README COPYRIGHT ChangeLog
 
-noinst_HEADERS = gsm.h config.h private.h proto.h unproto.h
+noinst_HEADERS = gsm.h config.h private.h
 noinst_LTLIBRARIES = libgsm.la
 
 CFILES = add.c decode.c gsm_decode.c gsm_encode.c long_term.c preprocess.c \

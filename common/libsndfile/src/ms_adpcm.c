@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1999-2001 Erik de Castro Lopo <erikd@zip.com.au>
+** Copyright (C) 1999-2002 Erik de Castro Lopo <erikd@zip.com.au>
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU Lesser General Public License as published by
@@ -16,18 +16,16 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-
 #include	<stdio.h>
 #include	<unistd.h>
 #include	<string.h>
-#include	<math.h>
 
 #include	"sndfile.h"
 #include	"config.h"
 #include	"sfendian.h"
-#include	"floatcast.h"
+#include	"float_cast.h"
 #include	"common.h"
-#include	"wav.h"
+#include	"wav_w64.h"
 
 /* These required here because we write the header in this file. */
 
@@ -40,10 +38,11 @@
 #define WAVE_FORMAT_MS_ADPCM	0x0002
 
 typedef struct
-{	unsigned int	channels, blocksize, samplesperblock, blocks, dataremaining ; 
-	int				blockcount, samplecount ;
-	unsigned char	*block ;
+{	int				channels, blocksize, samplesperblock, blocks, dataremaining ; 
+	int				blockcount ;
+	sf_count_t			samplecount ;
 	short			*samples ;
+	unsigned char	*block ;
 	unsigned char	dummydata [4] ; /* Dummy size */
 } MSADPCM_PRIVATE ;
 
@@ -60,11 +59,11 @@ static int AdaptationTable []    =
    appear in the actual WAVE file.  They should be read in
    in case a sound program added extras to the list. */
 
-static int AdaptCoeff1 [] = 
+static int AdaptCoeff1 [MSADPCM_ADAPT_COEFF_COUNT] = 
 {	256, 512, 0, 192, 240, 460, 392 
 } ;
 
-static int AdaptCoeff2 [] = 
+static int AdaptCoeff2 [MSADPCM_ADAPT_COEFF_COUNT] = 
 {	0, -256, 0, 64, 0, -208, -232
 } ;
 
@@ -98,27 +97,24 @@ static int AdaptCoeff2 [] =
 */
 
 static	int	msadpcm_decode_block (SF_PRIVATE *psf, MSADPCM_PRIVATE *pms) ;
-static	int msadpcm_read (SF_PRIVATE *psf, MSADPCM_PRIVATE *pms, short *ptr, int len) ;
+static sf_count_t msadpcm_read_block (SF_PRIVATE *psf, MSADPCM_PRIVATE *pms, short *ptr, sf_count_t len) ;
 
 static	int	msadpcm_encode_block (SF_PRIVATE *psf, MSADPCM_PRIVATE *pms) ;
-static	int msadpcm_write (SF_PRIVATE *psf, MSADPCM_PRIVATE *pms, short *ptr, int len) ;
+static sf_count_t msadpcm_write_block (SF_PRIVATE *psf, MSADPCM_PRIVATE *pms, short *ptr, sf_count_t len) ;
 
-static	int	msadpcm_read_s (SF_PRIVATE *psf, short *ptr, int len) ;
-static	int	msadpcm_read_i (SF_PRIVATE *psf, int *ptr, int len) ;
-static	int	msadpcm_read_f (SF_PRIVATE *psf, float *ptr, int len) ;
-static	int	msadpcm_read_d (SF_PRIVATE *psf, double *ptr, int len, int normalize) ;
+static sf_count_t	msadpcm_read_s (SF_PRIVATE *psf, short *ptr, sf_count_t len) ;
+static sf_count_t	msadpcm_read_i (SF_PRIVATE *psf, int *ptr, sf_count_t len) ;
+static sf_count_t	msadpcm_read_f (SF_PRIVATE *psf, float *ptr, sf_count_t len) ;
+static sf_count_t	msadpcm_read_d (SF_PRIVATE *psf, double *ptr, sf_count_t len) ;
 
-static int	msadpcm_write_s (SF_PRIVATE *psf, short *ptr, int len) ;
-static int	msadpcm_write_i  (SF_PRIVATE *psf, int *ptr, int len) ;
-static int	msadpcm_write_f  (SF_PRIVATE *psf, float *ptr, int len) ;
-static int	msadpcm_write_d  (SF_PRIVATE *psf, double *ptr, int len, int normalize) ;
+static sf_count_t	msadpcm_write_s (SF_PRIVATE *psf, short *ptr, sf_count_t len) ;
+static sf_count_t	msadpcm_write_i  (SF_PRIVATE *psf, int *ptr, sf_count_t len) ;
+static sf_count_t	msadpcm_write_f  (SF_PRIVATE *psf, float *ptr, sf_count_t len) ;
+static sf_count_t	msadpcm_write_d  (SF_PRIVATE *psf, double *ptr, sf_count_t len) ;
 
-static long msadpcm_seek   (SF_PRIVATE *psf, long offset, int whence) ;
+static sf_count_t msadpcm_seek   (SF_PRIVATE *psf, int mode, sf_count_t offset) ;
 static	int	msadpcm_close	(SF_PRIVATE  *psf) ;
 
-static int	msadpcm_write_header (SF_PRIVATE  *psf) ;
-
-static	unsigned int srate2blocksize (unsigned int srate_chan_product) ;
 static	void	choose_predictor (unsigned int channels, short *data, int *bpred, int *idelta) ;
 
 /*============================================================================================
@@ -126,53 +122,70 @@ static	void	choose_predictor (unsigned int channels, short *data, int *bpred, in
 */
 
 int	
-wav_msadpcm_reader_init (SF_PRIVATE *psf, WAV_FMT *fmt)
+wav_w64_msadpcm_init (SF_PRIVATE *psf, int blockalign, int samplesperblock)
 {	MSADPCM_PRIVATE	*pms ;
 	unsigned int	pmssize ;
 	int				count ;
-	
-	pmssize = sizeof (MSADPCM_PRIVATE) + fmt->msadpcm.blockalign + 3 * fmt->msadpcm.channels * fmt->msadpcm.samplesperblock ;
+
+	if (psf->mode == SFM_WRITE)
+		samplesperblock = 2 + 2 * (blockalign - 7 * psf->sf.channels) / psf->sf.channels ;
+
+	pmssize = sizeof (MSADPCM_PRIVATE) + blockalign + 3 * psf->sf.channels * samplesperblock ;
 
 	if (! (psf->fdata = malloc (pmssize)))
 		return SFE_MALLOC_FAILED ;
 	pms = (MSADPCM_PRIVATE*) psf->fdata ;
 	memset (pms, 0, pmssize) ;
-	
+		
 	pms->block   = (unsigned char*) pms->dummydata ;
-	pms->samples = (short*) (pms->dummydata + fmt->msadpcm.blockalign) ;
+	pms->samples = (short*) (pms->dummydata + blockalign) ;
+		
+	pms->channels        = psf->sf.channels ;
+	pms->blocksize       = blockalign ;
+	pms->samplesperblock = samplesperblock ;
+
+	if (psf->mode == SFM_READ)
+	{	pms->dataremaining	 = psf->datalength ;
 	
-	pms->channels        = fmt->msadpcm.channels ;
-	pms->blocksize       = fmt->msadpcm.blockalign ;
-	pms->samplesperblock = fmt->msadpcm.samplesperblock ;
-
-	pms->dataremaining	 = psf->datalength ;
-
-	if (psf->datalength % pms->blocksize)
-		pms->blocks = psf->datalength / pms->blocksize  + 1 ;
-	else
-		pms->blocks = psf->datalength / pms->blocksize ;
-
-	count = 2 * (pms->blocksize - 6 * pms->channels) / pms->channels ;
-	if (pms->samplesperblock != count)
-		psf_log_printf (psf, "*** Warning : samplesperblock shoud be %d.\n", count) ;
-
-	psf->sf.samples = (psf->datalength / pms->blocksize) * pms->samplesperblock ;
-
-	psf_log_printf (psf, " bpred   idelta\n") ;
-
-	msadpcm_decode_block (psf, pms) ;
+		if (psf->datalength % pms->blocksize)
+			pms->blocks = psf->datalength / pms->blocksize  + 1 ;
+		else
+			pms->blocks = psf->datalength / pms->blocksize ;
 	
-	psf->read_short  = (func_short)  msadpcm_read_s ;
-	psf->read_int    = (func_int)    msadpcm_read_i ;
-	psf->read_float  = (func_float)  msadpcm_read_f ;
-	psf->read_double = (func_double) msadpcm_read_d ;
-
-	psf->seek_func   = (func_seek)   msadpcm_seek ;
+		count = 2 * (pms->blocksize - 6 * pms->channels) / pms->channels ;
+		if (pms->samplesperblock != count)
+			psf_log_printf (psf, "*** Warning : samplesperblock shoud be %d.\n", count) ;
+	
+		psf->sf.samples = (psf->datalength / pms->blocksize) * pms->samplesperblock ;
+	
+		psf_log_printf (psf, " bpred   idelta\n") ;
+	
+		msadpcm_decode_block (psf, pms) ;
+		
+		psf->read_short  = msadpcm_read_s ;
+		psf->read_int    = msadpcm_read_i ;
+		psf->read_float  = msadpcm_read_f ;
+		psf->read_double = msadpcm_read_d ;
+		} ;
+	
+	if (psf->mode == SFM_WRITE)
+	{	pms->samples = (short*) (pms->dummydata + blockalign) ;
+		
+		pms->samplecount = 0 ;
+		
+		psf->write_short  = msadpcm_write_s ;
+		psf->write_int    = msadpcm_write_i ;
+		psf->write_float  = msadpcm_write_f ;
+		psf->write_double = msadpcm_write_d ;
+		} ;
+		
+	psf->new_seek	= msadpcm_seek ;
+	psf->close		= msadpcm_close ;
 
 	return 0 ;
-} /* wav_msadpcm_reader_init */
+} /* wav_w64_msadpcm_init */
 
-static int		
+static int
 msadpcm_decode_block (SF_PRIVATE *psf, MSADPCM_PRIVATE *pms)
 {	int		chan, k, blockindex, sampleindex ;
 	short	bytecode, bpred [2], chan_idelta [2] ;
@@ -189,7 +202,7 @@ msadpcm_decode_block (SF_PRIVATE *psf, MSADPCM_PRIVATE *pms)
 		return 1 ;
 		} ;
 
-	if ((k = fread (pms->block, 1, pms->blocksize, psf->file)) != pms->blocksize)
+	if ((k = psf_fread (pms->block, 1, pms->blocksize, psf->filedes)) != pms->blocksize)
 		psf_log_printf (psf, "*** Warning : short read (%d != %d).\n", k, pms->blocksize) ;
 
 	/* Read and check the block header. */
@@ -276,13 +289,13 @@ msadpcm_decode_block (SF_PRIVATE *psf, MSADPCM_PRIVATE *pms)
 	return 1 ;
 } /* msadpcm_decode_block */
 
-static int 
-msadpcm_read (SF_PRIVATE *psf, MSADPCM_PRIVATE *pms, short *ptr, int len)
-{	int		count, total = 0, index = 0 ;
+static sf_count_t 
+msadpcm_read_block (SF_PRIVATE *psf, MSADPCM_PRIVATE *pms, short *ptr, sf_count_t len)
+{	sf_count_t	count, total = 0, index = 0 ;
 	
 	while (index < len)
 	{	if (pms->blockcount >= pms->blocks && pms->samplecount >= pms->samplesperblock)
-		{	memset (&(ptr[index]), 0, (len - index) * sizeof (short)) ;
+		{	memset (&(ptr[index]), 0, (size_t) ((len - index) * sizeof (short))) ;
 			return total ;
 			} ;
 		
@@ -299,10 +312,10 @@ msadpcm_read (SF_PRIVATE *psf, MSADPCM_PRIVATE *pms, short *ptr, int len)
 		} ;
 
 	return total ;		
-} /* msadpcm_read */
+} /* msadpcm_read_block */
 
-static int		
-msadpcm_read_s (SF_PRIVATE *psf, short *ptr, int len)
+static sf_count_t		
+msadpcm_read_s (SF_PRIVATE *psf, short *ptr, sf_count_t len)
 {	MSADPCM_PRIVATE 	*pms ; 
 	int				total ;
 
@@ -310,13 +323,13 @@ msadpcm_read_s (SF_PRIVATE *psf, short *ptr, int len)
 		return 0 ;
 	pms = (MSADPCM_PRIVATE*) psf->fdata ;
 	
-	total = msadpcm_read (psf, pms, ptr, len) ;
+	total = msadpcm_read_block (psf, pms, ptr, len) ;
 
 	return total ;
 } /* msadpcm_read_s */
 
-static int		
-msadpcm_read_i  (SF_PRIVATE *psf, int *ptr, int len)
+static sf_count_t		
+msadpcm_read_i  (SF_PRIVATE *psf, int *ptr, sf_count_t len)
 {	MSADPCM_PRIVATE *pms ; 
 	short		*sptr ;
 	int			k, bufferlen, readcount = 0, count ;
@@ -327,12 +340,12 @@ msadpcm_read_i  (SF_PRIVATE *psf, int *ptr, int len)
 	pms = (MSADPCM_PRIVATE*) psf->fdata ;
 	
 	sptr = (short*) psf->buffer ;
-	bufferlen = ((SF_BUFFER_LEN / psf->blockwidth) * psf->blockwidth) / sizeof (short) ;
+	bufferlen = SF_BUFFER_LEN / sizeof (short) ;
 	while (len > 0)
 	{	readcount = (len >= bufferlen) ? bufferlen : len ;
-		count = msadpcm_read (psf, pms, sptr, readcount) ;
+		count = msadpcm_read_block (psf, pms, sptr, readcount) ;
 		for (k = 0 ; k < readcount ; k++)
-			ptr [index+k] = (int) (sptr [k]) ;
+			ptr [index + k] = sptr [k] << 16 ;
 		index += readcount ;
 		total += count ;
 		len -= readcount ;
@@ -340,8 +353,8 @@ msadpcm_read_i  (SF_PRIVATE *psf, int *ptr, int len)
 	return total ;
 } /* msadpcm_read_i */
 
-static int
-msadpcm_read_f  (SF_PRIVATE *psf, float *ptr, int len)
+static sf_count_t
+msadpcm_read_f  (SF_PRIVATE *psf, float *ptr, sf_count_t len)
 {	MSADPCM_PRIVATE *pms ; 
 	short		*sptr ;
 	int			k, bufferlen, readcount = 0, count ;
@@ -354,12 +367,12 @@ msadpcm_read_f  (SF_PRIVATE *psf, float *ptr, int len)
 	
 	normfact = (psf->norm_float == SF_TRUE) ? 1.0 / ((float) 0x8000) : 1.0 ;
 	sptr = (short*) psf->buffer ;
-	bufferlen = ((SF_BUFFER_LEN / psf->blockwidth) * psf->blockwidth) / sizeof (short) ;
+	bufferlen = SF_BUFFER_LEN / sizeof (short) ;
 	while (len > 0)
 	{	readcount = (len >= bufferlen) ? bufferlen : len ;
-		count = msadpcm_read (psf, pms, sptr, readcount) ;
+		count = msadpcm_read_block (psf, pms, sptr, readcount) ;
 		for (k = 0 ; k < readcount ; k++)
-			ptr [index+k] = normfact * (float) (sptr [k]) ;
+			ptr [index + k] = normfact * (float) (sptr [k]) ;
 		index += readcount ;
 		total += count ;
 		len -= readcount ;
@@ -367,27 +380,27 @@ msadpcm_read_f  (SF_PRIVATE *psf, float *ptr, int len)
 	return total ;
 } /* msadpcm_read_f */
 
-static int		
-msadpcm_read_d  (SF_PRIVATE *psf, double *ptr, int len, int normalize)
+static sf_count_t		
+msadpcm_read_d  (SF_PRIVATE *psf, double *ptr, sf_count_t len)
 {	MSADPCM_PRIVATE *pms ; 
 	short		*sptr ;
 	int			k, bufferlen, readcount = 0, count ;
 	int			index = 0, total = 0 ;
 	double 		normfact ;
 	
-	normfact = (normalize ? 1.0 / ((double) 0x8000) : 1.0) ;
+	normfact = (psf->norm_double == SF_TRUE) ? 1.0 / ((double) 0x8000) : 1.0 ;
 
 	if (! psf->fdata)
 		return 0 ;
 	pms = (MSADPCM_PRIVATE*) psf->fdata ;
 	
 	sptr = (short*) psf->buffer ;
-	bufferlen = ((SF_BUFFER_LEN / psf->blockwidth) * psf->blockwidth) / sizeof (short) ;
+	bufferlen = SF_BUFFER_LEN / sizeof (short) ;
 	while (len > 0)
 	{	readcount = (len >= bufferlen) ? bufferlen : len ;
-		count = msadpcm_read (psf, pms, sptr, readcount) ;
+		count = msadpcm_read_block (psf, pms, sptr, readcount) ;
 		for (k = 0 ; k < readcount ; k++)
-			ptr [index+k] = normfact * (double) (sptr [k]) ;
+			ptr [index + k] = normfact * (double) (sptr [k]) ;
 		index += readcount ;
 		total += count ;
 		len -= readcount ;
@@ -395,8 +408,8 @@ msadpcm_read_d  (SF_PRIVATE *psf, double *ptr, int len, int normalize)
 	return total ;
 } /* msadpcm_read_d */
 
-static long    
-msadpcm_seek   (SF_PRIVATE *psf, long offset, int whence)
+static sf_count_t    
+msadpcm_seek   (SF_PRIVATE *psf, int mode, sf_count_t offset)
 {	MSADPCM_PRIVATE *pms ; 
 	int			newblock, newsample ;
 	
@@ -404,46 +417,29 @@ msadpcm_seek   (SF_PRIVATE *psf, long offset, int whence)
 		return 0 ;
 	pms = (MSADPCM_PRIVATE*) psf->fdata ;
 
-	if (! (psf->blockwidth && psf->datalength && psf->dataoffset))
+	if (! (psf->datalength && psf->dataoffset))
 	{	psf->error = SFE_BAD_SEEK ;
-		return	((long) -1) ;
+		return	((sf_count_t) -1) ;
 		} ;
-		
-	switch (whence)
-	{	case SEEK_SET :
-				if (offset < 0 || offset > pms->blocks * pms->samplesperblock)
-				{	psf->error = SFE_BAD_SEEK ;
-					return	((long) -1) ;
-					} ;
-				newblock  = offset / pms->samplesperblock ;
-				newsample = offset % pms->samplesperblock ;
-				break ;
-				
-		case SEEK_CUR :
-				if (psf->current + offset < 0 || psf->current + offset > pms->blocks * pms->samplesperblock)
-				{	psf->error = SFE_BAD_SEEK ;
-					return	((long) -1) ;
-					} ;
-				newblock  = (psf->current + offset) / pms->samplesperblock ;
-				newsample = (psf->current + offset) % pms->samplesperblock ;
-				break ;
-				
-		case SEEK_END :
-				if (offset > 0 || pms->samplesperblock * pms->blocks + offset < 0)
-				{	psf->error = SFE_BAD_SEEK ;
-					return	((long) -1) ;
-					} ;
-				newblock  = (pms->samplesperblock * pms->blocks + offset) / pms->samplesperblock ;
-				newsample = (pms->samplesperblock * pms->blocks + offset) % pms->samplesperblock ;
-				break ;
-				
-		default : 
-				psf->error = SFE_BAD_SEEK ;
-				return	((long) -1) ;
+
+	if (offset == 0)
+	{	psf_fseek (psf->filedes, psf->dataoffset, SEEK_SET) ;
+		pms->blockcount  = 0 ;
+		msadpcm_decode_block (psf, pms) ;
+		pms->samplecount = 0 ;
+		return 0 ;
 		} ;
+
+	if (offset < 0 || offset > pms->blocks * pms->samplesperblock)
+	{	psf->error = SFE_BAD_SEEK ;
+		return	((sf_count_t) -1) ;
+		} ;
+
+	newblock  = offset / pms->samplesperblock ;
+	newsample = offset % pms->samplesperblock ;
 		
-	if (psf->mode == SF_MODE_READ)
-	{	fseek (psf->file, (int) (psf->dataoffset + newblock * pms->blocksize), SEEK_SET) ;
+	if (mode == SFM_READ)
+	{	psf_fseek (psf->filedes, psf->dataoffset + newblock * pms->blocksize, SEEK_SET) ;
 		pms->blockcount  = newblock ;
 		msadpcm_decode_block (psf, pms) ;
 		pms->samplecount = newsample ;
@@ -451,59 +447,28 @@ msadpcm_seek   (SF_PRIVATE *psf, long offset, int whence)
 	else
 	{	/* What to do about write??? */ 
 		psf->error = SFE_BAD_SEEK ;
-		return	((long) -1) ;
+		return	((sf_count_t) -1) ;
 		} ;
 
-	psf->current = newblock * pms->samplesperblock + newsample ;
-	return psf->current ;
+	return newblock * pms->samplesperblock + newsample ;
 } /* msadpcm_seek */
 
 /*==========================================================================================
 ** MS ADPCM Write Functions.
 */
 
-int	
-wav_msadpcm_writer_init (SF_PRIVATE *psf)
-{	MSADPCM_PRIVATE	*pms ;
-	unsigned int 	pmssize, blockalign, samplesperblock ;
-	
-	blockalign      = srate2blocksize (psf->sf.samplerate * psf->sf.channels) ;	
-	samplesperblock = 2 + 2 * (blockalign - 7 * psf->sf.channels) / psf->sf.channels ;
-	
-	pmssize = sizeof (MSADPCM_PRIVATE) + blockalign + 3 * psf->sf.channels * samplesperblock ;
+void
+msadpcm_write_adapt_coeffs (SF_PRIVATE *psf)
+{	int k ;
 
-	if (! (psf->fdata = malloc (pmssize)))
-		return SFE_MALLOC_FAILED ;
-	pms = (MSADPCM_PRIVATE*) psf->fdata ;
-	memset (pms, 0, pmssize) ;
-	
-	pms->channels        = psf->sf.channels ;
-	pms->blocksize       = blockalign ;
-	pms->samplesperblock = samplesperblock ;
-
-	pms->block   = (unsigned char*) pms->dummydata ;
-	pms->samples = (short*) (pms->dummydata + blockalign) ;
-	
-	pms->samplecount = 0 ;
-	
-	msadpcm_write_header (psf) ;
-	
-	psf->write_short  = (func_short)   msadpcm_write_s ;
-	psf->write_int    = (func_int)     msadpcm_write_i ;
-	psf->write_float  = (func_float)   msadpcm_write_f ;
-	psf->write_double = (func_double)  msadpcm_write_d ;
-	
-	psf->seek_func    = (func_seek)    msadpcm_seek ;
-	psf->close        = (func_close)   msadpcm_close ;
-	psf->write_header = (func_wr_hdr)  msadpcm_write_header ;
-
-	return 0 ;
-} /* wav_msadpcm_writer_init */
+	for (k = 0 ; k < MSADPCM_ADAPT_COEFF_COUNT ; k++)
+		psf_binheader_writef (psf, "e22", AdaptCoeff1 [k], AdaptCoeff2 [k]) ;
+} /* msadpcm_write_adapt_coeffs */
 
 /*==========================================================================================
 */
 
-static int		
+static int
 msadpcm_encode_block (SF_PRIVATE *psf, MSADPCM_PRIVATE *pms)
 {	unsigned int	blockindex ;
 	unsigned char	byte ;
@@ -613,7 +578,7 @@ msadpcm_encode_block (SF_PRIVATE *psf, MSADPCM_PRIVATE *pms)
 
 	/* Write the block to disk. */
 
-	if ((k = fwrite (pms->block, 1, pms->blocksize, psf->file)) != pms->blocksize)
+	if ((k = psf_fwrite (pms->block, 1, pms->blocksize, psf->filedes)) != pms->blocksize)
 		psf_log_printf (psf, "*** Warning : short write (%d != %d).\n", k, pms->blocksize) ;
 		
 	memset (pms->samples, 0, pms->samplesperblock * sizeof (short)) ;
@@ -624,8 +589,8 @@ msadpcm_encode_block (SF_PRIVATE *psf, MSADPCM_PRIVATE *pms)
 	return 1 ;
 } /* msadpcm_encode_block */
 
-static int 
-msadpcm_write (SF_PRIVATE *psf, MSADPCM_PRIVATE *pms, short *ptr, int len)
+static sf_count_t 
+msadpcm_write_block (SF_PRIVATE *psf, MSADPCM_PRIVATE *pms, short *ptr, sf_count_t len)
 {	int		count, total = 0, index = 0 ;
 	
 	while (index < len)
@@ -644,10 +609,10 @@ msadpcm_write (SF_PRIVATE *psf, MSADPCM_PRIVATE *pms, short *ptr, int len)
 		} ;
 
 	return total ;		
-} /* msadpcm_write */
+} /* msadpcm_write_block */
 
-static int		
-msadpcm_write_s (SF_PRIVATE *psf, short *ptr, int len)
+static sf_count_t		
+msadpcm_write_s (SF_PRIVATE *psf, short *ptr, sf_count_t len)
 {	MSADPCM_PRIVATE *pms ; 
 	int				total ;
 
@@ -655,13 +620,13 @@ msadpcm_write_s (SF_PRIVATE *psf, short *ptr, int len)
 		return 0 ;
 	pms = (MSADPCM_PRIVATE*) psf->fdata ;
 	
-	total = msadpcm_write (psf, pms, ptr, len) ;
+	total = msadpcm_write_block (psf, pms, ptr, len) ;
 
 	return total ;
 } /* msadpcm_write_s */
 
-static int		
-msadpcm_write_i  (SF_PRIVATE *psf, int *ptr, int len)
+static sf_count_t		
+msadpcm_write_i  (SF_PRIVATE *psf, int *ptr, sf_count_t len)
 {	MSADPCM_PRIVATE *pms ; 
 	short		*sptr ;
 	int			k, bufferlen, writecount = 0, count ;
@@ -672,12 +637,12 @@ msadpcm_write_i  (SF_PRIVATE *psf, int *ptr, int len)
 	pms = (MSADPCM_PRIVATE*) psf->fdata ;
 	
 	sptr = (short*) psf->buffer ;
-	bufferlen = ((SF_BUFFER_LEN / psf->blockwidth) * psf->blockwidth) / sizeof (short) ;
+	bufferlen = SF_BUFFER_LEN / sizeof (short) ;
 	while (len > 0)
 	{	writecount = (len >= bufferlen) ? bufferlen : len ;
 		for (k = 0 ; k < writecount ; k++)
-			sptr [k] = (short) ptr [index+k] ;
-		count = msadpcm_write (psf, pms, sptr, writecount) ;
+			sptr [k] = ptr [index + k] >> 16 ;
+		count = msadpcm_write_block (psf, pms, sptr, writecount) ;
 		index += writecount ;
 		total += count ;
 		len -= writecount ;
@@ -685,8 +650,8 @@ msadpcm_write_i  (SF_PRIVATE *psf, int *ptr, int len)
 	return total ;
 } /* msadpcm_write_i */
 
-static int
-msadpcm_write_f  (SF_PRIVATE *psf, float *ptr, int len)
+static sf_count_t
+msadpcm_write_f  (SF_PRIVATE *psf, float *ptr, sf_count_t len)
 {	MSADPCM_PRIVATE *pms ; 
 	short		*sptr ;
 	int			k, bufferlen, writecount = 0, count ;
@@ -700,12 +665,12 @@ msadpcm_write_f  (SF_PRIVATE *psf, float *ptr, int len)
 	normfact = (psf->norm_float == SF_TRUE) ? ((float) 0x8000) : 1.0 ;
 	
 	sptr = (short*) psf->buffer ;
-	bufferlen = ((SF_BUFFER_LEN / psf->blockwidth) * psf->blockwidth) / sizeof (short) ;
+	bufferlen = SF_BUFFER_LEN / sizeof (short) ;
 	while (len > 0)
 	{	writecount = (len >= bufferlen) ? bufferlen : len ;
 		for (k = 0 ; k < writecount ; k++)
-			sptr [k] = FLOAT_TO_SHORT (normfact * ptr [index+k]) ;
-		count = msadpcm_write (psf, pms, sptr, writecount) ;
+			sptr [k] = lrintf (normfact * ptr [index + k]) ;
+		count = msadpcm_write_block (psf, pms, sptr, writecount) ;
 		index += writecount ;
 		total += count ;
 		len -= writecount ;
@@ -713,27 +678,27 @@ msadpcm_write_f  (SF_PRIVATE *psf, float *ptr, int len)
 	return total ;
 } /* msadpcm_write_f */
 
-static int		
-msadpcm_write_d  (SF_PRIVATE *psf, double *ptr, int len, int normalize)
+static sf_count_t		
+msadpcm_write_d  (SF_PRIVATE *psf, double *ptr, sf_count_t len)
 {	MSADPCM_PRIVATE *pms ; 
 	short		*sptr ;
 	int			k, bufferlen, writecount = 0, count ;
 	int			index = 0, total = 0 ;
 	double 		normfact ;
 	
-	normfact = (normalize ? ((double) 0x8000) : 1.0) ;
+	normfact = (psf->norm_double == SF_TRUE) ? ((double) 0x8000) : 1.0 ;
 
 	if (! psf->fdata)
 		return 0 ;
 	pms = (MSADPCM_PRIVATE*) psf->fdata ;
 	
 	sptr = (short*) psf->buffer ;
-	bufferlen = ((SF_BUFFER_LEN / psf->blockwidth) * psf->blockwidth) / sizeof (short) ;
+	bufferlen = SF_BUFFER_LEN / sizeof (short) ;
 	while (len > 0)
 	{	writecount = (len >= bufferlen) ? bufferlen : len ;
 		for (k = 0 ; k < writecount ; k++)
-			sptr [k] = DOUBLE_TO_SHORT (normfact * ptr [index+k]) ;
-		count = msadpcm_write (psf, pms, sptr, writecount) ;
+			sptr [k] = lrint (normfact * ptr [index + k]) ;
+		count = msadpcm_write_block (psf, pms, sptr, writecount) ;
 		index += writecount ;
 		total += count ;
 		len -= writecount ;
@@ -744,55 +709,6 @@ msadpcm_write_d  (SF_PRIVATE *psf, double *ptr, int len, int normalize)
 /*========================================================================================
 */
 
-static int
-msadpcm_write_header (SF_PRIVATE  *psf)
-{	int  k, fmt_size, blockalign, samplesperblock, bytespersec, extrabytes ;
-
-	blockalign      = srate2blocksize (psf->sf.samplerate * psf->sf.channels) ;	
-	samplesperblock = 2 + 2 * (blockalign - 7 * psf->sf.channels) / psf->sf.channels ;
-	bytespersec     = (psf->sf.samplerate * blockalign) / samplesperblock ;
-	
-	/* Reset the current header length to zero. */
-	psf->header [0] = 0 ;
-	psf->headindex = 0 ;
-	fseek (psf->file, 0, SEEK_SET) ;
-
-	/* RIFF marker, length, WAVE and 'fmt ' markers. */		
-	psf_binheader_writef (psf, "mlmm", RIFF_MARKER, psf->filelength - 8, WAVE_MARKER, fmt_MARKER) ;
-
-	/* fmt chunk. */
-	extrabytes = 2 + 2 + 7 * (2 + 2) ;
-	fmt_size   = 2 + 2 + 4 + 4 + 2 + 2 + 2 + extrabytes ;
-	
-	/* fmt : size, WAV format type, channels. */
-	psf_binheader_writef (psf, "lww", fmt_size, WAVE_FORMAT_MS_ADPCM, psf->sf.channels) ;
-
-	/* fmt : samplerate, bytespersec. */
-	psf_binheader_writef (psf, "ll", psf->sf.samplerate, bytespersec) ;
-
-	/* fmt : blockalign, bitwidth, extrabytes, samplesperblock. */
-	psf_binheader_writef (psf, "wwwww", blockalign, 4, extrabytes, samplesperblock, 7) ;
-	
-	for (k = 0 ; k < 7 ; k++)
-		psf_binheader_writef (psf, "ww", AdaptCoeff1 [k], AdaptCoeff2 [k]) ;
-
-	/* Fact chunk. */	
-	psf_binheader_writef (psf, "mll", fact_MARKER, sizeof (int), psf->sf.samples) ;
-
-	/* DATA chunk. */
-	psf_binheader_writef (psf, "ml", data_MARKER, psf->datalength) ;
-
-	fwrite (psf->header, psf->headindex, 1, psf->file) ;
-
-	psf->dataoffset = psf->headindex ;
-
-	psf->datalength  = (psf->sf.samples / samplesperblock) * samplesperblock ;
-	if (psf->sf.samples % samplesperblock)
-		psf->datalength += samplesperblock ;
-
-	return 0 ;
-} /* msadpcm_write_header */
-
 static int	
 msadpcm_close	(SF_PRIVATE  *psf)
 {	MSADPCM_PRIVATE *pms ; 
@@ -802,7 +718,7 @@ msadpcm_close	(SF_PRIVATE  *psf)
 
 	pms = (MSADPCM_PRIVATE*) psf->fdata ;
 
-	if (psf->mode == SF_MODE_WRITE)
+	if (psf->mode == SFM_WRITE)
 	{	/*  Now we know static int for certain the length of the file we can
 		**  re-write the header.
 		*/
@@ -810,13 +726,14 @@ msadpcm_close	(SF_PRIVATE  *psf)
 		if (pms->samplecount && pms->samplecount < pms->samplesperblock)
 			msadpcm_encode_block (psf, pms) ;	
 
-		fseek (psf->file, 0, SEEK_END) ;
-		psf->filelength = ftell (psf->file) ;
+		psf_fseek (psf->filedes, 0, SEEK_END) ;
+		psf->filelength = psf_ftell (psf->filedes) ;
 
 		psf->sf.samples = pms->samplesperblock * pms->blockcount ;
 		psf->datalength = psf->filelength - psf->dataoffset ;
 
-		msadpcm_write_header (psf) ;
+		if (psf->write_header)
+			psf->write_header (psf) ;
 		} ;
 
 	if (psf->fdata)
@@ -829,17 +746,6 @@ msadpcm_close	(SF_PRIVATE  *psf)
 /*========================================================================================
 ** Static functions.
 */
-
-static	unsigned int 
-srate2blocksize (unsigned int srate_chan_product)
-{	if (srate_chan_product < 12000)
-		return 256 ;
-	if (srate_chan_product < 23000)
-		return 512 ;
-	if (srate_chan_product < 44000)
-		return 1024 ;
-	return 2048 ;
-} /* srate2blocksize */
 
 /*----------------------------------------------------------------------------------------
 **	Choosing the block predictor.

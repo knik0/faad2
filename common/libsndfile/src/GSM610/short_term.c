@@ -4,7 +4,7 @@
  * details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
  */
 
-/* $Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/short_term.c,v 1.1 2002/01/14 19:15:55 menno Exp $ */
+/* $Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/short_term.c,v 1.2 2002/07/25 12:22:13 menno Exp $ */
 
 #include <stdio.h>
 #include <assert.h>
@@ -12,7 +12,6 @@
 #include "private.h"
 
 #include "gsm.h"
-#include "proto.h"
 
 /*
  *  SHORT TERM ANALYSIS FILTERING SECTION
@@ -20,7 +19,7 @@
 
 /* 4.2.8 */
 
-static void Decoding_of_the_coded_Log_Area_Ratios P2((LARc,LARpp),
+static void Decoding_of_the_coded_Log_Area_Ratios (
 	word 	* LARc,		/* coded log area ratio	[0..7] 	IN	*/
 	word	* LARpp)	/* out: decoded ..			*/
 {
@@ -88,7 +87,7 @@ static void Decoding_of_the_coded_Log_Area_Ratios P2((LARc,LARpp),
  * (Initial value: LARpp(j-1)[1..8] = 0.)
  */
 
-static void Coefficients_0_12 P3((LARpp_j_1, LARpp_j, LARp),
+static void Coefficients_0_12 (
 	register word * LARpp_j_1,
 	register word * LARpp_j,
 	register word * LARp)
@@ -102,7 +101,7 @@ static void Coefficients_0_12 P3((LARpp_j_1, LARpp_j, LARp),
 	}
 }
 
-static void Coefficients_13_26 P3((LARpp_j_1, LARpp_j, LARp),
+static void Coefficients_13_26 (
 	register word * LARpp_j_1,
 	register word * LARpp_j,
 	register word * LARp)
@@ -114,7 +113,7 @@ static void Coefficients_13_26 P3((LARpp_j_1, LARpp_j, LARp),
 	}
 }
 
-static void Coefficients_27_39 P3((LARpp_j_1, LARpp_j, LARp),
+static void Coefficients_27_39 (
 	register word * LARpp_j_1,
 	register word * LARpp_j,
 	register word * LARp)
@@ -129,7 +128,7 @@ static void Coefficients_27_39 P3((LARpp_j_1, LARpp_j, LARp),
 }
 
 
-static void Coefficients_40_159 P2((LARpp_j, LARp),
+static void Coefficients_40_159 (
 	register word * LARpp_j,
 	register word * LARp)
 {
@@ -141,7 +140,7 @@ static void Coefficients_40_159 P2((LARpp_j, LARp),
 
 /* 4.2.9.2 */
 
-static void LARp_to_rp P1((LARp),
+static void LARp_to_rp (
 	register word * LARp)	/* [0..7] IN/OUT  */
 /*
  *  The input of this procedure is the interpolated LARp[0..7] array.
@@ -180,7 +179,7 @@ static void LARp_to_rp P1((LARp),
 
 
 /* 4.2.10 */
-static void Short_term_analysis_filtering P4((S,rp,k_n,s),
+static void Short_term_analysis_filtering (
 	struct gsm_state * S,
 	register word	* rp,	/* [0..7]	IN	*/
 	register int 	k_n, 	/*   k_end - k_start	*/
@@ -225,7 +224,7 @@ static void Short_term_analysis_filtering P4((S,rp,k_n,s),
 
 #if defined(USE_FLOAT_MUL) && defined(FAST)
 
-static void Fast_Short_term_analysis_filtering P4((S,rp,k_n,s),
+static void Fast_Short_term_analysis_filtering (
 	struct gsm_state * S,
 	register word	* rp,	/* [0..7]	IN	*/
 	register int 	k_n, 	/*   k_end - k_start	*/
@@ -262,7 +261,7 @@ static void Fast_Short_term_analysis_filtering P4((S,rp,k_n,s),
 }
 #endif /* ! (defined (USE_FLOAT_MUL) && defined (FAST)) */
 
-static void Short_term_synthesis_filtering P5((S,rrp,k,wt,sr),
+static void Short_term_synthesis_filtering (
 	struct gsm_state * S,
 	register word	* rrp,	/* [0..7]	IN	*/
 	register int	k,	/* k_end - k_start	*/
@@ -306,7 +305,7 @@ static void Short_term_synthesis_filtering P5((S,rrp,k,wt,sr),
 
 #if defined(FAST) && defined(USE_FLOAT_MUL)
 
-static void Fast_Short_term_synthesis_filtering P5((S,rrp,k,wt,sr),
+static void Fast_Short_term_synthesis_filtering (
 	struct gsm_state * S,
 	register word	* rrp,	/* [0..7]	IN	*/
 	register int	k,	/* k_end - k_start	*/
@@ -343,7 +342,7 @@ static void Fast_Short_term_synthesis_filtering P5((S,rrp,k,wt,sr),
 
 #endif /* defined(FAST) && defined(USE_FLOAT_MUL) */
 
-void Gsm_Short_Term_Analysis_Filter P3((S,LARc,s),
+void Gsm_Short_Term_Analysis_Filter (
 
 	struct gsm_state * S,
 
@@ -385,7 +384,7 @@ void Gsm_Short_Term_Analysis_Filter P3((S,LARc,s),
 	FILTER( S, LARp, 120, s + 40);
 }
 
-void Gsm_Short_Term_Synthesis_Filter P4((S, LARcr, wt, s),
+void Gsm_Short_Term_Synthesis_Filter (
 	struct gsm_state * S,
 
 	word	* LARcr,	/* received log area ratios [0..7] IN  */

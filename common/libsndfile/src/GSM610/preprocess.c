@@ -4,7 +4,7 @@
  * details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
  */
 
-/* $Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/preprocess.c,v 1.1 2002/01/14 19:15:55 menno Exp $ */
+/* $Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/preprocess.c,v 1.2 2002/07/25 12:22:13 menno Exp $ */
 
 #include	<stdio.h>
 #include	<assert.h>
@@ -12,7 +12,6 @@
 #include "private.h"
 
 #include	"gsm.h"
-#include 	"proto.h"
 
 /*	4.2.0 .. 4.2.3	PREPROCESSING SECTION
  *  
@@ -31,7 +30,7 @@
  */
 
 
-void Gsm_Preprocess P3((S, s, so),
+void Gsm_Preprocess (
 	struct gsm_state * S,
 	word		 * s,
 	word 		 * so )		/* [0..159] 	IN/OUT	*/

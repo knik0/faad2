@@ -4,7 +4,7 @@
  * details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
  */
 
-/* $Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/rpe.c,v 1.1 2002/01/14 19:15:55 menno Exp $ */
+/* $Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/rpe.c,v 1.2 2002/07/25 12:22:13 menno Exp $ */
 
 #include <stdio.h>
 #include <assert.h>
@@ -12,14 +12,13 @@
 #include "private.h"
 
 #include "gsm.h"
-#include "proto.h"
 
 /*  4.2.13 .. 4.2.17  RPE ENCODING SECTION
  */
 
 /* 4.2.13 */
 
-static void Weighting_filter P2((e, x),
+static void Weighting_filter (
 	register word	* e,		/* signal [-5..0.39.44]	IN  */
 	word		* x		/* signal [0..39]	OUT */
 )
@@ -113,7 +112,7 @@ static void Weighting_filter P2((e, x),
 
 /* 4.2.14 */
 
-static void RPE_grid_selection P3((x,xM,Mc_out),
+static void RPE_grid_selection (
 	word		* x,		/* [0..39]		IN  */ 
 	word		* xM,		/* [0..12]		OUT */
 	word		* Mc_out	/*			OUT */
@@ -220,7 +219,7 @@ static void RPE_grid_selection P3((x,xM,Mc_out),
 
 /* 4.12.15 */
 
-static void APCM_quantization_xmaxc_to_exp_mant P3((xmaxc,exp_out,mant_out),
+static void APCM_quantization_xmaxc_to_exp_mant (
 	word		xmaxc,		/* IN 	*/
 	word		* exp_out,	/* OUT	*/
 	word		* mant_out )	/* OUT  */
@@ -253,9 +252,8 @@ static void APCM_quantization_xmaxc_to_exp_mant P3((xmaxc,exp_out,mant_out),
 	*mant_out = mant;
 }
 
-static void APCM_quantization P5((xM,xMc,mant_out,exp_out,xmaxc_out),
+static void APCM_quantization (
 	word		* xM,		/* [0..12]		IN	*/
-
 	word		* xMc,		/* [0..12]		OUT	*/
 	word		* mant_out,	/* 			OUT	*/
 	word		* exp_out,	/*			OUT	*/
@@ -346,7 +344,7 @@ static void APCM_quantization P5((xM,xMc,mant_out,exp_out,xmaxc_out),
 
 /* 4.2.16 */
 
-static void APCM_inverse_quantization P4((xMc,mant,exp,xMp),
+static void APCM_inverse_quantization (
 	register word	* xMc,	/* [0..12]			IN 	*/
 	word		mant,
 	word		exp,
@@ -384,7 +382,7 @@ static void APCM_inverse_quantization P4((xMc,mant,exp,xMp),
 
 /* 4.2.17 */
 
-static void RPE_grid_positioning P3((Mc,xMp,ep),
+static void RPE_grid_positioning (
 	word		Mc,		/* grid position	IN	*/
 	register word	* xMp,		/* [0..12]		IN	*/
 	register word	* ep		/* [0..39]		OUT	*/
@@ -431,7 +429,7 @@ static void RPE_grid_positioning P3((Mc,xMp,ep),
  */
 
 #if 0	/* Has been inlined in code.c */
-void Gsm_Update_of_reconstructed_short_time_residual_signal P3((dpp, ep, dp),
+void Gsm_Update_of_reconstructed_short_time_residual_signal (
 	word	* dpp,		/* [0...39]	IN	*/
 	word	* ep,		/* [0...39]	IN	*/
 	word	* dp)		/* [-120...-1]  IN/OUT 	*/
@@ -446,9 +444,8 @@ void Gsm_Update_of_reconstructed_short_time_residual_signal P3((dpp, ep, dp),
 }
 #endif	/* Has been inlined in code.c */
 
-void Gsm_RPE_Encoding P5((S,e,xmaxc,Mc,xMc),
-
-	struct gsm_state * S,
+void Gsm_RPE_Encoding (
+	/*-struct gsm_state * S,-*/
 
 	word	* e,		/* -5..-1][0..39][40..44	IN/OUT  */
 	word	* xmaxc,	/* 				OUT */
@@ -469,8 +466,8 @@ void Gsm_RPE_Encoding P5((S,e,xmaxc,Mc,xMc),
 
 }
 
-void Gsm_RPE_Decoding P5((S, xmaxcr, Mcr, xMcr, erp),
-	struct gsm_state	* S,
+void Gsm_RPE_Decoding (
+	/*-struct gsm_state	* S,-*/
 
 	word 		xmaxcr,
 	word		Mcr,

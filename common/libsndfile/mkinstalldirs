@@ -4,7 +4,7 @@
 # Created: 1993-05-16
 # Public domain
 
-# $Id: mkinstalldirs,v 1.1 2002/01/14 19:15:51 menno Exp $
+# $Id: mkinstalldirs,v 1.2 2002/07/25 12:22:11 menno Exp $
 
 errstatus=0
 

@@ -4,14 +4,13 @@
  * details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
  */
 
-/* $Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/gsm_option.c,v 1.1 2002/01/14 19:15:54 menno Exp $ */
+/* $Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/gsm_option.c,v 1.2 2002/07/25 12:22:13 menno Exp $ */
 
 #include "private.h"
 
 #include "gsm.h"
-#include "proto.h"
 
-int gsm_option P3((r, opt, val), gsm r, int opt, int * val)
+int gsm_option (gsm r, int opt, int * val)
 {
 	int 	result = -1;
 

@@ -4,11 +4,10 @@
  * details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
  */
 
-/* $Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/gsm_destroy.c,v 1.1 2002/01/14 19:15:54 menno Exp $ */
+/* $Header: /home/cvs/f/fa/faac/faad2/common/libsndfile/src/GSM610/Attic/gsm_destroy.c,v 1.2 2002/07/25 12:22:13 menno Exp $ */
 
 #include "gsm.h"
 #include "config.h"
-#include "proto.h"
 
 #ifdef	HAS_STDLIB_H
 #	include	<stdlib.h>
@@ -20,7 +19,7 @@
 #	endif
 #endif
 
-void gsm_destroy P1((S), gsm S)
+void gsm_destroy (gsm S)
 {
 	if (S) free((char *)S);
 }

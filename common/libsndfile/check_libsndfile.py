@@ -6,7 +6,7 @@ import commands, os, string, sys
 # The list is provided as a text file. 
 # 
 
-_EXE_NAME = 'examples/sndfile_info'
+_EXE_NAME = 'examples/sndfile-info'
 
 
 def dump_status_output_exit (status, output, msg = None): 
@@ -56,8 +56,8 @@ while 1:
 	if line [0] == '#':
 		continue 
 	print line
-	if os.path.isfile (line): 
-		sfinfo_check_ok (line) 
+	if os.path.isfile ('/home/erikd/' + line): 
+		sfinfo_check_ok ('/home/erikd/' + line) 
 	else: 
 		print "Bad file name : ", line 
 		sys.exit (0) 

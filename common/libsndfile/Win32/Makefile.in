@@ -66,18 +66,26 @@ target_triplet = @target@
 AS = @AS@
 CC = @CC@
 DLLTOOL = @DLLTOOL@
+ECHO = @ECHO@
+EXEEXT = @EXEEXT@
+GETCONF = @GETCONF@
 LIBTOOL = @LIBTOOL@
 LN_S = @LN_S@
 MAKEINFO = @MAKEINFO@
 OBJDUMP = @OBJDUMP@
+OBJEXT = @OBJEXT@
+OS_SPECIFIC_INCLUDES = @OS_SPECIFIC_INCLUDES@
+OS_SPECIFIC_LINKS = @OS_SPECIFIC_LINKS@
 PACKAGE = @PACKAGE@
 RANLIB = @RANLIB@
 SHARED_VERSION_INFO = @SHARED_VERSION_INFO@
+STRIP = @STRIP@
 VERSION = @VERSION@
+ac_cv_sys_largefile_CFLAGS = @ac_cv_sys_largefile_CFLAGS@
+autogen = @autogen@
 subdirs = @subdirs@
 
-EXTRA_DIST = README-Win32.txt README-Win32.txt.old					config.h unistd.h
-
+EXTRA_DIST = README-Win32.txt config.h unistd.h libsndfile.def Makefile.msvc
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../src/config.h
 CONFIG_CLEAN_FILES = 
@@ -91,7 +99,7 @@ GZIP_ENV = --best
 all: all-redirect
 .SUFFIXES:
 $(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) 
-	cd $(top_srcdir) && $(AUTOMAKE) --gnu --include-deps Win32/Makefile
+	cd $(top_srcdir) && $(AUTOMAKE) --foreign --include-deps Win32/Makefile
 
 Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) \

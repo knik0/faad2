@@ -16,10 +16,6 @@ email me with suggestions.
 
   o Test sf_seek function on write???
 
-  o Get hold of a couple of Sun/Next AU files containing 32 and 64 bit 
-    floating point data write code to read and write them (well at least
-    the 32 bit ones).
-
   o Add more sound file formats. People should contact me with their
     requirements. 
 
