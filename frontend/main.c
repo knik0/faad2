@@ -16,14 +16,14 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.8 2002/01/19 09:39:00 menno Exp $
+** $Id: main.c,v 1.9 2002/01/21 23:19:54 menno Exp $
 **/
 
 #ifdef _WIN32
-    #define WIN32_LEAN_AND_MEAN
-    #include <windows.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #else
-    #include <time.h>
+#include <time.h>
 #endif
 
 #include <stdio.h>
@@ -248,7 +248,6 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
                 aufile = open_audio_file(sndfile, samplerate, frameInfo.channels,
                     outputFormat, fileType);
             } else {
-                setmode(fileno(stdout), O_BINARY);
                 aufile = open_audio_file("-", samplerate, frameInfo.channels,
                     outputFormat, fileType);
             }
@@ -419,7 +418,9 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
                 aufile = open_audio_file(sndfile, samplerate, frameInfo.channels,
                     outputFormat, fileType);
             } else {
+#ifdef _WIN32
                 setmode(fileno(stdout), O_BINARY);
+#endif
                 aufile = open_audio_file("-", samplerate, frameInfo.channels,
                     outputFormat, fileType);
             }
@@ -453,6 +454,21 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
     close_audio_file(aufile);
 
     return frameInfo.error;
+}
+
+int str_no_case_comp(char const *str1, char const *str2, unsigned long len)
+{
+    signed int c1 = 0, c2 = 0;
+
+    while (len--) {
+        c1 = tolower(*str1++);
+        c2 = tolower(*str2++);
+
+        if (c1 == 0 || c1 != c2)
+            break;
+    }
+
+    return c1 - c2;
 }
 
 int main(int argc, char *argv[])
@@ -598,7 +614,7 @@ int main(int argc, char *argv[])
     }
 
     fnp = (char *)strrchr(aacFileName, '.');
-    if (!stricmp(fnp, ".MP4"))
+    if (!str_no_case_comp(fnp, ".MP4", 4))
         mp4file = 1;
 
     if (mp4file)

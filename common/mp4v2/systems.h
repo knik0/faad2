@@ -20,12 +20,14 @@
  *		Bill May		wmay@cisco.com
  */
 
-#ifdef WIN32
+#ifdef _WIN32
 #define HAVE_IN_PORT_T
 #define HAVE_SOCKLEN_T
 #include "win32_ver.h"
 #else
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 #endif
 
 #ifndef __SYSTEMS_H__
@@ -33,7 +35,7 @@
 
 
 
-#ifdef WIN32
+#ifdef _WIN32
 
 #define _WIN32_WINNT 0x0400
 #include <windows.h>

@@ -1,0 +1,14 @@
+AC_INIT()
+AM_INIT_AUTOMAKE(mpeg4ip,0.9.2.8)
+
+AC_PROG_CC
+AC_PROG_CXX
+
+AM_PROG_LIBTOOL
+
+AM_CONFIG_HEADER(config.h)
+
+AC_CHECK_HEADERS(stdint.h)
+AC_CHECK_HEADERS(inttypes.h)
+
+AC_OUTPUT(Makefile)

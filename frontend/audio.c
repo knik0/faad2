@@ -16,10 +16,12 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: audio.c,v 1.1 2002/01/15 12:58:38 menno Exp $
+** $Id: audio.c,v 1.2 2002/01/21 23:19:54 menno Exp $
 **/
 
+#ifdef _WIN32
 #include <io.h>
+#endif
 #include <fcntl.h>
 #include <sndfile.h>
 #include <faad.h>
@@ -55,10 +57,12 @@ audio_file *open_audio_file(char *infile, int samplerate, int channels,
     }
     aufile->sfinfo.channels = channels;
     aufile->sfinfo.samples  = 0;
+#ifdef _WIN32
     if(infile[0] == '-')
     {
         setmode(fileno(stdout), O_BINARY);
     }
+#endif
     aufile->sndfile = sf_open_write(infile, &aufile->sfinfo);
 
     if (aufile->sndfile == NULL)
