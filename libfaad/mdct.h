@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.h,v 1.7 2002/04/21 09:00:40 menno Exp $
+** $Id: mdct.h,v 1.8 2002/04/23 21:08:26 menno Exp $
 **/
 
 #ifndef __MDCT_H__
@@ -34,8 +34,8 @@ typedef struct {
 } faad_sincos;
 
 typedef struct {
-    complex_t *Z1;
-    complex_t *Z2;
+    fftw_complex *Z1;
+    fftw_complex *Z2;
     faad_sincos *sincos;
     fftw_plan plan_backward;
 #ifdef LTP_DEC

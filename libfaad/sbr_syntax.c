@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: sbr_syntax.c,v 1.3 2002/04/21 09:00:40 menno Exp $
+** $Id: sbr_syntax.c,v 1.4 2002/04/23 21:08:26 menno Exp $
 **/
 
 /*
@@ -328,6 +328,7 @@ static void sbr_channel_pair_element(bitfile *ld, sbr_info *sbr)
 static void sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch)
 {
     uint8_t i, env, rel;
+    uint8_t bs_abs_bord, bs_abs_bord_1;
 
     sbr->bs_frame_class = faad_getbits(ld, 2
         DEBUGVAR(1,248,"sbr_grid(): bs_frame_class"));
@@ -346,10 +347,13 @@ static void sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch)
             DEBUGVAR(1,250,"sbr_grid(): bs_freq_res_flag"));
         for (env = 0; env < sbr->bs_num_env[ch]; env++)
             sbr->bs_freq_res[ch][env] = i;
+
+        sbr->abs_bord_lead[ch] = 0;
+        sbr->abs_bord_trail[ch] = NO_TIME_SLOTS;
         break;
 
     case FIXVAR:
-        sbr->bs_abs_bord[ch] = faad_getbits(ld, 3
+        bs_abs_bord = faad_getbits(ld, 3
             DEBUGVAR(1,251,"sbr_grid(): bs_abs_bord")) + NO_TIME_SLOTS;
         sbr->bs_num_env[ch] = faad_getbits(ld, 2
             DEBUGVAR(1,252,"sbr_grid(): bs_num_env")) + 1;
@@ -368,10 +372,13 @@ static void sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch)
             sbr->bs_freq_res[ch][sbr->bs_num_env[ch] - env - 1] = faad_get1bit(ld
                 DEBUGVAR(1,255,"sbr_grid(): bs_freq_res"));
         }
+
+        sbr->abs_bord_lead[ch] = 0;
+        sbr->abs_bord_trail[ch] = bs_abs_bord;
         break;
 
     case VARFIX:
-        sbr->bs_abs_bord[ch] = faad_getbits(ld, 3
+        bs_abs_bord = faad_getbits(ld, 3
             DEBUGVAR(1,256,"sbr_grid(): bs_abs_bord"));
         sbr->bs_num_env[ch] = faad_getbits(ld, 2
             DEBUGVAR(1,257,"sbr_grid(): bs_num_env")) + 1;
@@ -390,12 +397,15 @@ static void sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch)
             sbr->bs_freq_res[ch][env] = faad_get1bit(ld
                 DEBUGVAR(1,260,"sbr_grid(): bs_freq_res"));
         }
+
+        sbr->abs_bord_lead[ch] = bs_abs_bord;
+        sbr->abs_bord_trail[ch] = NO_TIME_SLOTS;
         break;
 
     case VARVAR:
-        sbr->bs_abs_bord_0[ch] = faad_getbits(ld, 3
+        bs_abs_bord = faad_getbits(ld, 3
             DEBUGVAR(1,261,"sbr_grid(): bs_abs_bord_0"));
-        sbr->bs_abs_bord_1[ch] = faad_getbits(ld, 3
+        bs_abs_bord_1 = faad_getbits(ld, 3
             DEBUGVAR(1,262,"sbr_grid(): bs_abs_bord_1")) + NO_TIME_SLOTS;
         sbr->bs_num_rel_0[ch] = faad_getbits(ld, 2
             DEBUGVAR(1,263,"sbr_grid(): bs_num_rel_0"));
@@ -422,6 +432,9 @@ static void sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch)
             sbr->bs_freq_res[ch][env] = faad_get1bit(ld
                 DEBUGVAR(1,268,"sbr_grid(): bs_freq_res"));
         }
+
+        sbr->abs_bord_lead[ch] = bs_abs_bord;
+        sbr->abs_bord_trail[ch] = bs_abs_bord_1;
         break;
     }
 
@@ -461,10 +474,12 @@ static void invf_mode(bitfile *ld, sbr_info *sbr, uint8_t ch)
     }
 }
 
-#if 0
 /* table 10 */
 static void sbr_envelope(bitfile *ld, sbr_info *sbr, uint8_t ch)
 {
+    uint8_t env, band;
+    sbr_huff_tab *t_huff, *f_huff;
+
     if (sbr->bs_coupling)
     {
         if (ch)
@@ -513,7 +528,7 @@ static void sbr_envelope(bitfile *ld, sbr_info *sbr, uint8_t ch)
                         DEBUGVAR(1,273,"sbr_envelope(): bs_data_env"));
                 }
             } else {
-                if (bs_amp_res)
+                if (sbr->bs_amp_res)
                 {
                     sbr->bs_data_env[ch][env][0] = faad_getbits(ld, 6
                         DEBUGVAR(1,274,"sbr_envelope(): bs_data_env"));
@@ -521,14 +536,14 @@ static void sbr_envelope(bitfile *ld, sbr_info *sbr, uint8_t ch)
                     sbr->bs_data_env[ch][env][0] = faad_getbits(ld, 7
                         DEBUGVAR(1,275,"sbr_envelope(): bs_data_env"));
                 }
-                for (band = 1; band < sbr->num_env_bands[bs_freq_res[ch][env]]; band++)
+                for (band = 1; band < sbr->num_env_bands[sbr->bs_freq_res[ch][env]]; band++)
                 {
-                    sbr->bs_data_env[ch][env][band] = huff_dec(ld, f_huff, bs_codeword);
+                    sbr->bs_data_env[ch][env][band] = sbr_huff_dec(ld, f_huff);
                 }
             }
         } else {
-            for (band = 0; band < sbr->num_env_bands[bs_freq_res[ch][env]]; band++)
-                sbr->bs_data_env[ch][env][band] = huff_dec(ld, t_huff, bs_codeword);
+            for (band = 0; band < sbr->num_env_bands[sbr->bs_freq_res[ch][env]]; band++)
+                sbr->bs_data_env[ch][env][band] = sbr_huff_dec(ld, t_huff);
         }
     }
 }
@@ -536,6 +551,9 @@ static void sbr_envelope(bitfile *ld, sbr_info *sbr, uint8_t ch)
 /* table 11 */
 static void sbr_noise(bitfile *ld, sbr_info *sbr, uint8_t ch)
 {
+    uint8_t noise, band;
+    sbr_huff_tab *t_huff, *f_huff;
+
     if (sbr->bs_coupling)
     {
         if (ch) {
@@ -564,17 +582,16 @@ static void sbr_noise(bitfile *ld, sbr_info *sbr, uint8_t ch)
             }
             for (band = 1; band < sbr->num_noise_bands[ch]; band++)
             {
-                sbr->bs_data_noise[ch][noise][band] = huff_dec(ld, f_huff, bs_codeword);
+                sbr->bs_data_noise[ch][noise][band] = sbr_huff_dec(ld, f_huff);
             }
         } else {
             for (band = 0; band < sbr->num_noise_bands[ch]; band++)
             {
-                sbr->bs_data_noise[ch][noise][band] = huff_dec(ld, t_huff, bs_codeword);
+                sbr->bs_data_noise[ch][noise][band] = sbr_huff_dec(ld, t_huff);
             }
         }
     }
 }
-#endif
 
 /* table 12 */
 static void sinusoidal_coding(bitfile *ld, sbr_info *sbr, uint8_t ch)

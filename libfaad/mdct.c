@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.c,v 1.8 2002/04/21 09:00:40 menno Exp $
+** $Id: mdct.c,v 1.9 2002/04/23 21:08:26 menno Exp $
 **/
 
 /*
@@ -57,8 +57,8 @@ void faad_mdct_init(mdct_info *mdct, uint16_t N)
 
     mdct->N = N;
     mdct->sincos = (faad_sincos*)malloc(N/4*sizeof(faad_sincos));
-    mdct->Z1 = (complex_t*)malloc(N/4*sizeof(complex_t));
-    mdct->Z2 = (complex_t*)malloc(N/4*sizeof(complex_t));
+    mdct->Z1 = (fftw_complex*)malloc(N/4*sizeof(fftw_complex));
+    mdct->Z2 = (fftw_complex*)malloc(N/4*sizeof(fftw_complex));
 
     for (k = 0; k < N/4; k++)
     {
@@ -89,8 +89,8 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
 {
     uint16_t k;
 
-    complex_t *Z1       = mdct->Z1;
-    complex_t *Z2       = mdct->Z2;
+    fftw_complex *Z1    = mdct->Z1;
+    fftw_complex *Z2    = mdct->Z2;
     faad_sincos *sincos = mdct->sincos;
 
     uint16_t N  = mdct->N;
@@ -142,8 +142,8 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
 {
     uint16_t k;
 
-    complex_t *Z1       = mdct->Z1;
-    complex_t *Z2       = mdct->Z2;
+    fftw_complex *Z1    = mdct->Z1;
+    fftw_complex *Z2    = mdct->Z2;
     faad_sincos *sincos = mdct->sincos;
 
     uint16_t N  = mdct->N;

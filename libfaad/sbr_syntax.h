@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: sbr_syntax.h,v 1.2 2002/04/20 22:20:15 menno Exp $
+** $Id: sbr_syntax.h,v 1.3 2002/04/23 21:08:26 menno Exp $
 **/
 
 #ifdef SBR
@@ -43,6 +43,15 @@ extern "C" {
 
 typedef struct
 {
+    /* really used */
+    uint8_t abs_bord_lead[2];
+    uint8_t abs_bord_trail[2];
+
+
+    /* to get it compiling */
+    /* we'll see during the coding of all the tools, whether
+       these are all used or not.
+    */
     uint8_t bs_crc_flag;
     uint8_t bs_sbr_crc_bits;
     uint8_t bs_protocol_version;
@@ -65,7 +74,6 @@ typedef struct
     uint8_t bs_frame_class;
     uint8_t bs_num_env[2];
     uint8_t bs_freq_res[2][6];
-    uint8_t bs_abs_bord[2];
     uint8_t bs_rel_bord[2][9];
     uint8_t bs_rel_bord_0[2][9];
     uint8_t bs_rel_bord_1[2][9];
@@ -81,6 +89,9 @@ typedef struct
     uint8_t bs_invf_mode_vec[2][/*??*/10];
     uint8_t num_high_res[2];
     uint8_t bs_add_harmonic[2][/*??*/10];
+    uint16_t bs_data_env[2][/*??*/10][/*??*/10];
+    uint16_t bs_data_noise[2][/*??*/10][/*??*/10];
+    uint8_t num_env_bands[2];
 } sbr_info;
 
 uint8_t sbr_bitstream(bitfile *ld, sbr_info *sbr, uint8_t id_aac,

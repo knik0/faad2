@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: sbr_huff.h,v 1.1 2002/04/20 14:45:13 menno Exp $
+** $Id: sbr_huff.h,v 1.2 2002/04/23 21:08:26 menno Exp $
 **/
 
 #ifdef SBR
@@ -28,7 +28,27 @@
 extern "C" {
 #endif
 
+typedef struct
+{
+    uint32_t codeword;
+    uint16_t index;
+} sbr_huff_tab;
 
+
+uint16_t sbr_huff_dec(bitfile *ld, sbr_huff_tab *t_huff);
+
+sbr_huff_tab t_huffman_env_1_5dB[];
+sbr_huff_tab f_huffman_env_1_5dB[];
+sbr_huff_tab t_huffman_env_bal_1_5dB[];
+sbr_huff_tab f_huffman_env_bal_1_5dB[];
+sbr_huff_tab t_huffman_env_3_0dB[];
+sbr_huff_tab f_huffman_env_3_0dB[];
+sbr_huff_tab t_huffman_env_bal_3_0dB[];
+sbr_huff_tab f_huffman_env_bal_3_0dB[];
+sbr_huff_tab t_huffman_noise_3_0dB[];
+sbr_huff_tab *f_huffman_noise_3_0dB;
+sbr_huff_tab t_huffman_noise_bal_3_0dB[];
+sbr_huff_tab *f_huffman_noise_bal_3_0dB;
 
 #ifdef __cplusplus
 }
