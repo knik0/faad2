@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filestream.c,v 1.1 2002/01/14 19:15:49 menno Exp $
+** $Id: filestream.c,v 1.2 2002/01/21 17:04:27 menno Exp $
 **/
 
 /* Not very portable yet */
@@ -33,8 +33,8 @@
 #define CommonExit(A) MessageBox(NULL, A, "FAAD Plugin", MB_OK)
 
 int winsock_init=0; // 0=winsock not initialized, 1=success
-long local_buffer_size = 64;
-long stream_buffer_size = 128;
+long m_local_buffer_size = 64;
+long m_stream_buffer_size = 128;
 
 FILE_STREAM *open_filestream(char *filename)
 {
@@ -42,7 +42,7 @@ FILE_STREAM *open_filestream(char *filename)
 
     if(StringComp(filename,"http://", 7) == 0)
     {
-        fs = (FILE_STREAM *)LocalAlloc(LPTR, sizeof(FILE_STREAM) + stream_buffer_size * 1024);
+        fs = (FILE_STREAM *)LocalAlloc(LPTR, sizeof(FILE_STREAM) + m_stream_buffer_size * 1024);
 
         if(fs == NULL)
             return NULL;
@@ -59,7 +59,7 @@ FILE_STREAM *open_filestream(char *filename)
     }
     else
     {
-        fs = (FILE_STREAM*)LocalAlloc(LPTR, sizeof(FILE_STREAM) + local_buffer_size * 1024);
+        fs = (FILE_STREAM*)LocalAlloc(LPTR, sizeof(FILE_STREAM) + m_local_buffer_size * 1024);
 
         if(fs == NULL)
             return NULL;
@@ -92,9 +92,9 @@ int read_byte_filestream(FILE_STREAM *fs)
         fs->buffer_offset = 0;
 
         if(fs->http)
-            fs->buffer_length = recv(fs->inetStream, fs->data, stream_buffer_size * 1024, 0);
+            fs->buffer_length = recv(fs->inetStream, fs->data, m_stream_buffer_size * 1024, 0);
         else
-            ReadFile(fs->stream, fs->data, local_buffer_size * 1024, &fs->buffer_length, 0);
+            ReadFile(fs->stream, fs->data, m_local_buffer_size * 1024, &fs->buffer_length, 0);
 
         if(fs->buffer_length <= 0)
         {

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filestream.h,v 1.1 2002/01/14 19:15:49 menno Exp $
+** $Id: filestream.h,v 1.2 2002/01/21 17:04:27 menno Exp $
 **/
 
 #ifndef FILESTREAM_H
@@ -33,8 +33,8 @@ typedef struct {
     int http_file_length;
 } FILE_STREAM;
 
-extern long local_buffer_size;
-extern long stream_buffer_size;
+extern long m_local_buffer_size;
+extern long m_stream_buffer_size;
 
 FILE_STREAM *open_filestream(char *filename);
 int read_byte_filestream(FILE_STREAM *fs);
