@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.21 2002/08/05 20:33:38 menno Exp $
+** $Id: syntax.c,v 1.22 2002/08/07 11:23:43 menno Exp $
 **/
 
 /*
@@ -696,18 +696,11 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
             return result;
     }
 
-    if ((object_type >= ER_OBJECT_START) 
-#ifdef DRM
-        && (object_type != DRM_ER_LC)
-#endif
-        )
+    if (aacSpectralDataResilienceFlag)
     {
         if (ics->tns_data_present)
             tns_data(ics, &(ics->tns), ld);
-    }
 
-    if (aacSpectralDataResilienceFlag)
-    {
         /* error resilient spectral data decoding */
         if ((result = reordered_spectral_data(ics, ld, spec_data, frame_len,
             aacSectionDataResilienceFlag)) > 0)
@@ -715,14 +708,24 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
             return result;
         }
     } else {
-#endif
 
-#ifdef ERROR_RESILIENCE
+        if ((object_type >= ER_OBJECT_START) 
+#ifdef DRM
+            && (object_type != DRM_ER_LC)
+#endif
+            )
+        {
+            if (ics->tns_data_present)
+                tns_data(ics, &(ics->tns), ld);
+        }
+
+#endif
         /* decode the spectral data */
         if ((result = spectral_data(ics, ld, spec_data, frame_len)) > 0)
         {
             return result;
         }
+#ifdef ERROR_RESILIENCE
     }
 #endif
 
