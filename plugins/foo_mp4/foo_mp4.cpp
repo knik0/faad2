@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.68 2003/11/02 14:18:56 menno Exp $
+** $Id: foo_mp4.cpp,v 1.69 2003/11/02 14:59:06 menno Exp $
 **/
 
 #include <mp4.h>
@@ -156,7 +156,14 @@ public:
         buffer_size = 0;
         MP4GetTrackESConfiguration(hFile, track, &buffer, &buffer_size);
 
-        if (buffer_size == 0 || MP4_IS_MPEG2_AAC_AUDIO_TYPE(audioType))
+        int ADIF_ASC = 0;
+        if ((buffer_size >= 4) && ((buffer[0] == 'A') && (buffer[1] == 'D') &&
+            (buffer[2] == 'I') && (buffer[3] == 'F')))
+        {
+            ADIF_ASC = 1;
+        }
+
+        if (buffer_size == 0 || ADIF_ASC == 1 /*MP4_IS_MPEG2_AAC_AUDIO_TYPE(audioType)*/)
         {
             int rc = faacDecInit(hDecoder, (unsigned char*)buffer, buffer_size,
                 (unsigned long*)&samplerate, (unsigned char*)&channels);
