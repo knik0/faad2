@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.62 2003/09/29 17:54:17 ca5e Exp $
+** $Id: foo_mp4.cpp,v 1.63 2003/10/02 19:23:10 ca5e Exp $
 **/
 
 #include <mp4.h>
@@ -47,7 +47,7 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "1.61",
+                           "1.62",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 static const char *object_type_string(int type)
@@ -784,6 +784,7 @@ public:
         advance_buffer(m_aac_bytes_consumed);
 
         m_length = length;
+        info->set_length(m_length);
 
         if (flags & OPEN_FLAG_GET_INFO) {
             const char *profile_str = object_type_string(profile);
@@ -810,25 +811,9 @@ public:
                 info->info_set("codec", "AAC+SBR");
             else
                 info->info_set("codec", "AAC");
+
+            tag_reader::g_run_multi(m_reader, info, "ape|id3v2|lyrics3|id3v1");
         }
-
-        tag_reader::g_run_multi(m_reader, info, "ape|id3v2|lyrics3|id3v1");
-
-        const char *p = info->meta_get("samples");
-        if (p) {
-            m_samples = (unsigned __int64)_atoi64(p);
-            info->info_set("samples", p);
-            info->meta_remove_field("samples");
-        } else {
-            p = info->info_get("samples");
-            if (p) m_samples = (unsigned __int64)_atoi64(p);
-        }
-
-        if (m_samples > 0) {
-            m_length = (double)(signed __int64)m_samples/(double)samplerate;
-        }
-
-        info->set_length(m_length);
 
         return 1;
     }
@@ -957,16 +942,9 @@ public:
         return 1;
     }
 
-    virtual set_info_t set_info(reader *r,const file_info *_info)
+    virtual set_info_t set_info(reader *r,const file_info *info)
     {
-        file_info_i_full info;
-        info.copy(_info);
-        const char *p = info.info_get("samples");
-        if (p) {
-            info.meta_add("samples", p);
-            info.info_remove_field("samples");
-        }
-        return tag_writer::g_run(r,&info,"ape") ? SET_INFO_SUCCESS : SET_INFO_FAILURE;
+        return tag_writer::g_run(r,info,"ape") ? SET_INFO_SUCCESS : SET_INFO_FAILURE;
     }
 
     virtual bool seek(double seconds)
