@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ff.c,v 1.9 2003/12/14 13:50:10 menno Exp $
+** $Id: mp4ff.c,v 1.11 2003/12/15 17:48:33 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -231,7 +231,7 @@ int64_t mp4ff_get_track_duration_use_offsets(const mp4ff_t *f, const int32_t tra
 	int64_t duration = mp4ff_get_track_duration(f,track);
 	if (duration!=-1)
 	{
-		int64_t offset = mp4ff_get_sample_offset_sum(f,track);
+		int64_t offset = mp4ff_get_sample_offset(f,track,0);
 		if (offset > duration) duration = 0;
 		else duration -= offset;
 	}
@@ -332,16 +332,6 @@ int32_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int
     return 0;
 }
 
-int32_t mp4ff_get_sample_offset_sum(const mp4ff_t *f, const int32_t track)
-{
-	int32_t i, total = 0;
-    for (i = 0; i < f->track[track]->ctts_entry_count; i++)
-    {
-		total += f->track[track]->ctts_sample_count[i] * f->track[track]->ctts_sample_offset[i];
-    }
-	return total;
-}
-
 int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip)
 {
 	int32_t i, co = 0;
@@ -370,24 +360,7 @@ int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t o
 
 int32_t mp4ff_find_sample_use_offsets(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip)
 {
-	mp4ff_track_t * p_track = f->track[track];
-	if (p_track->ctts_entry_count == 0) return mp4ff_find_sample(f,track,offset,toskip);
-	else //optimize it ?
-	{
-		int32_t sample, total_samples = mp4ff_num_samples(f,track);
-		int64_t acc = 0;
-		for(sample=0;sample<total_samples;sample++)
-		{
-			int32_t duration = mp4ff_get_sample_duration(f,track,sample) - mp4ff_get_sample_offset(f,track,sample);
-			if (acc + duration > offset)
-			{
-				if (toskip) *toskip = (int32_t)(offset - acc);
-				return sample;
-			}
-			acc += duration;
-		}
-		return -1;
-	}
+	return mp4ff_find_sample(f,track,offset + mp4ff_get_sample_offset(f,track,0),toskip);
 }
 
 int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,

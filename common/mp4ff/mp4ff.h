@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ff.h,v 1.12 2003/12/14 13:50:10 menno Exp $
+** $Id: mp4ff.h,v 1.14 2003/12/15 17:48:33 menno Exp $
 **/
 
 #ifndef MP4FF_H
@@ -56,7 +56,6 @@ int32_t mp4ff_get_sample_duration(const mp4ff_t *f, const int32_t track, const i
 int32_t mp4ff_get_sample_duration_use_offsets(const mp4ff_t *f, const int32_t track, const int32_t sample);
 int64_t mp4ff_get_sample_position(const mp4ff_t *f, const int32_t track, const int32_t sample);
 int32_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int32_t sample);
-int32_t mp4ff_get_sample_offset_sum(const mp4ff_t *f, const int32_t track);
 int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip);
 int32_t mp4ff_find_sample_use_offsets(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip);
 int32_t mp4ff_read_sample(mp4ff_t *f, const int track, const int sample,
