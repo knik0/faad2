@@ -1,19 +1,19 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.c,v 1.5 2003/07/29 08:20:13 menno Exp $
+** $Id: sbr_dec.c,v 1.6 2003/09/03 17:31:43 menno Exp $
 **/
 
 /*
@@ -168,24 +168,32 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
     real_t deg[64];
 #endif
 
-    bitfile *ld = (bitfile*)malloc(sizeof(bitfile));
+    bitfile *ld = NULL;
 
 
     sbr->id_aac = id_aac;
     channels = (id_aac == ID_SCE) ? 1 : 2;
 
-    /* initialise and read the bitstream */
-    faad_initbits(ld, sbr->data, sbr->data_size);
+    if (sbr->data == NULL || sbr->data_size == 0)
+    {
+        ret = 1;
+    } else {
+        ld = (bitfile*)malloc(sizeof(bitfile));
 
-    ret = sbr_extension_data(ld, sbr, id_aac);
+        /* initialise and read the bitstream */
+        faad_initbits(ld, sbr->data, sbr->data_size);
+
+        ret = sbr_extension_data(ld, sbr, id_aac);
+
+        ret = ld->error ? ld->error : ret;
+        faad_endbits(ld);
+        if (ld) free(ld);
+        ld = NULL;
+    }
 
     if (sbr->data) free(sbr->data);
     sbr->data = NULL;
 
-    ret = ld->error ? ld->error : ret;
-    faad_endbits(ld);
-    if (ld) free(ld);
-    ld = NULL;
     if (ret || (sbr->header_count == 0))
     {
         /* don't process just upsample */
@@ -204,7 +212,7 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
             uint8_t j;
             sbr->qmfa[ch] = qmfa_init(32);
             sbr->qmfs[ch] = qmfs_init(64);
-            
+
             for (j = 0; j < 5; j++)
             {
                 sbr->G_temp_prev[ch][j] = malloc(64*sizeof(real_t));
