@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.23 2002/08/26 19:08:39 menno Exp $
+** $Id: main.c,v 1.24 2002/09/24 09:23:55 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -344,6 +344,7 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
     audio_file *aufile;
 
     faacDecHandle hDecoder;
+    faacDecConfigurationPtr config;
     faacDecFrameInfo frameInfo;
 
     unsigned char *buffer;
@@ -355,6 +356,11 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
     int first_time = 1;
 
     hDecoder = faacDecOpen();
+
+    /* Set configuration */
+    config = faacDecGetCurrentConfiguration(hDecoder);
+    config->outputFormat = outputFormat;
+    faacDecSetConfiguration(hDecoder, config);
 
 	infile = MP4Read(mp4file, 0);
 	if (!infile)
