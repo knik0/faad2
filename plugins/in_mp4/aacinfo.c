@@ -16,13 +16,11 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: aacinfo.c,v 1.1 2002/08/14 17:55:49 menno Exp $
+** $Id: aacinfo.c,v 1.2 2002/08/15 17:41:44 menno Exp $
 **/
 
-#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#endif
 #include <malloc.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -70,12 +68,11 @@ static int read_ADIF_header(FILE *file, faadAACInfo *info)
     return 0;
 }
 
-static int read_ADTS_header(FILE *file, faadAACInfo *info, unsigned long **seek_table,
-                            int *seek_table_len, int use_seek_table)
+static int read_ADTS_header(FILE *file, faadAACInfo *info)
 {
     /* Get ADTS header data */
     unsigned char buffer[ADTS_MAX_SIZE];
-    int frames, framesinsec=0, t_framelength = 0, frame_length, sr_idx = 0, ID;
+    int frames, t_framelength = 0, frame_length, sr_idx = 0, ID;
     int second = 0, pos;
     float frames_per_sec = 0;
     unsigned long bytes;
@@ -84,7 +81,7 @@ static int read_ADTS_header(FILE *file, faadAACInfo *info, unsigned long **seek_
     info->headertype = 2;
 
     /* Read all frames to ensure correct time and bitrate */
-    for (frames = 0; /* */; frames++, framesinsec++)
+    for (frames = 0; /* */; frames++)
     {
         bytes = fread(buffer, 1, ADTS_MAX_SIZE, file);
 
@@ -121,27 +118,10 @@ static int read_ADTS_header(FILE *file, faadAACInfo *info, unsigned long **seek_
 
         t_framelength += frame_length;
 
-        if (framesinsec > 43)
-            framesinsec = 0;
-
         pos = ftell(file) - ADTS_MAX_SIZE;
-
-        if (framesinsec == 0 && use_seek_table)
-        {
-            tmp_seek_table = (unsigned long*)realloc(tmp_seek_table, (second+1) * sizeof(unsigned long));
-            tmp_seek_table[second] = pos;
-        }
-        if (framesinsec == 0)
-            second++;
 
         fseek(file, frame_length - ADTS_MAX_SIZE, SEEK_CUR);
     }
-
-	if(seek_table_len)
-	{
-		*seek_table_len = second;
-		*seek_table = tmp_seek_table;
-	}
 
     if (frames > 0)
     {
@@ -158,13 +138,11 @@ static int read_ADTS_header(FILE *file, faadAACInfo *info, unsigned long **seek_
     return 0;
 }
 
-int get_AAC_format(char *filename, faadAACInfo *info,
-                   unsigned long **seek_table, int *seek_table_len,
-                   int use_seek_table)
+int get_AAC_format(char *filename, faadAACInfo *info)
 {
     unsigned long tagsize;
     FILE *file;
-	char buffer[10];
+    char buffer[10];
     unsigned long file_len;
     unsigned char adxx_id[5];
     unsigned long tmp;
@@ -184,7 +162,7 @@ int get_AAC_format(char *filename, faadAACInfo *info,
     tmp = fread(buffer, 10, 1, file);
 
     if (StringComp(buffer, "ID3", 3) == 0)
-	{
+    {
         /* high bit is not used */
         tagsize = (buffer[6] << 21) | (buffer[7] << 14) |
             (buffer[8] <<  7) | (buffer[9] <<  0);
@@ -207,7 +185,7 @@ int get_AAC_format(char *filename, faadAACInfo *info,
     if (StringComp(adxx_id, "AD", 2) == 0)
     {
         /* We think its an ADIF header, but check the rest just to make sure */
-		tmp = fread(adxx_id + 2, 2, 1, file);
+        tmp = fread(adxx_id + 2, 2, 1, file);
 
         if (StringComp(adxx_id, "ADIF", 4) == 0)
         {
@@ -221,9 +199,7 @@ int get_AAC_format(char *filename, faadAACInfo *info,
         {
             /* ADTS  header located */
             fseek(file, tagsize, SEEK_SET);
-
-            read_ADTS_header(file, info, seek_table, seek_table_len,
-                use_seek_table);
+            read_ADTS_header(file, info);
         } else {
             /* Unknown/headerless AAC file, assume format: */
             info->version = 2;
@@ -239,4 +215,3 @@ int get_AAC_format(char *filename, faadAACInfo *info,
 
     return 0;
 }
-

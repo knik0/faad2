@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: utils.c,v 1.2 2002/08/14 17:55:20 menno Exp $
+** $Id: utils.c,v 1.3 2002/08/15 17:41:44 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -31,8 +31,8 @@ int StringComp(char const *str1, char const *str2, unsigned long len)
 
     while (len--)
     {
-        c1 = *str1++;
-        c2 = *str2++;
+        c1 = tolower(*str1++);
+        c2 = tolower(*str2++);
 
         if (c1 == 0 || c1 != c2)
             break;

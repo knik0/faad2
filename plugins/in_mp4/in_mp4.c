@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.14 2002/08/14 17:55:20 menno Exp $
+** $Id: in_mp4.c,v 1.15 2002/08/15 17:41:44 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -86,8 +86,6 @@ typedef struct state
     long bytes_consumed;
     unsigned char *buffer;
     long seconds;
-    unsigned long *seek_table;
-    int seek_table_len;
     faadAACInfo aacInfo;
 } state;
 
@@ -237,7 +235,7 @@ BOOL CALLBACK aac_info_dialog_proc(HWND hwndDlg, UINT message,
     case WM_INITDIALOG:
         info_text = malloc(1024*sizeof(char));
 
-        get_AAC_format(info_fn, &aacInfo, NULL, NULL, 0);
+        get_AAC_format(info_fn, &aacInfo);
 
         sprintf(info_text, "%s AAC %s, %d sec, %d kbps, %d Hz",
             (aacInfo.version==2)?"MPEG-2":"MPEG-4", get_ot_string(aacInfo.object_type),
@@ -262,7 +260,7 @@ BOOL CALLBACK aac_info_dialog_proc(HWND hwndDlg, UINT message,
 
 int infoDlg(char *fn, HWND hwndParent)
 {
-    if(StringComp(fn + strlen(fn) - 3, "aac", 3) == 0)
+    if(StringComp(fn + strlen(fn) - 3, "AAC", 3) == 0)
     {
         lstrcpy(info_fn, fn);
 
@@ -300,7 +298,7 @@ BOOL CALLBACK config_dialog_proc(HWND hwndDlg, UINT message,
         case IDOK:
             m_show_errors = SendMessage(GetDlgItem(hwndDlg, IDC_ERROR), BM_GETCHECK, 0, 0);
             m_priority = SendMessage(GetDlgItem(hwndDlg, IDC_PRIORITY), TBM_GETPOS, 0, 0);
-            for (i = 0; i < 3; i++)
+            for (i = 0; i < 5; i++)
             {
                 int set = SendMessage(GetDlgItem(hwndDlg, res_id_table[i]), BM_GETCHECK, 0, 0);
                 if (set)
@@ -339,11 +337,11 @@ void about(HWND hwndParent)
 
 int isourfile(char *fn)
 {
-    if(StringComp(fn + strlen(fn) - 3, "mp4", 3) == 0)
+    if(StringComp(fn + strlen(fn) - 3, "MP4", 3) == 0)
     {
         return 1;
     }
-    if(StringComp(fn + strlen(fn) - 3, "aac", 3) == 0)
+    if(StringComp(fn + strlen(fn) - 3, "AAC", 3) == 0)
     {
         return 1;
     }
@@ -363,17 +361,10 @@ int play(char *fn)
     mp4state.channels = 0;
     mp4state.samplerate = 0;
     mp4state.filetype = 0;
-    mp4state.seek_table_len = 0;
-
-    if (mp4state.seek_table)
-    {
-        free(mp4state.seek_table);
-        mp4state.seek_table = NULL;
-    }
 
     strcpy(mp4state.filename, fn);
 
-    if(StringComp(fn + strlen(fn) - 3, "aac", 3) == 0)
+    if(StringComp(fn + strlen(fn) - 3, "AAC", 3) == 0)
         mp4state.filetype = 1;
 
     mp4state.hDecoder = faacDecOpen();
@@ -387,8 +378,7 @@ int play(char *fn)
     {
         long pos, tmp, read;
 
-        get_AAC_format(mp4state.filename, &mp4state.aacInfo,
-            &mp4state.seek_table, &mp4state.seek_table_len, 1);
+        get_AAC_format(mp4state.filename, &mp4state.aacInfo);
 
         mp4state.aacfile = fopen(mp4state.filename, "rb");
         if (!mp4state.aacfile)
@@ -440,10 +430,7 @@ int play(char *fn)
 
         avg_bitrate = mp4state.aacInfo.bitrate;
 
-        if (mp4state.aacInfo.headertype == 2)
-            module.is_seekable = 1;
-        else
-            module.is_seekable = 0;
+        module.is_seekable = 0;
     } else {
         mp4state.mp4file = MP4Read(mp4state.filename, 0);
         if (!mp4state.mp4file)
@@ -604,13 +591,6 @@ void stop()
     else
         MP4Close(mp4state.mp4file);
 
-    if (mp4state.seek_table)
-    {
-        free(mp4state.seek_table);
-        mp4state.seek_table = NULL;
-        mp4state.seek_table_len = 0;
-    }
-
     module.outMod->Close();
     module.SAVSADeInit();
 }
@@ -619,7 +599,7 @@ int getsonglength(char *fn)
 {
     long msDuration = 0;
 
-    if(StringComp(fn + strlen(fn) - 3, "mp4", 3) == 0)
+    if(StringComp(fn + strlen(fn) - 3, "MP4", 3) == 0)
     {
         int track;
         MP4Duration length;
@@ -645,7 +625,7 @@ int getsonglength(char *fn)
         return msDuration;
     } else {
         faadAACInfo aacInfo;
-        get_AAC_format(fn, &aacInfo, NULL, NULL, 0);
+        get_AAC_format(fn, &aacInfo);
 
         return aacInfo.length;
     }
@@ -829,6 +809,7 @@ DWORD WINAPI MP4PlayThread(void *b)
     return 0;
 }
 
+#if 0
 int aac_seek(int pos_ms)
 {
     int read;
@@ -845,6 +826,7 @@ int aac_seek(int pos_ms)
 
     return 0;
 }
+#endif
 
 DWORD WINAPI AACPlayThread(void *b)
 {
@@ -859,6 +841,7 @@ DWORD WINAPI AACPlayThread(void *b)
 
     while (!*((int *)b))
     {
+#if 0
         /* seeking */
         if (mp4state.seek_needed != -1)
         {
@@ -871,6 +854,7 @@ DWORD WINAPI AACPlayThread(void *b)
             mp4state.decode_pos_ms = ms;
             mp4state.seek_needed = -1;
         }
+#endif
 
         if (done)
         {
@@ -976,13 +960,6 @@ DWORD WINAPI AACPlayThread(void *b)
         } else {
             Sleep(10);
         }
-    }
-
-    if (mp4state.seek_table)
-    {
-        free(mp4state.seek_table);
-        mp4state.seek_table = NULL;
-        mp4state.seek_table_len = 0;
     }
 
 	PlayThreadAlive = 0;

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: aacinfo.h,v 1.1 2002/08/14 17:55:49 menno Exp $
+** $Id: aacinfo.h,v 1.2 2002/08/15 17:41:44 menno Exp $
 **/
 
 #ifndef AACINFO_INCLUDED
@@ -32,13 +32,9 @@ typedef struct {
     int headertype;
 } faadAACInfo;
 
-int get_AAC_format(char *filename, faadAACInfo *info,
-                   unsigned long **seek_table, int *seek_table_len,
-                   int use_seek_table);
+int get_AAC_format(char *filename, faadAACInfo *info);
 
 static int read_ADIF_header(FILE *file, faadAACInfo *info);
-static int read_ADTS_header(FILE *file, faadAACInfo *info,
-                            unsigned long **seek_table, int *seek_table_len,
-                            int use_seek_table);
+static int read_ADTS_header(FILE *file, faadAACInfo *info);
 
 #endif
