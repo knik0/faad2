@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.34 2003/06/24 20:41:41 menno Exp $
+** $Id: main.c,v 1.35 2003/06/25 15:03:24 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -176,6 +176,7 @@ void usage(void)
     fprintf(stderr, "%s [options] infile.aac\n", progName);
     fprintf(stderr, "Options:\n");
     fprintf(stderr, " -h    Shows this help screen.\n");
+    fprintf(stderr, " -i    Shows info about the input file.\n");
     fprintf(stderr, " -o X  Set output filename.\n");
     fprintf(stderr, " -f X  Set output format. Valid values for X are:\n");
     fprintf(stderr, "        1:  Microsoft WAV format (default).\n");
@@ -206,7 +207,8 @@ void usage(void)
 }
 
 int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
-                  int def_srate, int object_type, int outputFormat, int fileType)
+                  int def_srate, int object_type, int outputFormat, int fileType,
+                  int infoOnly)
 {
     int tagsize;
     unsigned long samplerate;
@@ -350,6 +352,17 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
         break;
     }
 
+    if (infoOnly)
+    {
+        faacDecClose(hDecoder);
+        fclose(b.infile);
+        if (!first_time)
+            close_audio_file(aufile);
+        if (b.buffer)
+            free(b.buffer);
+        return 0;
+    }
+
     do
     {
         sample_buffer = faacDecDecode(hDecoder, &frameInfo,
@@ -466,7 +479,7 @@ unsigned long srates[] =
 };
 
 int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
-                  int outputFormat, int fileType)
+                  int outputFormat, int fileType, int infoOnly)
 {
     int track;
     unsigned int tracks;
@@ -526,9 +539,17 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
         fprintf(stderr, "\n");
     }
 
+    if (infoOnly)
+    {
+        faacDecClose(hDecoder);
+        MP4Close(infile);
+        return 0;
+    }
+
     if ((track = GetAACTrack(infile)) < 0)
     {
         fprintf(stderr, "Unable to find correct AAC sound track in the MP4 file.\n");
+        faacDecClose(hDecoder);
         MP4Close(infile);
         return 1;
     }
@@ -632,6 +653,7 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
 int main(int argc, char *argv[])
 {
     int result;
+    int infoOnly = 0;
     int writeToStdio = 0;
     int object_type = LC;
     int def_srate = 0;
@@ -677,11 +699,12 @@ int main(int argc, char *argv[])
             { "bits",       0, 0, 'b' },
             { "samplerate", 0, 0, 's' },
             { "objecttype", 0, 0, 'l' },
+            { "info",       0, 0, 'i' },
             { "stdio",      0, 0, 'w' },
             { "help",       0, 0, 'h' }
         };
 
-        c = getopt_long(argc, argv, "o:s:f:b:l:wh",
+        c = getopt_long(argc, argv, "o:s:f:b:l:whi",
             long_options, &option_index);
 
         if (c == -1)
@@ -748,6 +771,9 @@ int main(int argc, char *argv[])
         case 'w':
             writeToStdio = 1;
             break;
+        case 'i':
+            infoOnly = 1;
+            break;
         case 'h':
             showHelp = 1;
             break;
@@ -797,14 +823,14 @@ int main(int argc, char *argv[])
     if (mp4file)
     {
         result = decodeMP4file(aacFileName, audioFileName, writeToStdio,
-            outputFormat, format);
+            outputFormat, format, infoOnly);
     } else {
         result = decodeAACfile(aacFileName, audioFileName, writeToStdio,
-            def_srate, object_type, outputFormat, format);
+            def_srate, object_type, outputFormat, format, infoOnly);
     }
 
 
-    if (!result)
+    if (!result && !infoOnly)
     {
 #ifdef _WIN32
         end = GetTickCount();
