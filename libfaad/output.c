@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: output.c,v 1.8 2002/03/16 15:43:28 menno Exp $
+** $Id: output.c,v 1.9 2002/03/16 15:49:58 menno Exp $
 **/
 
 #include "common.h"
@@ -67,10 +67,10 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
         {
             for(i = 0; i < frame_len; i++)
             {
-                if (input[ch][i] > (1<<16)-1)
-                    input[ch][i] = (1<<16)-1;
-                else if (input[ch][i] < -(1<<16))
-                    input[ch][i] = -(1<<16);
+                if (input[ch][i] > (1<<15)-1)
+                    input[ch][i] = (1<<15)-1;
+                else if (input[ch][i] < -(1<<15))
+                    input[ch][i] = -(1<<15);
                 int_sample_buffer[(i*channels)+ch] = ROUND(input[ch][i]*(1<<8));
             }
         }
@@ -80,10 +80,10 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
         {
             for(i = 0; i < frame_len; i++)
             {
-                if (input[ch][i] > (1<<16)-1)
-                    input[ch][i] = (1<<16)-1;
-                else if (input[ch][i] < -(1<<16))
-                    input[ch][i] = -(1<<16);
+                if (input[ch][i] > (1<<15)-1)
+                    input[ch][i] = (1<<15)-1;
+                else if (input[ch][i] < -(1<<15))
+                    input[ch][i] = -(1<<15);
                 int_sample_buffer[(i*channels)+ch] = ROUND32(input[ch][i]*(1<<16));
             }
         }
@@ -93,10 +93,10 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
         {
             for(i = 0; i < frame_len; i++)
             {
-                if (input[ch][i] > (1<<16)-1)
-                    input[ch][i] = (1<<16)-1;
-                else if (input[ch][i] < -(1<<16))
-                    input[ch][i] = -(1<<16);
+                if (input[ch][i] > (1<<15)-1)
+                    input[ch][i] = (1<<15)-1;
+                else if (input[ch][i] < -(1<<15))
+                    input[ch][i] = -(1<<15);
                 float_sample_buffer[(i*channels)+ch] = input[ch][i]*FLOAT_SCALE;
             }
         }
