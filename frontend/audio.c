@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: audio.c,v 1.19 2003/09/03 20:19:29 menno Exp $
+** $Id: audio.c,v 1.20 2003/11/02 20:24:03 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -52,10 +52,6 @@ audio_file *open_audio_file(char *infile, int samplerate, int channels,
     switch (outputFormat)
     {
     case FAAD_FMT_16BIT:
-    case FAAD_FMT_16BIT_DITHER:
-    case FAAD_FMT_16BIT_L_SHAPE:
-    case FAAD_FMT_16BIT_M_SHAPE:
-    case FAAD_FMT_16BIT_H_SHAPE:
         aufile->bits_per_sample = 16;
         break;
     case FAAD_FMT_24BIT:
@@ -103,10 +99,6 @@ int write_audio_file(audio_file *aufile, void *sample_buffer, int samples, int o
     switch (aufile->outputFormat)
     {
     case FAAD_FMT_16BIT:
-    case FAAD_FMT_16BIT_DITHER:
-    case FAAD_FMT_16BIT_L_SHAPE:
-    case FAAD_FMT_16BIT_M_SHAPE:
-    case FAAD_FMT_16BIT_H_SHAPE:
         return write_audio_16bit(aufile, buf + offset*2, samples);
     case FAAD_FMT_24BIT:
         return write_audio_24bit(aufile, buf + offset*4, samples);

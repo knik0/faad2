@@ -104,7 +104,7 @@ BEGIN
     CONTROL         "16 bits",IDC_16BITS,"Button",BS_AUTORADIOBUTTON,77,18,
                     37,10
     CONTROL         "16 bits dithered",IDC_16BITS_DITHERED,"Button",
-                    BS_AUTORADIOBUTTON,77,29,64,10
+                    BS_AUTORADIOBUTTON | WS_DISABLED,77,29,64,10
     CONTROL         "24 bits",IDC_24BITS,"Button",BS_AUTORADIOBUTTON,77,40,
                     37,10
     CONTROL         "32 bits",IDC_32BITS,"Button",BS_AUTORADIOBUTTON,77,51,

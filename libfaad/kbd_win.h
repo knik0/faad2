@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: kbd_win.h,v 1.8 2003/10/19 18:11:20 menno Exp $
+** $Id: kbd_win.h,v 1.10 2003/11/04 21:43:30 menno Exp $
 **/
 
 #ifndef __KBD_WIN_H__
@@ -1065,6 +1065,7 @@ real_t kbd_long_1024[] =
     COEF_CONST(0.99999995720387)
 };
 
+#ifdef ALLOW_SMALL_FRAMELENGTH
 real_t kbd_long_960[] = {
     COEF_CONST(0.0003021562530949),
     COEF_CONST(0.0004452267024786),
@@ -2027,6 +2028,7 @@ real_t kbd_long_960[] = {
     COEF_CONST(0.9999999008865869),
     COEF_CONST(0.9999999543507984)
 };
+#endif
 
 real_t kbd_short_128[] =
 {
@@ -2160,6 +2162,7 @@ real_t kbd_short_128[] =
     COEF_CONST(0.99999999904096815)
 };
 
+#ifdef ALLOW_SMALL_FRAMELENGTH
 real_t kbd_short_120[] =
 {
     COEF_CONST(0.0000452320086910),
@@ -2283,6 +2286,7 @@ real_t kbd_short_120[] =
     COEF_CONST(0.9999999918774242),
     COEF_CONST(0.9999999989770326)
 };
+#endif
 
 #ifdef __cplusplus
 }

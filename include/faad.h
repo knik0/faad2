@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: faad.h,v 1.33 2003/09/24 19:55:34 menno Exp $
+** $Id: faad.h,v 1.34 2003/11/02 20:24:03 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -73,18 +73,14 @@ extern "C" {
 #define FAAD_FMT_32BIT  3
 #define FAAD_FMT_FLOAT  4
 #define FAAD_FMT_DOUBLE 5
-#define FAAD_FMT_16BIT_DITHER  6
-#define FAAD_FMT_16BIT_L_SHAPE 7
-#define FAAD_FMT_16BIT_M_SHAPE 8
-#define FAAD_FMT_16BIT_H_SHAPE 9
 
 /* Capabilities */
-#define LC_DEC_CAP            (1<<0)
-#define MAIN_DEC_CAP          (1<<1)
-#define LTP_DEC_CAP           (1<<2)
-#define LD_DEC_CAP            (1<<3)
-#define ERROR_RESILIENCE_CAP  (1<<4)
-#define FIXED_POINT_CAP       (1<<5)
+#define LC_DEC_CAP           (1<<0) /* Can decode LC */
+#define MAIN_DEC_CAP         (1<<1) /* Can decode MAIN */
+#define LTP_DEC_CAP          (1<<2) /* Can decode LTP */
+#define LD_DEC_CAP           (1<<3) /* Can decode LD */
+#define ERROR_RESILIENCE_CAP (1<<4) /* Can decode ER */
+#define FIXED_POINT_CAP      (1<<5) /* Fixed point */
 
 /* Channel definitions */
 #define FRONT_CHANNEL_CENTER (1)

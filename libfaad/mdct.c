@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mdct.c,v 1.30 2003/10/19 18:11:20 menno Exp $
+** $Id: mdct.c,v 1.32 2003/11/04 21:43:30 menno Exp $
 **/
 
 /*
@@ -280,7 +280,11 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     uint16_t N4 = N >> 2;
     uint16_t N8 = N >> 3;
 
+#ifndef FIXED_POINT
 	real_t scale = REAL_CONST(N);
+#else
+	real_t scale = REAL_CONST(4.0/N);
+#endif
 
     /* pre-FFT complex multiplication */
     for (k = 0; k < N8; k++)
@@ -292,11 +296,17 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
         RE(Z1[k]) = -MUL_R_C(RE(x), RE(sincos[k])) - MUL_R_C(IM(x), IM(sincos[k]));
         IM(Z1[k]) = -MUL_R_C(IM(x), RE(sincos[k])) + MUL_R_C(RE(x), IM(sincos[k]));
 
+        RE(Z1[k]) = MUL(RE(Z1[k]), scale);
+        IM(Z1[k]) = MUL(IM(Z1[k]), scale);
+
         RE(x) =  X_in[N2 - 1 - n] - X_in[        n];
         IM(x) =  X_in[N2 +     n] + X_in[N - 1 - n];
 
         RE(Z1[k + N8]) = -MUL_R_C(RE(x), RE(sincos[k + N8])) - MUL_R_C(IM(x), IM(sincos[k + N8]));
         IM(Z1[k + N8]) = -MUL_R_C(IM(x), RE(sincos[k + N8])) + MUL_R_C(RE(x), IM(sincos[k + N8]));
+
+        RE(Z1[k + N8]) = MUL(RE(Z1[k + N8]), scale);
+        IM(Z1[k + N8]) = MUL(IM(Z1[k + N8]), scale);
     }
 
     /* complex FFT, any non-scaling FFT can be used here  */
@@ -306,8 +316,8 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     for (k = 0; k < N4; k++)
     {
         uint16_t n = k << 1;
-        RE(x) = MUL(MUL_R_C(RE(Z1[k]), RE(sincos[k])) + MUL_R_C(IM(Z1[k]), IM(sincos[k])), scale);
-        IM(x) = MUL(MUL_R_C(IM(Z1[k]), RE(sincos[k])) - MUL_R_C(RE(Z1[k]), IM(sincos[k])), scale);
+        RE(x) = MUL_R_C(RE(Z1[k]), RE(sincos[k])) + MUL_R_C(IM(Z1[k]), IM(sincos[k]));
+        IM(x) = MUL_R_C(IM(Z1[k]), RE(sincos[k])) - MUL_R_C(RE(Z1[k]), IM(sincos[k]));
 
         X_out[         n] =  RE(x);
         X_out[N2 - 1 - n] = -IM(x);

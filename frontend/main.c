@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.56 2003/10/19 19:33:16 menno Exp $
+** $Id: main.c,v 1.57 2003/11/02 20:24:03 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -373,10 +373,6 @@ void usage(void)
     fprintf(stdout, "        3:  32 bit PCM data.\n");
     fprintf(stdout, "        4:  32 bit floating point data.\n");
     fprintf(stdout, "        5:  64 bit floating point data.\n");
-    fprintf(stdout, "        6:  16 bit PCM data (dithered).\n");
-    fprintf(stdout, "        7:  16 bit PCM data (dithered with LIGHT noise shaping).\n");
-    fprintf(stdout, "        8:  16 bit PCM data (dithered with MEDIUM noise shaping).\n");
-    fprintf(stdout, "        9:  16 bit PCM data (dithered with HEAVY noise shaping).\n");
     fprintf(stdout, " -s X  Force the samplerate to X (for RAW files).\n");
     fprintf(stdout, " -l X  Set object type. Supported object types:\n");
     fprintf(stdout, "        1:  Main object type.\n");
@@ -1107,7 +1103,7 @@ int main(int argc, char *argv[])
                     outputFormat = FAAD_FMT_16BIT; /* just use default */
                 } else {
                     outputFormat = atoi(dr);
-                    if ((outputFormat < 1) || (outputFormat > 9))
+                    if ((outputFormat < 1) || (outputFormat > 5))
                         showHelp = 1;
                 }
             }

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: in_mp4.c,v 1.43 2003/10/17 17:11:38 ca5e Exp $
+** $Id: in_mp4.c,v 1.44 2003/11/02 20:24:05 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -60,7 +60,7 @@ static int res_id_table[] = {
     IDC_32BITS,
     0,
     0,
-    IDC_16BITS_DITHERED
+    /*IDC_16BITS_DITHERED*/ IDC_16BITS /* temp hack */
 };
 static int res_table[] = {
     16,

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sine_win.h,v 1.5 2003/10/19 18:11:20 menno Exp $
+** $Id: sine_win.h,v 1.7 2003/11/04 21:43:30 menno Exp $
 **/
 
 #ifndef __SINE_WIN_H__
@@ -1065,6 +1065,7 @@ real_t sine_long_1024[] =
     COEF_CONST(0.9999997059)
 };
 
+#ifdef ALLOW_SMALL_FRAMELENGTH
 real_t sine_long_960[] =
 {
     COEF_CONST(0.0008181230),
@@ -2028,6 +2029,7 @@ real_t sine_long_960[] =
     COEF_CONST(0.9999969881),
     COEF_CONST(0.9999996654)
 };
+#endif
 
 real_t sine_short_128[] =
 {
@@ -2161,6 +2163,7 @@ real_t sine_short_128[] =
     COEF_CONST(0.9999811755)
 };
 
+#ifdef ALLOW_SMALL_FRAMELENGTH
 real_t sine_short_120[] =
 {
     COEF_CONST(0.0065449381),
@@ -2284,6 +2287,7 @@ real_t sine_short_120[] =
     COEF_CONST(0.9998072413),
     COEF_CONST(0.9999785819)
 };
+#endif
 
 #ifdef LD_DEC
 real_t sine_mid_512[] =
@@ -2802,6 +2806,7 @@ real_t sine_mid_512[] =
     COEF_CONST(0.9999988235)
 };
 
+#ifdef ALLOW_SMALL_FRAMELENGTH
 real_t sine_mid_480[] =
 {
     COEF_CONST(0.0016362455),
@@ -3285,6 +3290,7 @@ real_t sine_mid_480[] =
     COEF_CONST(0.9999879524),
     COEF_CONST(0.9999986614)
 };
+#endif
 
 real_t ld_mid_512[] =
 {
@@ -3802,6 +3808,7 @@ real_t ld_mid_512[] =
     COEF_CONST(1.0000000000)
 };
 
+#ifdef ALLOW_SMALL_FRAMELENGTH
 real_t ld_mid_480[] =
 {
     COEF_CONST(0.0000000000),
@@ -4285,6 +4292,7 @@ real_t ld_mid_480[] =
     COEF_CONST(1.0000000000),
     COEF_CONST(1.0000000000)
 };
+#endif
 #endif
 
 #ifdef __cplusplus

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.77 2003/10/20 15:43:52 menno Exp $
+** $Id: decoder.c,v 1.78 2003/11/02 20:24:03 menno Exp $
 **/
 
 #include "common.h"
@@ -36,7 +36,6 @@
 #include "syntax.h"
 #include "error.h"
 #include "output.h"
-#include "dither.h"
 #ifdef SBR_DEC
 #include "sbr_dec.h"
 #endif
@@ -279,11 +278,6 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
     if (can_decode_ot(hDecoder->object_type) < 0)
         return -1;
 
-#ifndef FIXED_POINT
-    if (hDecoder->config.outputFormat >= FAAD_FMT_DITHER_LOWEST)
-        Init_Dither(16, (uint8_t)(hDecoder->config.outputFormat - FAAD_FMT_DITHER_LOWEST));
-#endif
-
     return bits;
 }
 
@@ -363,11 +357,6 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
         hDecoder->frameLength >>= 1;
 #endif
 
-#ifndef FIXED_POINT
-    if (hDecoder->config.outputFormat >= FAAD_FMT_DITHER_LOWEST)
-        Init_Dither(16, (uint8_t)(hDecoder->config.outputFormat - FAAD_FMT_DITHER_LOWEST));
-#endif
-
     return 0;
 }
 
@@ -413,11 +402,6 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
 
     /* must be done before frameLength is divided by 2 for LD */
     hDecoder->fb = filter_bank_init(hDecoder->frameLength);
-
-#ifndef FIXED_POINT
-    if (hDecoder->config.outputFormat >= FAAD_FMT_DITHER_LOWEST)
-        Init_Dither(16, (uint8_t)(hDecoder->config.outputFormat - FAAD_FMT_DITHER_LOWEST));
-#endif
 
     /* Take care of buffers */
     if (hDecoder->sample_buffer) free(hDecoder->sample_buffer);

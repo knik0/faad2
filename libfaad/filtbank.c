@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: filtbank.c,v 1.29 2003/10/19 18:11:19 menno Exp $
+** $Id: filtbank.c,v 1.31 2003/11/04 21:43:30 menno Exp $
 **/
 
 #include "common.h"
@@ -62,8 +62,10 @@ fb_info *filter_bank_init(uint16_t frame_len)
     fb->mdct1024 = faad_mdct_init(2*frame_len_ld);
 #endif
 
+#ifdef ALLOW_SMALL_FRAMELENGTH
     if (frame_len == 1024)
     {
+#endif
         fb->long_window[0]  = sine_long_1024;
         fb->short_window[0] = sine_short_128;
         fb->long_window[1]  = kbd_long_1024;
@@ -72,6 +74,7 @@ fb_info *filter_bank_init(uint16_t frame_len)
         fb->ld_window[0] = sine_mid_512;
         fb->ld_window[1] = ld_mid_512;
 #endif
+#ifdef ALLOW_SMALL_FRAMELENGTH
     } else /* (frame_len == 960) */ {
         fb->long_window[0]  = sine_long_960;
         fb->short_window[0] = sine_short_120;
@@ -82,6 +85,7 @@ fb_info *filter_bank_init(uint16_t frame_len)
         fb->ld_window[1] = ld_mid_480;
 #endif
     }
+#endif
 
     return fb;
 }

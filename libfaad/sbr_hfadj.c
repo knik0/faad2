@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfadj.c,v 1.6 2003/10/20 13:57:32 menno Exp $
+** $Id: sbr_hfadj.c,v 1.7 2003/11/02 20:24:05 menno Exp $
 **/
 
 /* High Frequency adjustment */
@@ -263,7 +263,6 @@ static void estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
 }
 
 #define EPS (1e-12)
-
 #define ONE (1)
 
 
@@ -472,6 +471,7 @@ static void aliasing_reduction(sbr_info *sbr, sbr_hfadj_info *adj, real_t *deg, 
                 acc = 0;
             else
                 acc = E_total / (acc + EPS);
+
             for(m = sbr->f_group[l][(k<<1)]; m < sbr->f_group[l][(k<<1) + 1]; m++)
             {
                 adj->G_lim_boost[l][m-sbr->kx] = MUL(acc, adj->G_lim_boost[l][m-sbr->kx]);

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: cfft_tab.h,v 1.6 2003/10/19 18:11:19 menno Exp $
+** $Id: cfft_tab.h,v 1.8 2003/11/04 21:43:30 menno Exp $
 **/
 
 #ifndef __CFFT_TAB_H__
@@ -550,6 +550,7 @@ complex_t cfft_tab_512[] =
     { COEF_CONST(0.00000001), COEF_CONST(-1.00000000) }
 };
 
+#ifdef ALLOW_SMALL_FRAMELENGTH
 complex_t cfft_tab_480[] =
 {
     { COEF_CONST(1.00000000), COEF_CONST(0.00000000) },
@@ -1033,6 +1034,7 @@ complex_t cfft_tab_480[] =
     { COEF_CONST(1.00000000), COEF_CONST(0.00000000) },
     { COEF_CONST(0.30901712), COEF_CONST(-0.95105648) }
 };
+#endif
 
 complex_t cfft_tab_64[] =
 {
@@ -1102,6 +1104,7 @@ complex_t cfft_tab_64[] =
     { COEF_CONST(0.00000001), COEF_CONST(-1.00000000) }
 };
 
+#ifdef ALLOW_SMALL_FRAMELENGTH
 complex_t cfft_tab_60[] =
 {
     { COEF_CONST(1.00000000), COEF_CONST(0.00000000) },
@@ -1165,6 +1168,7 @@ complex_t cfft_tab_60[] =
     { COEF_CONST(1.00000000), COEF_CONST(0.00000000) },
     { COEF_CONST(0.30901712), COEF_CONST(-0.95105648) }
 };
+#endif
 
 #ifdef LD_DEC
 
@@ -1428,6 +1432,7 @@ complex_t cfft_tab_256[] =
     { COEF_CONST(0.00000001), COEF_CONST(-1.00000000) }
 };
 
+#ifdef ALLOW_SMALL_FRAMELENGTH
 complex_t cfft_tab_240[] =
 {
     { COEF_CONST(1.00000000), COEF_CONST(0.00000000) },
@@ -1671,6 +1676,7 @@ complex_t cfft_tab_240[] =
     { COEF_CONST(1.00000000), COEF_CONST(0.00000000) },
     { COEF_CONST(0.30901712), COEF_CONST(-0.95105648) }
 };
+#endif
 
 #endif
 

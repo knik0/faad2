@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.58 2003/10/19 18:11:20 menno Exp $
+** $Id: syntax.c,v 1.59 2003/11/02 20:24:05 menno Exp $
 **/
 
 /*
@@ -60,6 +60,10 @@ int8_t GASpecificConfig(bitfile *ld, mp4AudioSpecificConfig *mp4ASC,
     /* 1024 or 960 */
     mp4ASC->frameLengthFlag = faad_get1bit(ld
         DEBUGVAR(1,138,"GASpecificConfig(): FrameLengthFlag"));
+#ifndef ALLOW_SMALL_FRAMELENGTH
+    if (mp4ASC->frameLengthFlag == 1)
+        return -3;
+#endif
 
     mp4ASC->dependsOnCoreCoder = faad_get1bit(ld
         DEBUGVAR(1,139,"GASpecificConfig(): DependsOnCoreCoder"));

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: output.c,v 1.23 2003/10/19 18:11:20 menno Exp $
+** $Id: output.c,v 1.24 2003/11/02 20:24:04 menno Exp $
 **/
 
 #include "common.h"
@@ -33,7 +33,6 @@
 
 #ifndef FIXED_POINT
 
-#include "dither.h"
 
 
 #define ftol(A,B) {tmp = *(int32_t*) & A - 0x4B7F8000; \
@@ -43,12 +42,7 @@
 
 #define ROUND32(x) ROUND(x)
 
-#define ROUND64(x) (doubletmp = (x) + Dither.Add + (int64_t)0x001FFFFD80000000L, *(int64_t*)(&doubletmp) - (int64_t)0x433FFFFD80000000L)
-
 #define FLOAT_SCALE (1.0f/(1<<15))
-
-dither_t Dither;
-double doubletmp;
 
 #define DM_MUL ((real_t)1.0/((real_t)1.0+(real_t)sqrt(2.0)))
 
@@ -102,42 +96,6 @@ void* output_to_PCM(faacDecHandle hDecoder,
                 ftol(ftemp, short_sample_buffer[(i*channels)+ch]);
             }
             break;
-        case FAAD_FMT_16BIT_DITHER:
-            for(i = 0; i < frame_len; i++, j++)
-            {
-                //real_t inp = input[internal_channel][i];
-                real_t inp = get_sample(input, ch, i, hDecoder->downMatrix, hDecoder->internal_channel);
-                double Sum = inp * 65535.f;
-                int64_t val;
-                if(j > 31)
-                   j = 0;
-                val = dither_output(1, 0, j, Sum, ch) / 65536;
-                if (val > (1<<15)-1)
-                    val = (1<<15)-1;
-                else if (val < -(1<<15))
-                    val = -(1<<15);
-                short_sample_buffer[(i*channels)+ch] = (int16_t)val;
-            }
-            break;
-        case FAAD_FMT_16BIT_L_SHAPE:
-        case FAAD_FMT_16BIT_M_SHAPE:
-        case FAAD_FMT_16BIT_H_SHAPE:
-            for(i = 0; i < frame_len; i++, j++)
-            {
-                //real_t inp = input[internal_channel][i];
-                real_t inp = get_sample(input, ch, i, hDecoder->downMatrix, hDecoder->internal_channel);
-                double Sum = inp * 65535.f;
-                int64_t val;
-                if(j > 31)
-                   j = 0;
-                val = dither_output(1, 1, j, Sum, ch) / 65536;
-                if (val > (1<<15)-1)
-                    val = (1<<15)-1;
-                else if (val < -(1<<15))
-                    val = -(1<<15);
-                short_sample_buffer[(i*channels)+ch] = (int16_t)val;
-            }
-            break;
         case FAAD_FMT_24BIT:
             for(i = 0; i < frame_len; i++)
             {
@@ -182,34 +140,6 @@ void* output_to_PCM(faacDecHandle hDecoder,
     }
 
     return sample_buffer;
-}
-
-
-/* Dither output */
-static int64_t dither_output(uint8_t dithering, uint8_t shapingtype, uint16_t i, double Sum, uint8_t k)
-{
-    double Sum2;
-    int64_t val;
-    if(dithering)
-    {
-        if(!shapingtype)
-        {
-            double tmp = Random_Equi(Dither.Dither);
-            Sum2 = tmp - (double)Dither.LastRandomNumber[k];
-            Dither.LastRandomNumber[k] = (int32_t)tmp;
-            Sum2 = Sum += Sum2;
-            val = ROUND64(Sum2)&Dither.Mask;
-        } else {
-            Sum2 = Random_Triangular(Dither.Dither) - scalar16(Dither.DitherHistory[k], Dither.FilterCoeff + i);
-            Sum += Dither.DitherHistory[k][(-1-i)&15] = (float32_t)Sum2;
-            Sum2 = Sum + scalar16(Dither.ErrorHistory[k], Dither.FilterCoeff + i );
-            val = ROUND64(Sum2)&Dither.Mask;
-            Dither.ErrorHistory[k][(-1-i)&15] = (float)(Sum - val);
-        }
-        return val;
-    }
-    else
-        return ROUND64 (Sum);
 }
 
 #else
