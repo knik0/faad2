@@ -30,6 +30,16 @@ AC_CHECK_FUNCS(strchr memcpy)
 AC_CHECK_HEADERS(sys/time.h)
 AC_HEADER_TIME
 
+dnl DRMS 
+AC_CHECK_HEADERS(errno.h sys/stat.h sys/types.h limits.h)
+AC_CHECK_HEADERS(sysfs/libsysfs.h)
+AC_CHECK_HEADERS(IOKit/IOKitLib.h,
+  [AC_CHECK_LIB(IOKit, main,
+    [AC_DEFINE(HAVE_IOKIT_IOKITLIB_H, 1, [Define if you have the IOKit API])
+     MP4FF_LIBS="-lIOKit"
+     AC_SUBST(MP4FF_LIBS)])])
+AC_CHECK_FUNCS(getpwuid)
+
 AC_C_INLINE
 AC_C_BIGENDIAN
 
