@@ -1,19 +1,19 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_e_nf.c,v 1.8 2003/11/12 20:47:58 menno Exp $
+** $Id: sbr_e_nf.c,v 1.9 2003/11/14 15:15:51 menno Exp $
 **/
 
 #include "common.h"
@@ -172,8 +172,8 @@ void envelope_noise_dequantisation(sbr_info *sbr, uint8_t ch)
 void unmap_envelope_noise(sbr_info *sbr)
 {
     uint8_t l, k;
-    uint8_t amp0 = (sbr->amp_res[0]) ? 0 : 1;
-    uint8_t amp1 = (sbr->amp_res[1]) ? 0 : 1;
+    real_t amp0 = (sbr->amp_res[0]) ? (real_t)1.0 : (real_t)0.5;
+    real_t amp1 = (sbr->amp_res[1]) ? (real_t)1.0 : (real_t)0.5;
 
     for (l = 0; l < sbr->L_E[0]; l++)
     {
