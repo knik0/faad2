@@ -22,13 +22,14 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.63 2003/10/02 19:23:10 ca5e Exp $
+** $Id: foo_mp4.cpp,v 1.64 2003/10/12 15:38:47 ca5e Exp $
 **/
 
 #include <mp4.h>
 #include <faad.h>
 #include "foobar2000/SDK/foobar2000.h"
 #include "foobar2000/foo_input_std/id3v2_hacks.h"
+#include "convert.h"
 
 //#define DBG_OUT(A) OutputDebugString(A)
 #define DBG_OUT(A)
@@ -47,7 +48,7 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "1.62",
+                           "1.63",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 static const char *object_type_string(int type)
@@ -328,19 +329,19 @@ public:
         const char *p = NULL;
 
         p = info->info_get("TOOL");
-        if (p)
+        if (p && *p)
             MP4SetMetadataTool(hFile, p);
         p = info->info_get("REPLAYGAIN_TRACK_PEAK");
-        if (p)
+        if (p && *p)
             MP4SetMetadataFreeForm(hFile, "REPLAYGAIN_TRACK_PEAK", (unsigned __int8*)p, strlen(p));
         p = info->info_get("REPLAYGAIN_TRACK_GAIN");
-        if (p)
+        if (p && *p)
             MP4SetMetadataFreeForm(hFile, "REPLAYGAIN_TRACK_GAIN", (unsigned __int8*)p, strlen(p));
         p = info->info_get("REPLAYGAIN_ALBUM_PEAK");
-        if (p)
+        if (p && *p)
             MP4SetMetadataFreeForm(hFile, "REPLAYGAIN_ALBUM_PEAK", (unsigned __int8*)p, strlen(p));
         p = info->info_get("REPLAYGAIN_ALBUM_GAIN");
-        if (p)
+        if (p && *p)
             MP4SetMetadataFreeForm(hFile, "REPLAYGAIN_ALBUM_GAIN", (unsigned __int8*)p, strlen(p));
 
         int numItems = info->meta_get_count();
@@ -350,7 +351,7 @@ public:
             {
                 char *pName = (char*)info->meta_enum_name(i);
                 const char *val = info->meta_enum_value(i);
-                if (!val) continue;
+                if (!val || (val && !*val)) continue;
 
                 if (stricmp(pName, "TITLE") == 0)
                 {
@@ -368,20 +369,16 @@ public:
                 } else if (stricmp(pName, "GENRE") == 0) {
                     MP4SetMetadataGenre(hFile, val);
                 } else if (stricmp(pName, "TRACKNUMBER") == 0) {
-                    unsigned __int16 trkn = 0, tot = 0;
-                    sscanf(val, "%d", &trkn);
+                    unsigned __int16 trkn = atoi(val), tot = 0;
                     MP4SetMetadataTrack(hFile, trkn, tot);
                 } else if (stricmp(pName, "DISKNUMBER") == 0 || stricmp(pName, "DISC") == 0) {
-                    unsigned __int16 disk = 0, tot = 0;
-                    sscanf(val, "%d", &disk);
+                    unsigned __int16 disk = atoi(val), tot = 0;
                     MP4SetMetadataDisk(hFile, disk, tot);
                 } else if (stricmp(pName, "COMPILATION") == 0) {
-                    unsigned __int8 cpil = 0;
-                    sscanf(val, "%d", &cpil);
+                    unsigned __int8 cpil = atoi(val);
                     MP4SetMetadataCompilation(hFile, cpil);
                 } else if (stricmp(pName, "TEMPO") == 0) {
-                    unsigned __int16 tempo = 0;
-                    sscanf(val, "%d", &tempo);
+                    unsigned __int16 tempo = atoi(val);
                     MP4SetMetadataTempo(hFile, tempo);
                 } else {
                     MP4SetMetadataFreeForm(hFile, pName, (unsigned __int8*)val, strlen(val));
@@ -1157,5 +1154,137 @@ private:
     }
 };
 
-static service_factory_t<input,input_mp4> foo_mp4;
-static service_factory_t<input,input_aac> foo_aac;
+class contextmenu_mp4 : public menu_item_context
+{
+private:
+    int first_num;
+    string8 path;
+
+public:
+    virtual int get_num_items() { return 1; }
+
+    virtual const char *enum_item(int n)
+    {
+        if (n == 0) return "Converter (AAC <-> MP4)";
+        return 0;
+    }
+
+    virtual bool context_get_display(int n, const ptr_list_base<metadb_handle> &data, string_base &out, bool is_playlist)
+    {
+        int count = data.get_count();
+        if (count < 1) return false;
+        int type = -1;
+
+        for (int i = 0; i < count; i++)
+        {
+            metadb_handle *ptr = data.get_item(i);
+            if (!ptr) return false;
+            const char *p = ptr->handle_get_path();
+            if (!p) return false;
+            p = strrchr(p, '.');
+            if (!p) return false;
+            if (type == -1)
+            {
+                if (!stricmp(p, ".aac")) type = 0;
+                else if (!stricmp(p, ".m4a") || !stricmp(p, ".mp4")) type = 1;
+                else return false;
+            }
+            else
+            {
+                if (type == 0 && stricmp(p, ".aac")) return false;
+                if (type == 1 && (stricmp(p, ".m4a") && stricmp(p, ".mp4"))) return false;
+            }
+        }
+
+        if (type == 0)
+        {
+            out.set_string("Convert to MP4");
+        }
+        else
+        {
+            out.set_string("Extract AAC track");
+            if (count > 1) out.add_char('s');
+        }
+
+        return true;
+    }
+
+    virtual void context_command(int n, const ptr_list_base<metadb_handle> &data, bool is_playlist)
+    {
+        const int count = data.get_count();
+
+        for (int i = 0; i < count; i++) {
+            metadb_handle *ptr = data.get_item(i);
+            if (!ptr) return;
+
+            file_info_i_full src_info;
+
+            ptr->handle_lock();
+            bool error = false;
+            const file_info *info = ptr->handle_query_locked();
+            if (info)
+                src_info.copy(info);
+            else
+                error = true;
+            ptr->handle_unlock();
+
+            if (!error)
+            {
+                int type = 1;
+                string8 temp = src_info.get_file_path();
+                const char *p = strrchr((const char *)temp, '.');
+                if (p)
+                {
+                    if (!stricmp(p, ".aac")) type = 0;
+                    temp.truncate(p-(const char *)temp);
+                }
+                if (type == 0)
+                    temp.add_string(".mp4");
+                else
+                    temp.add_string(".aac");
+
+                const char *src = (const char *)src_info.get_file_path();
+                const char *dst = (const char *)temp;
+
+                if (file::g_exists(dst))
+                {
+                    console::info(string_printf("Destination file '%s' already exists", dst));
+                    console::popup();
+                }
+                else
+                {
+                    converter *conv = new converter(src, dst, &src_info);
+
+                    if (conv)
+                    {
+                        bool ret;
+
+                        if (type == 0)
+                            ret = conv->aac_to_mp4();
+                        else
+                            ret = conv->mp4_to_aac();
+
+                        if (ret)
+                            console::info(string_printf("'%s' converted to '%s'", src, dst));
+                        else
+                            console::error(string_printf("Failed to convert '%s' to '%s'", src, dst));
+
+                        delete conv;
+                    }
+                    else
+                    {
+                        console::error("Failed to create new converter");
+                    }
+                }
+            }
+            else
+            {
+                console::error("Failed to get file infos");
+            }
+        }
+    }
+};
+
+static service_factory_t<input, input_mp4> foo_mp4;
+static service_factory_t<input, input_aac> foo_aac;
+static service_factory_single_t<menu_item, contextmenu_mp4> foo_mp4_context;
