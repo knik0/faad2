@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.99 2004/03/10 19:45:40 menno Exp $
+** $Id: decoder.c,v 1.100 2004/03/10 19:53:40 menno Exp $
 **/
 
 #include "common.h"
@@ -255,6 +255,15 @@ int32_t NEAACDECAPI NeAACDecInit(NeAACDecHandle hDecoder, uint8_t *buffer,
     }
     hDecoder->channelConfiguration = *channels;
 
+#if (defined(PS_DEC) || defined(DRM_PS))
+    /* check if we have a mono file */
+    if (*channels == 1)
+    {
+        /* upMatrix to 2 channels for implicit signalling of PS */
+        *channels = 2;
+    }
+#endif
+
 #ifdef SBR_DEC
     /* implicit signalling */
     if (*samplerate <= 24000 && !(hDecoder->config.dontUpSampleImplicitSBR))
@@ -318,6 +327,14 @@ int8_t NEAACDECAPI NeAACDecInit2(NeAACDecHandle hDecoder, uint8_t *pBuffer,
         *channels = hDecoder->pce.channels;
         hDecoder->pce_set = 1;
     }
+#if (defined(PS_DEC) || defined(DRM_PS))
+    /* check if we have a mono file */
+    if (*channels == 1)
+    {
+        /* upMatrix to 2 channels for implicit signalling of PS */
+        *channels = 2;
+    }
+#endif
     hDecoder->sf_index = mp4ASC.samplingFrequencyIndex;
     hDecoder->object_type = mp4ASC.objectTypeIndex;
 #ifdef ERROR_RESILIENCE
