@@ -22,13 +22,13 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: utils.c,v 1.6 2003/07/29 08:20:14 menno Exp $
+** $Id: utils.c,v 1.7 2004/03/04 19:06:01 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <mp4.h>
-#include <faad.h>
+#include <neaacdec.h>
 #include "utils.h"
 
 int StringComp(char const *str1, char const *str2, unsigned long len)

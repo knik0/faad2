@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.97 2004/03/02 20:09:58 menno Exp $
+** $Id: decoder.c,v 1.98 2004/03/04 19:06:01 menno Exp $
 **/
 
 #include "common.h"
@@ -50,7 +50,7 @@
 uint16_t dbg_count;
 #endif
 
-int8_t* NEAACDECAPI NeAACDecGetErrorMessage(uint8_t errcode)
+char* NEAACDECAPI NeAACDecGetErrorMessage(uint8_t errcode)
 {
     if (errcode >= NUM_ERROR_MESSAGES)
         return NULL;

@@ -25,7 +25,7 @@ CFG=faad - Win32 Debug
 # PROP AllowPerConfigDependencies 0
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
-CPP=xicl6.exe
+CPP=cl.exe
 RSC=rc.exe
 
 !IF  "$(CFG)" == "faad - Win32 Release"
@@ -48,7 +48,7 @@ RSC=rc.exe
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
-LINK32=xilink6.exe
+LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
 # ADD LINK32 Advapi32.lib /nologo /subsystem:console /machine:I386
 # SUBTRACT LINK32 /profile
@@ -73,7 +73,7 @@ LINK32=xilink6.exe
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
-LINK32=xilink6.exe
+LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
 # ADD LINK32 Advapi32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
 
@@ -108,10 +108,6 @@ SOURCE=.\audio.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\include\faad.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\common\faad\getopt.h
 # End Source File
 # Begin Source File
@@ -120,7 +116,19 @@ SOURCE=..\common\mp4v2\mp4.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\common\mp4ff\mp4ff.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\common\mp4ff\mp4ff_int_types.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\common\mp4v2\mpeg4ip.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\neaacdec.h
 # End Source File
 # Begin Source File
 

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: in_mp4.c,v 1.50 2004/01/05 20:03:29 menno Exp $
+** $Id: in_mp4.c,v 1.51 2004/03/04 19:06:01 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -33,7 +33,7 @@
 #include <commdlg.h>
 #include <stdlib.h>
 #include <math.h>
-#include <faad.h>
+#include <neaacdec.h>
 #include <mp4.h>
 
 #include "resource.h"
@@ -84,7 +84,7 @@ struct seek_list
 typedef struct state
 {
     /* general stuff */
-    faacDecHandle hDecoder;
+    NeAACDecHandle hDecoder;
     int samplerate;
     unsigned char channels;
     double decode_pos_ms; // current decoding position, in milliseconds
@@ -130,7 +130,7 @@ static int PlayThreadAlive = 0; // 1=play thread still running
 HANDLE play_thread_handle = INVALID_HANDLE_VALUE; // the handle to the decode thread
 
 /* Function definitions */
-void *decode_aac_frame(state *st, faacDecFrameInfo *frameInfo);
+void *decode_aac_frame(state *st, NeAACDecFrameInfo *frameInfo);
 DWORD WINAPI MP4PlayThread(void *b); // the decode thread procedure
 DWORD WINAPI AACPlayThread(void *b); // the decode thread procedure
 
@@ -1460,7 +1460,7 @@ int play(char *fn)
     int avg_bitrate, br, sr;
     unsigned char *buffer;
     int buffer_size;
-    faacDecConfigurationPtr config;
+    NeAACDecConfigurationPtr config;
 
 #ifdef DEBUG_OUTPUT
     in_mp4_DebugOutput("play");
@@ -1484,7 +1484,7 @@ int play(char *fn)
         int bread = 0;
         double length = 0.;
         __int64 bitrate = 128;
-        faacDecFrameInfo frameInfo;
+        NeAACDecFrameInfo frameInfo;
 
         module.is_seekable = 1;
 
@@ -1505,17 +1505,17 @@ int play(char *fn)
 
         for (init=0; init<2; init++)
         {
-            mp4state.hDecoder = faacDecOpen();
+            mp4state.hDecoder = NeAACDecOpen();
             if (!mp4state.hDecoder)
             {
                 show_error(module.hMainWindow, "Unable to open decoder library.");
                 return -1;
             }
 
-            config = faacDecGetCurrentConfiguration(mp4state.hDecoder);
+            config = NeAACDecGetCurrentConfiguration(mp4state.hDecoder);
             config->outputFormat = m_resolution + 1;
             config->downMatrix = m_downmix;
-            faacDecSetConfiguration(mp4state.hDecoder, config);
+            NeAACDecSetConfiguration(mp4state.hDecoder, config);
 
             memset(mp4state.m_aac_buffer, 0, 768*6);
             bread = fread(mp4state.m_aac_buffer, 1, 768*6, mp4state.aacfile);
@@ -1526,11 +1526,11 @@ int play(char *fn)
 
             if (init==0)
             {
-                faacDecFrameInfo frameInfo;
+                NeAACDecFrameInfo frameInfo;
 
                 fill_buffer(&mp4state);
 
-                if ((mp4state.m_aac_bytes_consumed = faacDecInit(mp4state.hDecoder,
+                if ((mp4state.m_aac_bytes_consumed = NeAACDecInit(mp4state.hDecoder,
                     mp4state.m_aac_buffer, mp4state.m_aac_bytes_into_buffer,
                     &mp4state.samplerate, &mp4state.channels)) < 0)
                 {
@@ -1540,14 +1540,14 @@ int play(char *fn)
                 advance_buffer(&mp4state, mp4state.m_aac_bytes_consumed);
 
                 do {
-                    memset(&frameInfo, 0, sizeof(faacDecFrameInfo));
+                    memset(&frameInfo, 0, sizeof(NeAACDecFrameInfo));
                     fill_buffer(&mp4state);
-                    faacDecDecode(mp4state.hDecoder, &frameInfo, mp4state.m_aac_buffer, mp4state.m_aac_bytes_into_buffer);
+                    NeAACDecDecode(mp4state.hDecoder, &frameInfo, mp4state.m_aac_buffer, mp4state.m_aac_bytes_into_buffer);
                 } while (!frameInfo.samples && !frameInfo.error);
 
                 if (frameInfo.error)
                 {
-                    show_error(module.hMainWindow, faacDecGetErrorMessage(frameInfo.error));
+                    show_error(module.hMainWindow, NeAACDecGetErrorMessage(frameInfo.error));
                     return -1;
                 }
 
@@ -1560,7 +1560,7 @@ int play(char *fn)
                 header_type = frameInfo.header_type;
                 */
 
-                faacDecClose(mp4state.hDecoder);
+                NeAACDecClose(mp4state.hDecoder);
                 fseek(mp4state.aacfile, tagsize, SEEK_SET);
             }
         }
@@ -1614,7 +1614,7 @@ int play(char *fn)
         mp4state.m_length = (int)(length*1000.);
 
         fill_buffer(&mp4state);
-        if ((mp4state.m_aac_bytes_consumed = faacDecInit(mp4state.hDecoder,
+        if ((mp4state.m_aac_bytes_consumed = NeAACDecInit(mp4state.hDecoder,
             mp4state.m_aac_buffer, mp4state.m_aac_bytes_into_buffer,
             &mp4state.samplerate, &mp4state.channels)) < 0)
         {
@@ -1628,30 +1628,30 @@ int play(char *fn)
         else
             avg_bitrate = bitrate*1000;
     } else {
-        mp4state.hDecoder = faacDecOpen();
+        mp4state.hDecoder = NeAACDecOpen();
         if (!mp4state.hDecoder)
         {
             show_error(module.hMainWindow, "Unable to open decoder library.");
             return -1;
         }
 
-        config = faacDecGetCurrentConfiguration(mp4state.hDecoder);
+        config = NeAACDecGetCurrentConfiguration(mp4state.hDecoder);
         config->outputFormat = m_resolution + 1;
         config->downMatrix = m_downmix;
-        faacDecSetConfiguration(mp4state.hDecoder, config);
+        NeAACDecSetConfiguration(mp4state.hDecoder, config);
 
         mp4state.mp4file = MP4Read(mp4state.filename, 0);
         if (!mp4state.mp4file)
         {
             show_error(module.hMainWindow, "Unable to open file.");
-            faacDecClose(mp4state.hDecoder);
+            NeAACDecClose(mp4state.hDecoder);
             return -1;
         }
 
         if ((mp4state.mp4track = GetAACTrack(mp4state.mp4file)) < 0)
         {
             show_error(module.hMainWindow, "Unsupported Audio track type.");
-            faacDecClose(mp4state.hDecoder);
+            NeAACDecClose(mp4state.hDecoder);
             MP4Close(mp4state.mp4file);
             return -1;
         }
@@ -1662,16 +1662,16 @@ int play(char *fn)
             &buffer, &buffer_size);
         if (!buffer)
         {
-            faacDecClose(mp4state.hDecoder);
+            NeAACDecClose(mp4state.hDecoder);
             MP4Close(mp4state.mp4file);
             return -1;
         }
 
-        if(faacDecInit2(mp4state.hDecoder, buffer, buffer_size,
+        if(NeAACDecInit2(mp4state.hDecoder, buffer, buffer_size,
             &mp4state.samplerate, &mp4state.channels) < 0)
         {
             /* If some error initializing occured, skip the file */
-            faacDecClose(mp4state.hDecoder);
+            NeAACDecClose(mp4state.hDecoder);
             MP4Close(mp4state.mp4file);
             if (buffer) free (buffer);
             return -1;
@@ -1687,7 +1687,7 @@ int play(char *fn)
 
             if (buffer)
             {
-                if (AudioSpecificConfig(buffer, buffer_size, &mp4ASC) >= 0)
+                if (NeAACDecAudioSpecificConfig(buffer, buffer_size, &mp4ASC) >= 0)
                 {
                     if (mp4ASC.frameLengthFlag == 1) mp4state.framesize = 960;
                     if (mp4ASC.sbr_present_flag == 1) mp4state.framesize *= 2;
@@ -1709,7 +1709,7 @@ int play(char *fn)
     if (mp4state.channels == 0)
     {
         show_error(module.hMainWindow, "Number of channels not supported for playback.");
-        faacDecClose(mp4state.hDecoder);
+        NeAACDecClose(mp4state.hDecoder);
         if (mp4state.filetype)
             fclose(mp4state.aacfile);
         else
@@ -1725,7 +1725,7 @@ int play(char *fn)
 
     if (maxlatency < 0) // error opening device
     {
-        faacDecClose(mp4state.hDecoder);
+        NeAACDecClose(mp4state.hDecoder);
         if (mp4state.filetype)
             fclose(mp4state.aacfile);
         else
@@ -1755,7 +1755,7 @@ int play(char *fn)
             (void *)&killPlayThread, 0, &thread_id)) == NULL)
         {
             show_error(module.hMainWindow, "Cannot create playback thread");
-            faacDecClose(mp4state.hDecoder);
+            NeAACDecClose(mp4state.hDecoder);
             fclose(mp4state.aacfile);
             return -1;
         }
@@ -1764,7 +1764,7 @@ int play(char *fn)
             (void *)&killPlayThread, 0, &thread_id)) == NULL)
         {
             show_error(module.hMainWindow, "Cannot create playback thread");
-            faacDecClose(mp4state.hDecoder);
+            NeAACDecClose(mp4state.hDecoder);
             MP4Close(mp4state.mp4file);
             return -1;
         }
@@ -1852,7 +1852,7 @@ void stop()
         target = target->next;
         if (tmp) free(tmp);
     }
-    faacDecClose(mp4state.hDecoder);
+    NeAACDecClose(mp4state.hDecoder);
     if (mp4state.filetype)
         fclose(mp4state.aacfile);
     else
@@ -2165,7 +2165,7 @@ DWORD WINAPI MP4PlayThread(void *b)
     void *sample_buffer;
     unsigned char *buffer;
     int buffer_size;
-    faacDecFrameInfo frameInfo;
+    NeAACDecFrameInfo frameInfo;
 
 #ifdef DEBUG_OUTPUT
     in_mp4_DebugOutput("MP4PlayThread");
@@ -2232,12 +2232,12 @@ DWORD WINAPI MP4PlayThread(void *b)
                     sample_buffer = NULL;
                     frameInfo.samples = 0;
                 } else {
-                    sample_buffer = faacDecDecode(mp4state.hDecoder, &frameInfo,
+                    sample_buffer = NeAACDecDecode(mp4state.hDecoder, &frameInfo,
                         buffer, buffer_size);
                 }
                 if (frameInfo.error > 0)
                 {
-                    show_error(module.hMainWindow, faacDecGetErrorMessage(frameInfo.error));
+                    show_error(module.hMainWindow, NeAACDecGetErrorMessage(frameInfo.error));
                     mp4state.last_frame = 1;
                 }
                 if (mp4state.sampleId > mp4state.numSamples)
@@ -2350,7 +2350,7 @@ DWORD WINAPI MP4PlayThread(void *b)
     return 0;
 }
 
-void *decode_aac_frame(state *st, faacDecFrameInfo *frameInfo)
+void *decode_aac_frame(state *st, NeAACDecFrameInfo *frameInfo)
 {
     void *sample_buffer = NULL;
 
@@ -2360,7 +2360,7 @@ void *decode_aac_frame(state *st, faacDecFrameInfo *frameInfo)
 
         if (st->m_aac_bytes_into_buffer != 0)
         {
-            sample_buffer = faacDecDecode(st->hDecoder, frameInfo,
+            sample_buffer = NeAACDecDecode(st->hDecoder, frameInfo,
                 st->m_aac_buffer, st->m_aac_bytes_into_buffer);
 
             if (st->m_header_type != 1)
@@ -2416,13 +2416,13 @@ int aac_seek(state *st, double seconds)
         st->m_aac_bytes_consumed = 0;
         st->m_file_offset += bread;
 
-        faacDecPostSeekReset(st->hDecoder, -1);
+        NeAACDecPostSeekReset(st->hDecoder, -1);
 
         return 1;
     } else {
         if (seconds > st->cur_pos_sec)
         {
-            faacDecFrameInfo frameInfo;
+            NeAACDecFrameInfo frameInfo;
 
             frames = (int)((seconds - st->cur_pos_sec)*((double)st->samplerate/(double)st->framesize));
 
@@ -2430,22 +2430,22 @@ int aac_seek(state *st, double seconds)
             {
                 for (i = 0; i < frames; i++)
                 {
-                    memset(&frameInfo, 0, sizeof(faacDecFrameInfo));
+                    memset(&frameInfo, 0, sizeof(NeAACDecFrameInfo));
                     decode_aac_frame(st, &frameInfo);
 
                     if (frameInfo.error || (st->m_aac_bytes_into_buffer == 0))
                     {
                         if (frameInfo.error)
                         {
-                            if (faacDecGetErrorMessage(frameInfo.error) != NULL)
-                                show_error(module.hMainWindow, faacDecGetErrorMessage(frameInfo.error));
+                            if (NeAACDecGetErrorMessage(frameInfo.error) != NULL)
+                                show_error(module.hMainWindow, NeAACDecGetErrorMessage(frameInfo.error));
                         }
                         return 0;
                     }
                 }
             }
 
-            faacDecPostSeekReset(st->hDecoder, -1);
+            NeAACDecPostSeekReset(st->hDecoder, -1);
         }
         return 1;
     }
@@ -2495,10 +2495,10 @@ DWORD WINAPI AACPlayThread(void *b)
 
             Sleep(10);
         } else if (module.outMod->CanWrite() >= (2048*mp4state.channels*sizeof(short))) {
-            faacDecFrameInfo frameInfo;
+            NeAACDecFrameInfo frameInfo;
             void *sample_buffer;
 
-            memset(&frameInfo, 0, sizeof(faacDecFrameInfo));
+            memset(&frameInfo, 0, sizeof(NeAACDecFrameInfo));
 
             sample_buffer = decode_aac_frame(&mp4state, &frameInfo);
 
@@ -2506,8 +2506,8 @@ DWORD WINAPI AACPlayThread(void *b)
             {
                 if (frameInfo.error)
                 {
-                    if (faacDecGetErrorMessage(frameInfo.error) != NULL)
-                        show_error(module.hMainWindow, faacDecGetErrorMessage(frameInfo.error));
+                    if (NeAACDecGetErrorMessage(frameInfo.error) != NULL)
+                        show_error(module.hMainWindow, NeAACDecGetErrorMessage(frameInfo.error));
                 }
                 done = 1;
             }

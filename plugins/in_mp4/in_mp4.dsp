@@ -124,11 +124,11 @@ SOURCE=.\config.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\include\faad.h
+SOURCE=.\in2.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\in2.h
+SOURCE=..\..\include\neaacdec.h
 # End Source File
 # Begin Source File
 

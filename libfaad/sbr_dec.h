@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.h,v 1.25 2004/03/02 19:37:26 menno Exp $
+** $Id: sbr_dec.h,v 1.26 2004/03/04 19:06:01 menno Exp $
 **/
 
 #ifndef __SBR_DEC_H__
@@ -111,6 +111,9 @@ typedef struct
     int16_t E_prev[2][64];
     real_t E_orig[2][64][5];
     real_t E_curr[2][64][5];
+#ifdef FIXED_POINT
+    uint8_t E_curr_is_coef[2][64][5];
+#endif
     int32_t Q[2][64][2];
     real_t Q_div[2][64][2];
     real_t Q_div2[2][64][2];

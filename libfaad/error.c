@@ -22,13 +22,13 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: error.c,v 1.22 2004/02/26 09:29:26 menno Exp $
+** $Id: error.c,v 1.24 2004/03/10 19:45:41 menno Exp $
 **/
 
 #include "common.h"
 #include "error.h"
 
-int8_t *err_msg[] = {
+char *err_msg[] = {
     "No error",
     "Gain control not yet implemented",
     "Pulse coding not allowed in short blocks",

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: error.h,v 1.16 2004/01/28 19:17:25 menno Exp $
+** $Id: error.h,v 1.18 2004/03/10 19:45:41 menno Exp $
 **/
 
 #ifndef __ERROR_H__
@@ -33,7 +33,7 @@ extern "C" {
 #endif
 
 #define NUM_ERROR_MESSAGES 26
-extern int8_t *err_msg[];
+extern char *err_msg[];
 
 #ifdef __cplusplus
 }
