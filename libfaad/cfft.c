@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: cfft.c,v 1.2 2002/08/17 10:03:10 menno Exp $
+** $Id: cfft.c,v 1.3 2002/08/17 11:46:48 menno Exp $
 **/
 
 /*
@@ -57,7 +57,7 @@ static void passf2(uint16_t ido, uint16_t l1, real_t *cc, real_t *ch,
     } else {
         for (k = 0; k < l1; k++)
         {
-            for(i = 0; i < ido-1; i += 2)
+            for (i = 0; i < ido-1; i += 2)
             {
                 ah = i + k*ido;
                 ac = i + 2*k*ido;
@@ -65,8 +65,8 @@ static void passf2(uint16_t ido, uint16_t l1, real_t *cc, real_t *ch,
                 tr2 = cc[ac] - cc[ac+ido];
                 ch[ah+1] = cc[ac+1] + cc[ac+1+ido];
                 ti2 = cc[ac+1] - cc[ac+1+ido];
-                ch[ah+l1*ido+1] = wa1[i]*ti2 + isign*wa1[i+1]*tr2;
-                ch[ah+l1*ido] = wa1[i]*tr2 - isign*wa1[i+1]*ti2;
+                ch[ah+l1*ido+1] = MUL(wa1[i],ti2) + isign*MUL(wa1[i+1],tr2);
+                ch[ah+l1*ido] = MUL(wa1[i],tr2) - isign*MUL(wa1[i+1],ti2);
             }
         }
     }
@@ -87,16 +87,16 @@ static void passf3(uint16_t ido, uint16_t l1, real_t *cc, real_t *ch,
         {
             ac = (3*k-2) * ido;
             tr2 = cc[ac] + cc[ac+ido];
-            cr2 = cc[ac-ido] + taur*tr2;
+            cr2 = cc[ac-ido] + MUL(taur,tr2);
             ah = (k-1) * ido;
             ch[ah] = cc[ac-ido] + tr2;
 
             ti2 = cc[ac+1] + cc[ac+ido+1];
-            ci2 = cc[ac-ido+1] + taur*ti2;
+            ci2 = cc[ac-ido+1] + MUL(taur,ti2);
             ch[ah+1] = cc[ac-ido+1] + ti2;
 
-            cr3 = isign * taui * (cc[ac] - cc[ac+ido]);
-            ci3 = isign * taui * (cc[ac+1] - cc[ac+ido+1]);
+            cr3 = isign * MUL(taui, (cc[ac] - cc[ac+ido]));
+            ci3 = isign * MUL(taui, (cc[ac+1] - cc[ac+ido+1]));
             ch[ah+l1*ido] = cr2 - ci3;
             ch[ah+2*l1*ido] = cr2 + ci3;
             ch[ah+l1*ido+1] = ci2 + cr3;
@@ -109,22 +109,22 @@ static void passf3(uint16_t ido, uint16_t l1, real_t *cc, real_t *ch,
             {
                 ac = i + (3*k-2) * ido;
                 tr2 = cc[ac] + cc[ac+ido];
-                cr2 = cc[ac-ido] + taur*tr2;
+                cr2 = cc[ac-ido] + MUL(taur,tr2);
                 ah = i + (k-1) * ido;
                 ch[ah] = cc[ac-ido] + tr2;
                 ti2 = cc[ac+1] + cc[ac+ido+1];
-                ci2 = cc[ac-ido+1] + taur*ti2;
+                ci2 = cc[ac-ido+1] + MUL(taur,ti2);
                 ch[ah+1] = cc[ac-ido+1] + ti2;
-                cr3 = isign * taui * (cc[ac] - cc[ac+ido]);
-                ci3 = isign * taui * (cc[ac+1] - cc[ac+ido+1]);
+                cr3 = isign * MUL(taui, (cc[ac] - cc[ac+ido]));
+                ci3 = isign * MUL(taui, (cc[ac+1] - cc[ac+ido+1]));
                 dr2 = cr2 - ci3;
                 dr3 = cr2 + ci3;
                 di2 = ci2 + cr3;
                 di3 = ci2 - cr3;
-                ch[ah+l1*ido+1] = wa1[i]*di2 + isign*wa1[i+1]*dr2;
-                ch[ah+l1*ido] = wa1[i]*dr2 - isign*wa1[i+1]*di2;
-                ch[ah+2*l1*ido+1] = wa2[i]*di3 + isign*wa2[i+1]*dr3;
-                ch[ah+2*l1*ido] = wa2[i]*dr3 - isign*wa2[i+1]*di3;
+                ch[ah+l1*ido+1] = MUL(wa1[i],di2) + isign*MUL(wa1[i+1],dr2);
+                ch[ah+l1*ido] = MUL(wa1[i],dr2) - isign*MUL(wa1[i+1],di2);
+                ch[ah+2*l1*ido+1] = MUL(wa2[i],di3) + isign*MUL(wa2[i+1],dr3);
+                ch[ah+2*l1*ido] = MUL(wa2[i],dr3) - isign*MUL(wa2[i+1],di3);
             }
         }
     }
@@ -184,12 +184,12 @@ static void passf4(uint16_t ido, uint16_t l1, real_t *cc, real_t *ch,
                 cr4 = tr1 - isign*tr4;
                 ci2 = ti1 + isign*ti4;
                 ci4 = ti1 - isign*ti4;
-                ch[ah+l1*ido] = wa1[i]*cr2 - isign*wa1[i+1]*ci2;
-                ch[ah+l1*ido+1] = wa1[i]*ci2 + isign*wa1[i+1]*cr2;
-                ch[ah+2*l1*ido] = wa2[i]*cr3 - isign*wa2[i+1]*ci3;
-                ch[ah+2*l1*ido+1] = wa2[i]*ci3 + isign*wa2[i+1]*cr3;
-                ch[ah+3*l1*ido] = wa3[i]*cr4 - isign*wa3[i+1]*ci4;
-                ch[ah+3*l1*ido+1] = wa3[i]*ci4 + isign*wa3[i+1]*cr4;
+                ch[ah+l1*ido] = MUL(wa1[i],cr2) - isign*MUL(wa1[i+1],ci2);
+                ch[ah+l1*ido+1] = MUL(wa1[i],ci2) + isign*MUL(wa1[i+1],cr2);
+                ch[ah+2*l1*ido] = MUL(wa2[i],cr3) - isign*MUL(wa2[i+1],ci3);
+                ch[ah+2*l1*ido+1] = MUL(wa2[i],ci3) + isign*MUL(wa2[i+1],cr3);
+                ch[ah+3*l1*ido] = MUL(wa3[i],cr4) - isign*MUL(wa3[i+1],ci4);
+                ch[ah+3*l1*ido+1] = MUL(wa3[i],ci4) + isign*MUL(wa3[i+1],cr4);
             }
         }
     }
@@ -224,14 +224,14 @@ static void passf5(uint16_t ido, uint16_t l1, real_t *cc, real_t *ch,
             ah = (k-1) * ido;
             ch[ah] = cc[ac-ido-1] + tr2 + tr3;
             ch[ah+1] = cc[ac-ido] + ti2 + ti3;
-            cr2 = cc[ac-ido-1] + tr11*tr2 + tr12*tr3;
-            ci2 = cc[ac-ido] + tr11*ti2 + tr12*ti3;
-            cr3 = cc[ac-ido-1] + tr12*tr2 + tr11*tr3;
-            ci3 = cc[ac-ido] + tr12*ti2 + tr11*ti3;
-            cr5 = isign * (ti11*tr5 + ti12*tr4);
-            ci5 = isign * (ti11*ti5 + ti12*ti4);
-            cr4 = isign * (ti12*tr5 - ti11*tr4);
-            ci4 = isign * (ti12*ti5 - ti11*ti4);
+            cr2 = cc[ac-ido-1] + MUL(tr11,tr2) + MUL(tr12,tr3);
+            ci2 = cc[ac-ido] + MUL(tr11,ti2) + MUL(tr12,ti3);
+            cr3 = cc[ac-ido-1] + MUL(tr12,tr2) + MUL(tr11,tr3);
+            ci3 = cc[ac-ido] + MUL(tr12,ti2) + MUL(tr11,ti3);
+            cr5 = isign * (MUL(ti11,tr5) + MUL(ti12,tr4));
+            ci5 = isign * (MUL(ti11,ti5) + MUL(ti12,ti4));
+            cr4 = isign * (MUL(ti12,tr5) - MUL(ti11,tr4));
+            ci4 = isign * (MUL(ti12,ti5) - MUL(ti11,ti4));
             ch[ah+l1*ido] = cr2 - ci5;
             ch[ah+4*l1*ido] = cr2 + ci5;
             ch[ah+l1*ido+1] = ci2 + cr5;
@@ -258,14 +258,14 @@ static void passf5(uint16_t ido, uint16_t l1, real_t *cc, real_t *ch,
                 ah = i + (k-1) * ido;
                 ch[ah] = cc[ac-ido-1] + tr2 + tr3;
                 ch[ah+1] = cc[ac-ido] + ti2 + ti3;
-                cr2 = cc[ac-ido-1] + tr11*tr2 + tr12*tr3;
-                ci2 = cc[ac-ido] + tr11*ti2 + tr12*ti3;
-                cr3 = cc[ac-ido-1] + tr12*tr2 + tr11*tr3;
-                ci3 = cc[ac-ido] + tr12*ti2 + tr11*ti3;
-                cr5 = isign * (ti11*tr5 + ti12*tr4);
-                ci5 = isign * (ti11*ti5 + ti12*ti4);
-                cr4 = isign * (ti12*tr5 - ti11*tr4);
-                ci4 = isign * (ti12*ti5 - ti11*ti4);
+                cr2 = cc[ac-ido-1] + MUL(tr11,tr2) + MUL(tr12,tr3);
+                ci2 = cc[ac-ido] + MUL(tr11,ti2) + MUL(tr12,ti3);
+                cr3 = cc[ac-ido-1] + MUL(tr12,tr2) + MUL(tr11,tr3);
+                ci3 = cc[ac-ido] + MUL(tr12,ti2) + MUL(tr11,ti3);
+                cr5 = isign * (MUL(ti11,tr5) + MUL(ti12,tr4));
+                ci5 = isign * (MUL(ti11,ti5) + MUL(ti12,ti4));
+                cr4 = isign * (MUL(ti12,tr5) - MUL(ti11,tr4));
+                ci4 = isign * (MUL(ti12,ti5) - MUL(ti11,ti4));
                 dr3 = cr3 - ci4;
                 dr4 = cr3 + ci4;
                 di3 = ci3 + cr4;
@@ -274,14 +274,14 @@ static void passf5(uint16_t ido, uint16_t l1, real_t *cc, real_t *ch,
                 dr2 = cr2 - ci5;
                 di5 = ci2 - cr5;
                 di2 = ci2 + cr5;
-                ch[ah+l1*ido] = wa1[i]*dr2 - isign*wa1[i+1]*di2;
-                ch[ah+l1*ido+1] = wa1[i]*di2 + isign*wa1[i+1]*dr2;
-                ch[ah+2*l1*ido] = wa2[i]*dr3 - isign*wa2[i+1]*di3;
-                ch[ah+2*l1*ido+1] = wa2[i]*di3 + isign*wa2[i+1]*dr3;
-                ch[ah+3*l1*ido] = wa3[i]*dr4 - isign*wa3[i+1]*di4;
-                ch[ah+3*l1*ido+1] = wa3[i]*di4 + isign*wa3[i+1]*dr4;
-                ch[ah+4*l1*ido] = wa4[i]*dr5 - isign*wa4[i+1]*di5;
-                ch[ah+4*l1*ido+1] = wa4[i]*di5 + isign*wa4[i+1]*dr5;
+                ch[ah+l1*ido] = MUL(wa1[i],dr2) - isign*MUL(wa1[i+1],di2);
+                ch[ah+l1*ido+1] = MUL(wa1[i],di2) + isign*MUL(wa1[i+1],dr2);
+                ch[ah+2*l1*ido] = MUL(wa2[i],dr3) - isign*MUL(wa2[i+1],di3);
+                ch[ah+2*l1*ido+1] = MUL(wa2[i],di3) + isign*MUL(wa2[i+1],dr3);
+                ch[ah+3*l1*ido] = MUL(wa3[i],dr4) - isign*MUL(wa3[i+1],di4);
+                ch[ah+3*l1*ido+1] = MUL(wa3[i],di4) + isign*MUL(wa3[i+1],dr4);
+                ch[ah+4*l1*ido] = MUL(wa4[i],dr5) - isign*MUL(wa4[i+1],di5);
+                ch[ah+4*l1*ido+1] = MUL(wa4[i],di5) + isign*MUL(wa4[i+1],dr5);
             }
         }
     }
@@ -354,8 +354,8 @@ static void passf(uint16_t *nac, uint16_t ido, uint16_t ip, uint16_t l1,
 
         for (ik = 0; ik < idl1; ik++)
         {
-            cc[ik+l*idl1] = ch[ik] + wa[idl-2]*ch[ik+idl1];
-            cc[ik+lc*idl1] = isign*wa[idl-1]*ch[ik+(ip-1)*idl1];
+            cc[ik+l*idl1] = ch[ik] + MUL(wa[idl-2],ch[ik+idl1]);
+            cc[ik+lc*idl1] = isign*MUL(wa[idl-1],ch[ik+(ip-1)*idl1]);
         }
 
         idlj = idl;
@@ -374,8 +374,8 @@ static void passf(uint16_t *nac, uint16_t ido, uint16_t ip, uint16_t l1,
 
             for (ik = 0; ik < idl1; ik++)
             {
-                cc[ik+l*idl1] += war*ch[ik+j*idl1];
-                cc[ik+lc*idl1] += isign*wai*ch[ik+jc*idl1];
+                cc[ik+l*idl1] += MUL(war,ch[ik+j*idl1]);
+                cc[ik+lc*idl1] += isign*MUL(wai,ch[ik+jc*idl1]);
             }
         }
     }
@@ -432,10 +432,10 @@ static void passf(uint16_t *nac, uint16_t ido, uint16_t ip, uint16_t l1,
 
                 for (k = 0; k < l1; k++)
                 {
-                    cc[i-1+(k+j*l1)*ido] = wa[idij-2] * ch[i-1+(k+j*l1)*ido] -
-                        isign * wa[idij-1] * ch[i+(k+j*l1)*ido];
-                    cc[i+(k+j*l1)*ido] = wa[idij-2] * ch[i+(k+j*l1)*ido] +
-                        isign * wa[idij-1] * ch[i-1+(k+j*l1)*ido];
+                    cc[i-1+(k+j*l1)*ido] = MUL(wa[idij-2], ch[i-1+(k+j*l1)*ido]) -
+                        isign * MUL(wa[idij-1], ch[i+(k+j*l1)*ido]);
+                    cc[i+(k+j*l1)*ido] = MUL(wa[idij-2], ch[i+(k+j*l1)*ido]) +
+                        isign * MUL(wa[idij-1], ch[i-1+(k+j*l1)*ido]);
                 }
             }
         }
@@ -453,10 +453,10 @@ static void passf(uint16_t *nac, uint16_t ido, uint16_t ip, uint16_t l1,
                 for (i = 3; i < ido; i += 2)
                 {
                     idij += 2;
-                    cc[i-1+(k+j*l1)*ido] = wa[idij-2] * ch[i-1+(k+j*l1)*ido] -
-                        isign * wa[idij-1] * ch[i+(k+j*l1)*ido];
-                    cc[i+(k+j*l1)*ido] = wa[idij-2] * ch[i+(k+j*l1)*ido] +
-                        isign * wa[idij-1] * ch[i-1+(k+j*l1)*ido];
+                    cc[i-1+(k+j*l1)*ido] = MUL(wa[idij-2], ch[i-1+(k+j*l1)*ido]) -
+                        isign * MUL(wa[idij-1], ch[i+(k+j*l1)*ido]);
+                    cc[i+(k+j*l1)*ido] = MUL(wa[idij-2], ch[i+(k+j*l1)*ido]) +
+                        isign * MUL(wa[idij-1], ch[i-1+(k+j*l1)*ido]);
                 }
             }
         }
@@ -636,7 +636,7 @@ startloop:
             {
                 i += 2;
                 fi += 1;
-                arg = fi*argld;
+                arg = MUL(fi,argld);
                 wa[i-1] = cos(arg);
                 wa[i] = sin(arg);
             }
