@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.9 2002/01/21 23:19:54 menno Exp $
+** $Id: main.c,v 1.10 2002/01/21 23:27:10 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -286,7 +286,7 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
 int GetAACTrack(MP4FileHandle *infile)
 {
     /* find AAC track */
-    int i;
+    int i, rc;
 	int numTracks = MP4GetNumberOfTracks(infile, NULL);
 
 	for (i = 0; i < numTracks; i++)
@@ -296,14 +296,17 @@ int GetAACTrack(MP4FileHandle *infile)
 
         if (!strcmp(trackType, MP4_AUDIO_TRACK_TYPE))
         {
-            int type = MP4GetTrackAudioType(infile, trackId);
+            unsigned char *buff = NULL;
+            int buff_size = 0, dummy;
+            MP4GetTrackESConfiguration(infile, trackId, &buff, &buff_size);
 
-            switch (type)
+            if (buff)
             {
-            case MP4_MPEG4_AUDIO_TYPE:
-            case MP4_MPEG2_AAC_MAIN_AUDIO_TYPE:
-            case MP4_MPEG2_AAC_LC_AUDIO_TYPE:
-            case MP4_MPEG2_AAC_SSR_AUDIO_TYPE:
+                rc = AudioSpecificConfig(buff, &dummy, &dummy, &dummy, &dummy);
+                free(buff);
+
+                if (rc < 0)
+                    return -1;
                 return trackId;
             }
         }
