@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.73 2003/11/22 11:48:16 ca5e Exp $
+** $Id: foo_mp4.cpp,v 1.74 2003/11/22 16:37:58 ca5e Exp $
 **/
 
 #include <mp4.h>
@@ -48,7 +48,7 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "1.68",
+                           "1.69",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 static const char *object_type_string(int type)
@@ -509,8 +509,8 @@ private:
     int ReadMP4Tag(file_info *info)
     {
         unsigned __int32 valueSize = 0;
-        unsigned __int8* pValue;
-        char* pName;
+        unsigned __int8 *pValue = 0;
+        char *pName = 0;
         unsigned int i = 0;
 
         do {
@@ -609,20 +609,15 @@ private:
                     } else if (memcmp(pName, "NDFL", 4) == 0) {
                         /* Removed */
                     } else {
-                        float f = 0;
                         if (!stricmp(pName, "REPLAYGAIN_TRACK_PEAK"))
                         {
-                            sscanf(val, "%f", &f);
-                            info->info_set_replaygain_track_peak((double)f);
+                            info->info_set_replaygain_track_peak(pfc_string_to_float(val));
                         } else if (!stricmp(pName, "REPLAYGAIN_TRACK_GAIN")) {
-                            sscanf(val, "%f", &f);
-                            info->info_set_replaygain_track_gain((double)f);
+                            info->info_set_replaygain_track_gain(pfc_string_to_float(val));
                         } else if (!stricmp(pName, "REPLAYGAIN_ALBUM_PEAK")) {
-                            sscanf(val, "%f", &f);
-                            info->info_set_replaygain_album_peak((double)f);
+                            info->info_set_replaygain_album_peak(pfc_string_to_float(val));
                         } else if (!stricmp(pName, "REPLAYGAIN_ALBUM_GAIN")) {
-                            sscanf(val, "%f", &f);
-                            info->info_set_replaygain_album_gain((double)f);
+                            info->info_set_replaygain_album_gain(pfc_string_to_float(val));
                         } else {
                             info->meta_add(pName, val);
                         }
