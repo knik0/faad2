@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.10 2002/01/21 23:27:10 menno Exp $
+** $Id: main.c,v 1.11 2002/01/23 23:42:25 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -283,7 +283,7 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
     return frameInfo.error;
 }
 
-int GetAACTrack(MP4FileHandle *infile)
+int GetAACTrack(MP4FileHandle infile)
 {
     /* find AAC track */
     int i, rc;
@@ -329,7 +329,7 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
     unsigned long samplerate, channels;
     void *sample_buffer;
 
-    MP4FileHandle *infile;
+    MP4FileHandle infile;
     MP4SampleId sampleId, numSamples;
 
     audio_file *aufile;

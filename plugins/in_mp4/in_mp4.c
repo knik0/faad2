@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.4 2002/01/23 23:17:31 menno Exp $
+** $Id: in_mp4.c,v 1.5 2002/01/23 23:42:14 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -56,7 +56,7 @@ static char info_fn[_MAX_PATH];
 typedef struct state
 {
     faacDecHandle hDecoder;
-    MP4FileHandle *mp4file;
+    MP4FileHandle mp4file;
     int mp4track;
     MP4SampleId numSamples;
     MP4SampleId sampleId;
@@ -106,7 +106,7 @@ int StringComp(char const *str1, char const *str2, unsigned long len)
     return c1 - c2;
 }
 
-int GetAACTrack(MP4FileHandle *infile)
+int GetAACTrack(MP4FileHandle infile)
 {
     /* find AAC track */
     int i, rc;
@@ -139,7 +139,7 @@ int GetAACTrack(MP4FileHandle *infile)
     return -1;
 }
 
-int GetAudioTrack(MP4FileHandle *infile)
+int GetAudioTrack(MP4FileHandle infile)
 {
     /* find AAC track */
     int i;
@@ -160,7 +160,7 @@ int GetAudioTrack(MP4FileHandle *infile)
     return -1;
 }
 
-int GetVideoTrack(MP4FileHandle *infile)
+int GetVideoTrack(MP4FileHandle infile)
 {
     /* find AAC track */
     int i;
