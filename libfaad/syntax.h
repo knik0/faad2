@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.20 2002/09/27 08:37:22 menno Exp $
+** $Id: syntax.h,v 1.21 2002/10/02 18:49:55 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -161,7 +161,7 @@ typedef struct
     uint16_t lag;
     uint8_t lag_update;
     uint8_t coef;
-    uint8_t long_used[51];
+    uint8_t long_used[MAX_SFB];
     uint8_t short_used[8];
     uint8_t short_lag_present[8];
     uint8_t short_lag[8];
@@ -172,7 +172,7 @@ typedef struct
     uint8_t limit;
     uint8_t predictor_reset;
     uint8_t predictor_reset_group_number;
-    uint8_t prediction_used[41];
+    uint8_t prediction_used[MAX_SFB];
 } pred_info;
 
 typedef struct
