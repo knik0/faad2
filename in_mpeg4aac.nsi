@@ -11,7 +11,7 @@ SetDateSave on
 
 InstallDir $PROGRAMFILES\Winamp
 InstallDirRegKey HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\Winamp" "UninstallString"
-DirShow show
+;DirShow
 DirText "The installer has detected the path to Winamp. If it is not correct, please change."
 
 Section "AudioCoding.com MP4 Winamp plugin"
