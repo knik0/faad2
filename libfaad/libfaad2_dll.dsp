@@ -25,7 +25,7 @@ CFG=libfaad2_dll - Win32 Debug
 # PROP AllowPerConfigDependencies 0
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
-CPP=cl.exe
+CPP=xicl6.exe
 MTL=midl.exe
 RSC=rc.exe
 
@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "libfaad2_dll_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "libfaad2_dll_EXPORTS" /YX /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /I "fftw" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "libfaad2_dll_EXPORTS" /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x407 /d "NDEBUG"
@@ -51,7 +51,7 @@ RSC=rc.exe
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
-LINK32=link.exe
+LINK32=xilink6.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
 # ADD LINK32 /nologo /dll /machine:I386 /out:"ReleaseDLL/libfaad2.dll"
 
@@ -69,7 +69,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "libfaad2_dll_EXPORTS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "libfaad2_dll_EXPORTS" /YX /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "fftw" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "libfaad2_dll_EXPORTS" /YX /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x407 /d "_DEBUG"
@@ -77,7 +77,7 @@ LINK32=link.exe
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
-LINK32=link.exe
+LINK32=xilink6.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
 # ADD LINK32 /nologo /dll /debug /machine:I386 /out:"DebugDLL/libfaad2.dll" /pdbtype:sept
 
@@ -140,6 +140,302 @@ SOURCE=.\codebook\hcb_9.c
 # Begin Source File
 
 SOURCE=.\codebook\hcb_sf.c
+# End Source File
+# End Group
+# Begin Group "fftw"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\fftw\config.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\executor.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fftwf77.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fftwnd.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_1.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_10.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_11.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_12.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_13.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_14.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_15.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_16.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_2.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_3.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_32.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_4.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_5.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_6.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_64.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_7.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_8.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_9.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_1.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_10.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_11.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_12.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_13.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_14.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_15.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_16.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_2.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_3.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_32.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_4.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_5.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_6.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_64.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_7.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_8.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_9.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_10.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_16.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_2.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_3.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_32.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_4.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_5.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_6.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_64.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_7.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_8.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_9.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_10.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_16.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_2.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_3.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_32.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_4.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_5.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_6.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_64.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_7.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_8.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_9.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\generic.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\malloc.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\planner.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\putils.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\rader.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\timer.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\twiddle.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\wisdom.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\wisdomio.c
 # End Source File
 # End Group
 # Begin Source File
