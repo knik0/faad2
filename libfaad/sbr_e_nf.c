@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_e_nf.c,v 1.5 2003/10/09 20:04:25 menno Exp $
+** $Id: sbr_e_nf.c,v 1.7 2003/11/02 20:24:05 menno Exp $
 **/
 
 #include "common.h"
@@ -159,8 +159,9 @@ void envelope_noise_dequantisation(sbr_info *sbr, uint8_t ch)
             for (k = 0; k < sbr->N_Q; k++)
             {
                 if (sbr->Q[ch][k][l] < 0 || sbr->Q[ch][k][l] > 30)
+                {
                     sbr->Q_orig[ch][k][l] = 0;
-                else {
+                } else {
                     sbr->Q_orig[ch][k][l] = (real_t)pow(2, NOISE_FLOOR_OFFSET - sbr->Q[ch][k][l]);
                 }
             }
@@ -186,12 +187,6 @@ void unmap_envelope_noise(sbr_info *sbr)
             r_temp = (real_t)pow(2, sbr->E[1][k][l]*amp1 - 12);
 
             sbr->E_orig[1][k][l] = l_temp / ((real_t)1.0 + r_temp);
-
-            /*
-               E_orig[1]: integer
-               r_temp: fixed point
-               fixed point multiplication gives integer
-             */
             sbr->E_orig[0][k][l] = MUL(r_temp, sbr->E_orig[1][k][l]);
         }
     }
@@ -200,7 +195,7 @@ void unmap_envelope_noise(sbr_info *sbr)
         for (k = 0; k < sbr->N_Q; k++)
         {
             if ((sbr->Q[0][k][l] < 0 || sbr->Q[0][k][l] > 30) ||
-                (sbr->Q[1][k][l] < 0 || sbr->Q[1][k][l] > 30))
+                (sbr->Q[1][k][l] < 0 || sbr->Q[1][k][l] > 24 /* 2*panOffset(1) */))
             {
                 sbr->Q_orig[0][k][l] = 0;
                 sbr->Q_orig[1][k][l] = 0;

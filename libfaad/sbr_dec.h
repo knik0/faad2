@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.h,v 1.8 2003/10/09 20:04:25 menno Exp $
+** $Id: sbr_dec.h,v 1.11 2003/11/04 21:43:30 menno Exp $
 **/
 
 #ifndef __SBR_DEC_H__
@@ -31,6 +31,16 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
+/* MAX_NTSRHFG: maximum of number_time_slots * rate + HFGen. DRM: 15*2+32, else 16*2+8 */
+#ifdef DRM
+# define MAX_NTSRHFG 62
+#else
+# define MAX_NTSRHFG 40
+#endif
+#define MAX_NTSR     32 /* max number_time_slots * rate, ok for DRM and not DRM mode */
+
 
 typedef struct {
     real_t *x;
@@ -138,8 +148,8 @@ typedef struct
     qmfa_info *qmfa[2];
     qmfs_info *qmfs[2];
 
-    qmf_t Xsbr[2][40][64];
-    qmf_t Xcodec[2][40][32];
+    qmf_t Xsbr[2][MAX_NTSRHFG][64];
+    qmf_t Xcodec[2][MAX_NTSRHFG][32];
 
 #ifdef DRM
 	int8_t lcstereo_flag;
@@ -201,7 +211,7 @@ void sbrDecodeEnd(sbr_info *sbr);
 
 void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
                     real_t *right_channel,
-                    uint8_t just_seeked, uint8_t upsample_only);
+                    const uint8_t just_seeked, const uint8_t upsample_only);
 
 
 #ifdef __cplusplus

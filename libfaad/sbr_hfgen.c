@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfgen.c,v 1.7 2003/10/09 20:04:25 menno Exp $
+** $Id: sbr_hfgen.c,v 1.8 2003/10/20 13:57:32 menno Exp $
 **/
 
 /* High Frequency generation */
@@ -36,8 +36,8 @@
 #include "sbr_hfgen.h"
 #include "sbr_fbt.h"
 
-void hf_generation(sbr_info *sbr, const qmf_t Xlow[40][32],
-                   qmf_t Xhigh[40][64]
+void hf_generation(sbr_info *sbr, const qmf_t Xlow[MAX_NTSRHFG][32],
+                   qmf_t Xhigh[MAX_NTSRHFG][64]
 #ifdef SBR_LOW_POWER
                    ,real_t *deg
 #endif
@@ -176,7 +176,8 @@ typedef struct
 #define SBR_ABS(A) ((A) < 0) ? -(A) : (A)
 
 #ifdef SBR_LOW_POWER
-static void auto_correlation(sbr_info *sbr, acorr_coef *ac, const qmf_t buffer[40][32],
+static void auto_correlation(sbr_info *sbr, acorr_coef *ac,
+                             const qmf_t buffer[MAX_NTSRHFG][32],
                              uint8_t bd, uint8_t len)
 {
     int8_t j;
@@ -212,7 +213,7 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, const qmf_t buffer[4
     ac->det = MUL(RE(ac->r11), RE(ac->r22)) - MUL_R_C(MUL(RE(ac->r12), RE(ac->r12)), rel);
 }
 #else
-static void auto_correlation(sbr_info *sbr, acorr_coef *ac, const qmf_t buffer[40][32],
+static void auto_correlation(sbr_info *sbr, acorr_coef *ac, const qmf_t buffer[MAX_NTSRHFG][32],
                              uint8_t bd, uint8_t len)
 {
     int8_t j;
@@ -262,7 +263,7 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, const qmf_t buffer[4
 }
 #endif
 
-static void calc_prediction_coef(sbr_info *sbr, const qmf_t Xlow[40][32],
+static void calc_prediction_coef(sbr_info *sbr, const qmf_t Xlow[MAX_NTSRHFG][32],
                                  complex_t *alpha_0, complex_t *alpha_1
 #ifdef SBR_LOW_POWER
                                  , real_t *rxx

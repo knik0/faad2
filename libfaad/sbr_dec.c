@@ -1,19 +1,19 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
-**
+**  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**
+** 
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
+** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.c,v 1.14 2003/10/14 16:56:26 menno Exp $
+** $Id: sbr_dec.c,v 1.16 2003/11/02 20:24:05 menno Exp $
 **/
 
 
@@ -43,7 +43,7 @@
 
 sbr_info *sbrDecodeInit(uint16_t framelength
 #ifdef DRM
-                        , uint8_t IsDRM
+						, uint8_t IsDRM
 #endif
                         )
 {
@@ -158,7 +158,7 @@ void sbr_save_prev_data(sbr_info *sbr, uint8_t ch)
 
 void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
                     real_t *right_channel,
-                    uint8_t just_seeked, uint8_t upsample_only)
+                    const uint8_t just_seeked, const uint8_t upsample_only)
 {
     int16_t i, k, l;
 
@@ -166,7 +166,7 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
     uint8_t ch, channels, ret;
     real_t *ch_buf;
 
-    qmf_t X[32][64];
+    qmf_t X[MAX_NTSR][64];
 #ifdef SBR_LOW_POWER
     real_t deg[64];
 #endif
@@ -219,7 +219,7 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
             uint8_t j;
             sbr->qmfa[ch] = qmfa_init(32);
             sbr->qmfs[ch] = qmfs_init(64);
-
+            
             for (j = 0; j < 5; j++)
             {
                 sbr->G_temp_prev[ch][j] = malloc(64*sizeof(real_t));
@@ -301,8 +301,8 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
                     xover_band = sbr->kx;
 
 #ifdef DRM
-                if (sbr->Is_DRM_SBR)
-                    xover_band = sbr->kx;
+				if (sbr->Is_DRM_SBR)
+					xover_band = sbr->kx;
 #endif
 
                 for (k = 0; k < xover_band; k++)

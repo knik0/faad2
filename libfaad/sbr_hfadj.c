@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfadj.c,v 1.5 2003/10/09 20:04:25 menno Exp $
+** $Id: sbr_hfadj.c,v 1.6 2003/10/20 13:57:32 menno Exp $
 **/
 
 /* High Frequency adjustment */
@@ -37,7 +37,7 @@
 
 #include "sbr_noise.h"
 
-void hf_adjustment(sbr_info *sbr, qmf_t Xsbr[40][64]
+void hf_adjustment(sbr_info *sbr, qmf_t Xsbr[MAX_NTSRHFG][64]
 #ifdef SBR_LOW_POWER
                    ,real_t *deg /* aliasing degree */
 #endif
@@ -186,8 +186,8 @@ static void map_sinusoids(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
     }
 }
 
-static void estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj, qmf_t Xsbr[40][64],
-                                      uint8_t ch)
+static void estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
+                                      qmf_t Xsbr[MAX_NTSRHFG][64], uint8_t ch)
 {
     uint8_t m, l, j, k, k_l, k_h, p;
     real_t nrg, div;
@@ -261,7 +261,6 @@ static void estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj, qmf_t 
         }
     }
 }
-
 
 #define EPS (1e-12)
 
@@ -473,7 +472,6 @@ static void aliasing_reduction(sbr_info *sbr, sbr_hfadj_info *adj, real_t *deg, 
                 acc = 0;
             else
                 acc = E_total / (acc + EPS);
-
             for(m = sbr->f_group[l][(k<<1)]; m < sbr->f_group[l][(k<<1) + 1]; m++)
             {
                 adj->G_lim_boost[l][m-sbr->kx] = MUL(acc, adj->G_lim_boost[l][m-sbr->kx]);
@@ -496,7 +494,7 @@ static void aliasing_reduction(sbr_info *sbr, sbr_hfadj_info *adj, real_t *deg, 
 #endif
 
 static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
-                        qmf_t Xsbr[40][64], uint8_t ch)
+                        qmf_t Xsbr[MAX_NTSRHFG][64], uint8_t ch)
 {
     static real_t h_smooth[] = {
         COEF_CONST(0.03183050093751), COEF_CONST(0.11516383427084),

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_qmf.c,v 1.14 2003/10/09 20:04:25 menno Exp $
+** $Id: sbr_qmf.c,v 1.15 2003/10/20 13:57:32 menno Exp $
 **/
 
 #include "common.h"
@@ -60,7 +60,7 @@ void qmfa_end(qmfa_info *qmfa)
 }
 
 void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const real_t *input,
-                         qmf_t X[40][32], uint8_t offset, uint8_t kx)
+                         qmf_t X[MAX_NTSRHFG][32], uint8_t offset, uint8_t kx)
 {
     uint8_t l;
     real_t u[64];
@@ -193,7 +193,7 @@ void qmfs_end(qmfs_info *qmfs)
 }
 
 #ifdef SBR_LOW_POWER
-void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t X[32][64],
+void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t X[MAX_NTSRHFG][64],
                           real_t *output)
 {
     uint8_t l;
@@ -257,7 +257,7 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t X[32][64],
     }
 }
 #else
-void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t X[32][64],
+void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t X[MAX_NTSRHFG][64],
                           real_t *output)
 {
     real_t x1[64], x2[64];
