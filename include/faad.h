@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: faad.h,v 1.20 2003/03/05 14:24:52 menno Exp $
+** $Id: faad.h,v 1.21 2003/04/02 20:07:45 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -55,15 +55,16 @@ extern "C" {
 #define ADTS       2
 
 /* library output formats */
-#define FAAD_FMT_16BIT 1
-#define FAAD_FMT_24BIT 2
-#define FAAD_FMT_32BIT 3
-#define FAAD_FMT_FLOAT 4
-#define FAAD_FMT_16BIT_DITHER 5
-#define FAAD_FMT_16BIT_L_SHAPE 6
-#define FAAD_FMT_16BIT_M_SHAPE 7
-#define FAAD_FMT_16BIT_H_SHAPE 8
-
+#define FAAD_FMT_16BIT  1
+#define FAAD_FMT_24BIT  2
+#define FAAD_FMT_32BIT  3
+#define FAAD_FMT_FLOAT  4
+#define FAAD_FMT_DOUBLE 5
+#define FAAD_FMT_16BIT_DITHER  6
+#define FAAD_FMT_16BIT_L_SHAPE 7
+#define FAAD_FMT_16BIT_M_SHAPE 8
+#define FAAD_FMT_16BIT_H_SHAPE 9
+    
 /* Capabilities */
 #define LC_DEC_CAP            (1<<0)
 #define MAIN_DEC_CAP          (1<<1)

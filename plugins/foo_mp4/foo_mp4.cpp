@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.14 2003/02/09 20:42:50 menno Exp $
+** $Id: foo_mp4.cpp,v 1.15 2003/04/02 20:07:46 menno Exp $
 **/
 
 #include <mp4.h>
@@ -38,6 +38,7 @@ public:
         unsigned __int8 *buffer;
         unsigned __int32 buffer_size;
         unsigned __int8 channels;
+        unsigned __int32 samplerate;
         faacDecConfigurationPtr config;
 
         m_reader = r;
@@ -46,7 +47,7 @@ public:
         if (!hDecoder) return 0;
 
         config = faacDecGetCurrentConfiguration(hDecoder);
-        config->outputFormat = FAAD_FMT_FLOAT;
+        config->outputFormat = FAAD_FMT_DOUBLE;
         faacDecSetConfiguration(hDecoder, config);
 
         hFile = MP4ReadCb(0, open_cb, close_cb, read_cb, write_cb,
@@ -62,7 +63,7 @@ public:
         if (!buffer) return 0;
 
         int rc = faacDecInit2(hDecoder, (unsigned char*)buffer, buffer_size,
-            (unsigned long*)&m_samplerate, (unsigned char*)&channels);
+            (unsigned long*)&samplerate, (unsigned char*)&channels);
         if (buffer) free(buffer);
         if (rc < 0) return 0;
 
@@ -78,7 +79,7 @@ public:
             (double)(__int64)MP4GetTrackIntegerProperty(hFile,
             track, "mdia.minf.stbl.stsd.mp4a.esds.decConfigDescr.avgBitrate")) + 0.5);
         info->info_set_int("channels", (__int64)channels);
-        info->info_set_int("samplerate", (__int64)m_samplerate);
+        info->info_set_int("samplerate", (__int64)samplerate);
 
         ReadMP4Tag(info);
 
@@ -127,10 +128,10 @@ public:
         if (frameInfo.error || (sampleId > numSamples))
             return 0;
 
-        chunk->data = (float*)sample_buffer;
+        chunk->data = (audio_sample*)sample_buffer;
         chunk->samples = frameInfo.samples/frameInfo.channels;
         chunk->nch = frameInfo.channels;
-        chunk->srate = m_samplerate;
+        chunk->srate = frameInfo.samplerate;
 
         return 1;
     }
@@ -147,7 +148,6 @@ public:
         if (track < 1) return 0;
 
         MP4TagDelete(hFile, track);
-//        MP4TagCreate(hFile, track);
 
         /* replay gain writing */
         const char *p = NULL;
@@ -203,8 +203,6 @@ private:
     MP4FileHandle hFile;
     MP4SampleId sampleId, numSamples;
     MP4TrackId track;
-
-    unsigned __int32 m_samplerate;
 
     faacDecHandle hDecoder;
 

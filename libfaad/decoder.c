@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.53 2003/03/05 14:24:53 menno Exp $
+** $Id: decoder.c,v 1.54 2003/04/02 20:07:45 menno Exp $
 **/
 
 #include "common.h"
@@ -225,8 +225,8 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
         return -1;
 
 #ifndef FIXED_POINT
-    if (hDecoder->config.outputFormat >= 5)
-        Init_Dither(16, hDecoder->config.outputFormat - 5);
+    if (hDecoder->config.outputFormat >= FAAD_FMT_DITHER_LOWEST)
+        Init_Dither(16, hDecoder->config.outputFormat - FAAD_FMT_DITHER_LOWEST);
 #endif
 
     return bits;
@@ -288,8 +288,8 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
 #endif
 
 #ifndef FIXED_POINT
-    if (hDecoder->config.outputFormat >= 5)
-        Init_Dither(16, hDecoder->config.outputFormat - 5);
+    if (hDecoder->config.outputFormat >= FAAD_FMT_DITHER_LOWEST)
+        Init_Dither(16, hDecoder->config.outputFormat - FAAD_FMT_DITHER_LOWEST);
 #endif
 
     return 0;
@@ -314,8 +314,8 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
     hDecoder->fb = filter_bank_init(hDecoder->frameLength);
 
 #ifndef FIXED_POINT
-    if (hDecoder->config.outputFormat >= 5)
-        Init_Dither(16, hDecoder->config.outputFormat - 5);
+    if (hDecoder->config.outputFormat >= FAAD_FMT_DITHER_LOWEST)
+        Init_Dither(16, hDecoder->config.outputFormat - FAAD_FMT_DITHER_LOWEST);
 #endif
 
     return 0;
@@ -481,7 +481,12 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     }
 
     if (hDecoder->sample_buffer == NULL)
-        hDecoder->sample_buffer = malloc(frame_len*channels*sizeof(real_t));
+    {
+        if (hDecoder->config.outputFormat == FAAD_FMT_DOUBLE)
+            hDecoder->sample_buffer = malloc(frame_len*channels*sizeof(double));
+        else
+            hDecoder->sample_buffer = malloc(frame_len*channels*sizeof(real_t));
+    }
 
     sample_buffer = hDecoder->sample_buffer;
 

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: output.c,v 1.14 2002/11/28 18:48:30 menno Exp $
+** $Id: output.c,v 1.15 2003/04/02 20:07:46 menno Exp $
 **/
 
 #include "common.h"
@@ -53,6 +53,7 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
     int16_t   *short_sample_buffer = (int16_t*)sample_buffer;
     int32_t   *int_sample_buffer = (int32_t*)sample_buffer;
     float32_t *float_sample_buffer = (float32_t*)sample_buffer;
+    double    *double_sample_buffer = (double*)sample_buffer;
 
     /* Copy output to a standard PCM buffer */
     switch (format)
@@ -144,6 +145,19 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
                 else if (input[ch][i] < -(1<<15))
                     input[ch][i] = -(1<<15);
                 float_sample_buffer[(i*channels)+ch] = input[ch][i]*FLOAT_SCALE;
+            }
+        }
+        break;
+    case FAAD_FMT_DOUBLE:
+        for (ch = 0; ch < channels; ch++)
+        {
+            for(i = 0; i < frame_len; i++)
+            {
+                if (input[ch][i] > (1<<15)-1)
+                    input[ch][i] = (1<<15)-1;
+                else if (input[ch][i] < -(1<<15))
+                    input[ch][i] = -(1<<15);
+                double_sample_buffer[(i*channels)+ch] = (double)input[ch][i]*FLOAT_SCALE;
             }
         }
         break;

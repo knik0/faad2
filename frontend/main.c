@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.29 2003/03/05 14:24:50 menno Exp $
+** $Id: main.c,v 1.30 2003/04/02 20:07:44 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -135,10 +135,11 @@ void usage(void)
     fprintf(stderr, "        2:  24 bit PCM data.\n");
     fprintf(stderr, "        3:  32 bit PCM data.\n");
     fprintf(stderr, "        4:  32 bit floating point data.\n");
-    fprintf(stderr, "        5:  16 bit PCM data (dithered).\n");
-    fprintf(stderr, "        6:  16 bit PCM data (dithered with LIGHT noise shaping).\n");
-    fprintf(stderr, "        7:  16 bit PCM data (dithered with MEDIUM noise shaping).\n");
-    fprintf(stderr, "        8:  16 bit PCM data (dithered with HEAVY noise shaping).\n");
+    fprintf(stderr, "        5:  64 bit floating point data.\n");
+    fprintf(stderr, "        6:  16 bit PCM data (dithered).\n");
+    fprintf(stderr, "        7:  16 bit PCM data (dithered with LIGHT noise shaping).\n");
+    fprintf(stderr, "        8:  16 bit PCM data (dithered with MEDIUM noise shaping).\n");
+    fprintf(stderr, "        9:  16 bit PCM data (dithered with HEAVY noise shaping).\n");
     fprintf(stderr, " -s X  Force the samplerate to X (for RAW files).\n");
     fprintf(stderr, " -l X  Set object type. Supported object types:\n");
     fprintf(stderr, "        0:  Main object type.\n");
@@ -583,7 +584,7 @@ int main(int argc, char *argv[])
                     outputFormat = FAAD_FMT_16BIT; /* just use default */
                 } else {
                     outputFormat = atoi(dr);
-                    if ((outputFormat < 1) || (outputFormat > 8))
+                    if ((outputFormat < 1) || (outputFormat > 9))
                         showHelp = 1;
                 }
             }
