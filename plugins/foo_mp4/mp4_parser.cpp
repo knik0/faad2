@@ -108,7 +108,6 @@ public:
 	double m_length;
 	uint32_t m_timescale;
 	int m_skip_samples;
-	int m_extra_duration;
 	uint32_t m_skip_frames;
 
 	unsigned m_expected_sample_rate,m_expected_channels;
@@ -158,7 +157,6 @@ public:
 		infile = 0;
 		m_offset = 0;
 		m_skip_samples = 0;
-		m_extra_duration = 0;
     }
 
     ~input_mp4()
@@ -220,7 +218,6 @@ public:
 			if (buffer) free(buffer);
 			cleanup();
 			console::error("Error initializing decoder.");
-			
 			return 0;
 		}
 
@@ -232,6 +229,15 @@ public:
 		}
 
 		{
+			m_expected_sample_rate = mp4ff_get_sample_rate(infile,track);
+			m_expected_channels = mp4ff_get_channel_count(infile,track);
+			if (m_timescale != m_expected_sample_rate)
+			{
+				cleanup();
+				console::error("Different sample rate / time scales not supported.");
+				return 0;
+			}
+
 			char *tag = NULL, *item = NULL;
 			int k, j;
 			
@@ -240,7 +246,7 @@ public:
 				m_length = -1.0;
 			else
 			{
-				int64_t duration = mp4ff_get_track_duration(infile,track);
+				int64_t duration = mp4ff_get_track_duration_use_offsets(infile,track);
 				if (duration == -1)
 					m_length = -1.0;
 				else
@@ -251,8 +257,6 @@ public:
 
 			info->set_length(m_length);
 
-			m_expected_sample_rate = mp4ff_get_sample_rate(infile,track);
-			m_expected_channels = mp4ff_get_channel_count(infile,track);
 
 			if (flags & OPEN_FLAG_GET_INFO)
 			{
@@ -279,7 +283,6 @@ public:
 		numSamples = mp4ff_num_samples(infile, track);
 
 		m_skip_samples = 0;
-		m_extra_duration = 0;
 
 		m_offset = 0;
 
@@ -306,21 +309,10 @@ public:
 			buffer = NULL;
 			buffer_size = 0;
 
-			{
-				unsigned offset = mp4ff_get_sample_offset(infile,track,sampleId);
-				int delta = offset - m_offset;
-				m_skip_samples += delta;
-				m_extra_duration += delta;
-				m_offset = offset;
-			}
-			
-			unsigned duration = mp4ff_get_sample_duration(infile, track, sampleId);
-//			console::info(uStringPrintf("duration: %u",duration));
-
 			if (mp4ff_read_sample(infile, track, sampleId, &buffer,  &buffer_size) == 0)
 			{
 				cleanup();
-				console::error("Reading from MP4 file failed.");
+				console::error(uStringPrintf("Reading from MP4 file failed: frame %u of %u.",sampleId,numSamples));
 				return -1;
 			}
 
@@ -337,6 +329,10 @@ public:
 			if (m_skip_frames>0) m_skip_frames--;
 			else
 			{
+				unsigned offset = mp4ff_get_sample_offset(infile,track,sampleId);
+				unsigned duration = mp4ff_get_sample_duration(infile, track, sampleId);
+	//			console::info(uStringPrintf("duration: %u, offset: %u",duration,offset));
+
 				if (m_tempchunk.is_empty())
 				{
 					if (duration > 0)
@@ -374,16 +370,10 @@ public:
 					decoded_sample_count = duration;
 					m_tempchunk.pad_with_silence(decoded_sample_count);
 				}
-				else if (decoded_sample_count > duration && m_extra_duration>0)
-				{
-					unsigned duration2 = duration + m_extra_duration;
-					if (duration2 > decoded_sample_count) duration2 = decoded_sample_count;
-					m_extra_duration -= duration2 - duration;
-//					console::info(uStringPrintf("duration: %u => %u",duration,duration2));
-					duration = duration2;
-				}
 
-				unsigned offset = 0;
+				if (duration < offset) duration = 0;
+				else duration -= offset;
+
 				if (m_skip_samples>0)
 				{
 					unsigned int delta = (unsigned)m_skip_samples;
@@ -391,12 +381,6 @@ public:
 					offset += delta;
 					duration -= delta;
 					m_skip_samples -= delta;
-				}
-				else if (m_skip_samples<0)
-				{
-					//blah....
-					m_tempchunk.insert_silence_fromstart(-m_skip_samples);
-					m_skip_samples = 0;
 				}
 
 
@@ -497,7 +481,7 @@ typedef struct
 		unsigned max_frame_dependency = p_decoder->get_max_frame_dependency();
 		int64_t offset = (int64_t)(seconds * m_timescale + 0.5);
 		int32_t skip_samples = 0;
-		unsigned dest_sample = mp4ff_find_sample(infile,track,offset,&skip_samples);
+		unsigned dest_sample = mp4ff_find_sample_use_offsets(infile,track,offset,&skip_samples);
 //		console::info(uStringPrintf("%u %u %u",(unsigned)offset,dest_sample,skip_samples));
 
 		if (dest_sample == (-1)) return false;
@@ -518,7 +502,6 @@ typedef struct
 		m_skip_samples = skip_samples;
 
 		m_offset = 0;
-		m_extra_duration = 0;
 
 		p_decoder->reset_after_seek();
 
