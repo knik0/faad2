@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.2 2002/01/21 22:58:27 menno Exp $
+** $Id: in_mp4.c,v 1.3 2002/01/22 20:09:41 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -69,7 +69,7 @@ typedef struct state
 } state;
 
 static char INI_FILE[MAX_PATH];
-static int m_priority = 4;
+static int m_priority = 3;
 static int m_resolution = 0;
 static int m_show_errors = 1;
 
@@ -210,7 +210,7 @@ void config_read()
 	config_init();
 
     strcpy(show_errors, "1");
-    strcpy(priority, "4");
+    strcpy(priority, "3");
     strcpy(resolution, "0");
 
     RS(priority);
