@@ -5,8 +5,87 @@
 extern "C" {
 #endif
 
+#ifdef _WIN32
+
+ #include <stdio.h>
+ #include <stdlib.h>
+
+#else
+#ifdef HAVE_CONFIG_H
+#  include "../../config.h"
+#endif
+
 #include <stdio.h>
-#include <stdlib.h>
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#if HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+#if STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# if HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif
+#if HAVE_STRING_H
+# if !STDC_HEADERS && HAVE_MEMORY_H
+#  include <memory.h>
+# endif
+# include <string.h>
+#endif
+#if HAVE_STRINGS_H
+# include <strings.h>
+#endif
+#if HAVE_INTTYPES_H
+# include <inttypes.h>
+#else
+# if HAVE_STDINT_H
+#  include <stdint.h>
+# else
+/* we need these... */
+typedef unsigned long long uint64_t;
+typedef unsigned long uint32_t;
+typedef unsigned short uint16_t;
+typedef unsigned char uint8_t;
+typedef long long int64_t;
+typedef long int32_t;
+typedef short int16_t;
+typedef char int8_t;
+# endif
+#endif
+#if HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
+#ifndef HAVE_FLOAT32_T
+typedef float float32_t;
+#endif
+
+#if STDC_HEADERS
+# include <string.h>
+#else
+# if !HAVE_STRCHR
+#  define strchr index
+#  define strrchr rindex
+# endif
+char *strchr(), *strrchr();
+# if !HAVE_MEMCPY
+#  define memcpy(d, s, n) bcopy((s), (d), (n))
+#  define memmove(d, s, n) bcopy((s), (d), (n))
+# endif
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+#ifndef TRUE
+#define TRUE 1
+#endif
+
+#endif
 
 
 #include "private.h"

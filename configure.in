@@ -14,11 +14,11 @@ AC_PROG_MAKE_SET
 
 AM_CONFIG_HEADER(config.h)
 
-AC_ARG_WITH( xmms,   [  --with-xmms             compile XMMS plugin],WITHXMMS=$withval, WITHXMMS=no)
-
-AC_ARG_WITH( xmmsmp4,[  --with-xmmsmp4          compile XMMS MP4 plugin],WITHXMMSMP4=$withval, WITHXMMSMP4=no)
+AC_ARG_WITH( xmms,   [  --with-xmms             compile XMMS plugins],WITHXMMS=$withval, WITHXMMS=no)
 
 AC_ARG_WITH( drm,    [  --with-drm              compile libfaad with DRM support],WITHDRM=$withval, WITHDRM=no)
+
+AC_ARG_WITH( mp4v2,  [  --with-mp4v2            compile libmp4v2],WITHMP4V2=$withval, WITHMP4V2=no)
 
 dnl Checks for header files required for mp4.h
 AC_HEADER_STDC
@@ -31,6 +31,8 @@ AC_HEADER_TIME
 
 AC_C_INLINE
 AC_C_BIGENDIAN
+
+AC_TYPE_OFF_T
 
 AC_DEFUN(MY_CHECK_TYPEDEF_FROM_INCLUDE,
 [
@@ -69,39 +71,51 @@ AC_CHECK_LIB(mp4v2, MP4Create, , external_mp4v2=no, -lstdc++)
 AC_CHECK_LIB(mp4v2, MP4MetadataDelete, external_mp4v2=no, , -lstdc++)
 AC_CHECK_HEADER(mp4.h, , external_mp4v2=no)
 
+AM_CONDITIONAL(WITH_MP4V2, false)
+
 if test x$external_mp4v2 = xyes; then
   AM_CONDITIONAL(HAVE_MPEG4IP, true)
   MPEG4IP_PLAYER_PLUGIN_DIR=`mpeg4ip-config --player-plugin-dir`  
   AC_SUBST(MPEG4IP_PLAYER_PLUGIN_DIR)
-  AC_CONFIG_FILES(plugins/mpeg4ip/Makefile)
   AC_MSG_NOTICE([*** Building with external mp4v2 ***])
 else
   AM_CONDITIONAL(HAVE_MPEG4IP, false)
-  AC_CONFIG_FILES(common/mp4v2/Makefile)
+  if test x$WITHMP4V2 = xyes; then
+     AM_CONDITIONAL(WITH_MP4V2, true)
+  fi
 fi
 
 if test x$WITHXMMS = xyes; then
-  xmmsplugin=yes
-  AC_CHECK_PROGS(XMMS_CONFIG, xmms-config,"no_found")
-  if test "$XMMS_CONFIG" = "no_found"; then
-   AC_MSG_ERROR("*** xmms-config not found - omitting xmms plugin build")
-   xmmsplugin=no
-   AM_CONDITIONAL(HAVE_XMMS, false)
-  else
-   AM_CONDITIONAL(HAVE_XMMS, true)
-   AC_CONFIG_SUBDIRS(plugins/xmms)
+  AC_CHECK_PROGS(XMMS_CONFIG, xmms-config,"not_found")
+  if test "$XMMS_CONFIG" = "not_found"; then
+    AC_MSG_ERROR("*** xmms-config not found - xmms plugin can't be build")
   fi
+  AC_CHECK_HEADER(pthread.h,,
+           AC_MSG_ERROR(*** pthread headers support not installed or not found))
+  AC_CHECK_HEADER(id3.h,,
+       AC_MSG_ERROR(*** id3lib headers support not installed or not found))
+  AC_CHECK_PROGS(GTK_CONFIG, gtk-config, "not_found")
+  
+  if test x$GTK_CONFIG = xnot_found; then
+    AC_MSG_ERROR("*** gtk-config not found - xmms plugin can't be build")
+  fi
+  
+  AM_CONDITIONAL(HAVE_XMMS, true)  
+  AC_MSG_NOTICE("xmms plugin requires libmp4v2 to be build")
+  AM_CONDITIONAL(WITH_MP4V2, true)
 else
  AM_CONDITIONAL(HAVE_XMMS, false)
- xmmsplugin=no
 fi
 
 if test x$WITHDRM = xyes; then
   AC_DEFINE(DRM, 1, [Define if you want to use libfaad together with Digital Radio Mondiale (DRM)])
 fi
 
-AC_CONFIG_FILES(libfaad/Makefile frontend/Makefile common/Makefile Makefile plugins/Makefile)
-AC_OUTPUT
+AC_CONFIG_FILES(libfaad/Makefile frontend/Makefile common/Makefile plugins/Makefile Makefile )
 
-dnl AC_CONFIG_SUBDIRS(plugins/xmmsmp4/src)
-dnl AC_OUTPUT(plugins/xmmsmp4/Makefile plugins/xmmsmp4/src/Makefile)
+AC_CONFIG_FILES(plugins/mpeg4ip/Makefile)
+AC_CONFIG_FILES(plugins/xmms/Makefile plugins/xmms/src/Makefile)
+AC_CONFIG_FILES(plugins/xmmsmp4/Makefile plugins/xmmsmp4/src/Makefile)
+
+AC_CONFIG_FILES(common/mp4ff/Makefile common/mp4v2/Makefile)
+AC_OUTPUT

@@ -22,12 +22,13 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.57 2003/11/02 20:24:03 menno Exp $
+** $Id: main.c,v 1.58 2003/11/06 11:04:13 menno Exp $
 **/
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+typedef __int64 off_t
 #else
 #include <time.h>
 #endif
@@ -176,14 +177,14 @@ size_t write_callback(void *buffer, size_t length)
     return 0;
 }
 
-__int64 get_position_callback()
+off_t get_position_callback()
 {
     return ftell(g_mp4File);
 }
 
-__int64 get_length_callback()
+off_t get_length_callback()
 {
-    __int64 oldpos, size = 0;
+    off_t oldpos, size = 0;
     oldpos = ftell(g_mp4File);
     fseek(g_mp4File, 0, SEEK_END);
     size = ftell(g_mp4File);
@@ -191,7 +192,7 @@ __int64 get_length_callback()
     return size;
 }
 
-int seek_callback(__int64 position)
+int seek_callback(off_t position)
 {
     return fseek(g_mp4File, position, SEEK_SET);
 }

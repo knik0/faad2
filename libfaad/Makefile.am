@@ -15,7 +15,7 @@ ms.h output.h pns.h pulse.h rvlc.h sine_win.h ssr.h ssr_fb.h ssr_ipqf.h \
 ssr_win.h specrec.h syntax.h structs.h tns.h \
 sbr_dct.h sbr_dec.h sbr_e_nf.h sbr_fbt.h sbr_hfadj.h sbr_hfgen.h \
 sbr_huff.h sbr_noise.h sbr_qmf.h sbr_syntax.h sbr_tf_grid.h \
-codebook/hcb.h \
+sbr_qmf_c.h codebook/hcb.h \
 codebook/hcb_1.h codebook/hcb_2.h codebook/hcb_3.h codebook/hcb_4.h \
 codebook/hcb_5.h codebook/hcb_6.h codebook/hcb_7.h codebook/hcb_8.h \
 codebook/hcb_9.h codebook/hcb_10.h codebook/hcb_11.h codebook/hcb_sf.h
