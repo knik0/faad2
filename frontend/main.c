@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.61 2003/11/21 15:09:16 menno Exp $
+** $Id: main.c,v 1.62 2003/11/21 18:20:57 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -664,7 +664,7 @@ int GetAACTrack(mp4ff_t *infile)
             free(buff);
 
             if (rc < 0)
-                return -1;
+                continue;
             return i;
         }
     }

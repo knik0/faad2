@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4atom.c,v 1.1 2003/11/21 15:08:48 menno Exp $
+** $Id: mp4atom.c,v 1.2 2003/11/21 18:20:56 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -392,7 +392,7 @@ int32_t mp4ff_read_mvhd(mp4ff_t *f)
     return 0;
 }
 
-int32_t mp4ff_atom_read(mp4ff_t *f, int32_t size, int8_t atom_type)
+int32_t mp4ff_atom_read(mp4ff_t *f, int32_t size, uint8_t atom_type)
 {
     if (atom_type == ATOM_STSZ)
     {
