@@ -576,11 +576,13 @@ int GenreToString(char** GenreStr, const int genre)
 {
     if (genre > 0 && genre <= sizeof(ID3v1GenreList)/sizeof(*ID3v1GenreList))
     {
-        *GenreStr = (char*)malloc(strlen((ID3v1GenreList[genre-1])+1)*sizeof(char));
+        *GenreStr = (char*)malloc((strlen(ID3v1GenreList[genre-1])+1)*sizeof(char));
+        memset(*GenreStr, 0, (strlen(ID3v1GenreList[genre-1])+1)*sizeof(char));
         strcpy(*GenreStr, ID3v1GenreList[genre-1]);
         return 0;
     } else {
-        *GenreStr[0] = '\0';
+        *GenreStr = (char*)malloc(2*sizeof(char));
+        memset(*GenreStr, 0, 2*sizeof(char));
         return 1;
     }
 }
