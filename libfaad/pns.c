@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: pns.c,v 1.7 2002/06/13 11:03:27 menno Exp $
+** $Id: pns.c,v 1.8 2002/08/14 10:55:03 menno Exp $
 **/
 
 #include "common.h"
@@ -40,14 +40,30 @@
 */
 
 
+static const unsigned char Parity [256] = {  // parity
+    0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,
+    1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,
+    1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,
+    0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,
+    1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,
+    0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,
+    0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,
+    1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0
+};
 
-static INLINE int32_t random2()
+static unsigned int  __r1 = 1;
+static unsigned int  __r2 = 1;
+
+static INLINE uint32_t random2()
 {
-    static int32_t state = 1;
+    uint32_t  t1, t2, t3, t4;
 
-    state = (1664525L * state) + 1013904223L;  /* Numerical recipes */
+    t3   = t1 = __r1;   t4   = t2 = __r2;       // Parity calculation is done via table lookup, this is also available
+    t1  &= 0xF5;        t2 >>= 25;              // on CPUs without parity, can be implemented in C and avoid unpredictable
+    t1   = Parity [t1]; t2  &= 0x63;            // jumps and slow rotate through the carry flag operations.
+    t1 <<= 31;          t2   = Parity [t2];
 
-    return state;
+    return (__r1 = (t3 >> 1) | t1 ) ^ (__r2 = (t4 + t4) | t2 );
 }
 
 /* The function gen_rand_vector(addr, size) generates a vector of length
