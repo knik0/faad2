@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.66 2003/10/17 16:23:05 ca5e Exp $
+** $Id: foo_mp4.cpp,v 1.67 2003/10/29 18:14:46 ca5e Exp $
 **/
 
 #include <mp4.h>
@@ -48,7 +48,7 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "1.65",
+                           "1.66",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 static const char *object_type_string(int type)
@@ -336,6 +336,12 @@ public:
         if (hFile == MP4_INVALID_FILE_HANDLE) return SET_INFO_FAILURE;
 
         MP4MetadataDelete(hFile);
+
+        MP4Close(hFile);
+
+        hFile = MP4ModifyCb(0, 0, open_cb, close_cb, read_cb, write_cb,
+            setpos_cb, getpos_cb, filesize_cb, (void*)m_reader);
+        if (hFile == MP4_INVALID_FILE_HANDLE) return SET_INFO_FAILURE;
 
         /* replay gain writing */
         const char *p = NULL;
@@ -971,6 +977,7 @@ public:
 
     virtual set_info_t set_info(reader *r,const file_info *info)
     {
+        tag_remover::g_run(r);
         return tag_writer::g_run(r,info,"ape") ? SET_INFO_SUCCESS : SET_INFO_FAILURE;
     }
 
