@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: faad.h,v 1.11 2002/08/13 19:16:07 menno Exp $
+** $Id: faad.h,v 1.12 2002/08/26 18:41:47 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -39,13 +39,14 @@ extern "C" {
 
 #define FAAD2_VERSION "1.2 beta"
 
-#define MAIN 0
-#define LC   1
-#define SSR  2
-#define LTP  3
-#define ER_LC  17
-#define LD   23
-#define DRM_ER_LC   27 /* special object type for DRM */
+#define MAIN       0
+#define LC         1
+#define SSR        2
+#define LTP        3
+#define ER_LC     17
+#define ER_LTP    19
+#define LD        23
+#define DRM_ER_LC 27 /* special object type for DRM */
 
 #define FAAD_FMT_16BIT 1
 #define FAAD_FMT_24BIT 2

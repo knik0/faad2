@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.16 2002/08/17 12:27:33 menno Exp $
+** $Id: common.h,v 1.17 2002/08/26 18:41:47 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -59,6 +59,8 @@ extern "C" {
 
 /* use double precision */
 /* #define USE_DOUBLE_PRECISION */
+/* use fixed point reals */
+//#define FIXED_POINT
 
 //#define SBR
 #define ERROR_RESILIENCE
@@ -109,7 +111,7 @@ typedef unsigned long long uint64_t;
 typedef unsigned long uint32_t;
 typedef unsigned short uint16_t;
 typedef unsigned char uint8_t;
-typedef long long int32_t;
+typedef long long int64_t;
 typedef long int32_t;
 typedef short int16_t;
 typedef char int8_t;
@@ -124,13 +126,51 @@ typedef float float32_t;
 
 #endif
 
+/* FIXED_POINT doesn't work everywhere yet */
+#ifdef FIXED_POINT
+  #undef MAIN_DEC
+  #undef LTP_DEC
+  #undef LD_DEC
+  #undef SBR
+  #undef USE_FFTW
+#endif
 
-#ifndef USE_DOUBLE_PRECISION
+
+#if defined(FIXED_POINT)
+
+  typedef int32_t real_t;
+
+  #include <math.h>
+
+  #include "fixed.h"
+
+#elif defined(USE_DOUBLE_PRECISION)
+
+  typedef double real_t;
+
+  #include <math.h>
+
+  #define MUL(A,B) ((A)*(B))
+  #define MUL_C_C(A,B) ((A)*(B))
+  #define MUL_R_C(A,B) ((A)*(B))
+  #define MUL_R_1(A,B) ((A)*(B))
+
+  #define COEF_CONST_1(A) ((real_t)A)
+  #define REAL_CONST(A) ((real_t)A)
+  #define COEF_CONST(A) ((real_t)A)
+
+#else /* Normal floating point operation */
 
   typedef float real_t;
 
   #define MUL(A,B) ((A)*(B))
+  #define MUL_C_C(A,B) ((A)*(B))
+  #define MUL_R_C(A,B) ((A)*(B))
+  #define MUL_R_1(A,B) ((A)*(B))
+
+  #define COEF_CONST_1(A) ((real_t)A)
   #define REAL_CONST(A) ((real_t)A)
+  #define COEF_CONST(A) ((real_t)A)
 
   #ifdef __ICL /* only Intel C compiler has fmath ??? */
 
@@ -171,14 +211,6 @@ typedef float float32_t;
 #endif
 
   #endif
-
-#else
-
-  typedef double real_t;
-  #include <math.h>
-
-  #define MUL(A,B) ((A)*(B))
-  #define REAL_CONST(A) (A)
 
 #endif
 

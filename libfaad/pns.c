@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: pns.c,v 1.10 2002/08/17 12:27:33 menno Exp $
+** $Id: pns.c,v 1.11 2002/08/26 18:41:47 menno Exp $
 **/
 
 #include "common.h"
@@ -74,26 +74,18 @@ static INLINE uint32_t random2()
 static INLINE void gen_rand_vector(real_t *spec, uint16_t scale_factor, uint16_t size)
 {
     uint16_t i;
-    real_t scale;
-
-    for (i = 0; i < size; i++)
-    {
-        spec[i] = (real_t)random2();
-    }
 
     /* 14496-3 says:
-       scale = 1.0f/(size * (real_t)sqrt(MEAN_NRG));
+       scale = 1.0f/(size * (fftw_real)sqrt(MEAN_NRG));
     */
-    scale = REAL_CONST(sqrt(size * MEAN_NRG));
-    if (scale != 0.0)
-    {
-        scale = 1.0/scale; /* <-- TODO */
-        scale = MUL(scale, REAL_CONST(exp(LN2 * 0.25 * scale_factor)));
-    }
+    float32_t scale = 1.0/(float32_t)sqrt(size * MEAN_NRG);
 
-    /* Scale random vector to desired target energy */
+    scale *= (float32_t)exp(LN2 * 0.25 * scale_factor);
+
     for (i = 0; i < size; i++)
-        spec[i] = MUL(spec[i], scale);
+    {
+        spec[i] = REAL_CONST(scale*(float32_t)random2());
+    }
 }
 
 void pns_decode(ic_stream *ics, real_t *spec, uint16_t frame_len)

@@ -66,11 +66,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="1"
-				EnableIntrinsicFunctions="TRUE"
-				FavorSizeOrSpeed="1"
-				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories=".\,..\,..\include,..\include\id3,..\zlib\include,..\win32"
 				PreprocessorDefinitions="NDEBUG,WIN32,_LIB,_WINDOWS,HAVE_CONFIG_H,ID3LIB_COMPILATION"
 				StringPooling="TRUE"
@@ -196,10 +192,10 @@
 				RelativePath="E:\Program Files\Microsoft Visual Studio\VC98\Include\BASETSD.H">
 			</File>
 			<File
-				RelativePath="..\config.h">
+				RelativePath="..\win32\config.h">
 			</File>
 			<File
-				RelativePath="..\win32\config.h">
+				RelativePath="..\config.h">
 			</File>
 			<File
 				RelativePath="..\include\id3\error.h">

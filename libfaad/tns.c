@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: tns.c,v 1.13 2002/08/17 12:27:33 menno Exp $
+** $Id: tns.c,v 1.14 2002/08/26 18:41:47 menno Exp $
 **/
 
 #include "common.h"
@@ -132,7 +132,7 @@ static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_c
     uint8_t i, m;
     uint8_t coef_res2, s_mask, n_mask;
     real_t tmp2[TNS_MAX_ORDER+1], b[TNS_MAX_ORDER+1];
-    real_t iqfac;
+    float32_t iqfac;
 
     /* Some internal tables */
     static uint8_t sgn_mask[] = { 0x2, 0x4, 0x8 };
@@ -151,14 +151,12 @@ static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_c
         /* Inverse quantization */
         if (tmp >= 0)
         {
-            iqfac = REAL_CONST((1 << (coef_res_bits-1)) -
-                REAL_CONST(0.5)) / REAL_CONST(M_PI_2); /* <-- TODO */
+            iqfac = ((1 << (coef_res_bits-1)) - 0.5) / M_PI_2;
         } else {
-            iqfac = REAL_CONST((1 << (coef_res_bits-1)) +
-                REAL_CONST(0.5)) / REAL_CONST(M_PI_2); /* <-- TODO */
+            iqfac = ((1 << (coef_res_bits-1)) + 0.5) / M_PI_2;
         }
 
-        tmp2[i] = REAL_CONST(sin(tmp / iqfac));
+        tmp2[i] = COEF_CONST(sin(tmp / iqfac));
     }
 
     /* Conversion to LPC coefficients */
@@ -166,7 +164,7 @@ static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_c
     for (m = 1; m <= order; m++)
     {
         for (i = 1; i < m; i++) /* loop only while i<m */
-            b[i] = a[i] + MUL(tmp2[m-1], a[m-i]);
+            b[i] = a[i] + MUL_C_C(tmp2[m-1], a[m-i]);
 
         for (i = 1; i < m; i++) /* loop only while i<m */
             a[i] = b[i];
@@ -199,7 +197,7 @@ static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
         y = *spectrum;
 
         for (j = 0; j < order; j++)
-            y -= MUL(lpc[j+1], state[j]);
+            y -= MUL_R_C(state[j], lpc[j+1]);
 
         for (j = order-1; j > 0; j--)
             state[j] = state[j-1];
@@ -234,7 +232,7 @@ static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
         y = *spectrum;
 
         for (j = 0; j < order; j++)
-            y += MUL(lpc[j+1], state[j]);
+            y += MUL_R_C(state[j], lpc[j+1]);
 
         for (j = order-1; j > 0; j--)
             state[j] = state[j-1];
@@ -300,14 +298,15 @@ static uint8_t tns_max_order(ic_stream *ics, uint8_t sr_index,
         switch (object_type)
         {
         case MAIN:
-            return 20;
         case LTP:
-            return 20;
+        case ER_LTP:
 #ifdef LD_DEC
         case LD:
-            return 20;
 #endif
+            return 20;
         case LC:
+        case ER_LC:
+        case DRM_ER_LC:
         case SSR:
             return 12;
         }

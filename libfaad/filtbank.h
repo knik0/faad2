@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.h,v 1.8 2002/08/17 10:03:14 menno Exp $
+** $Id: filtbank.h,v 1.9 2002/08/26 18:41:47 menno Exp $
 **/
 
 #ifndef __FILTBANK_H__
@@ -63,7 +63,6 @@ void ifilter_bank(fb_info *fb,
                   uint8_t window_shape,
                   uint8_t window_shape_prev,
                   real_t *freq_in,
-                  real_t *time_buff,
                   real_t *time_out,
                   uint8_t object_type,
                   uint16_t frame_len);

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: specrec.c,v 1.10 2002/08/20 16:59:58 menno Exp $
+** $Id: specrec.c,v 1.11 2002/08/26 18:41:47 menno Exp $
 **/
 
 /*
@@ -241,104 +241,78 @@ void quant_to_spec(ic_stream *ics, real_t *spec_data, uint16_t frame_len)
     }
 }
 
-void build_tables(real_t *iq_table, real_t *pow2_table)
+void build_tables(real_t *iq_table)
 {
     uint16_t i;
 
     /* build pow(x, 4/3) table for inverse quantization */
     for(i = 0; i < IQ_TABLE_SIZE; i++)
     {
-        iq_table[i] = (real_t)pow(i, 4.0/3.0);
-    }
-
-    /* build pow(2, 0.25*x) table for scalefactors */
-    for(i = 0; i < POW_TABLE_SIZE; i++)
-    {
-        pow2_table[i] = (real_t)pow(2.0, 0.25 * (i-100));
+        iq_table[i] = REAL_CONST(pow(i, 4.0/3.0));
     }
 }
 
-static INLINE real_t iquant(int16_t q, real_t *iq_table)
-{
-    if (q > 0)
-    {
-        if (q < IQ_TABLE_SIZE)
-            return iq_table[q];
-        else
-            return iq_table[q>>3] * 16;
-    } else if (q < 0) {
-        q = -q;
-        if (q < IQ_TABLE_SIZE)
-            return -iq_table[q];
-        else
-          return -iq_table[q>>3] * 16;
-    } else {
-        return 0;
-    }
-}
+static real_t newpow2_table[4] = {
+    COEF_CONST(1.0),
+    COEF_CONST(1.1892071), /* pow(2,.25) */
+    COEF_CONST(1.4142136), /* pow(2,.5) */
+    COEF_CONST(1.6817928)  /* pow(2,.75) */
+};
 
-void inverse_quantization(real_t *x_invquant, int16_t *x_quant, real_t *iq_table,
-                          uint16_t frame_len)
+void iquant_and_apply_scalefactors(ic_stream *ics, real_t *x_invquant,
+                                   int16_t *x_quant, real_t *iq_table,
+                                   uint16_t frame_len)
 {
-    int8_t i;
-    int16_t *in_ptr = x_quant;
-    real_t *out_ptr = x_invquant;
-
-    for(i = frame_len/8-1; i >= 0; --i)
-    {
-        *out_ptr++ = iquant(*in_ptr++, iq_table);
-        *out_ptr++ = iquant(*in_ptr++, iq_table);
-        *out_ptr++ = iquant(*in_ptr++, iq_table);
-        *out_ptr++ = iquant(*in_ptr++, iq_table);
-        *out_ptr++ = iquant(*in_ptr++, iq_table);
-        *out_ptr++ = iquant(*in_ptr++, iq_table);
-        *out_ptr++ = iquant(*in_ptr++, iq_table);
-        *out_ptr++ = iquant(*in_ptr++, iq_table);
-    }
-}
-
-static INLINE real_t get_scale_factor_gain(uint16_t scale_factor, real_t *pow2_table)
-{
-    if (scale_factor < POW_TABLE_SIZE)
-        return pow2_table[scale_factor];
-    else
-        return REAL_CONST(exp(LN2 * 0.25 * (scale_factor - 100)));
-}
-
-void apply_scalefactors(ic_stream *ics, real_t *x_invquant, real_t *pow2_table,
-                        uint16_t frame_len)
-{
-    uint8_t g, sfb;
-    uint16_t top;
-    real_t *fp, scale;
-    uint8_t groups = 0;
+    int16_t i;
+    uint16_t g, sfb, k;
     uint16_t nshort = frame_len/8;
+
+    for (i = 0; i < frame_len; i++)
+        x_invquant[i] = 0;
 
     for (g = 0; g < ics->num_window_groups; g++)
     {
-        uint16_t k = 0;
-
-        /* using this 128*groups doesn't hurt long blocks, because
-           long blocks only have 1 group, so that means 'groups' is
-           always 0 for long blocks
-        */
-        fp = x_invquant + (groups*nshort);
-
-        for (sfb = 0; sfb < ics->max_sfb; sfb++)
+        for (sfb = 0, k = 0; sfb < ics->max_sfb; sfb++)
         {
-            top = ics->sect_sfb_offset[g][sfb+1];
+            uint16_t top = ics->sect_sfb_offset[g][sfb+1];
+            int16_t scalefactor = ics->scale_factors[g][sfb] - 100;
 
-            scale = get_scale_factor_gain(ics->scale_factors[g][sfb], pow2_table);
-
-            /* minimum size of a sf band is 4 and always a multiple of 4 */
-            for ( ; k < top; k+=4)
+            for ( ; k < top; k++)
             {
-                *fp = MUL(*fp, scale); fp++;
-                *fp = MUL(*fp, scale); fp++;
-                *fp = MUL(*fp, scale); fp++;
-                *fp = MUL(*fp, scale); fp++;
+                real_t dequant;
+                int16_t shift;
+                int16_t q = x_quant[k];
+                if (!q)
+                    continue;
+
+                i = abs(q) << 3;
+                shift = scalefactor >> 2;
+
+                while (i < IQ_TABLE_SIZE)
+                {
+                    i <<= 3;
+                    shift -= 4;
+                }
+                i >>= 3;
+                if (i < IQ_TABLE_SIZE)
+                    dequant = iq_table[i];
+                else 
+                    dequant = iq_table[i>>3] * 16;
+
+                if (shift >= 0)
+                    dequant *= (1 << shift);
+                else if (shift >= -31)
+                    dequant *= (1 >> -shift);
+                else
+                    dequant = 0;
+
+                dequant = MUL_R_C(dequant, newpow2_table[scalefactor & 3]);
+
+                x_invquant[k] = (q > 0) ? dequant : -dequant;
+//                x_invquant[k] = (dequant^(q >> (sizeof(int32_t)*8-1))) - (q >> (sizeof(int32_t)*8-1));
             }
         }
-        groups += ics->window_group_length[g];
+        x_invquant += nshort * ics->window_group_length[g];
+        x_quant += nshort * ics->window_group_length[g];
     }
 }

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: kbd_win.h,v 1.2 2002/02/18 10:01:05 menno Exp $
+** $Id: kbd_win.h,v 1.3 2002/08/26 18:41:47 menno Exp $
 **/
 
 #ifndef __KBD_WIN_H__
@@ -28,9 +28,10 @@ extern "C" {
 
 #ifdef _MSC_VER
 #pragma warning(disable:4305)
+#pragma warning(disable:4244)
 #endif
 
-real_t kbd_long[] =
+float32_t kbd_long[] =
 {
     0.00029256153896361,
     0.00042998567353047,
@@ -1059,7 +1060,7 @@ real_t kbd_long[] =
 };
 
 
-real_t kbd_short[] =
+float32_t kbd_short[] =
 {
     4.3795702929468881e-005,
     0.00011867384265436617,

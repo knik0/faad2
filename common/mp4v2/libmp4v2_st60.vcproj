@@ -19,11 +19,7 @@
 			ATLMinimizesCRunTimeLibraryUsage="FALSE">
 			<Tool
 				Name="VCCLCompilerTool"
-				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="1"
-				EnableIntrinsicFunctions="TRUE"
-				FavorSizeOrSpeed="1"
-				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories=".\"
 				PreprocessorDefinitions="WIN32,NDEBUG,_WINDOWS"
 				StringPooling="TRUE"
@@ -69,7 +65,7 @@
 				Optimization="0"
 				AdditionalIncludeDirectories=".\"
 				PreprocessorDefinitions="WIN32,_DEBUG,_WINDOWS"
-				RuntimeLibrary="5"
+				RuntimeLibrary="1"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\ST_Debug/libmp4v2_st60.pch"
 				AssemblerListingLocation=".\ST_Debug/"

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: specrec.h,v 1.5 2002/06/13 11:03:28 menno Exp $
+** $Id: specrec.h,v 1.6 2002/08/26 18:41:47 menno Exp $
 **/
 
 #ifndef __SPECREC_H__
@@ -31,18 +31,14 @@ extern "C" {
 /* !!!DON'T CHANGE IQ_TABLE_SIZE!!! */
 #define IQ_TABLE_SIZE   1026
 
-#define POW_TABLE_SIZE  200
-
 
 uint8_t window_grouping_info(ic_stream *ics, uint8_t fs_index,
                              uint8_t object_type, uint16_t frame_len);
 void quant_to_spec(ic_stream *ics, real_t *spec_data, uint16_t frame_len);
-void build_tables(real_t *iq_table, real_t *pow2_table);
-void inverse_quantization(real_t *x_invquant, int16_t *x_quant, real_t *iq_table,
-                          uint16_t frame_len);
-void apply_scalefactors(ic_stream *ics, real_t *x_invquant, real_t *pow2_table,
-                        uint16_t frame_len);
-
+void build_tables(real_t *iq_table);
+void iquant_and_apply_scalefactors(ic_stream *ics, real_t *x_invquant,
+                                   int16_t *x_quant, real_t *iq_table,
+                                   uint16_t frame_len);
 
 #ifdef __cplusplus
 }

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.20 2002/08/17 12:27:33 menno Exp $
+** $Id: decoder.c,v 1.21 2002/08/26 18:41:47 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -72,7 +72,6 @@ faacDecHandle FAADAPI faacDecOpen()
     for (i = 0; i < MAX_CHANNELS; i++)
     {
         hDecoder->window_shape_prev[i] = 0;
-        hDecoder->time_state[i] = NULL;
         hDecoder->time_out[i] = NULL;
 #ifdef MAIN_DEC
         hDecoder->pred_stat[i] = NULL;
@@ -84,11 +83,9 @@ faacDecHandle FAADAPI faacDecOpen()
     }
 
     hDecoder->drc = drc_init(REAL_CONST(1.0), REAL_CONST(1.0));
-#if IQ_TABLE_SIZE && POW_TABLE_SIZE
-    build_tables(hDecoder->iq_table, hDecoder->pow2_table);
-#elif !POW_TABLE_SIZE
-    build_tables(hDecoder->iq_table, NULL);
-#endif
+
+    /* build table for inverse quantization */
+    build_tables(hDecoder->iq_table);
 
     return hDecoder;
 }
@@ -277,7 +274,7 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
         &hDecoder->aacScalefactorDataResilienceFlag,
         &hDecoder->aacSpectralDataResilienceFlag,
         &frameLengthFlag);
-    if (hDecoder->object_type < 4)
+    if (hDecoder->object_type < 5)
         hDecoder->object_type--; /* For AAC differs from MPEG-4 */
     if (rc != 0)
     {
@@ -304,7 +301,6 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
 
     for (i = 0; i < MAX_CHANNELS; i++)
     {
-        if (hDecoder->time_state[i]) free(hDecoder->time_state[i]);
         if (hDecoder->time_out[i]) free(hDecoder->time_out[i]);
 #ifdef MAIN_DEC
         if (hDecoder->pred_stat[i]) free(hDecoder->pred_stat[i]);
@@ -442,13 +438,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     real_t **lt_pred_stat  =  hDecoder->lt_pred_stat;
 #endif
     real_t *iq_table       =  hDecoder->iq_table;
-#if POW_TABLE_SIZE
-    real_t *pow2_table     =  hDecoder->pow2_table;
-#else
-    real_t *pow2_table     =  NULL;
-#endif
     uint8_t *window_shape_prev = hDecoder->window_shape_prev;
-    real_t **time_state    =  hDecoder->time_state;
     real_t **time_out      =  hDecoder->time_out;
     fb_info *fb            =  hDecoder->fb;
     drc_info *drc          =  hDecoder->drc;
@@ -631,12 +621,9 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                 ics = &(syntax_elements[i]->ics2);
         }
 
-        /* inverse quantization */
-        inverse_quantization(spec_coef[ch], spec_data[ch], iq_table,
-            frame_len);
-
-        /* apply scalefactors */
-        apply_scalefactors(ics, spec_coef[ch], pow2_table, frame_len);
+        /* inverse quantization and application of scalefactors */
+        iquant_and_apply_scalefactors(ics, spec_coef[ch], spec_data[ch],
+            iq_table, frame_len);
 
         /* deinterleave short block grouping */
         if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
@@ -743,35 +730,26 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         tns_decode_frame(ics, &(ics->tns), sf_index, object_type,
             spec_coef[ch], frame_len);
 
+#ifndef FIXED_POINT
         /* drc decoding */
         if (drc->present)
         {
             if (!drc->exclude_mask[ch] || !drc->excluded_chns_present)
                 drc_decode(drc, spec_coef[ch]);
         }
+#endif
 
-        if (time_state[ch] == NULL)
-        {
-            real_t *tp;
-
-            time_state[ch] = malloc(frame_len*sizeof(real_t));
-            tp = time_state[ch];
-            for (i = frame_len/16-1; i >= 0; --i)
-            {
-                *tp++ = 0; *tp++ = 0; *tp++ = 0; *tp++ = 0;
-                *tp++ = 0; *tp++ = 0; *tp++ = 0; *tp++ = 0;
-                *tp++ = 0; *tp++ = 0; *tp++ = 0; *tp++ = 0;
-                *tp++ = 0; *tp++ = 0; *tp++ = 0; *tp++ = 0;
-            }
-        }
         if (time_out[ch] == NULL)
         {
+            uint16_t r;
             time_out[ch] = malloc(frame_len*2*sizeof(real_t));
+			for (r = 0; r < frame_len*2; r++)
+				time_out[ch][r] = 0;
         }
 
         /* filter bank */
         ifilter_bank(fb, ics->window_sequence, ics->window_shape,
-            window_shape_prev[ch], spec_coef[ch], time_state[ch],
+            window_shape_prev[ch], spec_coef[ch],
             time_out[ch], object_type, frame_len);
         /* save window shape for next frame */
         window_shape_prev[ch] = ics->window_shape;
@@ -786,7 +764,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #endif
             )
         {
-            lt_update_state(lt_pred_stat[ch], time_out[ch], time_state[ch],
+            lt_update_state(lt_pred_stat[ch], time_out[ch], time_out[ch]+frame_len,
                 frame_len, object_type);
         }
 #endif

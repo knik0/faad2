@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.h,v 1.9 2002/08/17 10:03:12 menno Exp $
+** $Id: decoder.h,v 1.10 2002/08/26 18:41:47 menno Exp $
 **/
 
 #ifndef __DECODER_H__
@@ -88,7 +88,6 @@ typedef struct
     fb_info *fb;
     drc_info *drc;
 
-    real_t *time_state[MAX_CHANNELS];
     real_t *time_out[MAX_CHANNELS];
 
 #ifdef MAIN_DEC
@@ -102,9 +101,6 @@ typedef struct
     real_t mnt_table[128];
 
     real_t iq_table[IQ_TABLE_SIZE];
-#if POW_TABLE_SIZE
-    real_t pow2_table[POW_TABLE_SIZE];
-#endif
 
     /* Configuration data */
     faacDecConfiguration config;

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: drc.c,v 1.7 2002/08/17 12:27:33 menno Exp $
+** $Id: drc.c,v 1.8 2002/08/26 18:41:47 menno Exp $
 **/
 
 #include "common.h"
@@ -46,6 +46,7 @@ void drc_end(drc_info *drc)
     if (drc) free(drc);
 }
 
+#ifndef FIXED_POINT
 void drc_decode(drc_info *drc, real_t *spec)
 {
     uint16_t i, bd, top;
@@ -83,3 +84,4 @@ void drc_decode(drc_info *drc, real_t *spec)
         bottom = top;
     }
 }
+#endif
