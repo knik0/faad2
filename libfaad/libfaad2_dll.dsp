@@ -500,6 +500,10 @@ SOURCE=.\pulse.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\reordered_spectral_data.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\specrec.c
 # End Source File
 # Begin Source File
