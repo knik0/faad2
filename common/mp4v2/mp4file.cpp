@@ -200,7 +200,7 @@ void MP4File::Modify(const char* fileName)
 
 void MP4File::Optimize(const char* orgFileName, const char* newFileName)
 {
-#ifndef USE_FILE_CALLBACKS
+#if 1//ndef USE_FILE_CALLBACKS
     m_fileName = MP4Stralloc(orgFileName);
     m_mode = 'r';
 

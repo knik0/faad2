@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.64 2003/10/12 15:38:47 ca5e Exp $
+** $Id: foo_mp4.cpp,v 1.65 2003/10/17 13:37:22 menno Exp $
 **/
 
 #include <mp4.h>
@@ -1285,6 +1285,85 @@ public:
     }
 };
 
+class contextmenu_mp4o : public menu_item_context
+{
+private:
+    int first_num;
+    string8 path;
+
+public:
+    virtual int get_num_items() { return 1; }
+
+    virtual const char *enum_item(int n)
+    {
+        if (n == 0) return "MP4 Layout Optimiser";
+        return 0;
+    }
+
+    virtual bool context_get_display(int n, const ptr_list_base<metadb_handle> &data, string_base &out, bool is_playlist)
+    {
+        int count = data.get_count();
+        if (count < 1) return false;
+        int type = -1;
+
+        for (int i = 0; i < count; i++)
+        {
+            metadb_handle *ptr = data.get_item(i);
+            if (!ptr) return false;
+            const char *p = ptr->handle_get_path();
+            if (!p) return false;
+            p = strrchr(p, '.');
+            if (!p) return false;
+            if (type == -1)
+            {
+                if (!stricmp(p, ".m4a") || !stricmp(p, ".mp4")) type = 1;
+                else return false;
+            }
+            else
+            {
+                if (type == 1 && (stricmp(p, ".m4a") && stricmp(p, ".mp4"))) return false;
+            }
+        }
+
+        out.set_string("Optimise MP4 Layout");
+
+        return true;
+    }
+
+    virtual void context_command(int n, const ptr_list_base<metadb_handle> &data, bool is_playlist)
+    {
+        const int count = data.get_count();
+
+        for (int i = 0; i < count; i++) {
+            metadb_handle *ptr = data.get_item(i);
+            if (!ptr) return;
+
+            file_info_i_full src_info;
+
+            ptr->handle_lock();
+            bool error = false;
+            const file_info *info = ptr->handle_query_locked();
+            if (info)
+                src_info.copy(info);
+            else
+                error = true;
+            ptr->handle_unlock();
+
+            if (!error)
+            {
+                const char *src = (const char *)src_info.get_file_path();
+
+                MP4Optimize(src);
+            }
+            else
+            {
+                console::error("Failed to get file infos");
+            }
+        }
+    }
+};
+
 static service_factory_t<input, input_mp4> foo_mp4;
 static service_factory_t<input, input_aac> foo_aac;
 static service_factory_single_t<menu_item, contextmenu_mp4> foo_mp4_context;
+static service_factory_single_t<menu_item, contextmenu_mp4o> foo_mp4o_context;
