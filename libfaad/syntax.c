@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.53 2003/09/10 12:25:54 menno Exp $
+** $Id: syntax.c,v 1.54 2003/09/23 08:12:29 menno Exp $
 **/
 
 /*
@@ -1878,13 +1878,16 @@ static uint8_t adts_fixed_header(adts_header *adts, bitfile *ld)
         DEBUGVAR(1,126,"adts_fixed_header(): original"));
     adts->home = faad_get1bit(ld
         DEBUGVAR(1,127,"adts_fixed_header(): home"));
-/* Removed in corrigendum 14496-3:2002
-    if (adts->id == 0)
+
+    if (adts->old_format == 1)
     {
-        adts->emphasis = (uint8_t)faad_getbits(ld, 2
-            DEBUGVAR(1,128,"adts_fixed_header(): emphasis"));
+        /* Removed in corrigendum 14496-3:2002 */
+        if (adts->id == 0)
+        {
+            adts->emphasis = (uint8_t)faad_getbits(ld, 2
+                DEBUGVAR(1,128,"adts_fixed_header(): emphasis"));
+        }
     }
-*/
 
     return 0;
 }

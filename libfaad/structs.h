@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: structs.h,v 1.15 2003/09/22 20:05:32 menno Exp $
+** $Id: structs.h,v 1.16 2003/09/23 08:12:29 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -160,6 +160,9 @@ typedef struct
     uint16_t adts_buffer_fullness;
     uint8_t no_raw_data_blocks_in_frame;
     uint16_t crc_check;
+
+    /* control param */
+    uint8_t old_format;
 } adts_header;
 
 typedef struct
@@ -327,6 +330,7 @@ typedef struct faacDecConfiguration
     uint32_t defSampleRate;
     uint8_t outputFormat;
     uint8_t downMatrix;
+    uint8_t useOldADTSFormat;
 } faacDecConfiguration, *faacDecConfigurationPtr;
 
 typedef struct faacDecFrameInfo

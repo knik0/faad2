@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.69 2003/09/22 20:05:32 menno Exp $
+** $Id: decoder.c,v 1.70 2003/09/23 08:12:29 menno Exp $
 **/
 
 #include "common.h"
@@ -245,6 +245,7 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
         } else if (faad_showbits(&ld, 12) == 0xfff) {
             hDecoder->adts_header_present = 1;
 
+            adts.old_format = hDecoder->config.useOldADTSFormat;
             adts_frame(&adts, &ld);
 
             hDecoder->sf_index = adts.sf_index;
@@ -807,6 +808,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
     if (hDecoder->adts_header_present)
     {
+        adts.old_format = hDecoder->config.useOldADTSFormat;
         if ((hInfo->error = adts_frame(&adts, ld)) > 0)
             goto error;
 
