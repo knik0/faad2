@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfgen.c,v 1.16 2004/04/03 10:49:15 menno Exp $
+** $Id: sbr_hfgen.c,v 1.17 2004/04/12 18:17:42 menno Exp $
 **/
 
 /* High Frequency generation */
@@ -384,9 +384,9 @@ static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][32],
     } else {
 #ifdef FIXED_POINT
         tmp = (MUL_R(RE(ac.r01), RE(ac.r12)) - MUL_R(IM(ac.r01), IM(ac.r12)) - MUL_R(RE(ac.r02), RE(ac.r11)));
-        RE(alpha_1[k]) = SBR_DIV(tmp, ac.det);
+        RE(alpha_1[k]) = DIV_R(tmp, ac.det);
         tmp = (MUL_R(IM(ac.r01), RE(ac.r12)) + MUL_R(RE(ac.r01), IM(ac.r12)) - MUL_R(IM(ac.r02), RE(ac.r11)));
-        IM(alpha_1[k]) = SBR_DIV(tmp, ac.det);
+        IM(alpha_1[k]) = DIV_R(tmp, ac.det);
 #else
         tmp = REAL_CONST(1.0) / ac.det;
         RE(alpha_1[k]) = (MUL_R(RE(ac.r01), RE(ac.r12)) - MUL_R(IM(ac.r01), IM(ac.r12)) - MUL_R(RE(ac.r02), RE(ac.r11))) * tmp;
@@ -401,9 +401,9 @@ static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][32],
     } else {
 #ifdef FIXED_POINT
         tmp = -(RE(ac.r01) + MUL_R(RE(alpha_1[k]), RE(ac.r12)) + MUL_R(IM(alpha_1[k]), IM(ac.r12)));
-        RE(alpha_0[k]) = SBR_DIV(tmp, RE(ac.r11));
+        RE(alpha_0[k]) = DIV_R(tmp, RE(ac.r11));
         tmp = -(IM(ac.r01) + MUL_R(IM(alpha_1[k]), RE(ac.r12)) - MUL_R(RE(alpha_1[k]), IM(ac.r12)));
-        IM(alpha_0[k]) = SBR_DIV(tmp, RE(ac.r11));
+        IM(alpha_0[k]) = DIV_R(tmp, RE(ac.r11));
 #else
         tmp = 1.0f / RE(ac.r11);
         RE(alpha_0[k]) = -(RE(ac.r01) + MUL_R(RE(alpha_1[k]), RE(ac.r12)) + MUL_R(IM(alpha_1[k]), IM(ac.r12))) * tmp;
@@ -438,10 +438,10 @@ static void calc_prediction_coef_lp(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][32],
             RE(alpha_1[k]) = 0;
         } else {
             tmp = MUL_R(RE(ac.r01), RE(ac.r22)) - MUL_R(RE(ac.r12), RE(ac.r02));
-            RE(alpha_0[k]) = SBR_DIV(tmp, (-ac.det));
+            RE(alpha_0[k]) = DIV_R(tmp, (-ac.det));
 
             tmp = MUL_R(RE(ac.r01), RE(ac.r12)) - MUL_R(RE(ac.r02), RE(ac.r11));
-            RE(alpha_1[k]) = SBR_DIV(tmp, ac.det);
+            RE(alpha_1[k]) = DIV_R(tmp, ac.det);
         }
 
         if ((RE(alpha_0[k]) >= REAL_CONST(4)) || (RE(alpha_1[k]) >= REAL_CONST(4)))
@@ -455,11 +455,7 @@ static void calc_prediction_coef_lp(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][32],
         {
             rxx[k] = COEF_CONST(0.0);
         } else {
-#ifdef FIXED_POINT
-            rxx[k] = ((int64_t)RE(ac.r01) << COEF_BITS) / RE(ac.r11);
-#else
-            rxx[k] = RE(ac.r01) / RE(ac.r11);
-#endif
+            rxx[k] = DIV_C(RE(ac.r01), RE(ac.r11));
             rxx[k] = -rxx[k];
             if (rxx[k] > COEF_CONST(1.0)) rxx[k] = COEF_CONST(1.0);
             if (rxx[k] < COEF_CONST(-1.0)) rxx[k] = COEF_CONST(-1.0);

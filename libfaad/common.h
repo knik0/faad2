@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.58 2004/04/03 10:49:14 menno Exp $
+** $Id: common.h,v 1.59 2004/04/12 18:17:42 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -92,7 +92,7 @@ extern "C" {
 #define ALLOW_SMALL_FRAMELENGTH
 
 
-// Define LC_ONLY_DECODER if you want a pure AAC LC decoder (independant of SBR_DEC)
+// Define LC_ONLY_DECODER if you want a pure AAC LC decoder (independant of SBR_DEC and PS_DEC)
 //#define LC_ONLY_DECODER
 #ifdef LC_ONLY_DECODER
   #undef LTP_DEC
@@ -107,13 +107,10 @@ extern "C" {
 //#define SBR_LOW_POWER
 #define PS_DEC
 
-/* FIXED POINT: No MAIN decoding, forced SBR Low Power decoder */
+/* FIXED POINT: No MAIN decoding */
 #ifdef FIXED_POINT
 # ifdef MAIN_DEC
 #  undef MAIN_DEC
-# endif
-# ifdef PS_DEC
-#  undef PS_DEC
 # endif
 #endif // FIXED_POINT
 
@@ -131,9 +128,11 @@ extern "C" {
 #endif
 
 #ifdef FIXED_POINT
-#define SBR_DIV(A, B) (((int64_t)A << REAL_BITS)/B)
+#define DIV_R(A, B) (((int64_t)A << REAL_BITS)/B)
+#define DIV_C(A, B) (((int64_t)A << COEF_BITS)/B)
 #else
-#define SBR_DIV(A, B) ((A)/(B))
+#define DIV_R(A, B) ((A)/(B))
+#define DIV_C(A, B) ((A)/(B))
 #endif
 
 #ifndef SBR_LOW_POWER

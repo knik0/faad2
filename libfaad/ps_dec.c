@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: ps_dec.c,v 1.5 2004/04/03 19:08:38 menno Exp $
+** $Id: ps_dec.c,v 1.6 2004/04/12 18:17:42 menno Exp $
 **/
 
 #include "common.h"
@@ -926,7 +926,7 @@ static void ps_data_decode(ps_info *ps)
 static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64],
                            qmf_t X_hybrid_left[32][32], qmf_t X_hybrid_right[32][32])
 {
-    uint8_t gr, m, n, bk;
+    uint8_t gr, n, m, bk;
     uint8_t temp_delay;
     uint8_t sb, maxsb;
     const complex_t *Phi_Fract_SubQmf;
@@ -946,7 +946,6 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
     }
 
     /* clear the energy values */
-#if 0
     for (n = 0; n < 32; n++)
     {
         for (bk = 0; bk < 34; bk++)
@@ -954,7 +953,6 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
             P[n][bk] = 0;
         }
     }
-#endif
 
     /* calculate the energy in each parameter band b(k) */
     for (gr = 0; gr < ps->num_groups; gr++)
@@ -969,6 +967,10 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
         {
             for (n = ps->border_position[0]; n < ps->border_position[ps->num_env]; n++)
             {
+#ifdef FIXED_POINT
+                uint32_t in_re, in_im;
+#endif
+
                 /* input from hybrid subbands or QMF subbands */
                 if (gr < ps->num_hybrid_groups)
                 {
@@ -980,10 +982,33 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
                 }
 
                 /* accumulate energy */
+#ifdef FIXED_POINT
+                /* NOTE: all input is scaled by 2^(-5) because of fixed point QMF
+                 * meaning that P will be scaled by 2^(-10) compared to floating point version
+                 */
+                in_re = ((abs(RE(inputLeft))+(1<<(REAL_BITS-1)))>>REAL_BITS);
+                in_im = ((abs(IM(inputLeft))+(1<<(REAL_BITS-1)))>>REAL_BITS);
+                P[n][bk] += in_re*in_re + in_im*in_im;
+#else
                 P[n][bk] += MUL_R(RE(inputLeft),RE(inputLeft)) + MUL_R(IM(inputLeft),IM(inputLeft));
+#endif
             }
         }
     }
+
+#if 0
+    for (n = 0; n < 32; n++)
+    {
+        for (bk = 0; bk < 34; bk++)
+        {
+#ifdef FIXED_POINT
+            printf("%d %d: %d\n", n, bk, P[n][bk] /*/(float)REAL_PRECISION*/);
+#else
+            printf("%d %d: %f\n", n, bk, P[n][bk]/1024.0);
+#endif
+        }
+    }
+#endif
 
     /* calculate transient reduction ratio for each parameter band b(k) */
     for (bk = 0; bk < ps->nr_par_bands; bk++)
@@ -1011,10 +1036,24 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
             {
                 G_TransientRatio[n][bk] = REAL_CONST(1.0);
             } else {
-                G_TransientRatio[n][bk] = SBR_DIV(nrg, (MUL_C(P_SmoothPeakDecayDiffNrg, gamma)));
+                G_TransientRatio[n][bk] = DIV_R(nrg, (MUL_C(P_SmoothPeakDecayDiffNrg, gamma)));
             }
         }
     }
+
+#if 0
+    for (n = 0; n < 32; n++)
+    {
+        for (bk = 0; bk < 34; bk++)
+        {
+#ifdef FIXED_POINT
+            printf("%d %d: %f\n", n, bk, G_TransientRatio[n][bk]/(float)REAL_PRECISION);
+#else
+            printf("%d %d: %f\n", n, bk, G_TransientRatio[n][bk]);
+#endif
+        }
+    }
+#endif
 
     /* apply stereo decorrelation filter to the signal */
     for (gr = 0; gr < ps->num_groups; gr++)
@@ -1028,6 +1067,7 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
         for (sb = ps->group_border[gr]; sb < maxsb; sb++)
         {
             real_t g_DecaySlope;
+            real_t g_DecaySlope_filt[NO_ALLPASS_LINKS];
 
             /* g_DecaySlope: [0..1] */
             if (gr < ps->num_hybrid_groups || sb <= ps->decay_cutoff)
@@ -1042,6 +1082,12 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
                     /* decay(int)*decay_slope(frac) = g_DecaySlope(frac) */
                     g_DecaySlope = FRAC_CONST(1.0) + DECAY_SLOPE * decay;
                 }
+            }
+
+            /* calculate g_DecaySlope_filt for every m multiplied by filter_a[m] */
+            for (m = 0; m < NO_ALLPASS_LINKS; m++)
+            {
+                g_DecaySlope_filt[m] = MUL_F(g_DecaySlope, filter_a[m]);
             }
 
 
@@ -1110,7 +1156,7 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
 
                     RE(R0) = RE(tmp);
                     IM(R0) = IM(tmp);
-                    for (m = 0; m < NO_ALLPASS_LINKS ; m++)
+                    for (m = 0; m < NO_ALLPASS_LINKS; m++)
                     {
                         complex_t Q_Fract_allpass, tmp2;
 
@@ -1143,12 +1189,12 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
                         ComplexMult(&RE(tmp), &IM(tmp), RE(tmp0), IM(tmp0), RE(Q_Fract_allpass), IM(Q_Fract_allpass));
 
                         /* -a(m) * g_DecaySlope[k] */
-                        RE(tmp) += -MUL_F(g_DecaySlope, MUL_F(filter_a[m], RE(R0)));
-                        IM(tmp) += -MUL_F(g_DecaySlope, MUL_F(filter_a[m], IM(R0)));
+                        RE(tmp) += -MUL_F(g_DecaySlope_filt[m], RE(R0));
+                        IM(tmp) += -MUL_F(g_DecaySlope_filt[m], IM(R0));
 
                         /* -a(m) * g_DecaySlope[k] * Q_Fract_allpass[k,m] * z^(-d(m)) */
-                        RE(tmp2) = RE(R0) + MUL_F(g_DecaySlope, MUL_F(filter_a[m], RE(tmp)));
-                        IM(tmp2) = IM(R0) + MUL_F(g_DecaySlope, MUL_F(filter_a[m], IM(tmp)));
+                        RE(tmp2) = RE(R0) + MUL_F(g_DecaySlope_filt[m], RE(tmp));
+                        IM(tmp2) = IM(R0) + MUL_F(g_DecaySlope_filt[m], IM(tmp));
 
                         /* store sample */
                         if (gr < ps->num_hybrid_groups)
@@ -1160,6 +1206,7 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
                             IM(ps->delay_Qmf_ser[m][temp_delay_ser[m]][sb]) = IM(tmp2);
                         }
 
+                        /* store for next iteration (or as output value if last iteration) */
                         RE(R0) = RE(tmp);
                         IM(R0) = IM(tmp);
                     }
@@ -1192,6 +1239,7 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
                 /* update delay indices */
                 if (sb > ps->nr_allpass_bands && gr >= ps->num_hybrid_groups)
                 {
+                    /* delay_D depends on the samplerate, it can hold the values 14 and 1 */
                     if (++ps->delay_buf_index_delay[sb] >= ps->delay_D[sb])
                     {
                         ps->delay_buf_index_delay[sb] = 0;
@@ -1215,10 +1263,41 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
         ps->delay_buf_index_ser[m] = temp_delay_ser[m];
 }
 
+#ifdef FIXED_POINT
+#define step(shift) \
+    if ((0x40000000l >> shift) + root <= value)       \
+    {                                                 \
+        value -= (0x40000000l >> shift) + root;       \
+        root = (root >> 1) | (0x40000000l >> shift);  \
+    } else {                                          \
+        root = root >> 1;                             \
+    }
+
+/* fixed point square root approximation */
+static real_t ps_sqrt(real_t value)
+{
+    real_t root = 0;
+
+    step( 0); step( 2); step( 4); step( 6);
+    step( 8); step(10); step(12); step(14);
+    step(16); step(18); step(20); step(22);
+    step(24); step(26); step(28); step(30);
+
+    if (root < value)
+        ++root;
+
+    root <<= (REAL_BITS/2);
+
+    return root;
+}
+#else
+#define ps_sqrt(A) sqrt(A)
+#endif
+
 static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64],
                          qmf_t X_hybrid_left[32][32], qmf_t X_hybrid_right[32][32])
 {
-    uint8_t i;
+    uint8_t n;
     uint8_t gr;
     uint8_t bk = 0;
     uint8_t sb, maxsb;
@@ -1315,9 +1394,6 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
                 RE(h12) = MUL_C(c_1, (ab1 + ab2));
                 RE(h21) = MUL_C(c_2, (ab3 + ab4));
                 RE(h22) = MUL_C(c_1, (ab3 - ab4));
-
-                //printf("%d %f %f %f %f\n", ps->iid_index[env][bin], scaleR, scaleL, alpha, beta);
-
             } else {
                 /* type 'B' mixing as described in 8.6.4.6.2.2 */
                 real_t sina, cosa;
@@ -1385,27 +1461,32 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
              */
             if ((ps->enable_ipdopd) && (bk < nr_ipdopd_par))
             {
-                real_t ipd, opd;
+                int8_t i;
                 real_t xxyy, ppqq;
                 real_t yq, xp, xq, py, tmp;
-
-                ipd = (float)( M_PI/4.0f ) * ps->ipd_index[env][bk];
-                opd = (float)( M_PI/4.0f ) * ps->opd_index[env][bk];
 
                 /* ringbuffer index */
                 i = ps->phase_hist;
 
                 /* previous value */
+#ifdef FIXED_POINT
+                /* divide by 4, shift right 2 bits */
+                RE(tempLeft)  = RE(ps->ipd_prev[bk][i]) >> 2;
+                IM(tempLeft)  = IM(ps->ipd_prev[bk][i]) >> 2;
+                RE(tempRight) = RE(ps->opd_prev[bk][i]) >> 2;
+                IM(tempRight) = IM(ps->opd_prev[bk][i]) >> 2;
+#else
                 RE(tempLeft)  = MUL_F(RE(ps->ipd_prev[bk][i]), FRAC_CONST(0.25));
                 IM(tempLeft)  = MUL_F(IM(ps->ipd_prev[bk][i]), FRAC_CONST(0.25));
                 RE(tempRight) = MUL_F(RE(ps->opd_prev[bk][i]), FRAC_CONST(0.25));
                 IM(tempRight) = MUL_F(IM(ps->opd_prev[bk][i]), FRAC_CONST(0.25));
+#endif
 
                 /* save current value */
-                RE(ps->ipd_prev[bk][i]) = (float)cos(ipd);
-                IM(ps->ipd_prev[bk][i]) = (float)sin(ipd);
-                RE(ps->opd_prev[bk][i]) = (float)cos(opd);
-                IM(ps->opd_prev[bk][i]) = (float)sin(opd);
+                RE(ps->ipd_prev[bk][i]) = (float)cos((float)( M_PI/4.0f ) * ps->ipd_index[env][bk]);
+                IM(ps->ipd_prev[bk][i]) = (float)sin((float)( M_PI/4.0f ) * ps->ipd_index[env][bk]);
+                RE(ps->opd_prev[bk][i]) = (float)cos((float)( M_PI/4.0f ) * ps->opd_index[env][bk]);
+                IM(ps->opd_prev[bk][i]) = (float)sin((float)( M_PI/4.0f ) * ps->opd_index[env][bk]);
 
                 /* add current value */
                 RE(tempLeft)  += RE(ps->ipd_prev[bk][i]);
@@ -1421,12 +1502,20 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
                 i--;
 
                 /* get value before previous */
+#ifdef FIXED_POINT
+                /* dividing by 2, shift right 1 bit */
+                RE(tempLeft)  += (RE(ps->ipd_prev[bk][i]) >> 1);
+                IM(tempLeft)  += (IM(ps->ipd_prev[bk][i]) >> 1);
+                RE(tempRight) += (RE(ps->opd_prev[bk][i]) >> 1);
+                IM(tempRight) += (IM(ps->opd_prev[bk][i]) >> 1);
+#else
                 RE(tempLeft)  += MUL_F(RE(ps->ipd_prev[bk][i]), FRAC_CONST(0.5));
                 IM(tempLeft)  += MUL_F(IM(ps->ipd_prev[bk][i]), FRAC_CONST(0.5));
                 RE(tempRight) += MUL_F(RE(ps->opd_prev[bk][i]), FRAC_CONST(0.5));
                 IM(tempRight) += MUL_F(IM(ps->opd_prev[bk][i]), FRAC_CONST(0.5));
+#endif
 
-#if 0
+#if 0 /* original code */
                 ipd = (float)atan2(IM(tempLeft), RE(tempLeft));
                 opd = (float)atan2(IM(tempRight), RE(tempRight));
 
@@ -1441,41 +1530,49 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
                 // sin(atan2(x,y)) = x/(y*sqrt(1 + (x*x)/(y*y)))
                 // cos(atan2(x,y)-atan2(p,q)) = (y*q+x*p)/(y*q * sqrt(1 + (x*x)/(y*y)) * sqrt(1 + (p*p)/(q*q)));
                 // sin(atan2(x,y)-atan2(p,q)) = (x*q-p*y)/(y*q * sqrt(1 + (x*x)/(y*y)) * sqrt(1 + (p*p)/(q*q)));
-#define DIV_C(A,B) ((A)/(B))
-                xxyy = DIV_C(MUL_C(IM(tempLeft),IM(tempLeft)), MUL_C(RE(tempLeft),RE(tempLeft)));
-                ppqq = DIV_C(MUL_C(IM(tempRight),IM(tempRight)), MUL_C(RE(tempRight),RE(tempRight)));
 
-                xxyy += COEF_CONST(1);
-                ppqq += COEF_CONST(1);
+                /* (x*x)/(y*y)  (REAL > 0) */
+                xxyy = DIV_R(MUL_C(IM(tempLeft),IM(tempLeft)), MUL_C(RE(tempLeft),RE(tempLeft)));
+                ppqq = DIV_R(MUL_C(IM(tempRight),IM(tempRight)), MUL_C(RE(tempRight),RE(tempRight)));
 
-                xxyy = sqrt(xxyy);
-                ppqq = sqrt(ppqq);
+                /* 1 + (x*x)/(y*y)  (REAL > 1) */
+                xxyy += REAL_CONST(1);
+                ppqq += REAL_CONST(1);
 
+                /* 1 / sqrt(1 + (x*x)/(y*y))  (FRAC <= 1) */
+                xxyy = DIV_R(FRAC_CONST(1), ps_sqrt(xxyy));
+                ppqq = DIV_R(FRAC_CONST(1), ps_sqrt(ppqq));
+
+                /* COEF */
                 yq = MUL_C(RE(tempLeft), RE(tempRight));
                 xp = MUL_C(IM(tempLeft), IM(tempRight));
                 xq = MUL_C(IM(tempLeft), RE(tempRight));
-                py = MUL_C(IM(tempRight), RE(tempLeft));
+                py = MUL_C(RE(tempLeft), IM(tempRight));
 
-                RE(phaseLeft) = 1.f/xxyy;
-                IM(phaseLeft) = IM(tempLeft)/(RE(tempLeft)*xxyy);
+                RE(phaseLeft) = xxyy;
+                IM(phaseLeft) = MUL_R(xxyy, (DIV_R(IM(tempLeft), RE(tempLeft))));
 
-                tmp = 1.f / (yq * xxyy * ppqq);
-                RE(phaseRight) = (yq+xp) * tmp;
-                IM(phaseRight) = (xq-py) * tmp;
+                tmp = DIV_C(MUL_F(xxyy, ppqq), yq);
+
+                /* MUL_C(FRAC,COEF) = FRAC */
+                RE(phaseRight) = MUL_C(tmp, (yq+xp));
+                IM(phaseRight) = MUL_C(tmp, (xq-py));
 #endif
 
-                IM(h11) = RE(h11) * IM(phaseLeft);
-                IM(h12) = RE(h12) * IM(phaseRight);
-                IM(h21) = RE(h21) * IM(phaseLeft);
-                IM(h22) = RE(h22) * IM(phaseRight);
+                /* MUL_F(COEF, FRAC) = COEF */
+                IM(h11) = MUL_F(RE(h11), IM(phaseLeft));
+                IM(h12) = MUL_F(RE(h12), IM(phaseRight));
+                IM(h21) = MUL_F(RE(h21), IM(phaseLeft));
+                IM(h22) = MUL_F(RE(h22), IM(phaseRight));
 
-                RE(h11) *= RE(phaseLeft);
-                RE(h12) *= RE(phaseRight);
-                RE(h21) *= RE(phaseLeft);
-                RE(h22) *= RE(phaseRight);
+                RE(h11) = MUL_F(RE(h11), RE(phaseLeft));
+                RE(h12) = MUL_F(RE(h12), RE(phaseRight));
+                RE(h21) = MUL_F(RE(h21), RE(phaseLeft));
+                RE(h22) = MUL_F(RE(h22), RE(phaseRight));
             }
 
             /* length of the envelope n_e+1 - n_e (in time samples) */
+            /* 0 < L <= 32: integer */
             L = (real_t)(ps->border_position[env + 1] - ps->border_position[env]);
 
             /* obtain final H_xy by means of linear interpolation */
@@ -1528,9 +1625,9 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
             }
 
             /* apply H_xy to the current envelope band of the decorrelated subband */
-            for (i = ps->border_position[env]; i < ps->border_position[env + 1]; i++)
+            for (n = ps->border_position[env]; n < ps->border_position[env + 1]; n++)
             {
-                /* addition finalises the interpolation */
+                /* addition finalises the interpolation over every n */
                 RE(H11) += RE(deltaH11);
                 RE(H12) += RE(deltaH12);
                 RE(H21) += RE(deltaH21);
@@ -1551,45 +1648,45 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
                     /* load decorrelated samples */
                     if (gr < ps->num_hybrid_groups)
                     {
-                        RE(inLeft) =  RE(X_hybrid_left[i][sb]);
-                        IM(inLeft) =  IM(X_hybrid_left[i][sb]);
-                        RE(inRight) = RE(X_hybrid_right[i][sb]);
-                        IM(inRight) = IM(X_hybrid_right[i][sb]);
+                        RE(inLeft) =  RE(X_hybrid_left[n][sb]);
+                        IM(inLeft) =  IM(X_hybrid_left[n][sb]);
+                        RE(inRight) = RE(X_hybrid_right[n][sb]);
+                        IM(inRight) = IM(X_hybrid_right[n][sb]);
                     } else {
-                        RE(inLeft) =  RE(X_left[i][sb]);
-                        IM(inLeft) =  IM(X_left[i][sb]);
-                        RE(inRight) = RE(X_right[i][sb]);
-                        IM(inRight) = IM(X_right[i][sb]);
+                        RE(inLeft) =  RE(X_left[n][sb]);
+                        IM(inLeft) =  IM(X_left[n][sb]);
+                        RE(inRight) = RE(X_right[n][sb]);
+                        IM(inRight) = IM(X_right[n][sb]);
                     }
 
                     /* apply mixing */
-                    RE(tempLeft) =  RE(H11) * RE(inLeft) + RE(H21) * RE(inRight);
-                    IM(tempLeft) =  RE(H11) * IM(inLeft) + RE(H21) * IM(inRight);
-                    RE(tempRight) = RE(H12) * RE(inLeft) + RE(H22) * RE(inRight);
-                    IM(tempRight) = RE(H12) * IM(inLeft) + RE(H22) * IM(inRight);
+                    RE(tempLeft) =  MUL_C(RE(H11), RE(inLeft)) + MUL_C(RE(H21), RE(inRight));
+                    IM(tempLeft) =  MUL_C(RE(H11), IM(inLeft)) + MUL_C(RE(H21), IM(inRight));
+                    RE(tempRight) = MUL_C(RE(H12), RE(inLeft)) + MUL_C(RE(H22), RE(inRight));
+                    IM(tempRight) = MUL_C(RE(H12), IM(inLeft)) + MUL_C(RE(H22), IM(inRight));
 
                     /* only perform imaginary operations when needed */
                     if ((ps->enable_ipdopd) && (bk < nr_ipdopd_par))
                     {
                         /* apply rotation */
-                        RE(tempLeft)  -= IM(H11) * IM(inLeft) + IM(H21) * IM(inRight); 
-                        IM(tempLeft)  += IM(H11) * RE(inLeft) + IM(H21) * RE(inRight);
-                        RE(tempRight) -= IM(H12) * IM(inLeft) + IM(H22) * IM(inRight);
-                        IM(tempRight) += IM(H12) * RE(inLeft) + IM(H22) * RE(inRight);
+                        RE(tempLeft)  -= MUL_C(IM(H11), IM(inLeft)) + MUL_C(IM(H21), IM(inRight));
+                        IM(tempLeft)  += MUL_C(IM(H11), RE(inLeft)) + MUL_C(IM(H21), RE(inRight));
+                        RE(tempRight) -= MUL_C(IM(H12), IM(inLeft)) + MUL_C(IM(H22), IM(inRight));
+                        IM(tempRight) += MUL_C(IM(H12), RE(inLeft)) + MUL_C(IM(H22), RE(inRight));
                     }
 
                     /* store final samples */
                     if (gr < ps->num_hybrid_groups)
                     {
-                        RE(X_hybrid_left[i][sb]) =  RE(tempLeft);
-                        IM(X_hybrid_left[i][sb]) =  IM(tempLeft);
-                        RE(X_hybrid_right[i][sb]) = RE(tempRight);
-                        IM(X_hybrid_right[i][sb]) = IM(tempRight);
+                        RE(X_hybrid_left[n][sb])  = RE(tempLeft);
+                        IM(X_hybrid_left[n][sb])  = IM(tempLeft);
+                        RE(X_hybrid_right[n][sb]) = RE(tempRight);
+                        IM(X_hybrid_right[n][sb]) = IM(tempRight);
                     } else {
-                        RE(X_left[i][sb]) =  RE(tempLeft);
-                        IM(X_left[i][sb]) =  IM(tempLeft);
-                        RE(X_right[i][sb]) = RE(tempRight);
-                        IM(X_right[i][sb]) = IM(tempRight);
+                        RE(X_left[n][sb])  = RE(tempLeft);
+                        IM(X_left[n][sb])  = IM(tempLeft);
+                        RE(X_right[n][sb]) = RE(tempRight);
+                        IM(X_right[n][sb]) = IM(tempRight);
                     }
                 }
             }

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_fbt.c,v 1.12 2004/03/10 19:45:41 menno Exp $
+** $Id: sbr_fbt.c,v 1.13 2004/04/12 18:17:42 menno Exp $
 **/
 
 /* Calculate frequency band tables */
@@ -594,7 +594,7 @@ uint8_t derived_frequency_table(sbr_info *sbr, uint8_t bs_xover_band,
     printf("f_table_noise[%d]: ", sbr->N_Q);
     for (k = 0; k <= sbr->N_Q; k++)
     {
-        printf("%d ", sbr->f_table_noise[k]);
+        printf("%d ", sbr->f_table_noise[k] - sbr->kx);
     }
     printf("\n");
 #endif
@@ -625,6 +625,15 @@ void limiter_frequency_table(sbr_info *sbr)
     sbr->f_table_lim[0][0] = sbr->f_table_res[LO_RES][0] - sbr->kx;
     sbr->f_table_lim[0][1] = sbr->f_table_res[LO_RES][sbr->N_low] - sbr->kx;
     sbr->N_L[0] = 1;
+
+#if 0
+    printf("f_table_lim[%d][%d]: ", 0, sbr->N_L[0]);
+    for (k = 0; k <= sbr->N_L[0]; k++)
+    {
+        printf("%d ", sbr->f_table_lim[0][k]);
+    }
+    printf("\n");
+#endif
 
     for (s = 1; s < 4; s++)
     {
@@ -668,7 +677,7 @@ restart:
                 nOctaves = REAL_CONST(log((float)limTable[k]/(float)limTable[k-1])/log(2.0));
 #else
 #ifdef FIXED_POINT
-                nOctaves = SBR_DIV(REAL_CONST(limTable[k]),REAL_CONST(limTable[k-1]));
+                nOctaves = DIV_R(REAL_CONST(limTable[k]),REAL_CONST(limTable[k-1]));
 #else
                 nOctaves = (real_t)limTable[k]/(real_t)limTable[k-1];
 #endif

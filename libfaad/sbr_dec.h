@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.h,v 1.30 2004/04/03 10:49:15 menno Exp $
+** $Id: sbr_dec.h,v 1.31 2004/04/12 18:17:42 menno Exp $
 **/
 
 #ifndef __SBR_DEC_H__
@@ -43,6 +43,10 @@ extern "C" {
 #define MAX_NTSRHFG 40
 #define MAX_NTSR    32 /* max number_time_slots * rate, ok for DRM and not DRM mode */
 
+/* MAX_M: maximum value for M */
+#define MAX_M       49
+/* MAX_L_E: maximum value for L_E */
+#define MAX_L_E      5
 
 typedef struct {
     real_t *x;
@@ -98,18 +102,19 @@ typedef struct
     uint8_t L_E_prev[2];
     uint8_t L_Q[2];
 
-    uint8_t t_E[2][6];
+    uint8_t t_E[2][MAX_L_E+1];
     uint8_t t_Q[2][3];
-    uint8_t f[2][6];
+    uint8_t f[2][MAX_L_E+1];
     uint8_t f_prev[2];
 
     real_t *G_temp_prev[2][5];
     real_t *Q_temp_prev[2][5];
+    int8_t GQ_ringbuf_index[2];
 
-    int16_t E[2][64][5];
+    int16_t E[2][64][MAX_L_E];
     int16_t E_prev[2][64];
-    real_t E_orig[2][64][5];
-    real_t E_curr[2][64][5];
+    real_t E_orig[2][64][MAX_L_E];
+    real_t E_curr[2][64][MAX_L_E];
     int32_t Q[2][64][2];
     real_t Q_div[2][64][2];
     real_t Q_div2[2][64][2];
@@ -118,8 +123,8 @@ typedef struct
     int8_t l_A[2];
     int8_t l_A_prev[2];
 
-    uint8_t bs_invf_mode[2][5];
-    uint8_t bs_invf_mode_prev[2][5];
+    uint8_t bs_invf_mode[2][MAX_L_E];
+    uint8_t bs_invf_mode_prev[2][MAX_L_E];
     real_t bwArray[2][64];
     real_t bwArray_prev[2][64];
 

@@ -1,6 +1,6 @@
+12 april 2004   mbakker(at)nero.com
+    - common.h, ps_dec.c: Updates for PS fixed point, should completely work now
 
-- 30 mar 2004: Updated mpeg4ip libraries to version 1.0
-- xx mar 2004: First PS (Parametric Stereo) checkin
+12 april 2004   gpascutto(at)nero.com
+    - drm_dec.c, drm_dec.h: eliminated sqrt and SA mapping/dequantization from DRM PS decoder                
 
-- 26 feb 2004: Added downsampled SBR support
-- 26 feb 2004: Optimised Low Power QMF filterbank

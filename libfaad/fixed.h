@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: fixed.h,v 1.21 2004/03/19 10:37:55 menno Exp $
+** $Id: fixed.h,v 1.22 2004/04/12 18:17:42 menno Exp $
 **/
 
 #ifndef __FIXED_H__
@@ -32,7 +32,7 @@
 extern "C" {
 #endif
 
-#ifdef _WIN32_WCE
+#if defined(_WIN32_WCE) && defined(_ARM_)
 #include <cmnintrin.h>
 #endif
 
@@ -213,15 +213,15 @@ static INLINE void ComplexMult(real_t *y1, real_t *y2,
   /* multiply with coef shift */
   #define MUL_C(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (COEF_BITS-1))) >> COEF_BITS)
   /* multiply with fractional shift */
-#ifndef _WIN32_WCE
-  #define _MulHigh(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (FRAC_SIZE-1))) >> FRAC_SIZE)
-  #define MUL_F(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (FRAC_BITS-1))) >> FRAC_BITS)
-#else
+#if defined(_WIN32_WCE) && defined(_ARM_)
   /* eVC for PocketPC has an intrinsic function that returns only the high 32 bits of a 32x32 bit multiply */
   static INLINE real_t MUL_F(real_t A, real_t B)
   {
       return _MulHigh(A,B) << (32-FRAC_BITS);
   }
+#else
+  #define _MulHigh(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (FRAC_SIZE-1))) >> FRAC_SIZE)
+  #define MUL_F(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (FRAC_BITS-1))) >> FRAC_BITS)
 #endif
   #define MUL_Q2(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (Q2_BITS-1))) >> Q2_BITS)
   #define MUL_SHIFT6(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (6-1))) >> 6)

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4atom.c,v 1.19 2004/03/31 17:39:57 menno Exp $
+** $Id: mp4atom.c,v 1.20 2004/04/12 18:17:42 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -30,7 +30,9 @@
 #include "config.h"
 #else
 #include <tchar.h>
+#ifdef ITUNES_DRM
 #include <shlobj.h>
+#endif
 #include <windows.h>
 #endif
 #ifdef HAVE_GETPWUID

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: ps_dec.h,v 1.3 2004/04/03 19:08:38 menno Exp $
+** $Id: ps_dec.h,v 1.6 2004/07/31 15:48:56 menno Exp $
 **/
 
 #ifndef __PS_DEC_H__
@@ -104,10 +104,10 @@ typedef struct
     uint8_t delay_D[64];
     uint8_t delay_buf_index_delay[64];
 
-    complex_t delay_Qmf[14][64]; /* 14 samples delay, 64 QMF channels */
-    complex_t delay_SubQmf[14][32]; /* 14 samples delay */
-    complex_t delay_Qmf_ser[NO_ALLPASS_LINKS][14][64]; /* 14 samples delay, 64 QMF channels */
-    complex_t delay_SubQmf_ser[NO_ALLPASS_LINKS][14][32]; /* 14 samples delay */
+    complex_t delay_Qmf[14][64]; /* 14 samples delay max, 64 QMF channels */
+    complex_t delay_SubQmf[2][32]; /* 2 samples delay max (SubQmf is always allpass filtered) */
+    complex_t delay_Qmf_ser[NO_ALLPASS_LINKS][5][64]; /* 5 samples delay max (table 8.34), 64 QMF channels */
+    complex_t delay_SubQmf_ser[NO_ALLPASS_LINKS][5][32]; /* 5 samples delay max (table 8.34) */
 
     /* transients */
     real_t alpha_decay;

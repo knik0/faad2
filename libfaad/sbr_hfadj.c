@@ -1,19 +1,19 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfadj.c,v 1.13 2004/03/19 10:37:55 menno Exp $
+** $Id: sbr_hfadj.c,v 1.14 2004/04/12 18:17:42 menno Exp $
 **/
 
 /* High Frequency adjustment */
@@ -77,28 +77,25 @@ void hf_adjustment(sbr_info *sbr, qmf_t Xsbr[MAX_NTSRHFG][64]
 static void map_noise_data(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 {
     uint8_t l, i;
-    uint32_t m;
+    uint8_t m;
 
     for (l = 0; l < sbr->L_E[ch]; l++)
     {
-        for (i = 0; i < sbr->N_Q; i++)
+        uint8_t k;
+
+        /* select the noise time band k that completely holds the current envelope time band l */
+        for (k = 0; k < 2; k++)
         {
-            for (m = sbr->f_table_noise[i]; m < sbr->f_table_noise[i+1]; m++)
+            if ((sbr->t_E[ch][l] >= sbr->t_Q[ch][k]) && (sbr->t_E[ch][l+1] <= sbr->t_Q[ch][k+1]))
             {
-                uint8_t k;
-
-                adj->Q_div_mapped[m - sbr->kx][l] = 0;
-                adj->Q_div2_mapped[m - sbr->kx][l] = 0;
-
-                for (k = 0; k < 2; k++)
+                for (i = 0; i < sbr->N_Q; i++)
                 {
-                    if ((sbr->t_E[ch][l] >= sbr->t_Q[ch][k]) &&
-                        (sbr->t_E[ch][l+1] <= sbr->t_Q[ch][k+1]))
+                    for (m = sbr->f_table_noise[i]; m < sbr->f_table_noise[i+1]; m++)
                     {
-                        adj->Q_div_mapped[m - sbr->kx][l] =
+                        adj->Q_div_mapped[l][m - sbr->kx] =
                             sbr->Q_div[ch][i][k];
 
-                        adj->Q_div2_mapped[m - sbr->kx][l] =
+                        adj->Q_div2_mapped[l][m - sbr->kx] =
                             sbr->Q_div2[ch][i][k];
                     }
                 }
@@ -130,8 +127,8 @@ static void map_sinusoids(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
     {
         for (i = 0; i < 64; i++)
         {
-            adj->S_index_mapped[i][l] = 0;
-            adj->S_mapped[i][l] = 0;
+            adj->S_index_mapped[l][i] = 0;
+            adj->S_mapped[l][i] = 0;
         }
     }
 
@@ -139,22 +136,12 @@ static void map_sinusoids(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
     {
         for (i = 0; i < sbr->N_high; i++)
         {
-            for (m = sbr->f_table_res[HI_RES][i]; m < sbr->f_table_res[HI_RES][i+1]; m++)
+            if ((l >= sbr->l_A[ch]) ||
+                (sbr->bs_add_harmonic_prev[ch][i] && sbr->bs_add_harmonic_flag_prev[ch]))
             {
-                uint8_t delta_step = 0;
-                if ((l >= sbr->l_A[ch]) || ((sbr->bs_add_harmonic_prev[ch][i]) &&
-                    (sbr->bs_add_harmonic_flag_prev[ch])))
-                {
-                    delta_step = 1;
-                }
-
-                if (m == (int32_t)((real_t)(sbr->f_table_res[HI_RES][i+1]+sbr->f_table_res[HI_RES][i])/2.))
-                {
-                    adj->S_index_mapped[m - sbr->kx][l] =
-                        delta_step * sbr->bs_add_harmonic[ch][i];
-                } else {
-                    adj->S_index_mapped[m - sbr->kx][l] = 0;
-                }
+                /* find the middle subband of the frequency band */
+                m = (sbr->f_table_res[HI_RES][i+1] + sbr->f_table_res[HI_RES][i]) >> 1;
+                adj->S_index_mapped[l][m - sbr->kx] = /*delta_step **/ sbr->bs_add_harmonic[ch][i];
             }
         }
     }
@@ -163,7 +150,7 @@ static void map_sinusoids(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
     {
         for (i = 0; i < sbr->N_high; i++)
         {
-            if (sbr->f[ch][l] == 1)
+            if (sbr->f[ch][l] == HI_RES)
             {
                 k1 = i;
                 k2 = i + 1;
@@ -192,16 +179,57 @@ static void map_sinusoids(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
             delta_S = 0;
             for (k = l_i; k < u_i; k++)
             {
-                if (adj->S_index_mapped[k - sbr->kx][l] == 1)
+                if (adj->S_index_mapped[l][k - sbr->kx] == 1)
                     delta_S = 1;
             }
 
             for (m = l_i; m < u_i; m++)
             {
-                adj->S_mapped[m - sbr->kx][l] = delta_S;
+                adj->S_mapped[l][m - sbr->kx] = delta_S;
             }
         }
     }
+}
+
+static uint8_t get_S_mapped(sbr_info *sbr, uint8_t ch, uint8_t l, uint8_t current_band)
+{
+    if (sbr->f[ch][l] == HI_RES)
+    {
+        /* in case of using f_table_high we just have 1 to 1 mapping
+         * from bs_add_harmonic[l][k]
+         */
+        if ((l >= sbr->l_A[ch]) ||
+            (sbr->bs_add_harmonic_prev[ch][current_band] && sbr->bs_add_harmonic_flag_prev[ch]))
+        {
+            return sbr->bs_add_harmonic[ch][current_band];
+        }
+    } else {
+        uint8_t b, lb, ub;
+
+        /* in case of f_table_low we check if any of the HI_RES bands
+         * within this LO_RES band has bs_add_harmonic[l][k] turned on
+         * (note that borders in the LO_RES table are also present in
+         * the HI_RES table)
+         */
+
+        /* find first HI_RES band in current LO_RES band */
+        lb = 2*current_band - ((sbr->N_high & 1) ? 1 : 0);
+        /* find first HI_RES band in next LO_RES band */
+        ub = 2*(current_band+1) - ((sbr->N_high & 1) ? 1 : 0);
+
+        /* check all HI_RES bands in current LO_RES band for sinusoid */
+        for (b = lb; b < ub; b++)
+        {
+            if ((l >= sbr->l_A[ch]) ||
+                (sbr->bs_add_harmonic_prev[ch][b] && sbr->bs_add_harmonic_flag_prev[ch]))
+            {
+                if (sbr->bs_add_harmonic[ch][b] == 1)
+                    return 1;
+            }
+        }
+    }
+
+    return 0;
 }
 
 static void estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
@@ -445,13 +473,13 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 {
     uint8_t m, l, k, i;
 
-    ALIGN real_t Q_M_lim[64];
-    ALIGN real_t G_lim[64];
+    ALIGN real_t Q_M_lim[MAX_M];
+    ALIGN real_t G_lim[MAX_M];
     ALIGN real_t G_boost;
-    ALIGN real_t S_M[64];
-    ALIGN uint8_t table_map_res_to_m[64];
-    ALIGN uint8_t G_is_frac[64];
-    ALIGN uint8_t Q_M_is_real[64];
+    ALIGN real_t S_M[MAX_M];
+    ALIGN uint8_t table_map_res_to_m[MAX_M];
+    ALIGN uint8_t G_is_frac[MAX_M];
+    ALIGN uint8_t Q_M_is_real[MAX_M];
 
 
     for (l = 0; l < sbr->L_E[ch]; l++)
@@ -549,9 +577,9 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
                 /* Q_mapped: fixed point */
 
                 /* Q_div1: [0..1] FRAC_CONST */
-                Q_div1 = adj->Q_div_mapped[m][l];
+                Q_div1 = adj->Q_div_mapped[l][m];
                 /* Q_div2: [0..1] FRAC_CONST */
-                Q_div2 = adj->Q_div2_mapped[m][l];
+                Q_div2 = adj->Q_div2_mapped[l][m];
 
                 /* E_orig: integer */
                 E_orig = sbr->E_orig[ch][table_map_res_to_m[m]][l];
@@ -564,18 +592,18 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
                     Q_M = ((int64_t)(E_orig>>4) * Q_div2) >> FRAC_BITS;
                     Q_M_is_real[m] = 0;
 
-                    S_M[m] = adj->S_index_mapped[m][l] * MUL_F((E_orig>>4), Q_div1);
+                    S_M[m] = adj->S_index_mapped[l][m] * MUL_F((E_orig>>4), Q_div1);
                 } else if (E_orig > (1<<4)) {
                     Q_M = ((int64_t)(E_orig>>4) * Q_div2) >> (FRAC_BITS-REAL_BITS);
                     Q_M_is_real[m] = 1;
 
-                    S_M[m] = adj->S_index_mapped[m][l] * MUL_F((E_orig>>4), Q_div1);
+                    S_M[m] = adj->S_index_mapped[l][m] * MUL_F((E_orig>>4), Q_div1);
                 } else {
                     Q_M = ((int64_t)E_orig * Q_div2) >> (FRAC_BITS-REAL_BITS);
                     Q_M >>= 4;
                     Q_M_is_real[m] = 1;
 
-                    S_M[m] = adj->S_index_mapped[m][l] * MUL_F(E_orig, Q_div1);
+                    S_M[m] = adj->S_index_mapped[l][m] * MUL_F(E_orig, Q_div1);
                     S_M[m] >>= 4;
                 }
 
@@ -617,7 +645,7 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
                     G_is_frac[m] = 0;
                 }
 
-                if (adj->S_mapped[m][l] == 1)
+                if (adj->S_mapped[l][m] == 1)
                 {
                     G = MUL_F(G, Q_div2);
                 } else if (delta == 1) {
@@ -668,7 +696,7 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
                     den_int += MUL_F(sbr->E_curr[ch][m][l], G_lim[m]);
                 }
                 den_int += S_M[m];
-                if ((!adj->S_index_mapped[m][l]) && (l != sbr->l_A[ch]))
+                if ((!adj->S_index_mapped[l][m]) && (l != sbr->l_A[ch]))
                 {
                     if (Q_M_is_real[m] == 1)
                     {
@@ -727,7 +755,7 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
                 }
 
                 /* S_M_boost: integer */
-                if (adj->S_index_mapped[m][l])
+                if (adj->S_index_mapped[l][m])
                 {
                     adj->S_M_boost[l][m] = SBR_SQRT_INT(MUL_R(S_M[m], G_boost));
                 } else {
@@ -742,24 +770,30 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 {
     static real_t limGain[] = { 0.5, 1.0, 2.0, 1e10 };
-    uint8_t m, l, k, i;
+    uint8_t m, l, k;
 
-    ALIGN real_t Q_M_lim[64];
-    ALIGN real_t G_lim[64];
+    uint8_t current_t_noise_band = 0;
+    uint8_t S_mapped;
+
+    ALIGN real_t Q_M_lim[MAX_M];
+    ALIGN real_t G_lim[MAX_M];
     ALIGN real_t G_boost;
-    ALIGN real_t S_M[64];
-    ALIGN uint8_t table_map_res_to_m[64];
+    ALIGN real_t S_M[MAX_M];
 
     for (l = 0; l < sbr->L_E[ch]; l++)
     {
+        uint8_t current_f_noise_band = 0;
+        uint8_t current_res_band = 0;
+        uint8_t current_res_band2 = 0;
+        uint8_t current_hi_res_band = 0;
+
         real_t delta = (l == sbr->l_A[ch] || l == sbr->prevEnvIsShort[ch]) ? 0 : 1;
 
-        for (i = 0; i < sbr->n[sbr->f[ch][l]]; i++)
+        S_mapped = get_S_mapped(sbr, ch, l, current_res_band2);
+
+        if (sbr->t_E[ch][l+1] > sbr->t_Q[ch][current_t_noise_band+1])
         {
-            for (m = sbr->f_table_res[sbr->f[ch][l]][i]; m < sbr->f_table_res[sbr->f[ch][l]][i+1]; m++)
-            {
-                table_map_res_to_m[m - sbr->kx] = i;
-            }
+            current_t_noise_band++;
         }
 
         for (k = 0; k < sbr->N_L[sbr->bs_limiter_bands]; k++)
@@ -768,6 +802,7 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
             real_t den = 0;
             real_t acc1 = 0;
             real_t acc2 = 0;
+            uint8_t current_res_band_size = 0;
 
             uint8_t ml1, ml2;
 
@@ -778,39 +813,110 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
             /* calculate the accumulated E_orig and E_curr over the limiter band */
             for (m = ml1; m < ml2; m++)
             {
-                acc1 += sbr->E_orig[ch][table_map_res_to_m[m]][l];
+                if ((m + sbr->kx) == sbr->f_table_res[sbr->f[ch][l]][current_res_band+1])
+                {
+                    current_res_band++;
+                }
+                acc1 += sbr->E_orig[ch][current_res_band][l];
                 acc2 += sbr->E_curr[ch][m][l];
             }
 
-            G_max = ((EPS + acc1)/(EPS + acc2)) * limGain[sbr->bs_limiter_gains];
+
+            /* calculate the maximum gain */
+            /* ratio of the energy of the original signal and the energy
+             * of the HF generated signal
+             */
+            G_max = ((EPS + acc1) / (EPS + acc2)) * limGain[sbr->bs_limiter_gains];
             G_max = min(G_max, 1e10);
+
 
             for (m = ml1; m < ml2; m++)
             {
                 real_t Q_M, G;
                 real_t Q_div, Q_div2;
+                uint8_t S_index_mapped;
+
+
+                /* check if m is on a noise band border */
+                if ((m + sbr->kx) == sbr->f_table_noise[current_f_noise_band+1])
+                {
+                    /* step to next noise band */
+                    current_f_noise_band++;
+                }
+
+
+                /* check if m is on a resolution band border */
+                if ((m + sbr->kx) == sbr->f_table_res[sbr->f[ch][l]][current_res_band2+1])
+                {
+                    /* step to next resolution band */
+                    current_res_band2++;
+
+                    /* if we move to a new resolution band, we should check if we are
+                     * going to add a sinusoid in this band
+                     */
+                    S_mapped = get_S_mapped(sbr, ch, l, current_res_band2);
+                }
+
+
+                /* check if m is on a HI_RES band border */
+                if ((m + sbr->kx) == sbr->f_table_res[HI_RES][current_hi_res_band+1])
+                {
+                    /* step to next HI_RES band */
+                    current_hi_res_band++;
+                }
+
+
+                /* find S_index_mapped
+                 * S_index_mapped can only be 1 for the m in the middle of the
+                 * current HI_RES band
+                 */
+                S_index_mapped = 0;
+                if ((l >= sbr->l_A[ch]) ||
+                    (sbr->bs_add_harmonic_prev[ch][current_hi_res_band] && sbr->bs_add_harmonic_flag_prev[ch]))
+                {
+                    /* find the middle subband of the HI_RES frequency band */
+                    if ((m + sbr->kx) == (sbr->f_table_res[HI_RES][current_hi_res_band+1] + sbr->f_table_res[HI_RES][current_hi_res_band]) >> 1)
+                        S_index_mapped = sbr->bs_add_harmonic[ch][current_hi_res_band];
+                }
+
 
                 /* Q_div: [0..1] (1/(1+Q_mapped)) */
-                Q_div = adj->Q_div_mapped[m][l];
+                Q_div = sbr->Q_div[ch][current_f_noise_band][current_t_noise_band];
+
 
                 /* Q_div2: [0..1] (Q_mapped/(1+Q_mapped)) */
-                Q_div2 = adj->Q_div2_mapped[m][l];
+                Q_div2 = sbr->Q_div2[ch][current_f_noise_band][current_t_noise_band];
 
-                Q_M = sbr->E_orig[ch][table_map_res_to_m[m]][l] * Q_div2;
 
-                /* 12-Nov: Changed S_mapped to S_index_mapped */
-                if (adj->S_index_mapped[m][l] == 0)
+                /* Q_M only depends on E_orig and Q_div2:
+                 * since N_Q <= N_Low <= N_High we only need to recalculate Q_M on
+                 * a change of current noise band
+                 */
+                Q_M = sbr->E_orig[ch][current_res_band2][l] * Q_div2;
+
+
+                /* S_M only depends on E_orig, Q_div and S_index_mapped:
+                 * S_index_mapped can only be non-zero once per HI_RES band
+                 */
+                if (S_index_mapped == 0)
                 {
                     S_M[m] = 0;
                 } else {
-                    S_M[m] = sbr->E_orig[ch][table_map_res_to_m[m]][l] * Q_div;
+                    S_M[m] = sbr->E_orig[ch][current_res_band2][l] * Q_div;
+
+                    /* accumulate sinusoid part of the total energy */
+                    den += S_M[m];
                 }
 
-                G = sbr->E_orig[ch][table_map_res_to_m[m]][l] / (1.0 + sbr->E_curr[ch][m][l]);
 
-                if ((adj->S_mapped[m][l] == 0) && (delta == 1))
+                /* calculate gain */
+                /* ratio of the energy of the original signal and the energy
+                 * of the HF generated signal
+                 */
+                G = sbr->E_orig[ch][current_res_band2][l] / (1.0 + sbr->E_curr[ch][m][l]);
+                if ((S_mapped == 0) && (delta == 1))
                     G *= Q_div;
-                else if (adj->S_mapped[m][l] == 1)
+                else if (S_mapped == 1)
                     G *= Q_div2;
 
 
@@ -821,14 +927,14 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
                     Q_M_lim[m] = Q_M;
                     G_lim[m] = G;
                 } else {
-                    Q_M_lim[m] = Q_M * G_max / G; /* equivalent to code below */
+                    Q_M_lim[m] = Q_M * G_max / G;
                     G_lim[m] = G_max;
                 }
 
+
+                /* accumulate the total energy */
                 den += sbr->E_curr[ch][m][l] * G_lim[m];
-                if (adj->S_index_mapped[m][l])
-                    den += S_M[m];
-                else if (l != sbr->l_A[ch])
+                if ((S_index_mapped == 0) && (l != sbr->l_A[ch]))
                     den += Q_M_lim[m];
             }
 
@@ -849,7 +955,7 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 #endif
                 adj->Q_M_lim_boost[l][m] = sqrt(Q_M_lim[m] * G_boost);
 
-                if (adj->S_index_mapped[m][l])
+                if (S_M[m] != 0)
                 {
                     adj->S_M_boost[l][m] = sqrt(S_M[m] * G_boost);
                 } else {
@@ -874,7 +980,7 @@ static void calc_gain_groups(sbr_info *sbr, sbr_hfadj_info *adj, real_t *deg, ui
 
         for (k = sbr->kx; k < sbr->kx + sbr->M - 1; k++)
         {
-            if (deg[k + 1] && adj->S_mapped[k-sbr->kx][l] == 0)
+            if (deg[k + 1] && adj->S_mapped[l][k-sbr->kx] == 0)
             {
                 if (grouping == 0)
                 {
@@ -885,7 +991,7 @@ static void calc_gain_groups(sbr_info *sbr, sbr_hfadj_info *adj, real_t *deg, ui
             } else {
                 if (grouping)
                 {
-                    if (adj->S_mapped[k-sbr->kx][l])
+                    if (adj->S_mapped[l][k-sbr->kx])
                     {
                         sbr->f_group[l][i] = k;
                     } else {
@@ -895,7 +1001,7 @@ static void calc_gain_groups(sbr_info *sbr, sbr_hfadj_info *adj, real_t *deg, ui
                     i++;
                 }
             }
-        }        
+        }
 
         if (grouping)
         {
@@ -917,7 +1023,7 @@ static void aliasing_reduction(sbr_info *sbr, sbr_hfadj_info *adj, real_t *deg, 
         for (k = 0; k < sbr->N_G[l]; k++)
         {
             E_total_est = E_total = 0;
-            
+
             for (m = sbr->f_group[l][k<<1]; m < sbr->f_group[l][(k<<1) + 1]; m++)
             {
                 /* E_curr: integer */
@@ -1023,7 +1129,6 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
     uint16_t fIndexNoise = 0;
     uint8_t fIndexSine = 0;
     uint8_t assembly_reset = 0;
-    real_t *temp;
 
     real_t G_filt, Q_filt;
 
@@ -1058,6 +1163,8 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
                 memcpy(sbr->G_temp_prev[ch][n], adj->G_lim_boost[l], sbr->M*sizeof(real_t));
                 memcpy(sbr->Q_temp_prev[ch][n], adj->Q_M_lim_boost[l], sbr->M*sizeof(real_t));
             }
+            /* reset ringbuffer index */
+            sbr->GQ_ringbuf_index[ch] = 4;
             assembly_reset = 0;
         }
 
@@ -1068,8 +1175,9 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
             uint8_t sinusoids = 0;
 #endif
 
-            memcpy(sbr->G_temp_prev[ch][4], adj->G_lim_boost[l], sbr->M*sizeof(real_t));
-            memcpy(sbr->Q_temp_prev[ch][4], adj->Q_M_lim_boost[l], sbr->M*sizeof(real_t));
+            /* load new values into ringbuffer */
+            memcpy(sbr->G_temp_prev[ch][sbr->GQ_ringbuf_index[ch]], adj->G_lim_boost[l], sbr->M*sizeof(real_t));
+            memcpy(sbr->Q_temp_prev[ch][sbr->GQ_ringbuf_index[ch]], adj->Q_M_lim_boost[l], sbr->M*sizeof(real_t));
 
             for (m = 0; m < sbr->M; m++)
             {
@@ -1083,13 +1191,16 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
                 {
                     for (n = 0; n <= 4; n++)
                     {
-                        G_filt += MUL_F(sbr->G_temp_prev[ch][n][m], h_smooth[n]);
-                        Q_filt += MUL_F(sbr->Q_temp_prev[ch][n][m], h_smooth[n]);
+                        uint8_t ri = sbr->GQ_ringbuf_index[ch] + 1 + n;
+                        if (ri >= 5)
+                            ri -= 5;
+                        G_filt += MUL_F(sbr->G_temp_prev[ch][ri][m], h_smooth[n]);
+                        Q_filt += MUL_F(sbr->Q_temp_prev[ch][ri][m], h_smooth[n]);
                     }
                 } else {
 #endif
-                    G_filt = sbr->G_temp_prev[ch][4][m];
-                    Q_filt = sbr->Q_temp_prev[ch][4][m];
+                    G_filt = sbr->G_temp_prev[ch][sbr->GQ_ringbuf_index[ch]][m];
+                    Q_filt = sbr->Q_temp_prev[ch][sbr->GQ_ringbuf_index[ch]][m];
 #ifndef SBR_LOW_POWER
                 }
 #endif
@@ -1219,16 +1330,10 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
 
             fIndexSine = (fIndexSine + 1) & 3;
 
-
-            temp = sbr->G_temp_prev[ch][0];
-            for (n = 0; n < 4; n++)
-                sbr->G_temp_prev[ch][n] = sbr->G_temp_prev[ch][n+1];
-            sbr->G_temp_prev[ch][4] = temp;
-
-            temp = sbr->Q_temp_prev[ch][0];
-            for (n = 0; n < 4; n++)
-                sbr->Q_temp_prev[ch][n] = sbr->Q_temp_prev[ch][n+1];
-            sbr->Q_temp_prev[ch][4] = temp;
+            /* update the ringbuffer index used for filtering G and Q with h_smooth */
+            sbr->GQ_ringbuf_index[ch]++;
+            if (sbr->GQ_ringbuf_index[ch] >= 5)
+                sbr->GQ_ringbuf_index[ch] = 0;
         }
     }
 
