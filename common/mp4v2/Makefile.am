@@ -124,3 +124,6 @@ EXTRA_DIST = API_CHANGES \
     libmp4v260.dsp \
     libmp4v2_st60.dsp \
     TODO
+
+LIBTOOL_DEPS =
+LIBS =

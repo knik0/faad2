@@ -1,19 +1,19 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.72 2003/09/24 19:55:34 menno Exp $
+** $Id: decoder.c,v 1.73 2003/10/05 15:22:10 menno Exp $
 **/
 
 #include "common.h"
@@ -377,6 +377,7 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
     return 0;
 }
 
+#ifdef DRM
 int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
                               uint8_t channels)
 {
@@ -384,11 +385,9 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
     hDecoder->config.defObjectType = DRM_ER_LC;
 
     hDecoder->config.defSampleRate = samplerate;
-#ifdef ERROR_RESILIENCE // This shoudl always be defined for DRM
     hDecoder->aacSectionDataResilienceFlag = 1; /* VCB11 */
     hDecoder->aacScalefactorDataResilienceFlag = 0; /* no RVLC */
     hDecoder->aacSpectralDataResilienceFlag = 1; /* HCR */
-#endif
     hDecoder->frameLength = 960;
     hDecoder->sf_index = get_sr_index(hDecoder->config.defSampleRate);
     hDecoder->object_type = hDecoder->config.defObjectType;
@@ -399,7 +398,6 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
         hDecoder->channelConfiguration = 1;
 
 #ifdef SBR_DEC
-#ifdef DRM
     if (channels == DRMCH_SBR_LC_STEREO)
         hDecoder->lcstereo_flag = 1;
     else
@@ -414,7 +412,6 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
     sbrDecodeEnd(hDecoder->sbr[0]);
     hDecoder->sbr[0] = NULL;
 #endif
-#endif
 
     /* must be done before frameLength is divided by 2 for LD */
     hDecoder->fb = filter_bank_init(hDecoder->frameLength);
@@ -426,6 +423,7 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
 
     return 0;
 }
+#endif
 
 void FAADAPI faacDecClose(faacDecHandle hDecoder)
 {
@@ -709,8 +707,8 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     uint32_t bitsconsumed;
 #ifdef DRM
     uint8_t *revbuffer;
-    uint8_t *prevbufstart;   
-    uint8_t *pbufend;   
+    uint8_t *prevbufstart;
+    uint8_t *pbufend;
 #endif
 
     /* local copy of globals */
