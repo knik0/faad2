@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.38 2003/07/29 08:20:14 menno Exp $
+** $Id: foo_mp4.cpp,v 1.39 2003/08/02 23:08:17 menno Exp $
 **/
 
 #include <mp4.h>
@@ -50,19 +50,19 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "$Revision: 1.38 $",
+                           "$Revision: 1.39 $",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
 {
 public:
 
-    virtual int test_filename(const char * fn,const char * ext)
+    virtual bool test_filename(const char * fn,const char * ext)
     {
         return (!stricmp(ext,"MP4") || !stricmp(ext,"M4A"));
     }
 
-    virtual int open(reader *r, file_info *info, int full_open)
+    virtual bool open(reader *r, file_info *info, unsigned flags)
     {
         unsigned __int8 *buffer;
         unsigned __int32 buffer_size;
@@ -321,7 +321,7 @@ public:
         return SET_INFO_SUCCESS;
     }
 
-    virtual int seek(double seconds)
+    virtual bool seek(double seconds)
     {
         MP4Duration duration;
 
@@ -333,7 +333,7 @@ public:
         return 1;
     }
 
-    virtual int is_our_content_type(const char *url, const char *type)
+    virtual bool is_our_content_type(const char *url, const char *type)
     {
         return !stricmp(type, "audio/mp4") || !stricmp(type, "audio/x-mp4");
     }
@@ -390,7 +390,7 @@ private:
                         info->meta_add(pName, val);
                     }
                 } else if (memcmp(pName, "gnre", 4) == 0) {
-                    char *t;
+                    char *t = NULL;
                     MP4GetMetadataGenre(hFile, &t);
                     info->meta_add("GENRE", t);
                 } else if (memcmp(pName, "trkn", 4) == 0) {
@@ -552,12 +552,12 @@ class input_aac : public input
 {
 public:
 
-    virtual int test_filename(const char * fn,const char * ext)
+    virtual bool test_filename(const char * fn,const char * ext)
     {
         return !stricmp(ext,"AAC");
     }
 
-    virtual int open(reader *r, file_info *info, int full_open)
+    virtual bool open(reader *r, file_info *info, unsigned flags)
     {
         int tagsize = 0, tmp = 0;
         int bread = 0;
@@ -796,7 +796,7 @@ public:
         return tag_writer::g_run(r,info,"ape") ? SET_INFO_SUCCESS : SET_INFO_FAILURE;
     }
 
-    virtual int seek(double seconds)
+    virtual bool seek(double seconds)
     {
         int i, frames;
         int bread;
@@ -847,7 +847,7 @@ public:
         }
     }
 
-    virtual int is_our_content_type(const char *url, const char *type)
+    virtual bool is_our_content_type(const char *url, const char *type)
     {
         return !stricmp(type, "audio/aac") || !stricmp(type, "audio/x-aac");
     }

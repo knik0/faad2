@@ -92,10 +92,6 @@ LINK32=xilink6.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=.\foobar2000\component_client\component_client.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\foo_mp4.cpp
 # End Source File
 # End Group
