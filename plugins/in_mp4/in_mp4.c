@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: in_mp4.c,v 1.46 2003/11/10 18:57:23 ca5e Exp $
+** $Id: in_mp4.c,v 1.47 2003/11/21 17:08:27 ca5e Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -133,6 +133,295 @@ HANDLE play_thread_handle = INVALID_HANDLE_VALUE; // the handle to the decode th
 void *decode_aac_frame(state *st, faacDecFrameInfo *frameInfo);
 DWORD WINAPI MP4PlayThread(void *b); // the decode thread procedure
 DWORD WINAPI AACPlayThread(void *b); // the decode thread procedure
+
+
+typedef struct tag
+{
+    char *item;
+    char *value;
+} tag;
+
+typedef struct medialib_tags
+{
+    struct tag *tags;
+    unsigned int count;
+} medialib_tags;
+
+int tag_add_field(medialib_tags *tags, const char *item, const char *value)
+{
+    void *backup = (void *)tags->tags;
+
+    if (!item || (item && !*item) || !value) return 0;
+
+    tags->tags = (struct tag *)realloc(tags->tags, (tags->count+1) * sizeof(tag));
+    if (!tags->tags) {
+        if (backup) free(backup);
+        return 0;
+    }
+    else
+    {
+        int i_len = strlen(item);
+        int v_len = strlen(value);
+
+        tags->tags[tags->count].item = (char *)malloc(i_len+1);
+        tags->tags[tags->count].value = (char *)malloc(v_len+1);
+
+        if (!tags->tags[tags->count].item || !tags->tags[tags->count].value)
+        {
+            if (!tags->tags[tags->count].item) free (tags->tags[tags->count].item);
+            if (!tags->tags[tags->count].value) free (tags->tags[tags->count].value);
+            tags->tags[tags->count].item = NULL;
+            tags->tags[tags->count].value = NULL;
+            return 0;
+        }
+
+        memcpy(tags->tags[tags->count].item, item, i_len);
+        memcpy(tags->tags[tags->count].value, value, v_len);
+        tags->tags[tags->count].item[i_len] = '\0';
+        tags->tags[tags->count].value[v_len] = '\0';
+
+        tags->count++;
+        return 1;
+    }
+}
+
+int tag_set_field(medialib_tags *tags, const char *item, const char *value)
+{
+    unsigned int i;
+
+    if (!item || (item && !*item) || !value) return 0;
+
+    for (i = 0; i < tags->count; i++)
+    {
+        if (!stricmp(tags->tags[i].item, item))
+        {
+            void *backup = (void *)tags->tags[i].value;
+            int v_len = strlen(value);
+
+            tags->tags[i].value = (char *)realloc(tags->tags[i].value, v_len+1);
+            if (!tags->tags[i].value)
+            {
+                if (backup) free(backup);
+                return 0;
+            }
+
+            memcpy(tags->tags[i].value, value, v_len);
+            tags->tags[i].value[v_len] = '\0';
+
+            return 1;
+        }
+    }
+
+    return tag_add_field(tags, item, value);
+}
+
+int tag_delete(medialib_tags *tags)
+{
+    unsigned int i;
+
+    for (i = 0; i < tags->count; i++)
+    {
+        if (tags->tags[i].item) free(tags->tags[i].item);
+        if (tags->tags[i].value) free(tags->tags[i].value);
+    }
+
+    if (tags->tags) free(tags->tags);
+
+    tags->tags = NULL;
+    tags->count = 0;
+}
+
+int ReadMP4Tag(MP4FileHandle file, medialib_tags *tags)
+{
+    unsigned __int32 valueSize;
+    unsigned __int8 *pValue;
+    char *pName;
+    unsigned int i = 0;
+
+    do {
+        pName = 0;
+        pValue = 0;
+        valueSize = 0;
+
+        MP4GetMetadataByIndex(file, i, (const char **)&pName, &pValue, &valueSize);
+
+        if (valueSize > 0)
+        {
+            char *val = (char *)malloc(valueSize+1);
+            if (!val) return 0;
+            memcpy(val, pValue, valueSize);
+            val[valueSize] = '\0';
+
+            if (pName[0] == '©')
+            {
+                if (memcmp(pName, "©nam", 4) == 0)
+                {
+                    tag_add_field(tags, "title", val);
+                } else if (memcmp(pName, "©ART", 4) == 0) {
+                    tag_add_field(tags, "artist", val);
+                } else if (memcmp(pName, "©wrt", 4) == 0) {
+                    tag_add_field(tags, "writer", val);
+                } else if (memcmp(pName, "©alb", 4) == 0) {
+                    tag_add_field(tags, "album", val);
+                } else if (memcmp(pName, "©day", 4) == 0) {
+                    tag_add_field(tags, "date", val);
+                } else if (memcmp(pName, "©too", 4) == 0) {
+                    tag_add_field(tags, "tool", val);
+                } else if (memcmp(pName, "©cmt", 4) == 0) {
+                    tag_add_field(tags, "comment", val);
+                } else if (memcmp(pName, "©gen", 4) == 0) {
+                    tag_add_field(tags, "genre", val);
+                } else {
+                    tag_add_field(tags, pName, val);
+                }
+            } else if (memcmp(pName, "gnre", 4) == 0) {
+                char *t=0;
+                if (MP4GetMetadataGenre(file, &t))
+                {
+                    tag_add_field(tags, "genre", t);
+                }
+            } else if (memcmp(pName, "trkn", 4) == 0) {
+                unsigned __int16 trkn = 0, tot = 0;
+                char t[200];
+                if (MP4GetMetadataTrack(file, &trkn, &tot))
+                {
+                    if (tot > 0)
+                        wsprintf(t, "%d/%d", trkn, tot);
+                    else
+                        wsprintf(t, "%d", trkn);
+                    tag_add_field(tags, "tracknumber", t);
+                }
+            } else if (memcmp(pName, "disk", 4) == 0) {
+                unsigned __int16 disk = 0, tot = 0;
+                char t[200];
+                if (MP4GetMetadataDisk(file, &disk, &tot))
+                {
+                    if (tot > 0)
+                        wsprintf(t, "%d/%d", disk, tot);
+                    else
+                        wsprintf(t, "%d", disk);
+                    tag_add_field(tags, "disc", t);
+                }
+            } else if (memcmp(pName, "cpil", 4) == 0) {
+                unsigned __int8 cpil = 0;
+                char t[200];
+                if (MP4GetMetadataCompilation(file, &cpil))
+                {
+                    wsprintf(t, "%d", cpil);
+                    tag_add_field(tags, "compilation", t);
+                }
+            } else if (memcmp(pName, "tmpo", 4) == 0) {
+                unsigned __int16 tempo = 0;
+                char t[200];
+                if (MP4GetMetadataTempo(file, &tempo))
+                {
+                    wsprintf(t, "%d BPM", tempo);
+                    tag_add_field(tags, "tempo", t);
+                }
+            } else if (memcmp(pName, "NDFL", 4) == 0) {
+                /* Removed */
+            } else {
+                tag_add_field(tags, pName, val);
+            }
+
+            free(val);
+        }
+
+        i++;
+    } while (valueSize > 0);
+
+    return 1;
+}
+
+int mp4_set_metadata(MP4FileHandle file, const char *item, const char *val)
+{
+    if (!item || (item && !*item) || !val || (val && !*val)) return 0;
+
+    if (!stricmp(item, "track") || !stricmp(item, "tracknumber"))
+    {
+        unsigned __int16 trkn, tot;
+        int t1 = 0, t2 = 0;
+        sscanf(val, "%d/%d", &t1, &t2);
+        trkn = t1, tot = t2;
+        if (!trkn) return 1;
+        if (MP4SetMetadataTrack(file, trkn, tot)) return 1;
+    }
+    else if (!stricmp(item, "disc") || !stricmp(item, "disknumber"))
+    {
+        unsigned __int16 disk, tot;
+        int t1 = 0, t2 = 0;
+        sscanf(val, "%d/%d", &t1, &t2);
+        disk = t1, tot = t2;
+        if (!disk) return 1;
+        if (MP4SetMetadataDisk(file, disk, tot)) return 1;
+    }
+    else if (!stricmp(item, "compilation"))
+    {
+        unsigned __int8 cpil = atoi(val);
+        if (!cpil) return 1;
+        if (MP4SetMetadataCompilation(file, cpil)) return 1;
+    }
+    else if (!stricmp(item, "tempo"))
+    {
+        unsigned __int16 tempo = atoi(val);
+        if (!tempo) return 1;
+        if (MP4SetMetadataTempo(file, tempo)) return 1;
+    }
+    else if (!stricmp(item, "artist"))
+    {
+        if (MP4SetMetadataArtist(file, val)) return 1;
+    }
+    else if (!stricmp(item, "writer"))
+    {
+        if (MP4SetMetadataWriter(file, val)) return 1;
+    }
+    else if (!stricmp(item, "title"))
+    {
+        if (MP4SetMetadataName(file, val)) return 1;
+    }
+    else if (!stricmp(item, "album"))
+    {
+        if (MP4SetMetadataAlbum(file, val)) return 1;
+    }
+    else if (!stricmp(item, "date") || !stricmp(item, "year"))
+    {
+        if (MP4SetMetadataYear(file, val)) return 1;
+    }
+    else if (!stricmp(item, "comment"))
+    {
+        if (MP4SetMetadataComment(file, val)) return 1;
+    }
+    else if (!stricmp(item, "genre"))
+    {
+        if (MP4SetMetadataGenre(file, val)) return 1;
+    }
+    else if (!stricmp(item, "tool"))
+    {
+        if (MP4SetMetadataTool(file, val)) return 1;
+    }
+    else
+    {
+        if (MP4SetMetadataFreeForm(file, (char *)item, (u_int8_t *)val, (u_int32_t)strlen(val))) return 1;
+    }
+
+    return 0;
+}
+
+int WriteMP4Tag(MP4FileHandle file, const medialib_tags *tags)
+{
+    unsigned int i;
+
+    for (i = 0; i < tags->count; i++)
+    {
+        const char *item = tags->tags[i].item;
+        const char *value = tags->tags[i].value;
+
+        if (value && *value)
+        {
+            mp4_set_metadata(file, item, value);
+        }
+    }
+}
 
 
 #ifdef DEBUG_OUTPUT
@@ -408,6 +697,7 @@ BOOL uSetDlgItemText(HWND hwnd, int id, const char *str)
     int r;
 
     if (!str) return FALSE;
+    if (!*str) return TRUE;
     len = strlen(str);
     temp = malloc(len+1);
     if (!temp) return FALSE;
@@ -425,7 +715,8 @@ UINT uGetDlgItemText(HWND hwnd, int id, char *str, int max)
     int len;
     HWND w;
 
-    if (!str) return 0;
+    if (!str || !max) return 0;
+    *str = '\0';
     w = GetDlgItem(hwnd, id);
     len = GetWindowTextLength(w);
     temp = malloc(len+1);
@@ -462,6 +753,10 @@ BOOL CALLBACK mp4_info_dialog_proc(HWND hwndDlg, UINT message,
     MP4FileHandle file;
     char *pVal, dummy1[1024], dummy3;
     short dummy, dummy2;
+    char temp[1024];
+    struct medialib_tags tags;
+    tags.count = 0;
+    tags.tags = NULL;
 
 #ifdef DEBUG_OUTPUT
     in_mp4_DebugOutput("mp4_info_dialog_proc");
@@ -476,7 +771,6 @@ BOOL CALLBACK mp4_info_dialog_proc(HWND hwndDlg, UINT message,
         EnableWindow(GetDlgItem(hwndDlg,IDC_CONVERT2), FALSE);
         ShowWindow(GetDlgItem(hwndDlg,IDC_CONVERT2), SW_HIDE);
 
-
         file = MP4Read(info_fn, 0);
 
         if (file == MP4_INVALID_FILE_HANDLE)
@@ -489,51 +783,66 @@ BOOL CALLBACK mp4_info_dialog_proc(HWND hwndDlg, UINT message,
         /* get Metadata */
 
         pVal = NULL;
-        MP4GetMetadataName(file, &pVal);
-        uSetDlgItemText(hwndDlg,IDC_METANAME, pVal);
+        if (MP4GetMetadataName(file, &pVal))
+            uSetDlgItemText(hwndDlg,IDC_METANAME, pVal);
 
         pVal = NULL;
-        MP4GetMetadataArtist(file, &pVal);
-        uSetDlgItemText(hwndDlg,IDC_METAARTIST, pVal);
+        if (MP4GetMetadataArtist(file, &pVal))
+            uSetDlgItemText(hwndDlg,IDC_METAARTIST, pVal);
 
         pVal = NULL;
-        MP4GetMetadataWriter(file, &pVal);
-        uSetDlgItemText(hwndDlg,IDC_METAWRITER, pVal);
+        if (MP4GetMetadataWriter(file, &pVal))
+            uSetDlgItemText(hwndDlg,IDC_METAWRITER, pVal);
 
         pVal = NULL;
-        MP4GetMetadataComment(file, &pVal);
-        uSetDlgItemText(hwndDlg,IDC_METACOMMENTS, pVal);
+        if (MP4GetMetadataComment(file, &pVal))
+            uSetDlgItemText(hwndDlg,IDC_METACOMMENTS, pVal);
 
         pVal = NULL;
-        MP4GetMetadataAlbum(file, &pVal);
-        uSetDlgItemText(hwndDlg,IDC_METAALBUM, pVal);
+        if (MP4GetMetadataAlbum(file, &pVal))
+            uSetDlgItemText(hwndDlg,IDC_METAALBUM, pVal);
 
         pVal = NULL;
-        MP4GetMetadataGenre(file, &pVal);
-        uSetDlgItemText(hwndDlg,IDC_METAGENRE, pVal);
+        if (MP4GetMetadataGenre(file, &pVal))
+            uSetDlgItemText(hwndDlg,IDC_METAGENRE, pVal);
 
         dummy = 0;
         MP4GetMetadataTempo(file, &dummy);
-        wsprintf(dummy1, "%d", dummy);
-        SetDlgItemText(hwndDlg,IDC_METATEMPO, dummy1);
+        if (dummy)
+        {
+            wsprintf(dummy1, "%d", dummy);
+            SetDlgItemText(hwndDlg,IDC_METATEMPO, dummy1);
+        }
 
         dummy = 0; dummy2 = 0;
         MP4GetMetadataTrack(file, &dummy, &dummy2);
-        wsprintf(dummy1, "%d", dummy);
-        SetDlgItemText(hwndDlg,IDC_METATRACK1, dummy1);
-        wsprintf(dummy1, "%d", dummy2);
-        SetDlgItemText(hwndDlg,IDC_METATRACK2, dummy1);
+        if (dummy)
+        {
+            wsprintf(dummy1, "%d", dummy);
+            SetDlgItemText(hwndDlg,IDC_METATRACK1, dummy1);
+        }
+        if (dummy2)
+        {
+            wsprintf(dummy1, "%d", dummy2);
+            SetDlgItemText(hwndDlg,IDC_METATRACK2, dummy1);
+        }
 
         dummy = 0; dummy2 = 0;
         MP4GetMetadataDisk(file, &dummy, &dummy2);
-        wsprintf(dummy1, "%d", dummy);
-        SetDlgItemText(hwndDlg,IDC_METADISK1, dummy1);
-        wsprintf(dummy1, "%d", dummy2);
-        SetDlgItemText(hwndDlg,IDC_METADISK2, dummy1);
+        if (dummy)
+        {
+            wsprintf(dummy1, "%d", dummy);
+            SetDlgItemText(hwndDlg,IDC_METADISK1, dummy1);
+        }
+        if (dummy2)
+        {
+            wsprintf(dummy1, "%d", dummy2);
+            SetDlgItemText(hwndDlg,IDC_METADISK2, dummy1);
+        }
 
         pVal = NULL;
-        MP4GetMetadataYear(file, &pVal);
-        uSetDlgItemText(hwndDlg,IDC_METAYEAR, pVal);
+        if (MP4GetMetadataYear(file, &pVal))
+            uSetDlgItemText(hwndDlg,IDC_METAYEAR, pVal);
 
         dummy3 = 0;
         MP4GetMetadataCompilation(file, &dummy3);
@@ -555,52 +864,71 @@ BOOL CALLBACK mp4_info_dialog_proc(HWND hwndDlg, UINT message,
 
             /* save Metadata changes */
 
+            tag_delete(&tags);
+            file = MP4Read(info_fn, 0);
+            if (file != MP4_INVALID_FILE_HANDLE)
+            {
+                ReadMP4Tag(file, &tags);
+                MP4Close(file);
+
+                file = MP4Modify(info_fn, 0, 0);
+                if (file != MP4_INVALID_FILE_HANDLE)
+                {
+                    MP4MetadataDelete(file);
+                    MP4Close(file);
+                }
+            }
+
             file = MP4Modify(info_fn, 0, 0);
             if (file == MP4_INVALID_FILE_HANDLE)
             {
+                tag_delete(&tags);
                 EndDialog(hwndDlg, wParam);
                 return FALSE;
             }
 
             uGetDlgItemText(hwndDlg, IDC_METANAME, dummy1, 1024);
-            MP4SetMetadataName(file, dummy1);
+            tag_set_field(&tags, "title", dummy1);
 
             uGetDlgItemText(hwndDlg, IDC_METAWRITER, dummy1, 1024);
-            MP4SetMetadataWriter(file, dummy1);
+            tag_set_field(&tags, "writer", dummy1);
 
             uGetDlgItemText(hwndDlg, IDC_METAARTIST, dummy1, 1024);
-            MP4SetMetadataArtist(file, dummy1);
+            tag_set_field(&tags, "artist", dummy1);
 
             uGetDlgItemText(hwndDlg, IDC_METAALBUM, dummy1, 1024);
-            MP4SetMetadataAlbum(file, dummy1);
+            tag_set_field(&tags, "album", dummy1);
 
             uGetDlgItemText(hwndDlg, IDC_METACOMMENTS, dummy1, 1024);
-            MP4SetMetadataComment(file, dummy1);
+            tag_set_field(&tags, "comment", dummy1);
 
             uGetDlgItemText(hwndDlg, IDC_METAGENRE, dummy1, 1024);
-            MP4SetMetadataGenre(file, dummy1);
+            tag_set_field(&tags, "genre", dummy1);
 
             uGetDlgItemText(hwndDlg, IDC_METAYEAR, dummy1, 1024);
-            MP4SetMetadataYear(file, dummy1);
+            tag_set_field(&tags, "year", dummy1);
 
             GetDlgItemText(hwndDlg, IDC_METATRACK1, dummy1, 1024);
             dummy = atoi(dummy1);
             GetDlgItemText(hwndDlg, IDC_METATRACK2, dummy1, 1024);
             dummy2 = atoi(dummy1);
-            MP4SetMetadataTrack(file, dummy, dummy2);
+            wsprintf(temp, "%d/%d", dummy, dummy2);
+            tag_set_field(&tags, "track", temp);
 
             GetDlgItemText(hwndDlg, IDC_METADISK1, dummy1, 1024);
             dummy = atoi(dummy1);
             GetDlgItemText(hwndDlg, IDC_METADISK2, dummy1, 1024);
             dummy2 = atoi(dummy1);
-            MP4SetMetadataDisk(file, dummy, dummy2);
+            wsprintf(temp, "%d/%d", dummy, dummy2);
+            tag_set_field(&tags, "disc", temp);
 
             GetDlgItemText(hwndDlg, IDC_METATEMPO, dummy1, 1024);
-            dummy = atoi(dummy1);
-            MP4SetMetadataTempo(file, dummy);
+            tag_set_field(&tags, "tempo", dummy1);
 
             dummy3 = SendMessage(GetDlgItem(hwndDlg, IDC_METACOMPILATION), BM_GETCHECK, 0, 0);
-            MP4SetMetadataCompilation(file, dummy3);
+            tag_set_field(&tags, "compilation", (dummy3 ? "1" : "0"));
+
+            WriteMP4Tag(file, &tags);
 
             MP4Close(file);
 
@@ -774,7 +1102,6 @@ void ConstructTitle(MP4FileHandle file, char *filename, char *title, char *forma
     char *bound = out + sizeof(temp) - 256; //out + (MAX_PATH - 10 - 1);
     char *pVal, dummy1[1024];
     short dummy, dummy2;
-
 
     while (*in && out < bound)
     {
@@ -1517,7 +1844,7 @@ void stop()
     module.SAVSADeInit();
 }
 
-int getsonglength(char *fn)
+int getsonglength(const char *fn)
 {
     long msDuration = 0;
 
@@ -2287,4 +2614,240 @@ __declspec(dllexport) In_Module* winampGetInModule2()
     }
 
     return &module;
+}
+
+/* new Media Library interface */
+
+int mp4_get_metadata(MP4FileHandle file, const char *item, char *dest, int dlen)
+{
+    char *pVal = NULL, dummy1[4096];
+    short dummy = 0, dummy2 = 0;
+
+    if (dlen < 1) return 0;
+
+    if (!stricmp(item, "track") || !stricmp(item, "tracknumber"))
+    {
+        if (MP4GetMetadataTrack(file, &dummy, &dummy2))
+        {
+            wsprintf(dummy1, "%d", (int)dummy);
+            strncpy(dest, dummy1, dlen-1);
+            dest[dlen-1] = '\0';
+            return 1;
+        }
+    }
+    else if (!stricmp(item, "disc") || !stricmp(item, "disknumber"))
+    {
+        if (MP4GetMetadataDisk(file, &dummy, &dummy2))
+        {
+            wsprintf(dummy1, "%d", (int)dummy);
+            strncpy(dest, dummy1, dlen-1);
+            dest[dlen-1] = '\0';
+            return 1;
+        }
+    }
+    else if (!stricmp(item, "compilation"))
+    {
+        u_int8_t cpil = 0;
+        if (MP4GetMetadataCompilation(file, &cpil))
+        {
+            wsprintf(dummy1, "%d", (int)cpil);
+            strncpy(dest, dummy1, dlen-1);
+            dest[dlen-1] = '\0';
+            return 1;
+        }
+    }
+    else if (!stricmp(item, "tempo"))
+    {
+        u_int16_t tempo = 0;
+        if (MP4GetMetadataTempo(file, &tempo))
+        {
+            wsprintf(dummy1, "%d", (int)tempo);
+            strncpy(dest, dummy1, dlen-1);
+            dest[dlen-1] = '\0';
+            return 1;
+        }
+    }
+    else if (!stricmp(item, "artist"))
+    {
+        if (MP4GetMetadataArtist(file, &pVal))
+        {
+            strncpy(dest, pVal, dlen-1);
+            dest[dlen-1] = '\0';
+            return 1;
+        }
+    }
+    else if (!stricmp(item, "writer"))
+    {
+        if (MP4GetMetadataWriter(file, &pVal))
+        {
+            strncpy(dest, pVal, dlen-1);
+            dest[dlen-1] = '\0';
+            return 1;
+        }
+    }
+    else if (!stricmp(item, "title"))
+    {
+        if (MP4GetMetadataName(file, &pVal))
+        {
+            strncpy(dest, pVal, dlen-1);
+            dest[dlen-1] = '\0';
+            return 1;
+        }
+    }
+    else if (!stricmp(item, "album"))
+    {
+        if (MP4GetMetadataAlbum(file, &pVal))
+        {
+            strncpy(dest, pVal, dlen-1);
+            dest[dlen-1] = '\0';
+            return 1;
+        }
+    }
+    else if (!stricmp(item, "date") || !stricmp(item, "year"))
+    {
+        if (MP4GetMetadataYear(file, &pVal))
+        {
+            strncpy(dest, pVal, dlen-1);
+            dest[dlen-1] = '\0';
+            return 1;
+        }
+    }
+    else if (!stricmp(item, "comment"))
+    {
+        if (MP4GetMetadataComment(file, &pVal))
+        {
+            strncpy(dest, pVal, dlen-1);
+            dest[dlen-1] = '\0';
+            return 1;
+        }
+    }
+    else if (!stricmp(item, "genre"))
+    {
+        if (MP4GetMetadataGenre(file, &pVal))
+        {
+            strncpy(dest, pVal, dlen-1);
+            dest[dlen-1] = '\0';
+            return 1;
+        }
+    }
+    else if (!stricmp(item, "tool"))
+    {
+        if (MP4GetMetadataTool(file, &pVal))
+        {
+            strncpy(dest, pVal, dlen-1);
+            dest[dlen-1] = '\0';
+            return 1;
+        }
+    }
+    else
+    {
+        u_int32_t valueSize = 0;
+        u_int8_t *pValue = NULL;
+
+        if (MP4GetMetadataFreeForm(file, (char *)item, &pValue, &valueSize))
+        {
+            unsigned int len = (valueSize < (unsigned int)(dlen-1)) ? valueSize : (unsigned int)(dlen-1);
+            memcpy(dest, pValue, len);
+            dest[len] = '\0';
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+__declspec(dllexport) int winampGetExtendedFileInfo(const char *fn, const char *data, char *dest, int destlen)
+{
+    if (!fn || (fn && !*fn) || !destlen) return 0;
+
+    dest[0] = '\0';
+
+    if (!stricmp(data, "length"))
+    {
+        char temp[32];
+        int len = getsonglength(fn);
+        itoa(len, temp, 10);
+        strncpy(dest, temp, destlen-1);
+        dest[destlen-1] = '\0';
+    }
+    else
+    {
+        char temp[2048], temp2[2048];
+        MP4FileHandle file = MP4Read(fn, 0);
+        if (file == MP4_INVALID_FILE_HANDLE) return 0;
+
+        if (mp4_get_metadata(file, data, temp, sizeof(temp)))
+        {
+            int len = ConvertUTF8ToANSI(temp, temp2);
+            if (len > destlen-1) len = destlen-1;
+            memcpy(dest, temp2, len);
+            dest[len] = '\0';
+        }
+
+        MP4Close(file);
+    }
+
+    return 1;
+}
+
+static struct medialib_tags mltags = {0, 0};
+static BOOL medialib_init = FALSE;
+static char medialib_lastfn[2048] = "";
+
+__declspec(dllexport) int winampSetExtendedFileInfo(const char *fn, const char *data, char *val)
+{
+    int len, ret = 0;
+    char *temp;
+
+    if (!medialib_init || (medialib_init && stricmp(fn, medialib_lastfn))) {
+        MP4FileHandle file;
+        strcpy(medialib_lastfn, fn);
+
+        if (medialib_init) tag_delete(&mltags);
+
+        file = MP4Read(fn, 0);
+        if (file == MP4_INVALID_FILE_HANDLE) return 0;
+        ReadMP4Tag(file, &mltags);
+        MP4Close(file);
+        medialib_init = TRUE;
+    }
+
+    len = strlen(val);
+    temp = (char *)malloc((len+1)*4);
+    if (!temp) return 0;
+
+    if (ConvertANSIToUTF8(val, temp))
+    {
+        ret = 1;
+        tag_set_field(&mltags, data, temp);
+    }
+
+    free(temp);
+
+    return ret;
+}    
+
+__declspec(dllexport) int winampWriteExtendedFileInfo()
+{
+    if (medialib_init)
+    {
+        MP4FileHandle file = MP4Modify(medialib_lastfn, 0, 0);
+        if (file == MP4_INVALID_FILE_HANDLE) return 0;
+
+        MP4MetadataDelete(file);
+        MP4Close(file);
+
+        file = MP4Modify(medialib_lastfn, 0, 0);
+        if (file == MP4_INVALID_FILE_HANDLE) return 0;
+
+        WriteMP4Tag(file, &mltags);
+
+        MP4Close(file);
+
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
 }
