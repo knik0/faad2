@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: huffman.c,v 1.15 2004/01/16 20:20:32 menno Exp $
+** $Id: huffman.c,v 1.16 2004/01/20 18:42:51 menno Exp $
 **/
 
 #include "common.h"
@@ -51,25 +51,18 @@ static uint8_t huffman_binary_pair(uint8_t cb, bitfile *ld, int16_t *sp);
 static uint8_t huffman_binary_pair_sign(uint8_t cb, bitfile *ld, int16_t *sp);
 static int16_t huffman_codebook(uint8_t i);
 
-
 int8_t huffman_scale_factor(bitfile *ld)
 {
-    uint16_t offset = 0;
+    uint8_t bit;
+    int16_t index = 0;
 
-    while (hcb_sf[offset][1])
+    while (index >= 0)
     {
-        uint8_t b = faad_get1bit(ld
-            DEBUGVAR(1,255,"huffman_scale_factor()"));
-        offset += hcb_sf[offset][b];
-
-        if (offset > 240)
-        {
-            /* printf("ERROR: offset into hcb_sf = %d >240!\n", offset); */
-            return -1;
-        }
+        bit = (uint8_t)faad_get1bit(ld);
+        index = hcb_sf[index][bit];
     }
 
-    return hcb_sf[offset][0];
+    return index + 121;
 }
 
 

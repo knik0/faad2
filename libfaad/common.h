@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.46 2004/01/16 20:20:32 menno Exp $
+** $Id: common.h,v 1.47 2004/01/20 18:42:51 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -73,6 +73,7 @@ extern "C" {
 //#define SCALABLE_DEC
 /* Allow decoding of Digital Radio Mondiale (DRM) */
 //#define DRM
+//#define DRM_PS
 
 /* LD can't do without LTP */
 #ifdef LD_DEC

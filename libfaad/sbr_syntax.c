@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_syntax.c,v 1.23 2004/01/19 21:49:53 menno Exp $
+** $Id: sbr_syntax.c,v 1.24 2004/01/20 18:42:51 menno Exp $
 **/
 
 #include "common.h"
@@ -40,7 +40,7 @@
 #ifdef PS_DEC
 #include "ps_dec.h"
 #endif
-#ifdef DRM
+#ifdef DRM_PS
 #include "drm_dec.h"
 #endif
 #include "analysis.h"
@@ -695,7 +695,7 @@ static uint16_t sbr_extension(bitfile *ld, sbr_info *sbr,
     case EXTENSION_ID_PS:
         return ps_data(&(sbr->ps), ld);
 #endif
-#ifdef DRM
+#ifdef DRM_PS
     case DRM_PARAMETRIC_STEREO:
         return drm_ps_data(&(sbr->drm_ps), ld);
 #endif

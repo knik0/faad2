@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.h,v 1.20 2004/01/19 21:49:53 menno Exp $
+** $Id: sbr_dec.h,v 1.21 2004/01/20 18:42:51 menno Exp $
 **/
 
 #ifndef __SBR_DEC_H__
@@ -35,7 +35,7 @@ extern "C" {
 #ifdef PS_DEC
 #include "ps_dec.h"
 #endif
-#ifdef DRM
+#ifdef DRM_PS
 #include "drm_dec.h"
 #endif
 
