@@ -33,7 +33,7 @@ kreel@tiscali.it
 
 
 #include <attribs/attrstr.h>
-extern _string	cfg_samplerate;
+extern _string cfg_samplerate;
 extern _string cfg_profile;
 extern _string cfg_bps;
 

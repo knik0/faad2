@@ -23,8 +23,7 @@ kreel@tiscali.it
 #include <stdio.h>
 #include <process.h>
 #include "resource.h"
-#include "faad.h"
-#include "..\..\..\faac\include\faac.h"
+#include "faadwa3.h"
 #include "cnv_FAAD.h"
 #include "CRegistry.h"
 #include "Defines.h"
@@ -37,10 +36,11 @@ kreel@tiscali.it
 
 #define MAX_Channels	2
 #define	FAAD_STREAMSIZE	(FAAD_MIN_STREAMSIZE*MAX_Channels)
+/*
 #define RAW		0
 #define ADIF	1
 #define ADTS	2
-
+*/
 // -----------------------------------------------------------------------------------------------
 
 #define FREE_ARRAY(ptr) \

@@ -18,7 +18,7 @@ it supports .aac/.mp4 files.
 
 To use it:
 ----------
-1) Put "Wasabi SDK" folder into the folder where my sources are placed;
+1) Copy "Wasabi SDK\Studio" folder into the folder where my sources are placed and rename it "SDK";
 
 2) Build it;
 

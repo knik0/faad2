@@ -28,11 +28,13 @@ kreel@tiscali.it
 #include <studio/wac.h>
 #include <attribs/cfgitemi.h>
 #include <attribs/attrint.h>
+
+#include <mp4.h>
+#include "..\..\..\faac\include\faac.h"
 #include <faad.h>
 extern "C" {
 #include <aacinfo.h>    // get_AAC_format()
 }
-#include <mp4.h>
 #include "Defines.h"
 
 

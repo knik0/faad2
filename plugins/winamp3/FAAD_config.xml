@@ -3,11 +3,11 @@
 <WinampAbstractionLayer version="0.7">
    <groupdef id="FAAD.Config.Content">
 	<Wasabi:Text id="static" text="Profile" x="0" y="0" w="80" h="15" />
-    <Wasabi:Dropdownlist id="profile" feed="PROFILE" x="70" y="0" w="-80" relatw="1" h="20" cfgattrib="{3AF667AD-3CF8-459e-8C7C-BD8CD1D6F8C2};Profile" />
+	<Wasabi:Dropdownlist id="profile" feed="PROFILE" x="70" y="0" w="-80" relatw="1" h="20" cfgattrib="{3AF667AD-3CF8-459e-8C7C-BD8CD1D6F8C2};Profile" />
 	<Wasabi:Text id="static" text="Samplerate" x="0" y="28" w="80" h="15" />
-    <Wasabi:Combobox id="samplerate" feed="SAMPLERATE" x="70" y="28" w="-80" relatw="1" h="20" cfgattrib="{3AF667AD-3CF8-459e-8C7C-BD8CD1D6F8C2};Samplerate" />
+	<Wasabi:Combobox id="samplerate" feed="SAMPLERATE" x="70" y="28" w="-80" relatw="1" h="20" cfgattrib="{3AF667AD-3CF8-459e-8C7C-BD8CD1D6F8C2};Samplerate" />
 	<Wasabi:Text id="static" text="Bps" x="0" y="56" w="80" h="15" />
-    <Wasabi:Dropdownlist id="bps" feed="BPS" x="70" y="56" w="-80" relatw="1" h="20" cfgattrib="{3AF667AD-3CF8-459e-8C7C-BD8CD1D6F8C2};Bps" />
+	<Wasabi:Dropdownlist id="bps" feed="BPS" x="70" y="56" w="-80" relatw="1" h="20" cfgattrib="{3AF667AD-3CF8-459e-8C7C-BD8CD1D6F8C2};Bps" />
    </groupdef>
 
    <groupdef id="FAAD.About.Content">
