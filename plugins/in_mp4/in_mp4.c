@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.3 2002/01/22 20:09:41 menno Exp $
+** $Id: in_mp4.c,v 1.4 2002/01/23 23:17:31 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -625,8 +625,8 @@ int play(char *fn)
         return -1;
     }
 
-	if (m_priority != 3)
-	    SetThreadPriority(play_thread_handle, priority_table[m_priority]);
+    if (m_priority != 3)
+        SetThreadPriority(play_thread_handle, priority_table[m_priority]);
 
     return 0;
 }
@@ -678,6 +678,7 @@ void stop()
 
 int getsonglength(char *fn)
 {
+#if 0
     int track;
     long long msDuration;
 	MP4Duration length;
@@ -701,11 +702,28 @@ int getsonglength(char *fn)
     MP4Close(file);
 
     return msDuration;
+#else
+    return 0;
+#endif
 }
 
 int getlength()
 {
-    return getsonglength(mp4state.filename);
+    int track;
+    long long msDuration;
+	MP4Duration length;
+
+    if ((track = GetAACTrack(mp4state.mp4file)) < 0)
+    {
+        return -1;
+    }
+
+    length = MP4GetTrackDuration(mp4state.mp4file, track);
+
+	msDuration = MP4ConvertFromTrackDuration(mp4state.mp4file, track,
+        length, MP4_MSECS_TIME_SCALE);
+
+    return msDuration;
 }
 
 int getoutputtime()
@@ -764,7 +782,7 @@ int last_frame;
 
 DWORD WINAPI PlayThread(void *b)
 {
-    int done=0;
+    int done = 0;
     int l;
 	int decoded_frames=0;
 	int br_calc_frames=0;
@@ -825,9 +843,11 @@ DWORD WINAPI PlayThread(void *b)
                 rc = MP4ReadSample(mp4state.mp4file, mp4state.mp4track,
                     mp4state.sampleId++, &buffer, &buffer_size,
                     NULL, NULL, NULL, NULL);
-                if (rc == 0)
+                if (rc == 0 || buffer == NULL)
                 {
                     last_frame = 1;
+                    sample_buffer = NULL;
+                    frameInfo.samples = 0;
                 } else {
                     sample_buffer = faacDecDecode(mp4state.hDecoder, &frameInfo, buffer);
                 }
