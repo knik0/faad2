@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: huffman.c,v 1.12 2004/01/13 14:24:10 menno Exp $
+** $Id: huffman.c,v 1.13 2004/01/14 20:32:30 menno Exp $
 **/
 
 #include "common.h"
@@ -168,8 +168,12 @@ static uint8_t huffman_2step_quad(uint8_t cb, bitfile *ld, int16_t *sp)
     {
         /* we know for sure it's more than hcbN[cb] bits long */
         faad_flushbits(ld, hcbN[cb]);
+#if 0
         offset += (uint16_t)faad_showbits(ld, extra_bits);
         faad_flushbits(ld, hcb_2_quad_table[cb][offset].bits - hcbN[cb]);
+#else
+        offset += (uint16_t)faad_getbits(ld, extra_bits);
+#endif
     } else {
         faad_flushbits(ld, hcb_2_quad_table[cb][offset].bits);
     }
@@ -211,8 +215,12 @@ static uint8_t huffman_2step_pair(uint8_t cb, bitfile *ld, int16_t *sp)
     {
         /* we know for sure it's more than hcbN[cb] bits long */
         faad_flushbits(ld, hcbN[cb]);
+#if 0
         offset += (uint16_t)faad_showbits(ld, extra_bits);
         faad_flushbits(ld, hcb_2_pair_table[cb][offset].bits - hcbN[cb]);
+#else
+        offset += (uint16_t)faad_getbits(ld, extra_bits);
+#endif
     } else {
         faad_flushbits(ld, hcb_2_pair_table[cb][offset].bits);
     }
@@ -333,7 +341,7 @@ uint8_t huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
     case 10:
         return huffman_2step_pair_sign(cb, ld, sp);
     case 12: {
-        uint8_t err = huffman_2step_quad(1, ld, sp);
+        uint8_t err = huffman_2step_pair(11, ld, sp);
         sp[0] = huffman_codebook(0); sp[1] = huffman_codebook(1); 
         return err; }
     case 11:

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.c,v 1.23 2004/01/13 20:35:14 menno Exp $
+** $Id: sbr_dec.c,v 1.24 2004/01/14 20:32:30 menno Exp $
 **/
 
 
@@ -44,7 +44,8 @@
 /* static function declarations */
 static void sbr_save_prev_data(sbr_info *sbr, uint8_t ch);
 
-sbr_info *sbrDecodeInit(uint16_t framelength
+sbr_info *sbrDecodeInit(uint16_t framelength, uint8_t id_aac,
+                        uint32_t sample_rate
 #ifdef DRM
 						, uint8_t IsDRM
 #endif
@@ -52,6 +53,10 @@ sbr_info *sbrDecodeInit(uint16_t framelength
 {
     sbr_info *sbr = faad_malloc(sizeof(sbr_info));
     memset(sbr, 0, sizeof(sbr_info));
+
+    /* save id of the parent element */
+    sbr->id_aac = id_aac;
+    sbr->sample_rate = sample_rate;
 
     sbr->bs_freq_scale = 2;
     sbr->bs_alter_scale = 1;
@@ -124,11 +129,22 @@ static void sbr_save_prev_data(sbr_info *sbr, uint8_t ch)
 
     sbr->L_E_prev[ch] = sbr->L_E[ch];
 
-    sbr->f_prev[ch] = sbr->f[ch][sbr->L_E[ch] - 1];
-    for (i = 0; i < 64; i++)
+    /* sbr->L_E[ch] can become 0 on files with bit errors */
+    if (sbr->L_E[ch] > 0)
     {
-        sbr->E_prev[ch][i] = sbr->E[ch][i][sbr->L_E[ch] - 1];
-        sbr->Q_prev[ch][i] = sbr->Q[ch][i][sbr->L_Q[ch] - 1];
+        sbr->f_prev[ch] = sbr->f[ch][sbr->L_E[ch] - 1];
+        for (i = 0; i < 64; i++)
+        {
+            sbr->E_prev[ch][i] = sbr->E[ch][i][sbr->L_E[ch] - 1];
+            sbr->Q_prev[ch][i] = sbr->Q[ch][i][sbr->L_Q[ch] - 1];
+        }
+    } else {
+        sbr->f_prev[ch] = 0;
+        for (i = 0; i < 64; i++)
+        {
+            sbr->E_prev[ch][i] = 0;
+            sbr->Q_prev[ch][i] = 0;
+        }
     }
 
     for (i = 0; i < 64; i++)
@@ -236,6 +252,10 @@ static void sbr_process_channel(sbr_info *sbr, real_t *channel_buf,
             else
                 xover_band = sbr->kx;
 
+            /* kx can be > 32 in cases of bit errors */
+            /* TODO: should be checked somewhere else */
+            xover_band = min(xover_band, 32);
+
             for (k = 0; k < xover_band; k++)
             {
                 QMF_RE(X[l][k]) = QMF_RE(sbr->Xcodec[ch][l + sbr->tHFAdj][k]);
@@ -275,6 +295,13 @@ void sbrDecodeCoupleFrame(sbr_info *sbr, real_t *left_chan, real_t *right_chan,
 {
     uint8_t dont_process = 0;
 
+    if (sbr == NULL)
+        return;
+
+    /* case can occur due to bit errors */
+    if (sbr->id_aac != ID_CPE)
+        return;
+
     if (sbr->ret || (sbr->header_count == 0))
     {
         /* don't process just upsample */
@@ -311,6 +338,13 @@ void sbrDecodeSingleFrame(sbr_info *sbr, real_t *channel,
                           const uint8_t just_seeked, const uint8_t upsample_only)
 {
     uint8_t dont_process = 0;
+
+    if (sbr == NULL)
+        return;
+
+    /* case can occur due to bit errors */
+    if (sbr->id_aac != ID_SCE && sbr->id_aac != ID_LFE)
+        return;
 
     if (sbr->ret || (sbr->header_count == 0))
     {

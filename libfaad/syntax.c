@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.66 2004/01/13 14:24:10 menno Exp $
+** $Id: syntax.c,v 1.67 2004/01/14 20:32:30 menno Exp $
 **/
 
 /*
@@ -439,7 +439,7 @@ void raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
                 /* one sbr_info describes a channel_element not a channel! */
                 if ((hInfo->error = fill_element(hDecoder, ld, drc
 #ifdef SBR_DEC
-                    , (ch_ele-1)
+                    , (ch_ele == 0) ? 0 : (ch_ele-1)
 #endif
                     )) > 0)
                     return;
@@ -963,17 +963,15 @@ static uint8_t fill_element(faacDecHandle hDecoder, bitfile *ld, drc_info *drc
     if (count > 0)
     {
 #ifdef SBR_DEC
-        hDecoder->sbr_used[sbr_ele] = 0;
         bs_extension_type = (uint8_t)faad_showbits(ld, 4);
 
         if ((bs_extension_type == EXT_SBR_DATA) ||
             (bs_extension_type == EXT_SBR_DATA_CRC))
         {
-            hDecoder->sbr_used[sbr_ele] = 1;
-
             if (!hDecoder->sbr[sbr_ele])
             {
-                hDecoder->sbr[sbr_ele] = sbrDecodeInit(hDecoder->frameLength
+                hDecoder->sbr[sbr_ele] = sbrDecodeInit(hDecoder->frameLength,
+                    hDecoder->element_id[sbr_ele], 2*get_sample_rate(hDecoder->sf_index)
 #ifdef DRM
                     , 0
 #endif
@@ -981,15 +979,10 @@ static uint8_t fill_element(faacDecHandle hDecoder, bitfile *ld, drc_info *drc
             }
 
             hDecoder->sbr_present_flag = 1;
-            hDecoder->sbr[sbr_ele]->sample_rate = get_sample_rate(hDecoder->sf_index);
-            hDecoder->sbr[sbr_ele]->sample_rate *= 2;
-            /* save id of previous element, this sbr object belongs to that element */
-            hDecoder->sbr[sbr_ele]->id_aac = hDecoder->element_id[sbr_ele];
 
             /* parse the SBR data */
             hDecoder->sbr[sbr_ele]->ret = sbr_extension_data(ld, hDecoder->sbr[sbr_ele], count);
         } else {
-            hDecoder->sbr_used[sbr_ele] = 0;
 #endif
             while (count > 0)
             {
@@ -1170,10 +1163,11 @@ void aac_scalable_main_element(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
             return;
         }
 
-        hDecoder->sbr_used[0] = 1;
-
         if (!hDecoder->sbr[0])
-            hDecoder->sbr[0] = sbrDecodeInit(hDecoder->frameLength, 1);
+        {
+            hDecoder->sbr[0] = sbrDecodeInit(hDecoder->frameLength, cpe.ele_id,
+                2*get_sample_rate(hDecoder->sf_index), 1);
+        }
 
         /* Reverse bit reading of SBR data in DRM audio frame */
         revbuffer = (uint8_t*)faad_malloc(buffer_size*sizeof(uint8_t));
@@ -1192,8 +1186,6 @@ void aac_scalable_main_element(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
         hDecoder->sbr[0]->sample_rate = get_sample_rate(hDecoder->sf_index);
         hDecoder->sbr[0]->sample_rate *= 2;
 
-        hDecoder->sbr[0]->id_aac = hDecoder->element_id[0];
-
         faad_getbits(&ld_sbr, 8); /* Skip 8-bit CRC */
 
         hDecoder->sbr[0]->ret = sbr_extension_data(&ld_sbr, hDecoder->sbr[0], count);
@@ -1204,6 +1196,9 @@ void aac_scalable_main_element(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
             hDecoder->sbr[0]->ret = faad_check_CRC(&ld_sbr, faad_get_processed_bits(&ld_sbr) - 8);
 
         faad_endbits(&ld_sbr);
+
+        if (revbuffer)
+            faad_free(revbuffer);
     }
 #endif
 #endif
@@ -1641,6 +1636,10 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
 
                 break;
             default: /* spectral books */
+
+                /* ics->scale_factors[g][sfb] must be between 0 and 255 */
+
+                ics->scale_factors[g][sfb] = 0;
 
                 /* decode scale factor */
                 t = huffman_scale_factor(ld);

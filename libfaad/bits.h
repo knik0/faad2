@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: bits.h,v 1.32 2004/01/14 20:32:30 menno Exp $
+** $Id: bits.h,v 1.33 2004/01/14 20:36:22 menno Exp $
 **/
 
 #ifndef __BITS_H__
@@ -280,12 +280,12 @@ static uint8_t faad_check_CRC(bitfile *ld, uint16_t len)
             DEBUGVAR(1,998,""))  & 1) ^ ((r >> 7) & 1)) * GPOLY )) & 0xFF;
     }
 
-//    if (r != CRC)
-//    {
-//        return 8;
-//    } else {
+    if (r != CRC)
+    {
+        return 8;
+    } else {
         return 0;
-//    }
+    }
 }
 
 static uint8_t tabFlipbits[256] = {

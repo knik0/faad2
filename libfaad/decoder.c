@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.90 2004/01/14 09:09:13 menno Exp $
+** $Id: decoder.c,v 1.91 2004/01/14 20:32:30 menno Exp $
 **/
 
 #include "common.h"
@@ -408,8 +408,8 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
     hDecoder->sbr[0] = NULL;
 #endif
 
-    /* must be done before frameLength is divided by 2 for LD */
-    hDecoder->fb = filter_bank_init(hDecoder->frameLength);
+    if (hDecoder->fb) filter_bank_end(hDecoder->fb);
+    hDecoder->fb = NULL;
 
     /* Take care of buffers */
     if (hDecoder->sample_buffer) faad_free(hDecoder->sample_buffer);
@@ -447,6 +447,8 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
             sbrDecodeEnd(hDecoder->sbr[i]);
     }
 #endif
+
+    hDecoder->fb = filter_bank_init(hDecoder->frameLength);
 
     return 0;
 }
@@ -929,6 +931,9 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     return sample_buffer;
 
 error:
+
+    faad_endbits(&ld);
+
     /* cleanup */
 #ifdef ANALYSIS
     fflush(stdout);
