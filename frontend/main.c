@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.14 2002/02/25 19:58:32 menno Exp $
+** $Id: main.c,v 1.15 2002/05/30 17:55:08 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -307,7 +307,8 @@ int GetAACTrack(MP4FileHandle infile)
 
             if (buff)
             {
-                rc = AudioSpecificConfig(buff, &dummy32, &dummy8, &dummy8, &dummy8);
+                rc = AudioSpecificConfig(buff, &dummy32, &dummy8, &dummy8, &dummy8,
+                    &dummy8, &dummy8, &dummy8);
                 free(buff);
 
                 if (rc < 0)

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.7 2002/04/20 14:45:13 menno Exp $
+** $Id: syntax.h,v 1.8 2002/05/30 17:55:08 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -242,6 +242,12 @@ typedef struct
     pred_info pred;
     ltp_info ltp;
     ltp_info ltp2;
+
+#ifdef ERROR_RESILIENCE
+    /* ER data */
+    uint16_t length_of_reordered_spectral_data;
+    uint8_t length_of_longest_codeword;
+#endif
 } ic_stream; /* individual channel stream */
 
 typedef struct
@@ -260,16 +266,31 @@ typedef struct
 
 
 uint8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration,
-                         uint8_t object_type);
+                         uint8_t object_type,
+                         uint8_t *aacSectionDataResilienceFlag,
+                         uint8_t *aacScalefactorDataResilienceFlag,
+                         uint8_t *aacSpectralDataResilienceFlag);
 uint8_t raw_data_block(bitfile *ld, int16_t ***spec_data, real_t ***spec_coef,
                        element ***syntax_elements,
                        uint8_t *channels, uint8_t *ele, uint8_t *ch_ele,
                        uint16_t frame_len, uint8_t sf_index, uint8_t object_type,
                        drc_info *drc);
 uint8_t single_lfe_channel_element(element *sce, bitfile *ld, int16_t *spec_data,
-                               uint8_t sf_index, uint8_t object_type);
+                                   uint8_t sf_index, uint8_t object_type
+#ifdef ERROR_RESILIENCE
+                                   ,uint8_t aacSectionDataResilienceFlag,
+                                   uint8_t aacScalefactorDataResilienceFlag,
+                                   uint8_t aacSpectralDataResilienceFlag
+#endif
+                                   );
 uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
-                         int16_t *spec_data2, uint8_t sf_index, uint8_t object_type);
+                             int16_t *spec_data2, uint8_t sf_index, uint8_t object_type
+#ifdef ERROR_RESILIENCE
+                             ,uint8_t aacSectionDataResilienceFlag,
+                             uint8_t aacScalefactorDataResilienceFlag,
+                             uint8_t aacSpectralDataResilienceFlag
+#endif
+                             );
 uint16_t data_stream_element(bitfile *ld);
 uint8_t program_config_element(program_config *pce, bitfile *ld);
 uint8_t fill_element(bitfile *ld, drc_info *drc
@@ -285,11 +306,25 @@ void get_adif_header(adif_header *adif, bitfile *ld);
 static uint8_t individual_channel_stream(element *ele, bitfile *ld,
                                      ic_stream *ics, uint8_t scal_flag,
                                      int16_t *spec_data, uint8_t sf_index,
-                                     uint8_t object_type);
+                                     uint8_t object_type
+#ifdef ERROR_RESILIENCE
+                                     ,uint8_t aacSectionDataResilienceFlag,
+                                     uint8_t aacScalefactorDataResilienceFlag,
+                                     uint8_t aacSpectralDataResilienceFlag
+#endif
+                                     );
 static uint8_t ics_info(ic_stream *ics, bitfile *ld,
                     uint8_t common_window, uint8_t fs_index, uint8_t object_type);
-static void section_data(ic_stream *ics, bitfile *ld);
-static uint8_t scale_factor_data(ic_stream *ics, bitfile *ld);
+static void section_data(ic_stream *ics, bitfile *ld
+#ifdef ERROR_RESILIENCE
+                         ,uint8_t aacSectionDataResilienceFlag
+#endif
+                         );
+static uint8_t scale_factor_data(ic_stream *ics, bitfile *ld
+#ifdef ERROR_RESILIENCE
+                                 ,uint8_t aacScalefactorDataResilienceFlag
+#endif
+                                 );
 static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data,
                              uint16_t frame_len);
 static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count);

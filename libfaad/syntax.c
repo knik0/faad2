@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.12 2002/04/20 14:45:13 menno Exp $
+** $Id: syntax.c,v 1.13 2002/05/30 17:55:08 menno Exp $
 **/
 
 /*
@@ -44,7 +44,10 @@
 
 /* Table 4.4.1 */
 uint8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration,
-                         uint8_t object_type)
+                         uint8_t object_type,
+                         uint8_t *aacSectionDataResilienceFlag,
+                         uint8_t *aacScalefactorDataResilienceFlag,
+                         uint8_t *aacSpectralDataResilienceFlag)
 {
     uint8_t frameLengthFlag, dependsOnCoreCoder, extensionFlag;
     uint16_t coreCoderDelay;
@@ -77,19 +80,12 @@ uint8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration,
         /* Error resilience not supported yet */
         if (object_type == 23)
         {
-            uint8_t tmp;
-            tmp = faad_get1bit(ld
+            *aacSectionDataResilienceFlag = faad_get1bit(ld
                 DEBUGVAR(1,144,"GASpecificConfig(): aacSectionDataResilienceFlag"));
-            if (tmp)
-                return -6;
-            tmp = faad_get1bit(ld
+            *aacScalefactorDataResilienceFlag = faad_get1bit(ld
                 DEBUGVAR(1,145,"GASpecificConfig(): aacScalefactorDataResilienceFlag"));
-            if (tmp)
-                return -6;
-            tmp = faad_get1bit(ld
+            *aacSpectralDataResilienceFlag = faad_get1bit(ld
                 DEBUGVAR(1,146,"GASpecificConfig(): aacSpectralDataResilienceFlag"));
-            if (tmp)
-                return -6;
 
             /* 1 bit: extensionFlag3 */
         }
@@ -236,7 +232,13 @@ uint8_t program_config_element(program_config *pce, bitfile *ld)
 /* Table 4.4.4 and */
 /* Table 4.4.9 */
 uint8_t single_lfe_channel_element(element *sce, bitfile *ld, int16_t *spec_data,
-                               uint8_t sf_index, uint8_t object_type)
+                                   uint8_t sf_index, uint8_t object_type
+#ifdef ERROR_RESILIENCE
+                                   ,uint8_t aacSectionDataResilienceFlag,
+                                   uint8_t aacScalefactorDataResilienceFlag,
+                                   uint8_t aacSpectralDataResilienceFlag
+#endif
+                                   )
 {
     ic_stream *ics = &(sce->ics1);
 
@@ -244,12 +246,24 @@ uint8_t single_lfe_channel_element(element *sce, bitfile *ld, int16_t *spec_data
         DEBUGVAR(1,38,"single_lfe_channel_element(): element_instance_tag"));
 
     return individual_channel_stream(sce, ld, ics, 0, spec_data, sf_index,
-        object_type);
+        object_type
+#ifdef ERROR_RESILIENCE
+        ,aacSectionDataResilienceFlag,
+        aacScalefactorDataResilienceFlag,
+        aacSpectralDataResilienceFlag
+#endif
+        );
 }
 
 /* Table 4.4.5 */
 uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
-                         int16_t *spec_data2, uint8_t sf_index, uint8_t object_type)
+                             int16_t *spec_data2, uint8_t sf_index, uint8_t object_type
+#ifdef ERROR_RESILIENCE
+                             ,uint8_t aacSectionDataResilienceFlag,
+                             uint8_t aacScalefactorDataResilienceFlag,
+                             uint8_t aacSpectralDataResilienceFlag
+#endif
+                             )
 {
     uint8_t result;
     ic_stream *ics1 = &(cpe->ics1);
@@ -287,10 +301,22 @@ uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
     }
 
     if ((result = individual_channel_stream(cpe, ld, ics1, 0, spec_data1,
-        sf_index, object_type)) > 0)
+        sf_index, object_type
+#ifdef ERROR_RESILIENCE
+        ,aacSectionDataResilienceFlag,
+        aacScalefactorDataResilienceFlag,
+        aacSpectralDataResilienceFlag
+#endif
+        )) > 0)
         return result;
     if ((result = individual_channel_stream(cpe, ld, ics2, 0, spec_data2,
-        sf_index, object_type)) > 0)
+        sf_index, object_type
+#ifdef ERROR_RESILIENCE
+        ,aacSectionDataResilienceFlag,
+        aacScalefactorDataResilienceFlag,
+        aacSpectralDataResilienceFlag
+#endif
+        )) > 0)
         return result;
 
     return 0;
@@ -478,7 +504,9 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
                                      int16_t *spec_data, uint8_t sf_index,
                                      uint8_t object_type
 #ifdef ERROR_RESILIENCE
-                                     ,uint8_t aacSpectralDataResilienceFlag
+                                     ,uint8_t aacSectionDataResilienceFlag,
+                                     uint8_t aacScalefactorDataResilienceFlag,
+                                     uint8_t aacSpectralDataResilienceFlag
 #endif
                                      )
 {
@@ -498,8 +526,16 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
             object_type)) > 0)
             return result;
     }
-    section_data(ics, ld);
-    if ((result = scale_factor_data(ics, ld)) > 0)
+    section_data(ics, ld
+#ifdef ERROR_RESILIENCE
+        ,aacSectionDataResilienceFlag
+#endif
+        );
+    if ((result = scale_factor_data(ics, ld
+#ifdef ERROR_RESILIENCE
+        ,aacScalefactorDataResilienceFlag
+#endif
+        )) > 0)
         return result;
 
     if (!scal_flag)
@@ -545,9 +581,11 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
         ics->length_of_longest_codeword = (uint8_t)faad_getbits(ld, 6
             DEBUGVAR(1,148,"individual_channel_stream(): length_of_longest_codeword"));
 
+#if 0
         /* error resilient spectral data decoding */
         if ((result = reordered_spectral_data()) > 0)
             return result;
+#endif
     }
 #endif
 
@@ -718,6 +756,7 @@ static uint8_t scale_factor_data(ic_stream *ics, bitfile *ld
         return decode_scale_factors(ics, ld);
 #ifdef ERROR_RESILIENCE
     } else {
+#if 0
         uint32_t bits_used, length_of_rvlc_sf;
         uint8_t bits = 11;
 
@@ -791,6 +830,7 @@ static uint8_t scale_factor_data(ic_stream *ics, bitfile *ld
         {
             dpcm_noise_last_position; 9 uimsbf
         }
+#endif
     }
 #endif
 }

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.h,v 1.5 2002/03/16 13:38:37 menno Exp $
+** $Id: decoder.h,v 1.6 2002/05/30 17:55:08 menno Exp $
 **/
 
 #ifndef __DECODER_H__
@@ -71,6 +71,9 @@ typedef struct
     uint8_t sf_index;
     uint8_t object_type;
     uint8_t channelConfiguration;
+    uint8_t aacSectionDataResilienceFlag;
+    uint8_t aacScalefactorDataResilienceFlag;
+    uint8_t aacSpectralDataResilienceFlag;
 
     uint32_t frame;
 

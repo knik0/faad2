@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mp4.c,v 1.5 2002/04/07 21:26:04 menno Exp $
+** $Id: mp4.c,v 1.6 2002/05/30 17:55:08 menno Exp $
 **/
 
 #include "common.h"
@@ -80,7 +80,10 @@ int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
                                    uint32_t *samplerate,
                                    uint8_t *channels,
                                    uint8_t *sf_index,
-                                   uint8_t *object_type)
+                                   uint8_t *object_type,
+                                   uint8_t *aacSectionDataResilienceFlag,
+                                   uint8_t *aacScalefactorDataResilienceFlag,
+                                   uint8_t *aacSpectralDataResilienceFlag)
 {
     bitfile ld;
     uint8_t ObjectTypeIndex, SamplingFrequencyIndex, ChannelsConfiguration;
@@ -125,10 +128,16 @@ int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
         ObjectTypeIndex == 3 || ObjectTypeIndex == 4 ||
         ObjectTypeIndex == 6 || ObjectTypeIndex == 7)
     {
-        return GASpecificConfig(&ld, channels, ObjectTypeIndex);
+        return GASpecificConfig(&ld, channels, ObjectTypeIndex,
+            aacSectionDataResilienceFlag,
+            aacScalefactorDataResilienceFlag,
+            aacSpectralDataResilienceFlag);
 #ifdef LD_DEC
     } else if (ObjectTypeIndex == 23) { /* ER AAC LD */
-        uint8_t result = GASpecificConfig(&ld, channels, ObjectTypeIndex);
+        uint8_t result = GASpecificConfig(&ld, channels, ObjectTypeIndex,
+            aacSectionDataResilienceFlag,
+            aacScalefactorDataResilienceFlag,
+            aacSpectralDataResilienceFlag);
         uint8_t ep_config = (uint8_t)faad_getbits(&ld, 2
             DEBUGVAR(1,143,"parse_audio_decoder_specific_info(): epConfig"));
         if (ep_config != 0)

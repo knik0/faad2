@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.13 2002/03/16 19:18:11 menno Exp $
+** $Id: decoder.c,v 1.14 2002/05/30 17:55:08 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -62,6 +62,9 @@ faacDecHandle FAADAPI faacDecOpen()
     hDecoder->config.defSampleRate = 44100; /* Default: 44.1kHz */
     hDecoder->adts_header_present = 0;
     hDecoder->adif_header_present = 0;
+    hDecoder->aacSectionDataResilienceFlag = 0;
+    hDecoder->aacScalefactorDataResilienceFlag = 0;
+    hDecoder->aacSpectralDataResilienceFlag = 0;
 
     hDecoder->frame = 0;
     hDecoder->sample_buffer = NULL;
@@ -234,7 +237,10 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
     }
 
     rc = AudioSpecificConfig(pBuffer, samplerate, channels,
-        &hDecoder->sf_index, &hDecoder->object_type);
+        &hDecoder->sf_index, &hDecoder->object_type,
+        &hDecoder->aacSectionDataResilienceFlag,
+        &hDecoder->aacScalefactorDataResilienceFlag,
+        &hDecoder->aacSpectralDataResilienceFlag);
 #ifdef LD_DEC
     if (hDecoder->object_type != LD)
 #endif
@@ -271,6 +277,29 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
     if (hDecoder) free(hDecoder);
 }
 
+#ifdef ERROR_RESILIENCE
+#define decode_sce_lfe() \
+    spec_data[channels]   = (int16_t*)malloc(frame_len*sizeof(int16_t)); \
+    spec_coef[channels]   = (real_t*)malloc(frame_len*sizeof(real_t)); \
+ \
+    syntax_elements[ch_ele] = (element*)malloc(sizeof(element)); \
+    memset(syntax_elements[ch_ele], 0, sizeof(element)); \
+    syntax_elements[ch_ele]->ele_id  = id_syn_ele; \
+    syntax_elements[ch_ele]->channel = channels; \
+ \
+    if ((hInfo->error = single_lfe_channel_element(syntax_elements[ch_ele], \
+        ld, spec_data[channels], sf_index, object_type, \
+        aacSectionDataResilienceFlag, aacScalefactorDataResilienceFlag, \
+        aacSpectralDataResilienceFlag)) > 0) \
+    { \
+        /* to make sure everything gets deallocated */ \
+        channels++; ch_ele++; \
+        goto error; \
+    } \
+ \
+    channels++; \
+    ch_ele++;
+#else
 #define decode_sce_lfe() \
     spec_data[channels]   = (int16_t*)malloc(frame_len*sizeof(int16_t)); \
     spec_coef[channels]   = (real_t*)malloc(frame_len*sizeof(real_t)); \
@@ -290,7 +319,35 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
  \
     channels++; \
     ch_ele++;
+#endif
 
+#ifdef ERROR_RESILIENCE
+#define decode_cpe() \
+    spec_data[channels]   = (int16_t*)malloc(frame_len*sizeof(int16_t)); \
+    spec_data[channels+1] = (int16_t*)malloc(frame_len*sizeof(int16_t)); \
+    spec_coef[channels]   = (real_t*)malloc(frame_len*sizeof(real_t)); \
+    spec_coef[channels+1] = (real_t*)malloc(frame_len*sizeof(real_t)); \
+ \
+    syntax_elements[ch_ele] = (element*)malloc(sizeof(element)); \
+    memset(syntax_elements[ch_ele], 0, sizeof(element)); \
+    syntax_elements[ch_ele]->ele_id         = id_syn_ele; \
+    syntax_elements[ch_ele]->channel        = channels; \
+    syntax_elements[ch_ele]->paired_channel = channels+1; \
+ \
+    if ((hInfo->error = channel_pair_element(syntax_elements[ch_ele], \
+        ld, spec_data[channels], spec_data[channels+1], \
+        sf_index, object_type, \
+        aacSectionDataResilienceFlag, aacScalefactorDataResilienceFlag, \
+        aacSpectralDataResilienceFlag)) > 0) \
+    { \
+        /* to make sure everything gets deallocated */ \
+        channels+=2; ch_ele++; \
+        goto error; \
+    } \
+ \
+    channels += 2; \
+    ch_ele++;
+#else
 #define decode_cpe() \
     spec_data[channels]   = (int16_t*)malloc(frame_len*sizeof(int16_t)); \
     spec_data[channels+1] = (int16_t*)malloc(frame_len*sizeof(int16_t)); \
@@ -314,6 +371,7 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
  \
     channels += 2; \
     ch_ele++;
+#endif
 
 void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                             faacDecFrameInfo *hInfo,
@@ -349,6 +407,11 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     uint8_t outputFormat   =  hDecoder->config.outputFormat;
 #ifdef LTP_DEC
     uint16_t *ltp_lag      =  hDecoder->ltp_lag;
+#endif
+#ifdef ERROR_RESILIENCE
+    uint8_t aacSectionDataResilienceFlag     = hDecoder->aacSectionDataResilienceFlag;
+    uint8_t aacScalefactorDataResilienceFlag = hDecoder->aacScalefactorDataResilienceFlag;
+    uint8_t aacSpectralDataResilienceFlag    = hDecoder->aacSpectralDataResilienceFlag;
 #endif
 
     program_config pce;

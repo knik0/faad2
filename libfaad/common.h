@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.11 2002/05/24 17:26:11 menno Exp $
+** $Id: common.h,v 1.12 2002/05/30 17:55:08 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -73,6 +73,7 @@ extern "C" {
 #endif
 
 //#define SBR
+//#define ERROR_RESILIENCE
 
 /* END COMPILE TIME DEFINITIONS */
 
