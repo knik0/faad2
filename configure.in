@@ -58,15 +58,19 @@ MY_CHECK_TYPEDEF_FROM_INCLUDE([fpos_t foo; foo.__pos = 0;],
         [HAVE_FPOS_T_POS])
 
 
-AC_CHECK_LIB(mp4v2, MP4Create,
-  [AM_CONDITIONAL(HAVE_MPEG4IP, true)
+external_mp4v2=yes
+AC_CHECK_LIB(mp4v2, MP4Create, , external_mp4v2=no, -lstdc++)
+AC_CHECK_LIB(mp4v2, MP4MetadataDelete, external_mp4v2=no, , -lstdc++)
+AC_CHECK_HEADER(mp4.h, , external_mp4v2=no)
+
+if test x$external_mp4v2 = xyes; then
+  AM_CONDITIONAL(HAVE_MPEG4IP, true)
   MPEG4IP_PLAYER_PLUGIN_DIR=`mpeg4ip-config --player-plugin-dir`  
   AC_SUBST(MPEG4IP_PLAYER_PLUGIN_DIR)
-  ],
-  [AM_CONDITIONAL(HAVE_MPEG4IP, false)
-   AC_OUTPUT_COMMANDS(,[cd common/mp4v2; aclocal -I .; autoheader; libtoolize --automake; automake --add-missing; autoconf; cd -])
-  ], 
-  -lstdc++)
+else
+  AM_CONDITIONAL(HAVE_MPEG4IP, false)
+  AC_OUTPUT_COMMANDS(,[cd common/mp4v2; aclocal -I .; autoheader; libtoolize --automake; automake --add-missing; autoconf; cd -])
+fi
 
 AC_OUTPUT_COMMANDS(,[cd plugins/xmms; libtoolize; aclocal; autoconf; automake --add-missing; cd -])
 
