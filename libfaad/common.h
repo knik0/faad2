@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.12 2002/05/30 17:55:08 menno Exp $
+** $Id: common.h,v 1.13 2002/05/30 18:31:51 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -57,6 +57,9 @@ extern "C" {
 /* use double precision */
 /* #define USE_DOUBLE_PRECISION */
 
+//#define SBR
+#define ERROR_RESILIENCE
+
 
 /* Allow decoding of MAIN profile AAC */
 #define MAIN_DEC
@@ -67,13 +70,14 @@ extern "C" {
 
 /* LD can't do without LTP */
 #ifdef LD_DEC
+#ifndef ERROR_RESILIENCE
+#define ERROR_RESILIENCE
+#endif
 #ifndef LTP_DEC
 #define LTP_DEC
 #endif
 #endif
 
-//#define SBR
-//#define ERROR_RESILIENCE
 
 /* END COMPILE TIME DEFINITIONS */
 

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.8 2002/05/30 17:55:08 menno Exp $
+** $Id: syntax.h,v 1.9 2002/05/30 18:31:51 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -28,11 +28,16 @@ extern "C" {
 
 #include "bits.h"
 
-#define MAIN 0
-#define LC   1
-#define SSR  2
-#define LTP  3
-#define LD   23
+#define MAIN    0
+#define LC      1
+#define SSR     2
+#define LTP     3
+#define LD      23
+#define ER_LC   17
+#define ER_LTP  19
+
+/* First object type that has ER */
+#define ER_OBJECT_START 17
 
 
 /* Bitstream */

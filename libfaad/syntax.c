@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.13 2002/05/30 17:55:08 menno Exp $
+** $Id: syntax.c,v 1.14 2002/05/30 18:31:51 menno Exp $
 **/
 
 /*
@@ -78,7 +78,7 @@ uint8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration,
     if (extensionFlag == 1)
     {
         /* Error resilience not supported yet */
-        if (object_type == 23)
+        if (object_type >= ER_OBJECT_START)
         {
             *aacSectionDataResilienceFlag = faad_get1bit(ld
                 DEBUGVAR(1,144,"GASpecificConfig(): aacSectionDataResilienceFlag"));

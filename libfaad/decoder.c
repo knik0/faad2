@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.14 2002/05/30 17:55:08 menno Exp $
+** $Id: decoder.c,v 1.15 2002/05/30 18:31:51 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -151,11 +151,23 @@ static int8_t can_decode_ot(uint8_t object_type)
 #else
         return -1;
 #endif
+
+    /* ER object types */
+#ifdef ERROR_RESILIENCE
+    case ER_LC:
+        return 0;
+    case ER_LTP:
+#ifdef LTP_DEC
+        return 0;
+#else
+        return -1;
+#endif
     case LD:
 #ifdef LD_DEC
         return 0;
 #else
         return -1;
+#endif
 #endif
     }
 
@@ -241,9 +253,7 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
         &hDecoder->aacSectionDataResilienceFlag,
         &hDecoder->aacScalefactorDataResilienceFlag,
         &hDecoder->aacSpectralDataResilienceFlag);
-#ifdef LD_DEC
-    if (hDecoder->object_type != LD)
-#endif
+    if (hDecoder->object_type < 4)
         hDecoder->object_type--; /* For AAC differs from MPEG-4 */
     if (rc != 0)
     {
@@ -452,8 +462,8 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     dbg_count = 0;
 #endif
 
-#ifdef LD_DEC
-    if (object_type != LD)
+#ifdef ERROR_RESILIENCE
+    if (object_type < ER_OBJECT_START)
     {
 #endif
         /* Table 4.4.3: raw_data_block() */
@@ -486,7 +496,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             }
             ele++;
         }
-#ifdef LD_DEC
+#ifdef ERROR_RESILIENCE
     } else {
         /* Table 262: er_raw_data_block() */
         switch (channelConfiguration)
@@ -666,6 +676,9 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #endif
 #ifdef LTP_DEC
         else if ((object_type == LTP)
+#ifdef ERROR_RESILIENCE
+            || (object_type == ER_LTP)
+#endif
 #ifdef LD_DEC
             || (object_type == LD)
 #endif
@@ -736,6 +749,9 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
 #ifdef LTP_DEC
         if ((object_type == LTP)
+#ifdef ERROR_RESILIENCE
+            || (object_type == ER_LTP)
+#endif
 #ifdef LD_DEC
             || (object_type == LD)
 #endif

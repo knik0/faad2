@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mp4.c,v 1.6 2002/05/30 17:55:08 menno Exp $
+** $Id: mp4.c,v 1.7 2002/05/30 18:31:51 menno Exp $
 **/
 
 #include "common.h"
@@ -54,9 +54,14 @@ static uint8_t ObjectTypesTable[32] = {
     0, /* Algorithmic Synthesis and Audio FX */
 
     /* MPEG-4 Version 2 */
-    0, /* ER AAC LC */
+#ifdef ERROR_RESILIENCE
+    1, /* ER AAC LC */
     0, /* (Reserved) */
+#ifdef LTP_DEC
+    1, /* ER AAC LTP */
+#else
     0, /* ER AAC LTP */
+#endif
     0, /* ER AAC scalable */
     0, /* ER TwinVQ */
     0, /* ER BSAC */
@@ -69,6 +74,19 @@ static uint8_t ObjectTypesTable[32] = {
     0, /* ER HVXC */
     0, /* ER HILN */
     0, /* ER Parametric */
+#else /* No ER defined */
+    0, /* ER AAC LC */
+    0, /* (Reserved) */
+    0, /* ER AAC LTP */
+    0, /* ER AAC scalable */
+    0, /* ER TwinVQ */
+    0, /* ER BSAC */
+    0, /* ER AAC LD */
+    0, /* ER CELP */
+    0, /* ER HVXC */
+    0, /* ER HILN */
+    0, /* ER Parametric */
+#endif
     0, /* (Reserved) */
     0, /* (Reserved) */
     0, /* (Reserved) */
@@ -132,8 +150,8 @@ int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
             aacSectionDataResilienceFlag,
             aacScalefactorDataResilienceFlag,
             aacSpectralDataResilienceFlag);
-#ifdef LD_DEC
-    } else if (ObjectTypeIndex == 23) { /* ER AAC LD */
+#ifdef ERROR_RESILIENCE
+    } else if (ObjectTypeIndex >= ER_OBJECT_START) { /* ER */
         uint8_t result = GASpecificConfig(&ld, channels, ObjectTypeIndex,
             aacSectionDataResilienceFlag,
             aacScalefactorDataResilienceFlag,
