@@ -1,4 +1,4 @@
-#include "../SDK/foobar2000.h"
+#include "foobar2000/SDK/foobar2000.h"
 #define USE_TAGGING
 #include <mp4ff.h>
 
@@ -97,20 +97,34 @@ public:
 	packet_decoder * p_decoder;
 
 
-    unsigned char *buffer;
-    unsigned int buffer_size;
-
 
     /* for gapless decoding */
 
 	mp4ff_callback_t mp4cb;
 	
 	double m_length;
-	uint32_t m_timescale;
-	int m_skip_samples;
-	uint32_t m_skip_frames;
-
+	unsigned m_timescale;
+	unsigned m_skip_samples;
+	unsigned m_skip_frames;
+	double m_timescale_div;
 	unsigned m_expected_sample_rate,m_expected_channels;
+	
+	double m_vbr_last_duration;
+	unsigned m_vbr_update_frames,m_vbr_update_bytes;
+	double m_vbr_update_time;
+	bool m_vbr_update_enabled;
+	unsigned m_vbr_update_interval;
+
+
+	int64_t duration_to_samples(int64_t val)
+	{
+		return (int64_t) ( (double)val * (double) m_expected_sample_rate * m_timescale_div + 0.5);
+	}
+
+	int64_t samples_to_duration(int64_t val)
+	{
+		return (int64_t) ( (double)val * (double)m_timescale / (double)m_expected_sample_rate + 0.5);
+	}
 
 	audio_chunk_i m_tempchunk;
 
@@ -134,6 +148,14 @@ public:
 		return reinterpret_cast<input_mp4*>(udata)->mp4file->set_eof() ? 1 : 0;
 	}
 	
+	void vbr_update_reset()
+	{
+		m_vbr_update_frames = 0; m_vbr_update_bytes = 0;
+		m_vbr_update_time = 0;
+		m_vbr_update_enabled = true;//make this configurable ?
+		m_vbr_update_interval = 16;
+	}
+
 	void cleanup()
 	{
 		if (infile) {mp4ff_close(infile);infile=0;}
@@ -142,6 +164,7 @@ public:
 			p_decoder->service_release();
 			p_decoder = 0;
 		}
+		vbr_update_reset();
 	}
 
     input_mp4()
@@ -157,6 +180,9 @@ public:
 		infile = 0;
 		m_offset = 0;
 		m_skip_samples = 0;
+
+		vbr_update_reset();
+
     }
 
     ~input_mp4()
@@ -168,6 +194,57 @@ public:
     {
         return (!stricmp(ext,"MP4") || !stricmp(ext,"M4A"));
     }
+
+	bool read_mp4_track_info(file_info * info)
+	{
+		m_expected_sample_rate = mp4ff_get_sample_rate(infile,track);
+		m_expected_channels = mp4ff_get_channel_count(infile,track);
+
+		if (m_expected_sample_rate == 0)
+		{
+			console::error("Invalid MP4 sample rate.");
+			return false;
+		}
+
+		if (m_expected_channels == 0)
+		{
+			console::error("Invalid MP4 channel count.");
+			return false;
+		}
+		m_timescale = mp4ff_time_scale(infile,track);
+		
+		if (m_timescale == 0)
+		{
+			console::error("Invalid MP4 time scale.");
+			return false;
+		}
+/*		if (m_timescale != m_expected_sample_rate)
+		{
+			console::error("Different sample rate / time scales not supported.");
+			return false;
+		}*/
+
+		m_timescale_div = 1.0 / (double) m_timescale;
+
+		{
+			int64_t duration = mp4ff_get_track_duration_use_offsets(infile,track);
+			if (duration == -1)
+				m_length = -1.0;
+			else
+			{
+				m_length = (double)duration * m_timescale_div;
+			}
+		}
+
+		info->set_length(m_length);
+
+		info->info_set_int("bitrate",(mp4ff_get_avg_bitrate(infile,track) + 500) / 1000);
+		info->info_set_int("channels",m_expected_channels);
+		info->info_set_int("samplerate",m_expected_sample_rate);
+//		info->info_set_int("mp4_timescale",m_timescale);
+		
+		return true;
+	}
 
     virtual bool open(reader *r, file_info *info, unsigned flags)
     {
@@ -189,14 +266,22 @@ public:
 		{
 			cleanup();
 			console::error("Error parsing MP4 file.");
-			return 0;
+			return false;
 		}
 
 		if ((track = find_track_to_decode(infile,codecname)) < 0)
 		{
 			cleanup();
 			console::error("Unable to find correct sound track in the MP4 file.");
-			return 0;
+			return false;
+		}
+
+		info->info_set("codec",codecname);
+
+		if (!read_mp4_track_info(info))
+		{
+			cleanup();
+			return false;
 		}
 
 		p_decoder = packet_decoder::create(codecname);
@@ -204,10 +289,11 @@ public:
 		{
 			cleanup();
 			console::error("Unable to find correct packet decoder object.");
-			return 0;
+			return false;
 		}
 
-		info->info_set("codec",codecname);
+	    unsigned char *buffer;
+		unsigned int buffer_size;
 
 		buffer = NULL;
 		buffer_size = 0;
@@ -218,51 +304,31 @@ public:
 			if (buffer) free(buffer);
 			cleanup();
 			console::error("Error initializing decoder.");
-			return 0;
+			return false;
 		}
 
-		m_timescale = mp4ff_time_scale(infile,track);
+		m_expected_channels = (unsigned)info->info_get_int("channels");
+		m_expected_sample_rate = (unsigned)info->info_get_int("samplerate");
+
+		if (m_expected_channels==0 || m_expected_sample_rate==0)
+		{
+			cleanup();
+			console::error("Decoder returned invalid info.");
+			return false;
+		}
 
 		if (buffer)
 		{
 			free(buffer);
 		}
 
-		{
-			m_expected_sample_rate = mp4ff_get_sample_rate(infile,track);
-			m_expected_channels = mp4ff_get_channel_count(infile,track);
-			if (m_timescale != m_expected_sample_rate)
-			{
-				cleanup();
-				console::error("Different sample rate / time scales not supported.");
-				return 0;
-			}
 
+		{
 			char *tag = NULL, *item = NULL;
 			int k, j;
 			
-			
-			if (m_timescale<=0)
-				m_length = -1.0;
-			else
-			{
-				int64_t duration = mp4ff_get_track_duration_use_offsets(infile,track);
-				if (duration == -1)
-					m_length = -1.0;
-				else
-				{
-					m_length = (double)duration / (double)m_timescale;
-				}
-			}
-
-			info->set_length(m_length);
-
-
 			if (flags & OPEN_FLAG_GET_INFO)
 			{
-				info->info_set_int("bitrate",(mp4ff_get_avg_bitrate(infile,track) + 500) / 1000);
-				info->info_set_int("channels",m_expected_channels);
-				info->info_set_int("samplerate",m_expected_sample_rate);
 
 				j = mp4ff_meta_get_num_items(infile);
 				for (k = 0; k < j; k++)
@@ -286,6 +352,8 @@ public:
 
 		m_offset = 0;
 
+		vbr_update_reset();
+
 		sampleId = 0;
 
         return 1;
@@ -305,6 +373,9 @@ public:
 
 		do		
 		{
+			unsigned char *buffer;
+			unsigned int buffer_size;
+
 			/* get acces unit from MP4 file */
 			buffer = NULL;
 			buffer_size = 0;
@@ -329,8 +400,8 @@ public:
 			if (m_skip_frames>0) m_skip_frames--;
 			else
 			{
-				unsigned offset = mp4ff_get_sample_offset(infile,track,sampleId);
-				unsigned duration = mp4ff_get_sample_duration(infile, track, sampleId);
+				unsigned offset = (unsigned)duration_to_samples(mp4ff_get_sample_offset(infile,track,sampleId));
+				unsigned duration = (unsigned)duration_to_samples(mp4ff_get_sample_duration(infile, track, sampleId));
 	//			console::info(uStringPrintf("duration: %u, offset: %u",duration,offset));
 
 				if (m_tempchunk.is_empty())
@@ -345,18 +416,22 @@ public:
 				}
 				else
 				{
+					m_vbr_update_frames++;
+					m_vbr_update_bytes += buffer_size;
+					m_vbr_update_time += (m_vbr_last_duration = m_tempchunk.get_duration());
+
 					if (m_tempchunk.get_srate() != m_expected_sample_rate)
 					{
 						cleanup();
 						console::error(uStringPrintf("Expected sample rate: %u, got: %u.",m_expected_sample_rate,m_tempchunk.get_srate()));
 						return -1;
 					}
-					if (m_tempchunk.get_channels() != m_expected_channels)
+/*					if (m_tempchunk.get_channels() != m_expected_channels)
 					{
 						cleanup();
 						console::error(uStringPrintf("Expected channels: %u, got: %u.",m_expected_channels,m_tempchunk.get_channels()));
 						return -1;
-					}
+					}*/
 				}
 				unsigned samplerate,channels,decoded_sample_count;
 
@@ -499,11 +574,13 @@ typedef struct
 
 		sampleId = dest_sample;
 		
-		m_skip_samples = skip_samples;
+		m_skip_samples = (unsigned)duration_to_samples(skip_samples);
 
 		m_offset = 0;
 
 		p_decoder->reset_after_seek();
+		
+		vbr_update_reset();
 
         return true;
 
@@ -513,6 +590,30 @@ typedef struct
     {
         return !stricmp(type, "audio/mp4") || !stricmp(type, "audio/x-mp4");
     }
+
+	virtual bool get_dynamic_info(file_info * out,double * timestamp_delta,bool * b_track_change)
+	{
+		bool ret = false;
+		if (m_vbr_update_enabled)
+		{
+			if (m_vbr_update_time > 0 && m_vbr_update_frames >= m_vbr_update_interval)
+			{
+				double delay = - (m_vbr_update_time - m_vbr_last_duration);
+				int val = (int) ( ((double)m_vbr_update_bytes * 8.0 / m_vbr_update_time + 500.0) / 1000.0 );
+				if (val != out->info_get_bitrate_vbr())
+				{
+					*timestamp_delta = delay;
+					out->info_set_bitrate_vbr(val);
+					ret = true;
+				}
+				m_vbr_update_frames = 0; m_vbr_update_bytes = 0;
+				m_vbr_update_time = 0;
+			}
+		}
+
+		return ret;
+	}
+
 };
 
 static service_factory_t<input, input_mp4> foo_mp4;

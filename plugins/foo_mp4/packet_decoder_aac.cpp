@@ -1,4 +1,4 @@
-#include "../SDK/foobar2000.h"
+#include "foobar2000/SDK/foobar2000.h"
 #include <faad.h>
 
 
@@ -61,6 +61,9 @@ public:
 			return false;
 		}
 
+		info->info_set_int("samplerate",t_samplerate);
+		info->info_set_int("channels",t_channels);
+
 		{
 			mp4AudioSpecificConfig mp4ASC;
 			if (AudioSpecificConfig((unsigned char*)data, bytes, &mp4ASC) >= 0)
@@ -87,7 +90,7 @@ public:
 
 	virtual bool decode(const void * buffer,unsigned bytes,audio_chunk * out)
 	{
-		const audio_sample * sample_buffer = (const audio_sample*)faacDecDecode(hDecoder, &frameInfo, (unsigned char*)buffer, bytes);
+		audio_sample * sample_buffer = (audio_sample*)faacDecDecode(hDecoder, &frameInfo, (unsigned char*)buffer, bytes);
 
 		if (frameInfo.error > 0)
 		{
@@ -105,6 +108,27 @@ public:
 
 		if (frameInfo.samples)
 		{
+            if (frameInfo.channels == 6 && frameInfo.num_lfe_channels)
+            {
+                //channel order for 5.1: L/R/C/LF/BL/BR
+                audio_sample r1, r2, r3, r4, r5, r6;
+                for (unsigned int i = 0; i < frameInfo.samples; i += frameInfo.channels)
+                {
+                    r1 = sample_buffer[i];
+                    r2 = sample_buffer[i+1];
+                    r3 = sample_buffer[i+2];
+                    r4 = sample_buffer[i+3];
+                    r5 = sample_buffer[i+4];
+                    r6 = sample_buffer[i+5];
+                    sample_buffer[i] = r2;
+                    sample_buffer[i+1] = r3;
+                    sample_buffer[i+2] = r1;
+                    sample_buffer[i+3] = r6;
+                    sample_buffer[i+4] = r4;
+                    sample_buffer[i+5] = r5;
+                }
+            }
+
 			return out->set_data(sample_buffer,frameInfo.samples / frameInfo.channels,frameInfo.channels,frameInfo.samplerate);
 		}
 		else
