@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ic_predict.c,v 1.5 2002/06/03 15:03:46 menno Exp $
+** $Id: ic_predict.c,v 1.6 2002/06/13 11:03:27 menno Exp $
 **/
 
 #include "common.h"
@@ -131,23 +131,24 @@ void pns_reset_pred_state(ic_stream *ics, pred_state *state)
     }
 }
 
-void reset_all_predictors(pred_state *state)
+void reset_all_predictors(pred_state *state, uint16_t frame_len)
 {
     uint16_t i;
 
-    for (i = 0; i < 1024; i++)
+    for (i = 0; i < frame_len; i++)
         reset_pred_state(&state[i]);
 }
 
 /* intra channel prediction */
-void ic_prediction(ic_stream *ics, real_t *spec, pred_state *state)
+void ic_prediction(ic_stream *ics, real_t *spec, pred_state *state,
+                   uint16_t frame_len)
 {
     uint8_t sfb;
     uint16_t bin;
 
     if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
     {
-        reset_all_predictors(state);
+        reset_all_predictors(state, frame_len);
     } else {
         for (sfb = 0; sfb < ics->pred.limit; sfb++)
         {
@@ -167,7 +168,7 @@ void ic_prediction(ic_stream *ics, real_t *spec, pred_state *state)
             if (ics->pred.predictor_reset)
             {
                 for (bin = ics->pred.predictor_reset_group_number - 1;
-                     bin < 1024; bin += 30)
+                     bin < frame_len; bin += 30)
                 {
                     reset_pred_state(&state[bin]);
                 }

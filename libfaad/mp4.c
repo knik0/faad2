@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mp4.c,v 1.7 2002/05/30 18:31:51 menno Exp $
+** $Id: mp4.c,v 1.8 2002/06/13 11:03:27 menno Exp $
 **/
 
 #include "common.h"
@@ -66,7 +66,7 @@ static uint8_t ObjectTypesTable[32] = {
     0, /* ER TwinVQ */
     0, /* ER BSAC */
 #ifdef LD_DEC
-    1, /* ER AAC LD */     /* !!! Supported, but only with ER turned off !!! */
+    1, /* ER AAC LD */
 #else
     0, /* ER AAC LD */
 #endif
@@ -101,7 +101,8 @@ int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
                                    uint8_t *object_type,
                                    uint8_t *aacSectionDataResilienceFlag,
                                    uint8_t *aacScalefactorDataResilienceFlag,
-                                   uint8_t *aacSpectralDataResilienceFlag)
+                                   uint8_t *aacSpectralDataResilienceFlag,
+                                   uint8_t *frameLengthFlag)
 {
     bitfile ld;
     uint8_t ObjectTypeIndex, SamplingFrequencyIndex, ChannelsConfiguration;
@@ -149,13 +150,15 @@ int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
         return GASpecificConfig(&ld, channels, ObjectTypeIndex,
             aacSectionDataResilienceFlag,
             aacScalefactorDataResilienceFlag,
-            aacSpectralDataResilienceFlag);
+            aacSpectralDataResilienceFlag,
+            frameLengthFlag);
 #ifdef ERROR_RESILIENCE
     } else if (ObjectTypeIndex >= ER_OBJECT_START) { /* ER */
         uint8_t result = GASpecificConfig(&ld, channels, ObjectTypeIndex,
             aacSectionDataResilienceFlag,
             aacScalefactorDataResilienceFlag,
-            aacSpectralDataResilienceFlag);
+            aacSpectralDataResilienceFlag,
+            frameLengthFlag);
         uint8_t ep_config = (uint8_t)faad_getbits(&ld, 2
             DEBUGVAR(1,143,"parse_audio_decoder_specific_info(): epConfig"));
         if (ep_config != 0)

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: tns.c,v 1.11 2002/05/30 18:31:51 menno Exp $
+** $Id: tns.c,v 1.12 2002/06/13 11:03:28 menno Exp $
 **/
 
 #include "common.h"
@@ -27,11 +27,12 @@
 
 /* TNS decoding for one channel and frame */
 void tns_decode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
-                      uint8_t object_type, real_t *spec)
+                      uint8_t object_type, real_t *spec, uint16_t frame_len)
 {
     uint8_t w, f, tns_order;
     int8_t inc;
     uint16_t bottom, top, start, end, size;
+    uint16_t nshort = frame_len/8;
     real_t lpc[TNS_MAX_ORDER+1];
 
     if (!ics->tns_data_present)
@@ -69,18 +70,19 @@ void tns_decode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
                 inc = 1;
             }
 
-            tns_ar_filter(&spec[(w*128)+start], size, inc, lpc, tns_order);
+            tns_ar_filter(&spec[(w*nshort)+start], size, inc, lpc, tns_order);
         }
     }
 }
 
 /* TNS encoding for one channel and frame */
 void tns_encode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
-                      uint8_t object_type, real_t *spec)
+                      uint8_t object_type, real_t *spec, uint16_t frame_len)
 {
     uint8_t w, f, tns_order;
     int8_t inc;
     uint16_t bottom, top, start, end, size;
+    uint16_t nshort = frame_len/8;
     real_t lpc[TNS_MAX_ORDER+1];
 
     if (!ics->tns_data_present)
@@ -118,7 +120,7 @@ void tns_encode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
                 inc = 1;
             }
 
-            tns_ma_filter(&spec[(w*128)+start], size, inc, lpc, tns_order);
+            tns_ma_filter(&spec[(w*nshort)+start], size, inc, lpc, tns_order);
         }
     }
 }

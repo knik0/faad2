@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: is.c,v 1.5 2002/05/24 17:26:12 menno Exp $
+** $Id: is.c,v 1.6 2002/06/13 11:03:27 menno Exp $
 **/
 
 #include "common.h"
@@ -24,12 +24,14 @@
 #include "syntax.h"
 #include "is.h"
 
-void is_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec)
+void is_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec,
+               uint16_t frame_len)
 {
     uint8_t g, sfb, b;
     uint16_t i, k;
     real_t scale;
 
+    uint16_t nshort = frame_len/8;
     uint8_t group = 0;
 
     for (g = 0; g < icsr->num_window_groups; g++)
@@ -56,7 +58,7 @@ void is_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec)
                        do not touch left channel */
                     for (i = icsr->swb_offset[sfb]; i < icsr->swb_offset[sfb+1]; i++)
                     {
-                        k = (group*128)+i;
+                        k = (group*nshort)+i;
                         r_spec[k] = MUL(l_spec[k], scale);
                     }
                 }

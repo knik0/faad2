@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: pns.c,v 1.6 2002/05/24 17:26:12 menno Exp $
+** $Id: pns.c,v 1.7 2002/06/13 11:03:27 menno Exp $
 **/
 
 #include "common.h"
@@ -76,12 +76,13 @@ static INLINE void gen_rand_vector(real_t *spec, uint16_t scale_factor, uint16_t
         spec[i] = MUL(spec[i], scale);
 }
 
-void pns_decode(ic_stream *ics, real_t *spec)
+void pns_decode(ic_stream *ics, real_t *spec, uint16_t frame_len)
 {
     uint8_t g, sfb, b;
     uint16_t size, offs;
 
     uint8_t group = 0;
+    uint16_t nshort = frame_len/8;
 
     for (g = 0; g < ics->num_window_groups; g++)
     {
@@ -109,7 +110,7 @@ void pns_decode(ic_stream *ics, real_t *spec)
                     size = ics->swb_offset[sfb+1] - offs;
 
                     /* Generate random vector */
-                    gen_rand_vector(&spec[(group*128)+offs],
+                    gen_rand_vector(&spec[(group*nshort)+offs],
                         ics->scale_factors[g][sfb], size);
                 }
             }

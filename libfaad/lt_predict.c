@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: lt_predict.c,v 1.5 2002/05/24 17:26:12 menno Exp $
+** $Id: lt_predict.c,v 1.6 2002/06/13 11:03:27 menno Exp $
 **/
 
 
@@ -64,9 +64,10 @@ void lt_prediction(ic_stream *ics, ltp_info *ltp, real_t *spec,
             }
 
             filter_bank_ltp(fb, ics->window_sequence, win_shape, win_shape_prev,
-                x_est, X_est, object_type);
+                x_est, X_est, object_type, frame_len);
 
-            tns_encode_frame(ics, &(ics->tns), sr_index, object_type, X_est);
+            tns_encode_frame(ics, &(ics->tns), sr_index, object_type, X_est,
+                frame_len);
 
             for (sfb = 0; sfb < ltp->last_band; sfb++)
             {

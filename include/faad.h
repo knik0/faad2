@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: faad.h,v 1.6 2002/05/30 17:55:08 menno Exp $
+** $Id: faad.h,v 1.7 2002/06/13 11:03:27 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -105,7 +105,8 @@ char FAADAPI AudioSpecificConfig(unsigned char *pBuffer,
                                  unsigned char *object_type,
                                  unsigned char *aacSectionDataResilienceFlag,
                                  unsigned char *aacScalefactorDataResilienceFlag,
-                                 unsigned char *aacSpectralDataResilienceFlag);
+                                 unsigned char *aacSpectralDataResilienceFlag,
+                                 unsigned char *frameLengthFlag);
 
 #ifdef _WIN32
   #pragma pack(pop)

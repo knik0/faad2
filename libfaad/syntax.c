@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.17 2002/06/13 08:00:27 menno Exp $
+** $Id: syntax.c,v 1.18 2002/06/13 11:03:28 menno Exp $
 **/
 
 /*
@@ -47,14 +47,15 @@ uint8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration,
                          uint8_t object_type,
                          uint8_t *aacSectionDataResilienceFlag,
                          uint8_t *aacScalefactorDataResilienceFlag,
-                         uint8_t *aacSpectralDataResilienceFlag)
+                         uint8_t *aacSpectralDataResilienceFlag,
+                         uint8_t *frameLengthFlag)
 {
-    uint8_t frameLengthFlag, dependsOnCoreCoder, extensionFlag;
+    uint8_t dependsOnCoreCoder, extensionFlag;
     uint16_t coreCoderDelay;
     program_config pce;
 
     /* 1024 or 960 */
-    frameLengthFlag = faad_get1bit(ld
+    *frameLengthFlag = faad_get1bit(ld
         DEBUGVAR(1,138,"GASpecificConfig(): FrameLengthFlag"));
 
     dependsOnCoreCoder = faad_get1bit(ld
@@ -232,7 +233,8 @@ uint8_t program_config_element(program_config *pce, bitfile *ld)
 /* Table 4.4.4 and */
 /* Table 4.4.9 */
 uint8_t single_lfe_channel_element(element *sce, bitfile *ld, int16_t *spec_data,
-                                   uint8_t sf_index, uint8_t object_type
+                                   uint8_t sf_index, uint8_t object_type,
+                                   uint16_t frame_len
 #ifdef ERROR_RESILIENCE
                                    ,uint8_t aacSectionDataResilienceFlag,
                                    uint8_t aacScalefactorDataResilienceFlag,
@@ -246,7 +248,7 @@ uint8_t single_lfe_channel_element(element *sce, bitfile *ld, int16_t *spec_data
         DEBUGVAR(1,38,"single_lfe_channel_element(): element_instance_tag"));
 
     return individual_channel_stream(sce, ld, ics, 0, spec_data, sf_index,
-        object_type
+        object_type, frame_len
 #ifdef ERROR_RESILIENCE
         ,aacSectionDataResilienceFlag,
         aacScalefactorDataResilienceFlag,
@@ -257,7 +259,8 @@ uint8_t single_lfe_channel_element(element *sce, bitfile *ld, int16_t *spec_data
 
 /* Table 4.4.5 */
 uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
-                             int16_t *spec_data2, uint8_t sf_index, uint8_t object_type
+                             int16_t *spec_data2, uint8_t sf_index, uint8_t object_type,
+                             uint16_t frame_len
 #ifdef ERROR_RESILIENCE
                              ,uint8_t aacSectionDataResilienceFlag,
                              uint8_t aacScalefactorDataResilienceFlag,
@@ -277,7 +280,7 @@ uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
     {
         /* both channels have common ics information */
         if ((result = ics_info(ics1, ld, cpe->common_window, sf_index,
-            object_type)) > 0)
+            object_type, frame_len)) > 0)
             return result;
 
         ics1->ms_mask_present = (uint8_t)faad_getbits(ld, 2
@@ -301,7 +304,7 @@ uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
     }
 
     if ((result = individual_channel_stream(cpe, ld, ics1, 0, spec_data1,
-        sf_index, object_type
+        sf_index, object_type, frame_len
 #ifdef ERROR_RESILIENCE
         ,aacSectionDataResilienceFlag,
         aacScalefactorDataResilienceFlag,
@@ -310,7 +313,7 @@ uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
         )) > 0)
         return result;
     if ((result = individual_channel_stream(cpe, ld, ics2, 0, spec_data2,
-        sf_index, object_type
+        sf_index, object_type, frame_len
 #ifdef ERROR_RESILIENCE
         ,aacSectionDataResilienceFlag,
         aacScalefactorDataResilienceFlag,
@@ -324,7 +327,7 @@ uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
 
 /* Table 4.4.6 */
 static uint8_t ics_info(ic_stream *ics, bitfile *ld, uint8_t common_window,
-                    uint8_t sf_index, uint8_t object_type)
+                    uint8_t sf_index, uint8_t object_type, uint16_t frame_len)
 {
     /* ics->ics_reserved_bit = */ faad_get1bit(ld
         DEBUGVAR(1,43,"ics_info(): ics_reserved_bit"));
@@ -386,7 +389,7 @@ static uint8_t ics_info(ic_stream *ics, bitfile *ld, uint8_t common_window,
     }
 
     /* get the grouping information */
-    return window_grouping_info(ics, sf_index, object_type);
+    return window_grouping_info(ics, sf_index, object_type, frame_len);
 }
 
 /* Table 4.4.7 */
@@ -598,7 +601,7 @@ static void gain_control_data(bitfile *ld, ic_stream *ics)
 static uint8_t individual_channel_stream(element *ele, bitfile *ld,
                                      ic_stream *ics, uint8_t scal_flag,
                                      int16_t *spec_data, uint8_t sf_index,
-                                     uint8_t object_type
+                                     uint8_t object_type, uint16_t frame_len
 #ifdef ERROR_RESILIENCE
                                      ,uint8_t aacSectionDataResilienceFlag,
                                      uint8_t aacScalefactorDataResilienceFlag,
@@ -607,11 +610,6 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
                                      )
 {
     uint8_t result;
-    uint16_t frame_len =
-#ifdef LD_DEC
-        (object_type == LD) ? 512 :
-#endif
-        1024;
 
     ics->global_gain = (uint8_t)faad_getbits(ld, 8
         DEBUGVAR(1,67,"individual_channel_stream(): global_gain"));
@@ -619,7 +617,7 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
     if (!ele->common_window && !scal_flag)
     {
         if ((result = ics_info(ics, ld, ele->common_window, sf_index,
-            object_type)) > 0)
+            object_type, frame_len)) > 0)
             return result;
     }
     section_data(ics, ld
@@ -1087,6 +1085,7 @@ static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data
     uint16_t k, p = 0;
     uint8_t groups = 0;
     uint8_t sect_cb;
+    uint16_t nshort = frame_len/8;
 
     sp = spectral_data;
     for (i = frame_len/16-1; i >= 0; --i)
@@ -1099,7 +1098,7 @@ static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data
 
     for(g = 0; g < ics->num_window_groups; g++)
     {
-        p = groups*128;
+        p = groups*nshort;
 
         for (i = 0; i < ics->num_sec[g]; i++)
         {

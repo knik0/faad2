@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.c,v 1.8 2002/05/24 17:26:12 menno Exp $
+** $Id: filtbank.c,v 1.9 2002/06/13 11:03:27 menno Exp $
 **/
 
 #include "common.h"
@@ -29,42 +29,46 @@
 #include "mdct.h"
 
 
-void filter_bank_init(fb_info *fb)
+void filter_bank_init(fb_info *fb, uint16_t frame_len)
 {
     uint16_t i;
+    uint16_t nshort = frame_len/8;
+#ifdef LD_DEC
+    uint16_t frame_len_ld = frame_len/2;
+#endif
 
     /* normal */
-    faad_mdct_init(&(fb->mdct256), 256);
-    faad_mdct_init(&(fb->mdct2048), 2048);
+    faad_mdct_init(&(fb->mdct256), 2*nshort);
+    faad_mdct_init(&(fb->mdct2048), 2*frame_len);
 
-    fb->long_window[0]  = malloc(BLOCK_LEN_LONG*sizeof(real_t));
-    fb->short_window[0] = malloc(BLOCK_LEN_SHORT*sizeof(real_t));
+    fb->long_window[0]  = malloc(frame_len*sizeof(real_t));
+    fb->short_window[0] = malloc(nshort*sizeof(real_t));
     fb->long_window[1]  = kbd_long;
     fb->short_window[1] = kbd_short;
 
     /* calculate the sine windows */
-    for (i = 0; i < BLOCK_LEN_LONG; i++)
-        fb->long_window[0][i] = (real_t)sin(M_PI / (2.0 * BLOCK_LEN_LONG) * (i + 0.5));
-    for (i = 0; i < BLOCK_LEN_SHORT; i++)
-        fb->short_window[0][i] = (real_t)sin(M_PI / (2.0 * BLOCK_LEN_SHORT) * (i + 0.5));
+    for (i = 0; i < frame_len; i++)
+        fb->long_window[0][i] = (real_t)sin(M_PI / (2.0 * frame_len) * (i + 0.5));
+    for (i = 0; i < nshort; i++)
+        fb->short_window[0][i] = (real_t)sin(M_PI / (2.0 * nshort) * (i + 0.5));
 
 #ifdef LD_DEC
     /* LD */
-    faad_mdct_init(&(fb->mdct1024), 1024);
+    faad_mdct_init(&(fb->mdct1024), frame_len_ld);
 
-    fb->ld_window[0] = malloc(BLOCK_LEN_LD*sizeof(real_t));
-    fb->ld_window[1] = malloc(BLOCK_LEN_LD*sizeof(real_t));
+    fb->ld_window[0] = malloc(frame_len_ld*sizeof(real_t));
+    fb->ld_window[1] = malloc(frame_len_ld*sizeof(real_t));
 
     /* calculate the sine windows */
-    for (i = 0; i < BLOCK_LEN_LD; i++)
-        fb->ld_window[0][i] = (real_t)sin(M_PI / (2.0 * BLOCK_LEN_LD) * (i + 0.5));
+    for (i = 0; i < frame_len_ld; i++)
+        fb->ld_window[0][i] = (real_t)sin(M_PI / (2.0 * frame_len_ld) * (i + 0.5));
 
     /* low overlap window */
-    for (i = 0; i < 3*(BLOCK_LEN_LD>>3); i++)
+    for (i = 0; i < 3*(frame_len_ld>>3); i++)
         fb->ld_window[1][i] = 0.0;
-    for (; i < 5*(BLOCK_LEN_LD>>3); i++)
-        fb->ld_window[1][i] = (real_t)sin((i-3*(BLOCK_LEN_LD>>3)+0.5) * M_PI / (BLOCK_LEN_LD>>1));
-    for (; i < BLOCK_LEN_LD; i++)
+    for (; i < 5*(frame_len_ld>>3); i++)
+        fb->ld_window[1][i] = (real_t)sin((i-3*(frame_len_ld>>3)+0.5) * M_PI / (frame_len_ld>>1));
+    for (; i < frame_len_ld; i++)
         fb->ld_window[1][i] = 1.0;
 #endif
 }
@@ -179,13 +183,16 @@ static INLINE void imdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_
     switch (len)
     {
     case 2048:
+    case 1920:
         mdct = &(fb->mdct2048);
         break;
     case 256:
+    case 240:
         mdct = &(fb->mdct256);
         break;
 #ifdef LD_DEC
     case 1024:
+    case 960:
         mdct = &(fb->mdct1024);
         break;
 #endif
@@ -202,13 +209,16 @@ static INLINE void mdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_t
     switch (len)
     {
     case 2048:
+    case 1920:
         mdct = &(fb->mdct2048);
         break;
     case 256:
+    case 120:
         mdct = &(fb->mdct256);
         break;
 #ifdef LD_DEC
     case 1024:
+    case 960:
         mdct = &(fb->mdct1024);
         break;
 #endif
@@ -220,7 +230,7 @@ static INLINE void mdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_t
 
 void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
                   uint8_t window_shape_prev, real_t *freq_in, real_t *time_buff,
-                  real_t *time_out, uint8_t object_type)
+                  real_t *time_out, uint8_t object_type, uint16_t frame_len)
 {
     real_t *o_buf, *transf_buf;
     real_t *obuf_temp;
@@ -233,12 +243,8 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
 
     real_t *fp;
     int8_t win;
-    uint16_t nlong =
-#ifdef LD_DEC
-        (object_type == LD) ? 512 :
-#endif
-        1024;
-    uint16_t nshort = 128;
+    uint16_t nlong = frame_len;
+    uint16_t nshort = frame_len/8;
 
     uint16_t nflat_ls = (nlong-nshort)/2;
 
@@ -372,7 +378,7 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
 /* only works for LTP -> no overlapping */
 void filter_bank_ltp(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
                      uint8_t window_shape_prev, real_t *in_data, real_t *out_mdct,
-                     uint8_t object_type)
+                     uint8_t object_type, uint16_t frame_len)
 {
     int8_t win;
     real_t *windowed_buf;
@@ -384,12 +390,8 @@ void filter_bank_ltp(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
     real_t *window_short_prev;
     real_t *window_short_prev_ptr;
 
-    uint16_t nlong =
-#ifdef LD_DEC
-        (object_type == LD) ? 512 :
-#endif
-        1024;
-    uint16_t nshort = 128;
+    uint16_t nlong = frame_len;
+    uint16_t nshort = frame_len/8;
     uint16_t nflat_ls = (nlong-nshort)/2;
 
     windowed_buf = malloc(nlong*2*sizeof(real_t));

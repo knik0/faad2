@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.15 2002/05/30 18:31:51 menno Exp $
+** $Id: decoder.c,v 1.16 2002/06/13 11:03:27 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -65,6 +65,7 @@ faacDecHandle FAADAPI faacDecOpen()
     hDecoder->aacSectionDataResilienceFlag = 0;
     hDecoder->aacScalefactorDataResilienceFlag = 0;
     hDecoder->aacSpectralDataResilienceFlag = 0;
+    hDecoder->frameLength = 1024;
 
     hDecoder->frame = 0;
     hDecoder->sample_buffer = NULL;
@@ -84,7 +85,6 @@ faacDecHandle FAADAPI faacDecOpen()
     }
 
     init_drc(&hDecoder->drc, 1.0f, 1.0f);
-    filter_bank_init(&hDecoder->fb);
 #if IQ_TABLE_SIZE && POW_TABLE_SIZE
     build_tables(hDecoder->iq_table, hDecoder->pow2_table);
 #elif !POW_TABLE_SIZE
@@ -223,6 +223,14 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
     }
     hDecoder->channelConfiguration = *channels;
 
+    /* must be done before frameLength is divided by 2 for LD */
+    filter_bank_init(&hDecoder->fb, hDecoder->frameLength);
+
+#ifdef LD_DEC
+    if (hDecoder->object_type == LD)
+        hDecoder->frameLength >>= 1;
+#endif
+
     if (can_decode_ot(hDecoder->object_type) < 0)
         return -1;
 
@@ -235,6 +243,7 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
                             uint32_t *samplerate, uint8_t *channels)
 {
     int8_t rc;
+    uint8_t frameLengthFlag;
 
     hDecoder->adif_header_present = 0;
     hDecoder->adts_header_present = 0;
@@ -252,7 +261,8 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
         &hDecoder->sf_index, &hDecoder->object_type,
         &hDecoder->aacSectionDataResilienceFlag,
         &hDecoder->aacScalefactorDataResilienceFlag,
-        &hDecoder->aacSpectralDataResilienceFlag);
+        &hDecoder->aacSpectralDataResilienceFlag,
+        &frameLengthFlag);
     if (hDecoder->object_type < 4)
         hDecoder->object_type--; /* For AAC differs from MPEG-4 */
     if (rc != 0)
@@ -260,6 +270,16 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
         return rc;
     }
     hDecoder->channelConfiguration = *channels;
+    if (frameLengthFlag)
+        hDecoder->frameLength = 960;
+
+    /* must be done before frameLength is divided by 2 for LD */
+    filter_bank_init(&hDecoder->fb, hDecoder->frameLength);
+
+#ifdef LD_DEC
+    if (hDecoder->object_type == LD)
+        hDecoder->frameLength >>= 1;
+#endif
 
     return 0;
 }
@@ -298,7 +318,7 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
     syntax_elements[ch_ele]->channel = channels; \
  \
     if ((hInfo->error = single_lfe_channel_element(syntax_elements[ch_ele], \
-        ld, spec_data[channels], sf_index, object_type, \
+        ld, spec_data[channels], sf_index, object_type, frame_len, \
         aacSectionDataResilienceFlag, aacScalefactorDataResilienceFlag, \
         aacSpectralDataResilienceFlag)) > 0) \
     { \
@@ -320,7 +340,7 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
     syntax_elements[ch_ele]->channel = channels; \
  \
     if ((hInfo->error = single_lfe_channel_element(syntax_elements[ch_ele], \
-        ld, spec_data[channels], sf_index, object_type)) > 0) \
+        ld, spec_data[channels], sf_index, object_type, frame_len)) > 0) \
     { \
         /* to make sure everything gets deallocated */ \
         channels++; ch_ele++; \
@@ -346,7 +366,7 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
  \
     if ((hInfo->error = channel_pair_element(syntax_elements[ch_ele], \
         ld, spec_data[channels], spec_data[channels+1], \
-        sf_index, object_type, \
+        sf_index, object_type, frame_len, \
         aacSectionDataResilienceFlag, aacScalefactorDataResilienceFlag, \
         aacSpectralDataResilienceFlag)) > 0) \
     { \
@@ -372,7 +392,7 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
  \
     if ((hInfo->error = channel_pair_element(syntax_elements[ch_ele], \
         ld, spec_data[channels], spec_data[channels+1], \
-        sf_index, object_type)) > 0) \
+        sf_index, object_type, frame_len)) > 0) \
     { \
         /* to make sure everything gets deallocated */ \
         channels+=2; ch_ele++; \
@@ -430,11 +450,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     real_t *spec_coef[MAX_CHANNELS];
 
     /* frame length is different for Low Delay AAC */
-    uint16_t frame_len =
-#ifdef LD_DEC
-        (object_type == LD) ? 512 :
-#endif
-        1024;
+    uint16_t frame_len = hDecoder->frameLength;
 
     void *sample_buffer;
 
@@ -606,7 +622,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             frame_len);
 
         /* apply scalefactors */
-        apply_scalefactors(ics, spec_coef[ch], pow2_table);
+        apply_scalefactors(ics, spec_coef[ch], pow2_table, frame_len);
 
         /* deinterleave short block grouping */
         if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
@@ -644,14 +660,14 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
         /* mid/side decoding */
         if (!right_channel)
-            ms_decode(ics, icsr, spec_coef[ch], spec_coef[pch]);
+            ms_decode(ics, icsr, spec_coef[ch], spec_coef[pch], frame_len);
 
         /* pns decoding */
-        pns_decode(ics, spec_coef[ch]);
+        pns_decode(ics, spec_coef[ch], frame_len);
 
         /* intensity stereo decoding */
         if (!right_channel)
-            is_decode(ics, icsr, spec_coef[ch], spec_coef[pch]);
+            is_decode(ics, icsr, spec_coef[ch], spec_coef[pch], frame_len);
 
 #ifdef MAIN_DEC
         /* MAIN object type prediction */
@@ -661,11 +677,11 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             if (pred_stat[ch] == NULL)
             {
                 pred_stat[ch] = malloc(frame_len * sizeof(pred_state));
-                reset_all_predictors(pred_stat[ch]);
+                reset_all_predictors(pred_stat[ch], frame_len);
             }
 
             /* intra channel prediction */
-            ic_prediction(ics, spec_coef[ch], pred_stat[ch]);
+            ic_prediction(ics, spec_coef[ch], pred_stat[ch], frame_len);
 
             /* In addition, for scalefactor bands coded by perceptual
                noise substitution the predictors belonging to the
@@ -712,7 +728,8 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #endif
 
         /* tns decoding */
-        tns_decode_frame(ics, &(ics->tns), sf_index, object_type, spec_coef[ch]);
+        tns_decode_frame(ics, &(ics->tns), sf_index, object_type,
+            spec_coef[ch], frame_len);
 
         /* drc decoding */
         if (drc->present)
@@ -743,7 +760,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         /* filter bank */
         ifilter_bank(fb, ics->window_sequence, ics->window_shape,
             window_shape_prev[ch], spec_coef[ch], time_state[ch],
-            time_out[ch], object_type);
+            time_out[ch], object_type, frame_len);
         /* save window shape for next frame */
         window_shape_prev[ch] = ics->window_shape;
 

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.12 2002/06/13 08:00:28 menno Exp $
+** $Id: syntax.h,v 1.13 2002/06/13 11:03:28 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -273,14 +273,16 @@ uint8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration,
                          uint8_t object_type,
                          uint8_t *aacSectionDataResilienceFlag,
                          uint8_t *aacScalefactorDataResilienceFlag,
-                         uint8_t *aacSpectralDataResilienceFlag);
+                         uint8_t *aacSpectralDataResilienceFlag,
+                         uint8_t *frameLengthFlag);
 uint8_t raw_data_block(bitfile *ld, int16_t ***spec_data, real_t ***spec_coef,
                        element ***syntax_elements,
                        uint8_t *channels, uint8_t *ele, uint8_t *ch_ele,
                        uint16_t frame_len, uint8_t sf_index, uint8_t object_type,
                        drc_info *drc);
 uint8_t single_lfe_channel_element(element *sce, bitfile *ld, int16_t *spec_data,
-                                   uint8_t sf_index, uint8_t object_type
+                                   uint8_t sf_index, uint8_t object_type,
+                                   uint16_t frame_len
 #ifdef ERROR_RESILIENCE
                                    ,uint8_t aacSectionDataResilienceFlag,
                                    uint8_t aacScalefactorDataResilienceFlag,
@@ -288,7 +290,8 @@ uint8_t single_lfe_channel_element(element *sce, bitfile *ld, int16_t *spec_data
 #endif
                                    );
 uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
-                             int16_t *spec_data2, uint8_t sf_index, uint8_t object_type
+                             int16_t *spec_data2, uint8_t sf_index, uint8_t object_type,
+                             uint16_t frame_len
 #ifdef ERROR_RESILIENCE
                              ,uint8_t aacSectionDataResilienceFlag,
                              uint8_t aacScalefactorDataResilienceFlag,
@@ -310,15 +313,16 @@ void get_adif_header(adif_header *adif, bitfile *ld);
 static uint8_t individual_channel_stream(element *ele, bitfile *ld,
                                      ic_stream *ics, uint8_t scal_flag,
                                      int16_t *spec_data, uint8_t sf_index,
-                                     uint8_t object_type
+                                     uint8_t object_type, uint16_t frame_len
 #ifdef ERROR_RESILIENCE
                                      ,uint8_t aacSectionDataResilienceFlag,
                                      uint8_t aacScalefactorDataResilienceFlag,
                                      uint8_t aacSpectralDataResilienceFlag
 #endif
                                      );
-static uint8_t ics_info(ic_stream *ics, bitfile *ld,
-                    uint8_t common_window, uint8_t fs_index, uint8_t object_type);
+static uint8_t ics_info(ic_stream *ics, bitfile *ld, uint8_t common_window,
+                        uint8_t fs_index, uint8_t object_type,
+                        uint16_t frame_len);
 static void section_data(ic_stream *ics, bitfile *ld
 #ifdef ERROR_RESILIENCE
                          ,uint8_t aacSectionDataResilienceFlag

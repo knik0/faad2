@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: specrec.c,v 1.7 2002/05/24 17:26:12 menno Exp $
+** $Id: specrec.c,v 1.8 2002/06/13 11:03:28 menno Exp $
 **/
 
 /*
@@ -49,7 +49,7 @@
     scale_factor_grouping and is needed to decode the spectral_data().
 */
 uint8_t window_grouping_info(ic_stream *ics, uint8_t fs_index,
-                             uint8_t object_type)
+                             uint8_t object_type, uint16_t frame_len)
 {
     uint8_t i, g;
 
@@ -76,18 +76,22 @@ uint8_t window_grouping_info(ic_stream *ics, uint8_t fs_index,
 #ifdef LD_DEC
         if (object_type == LD)
         {
-            for (i = 0; i < ics->num_swb + 1; i++)
+            for (i = 0; i < ics->num_swb; i++)
             {
                 ics->sect_sfb_offset[0][i] = swb_offset_512_window[fs_index][i];
                 ics->swb_offset[i] = swb_offset_512_window[fs_index][i];
             }
+            ics->sect_sfb_offset[0][ics->num_swb] = frame_len;
+            ics->swb_offset[ics->num_swb] = frame_len;
         } else {
 #endif
-            for (i = 0; i < ics->num_swb + 1; i++)
+            for (i = 0; i < ics->num_swb; i++)
             {
                 ics->sect_sfb_offset[0][i] = swb_offset_1024_window[fs_index][i];
                 ics->swb_offset[i] = swb_offset_1024_window[fs_index][i];
             }
+            ics->sect_sfb_offset[0][ics->num_swb] = frame_len;
+            ics->swb_offset[ics->num_swb] = frame_len;
 #ifdef LD_DEC
         }
 #endif
@@ -98,8 +102,9 @@ uint8_t window_grouping_info(ic_stream *ics, uint8_t fs_index,
         ics->window_group_length[ics->num_window_groups-1] = 1;
         ics->num_swb = num_swb_128_window[fs_index];
 
-        for (i = 0; i < ics->num_swb + 1; i++)
+        for (i = 0; i < ics->num_swb; i++)
             ics->swb_offset[i] = swb_offset_128_window[fs_index][i];
+        ics->swb_offset[ics->num_swb] = frame_len/8;
 
         for (i = 0; i < ics->num_windows-1; i++) {
             if (bit_set(ics->scale_factor_grouping, 6-i) == 0)
@@ -120,8 +125,13 @@ uint8_t window_grouping_info(ic_stream *ics, uint8_t fs_index,
 
             for (i = 0; i < ics->num_swb; i++)
             {
-                width = swb_offset_128_window[fs_index][i+1] -
-                    swb_offset_128_window[fs_index][i];
+                if (i+1 == ics->num_swb)
+                {
+                    width = (frame_len/8) - swb_offset_128_window[fs_index][i];
+                } else {
+                    width = swb_offset_128_window[fs_index][i+1] -
+                        swb_offset_128_window[fs_index][i];
+                }
                 width *= ics->window_group_length[g];
                 ics->sect_sfb_offset[g][sect_sfb++] = offset;
                 offset += width;
@@ -295,12 +305,14 @@ static INLINE real_t get_scale_factor_gain(uint16_t scale_factor, real_t *pow2_t
         return (real_t)exp(LN2 * 0.25 * (scale_factor - 100));
 }
 
-void apply_scalefactors(ic_stream *ics, real_t *x_invquant, real_t *pow2_table)
+void apply_scalefactors(ic_stream *ics, real_t *x_invquant, real_t *pow2_table,
+                        uint16_t frame_len)
 {
     uint8_t g, sfb;
     uint16_t top;
     real_t *fp, scale;
     uint8_t groups = 0;
+    uint16_t nshort = frame_len/8;
 
     for (g = 0; g < ics->num_window_groups; g++)
     {
@@ -310,7 +322,7 @@ void apply_scalefactors(ic_stream *ics, real_t *x_invquant, real_t *pow2_table)
            long blocks only have 1 group, so that means 'groups' is
            always 0 for long blocks
         */
-        fp = x_invquant + (groups*128);
+        fp = x_invquant + (groups*nshort);
 
         for (sfb = 0; sfb < ics->max_sfb; sfb++)
         {

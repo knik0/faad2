@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ms.c,v 1.2 2002/02/18 10:01:05 menno Exp $
+** $Id: ms.c,v 1.3 2002/06/13 11:03:27 menno Exp $
 **/
 
 #include "common.h"
@@ -25,10 +25,12 @@
 #include "is.h"
 #include "pns.h"
 
-void ms_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec)
+void ms_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec,
+               uint16_t frame_len)
 {
     uint8_t g, b, sfb;
     uint8_t group = 0;
+    uint16_t nshort = frame_len/8;
 
     uint16_t i, k;
     real_t tmp;
@@ -50,7 +52,7 @@ void ms_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec)
                     {
                         for (i = ics->swb_offset[sfb]; i < ics->swb_offset[sfb+1]; i++)
                         {
-                            k = (group*128) + i;
+                            k = (group*nshort) + i;
                             tmp = l_spec[k] - r_spec[k];
                             l_spec[k] = l_spec[k] + r_spec[k];
                             r_spec[k] = tmp;

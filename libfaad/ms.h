@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ms.h,v 1.2 2002/02/18 10:01:05 menno Exp $
+** $Id: ms.h,v 1.3 2002/06/13 11:03:27 menno Exp $
 **/
 
 #ifndef __MS_H__
@@ -26,7 +26,8 @@
 extern "C" {
 #endif
 
-void ms_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec);
+void ms_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec,
+               uint16_t frame_len);
 
 #ifdef __cplusplus
 }

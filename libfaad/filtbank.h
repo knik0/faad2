@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.h,v 1.6 2002/04/07 21:26:04 menno Exp $
+** $Id: filtbank.h,v 1.7 2002/06/13 11:03:27 menno Exp $
 **/
 
 #ifndef __FILTBANK_H__
@@ -27,10 +27,6 @@ extern "C" {
 #endif
 
 #include "mdct.h"
-
-#define BLOCK_LEN_LONG  1024
-#define BLOCK_LEN_LD     512
-#define BLOCK_LEN_SHORT  128
 
 
 typedef struct
@@ -48,7 +44,7 @@ typedef struct
     mdct_info mdct2048;
 } fb_info;
 
-void filter_bank_init(fb_info *fb);
+void filter_bank_init(fb_info *fb, uint16_t frame_len);
 void filter_bank_end(fb_info *fb);
 
 #ifdef LTP_DEC
@@ -58,7 +54,8 @@ void filter_bank_ltp(fb_info *fb,
                      uint8_t window_shape_prev,
                      real_t *in_data,
                      real_t *out_mdct,
-                     uint8_t object_type);
+                     uint8_t object_type,
+                     uint16_t frame_len);
 #endif
 
 void ifilter_bank(fb_info *fb,
@@ -68,7 +65,8 @@ void ifilter_bank(fb_info *fb,
                   real_t *freq_in,
                   real_t *time_buff,
                   real_t *time_out,
-                  uint8_t object_type);
+                  uint8_t object_type,
+                  uint16_t frame_len);
 
 #ifdef __cplusplus
 }

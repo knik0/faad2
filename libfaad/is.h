@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: is.h,v 1.3 2002/02/18 10:01:05 menno Exp $
+** $Id: is.h,v 1.4 2002/06/13 11:03:27 menno Exp $
 **/
 
 #ifndef __IS_H__
@@ -28,7 +28,8 @@ extern "C" {
 
 #include "syntax.h"
 
-void is_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec);
+void is_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec,
+               uint16_t frame_len);
 
 static INLINE int8_t is_intensity(ic_stream *ics, uint8_t group, uint8_t sfb)
 {

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ic_predict.h,v 1.3 2002/03/16 13:38:37 menno Exp $
+** $Id: ic_predict.h,v 1.4 2002/06/13 11:03:27 menno Exp $
 **/
 
 #ifdef MAIN_DEC
@@ -42,8 +42,9 @@ typedef struct {
 
 
 void pns_reset_pred_state(ic_stream *ics, pred_state *state);
-void reset_all_predictors(pred_state *state);
-void ic_prediction(ic_stream *ics, real_t *spec, pred_state *state);
+void reset_all_predictors(pred_state *state, uint16_t frame_len);
+void ic_prediction(ic_stream *ics, real_t *spec, pred_state *state,
+                   uint16_t frame_len);
 
 
 #ifdef __cplusplus

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: pns.h,v 1.4 2002/02/18 10:01:05 menno Exp $
+** $Id: pns.h,v 1.5 2002/06/13 11:03:28 menno Exp $
 **/
 
 #ifndef __PNS_H__
@@ -33,7 +33,7 @@ extern "C" {
 #define MEAN_NRG 1.537228e+18 /* (2^31)^2 / 3 */
 
 
-void pns_decode(ic_stream *ics, real_t *spec);
+void pns_decode(ic_stream *ics, real_t *spec, uint16_t frame_len);
 
 static INLINE int32_t random2();
 static void gen_rand_vector(real_t *spec, uint16_t scale_factor, uint16_t size);

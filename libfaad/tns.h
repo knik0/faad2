@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: tns.h,v 1.3 2002/02/25 19:58:33 menno Exp $
+** $Id: tns.h,v 1.4 2002/06/13 11:03:28 menno Exp $
 **/
 
 #ifndef __TNS_H__
@@ -31,9 +31,9 @@ extern "C" {
 
     
 void tns_decode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
-                      uint8_t object_type, real_t *spec);
+                      uint8_t object_type, real_t *spec, uint16_t frame_len);
 void tns_encode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
-                      uint8_t object_type, real_t *spec);
+                      uint8_t object_type, real_t *spec, uint16_t frame_len);
 
 static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_compress,
                             uint8_t *coef, real_t *a);

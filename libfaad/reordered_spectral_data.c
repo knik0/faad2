@@ -360,6 +360,7 @@ uint8_t reordered_spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_d
     
     uint8_t PCW_decoded=0;
     uint16_t segment_index=0, codeword_index=0;
+    uint16_t nshort = frame_len/8;
     
 
     memset (spectral_data, 0, frame_len*sizeof(uint16_t));
@@ -371,7 +372,7 @@ uint8_t reordered_spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_d
     
     sp_offset[0] = 0;
     for (g=1; g < ics->num_window_groups; g++) {
-    	sp_offset[g] = sp_offset[g-1] + 128*ics->window_group_length[g-1];
+    	sp_offset[g] = sp_offset[g-1] + nshort*ics->window_group_length[g-1];
     }
         
 	/* All data is sorted according to the codebook used */        
