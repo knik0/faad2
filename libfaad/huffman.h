@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: huffman.h,v 1.2 2002/01/19 09:39:41 menno Exp $
+** $Id: huffman.h,v 1.3 2002/01/19 16:19:54 menno Exp $
 **/
 
 #ifndef __HUFFMAN_H__
@@ -160,7 +160,7 @@ static huff_inline void huffman_sign_bits(bitfile *ld, short *sp, int len)
         if(sp[i])
         {
             if(faad_get1bit(ld
-                DEBUGVAR(1,0,"huffman_sign_bits(): sign bit")) & 1)
+                DEBUGVAR(1,5,"huffman_sign_bits(): sign bit")) & 1)
             {
                 sp[i] = -sp[i];
             }
@@ -183,18 +183,21 @@ static huff_inline short huffman_getescape(bitfile *ld, short sp)
     }
 
     for (i = 4; ; i++){
-        if (faad_get1bit(ld DEBUGVAR(1,0,"huffman_getescape(): escape size")) == 0)
+        if (faad_get1bit(ld
+            DEBUGVAR(1,6,"huffman_getescape(): escape size")) == 0)
+        {
             break;
+        }
     }
 
     if (i > 16) {
         off = faad_getbits(ld, i-16
-            DEBUGVAR(1,0,"huffman_getescape(): escape, first part")) << 16;
+            DEBUGVAR(1,7,"huffman_getescape(): escape, first part")) << 16;
         off |= faad_getbits(ld, 16
-            DEBUGVAR(1,0,"huffman_getescape(): escape, second part"));
+            DEBUGVAR(1,8,"huffman_getescape(): escape, second part"));
     } else {
         off = faad_getbits(ld, i
-            DEBUGVAR(1,0,"huffman_getescape(): escape"));
+            DEBUGVAR(1,9,"huffman_getescape(): escape"));
     }
 
     i = off + (1<<i);

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.4 2002/01/19 16:06:14 menno Exp $
+** $Id: decoder.c,v 1.5 2002/01/19 16:19:54 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -190,13 +190,13 @@ int parse_audio_decoder_specific_info(faacDecHandle hDecoder,
     faad_byte_align(&ld);
 
     ObjectTypeIndex = faad_getbits(&ld, 5
-        DEBUGVAR(1,0,"parse_audio_decoder_specific_info(): ObjectTypeIndex"));
+        DEBUGVAR(1,1,"parse_audio_decoder_specific_info(): ObjectTypeIndex"));
 
     SamplingFrequencyIndex = faad_getbits(&ld, 4
-        DEBUGVAR(1,0,"parse_audio_decoder_specific_info(): SamplingFrequencyIndex"));
+        DEBUGVAR(1,2,"parse_audio_decoder_specific_info(): SamplingFrequencyIndex"));
 
     ChannelsConfiguration = faad_getbits(&ld, 4
-        DEBUGVAR(1,0,"parse_audio_decoder_specific_info(): ChannelsConfiguration"));
+        DEBUGVAR(1,3,"parse_audio_decoder_specific_info(): ChannelsConfiguration"));
 
     if (ObjectTypesTable[ObjectTypeIndex] != 1)
     {
@@ -336,7 +336,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
     /* Table 4.4.3: raw_data_block() */
     while ((id_syn_ele = faad_getbits(ld, LEN_SE_ID
-        DEBUGVAR(1,0,"faacDecDecode(): id_syn_ele"))) != ID_END)
+        DEBUGVAR(1,4,"faacDecDecode(): id_syn_ele"))) != ID_END)
     {
         switch (id_syn_ele) {
         case ID_SCE:
