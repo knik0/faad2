@@ -71,6 +71,7 @@ BEGIN
     POPUP "Menu"
     BEGIN
         MENUITEM "&Decoder Options",            IDM_VOLUME
+        MENUITEM "&Stop Decoding",              IDM_STOP_DEC
         MENUITEM SEPARATOR
         MENUITEM "&Errors to Log File",         IDM_LOGERR
         MENUITEM "&Always on Top",              IDM_ONTOP
@@ -97,48 +98,43 @@ IDI_ICON1               ICON    DISCARDABLE     "resource/AAC01.ico"
 
 IDD_VOLUME DIALOG DISCARDABLE  0, 0, 255, 218
 STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Decoder Options"
+CAPTION "Decoder Options V1.2"
 FONT 8, "MS Sans Serif"
 BEGIN
     GROUPBOX        "Decoding Settings",IDC_STATIC,7,7,241,23
-    CONTROL         "Playback",IDC_PLAYBACK,"Button", BS_AUTORADIOBUTTON | WS_GROUP,15,17,55,10
-    CONTROL         "Decode to File",IDC_DECODE,"Button", BS_AUTORADIOBUTTON,125,17,65,10
+    CONTROL         "Playback",IDC_PLAYBACK,"Button",BS_AUTORADIOBUTTON | 
+                    WS_GROUP,15,17,55,10
+    CONTROL         "Decode to File",IDC_DECODE,"Button",BS_AUTORADIOBUTTON,
+                    125,17,65,10
     GROUPBOX        "Output Format Settings",IDC_STATIC,7,31,241,50
-    CONTROL         "Microsoft WAV",IDC_WAV,"Button", BS_AUTORADIOBUTTON | WS_GROUP,15,45,65,10
-    CONTROL         "Apple/SGI AIFF",IDC_AIFF,"Button", BS_AUTORADIOBUTTON,125,45,65,10
-    CONTROL         "Sun/NeXT AU",IDC_SUNAU,"Button", BS_AUTORADIOBUTTON,15,60,65,10
-    CONTROL         "DEC AU",IDC_DECAU,"Button", BS_AUTORADIOBUTTON,125,60,65,10
+    CONTROL         "Microsoft WAV",IDC_WAV,"Button",BS_AUTORADIOBUTTON | 
+                    WS_GROUP,15,45,65,10
+    CONTROL         "Apple/SGI AIFF",IDC_AIFF,"Button",BS_AUTORADIOBUTTON,
+                    125,45,65,10
+    CONTROL         "Sun/NeXT AU",IDC_SUNAU,"Button",BS_AUTORADIOBUTTON,15,
+                    60,65,10
+    CONTROL         "DEC AU",IDC_DECAU,"Button",BS_AUTORADIOBUTTON,125,60,65,
+                    10
     GROUPBOX        "Output Sample Format Settings",IDC_STATIC,7,82,241,50
-    CONTROL         "16 bit PCM",IDC_16BIT,"Button", BS_AUTORADIOBUTTON | WS_GROUP,15,96,65,10
-    CONTROL         "24 bit PCM",IDC_24BIT,"Button", BS_AUTORADIOBUTTON,125,96,65,10
-    CONTROL         "32 bit PCM",IDC_32BIT,"Button", BS_AUTORADIOBUTTON,15,111,65,10
-    CONTROL         "32 bit floats",IDC_FLOATS,"Button", BS_AUTORADIOBUTTON,125,111,65,10
+    CONTROL         "16 bit PCM",IDC_16BIT,"Button",BS_AUTORADIOBUTTON | 
+                    WS_GROUP,15,96,65,10
+    CONTROL         "24 bit PCM",IDC_24BIT,"Button",BS_AUTORADIOBUTTON,125,
+                    96,65,10
+    CONTROL         "32 bit PCM",IDC_32BIT,"Button",BS_AUTORADIOBUTTON,15,
+                    111,65,10
+    CONTROL         "32 bit floats",IDC_FLOATS,"Button",BS_AUTORADIOBUTTON,
+                    125,111,65,10
     GROUPBOX        "Object Type Settings",IDC_STATIC,7,133,241,50
-    CONTROL         "Main",IDC_MAIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,15,147,65,10
-    CONTROL         "Low Complexity",IDC_LC,"Button", BS_AUTORADIOBUTTON,125,147,65,10
-    CONTROL         "Long Term Prediction",IDC_LTP,"Button", BS_AUTORADIOBUTTON,15,162,85,10
-    CONTROL         "Low Delay",IDC_LD,"Button", BS_AUTORADIOBUTTON,125,162,65,10
+    CONTROL         "Main",IDC_MAIN,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
+                    15,147,65,10
+    CONTROL         "Low Complexity",IDC_LC,"Button",BS_AUTORADIOBUTTON,125,
+                    147,65,10
+    CONTROL         "Long Term Prediction",IDC_LTP,"Button",
+                    BS_AUTORADIOBUTTON,15,162,85,10
+    CONTROL         "Low Delay",IDC_LD,"Button",BS_AUTORADIOBUTTON,125,162,
+                    65,10
     DEFPUSHBUTTON   "Accept",IDC_BUTTON1,102,192,50,16
-//    PUSHBUTTON      "Stop",IDC_BUTTON2,172,192,50,16
 END
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// DESIGNINFO
-//
-
-#ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO DISCARDABLE 
-BEGIN
-    IDD_QUALITY, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 217
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 101
-    END
-END
-#endif    // APSTUDIO_INVOKED
 
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////

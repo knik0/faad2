@@ -16,8 +16,8 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decode.c,v 1.1 2002/03/16 19:18:10 menno Exp $
-** $Id: decode.c,v 1.1 2002/03/16 19:18:10 menno Exp $
+** $Id: decode.c,v 1.2 2002/04/14 16:31:02 menno Exp $
+** $Id: decode.c,v 1.2 2002/04/14 16:31:02 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -92,6 +92,7 @@
 
 /* globals */
 char *progName;
+extern int stop_decoding;
 
 int id3v2_tag(unsigned char *buffer)
 {
@@ -239,6 +240,9 @@ int decodeAACfile(char *sndfile, int def_srate, aac_dec_opt *opt)
 
 		if (buffer_index >= fileread)
 			sample_buffer = NULL; /* to make sure it stops now */
+
+		if(stop_decoding)
+			break;
 
 	} while (sample_buffer != NULL);
 
@@ -421,6 +425,8 @@ int decodeMP4file(char *sndfile, aac_dec_opt *opt)
 			faacDecGetErrorMessage(frameInfo.error));
 			break;
 		}
+		if(stop_decoding)
+			break;
 	}
 
 

@@ -40,6 +40,7 @@ int frame = 0;
 HBITMAP hbm[12], temp;
 HMENU menu;
 int decoding_done = 0;
+int stop_decoding = 0;
 double file_complete;
 int totalfiles;
 int numfiles;
@@ -266,6 +267,7 @@ void HandleDrag(HWND hwnd, HDROP hDrop)
 			{
 				flag = 1;
 				decthread_addfile(szFile);
+				stop_decoding = 0;
 			}
 		}
 	}
@@ -447,6 +449,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				case IDM_LOGERR:
 					set_logerr(hwnd, ~GetMenuState(menu, LOWORD(wParam), MF_BYCOMMAND) & MF_CHECKED);
 					break;
+				case IDM_STOP_DEC:
+				{
+					int v = ~GetMenuState(menu, LOWORD(wParam), MF_BYCOMMAND) & MF_CHECKED;
+					if(v == 8)
+						stop_decoding = 1;
+					break;
+				}
 				case IDM_VOLUME:
 				{
 					int value = 
@@ -457,6 +466,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 					if (value == -2)
 						break;
+					break;
 				}
 
 			} // LOWORD(wParam)
@@ -634,12 +644,9 @@ BOOL CALLBACK QCProc(HWND hwndDlg, UINT message,
 					else if (IsDlgButtonChecked(hwndDlg, IDC_LD) == BST_CHECKED)
 						set_object_type(23);            // Low Delay
 
-					decoding_done = 0;
 					EndDialog(hwndDlg, -2);
 					return TRUE;
 				}
-//				case IDC_BUTTON2:
-//					break;
 				case IDC_PLAYBACK:
 					CheckDlgButton(hwndDlg,IDC_DECODE,FALSE);
 					CheckDlgButton(hwndDlg,IDC_WAV,TRUE);

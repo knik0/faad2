@@ -14,7 +14,6 @@
 #define IDR_MENU1                       124
 #define IDI_ICON1                       130
 #define IDC_BUTTON1                     1001
-#define IDC_BUTTON2                     1003
 #define IDC_PLAYBACK                    1005
 #define IDC_DECODE                      1008
 #define IDC_WAV                         1014
@@ -30,6 +29,7 @@
 #define IDC_LTP                         1025
 #define IDC_LD                          1026
 #define IDM_VOLUME                      40005
+#define IDM_STOP_DEC                    40006
 #define IDM_LOGERR                      40008
 #define IDM_ONTOP                       40015
 #define IDM_QUIT                        40019

@@ -20,7 +20,7 @@ void (*error_handler)(const char *fmt, ...) = error_dialog;
  * Set the current input file name.
  */
 
-void set_filename(const char *filename)
+void set_filename(char *filename)
 {
 	_filename = filename;
 }

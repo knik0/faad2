@@ -13,7 +13,7 @@
 #include "decode.h"
 #include <stdio.h>
 
-void set_filename(const char *filename);
+void set_filename(char *filename);
 
 extern void error_dialog(const char *fmt, ...);
 extern void log_error(const char *fmt, ...);

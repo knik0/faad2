@@ -27,6 +27,7 @@ int outputFormat;
 int fileType;
 int object_type;
 extern char* fileName;
+int stop_decoding;
 
 typedef struct enclist_tag {
 	char *filename;
@@ -152,6 +153,10 @@ DWORD WINAPI decode_thread(LPVOID arg)
 			aac_dec_opt      dec_opts;
 			animate = 1;
 
+			if(stop_decoding){
+				numfiles--;
+				break;
+			}
 			set_filename(in_file);
 
 			dec_opts.progress_update = _update;
