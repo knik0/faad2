@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: in_mp4.c,v 1.36 2003/08/02 22:34:46 menno Exp $
+** $Id: in_mp4.c,v 1.37 2003/08/03 08:57:32 knik Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -87,7 +87,7 @@ typedef struct state
     faacDecHandle hDecoder;
     int samplerate;
     unsigned char channels;
-    int decode_pos_ms; // current decoding position, in milliseconds
+    double decode_pos_ms; // current decoding position, in milliseconds
     int paused; // are we paused?
     int seek_needed; // if != -1, it is the point that the decode thread should seek to, in ms.
     char filename[_MAX_PATH];
@@ -1278,7 +1278,7 @@ DWORD WINAPI MP4PlayThread(void *b)
 
     void *sample_buffer;
     unsigned char *buffer;
-    int buffer_size, ms;
+    int buffer_size;
     faacDecFrameInfo frameInfo;
 
 #ifdef DEBUG_OUTPUT
@@ -1365,9 +1365,8 @@ DWORD WINAPI MP4PlayThread(void *b)
                         mp4state.decode_pos_ms);
                     module.VSAAddPCMData(sample_buffer, (int)mp4state.channels, res_table[m_resolution],
                         mp4state.decode_pos_ms);
-                    ms = (int)floor(((float)frameInfo.samples*1000.0) /
-                        ((float)mp4state.samplerate*(float)frameInfo.channels));
-                    mp4state.decode_pos_ms += ms;
+		    mp4state.decode_pos_ms += (double)frameInfo.samples * 1000.0 /
+		      ((double)mp4state.samplerate * (double)frameInfo.channels);
 
                     l = frameInfo.samples * res_table[m_resolution] / 8;
 
@@ -1497,7 +1496,7 @@ int aac_seek(state *st, double seconds)
 DWORD WINAPI AACPlayThread(void *b)
 {
     int done = 0;
-    int l, ms;
+    int l;
 
 #ifdef DEBUG_OUTPUT
     in_mp4_DebugOutput("AACPlayThread");
@@ -1565,9 +1564,8 @@ DWORD WINAPI AACPlayThread(void *b)
                     mp4state.decode_pos_ms);
                 module.VSAAddPCMData(sample_buffer, (int)mp4state.channels, res_table[m_resolution],
                     mp4state.decode_pos_ms);
-                ms = (int)floor(((float)frameInfo.samples*1000.0) /
-                    ((float)mp4state.samplerate*(float)frameInfo.channels));
-                mp4state.decode_pos_ms += ms;
+		mp4state.decode_pos_ms += (double)frameInfo.samples * 1000.0 /
+		  ((double)mp4state.samplerate* (double)frameInfo.channels);
 
                 l = frameInfo.samples * res_table[m_resolution] / 8;
 
