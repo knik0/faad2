@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: output.h,v 1.6 2002/08/26 19:08:39 menno Exp $
+** $Id: output.h,v 1.7 2003/07/08 13:45:45 menno Exp $
 **/
 
 #ifndef __OUTPUT_H__
@@ -26,7 +26,8 @@
 extern "C" {
 #endif
 
-void* output_to_PCM(real_t **input,
+void* output_to_PCM(faacDecHandle hDecoder,
+                    real_t **input,
                     void *samplebuffer,
                     uint8_t channels,
                     uint16_t frame_len,

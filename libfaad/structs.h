@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: structs.h,v 1.6 2003/07/07 21:11:18 menno Exp $
+** $Id: structs.h,v 1.7 2003/07/08 13:45:45 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -121,6 +121,14 @@ typedef struct
 
     uint8_t comment_field_bytes;
     uint8_t comment_field_data[257];
+
+    /* extra added values */
+    uint8_t num_front_channels;
+    uint8_t num_side_channels;
+    uint8_t num_back_channels;
+    uint8_t num_lfe_channels;
+    uint8_t sce_channel[16];
+    uint8_t cpe_channel[16];
 } program_config;
 
 typedef struct
@@ -317,7 +325,11 @@ typedef struct faacDecFrameInfo
     uint32_t samplerate;
 
     /* multichannel configuration */
-    uint8_t channel_config[64];
+    uint8_t num_front_channels;
+    uint8_t num_side_channels;
+    uint8_t num_back_channels;
+    uint8_t num_lfe_channels;
+    uint8_t channel_position[MAX_CHANNELS];
 } faacDecFrameInfo;
 
 typedef struct
@@ -373,6 +385,7 @@ typedef struct
     uint8_t pce_set;
     program_config pce;
     uint8_t channel_element[MAX_CHANNELS];
+    uint8_t internal_channel[MAX_CHANNELS];
 
     /* Configuration data */
     faacDecConfiguration config;

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: faad.h,v 1.22 2003/07/07 21:11:18 menno Exp $
+** $Id: faad.h,v 1.23 2003/07/08 13:45:45 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -47,7 +47,7 @@ extern "C" {
 #define ER_LC     17
 #define ER_LTP    19
 #define LD        23
-#define DRM_ER_LC 32 /* special object type for DRM */
+#define DRM_ER_LC 27 /* special object type for DRM */
 
 /* header types */
 #define RAW        0
@@ -129,7 +129,11 @@ typedef struct faacDecFrameInfo
     unsigned long samplerate;
 
     /* multichannel configuration */
-    unsigned char channel_config[64];
+    unsigned char num_front_channels;
+    unsigned char num_side_channels;
+    unsigned char num_back_channels;
+    unsigned char num_lfe_channels;
+    unsigned char channel_position[64];
 } faacDecFrameInfo;
 
 char* FAADAPI faacDecGetErrorMessage(unsigned char errcode);

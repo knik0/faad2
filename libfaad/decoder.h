@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.h,v 1.23 2003/07/07 21:11:18 menno Exp $
+** $Id: decoder.h,v 1.24 2003/07/08 13:45:45 menno Exp $
 **/
 
 #ifndef __DECODER_H__
@@ -65,7 +65,6 @@ extern "C" {
 #define ERROR_RESILIENCE_CAP  (1<<4)
 #define FIXED_POINT_CAP       (1<<5)
 
-/* channel definitions */
 #define FRONT_CHANNEL_CENTER (1)
 #define FRONT_CHANNEL_LEFT   (2)
 #define FRONT_CHANNEL_RIGHT  (3)

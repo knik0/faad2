@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.46 2003/07/07 21:11:18 menno Exp $
+** $Id: syntax.c,v 1.47 2003/07/08 13:45:45 menno Exp $
 **/
 
 /*
@@ -65,10 +65,8 @@ int8_t GASpecificConfig(bitfile *ld, mp4AudioSpecificConfig *mp4ASC)
         program_config_element(&pce, ld);
         mp4ASC->channelsConfiguration = pce.channels;
 
-        /*
         if (pce.num_valid_cc_elements)
             return -3;
-        */
     }
 
 #ifdef ERROR_RESILIENCE
@@ -102,6 +100,8 @@ int8_t GASpecificConfig(bitfile *ld, mp4AudioSpecificConfig *mp4ASC)
 uint8_t program_config_element(program_config *pce, bitfile *ld)
 {
     uint8_t i;
+
+    memset(pce, 0, sizeof(program_config));
 
     pce->channels = 0;
 
@@ -153,72 +153,80 @@ uint8_t program_config_element(program_config *pce, bitfile *ld)
 
     for (i = 0; i < pce->num_front_channel_elements; i++)
     {
-        if ((pce->front_element_is_cpe[i] = faad_get1bit(ld
-            DEBUGVAR(1,26,"program_config_element(): front_element_is_cpe"))) & 1)
-        {
-//            printf("CPE ");
-            pce->channels += 2;
-        } else {
-//            printf("SCE ");
-            pce->channels++;
-        }
+        pce->front_element_is_cpe[i] = faad_get1bit(ld
+            DEBUGVAR(1,26,"program_config_element(): front_element_is_cpe"));
         pce->front_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,27,"program_config_element(): front_element_tag_select"));
 
-//        printf("FRONT %d: %d\n", i, pce->front_element_tag_select[i]);
+        if (pce->front_element_is_cpe[i] & 1)
+        {
+            pce->cpe_channel[pce->front_element_tag_select[i]] = pce->channels;
+            pce->num_front_channels += 2;
+            pce->channels += 2;
+        } else {
+            pce->sce_channel[pce->front_element_tag_select[i]] = pce->channels;
+            pce->num_front_channels++;
+            pce->channels++;
+        }
     }
 
     for (i = 0; i < pce->num_side_channel_elements; i++)
     {
-        if ((pce->side_element_is_cpe[i] = faad_get1bit(ld
-            DEBUGVAR(1,28,"program_config_element(): side_element_is_cpe"))) & 1)
-        {
-//            printf("CPE ");
-            pce->channels += 2;
-        } else {
-//            printf("SCE ");
-            pce->channels++;
-        }
+        pce->side_element_is_cpe[i] = faad_get1bit(ld
+            DEBUGVAR(1,28,"program_config_element(): side_element_is_cpe"));
         pce->side_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,29,"program_config_element(): side_element_tag_select"));
 
-//        printf("SIDE %d: %d\n", i, pce->side_element_tag_select[i]);
+        if (pce->side_element_is_cpe[i] & 1)
+        {
+            pce->cpe_channel[pce->side_element_tag_select[i]] = pce->channels;
+            pce->num_side_channels += 2;
+            pce->channels += 2;
+        } else {
+            pce->sce_channel[pce->side_element_tag_select[i]] = pce->channels;
+            pce->num_side_channels++;
+            pce->channels++;
+        }
     }
 
     for (i = 0; i < pce->num_back_channel_elements; i++)
     {
-        if ((pce->back_element_is_cpe[i] = faad_get1bit(ld
-            DEBUGVAR(1,30,"program_config_element(): back_element_is_cpe"))) & 1)
-        {
-//            printf("CPE ");
-            pce->channels += 2;
-        } else {
-//            printf("SCE ");
-            pce->channels++;
-        }
+        pce->back_element_is_cpe[i] = faad_get1bit(ld
+            DEBUGVAR(1,30,"program_config_element(): back_element_is_cpe"));
         pce->back_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,31,"program_config_element(): back_element_tag_select"));
 
-//        printf("BACK %d: %d\n", i, pce->back_element_tag_select[i]);
+        if (pce->back_element_is_cpe[i] & 1)
+        {
+            pce->cpe_channel[pce->back_element_tag_select[i]] = pce->channels;
+            pce->channels += 2;
+            pce->num_back_channels += 2;
+        } else {
+            pce->sce_channel[pce->back_element_tag_select[i]] = pce->channels;
+            pce->num_back_channels++;
+            pce->channels++;
+        }
     }
 
     for (i = 0; i < pce->num_lfe_channel_elements; i++)
     {
-        pce->channels++;
         pce->lfe_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,32,"program_config_element(): lfe_element_tag_select"));
 
-//        printf("LFE %d: %d\n", i, pce->lfe_element_tag_select[i]);
+        pce->sce_channel[pce->lfe_element_tag_select[i]] = pce->channels;
+        pce->num_lfe_channels++;
+        pce->channels++;
     }
 
     for (i = 0; i < pce->num_assoc_data_elements; i++)
-    {
         pce->assoc_data_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
-            DEBUGVAR(1,33,"program_config_element(): assoc_data_element_tag_select"));
-    }
+        DEBUGVAR(1,33,"program_config_element(): assoc_data_element_tag_select"));
 
     for (i = 0; i < pce->num_valid_cc_elements; i++)
     {
+        /* have to count these as channels too?? (1 or 2) */
+        pce->channels += 2;
+
         pce->cc_element_is_ind_sw[i] = faad_get1bit(ld
             DEBUGVAR(1,34,"program_config_element(): cc_element_is_ind_sw"));
         pce->valid_cc_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
@@ -271,6 +279,9 @@ element *decode_sce_lfe(faacDecHandle hDecoder,
     hInfo->error = single_lfe_channel_element(hDecoder, ele,
         ld, spec_data[channels]);
 
+    if (hDecoder->pce_set)
+        hDecoder->internal_channel[hDecoder->pce.sce_channel[ele->element_instance_tag]] = channels;
+
     if (id_syn_ele == ID_SCE)
         hDecoder->channel_element[channels] = hDecoder->fr_ch_ele;
     else /* LFE */
@@ -314,6 +325,12 @@ element *decode_cpe(faacDecHandle hDecoder,
 
     hInfo->error = channel_pair_element(hDecoder, ele,
         ld, spec_data[channels], spec_data[channels+1]);
+
+    if (hDecoder->pce_set)
+    {
+        hDecoder->internal_channel[hDecoder->pce.cpe_channel[ele->element_instance_tag]] = channels;
+        hDecoder->internal_channel[hDecoder->pce.cpe_channel[ele->element_instance_tag]+1] = channels+1;
+    }
 
     hDecoder->channel_element[channels] = hDecoder->fr_ch_ele;
     hDecoder->channel_element[channels+1] = hDecoder->fr_ch_ele;
@@ -816,7 +833,7 @@ static uint8_t coupling_channel_element(faacDecHandle hDecoder, bitfile *ld)
     memset(&el_empty, 0, sizeof(element));
     memset(&ics_empty, 0, sizeof(ic_stream));
 
-    faad_getbits(ld, LEN_TAG
+    c = faad_getbits(ld, LEN_TAG
         DEBUGVAR(1,900,"coupling_channel_element(): element_instance_tag"));
 
     ind_sw_cce_flag = faad_get1bit(ld

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.58 2003/07/07 21:11:18 menno Exp $
+** $Id: decoder.c,v 1.59 2003/07/08 13:45:45 menno Exp $
 **/
 
 #include "common.h"
@@ -367,6 +367,130 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
     if (hDecoder) free(hDecoder);
 }
 
+void create_channel_config(faacDecHandle hDecoder, faacDecFrameInfo *hInfo)
+{
+    hInfo->num_front_channels = 0;
+    hInfo->num_side_channels = 0;
+    hInfo->num_back_channels = 0;
+    hInfo->num_lfe_channels = 0;
+    memset(hInfo->channel_position, 0, MAX_CHANNELS*sizeof(uint8_t));
+
+    /* check if there is a PCE */
+    if (hDecoder->pce_set)
+    {
+        uint8_t i, chpos = 0;
+        uint8_t chdir, back_center = 0;
+
+        hInfo->num_front_channels = hDecoder->pce.num_front_channels;
+        hInfo->num_side_channels = hDecoder->pce.num_side_channels;
+        hInfo->num_back_channels = hDecoder->pce.num_back_channels;
+        hInfo->num_lfe_channels = hDecoder->pce.num_lfe_channels;
+
+        chdir = hInfo->num_front_channels;
+        if (chdir & 1)
+        {
+            hInfo->channel_position[chpos++] = FRONT_CHANNEL_CENTER;
+            chdir--;
+        }
+        for (i = 0; i < chdir; i += 2)
+        {
+            hInfo->channel_position[chpos++] = FRONT_CHANNEL_LEFT;
+            hInfo->channel_position[chpos++] = FRONT_CHANNEL_RIGHT;
+        }
+
+        for (i = 0; i < hInfo->num_side_channels; i += 2)
+        {
+            hInfo->channel_position[chpos++] = SIDE_CHANNEL_LEFT;
+            hInfo->channel_position[chpos++] = SIDE_CHANNEL_RIGHT;
+        }
+
+        chdir = hInfo->num_back_channels;
+        if (chdir & 1)
+        {
+            back_center = 1;
+            chdir--;
+        }
+        for (i = 0; i < chdir; i += 2)
+        {
+            hInfo->channel_position[chpos++] = BACK_CHANNEL_LEFT;
+            hInfo->channel_position[chpos++] = BACK_CHANNEL_RIGHT;
+        }
+        if (back_center)
+        {
+            hInfo->channel_position[chpos++] = BACK_CHANNEL_CENTER;
+        }
+
+        for (i = 0; i < hInfo->num_lfe_channels; i++)
+        {
+            hInfo->channel_position[chpos++] = LFE_CHANNEL;
+        }
+
+    } else {
+        switch (hDecoder->channelConfiguration)
+        {
+        case 1:
+            hInfo->num_front_channels = 1;
+            hInfo->channel_position[0] = FRONT_CHANNEL_CENTER;
+            break;
+        case 2:
+            hInfo->num_front_channels = 2;
+            hInfo->channel_position[0] = FRONT_CHANNEL_LEFT;
+            hInfo->channel_position[1] = FRONT_CHANNEL_RIGHT;
+            break;
+        case 3:
+            hInfo->num_front_channels = 3;
+            hInfo->channel_position[0] = FRONT_CHANNEL_CENTER;
+            hInfo->channel_position[1] = FRONT_CHANNEL_LEFT;
+            hInfo->channel_position[2] = FRONT_CHANNEL_RIGHT;
+            break;
+        case 4:
+            hInfo->num_front_channels = 3;
+            hInfo->num_back_channels = 1;
+            hInfo->channel_position[0] = FRONT_CHANNEL_CENTER;
+            hInfo->channel_position[1] = FRONT_CHANNEL_LEFT;
+            hInfo->channel_position[2] = FRONT_CHANNEL_RIGHT;
+            hInfo->channel_position[3] = BACK_CHANNEL_CENTER;
+            break;
+        case 5:
+            hInfo->num_front_channels = 3;
+            hInfo->num_back_channels = 2;
+            hInfo->channel_position[0] = FRONT_CHANNEL_CENTER;
+            hInfo->channel_position[1] = FRONT_CHANNEL_LEFT;
+            hInfo->channel_position[2] = FRONT_CHANNEL_RIGHT;
+            hInfo->channel_position[3] = BACK_CHANNEL_LEFT;
+            hInfo->channel_position[4] = BACK_CHANNEL_RIGHT;
+            break;
+        case 6:
+            hInfo->num_front_channels = 3;
+            hInfo->num_back_channels = 2;
+            hInfo->num_lfe_channels = 1;
+            hInfo->channel_position[0] = FRONT_CHANNEL_CENTER;
+            hInfo->channel_position[1] = FRONT_CHANNEL_LEFT;
+            hInfo->channel_position[2] = FRONT_CHANNEL_RIGHT;
+            hInfo->channel_position[3] = BACK_CHANNEL_LEFT;
+            hInfo->channel_position[4] = BACK_CHANNEL_RIGHT;
+            hInfo->channel_position[5] = LFE_CHANNEL;
+            break;
+        case 7:
+            hInfo->num_front_channels = 3;
+            hInfo->num_side_channels = 2;
+            hInfo->num_back_channels = 2;
+            hInfo->num_lfe_channels = 1;
+            hInfo->channel_position[0] = FRONT_CHANNEL_CENTER;
+            hInfo->channel_position[1] = FRONT_CHANNEL_LEFT;
+            hInfo->channel_position[2] = FRONT_CHANNEL_RIGHT;
+            hInfo->channel_position[3] = SIDE_CHANNEL_LEFT;
+            hInfo->channel_position[4] = SIDE_CHANNEL_RIGHT;
+            hInfo->channel_position[5] = BACK_CHANNEL_LEFT;
+            hInfo->channel_position[6] = BACK_CHANNEL_RIGHT;
+            hInfo->channel_position[7] = LFE_CHANNEL;
+            break;
+        default: /* channelConfiguration == 0 || channelConfiguration > 7 */
+            break;
+        }
+    }
+}
+
 void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                             faacDecFrameInfo *hInfo,
                             uint8_t *buffer, uint32_t buffer_size)
@@ -406,8 +530,8 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #ifdef LTP_DEC
     uint16_t *ltp_lag      =  hDecoder->ltp_lag;
 #endif
-    program_config *pce    = &(hDecoder->pce);
 
+    program_config pce;
     element *syntax_elements[MAX_SYNTAX_ELEMENTS];
     element **elements;
     int16_t *spec_data[MAX_CHANNELS];
@@ -450,7 +574,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
     /* decode the complete bitstream */
     elements = raw_data_block(hDecoder, hInfo, ld, syntax_elements,
-        spec_data, spec_coef, pce, drc);
+        spec_data, spec_coef, &pce, drc);
 
     ch_ele = hDecoder->fr_ch_ele;
     channels = hDecoder->fr_channels;
@@ -469,6 +593,20 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     faad_endbits(ld);
     if (ld) free(ld);
     ld = NULL;
+
+    if (!hDecoder->adts_header_present && !hDecoder->adif_header_present)
+    {
+        if (channels != hDecoder->channelConfiguration)
+            hDecoder->channelConfiguration = channels;
+
+        if (channels == 8) /* 7.1 */
+            hDecoder->channelConfiguration = 7;
+        if (channels == 7) /* not a standard channelConfiguration */
+            hDecoder->channelConfiguration = 0;
+    }
+
+    /* Make a channel configuration based on either a PCE or a channelConfiguration */
+    create_channel_config(hDecoder, hInfo);
 
     /* number of samples in this frame */
     hInfo->samples = frame_len*channels;
@@ -683,8 +821,8 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #endif
     }
 
-    sample_buffer = output_to_PCM(time_out, sample_buffer, channels,
-        frame_len, outputFormat);
+    sample_buffer = output_to_PCM(hDecoder, time_out, sample_buffer,
+        channels, frame_len, outputFormat);
 
     hDecoder->frame++;
 #ifdef LD_DEC

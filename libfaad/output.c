@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: output.c,v 1.17 2003/07/07 21:11:18 menno Exp $
+** $Id: output.c,v 1.18 2003/07/08 13:45:45 menno Exp $
 **/
 
 #include "common.h"
@@ -44,11 +44,13 @@
 dither_t Dither;
 double doubletmp;
 
-void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
+void* output_to_PCM(faacDecHandle hDecoder,
+                    real_t **input, void *sample_buffer, uint8_t channels,
                     uint16_t frame_len, uint8_t format)
 {
     uint8_t ch;
     uint16_t i, j = 0;
+    uint8_t internal_channel;
 
     int16_t   *short_sample_buffer = (int16_t*)sample_buffer;
     int32_t   *int_sample_buffer = (int32_t*)sample_buffer;
@@ -58,6 +60,13 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
     /* Copy output to a standard PCM buffer */
     for (ch = 0; ch < channels; ch++)
     {
+        if (hDecoder->pce_set)
+        {
+            internal_channel = hDecoder->internal_channel[ch];
+        } else {
+            internal_channel = ch;
+        }
+
         switch (format)
         {
         case FAAD_FMT_16BIT:
@@ -66,14 +75,14 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
                 int32_t tmp;
                 real_t ftemp;
 
-                ftemp = input[ch][i] + 0xff8000;
+                ftemp = input[internal_channel][i] + 0xff8000;
                 ftol(ftemp, short_sample_buffer[(i*channels)+ch]);
             }
             break;
         case FAAD_FMT_16BIT_DITHER:
             for(i = 0; i < frame_len; i++, j++)
             {
-                double Sum = input[ch][i] * 65535.f;
+                double Sum = input[internal_channel][i] * 65535.f;
                 int64_t val;
                 if(j > 31)
                    j = 0;
@@ -90,7 +99,7 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
         case FAAD_FMT_16BIT_H_SHAPE:
             for(i = 0; i < frame_len; i++, j++)
             {
-                double Sum = input[ch][i] * 65535.f;
+                double Sum = input[internal_channel][i] * 65535.f;
                 int64_t val;
                 if(j > 31)
                    j = 0;
@@ -105,33 +114,33 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
         case FAAD_FMT_24BIT:
             for(i = 0; i < frame_len; i++)
             {
-                if (input[ch][i] > (1<<15)-1)
-                    input[ch][i] = (1<<15)-1;
-                else if (input[ch][i] < -(1<<15))
-                    input[ch][i] = -(1<<15);
-                int_sample_buffer[(i*channels)+ch] = ROUND(input[ch][i]*(1<<8));
+                if (input[internal_channel][i] > (1<<15)-1)
+                    input[internal_channel][i] = (1<<15)-1;
+                else if (input[internal_channel][i] < -(1<<15))
+                    input[internal_channel][i] = -(1<<15);
+                int_sample_buffer[(i*channels)+ch] = ROUND(input[internal_channel][i]*(1<<8));
             }
             break;
         case FAAD_FMT_32BIT:
             for(i = 0; i < frame_len; i++)
             {
-                if (input[ch][i] > (1<<15)-1)
-                    input[ch][i] = (1<<15)-1;
-                else if (input[ch][i] < -(1<<15))
-                    input[ch][i] = -(1<<15);
-                int_sample_buffer[(i*channels)+ch] = ROUND32(input[ch][i]*(1<<16));
+                if (input[internal_channel][i] > (1<<15)-1)
+                    input[internal_channel][i] = (1<<15)-1;
+                else if (input[internal_channel][i] < -(1<<15))
+                    input[internal_channel][i] = -(1<<15);
+                int_sample_buffer[(i*channels)+ch] = ROUND32(input[internal_channel][i]*(1<<16));
             }
             break;
         case FAAD_FMT_FLOAT:
             for(i = 0; i < frame_len; i++)
             {
-                float_sample_buffer[(i*channels)+ch] = input[ch][i]*FLOAT_SCALE;
+                float_sample_buffer[(i*channels)+ch] = input[internal_channel][i]*FLOAT_SCALE;
             }
             break;
         case FAAD_FMT_DOUBLE:
             for(i = 0; i < frame_len; i++)
             {
-                double_sample_buffer[(i*channels)+ch] = (double)input[ch][i]*FLOAT_SCALE;
+                double_sample_buffer[(i*channels)+ch] = (double)input[internal_channel][i]*FLOAT_SCALE;
             }
             break;
         }
@@ -170,7 +179,8 @@ static int64_t dither_output(uint8_t dithering, uint8_t shapingtype, uint16_t i,
 
 #else
 
-void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
+void* output_to_PCM(faacDecHandle hDecoder,
+                    real_t **input, void *sample_buffer, uint8_t channels,
                     uint16_t frame_len, uint8_t format)
 {
     uint8_t ch;

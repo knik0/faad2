@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: audio.h,v 1.6 2003/07/07 21:11:17 menno Exp $
+** $Id: audio.h,v 1.7 2003/07/08 13:45:45 menno Exp $
 **/
 
 #ifndef AUDIO_H_INCLUDED
@@ -45,7 +45,7 @@ typedef struct
 audio_file *open_audio_file(char *infile, int samplerate, int channels,
                             int outputFormat, int fileType);
 int write_audio_file(audio_file *aufile, void *sample_buffer, int samples);
-void close_audio_file(audio_file *aufile, char *fileName);
+void close_audio_file(audio_file *aufile);
 static int write_wav_header(audio_file *aufile);
 static int write_audio_16bit(audio_file *aufile, void *sample_buffer,
                              unsigned int samples);

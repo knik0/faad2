@@ -97,10 +97,6 @@ SOURCE=..\common\faad\getopt.c
 
 SOURCE=.\main.c
 # End Source File
-# Begin Source File
-
-SOURCE=.\wave_out.c
-# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -128,10 +124,6 @@ SOURCE=..\common\mp4v2\mpeg4ip.h
 # Begin Source File
 
 SOURCE=..\common\mp4v2\systems.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\wave_out.h
 # End Source File
 # Begin Source File
 
