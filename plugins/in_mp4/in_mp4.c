@@ -16,13 +16,14 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.15 2002/08/15 17:41:44 menno Exp $
+** $Id: in_mp4.c,v 1.16 2002/08/17 11:16:11 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <commctrl.h>
 #include <stdlib.h>
+#include <math.h>
 #include <faad.h>
 #include <mp4.h>
 
@@ -239,7 +240,8 @@ BOOL CALLBACK aac_info_dialog_proc(HWND hwndDlg, UINT message,
 
         sprintf(info_text, "%s AAC %s, %d sec, %d kbps, %d Hz",
             (aacInfo.version==2)?"MPEG-2":"MPEG-4", get_ot_string(aacInfo.object_type),
-            aacInfo.length/1000, (int)(aacInfo.bitrate/1000.0+0.5), aacInfo.sampling_rate);
+            (int)((float)aacInfo.length/1000.0), (int)((float)aacInfo.bitrate/1000.0+0.5),
+            aacInfo.sampling_rate);
 
         SetDlgItemText(hwndDlg, IDC_INFOTEXT, info_text);
 
@@ -328,7 +330,7 @@ void config(HWND hwndParent)
 void about(HWND hwndParent)
 {
     MessageBox(hwndParent,
-        "AudioCoding.com MPEG-4 General Audio player.\n"
+        "AudioCoding.com MPEG-4 General Audio player " FAAD2_VERSION "\n"
         "Visit the website for more info.\n"
         "Copyright 2002 AudioCoding.com",
         "About",
@@ -353,7 +355,7 @@ int play(char *fn)
 {
     int maxlatency;
     int thread_id;
-    int avg_bitrate;
+    int avg_bitrate, br, sr;
     unsigned char *buffer;
     int buffer_size;
     faacDecConfigurationPtr config;
@@ -418,7 +420,7 @@ int play(char *fn)
             return -1;
         }
 
-        if ((mp4state.bytes_consumed=faacDecInit(mp4state.hDecoder,
+        if ((mp4state.bytes_consumed = faacDecInit(mp4state.hDecoder,
             mp4state.buffer, &mp4state.samplerate, &mp4state.channels)) < 0)
         {
             show_error(module.hMainWindow, "Can't initialize library.");
@@ -493,8 +495,8 @@ int play(char *fn)
         return -1;
     }
 
-    maxlatency = module.outMod->Open(mp4state.samplerate, mp4state.channels,
-        res_table[m_resolution], -1,-1);
+    maxlatency = module.outMod->Open(mp4state.samplerate, (int)mp4state.channels,
+        res_table[m_resolution], -1, -1);
     if (maxlatency < 0) // error opening device
     {
         faacDecClose(mp4state.hDecoder);
@@ -511,9 +513,11 @@ int play(char *fn)
 
     // initialize vis stuff
     module.SAVSAInit(maxlatency, mp4state.samplerate);
-    module.VSASetInfo(mp4state.samplerate, mp4state.channels);
+    module.VSASetInfo((int)mp4state.channels, mp4state.samplerate);
 
-    module.SetInfo((avg_bitrate + 500)/1000, mp4state.samplerate/1000, mp4state.channels, 1);
+    br = (int)floor(((float)avg_bitrate + 500.0)/1000.0);
+    sr = (int)floor((float)mp4state.samplerate/1000.0);
+    module.SetInfo(br, sr, (int)mp4state.channels, 1);
 
     module.outMod->SetVolume(-666); // set the output plug-ins default volume
 
@@ -701,7 +705,7 @@ DWORD WINAPI MP4PlayThread(void *b)
 
     void *sample_buffer;
     unsigned char *buffer;
-    int buffer_size;
+    int buffer_size, ms;
     faacDecFrameInfo frameInfo;
 
 	PlayThreadAlive = 1;
@@ -736,9 +740,8 @@ DWORD WINAPI MP4PlayThread(void *b)
             }
 
             Sleep(10);
-        } else if (module.outMod->CanWrite() >=
-            ((1024*mp4state.channels*sizeof(short))<<(module.dsp_isactive()?1:0)))
-        {
+        } else if (module.outMod->CanWrite() >= (1024*mp4state.channels*sizeof(short))) {
+
             if (mp4state.last_frame)
             {
                 done = 1;
@@ -780,21 +783,15 @@ DWORD WINAPI MP4PlayThread(void *b)
                         free(temp_buffer);
                     }
 
-                    module.SAAddPCMData(sample_buffer, mp4state.channels, res_table[m_resolution],
+                    module.SAAddPCMData(sample_buffer, (int)mp4state.channels, res_table[m_resolution],
                         mp4state.decode_pos_ms);
-                    module.VSAAddPCMData(sample_buffer, mp4state.channels, res_table[m_resolution],
+                    module.VSAAddPCMData(sample_buffer, (int)mp4state.channels, res_table[m_resolution],
                         mp4state.decode_pos_ms);
-                    mp4state.decode_pos_ms += (1024*1000)/mp4state.samplerate;
+                    ms = (int)floor(((float)frameInfo.samples*1000.0) /
+                        ((float)mp4state.samplerate*(float)frameInfo.channels));
+                    mp4state.decode_pos_ms += ms;
 
-                    if (module.dsp_isactive())
-                    {
-                        l = module.dsp_dosamples((short*)sample_buffer,
-                            frameInfo.samples*sizeof(short)/mp4state.channels/(res_table[m_resolution]/8),
-                            res_table[m_resolution],
-                            mp4state.channels,mp4state.samplerate)*(mp4state.channels*(res_table[m_resolution]/8));
-                    } else {
-                        l = frameInfo.samples*(res_table[m_resolution]/8);
-                    }
+                    l = frameInfo.samples * res_table[m_resolution] / 8;
 
                     module.outMod->Write(sample_buffer, l);
                 }
@@ -831,7 +828,7 @@ int aac_seek(int pos_ms)
 DWORD WINAPI AACPlayThread(void *b)
 {
     int done = 0;
-    int l;
+    int l, ms;
 
     void *sample_buffer;
     faacDecFrameInfo frameInfo;
@@ -868,9 +865,7 @@ DWORD WINAPI AACPlayThread(void *b)
             }
 
             Sleep(10);
-        } else if (module.outMod->CanWrite() >=
-            ((1024*mp4state.channels*sizeof(short))<<(module.dsp_isactive()?1:0)))
-        {
+        } else if (module.outMod->CanWrite() >= (1024*mp4state.channels*sizeof(short))) {
             if (mp4state.last_frame)
             {
                 done = 1;
@@ -938,21 +933,15 @@ DWORD WINAPI AACPlayThread(void *b)
                         free(temp_buffer);
                     }
 
-                    module.SAAddPCMData(sample_buffer, mp4state.channels, res_table[m_resolution],
+                    module.SAAddPCMData(sample_buffer, (int)mp4state.channels, res_table[m_resolution],
                         mp4state.decode_pos_ms);
-                    module.VSAAddPCMData(sample_buffer, mp4state.channels, res_table[m_resolution],
+                    module.VSAAddPCMData(sample_buffer, (int)mp4state.channels, res_table[m_resolution],
                         mp4state.decode_pos_ms);
-                    mp4state.decode_pos_ms += (1024*1000)/mp4state.samplerate;
+                    ms = (int)floor(((float)frameInfo.samples*1000.0) /
+                        ((float)mp4state.samplerate*(float)frameInfo.channels));
+                    mp4state.decode_pos_ms += ms;
 
-                    if (module.dsp_isactive())
-                    {
-                        l = module.dsp_dosamples((short*)sample_buffer,
-                            frameInfo.samples*sizeof(short)/mp4state.channels/(res_table[m_resolution]/8),
-                            res_table[m_resolution],
-                            mp4state.channels,mp4state.samplerate)*(mp4state.channels*(res_table[m_resolution]/8));
-                    } else {
-                        l = frameInfo.samples*(res_table[m_resolution]/8);
-                    }
+                    l = frameInfo.samples * res_table[m_resolution] / 8;
 
                     module.outMod->Write(sample_buffer, l);
                 }
