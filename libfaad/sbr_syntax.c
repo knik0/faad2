@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_syntax.c,v 1.16 2003/12/17 14:43:16 menno Exp $
+** $Id: sbr_syntax.c,v 1.17 2003/12/17 16:37:34 menno Exp $
 **/
 
 #include "common.h"
@@ -320,8 +320,13 @@ static uint8_t sbr_single_channel_element(bitfile *ld, sbr_info *sbr)
                 DEBUGVAR(1,227,"sbr_single_channel_element(): bs_extension_id"));
             nr_bits_left -= 2;
             /* sbr_extension(ld, sbr, 0, nr_bits_left); */
-            sbr->bs_extension_data = (uint8_t)faad_getbits(ld, 6
-                DEBUGVAR(1,279,"sbr_single_channel_element(): bs_extension_data"));
+#ifdef DRM
+            if (!sbr->Is_DRM_SBR)
+#endif
+            {
+                sbr->bs_extension_data = (uint8_t)faad_getbits(ld, 6
+                    DEBUGVAR(1,279,"sbr_single_channel_element(): bs_extension_data"));
+            }
         }
 
         /* Corrigendum */
@@ -446,8 +451,13 @@ static uint8_t sbr_channel_pair_element(bitfile *ld, sbr_info *sbr)
                 DEBUGVAR(1,236,"sbr_channel_pair_element(): bs_extension_id"));
             nr_bits_left -= 2;
             /* sbr_extension(ld, sbr, 0, nr_bits_left); */
-            sbr->bs_extension_data = (uint8_t)faad_getbits(ld, 6
-                DEBUGVAR(1,280,"sbr_channel_pair_element(): bs_extension_data"));
+#ifdef DRM
+            if (!sbr->Is_DRM_SBR)
+#endif
+            {
+                sbr->bs_extension_data = (uint8_t)faad_getbits(ld, 6
+                    DEBUGVAR(1,280,"sbr_channel_pair_element(): bs_extension_data"));
+            }
         }
 
         /* Corrigendum */

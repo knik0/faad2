@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.34 2003/12/17 14:43:16 menno Exp $
+** $Id: specrec.c,v 1.35 2003/12/17 16:37:34 menno Exp $
 **/
 
 /*
@@ -488,14 +488,14 @@ static INLINE real_t iquant(int16_t q, const real_t *tab)
 #else
     if (q < 0)
     {
-        if (-q > IQ_TABLE_SIZE)
+        if (-q >= IQ_TABLE_SIZE)
             return 0;
 
         /* tab contains a value for all possible q [0,8192] */
         return -tab[-q];
     }
 
-    if (q > IQ_TABLE_SIZE)
+    if (q >= IQ_TABLE_SIZE)
         return 0;
 
     /* tab contains a value for all possible q [0,8192] */

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.39 2003/12/17 14:43:16 menno Exp $
+** $Id: common.h,v 1.40 2003/12/17 16:37:34 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -110,6 +110,12 @@ extern "C" {
 #  define SBR_LOW_POWER
 # endif
 #endif // FIXED_POINT
+
+#ifdef DRM
+# ifndef SCALABLE_DEC
+#  define SCALABLE_DEC
+# endif
+#endif
 
 #if ((defined(_WIN32) && !defined(_WIN32_WCE)) || ((__GNUC__ >= 3) && defined(i386)))
 #ifndef FIXED_POINT
