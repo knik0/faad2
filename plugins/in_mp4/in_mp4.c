@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: in_mp4.c,v 1.44 2003/11/02 20:24:05 menno Exp $
+** $Id: in_mp4.c,v 1.45 2003/11/05 14:41:46 ca5e Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -1732,6 +1732,81 @@ void eq_set(int on, char data[10], int preamp)
 {
 }
 
+static void remap_channels(unsigned char *data, unsigned int samples, unsigned int bps)
+{
+    unsigned int i;
+
+    switch (bps)
+    {
+    case 8:
+        {
+            unsigned char r1, r2, r3, r4, r5, r6;
+            for (i = 0; i < samples; i += 6)
+            {
+                r1 = data[i];
+                r2 = data[i+1];
+                r3 = data[i+2];
+                r4 = data[i+3];
+                r5 = data[i+4];
+                r6 = data[i+5];
+                data[i] = r2;
+                data[i+1] = r3;
+                data[i+2] = r1;
+                data[i+3] = r6;
+                data[i+4] = r4;
+                data[i+5] = r5;
+            }
+        }
+        break;
+
+    case 16:
+    default:
+        {
+            unsigned short r1, r2, r3, r4, r5, r6;
+            unsigned short *sample_buffer = (unsigned short *)data;
+            for (i = 0; i < samples; i += 6)
+            {
+                r1 = sample_buffer[i];
+                r2 = sample_buffer[i+1];
+                r3 = sample_buffer[i+2];
+                r4 = sample_buffer[i+3];
+                r5 = sample_buffer[i+4];
+                r6 = sample_buffer[i+5];
+                sample_buffer[i] = r2;
+                sample_buffer[i+1] = r3;
+                sample_buffer[i+2] = r1;
+                sample_buffer[i+3] = r6;
+                sample_buffer[i+4] = r4;
+                sample_buffer[i+5] = r5;
+            }
+        }
+        break;
+
+    case 24:
+    case 32:
+        {
+            unsigned int r1, r2, r3, r4, r5, r6;
+            unsigned int *sample_buffer = (unsigned int *)data;
+            for (i = 0; i < samples; i += 6)
+            {
+                r1 = sample_buffer[i];
+                r2 = sample_buffer[i+1];
+                r3 = sample_buffer[i+2];
+                r4 = sample_buffer[i+3];
+                r5 = sample_buffer[i+4];
+                r6 = sample_buffer[i+5];
+                sample_buffer[i] = r2;
+                sample_buffer[i+1] = r3;
+                sample_buffer[i+2] = r1;
+                sample_buffer[i+3] = r6;
+                sample_buffer[i+4] = r4;
+                sample_buffer[i+5] = r5;
+            }
+        }
+        break;
+    }
+}
+
 DWORD WINAPI MP4PlayThread(void *b)
 {
     int done = 0;
@@ -1861,6 +1936,9 @@ DWORD WINAPI MP4PlayThread(void *b)
                     case 64:
                         buf += delay * 8;
                     }
+
+                    if (frameInfo.channels == 6 && frameInfo.num_lfe_channels)
+                        remap_channels(buf, sample_count, res_table[m_resolution]);
 
                     if (res_table[m_resolution] == 24)
                     {
@@ -2081,6 +2159,9 @@ DWORD WINAPI AACPlayThread(void *b)
 
             if (!killPlayThread && (frameInfo.samples > 0))
             {
+                if (frameInfo.channels == 6 && frameInfo.num_lfe_channels)
+                    remap_channels(sample_buffer, frameInfo.samples, res_table[m_resolution]);
+
                 if (res_table[m_resolution] == 24)
                 {
                     /* convert libfaad output (3 bytes packed in 4 bytes) */
