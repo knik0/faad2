@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.59 2004/04/12 18:17:42 menno Exp $
+** $Id: common.h,v 1.60 2004/04/21 11:34:19 danchr Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -294,7 +294,7 @@ char *strchr(), *strrchr();
   }
 
 
-  #ifdef _WIN32
+  #if defined(_WIN32) && !defined(__MINGW32__)
     #define HAS_LRINTF
     static INLINE int lrintf(float f)
     {
