@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.52 2003/08/31 10:26:48 menno Exp $
+** $Id: foo_mp4.cpp,v 1.53 2003/08/31 10:27:51 menno Exp $
 **/
 
 #include <mp4.h>
@@ -215,11 +215,17 @@ public:
                 if (initial && (sample_count < m_framesize) && frameInfo.channels)
                     delay = (frameInfo.samples/frameInfo.channels) - sample_count;
 
-                if (frameInfo.error)
+                if (frameInfo.error || !sample_buffer)
                 {
-                    console::warning(faacDecGetErrorMessage(frameInfo.error));
+                    const char *msg;
+                    if (frameInfo.error)
+                        msg = faacDecGetErrorMessage(frameInfo.error);
+                    else
+                        msg = "faacDecDecode() error";
+                    console::warning(msg);
                     if (sampleId > numSamples) return 0;//-1;
-                    console::warning("Skipping frame");
+                    console::info("Skipping frame");
+                    sample_count = 0;
                 }
             } while (frameInfo.error || frameInfo.samples == 0 || frameInfo.channels == 0 || sample_count == 0);
 
