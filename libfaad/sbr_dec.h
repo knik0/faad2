@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.h,v 1.22 2004/01/29 11:31:11 menno Exp $
+** $Id: sbr_dec.h,v 1.23 2004/02/04 20:07:24 menno Exp $
 **/
 
 #ifndef __SBR_DEC_H__
@@ -158,7 +158,9 @@ typedef struct
 	int8_t lcstereo_flag;
 	uint8_t bs_dataextra;
     uint8_t Is_DRM_SBR;
+#ifdef DRM_PS
     drm_ps_info drm_ps;
+#endif
 #endif
 
 	uint8_t numTimeSlotsRate;
