@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.29 2003/05/07 18:30:49 menno Exp $
+** $Id: foo_mp4.cpp,v 1.30 2003/05/21 21:16:03 menno Exp $
 **/
 
 #include <mp4.h>
@@ -35,7 +35,7 @@ char *STRIP_REVISION(const char *str)
 }
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           STRIP_REVISION("$Revision: 1.29 $"),
+                           STRIP_REVISION("$Revision: 1.30 $"),
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -254,8 +254,7 @@ public:
     
     virtual int is_our_content_type(const char *url, const char *type)
     {
-        return !strcmp(type, "audio/mp4") || !strcmp(type, "audio/x-mp4") ||
-            !strcmp(type, "audio/mp4a");
+        return !strcmp(type, "audio/mp4") || !strcmp(type, "audio/x-mp4");
     }
 
 private:
@@ -473,7 +472,7 @@ public:
             }
         } else if (memcmp(m_aac_buffer, "ADIF", 4) == 0) {
             int skip_size = (m_aac_buffer[4] & 0x80) ? 9 : 0;
-            bitrate =  ((unsigned int)(m_aac_buffer[4 + skip_size] & 0x0F)<<19) |
+            bitrate = ((unsigned int)(m_aac_buffer[4 + skip_size] & 0x0F)<<19) |
                 ((unsigned int)m_aac_buffer[4 + skip_size]<<11) |
                 ((unsigned int)m_aac_buffer[4 + skip_size]<<3) |
                 ((unsigned int)m_aac_buffer[4 + skip_size] & 0xE0);
@@ -619,8 +618,10 @@ public:
                 if (target->next)
                     target = target->next;
                 else
-                    return 0;
+                    return 1;
             }
+            if (target->offset == 0 && frames > 0)
+                return 1;
             m_reader->seek(target->offset);
 
             bread = m_reader->read(m_aac_buffer, 768*6);
@@ -642,7 +643,7 @@ public:
                     for (i = 0; i < frames; i++)
                     {
                         if (!run(NULL))
-                            break;
+                            return 1;
                     }
                 }
 
