@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.32 2002/11/28 18:48:30 menno Exp $
+** $Id: syntax.c,v 1.33 2002/12/05 18:01:57 menno Exp $
 **/
 
 /*
@@ -285,6 +285,29 @@ element *decode_cpe(faacDecHandle hDecoder,
     return ele;
 }
 
+#define CHCHECK1 \
+    if (channels+1 >= MAX_CHANNELS) \
+    { \
+        hInfo->error = 12; \
+        goto return_on_error; \
+    } \
+    if (ch_ele+1 >= MAX_SYNTAX_ELEMENTS) \
+    { \
+        hInfo->error = 13; \
+        goto return_on_error; \
+    }
+#define CHCHECK2 \
+    if (channels+2 >= MAX_CHANNELS) \
+    { \
+        hInfo->error = 12; \
+        goto return_on_error; \
+    } \
+    if (ch_ele+1 >= MAX_SYNTAX_ELEMENTS) \
+    { \
+        hInfo->error = 13; \
+        goto return_on_error; \
+    }
+
 element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
                          bitfile *ld, element **elements,
                          int16_t **spec_data, real_t **spec_coef,
@@ -307,6 +330,7 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
             switch (id_syn_ele) {
             case ID_SCE:
             case ID_LFE:
+                CHCHECK1;
                 elements[ch_ele] = decode_sce_lfe(hDecoder,
                     hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
                 ch_ele++; channels++;
@@ -314,6 +338,7 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
                     goto return_on_error;
                 break;
             case ID_CPE:
+                CHCHECK2;
                 elements[ch_ele] = decode_cpe(hDecoder,
                     hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
                 channels += 2; ch_ele++;
@@ -344,6 +369,7 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
         {
         case 1:
             id_syn_ele = ID_SCE;
+            CHCHECK1;
             elements[ch_ele] = decode_sce_lfe(hDecoder,
                 hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
             ch_ele++; channels++;
@@ -352,6 +378,7 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
             break;
         case 2:
             id_syn_ele = ID_CPE;
+            CHCHECK2;
             elements[ch_ele] = decode_cpe(hDecoder,
                 hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
             channels += 2; ch_ele++;
@@ -360,12 +387,14 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
             break;
         case 3:
             id_syn_ele = ID_SCE;
+            CHCHECK1;
             elements[ch_ele] = decode_sce_lfe(hDecoder,
                 hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
             ch_ele++; channels++;
             if (hInfo->error > 0)
                 goto return_on_error;
             id_syn_ele = ID_CPE;
+            CHCHECK2;
             elements[ch_ele] = decode_cpe(hDecoder,
                 hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
             channels += 2; ch_ele++;
@@ -374,18 +403,21 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
             break;
         case 4:
             id_syn_ele = ID_SCE;
+            CHCHECK1;
             elements[ch_ele] = decode_sce_lfe(hDecoder,
                 hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
             ch_ele++; channels++;
             if (hInfo->error > 0)
                 goto return_on_error;
             id_syn_ele = ID_CPE;
+            CHCHECK2;
             elements[ch_ele] = decode_cpe(hDecoder,
                 hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
             channels += 2; ch_ele++;
             if (hInfo->error > 0)
                 goto return_on_error;
             id_syn_ele = ID_SCE;
+            CHCHECK1;
             elements[ch_ele] = decode_sce_lfe(hDecoder,
                 hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
             ch_ele++; channels++;
@@ -394,18 +426,21 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
             break;
         case 5:
             id_syn_ele = ID_SCE;
+            CHCHECK1;
             elements[ch_ele] = decode_sce_lfe(hDecoder,
                 hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
             ch_ele++; channels++;
             if (hInfo->error > 0)
                 goto return_on_error;
             id_syn_ele = ID_CPE;
+            CHCHECK2;
             elements[ch_ele] = decode_cpe(hDecoder,
                 hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
             channels += 2; ch_ele++;
             if (hInfo->error > 0)
                 goto return_on_error;
             id_syn_ele = ID_CPE;
+            CHCHECK2;
             elements[ch_ele] = decode_cpe(hDecoder,
                 hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
             channels += 2; ch_ele++;
@@ -414,24 +449,28 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
             break;
         case 6:
             id_syn_ele = ID_SCE;
+            CHCHECK1;
             elements[ch_ele] = decode_sce_lfe(hDecoder,
                 hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
             ch_ele++; channels++;
             if (hInfo->error > 0)
                 goto return_on_error;
             id_syn_ele = ID_CPE;
+            CHCHECK2;
             elements[ch_ele] = decode_cpe(hDecoder,
                 hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
             channels += 2; ch_ele++;
             if (hInfo->error > 0)
                 goto return_on_error;
             id_syn_ele = ID_CPE;
+            CHCHECK2;
             elements[ch_ele] = decode_cpe(hDecoder,
                 hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
             channels += 2; ch_ele++;
             if (hInfo->error > 0)
                 goto return_on_error;
             id_syn_ele = ID_LFE;
+            CHCHECK1;
             elements[ch_ele] = decode_sce_lfe(hDecoder,
                 hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
             ch_ele++; channels++;
@@ -440,30 +479,35 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
             break;
         case 7:
             id_syn_ele = ID_SCE;
+            CHCHECK1;
             elements[ch_ele] = decode_sce_lfe(hDecoder,
                 hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
             ch_ele++; channels++;
             if (hInfo->error > 0)
                 goto return_on_error;
             id_syn_ele = ID_CPE;
+            CHCHECK2;
             elements[ch_ele] = decode_cpe(hDecoder,
                 hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
             channels += 2; ch_ele++;
             if (hInfo->error > 0)
                 goto return_on_error;
             id_syn_ele = ID_CPE;
+            CHCHECK2;
             elements[ch_ele] = decode_cpe(hDecoder,
                 hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
             channels += 2; ch_ele++;
             if (hInfo->error > 0)
                 goto return_on_error;
             id_syn_ele = ID_CPE;
+            CHCHECK2;
             elements[ch_ele] = decode_cpe(hDecoder,
                 hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
             channels += 2; ch_ele++;
             if (hInfo->error > 0)
                 goto return_on_error;
             id_syn_ele = ID_LFE;
+            CHCHECK1;
             elements[ch_ele] = decode_sce_lfe(hDecoder,
                 hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
             ch_ele++; channels++;

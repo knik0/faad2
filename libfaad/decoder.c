@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.41 2002/12/02 20:27:51 menno Exp $
+** $Id: decoder.c,v 1.42 2002/12/05 18:01:49 menno Exp $
 **/
 
 #include "common.h"
@@ -634,13 +634,13 @@ error:
     /* cleanup */
     for (ch = 0; ch < channels; ch++)
     {
-        free(spec_coef[ch]);
-        free(spec_data[ch]);
+        if (spec_coef[ch]) free(spec_coef[ch]);
+        if (spec_data[ch]) free(spec_data[ch]);
     }
 
     for (i = 0; i < ch_ele; i++)
     {
-        free(syntax_elements[i]);
+        if (syntax_elements[i]) free(syntax_elements[i]);
     }
 
 #ifdef ANALYSIS

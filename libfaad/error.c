@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: error.c,v 1.6 2002/08/27 10:24:55 menno Exp $
+** $Id: error.c,v 1.7 2002/12/05 18:01:55 menno Exp $
 **/
 
 #include "common.h"
@@ -34,5 +34,7 @@ extern int8_t *err_msg[] = {
     "Bit error in error resilient scalefactor decoding",
     "Error decoding huffman scalefactor (bitstream error)",
     "Error decoding huffman codeword (bitstream error)",
-    "Non existent huffman codebook number found"
+    "Non existent huffman codebook number found",
+    "Maximum number of channels exceeded",
+    "Maximum number of bitstream elements exceeded"
 };
