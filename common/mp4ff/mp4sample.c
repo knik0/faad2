@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4sample.c,v 1.10 2003/12/23 18:53:24 menno Exp $
+** $Id: mp4sample.c,v 1.11 2003/12/29 18:36:01 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -77,7 +77,7 @@ static int32_t mp4ff_chunk_of_sample(const mp4ff_t *f, const int32_t track, cons
 
 static int32_t mp4ff_chunk_to_offset(const mp4ff_t *f, const int32_t track, const int32_t chunk)
 {
-	const mp4ff_track_t * p_track = f->track[track];
+    const mp4ff_track_t * p_track = f->track[track];
 
     if (p_track->stco_entry_count && (chunk > p_track->stco_entry_count))
     {
@@ -87,7 +87,7 @@ static int32_t mp4ff_chunk_to_offset(const mp4ff_t *f, const int32_t track, cons
     } else {
         return 8;
     }
-    
+
     return 0;
 }
 
@@ -95,12 +95,16 @@ static int32_t mp4ff_sample_range_size(const mp4ff_t *f, const int32_t track,
                                        const int32_t chunk_sample, const int32_t sample)
 {
     int32_t i, total;
-	const mp4ff_track_t * p_track = f->track[track];
+    const mp4ff_track_t * p_track = f->track[track];
 
     if (p_track->stsz_sample_size)
     {
-        return sample * p_track->channelCount * p_track->sampleSize/8;
-    } else {
+        return (sample - chunk_sample) * p_track->stsz_sample_size;
+    }
+    else
+    {
+        if (sample>=p_track->stsz_sample_count) return 0;//error
+
         for(i = chunk_sample, total = 0; i < sample; i++)
         {
             total += p_track->stsz_table[i];
@@ -119,13 +123,13 @@ static int32_t mp4ff_sample_to_offset(const mp4ff_t *f, const int32_t track, con
     chunk_offset1 = mp4ff_chunk_to_offset(f, track, chunk);
     chunk_offset2 = chunk_offset1 + mp4ff_sample_range_size(f, track, chunk_sample, sample);
 
-	return chunk_offset2;
+    return chunk_offset2;
 }
 
 int32_t mp4ff_audio_frame_size(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t bytes;
-	const mp4ff_track_t * p_track = f->track[track];
+    const mp4ff_track_t * p_track = f->track[track];
 
     if (p_track->stsz_sample_size)
     {
