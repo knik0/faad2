@@ -1,4 +1,5 @@
 lib_LTLIBRARIES = libfaad.la
+include_HEADERS = ../include/faad.h
 
 VPATH = @srcdir@:codebook:
 
@@ -13,9 +14,7 @@ filtbank.h huffman.h ic_predict.h is.h kbd_win.h lt_predict.h mdct.h mp4.h \
 ms.h output.h pns.h pulse.h specrec.h syntax.h tns.h \
 codebook/hcb.h
 libfaad_la_LIBADD = fftw/libfftw.la
-libfaad_la_LDFLAGS = -static
 
-#CFLAGS = -O2 -DERROR_RESILIENCE
 CFLAGS = -O2
 INCLUDES = -I$(top_srcdir)/include -Ifftw
 
