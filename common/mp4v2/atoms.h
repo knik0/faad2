@@ -540,6 +540,11 @@ public:
 	MP4AlbAtom();
 };
 
+class MP4GenAtom : public MP4Atom {
+public:
+	MP4GenAtom();
+};
+
 class MP4TrknAtom : public MP4Atom {
 public:
 	MP4TrknAtom();

@@ -94,9 +94,10 @@ MP4IlstAtom::MP4IlstAtom()
     ExpectChildAtom("©day", Optional, OnlyOne); /* date */
     ExpectChildAtom("©too", Optional, OnlyOne); /* tool */
     ExpectChildAtom("©cmt", Optional, OnlyOne); /* comment */
+    ExpectChildAtom("©gen", Optional, OnlyOne); /* custom genre */
     ExpectChildAtom("trkn", Optional, OnlyOne); /* tracknumber */
     ExpectChildAtom("disk", Optional, OnlyOne); /* disknumber */
-    ExpectChildAtom("gnre", Optional, OnlyOne); /* genre */
+    ExpectChildAtom("gnre", Optional, OnlyOne); /* genre (ID3v1 index + 1) */
     ExpectChildAtom("cpil", Optional, OnlyOne); /* compilation */
     ExpectChildAtom("tmpo", Optional, OnlyOne); /* BPM */
     ExpectChildAtom("----", Optional, Many); /* ---- free form */
@@ -154,6 +155,12 @@ MP4DiskAtom::MP4DiskAtom()
 
 MP4DayAtom::MP4DayAtom()
     : MP4Atom("©day")
+{
+    ExpectChildAtom("data", Required, OnlyOne);
+}
+
+MP4GenAtom::MP4GenAtom()
+    : MP4Atom("©gen")
 {
     ExpectChildAtom("data", Required, OnlyOne);
 }

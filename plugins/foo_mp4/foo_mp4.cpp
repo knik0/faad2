@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.35 2003/06/29 21:41:00 menno Exp $
+** $Id: foo_mp4.cpp,v 1.36 2003/07/01 21:26:32 menno Exp $
 **/
 
 #include <mp4.h>
@@ -44,7 +44,7 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "$Revision: 1.35 $",
+                           "$Revision: 1.36 $",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -209,56 +209,6 @@ public:
 
     virtual int set_info(reader *r,const file_info * info)
     {
-#if 0
-        m_reader = r;
-
-        hFile = MP4ModifyCb(0, 0, open_cb, close_cb, read_cb, write_cb,
-            setpos_cb, getpos_cb, filesize_cb, (void*)m_reader);
-        if (hFile == MP4_INVALID_FILE_HANDLE) return 0;
-
-        track = GetAACTrack(hFile);
-        if (track < 1)
-        {
-            console::error("No valid AAC track found.", "foo_mp4");
-            return 0;
-        }
-
-        MP4TagDelete(hFile, track);
-
-        /* replay gain writing */
-        const char *p = NULL;
-
-        p = info->info_get("REPLAYGAIN_TRACK_PEAK");
-        if (p)
-            MP4TagAddEntry(hFile, track, "REPLAYGAIN_TRACK_PEAK", p);
-        p = info->info_get("REPLAYGAIN_TRACK_GAIN");
-        if (p)
-            MP4TagAddEntry(hFile, track, "REPLAYGAIN_TRACK_GAIN", p);
-        p = info->info_get("REPLAYGAIN_ALBUM_PEAK");
-        if (p)
-            MP4TagAddEntry(hFile, track, "REPLAYGAIN_ALBUM_PEAK", p);
-        p = info->info_get("REPLAYGAIN_ALBUM_GAIN");
-        if (p)
-            MP4TagAddEntry(hFile, track, "REPLAYGAIN_ALBUM_GAIN", p);
-
-        int numItems = info->meta_get_count();
-        if (numItems > 0)
-        {
-            for (int i = 0; i < numItems; i++)
-            {
-                const char *n = info->meta_enum_name(i);
-                const char *v = info->meta_enum_value(i);
-                MP4TagAddEntry(hFile, track, n, v);
-            }
-        }
-
-        numItems = MP4TagGetNumEntries(hFile, track);
-        if (numItems == 0)
-            MP4TagDelete(hFile, track);
-
-        /* end */
-        return 1;
-#else
         m_reader = r;
 
         hFile = MP4ModifyCb(0, 0, open_cb, close_cb, read_cb, write_cb,
@@ -307,8 +257,7 @@ public:
                 } else if (strcmp(pName, "COMMENT") == 0) {
                     MP4SetMetadataComment(hFile, val);
                 } else if (strcmp(pName, "GENRE") == 0) {
-                    unsigned __int16 genre = 0;
-                    MP4SetMetadataGenre(hFile, genre);
+                    MP4SetMetadataGenre(hFile, val);
                 } else if (strcmp(pName, "TRACKNUMBER") == 0) {
                     unsigned __int16 trkn = 0, tot = 0;
                     sscanf(val, "%d", &trkn);
@@ -333,7 +282,6 @@ public:
 
         /* end */
         return 1;
-#endif
     }
 
     virtual int seek(double seconds)
@@ -395,17 +343,17 @@ private:
                     } else if (memcmp(pName, "©day", 4) == 0) {
                         info->meta_add("YEAR", val);
                     } else if (memcmp(pName, "©too", 4) == 0) {
-                        info->meta_add("TOOL", val);
+                        info->info_set("TOOL", val);
                     } else if (memcmp(pName, "©cmt", 4) == 0) {
                         info->meta_add("COMMENT", val);
+                    } else if (memcmp(pName, "©gen", 4) == 0) {
+                        info->meta_add("GENRE", val);
                     } else {
                         info->meta_add(pName, val);
                     }
                 } else if (memcmp(pName, "gnre", 4) == 0) {
-                    unsigned __int16 genre = 0;
-                    char t[200];
-                    MP4GetMetadataGenre(hFile, &genre);
-                    wsprintf(t, "%d", genre);
+                    char *t;
+                    MP4GetMetadataGenre(hFile, &t);
                     info->meta_add("GENRE", t);
                 } else if (memcmp(pName, "trkn", 4) == 0) {
                     unsigned __int16 trkn = 0, tot = 0;

@@ -307,6 +307,8 @@ MP4Atom* MP4Atom::CreateAtom(const char* type)
 	pAtom = new MP4TooAtom();
       } else if (ATOMID(type) == ATOMID("©cmt")) { /* Apple iTunes */
 	pAtom = new MP4CmtAtom();
+      } else if (ATOMID(type) == ATOMID("©gen")) { /* Apple iTunes */
+	pAtom = new MP4GenAtom();
       }
       break;
     case '-':

@@ -3061,7 +3061,7 @@ extern "C" bool MP4GetMetadataDisk(MP4FileHandle hFile,
     return false;
 }
 
-extern "C" bool MP4SetMetadataGenre(MP4FileHandle hFile, u_int16_t genre)
+extern "C" bool MP4SetMetadataGenre(MP4FileHandle hFile, const char* genre)
 {
 	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
 		try {
@@ -3075,7 +3075,7 @@ extern "C" bool MP4SetMetadataGenre(MP4FileHandle hFile, u_int16_t genre)
     return false;
 }
 
-extern "C" bool MP4GetMetadataGenre(MP4FileHandle hFile, u_int16_t* genre)
+extern "C" bool MP4GetMetadataGenre(MP4FileHandle hFile, char** genre)
 {
 	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
 		try {

@@ -34,6 +34,7 @@
  - ©day : Year (4 bytes, e.g. "2003") (string)
  - ©too : Tool(s) used to create the file (string)
  - ©cmt : Comment (string)
+ - ©gen : Custom genre (string)
  - trkn : Tracknumber (8 byte string)
            16 bit: empty
            16 bit: tracknumber
@@ -44,7 +45,7 @@
            16 bit: disknumber
            16 bit: total number of disks
            16 bit: empty
- - gnre : Genre (16 bit genre)
+ - gnre : Genre (16 bit genre) (ID3v1 index + 1)
  - cpil : Part of a compilation (1 byte, 1 or 0)
  - tmpo : Tempo in BPM (16 bit)
  - covr : Cover art (xx bytes binary data)
@@ -542,51 +543,159 @@ bool MP4File::GetMetadataDisk(u_int16_t* disk, u_int16_t* totalDisks)
     return true;
 }
 
-bool MP4File::SetMetadataGenre(u_int16_t genreIndex)
+static const char* ID3v1GenreList[] = {
+    "Blues", "Classic Rock", "Country", "Dance", "Disco", "Funk",
+    "Grunge", "Hip-Hop", "Jazz", "Metal", "New Age", "Oldies",
+    "Other", "Pop", "R&B", "Rap", "Reggae", "Rock",
+    "Techno", "Industrial", "Alternative", "Ska", "Death Metal", "Pranks",
+    "Soundtrack", "Euro-Techno", "Ambient", "Trip-Hop", "Vocal", "Jazz+Funk",
+    "Fusion", "Trance", "Classical", "Instrumental", "Acid", "House",
+    "Game", "Sound Clip", "Gospel", "Noise", "AlternRock", "Bass",
+    "Soul", "Punk", "Space", "Meditative", "Instrumental Pop", "Instrumental Rock",
+    "Ethnic", "Gothic", "Darkwave", "Techno-Industrial", "Electronic", "Pop-Folk",
+    "Eurodance", "Dream", "Southern Rock", "Comedy", "Cult", "Gangsta",
+    "Top 40", "Christian Rap", "Pop/Funk", "Jungle", "Native American", "Cabaret",
+    "New Wave", "Psychadelic", "Rave", "Showtunes", "Trailer", "Lo-Fi",
+    "Tribal", "Acid Punk", "Acid Jazz", "Polka", "Retro", "Musical",
+    "Rock & Roll", "Hard Rock", "Folk", "Folk/Rock", "National Folk", "Swing",
+    "Fast-Fusion", "Bebob", "Latin", "Revival", "Celtic", "Bluegrass", "Avantgarde",
+    "Gothic Rock", "Progressive Rock", "Psychedelic Rock", "Symphonic Rock", "Slow Rock", "Big Band",
+    "Chorus", "Easy Listening", "Acoustic", "Humour", "Speech", "Chanson",
+    "Opera", "Chamber Music", "Sonata", "Symphony", "Booty Bass", "Primus",
+    "Porn Groove", "Satire", "Slow Jam", "Club", "Tango", "Samba",
+    "Folklore", "Ballad", "Power Ballad", "Rhythmic Soul", "Freestyle", "Duet",
+    "Punk Rock", "Drum Solo", "A capella", "Euro-House", "Dance Hall",
+    "Goa", "Drum & Bass", "Club House", "Hardcore", "Terror",
+    "Indie", "BritPop", "NegerPunk", "Polsk Punk", "Beat",
+    "Christian Gangsta", "Heavy Metal", "Black Metal", "Crossover", "Contemporary C",
+    "Christian Rock", "Merengue", "Salsa", "Thrash Metal", "Anime", "JPop",
+    "SynthPop",
+};
+
+int GenreToString(char** GenreStr, const int genre)
 {
-    unsigned char t[3];
-    const char *s = "moov.udta.meta.ilst.gnre.data";
-    MP4BytesProperty *pMetadataProperty = NULL;
-    MP4Atom *pMetaAtom = NULL;
-    
-    pMetaAtom = m_pRootAtom->FindAtom(s);
-
-    if (!pMetaAtom)
+    if (genre > 0 && genre <= sizeof(ID3v1GenreList)/sizeof(*ID3v1GenreList))
     {
-        if (!CreateMetadataAtom("gnre"))
-            return false;
-
-        pMetaAtom = m_pRootAtom->FindAtom(s);
+        *GenreStr = (char*)malloc(strlen((ID3v1GenreList[genre-1])+1)*sizeof(char));
+        strcpy(*GenreStr, ID3v1GenreList[genre-1]);
+        return 0;
+    } else {
+        *GenreStr[0] = '\0';
+        return 1;
     }
-
-    memset(t, 0, 3*sizeof(unsigned char));
-    t[0] = (unsigned char)(genreIndex>>8)&0xFF;
-    t[1] = (unsigned char)(genreIndex)&0xFF;
-
-    pMetaAtom->FindProperty("data.metadata", (MP4Property**)&pMetadataProperty);
-    ASSERT(pMetadataProperty);
-
-    pMetadataProperty->SetValue((u_int8_t*)t, 2);
-
-    return true;
 }
 
-bool MP4File::GetMetadataGenre(u_int16_t* genreIndex)
+int StringToGenre(const char* GenreStr)
 {
+    int i;
+
+    for (i = 0; i < sizeof(ID3v1GenreList)/sizeof(*ID3v1GenreList); i++)
+    {
+        if (strcasecmp(GenreStr, ID3v1GenreList[i]) == 0)
+            return i+1;
+    }
+    return 0;
+}
+
+bool MP4File::SetMetadataGenre(const char* value)
+{
+    u_int16_t genreIndex = 0;
+    unsigned char t[3];
+    MP4BytesProperty *pMetadataProperty = NULL;
+    MP4Atom *pMetaAtom = NULL;
+
+    genreIndex = StringToGenre(value);
+
+    if (genreIndex != 0)
+    {
+        const char *s = "moov.udta.meta.ilst.gnre.data";
+        pMetaAtom = m_pRootAtom->FindAtom(s);
+
+        if (!pMetaAtom)
+        {
+            if (!CreateMetadataAtom("gnre"))
+                return false;
+
+            pMetaAtom = m_pRootAtom->FindAtom(s);
+        }
+
+        memset(t, 0, 3*sizeof(unsigned char));
+        t[0] = (unsigned char)(genreIndex>>8)&0xFF;
+        t[1] = (unsigned char)(genreIndex)&0xFF;
+
+        pMetaAtom->FindProperty("data.metadata", (MP4Property**)&pMetadataProperty);
+        ASSERT(pMetadataProperty);
+
+        pMetadataProperty->SetValue((u_int8_t*)t, 2);
+
+        return true;
+    } else {
+        const char *s2 = "moov.udta.meta.ilst.©gen.data";
+        pMetaAtom = m_pRootAtom->FindAtom(s2);
+
+        if (!pMetaAtom)
+        {
+            if (!CreateMetadataAtom("©gen"))
+                return false;
+
+            pMetaAtom = m_pRootAtom->FindAtom(s2);
+        }
+
+        pMetaAtom->FindProperty("data.metadata", (MP4Property**)&pMetadataProperty);
+        ASSERT(pMetadataProperty);
+
+        pMetadataProperty->SetValue((u_int8_t*)value, strlen(value));
+
+        return true;
+    }
+
+    return false;
+}
+
+bool MP4File::GetMetadataGenre(char** value)
+{
+    u_int16_t genreIndex = 0;
     unsigned char *val = NULL;
     u_int32_t valSize = 0;
+    const char *t = "moov.udta.meta.ilst.gnre";
     const char *s = "moov.udta.meta.ilst.gnre.data.metadata";
-    GetBytesProperty(s, (u_int8_t**)&val, &valSize);
 
-    *genreIndex = 0;
+    MP4Atom *gnre = FindAtom(t);
 
-    if (valSize != 2)
-        return false;
+    if (gnre)
+    {
+        GetBytesProperty(s, (u_int8_t**)&val, &valSize);
 
-    *genreIndex = (u_int16_t)(val[1]);
-    *genreIndex += (u_int16_t)(val[0]<<8);
+        if (valSize != 2)
+            return false;
 
-    return true;
+        genreIndex = (u_int16_t)(val[1]);
+        genreIndex += (u_int16_t)(val[0]<<8);
+
+        GenreToString(value, genreIndex);
+
+        return true;
+    } else {
+        const char *s2 = "moov.udta.meta.ilst.©gen.data.metadata";
+
+        val = NULL;
+        valSize = 0;
+
+        GetBytesProperty(s2, (u_int8_t**)&val, &valSize);
+
+        if (valSize > 0)
+        {
+            *value = (char*)malloc((valSize+1)*sizeof(unsigned char));
+            memset(*value, 0, (valSize+1)*sizeof(unsigned char));
+            memcpy(*value, val, valSize*sizeof(unsigned char));
+            return true;
+        } else {
+            *value = NULL;
+            return false;
+        }
+    }
+
+    return false;
 }
 
 bool MP4File::SetMetadataTempo(u_int16_t tempo)

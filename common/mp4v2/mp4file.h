@@ -455,7 +455,7 @@ public: /* equivalent to MP4 library API */
     bool SetMetadataYear(const char* value);
     bool SetMetadataTrack(u_int16_t track, u_int16_t totalTracks);
     bool SetMetadataDisk(u_int16_t disk, u_int16_t totalDisks);
-    bool SetMetadataGenre(u_int16_t genreIndex);
+    bool SetMetadataGenre(const char* genreIndex);
     bool SetMetadataTempo(u_int16_t tempo);
     bool SetMetadataCompilation(u_int8_t compilation);
     bool SetMetadataCoverArt(u_int8_t *coverArt, u_int32_t size);
@@ -474,7 +474,7 @@ public: /* equivalent to MP4 library API */
     bool GetMetadataYear(char** value);
     bool GetMetadataTrack(u_int16_t* track, u_int16_t* totalTracks);
     bool GetMetadataDisk(u_int16_t* disk, u_int16_t* totalDisks);
-    bool GetMetadataGenre(u_int16_t* genreIndex);
+    bool GetMetadataGenre(char** genre);
     bool GetMetadataTempo(u_int16_t* tempo);
     bool GetMetadataCompilation(u_int8_t* compilation);
     bool GetMetadataCoverArt(u_int8_t **coverArt, u_int32_t* size);
