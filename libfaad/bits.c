@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.c,v 1.7 2002/08/07 08:14:31 menno Exp $
+** $Id: bits.c,v 1.8 2002/08/10 19:01:18 menno Exp $
 **/
 
 #include "common.h"
@@ -66,7 +66,8 @@ uint8_t faad_byte_align(bitfile *ld)
 uint8_t *faad_getbitbuffer(bitfile *ld, uint16_t bits
                        DEBUGDEC)
 {
-    uint16_t i, temp;
+    uint16_t i;
+	uint8_t temp;
     uint16_t bytes = bits / 8;
     uint8_t remainder = bits % 8;
 

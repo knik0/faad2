@@ -45,7 +45,7 @@ typedef struct
     /* bit input */
 	uint32_t bufa;
 	uint32_t bufb;
-	int16_t len; 
+	int8_t len; 
 } bits_t;
 
 
@@ -528,7 +528,6 @@ uint8_t reordered_spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_d
 		for (trial = 0; trial < numberOfSegments; trial++) {
 			
             uint16_t codewordBase;
-            uint16_t codeword_index;
             uint16_t set_decoded=numberOfSegments;
             
             if (set == numberOfSets)
@@ -544,7 +543,7 @@ uint8_t reordered_spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_d
 				if (!Codewords[ codeword_index ].decoded) {
                     if ( Segment[ segment_index ].len > 0) {
 						
-                        uint16_t tmplen;
+                        uint8_t tmplen;
 					    if (Codewords[ codeword_index ].bits.len != 0) {	
                         	/* on the first trial the data is only stored in Segment[], not in Codewords[]. 
 								On next trials first collect the data stored for this codeword and

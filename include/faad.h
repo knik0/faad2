@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: faad.h,v 1.9 2002/08/07 08:37:15 menno Exp $
+** $Id: faad.h,v 1.10 2002/08/10 19:01:17 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -37,7 +37,7 @@ extern "C" {
   #endif
 #endif
 
-#define FAAD2_VERSION "1.1"
+#define FAAD2_VERSION "1.2 beta"
 
 #define MAIN 0
 #define LC   1

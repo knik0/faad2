@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: audio.c,v 1.3 2002/07/25 12:22:13 menno Exp $
+** $Id: audio.c,v 1.4 2002/08/10 19:01:10 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -83,6 +83,8 @@ int write_audio_file(audio_file *aufile, void *sample_buffer, int samples)
     case FAAD_FMT_FLOAT:
         return sf_write_float(aufile->sndfile, (float*)sample_buffer, samples);
     }
+
+	return 0;
 }
 
 void close_audio_file(audio_file *aufile)

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: rvlc_scale_factors.c,v 1.2 2002/08/07 08:14:31 menno Exp $
+** $Id: rvlc_scale_factors.c,v 1.3 2002/08/10 19:01:19 menno Exp $
 **/
 
 #include "common.h"
@@ -149,7 +149,7 @@ static uint8_t rvlc_decode_sf_forward(ic_stream *ics, bitfile *ld_sf, bitfile *l
                     /* decode noise energy */
                     if (noise_pcm_flag)
                     {
-                        int8_t n = ics->dpcm_noise_nrg;
+                        int16_t n = ics->dpcm_noise_nrg;
                         noise_pcm_flag = 0;
                         noise_energy += n;
                     } else {

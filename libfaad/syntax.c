@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.25 2002/08/07 14:34:31 menno Exp $
+** $Id: syntax.c,v 1.26 2002/08/10 19:01:19 menno Exp $
 **/
 
 /*
@@ -751,7 +751,7 @@ static void section_data(ic_stream *ics, bitfile *ld
 
     for (g = 0; g < ics->num_window_groups; g++)
     {
-        uint16_t k = 0;
+        uint8_t k = 0;
         uint8_t i = 0;
 
         while (k < ics->max_sfb)

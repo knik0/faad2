@@ -1,0 +1,42 @@
+Microsoft Visual Studio Solution File, Format Version 7.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "faad", "faad.vcproj", "{2BD8CBB3-DFC9-4A6A-9B7A-07ED749BED58}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libfaad", "..\libfaad\libfaad.vcproj", "{BC3EFE27-9015-4C9C-AD3C-72B3B7ED2114}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libmp4v2_st", "..\common\mp4v2\libmp4v2_st60.vcproj", "{F450C38C-0A0D-4531-A17B-A5AF5320C7A7}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libsndfile", "..\common\libsndfile\Win32\libsndfile.vcproj", "{2BC2D510-4944-413D-B87B-96BECA28276F}"
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		ConfigName.0 = Debug
+		ConfigName.1 = Release
+	EndGlobalSection
+	GlobalSection(ProjectDependencies) = postSolution
+		{2BD8CBB3-DFC9-4A6A-9B7A-07ED749BED58}.0 = {F450C38C-0A0D-4531-A17B-A5AF5320C7A7}
+		{2BD8CBB3-DFC9-4A6A-9B7A-07ED749BED58}.1 = {2BC2D510-4944-413D-B87B-96BECA28276F}
+		{2BD8CBB3-DFC9-4A6A-9B7A-07ED749BED58}.2 = {BC3EFE27-9015-4C9C-AD3C-72B3B7ED2114}
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{2BD8CBB3-DFC9-4A6A-9B7A-07ED749BED58}.Debug.ActiveCfg = Debug|Win32
+		{2BD8CBB3-DFC9-4A6A-9B7A-07ED749BED58}.Debug.Build.0 = Debug|Win32
+		{2BD8CBB3-DFC9-4A6A-9B7A-07ED749BED58}.Release.ActiveCfg = Release|Win32
+		{2BD8CBB3-DFC9-4A6A-9B7A-07ED749BED58}.Release.Build.0 = Release|Win32
+		{BC3EFE27-9015-4C9C-AD3C-72B3B7ED2114}.Debug.ActiveCfg = Debug|Win32
+		{BC3EFE27-9015-4C9C-AD3C-72B3B7ED2114}.Debug.Build.0 = Debug|Win32
+		{BC3EFE27-9015-4C9C-AD3C-72B3B7ED2114}.Release.ActiveCfg = Release|Win32
+		{BC3EFE27-9015-4C9C-AD3C-72B3B7ED2114}.Release.Build.0 = Release|Win32
+		{F450C38C-0A0D-4531-A17B-A5AF5320C7A7}.Debug.ActiveCfg = Debug|Win32
+		{F450C38C-0A0D-4531-A17B-A5AF5320C7A7}.Debug.Build.0 = Debug|Win32
+		{F450C38C-0A0D-4531-A17B-A5AF5320C7A7}.Release.ActiveCfg = Release|Win32
+		{F450C38C-0A0D-4531-A17B-A5AF5320C7A7}.Release.Build.0 = Release|Win32
+		{2BC2D510-4944-413D-B87B-96BECA28276F}.Debug.ActiveCfg = Debug|Win32
+		{2BC2D510-4944-413D-B87B-96BECA28276F}.Debug.Build.0 = Debug|Win32
+		{2BC2D510-4944-413D-B87B-96BECA28276F}.Release.ActiveCfg = Release|Win32
+		{2BC2D510-4944-413D-B87B-96BECA28276F}.Release.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal

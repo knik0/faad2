@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.c,v 1.11 2002/07/14 19:11:11 menno Exp $
+** $Id: mdct.c,v 1.12 2002/08/10 19:01:18 menno Exp $
 **/
 
 /*
@@ -114,7 +114,6 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     faad_complex *Z2    = mdct->Z2;
 #endif
     faad_sincos *sincos = mdct->sincos;
-    real_t fftdata[1024];
 
     uint16_t N  = mdct->N;
     uint16_t N2 = N >> 1;
