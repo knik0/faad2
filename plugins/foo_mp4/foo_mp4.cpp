@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.25 2003/04/27 17:22:33 menno Exp $
+** $Id: foo_mp4.cpp,v 1.26 2003/04/27 17:42:59 menno Exp $
 **/
 
 #include <mp4.h>
@@ -35,7 +35,7 @@ char *STRIP_REVISION(const char *str)
 }
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           STRIP_REVISION("$Revision: 1.25 $"),
+                           STRIP_REVISION("$Revision: 1.26 $"),
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -492,6 +492,7 @@ public:
         }
         advance_buffer(m_aac_bytes_consumed);
 
+        info->info_set("codec", "AAC");
         info->set_length(length);
 
         info->info_set_int("bitrate", bitrate);
