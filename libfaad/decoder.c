@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.55 2003/04/27 18:53:22 menno Exp $
+** $Id: decoder.c,v 1.56 2003/05/15 20:58:46 menno Exp $
 **/
 
 #include "common.h"
@@ -511,7 +511,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
         /* apply scalefactors */
 #ifdef FIXED_POINT
-        apply_scalefactors(ics, spec_coef[ch], frame_len);
+        apply_scalefactors(hDecoder, ics, spec_coef[ch], frame_len);
 #else
         apply_scalefactors(ics, spec_coef[ch], pow2_table, frame_len);
 #endif
@@ -519,6 +519,18 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         /* deinterleave short block grouping */
         if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
             quant_to_spec(ics, spec_coef[ch], frame_len);
+
+#if 0
+        {
+            int rr;
+
+            for (rr = 0; rr < frame_len; rr++)
+            {
+//                if ((spec_coef[ch][rr] >> REAL_BITS) > (1<<12))
+                    printf(">>> %d\n", (spec_coef[ch][rr] >> REAL_BITS));
+            }
+        }
+#endif
     }
 
     /* Because for ms, is and pns both channels spectral coefficients are needed

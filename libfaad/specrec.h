@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: specrec.h,v 1.10 2002/11/28 18:48:30 menno Exp $
+** $Id: specrec.h,v 1.11 2003/05/15 20:58:47 menno Exp $
 **/
 
 #ifndef __SPECREC_H__
@@ -32,7 +32,8 @@ uint8_t window_grouping_info(faacDecHandle hDecoder, ic_stream *ics);
 void quant_to_spec(ic_stream *ics, real_t *spec_data, uint16_t frame_len);
 void inverse_quantization(real_t *x_invquant, int16_t *x_quant, uint16_t frame_len);
 #ifdef FIXED_POINT
-void apply_scalefactors(ic_stream *ics, real_t *x_invquant, uint16_t frame_len);
+void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics, real_t *x_invquant,
+                        uint16_t frame_len);
 #else
 void build_tables(real_t *pow2_table);
 void apply_scalefactors(ic_stream *ics, real_t *x_invquant, real_t *pow2_table,

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: specrec.c,v 1.19 2003/02/16 18:17:11 menno Exp $
+** $Id: specrec.c,v 1.20 2003/05/15 20:58:47 menno Exp $
 **/
 
 /*
@@ -254,7 +254,7 @@ void build_tables(real_t *pow2_table)
 }
 #endif
 
-static INLINE real_t iquant(int16_t q)
+static INLINE real_t iquant(int16_t q, real_t *tab)
 {
     int16_t sgn = 1;
 
@@ -267,9 +267,9 @@ static INLINE real_t iquant(int16_t q)
     }
 
     if (q >= IQ_TABLE_SIZE)
-        return sgn * iq_table[q>>3] * 16;
+        return sgn * tab[q>>3] * 16;
 
-    return sgn * iq_table[q];
+    return sgn * tab[q];
 }
 
 void inverse_quantization(real_t *x_invquant, int16_t *x_quant, uint16_t frame_len)
@@ -277,13 +277,14 @@ void inverse_quantization(real_t *x_invquant, int16_t *x_quant, uint16_t frame_l
     int16_t i;
     int16_t *in_ptr = x_quant;
     real_t *out_ptr = x_invquant;
+    real_t *tab = iq_table;
 
     for(i = frame_len/4-1; i >= 0; --i)
     {
-        out_ptr[0] = iquant(in_ptr[0]);
-        out_ptr[1] = iquant(in_ptr[1]);
-        out_ptr[2] = iquant(in_ptr[2]);
-        out_ptr[3] = iquant(in_ptr[3]);
+        out_ptr[0] = iquant(in_ptr[0], tab);
+        out_ptr[1] = iquant(in_ptr[1], tab);
+        out_ptr[2] = iquant(in_ptr[2], tab);
+        out_ptr[3] = iquant(in_ptr[3], tab);
         out_ptr += 4;
         in_ptr += 4;
     }
@@ -311,7 +312,8 @@ static real_t pow2_table[] =
 #endif
 
 #ifdef FIXED_POINT
-void apply_scalefactors(ic_stream *ics, real_t *x_invquant, uint16_t frame_len)
+void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics, real_t *x_invquant,
+                        uint16_t frame_len)
 #else
 void apply_scalefactors(ic_stream *ics, real_t *x_invquant, real_t *pow2_table,
                         uint16_t frame_len)
@@ -347,16 +349,26 @@ void apply_scalefactors(ic_stream *ics, real_t *x_invquant, real_t *pow2_table,
 #else
             exp = (ics->scale_factors[g][sfb] - 100) / 4;
             frac = (ics->scale_factors[g][sfb] - 100) % 4;
+
+            if (hDecoder->object_type == LD)
+            {
+                exp -= 9;
+            } else {
+                if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
+                    exp -= 7;
+                else
+                    exp -= 10;
+            }
 #endif
 
             /* minimum size of a sf band is 4 and always a multiple of 4 */
             for ( ; k < top; k += 4)
             {
 #ifndef FIXED_POINT
-                fp[0] = MUL(fp[0],scale);
-                fp[1] = MUL(fp[1],scale);
-                fp[2] = MUL(fp[2],scale);
-                fp[3] = MUL(fp[3],scale);
+                fp[0] = fp[0] * scale;
+                fp[1] = fp[1] * scale;
+                fp[2] = fp[2] * scale;
+                fp[3] = fp[3] * scale;
 #else
                 if (exp < 0)
                 {

@@ -295,6 +295,10 @@ SOURCE=.\filtbank.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\fixed.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\codebook\hcb.h
 # End Source File
 # Begin Source File
