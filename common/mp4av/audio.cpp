@@ -24,7 +24,32 @@
  *  - file formatted with tabstops == 4 spaces 
  */
 
-#include "mp4av_common.h"
+#include <mp4av_common.h>
+
+static MP4AV_Mp3Header GetMp3Header(
+	MP4FileHandle mp4File, 
+	MP4TrackId audioTrackId)
+{
+	u_int8_t* pMp3Frame = NULL;
+	u_int32_t mp3FrameLength = 0;
+
+	bool rc = MP4ReadSample(
+		mp4File,
+		audioTrackId,
+		1,
+		&pMp3Frame,
+		&mp3FrameLength);
+
+	if (!rc || mp3FrameLength < 4) {
+		return 0;
+	}
+
+	MP4AV_Mp3Header mp3Hdr =
+		MP4AV_Mp3HeaderFromBytes(pMp3Frame);
+	free(pMp3Frame);
+
+	return mp3Hdr;
+}
 
 extern "C" u_int8_t MP4AV_AudioGetChannels(
 	MP4FileHandle mp4File, 
@@ -38,7 +63,14 @@ extern "C" u_int8_t MP4AV_AudioGetChannels(
 	}
 
 	if (MP4_IS_MP3_AUDIO_TYPE(audioType)) {
+		MP4AV_Mp3Header mp3Hdr =
+			GetMp3Header(mp4File, audioTrackId);
+
+		if (mp3Hdr == 0) {
 			return 0;
+		}
+		return MP4AV_Mp3GetChannels(mp3Hdr);
+
 	} else if (MP4_IS_AAC_AUDIO_TYPE(audioType)) {
 		u_int8_t* pAacConfig = NULL;
 		u_int32_t aacConfigLength;
@@ -60,7 +92,8 @@ extern "C" u_int8_t MP4AV_AudioGetChannels(
 
 		return channels;
 
-	} else if (audioType == MP4_PCM16_AUDIO_TYPE) {
+	} else if ((audioType == MP4_PCM16_LITTLE_ENDIAN_AUDIO_TYPE) ||
+	(audioType == MP4_PCM16_BIG_ENDIAN_AUDIO_TYPE)) {
 		u_int32_t samplesPerFrame =
 			MP4GetSampleSize(mp4File, audioTrackId, 1) / 2;
 
@@ -90,7 +123,14 @@ extern "C" u_int32_t MP4AV_AudioGetSamplingRate(
 	}
 
 	if (MP4_IS_MP3_AUDIO_TYPE(audioType)) {
-    	return 0;
+		MP4AV_Mp3Header mp3Hdr =
+			GetMp3Header(mp4File, audioTrackId);
+
+		if (mp3Hdr == 0) {
+			return 0;
+		}
+		return MP4AV_Mp3GetHdrSamplingRate(mp3Hdr);
+
 	} else if (MP4_IS_AAC_AUDIO_TYPE(audioType)) {
 		u_int8_t* pAacConfig = NULL;
 		u_int32_t aacConfigLength;
@@ -112,7 +152,8 @@ extern "C" u_int32_t MP4AV_AudioGetSamplingRate(
 
 		return samplingRate;
 
-	} else if (audioType == MP4_PCM16_AUDIO_TYPE) {
+	} else if ((audioType == MP4_PCM16_LITTLE_ENDIAN_AUDIO_TYPE)||
+	(audioType == MP4_PCM16_BIG_ENDIAN_AUDIO_TYPE)) {
 		return MP4GetTrackTimeScale(mp4File, audioTrackId);
 	}
 
@@ -131,7 +172,11 @@ extern "C" u_int16_t MP4AV_AudioGetSamplingWindow(
 	}
 
 	if (MP4_IS_MP3_AUDIO_TYPE(audioType)) {
-		return 0;
+		MP4AV_Mp3Header mp3Hdr =
+			GetMp3Header(mp4File, audioTrackId);
+
+		return MP4AV_Mp3GetHdrSamplingWindow(mp3Hdr);
+
 	} else if (MP4_IS_AAC_AUDIO_TYPE(audioType)) {
 		u_int8_t* pAacConfig = NULL;
 		u_int32_t aacConfigLength;
@@ -153,7 +198,8 @@ extern "C" u_int16_t MP4AV_AudioGetSamplingWindow(
 
 		return samplingWindow;
 
-	} else if (audioType == MP4_PCM16_AUDIO_TYPE) {
+	} else if ((audioType == MP4_PCM16_LITTLE_ENDIAN_AUDIO_TYPE)||
+	(audioType == MP4_PCM16_BIG_ENDIAN_AUDIO_TYPE)) {
 		MP4Duration frameDuration =
 			MP4GetSampleDuration(mp4File, audioTrackId, 1);
 

@@ -24,7 +24,7 @@
  *  - file formatted with tabstops == 4 spaces 
  */
 
-#include "mp4av_common.h"
+#include <mp4av_common.h>
 
 /*
  * ADTS Header: 
@@ -252,12 +252,14 @@ extern "C" bool MP4AV_AdtsMakeFrame(
 		adts.PutBits(channels, 3);		// channel_configuration
 		adts.PutBits(0, 1);				// original
 		adts.PutBits(0, 1);				// home
-		adts.PutBits(0, 2);				// emphasis
+		if (!isMpeg2) {
+			adts.PutBits(0, 2);				// emphasis
+		}
 		adts.PutBits(0, 1);				// copyright_id
 		adts.PutBits(0, 1);				// copyright_id_start
 		adts.PutBits(*pAdtsDataLength, 13);	// aac_frame_length
 		adts.PutBits(0x7FF, 11);		// adts_buffer_fullness
-		adts.PutBits(1, 2);				// num_raw_data_blocks
+		adts.PutBits(0, 2);				// num_raw_data_blocks
 
 		// copy audio frame data
 		adts.PutBytes(pData, dataLength);

@@ -20,7 +20,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\include,..\..\common\mp4v2"
+				AdditionalIncludeDirectories="..\..\include,..\..\common\mp4v2,..\..\common\mp4av"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="5"
@@ -82,7 +82,7 @@
 				EnableIntrinsicFunctions="TRUE"
 				FavorSizeOrSpeed="1"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="..\..\include,..\..\common\mp4v2"
+				AdditionalIncludeDirectories="..\..\include,..\..\common\mp4v2,..\..\common\mp4av"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="TRUE"
 				RuntimeLibrary="4"
@@ -135,31 +135,16 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath="aac2mp4.c">
+				RelativePath="aac2mp4.cpp">
 			</File>
 			<File
 				RelativePath="aacinfo.c">
-			</File>
-			<File
-				RelativePath="aactrack.cpp">
 			</File>
 			<File
 				RelativePath=".\config.c">
 			</File>
 			<File
 				RelativePath=".\in_mp4.c">
-			</File>
-			<File
-				RelativePath="mbs.cpp">
-			</File>
-			<File
-				RelativePath="mp4av_aac.cpp">
-			</File>
-			<File
-				RelativePath="mp4av_adts.cpp">
-			</File>
-			<File
-				RelativePath="mp4av_audio.cpp">
 			</File>
 			<File
 				RelativePath=".\utils.c">

@@ -33,6 +33,18 @@ Package=<4>
 
 ###############################################################################
 
+Project: "libmp4av_st"=..\..\common\mp4av\libmp4av_st.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
 Project: "libmp4v2_st"=..\..\common\mp4v2\libmp4v2_st60.dsp - Package Owner=<4>
 
 Package=<5>

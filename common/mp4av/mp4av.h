@@ -34,7 +34,11 @@
 /* MP4AV library API */
 #include "mp4av_aac.h"
 #include "mp4av_adts.h"
+#include "mp4av_mp3.h"
+#include "mp4av_mpeg4.h"
 #include "mp4av_audio.h"
+#include "mp4av_hinters.h"
+#include "mp4av_mpeg3.h"
 
 #undef DEFAULT_PARM
 

@@ -13,20 +13,28 @@
  * 
  * The Initial Developer of the Original Code is Cisco Systems Inc.
  * Portions created by Cisco Systems Inc. are
- * Copyright (C) Cisco Systems Inc. 2001-2002.  All Rights Reserved.
+ * Copyright (C) Cisco Systems Inc. 2002.  All Rights Reserved.
  * 
  * Contributor(s): 
- *		Dave Mackie		dmackie@cisco.com
+ *		Bill May (wmay@cisco.com)
  */
+#ifndef __MP4AV_MPEG3_H__
+#define __MP4AV_MPEG3_H__ 1
 
-#ifndef __MP4AV_COMMON_INCLUDED__
-#define __MP4AV_COMMON_INCLUDED__ 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-// the external interface
-#include "mp4av.h"
+  int MP4AV_Mpeg3ParseSeqHdr(uint8_t *pbuffer, uint32_t buflen, 
+			     int *have_mpeg2,
+			      uint32_t *height, uint32_t *width, 
+			      double *frame_rate, double *bitrate);
 
-// the internal interfaces
-#include "mbs.h"
+  int MP4AV_Mpeg3PictHdrType(uint8_t *pbuffer);
 
-#endif /* __MP4AV_COMMON_INCLUDED__ */ 
+  int MP4AV_Mpeg3FindGopOrPictHdr(uint8_t *pbuffer, uint32_t buflen, int *ftype);
+#ifdef __cplusplus
+}
+#endif
 
+#endif
