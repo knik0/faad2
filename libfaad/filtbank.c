@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.c,v 1.10 2002/06/17 18:14:35 menno Exp $
+** $Id: filtbank.c,v 1.11 2002/08/05 20:33:38 menno Exp $
 **/
 
 #include "common.h"
@@ -322,7 +322,7 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
             window_short_prev_ptr = window_short;
         }
 
-        vcopy(obuf_temp, o_buf + 448, nlong*2-nflat_ls);
+        vcopy(obuf_temp, o_buf + nflat_ls, nlong*2-nflat_ls);
         vzero(o_buf+2*nlong-1, nflat_ls);
 
         free(obuf_temp);

@@ -209,6 +209,10 @@ SOURCE=.\reordered_spectral_data.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\rvlc_scale_factors.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\sbr_dec.c
 # End Source File
 # Begin Source File
@@ -330,6 +334,10 @@ SOURCE=.\pns.h
 # Begin Source File
 
 SOURCE=.\pulse.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\rvlc_scale_factors.h
 # End Source File
 # Begin Source File
 

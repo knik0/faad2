@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.15 2002/07/24 11:41:01 menno Exp $
+** $Id: syntax.h,v 1.16 2002/08/05 20:33:38 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -238,6 +238,8 @@ typedef struct
     uint8_t ms_mask_present;
     uint8_t ms_used[MAX_WINDOW_GROUPS][MAX_SFB];
 
+    uint8_t noise_used;
+
     uint8_t pulse_data_present;
     uint8_t tns_data_present;
     uint8_t gain_control_data_present;
@@ -250,9 +252,17 @@ typedef struct
     ltp_info ltp2;
 
 #ifdef ERROR_RESILIENCE
-    /* ER data */
+    /* ER HCR data */
     uint16_t length_of_reordered_spectral_data;
     uint8_t length_of_longest_codeword;
+    /* ER RLVC data */
+    uint8_t sf_concealment;
+    uint8_t rev_global_gain;
+    uint16_t length_of_rvlc_sf;
+    uint16_t dpcm_noise_nrg;
+    uint8_t sf_escapes_present;
+    uint8_t length_of_rvlc_escapes;
+    uint16_t dpcm_noise_last_position;
 #endif
 } ic_stream; /* individual channel stream */
 
@@ -271,17 +281,12 @@ typedef struct
 } element; /* syntax element (SCE, CPE, LFE) */
 
 
-uint8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration,
-                         uint8_t object_type,
-                         uint8_t *aacSectionDataResilienceFlag,
-                         uint8_t *aacScalefactorDataResilienceFlag,
-                         uint8_t *aacSpectralDataResilienceFlag,
-                         uint8_t *frameLengthFlag);
-uint8_t raw_data_block(bitfile *ld, int16_t ***spec_data, real_t ***spec_coef,
-                       element ***syntax_elements,
-                       uint8_t *channels, uint8_t *ele, uint8_t *ch_ele,
-                       uint16_t frame_len, uint8_t sf_index, uint8_t object_type,
-                       drc_info *drc);
+int8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration,
+                        uint8_t object_type,
+                        uint8_t *aacSectionDataResilienceFlag,
+                        uint8_t *aacScalefactorDataResilienceFlag,
+                        uint8_t *aacSpectralDataResilienceFlag,
+                        uint8_t *frameLengthFlag);
 uint8_t single_lfe_channel_element(element *sce, bitfile *ld, int16_t *spec_data,
                                    uint8_t sf_index, uint8_t object_type,
                                    uint16_t frame_len

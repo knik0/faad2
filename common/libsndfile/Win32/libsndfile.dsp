@@ -283,6 +283,54 @@ SOURCE=..\src\wav_w64.c
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=..\src\au.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\common.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\GSM610\config.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\config.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\float_cast.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\G72x\g72x.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\GSM610\gsm.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\G72x\private.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\GSM610\private.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\sfendian.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\sndfile.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wav_w64.h
+# End Source File
 # End Group
 # End Target
 # End Project

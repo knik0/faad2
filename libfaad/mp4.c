@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mp4.c,v 1.8 2002/06/13 11:03:27 menno Exp $
+** $Id: mp4.c,v 1.9 2002/08/05 20:33:38 menno Exp $
 **/
 
 #include "common.h"
@@ -27,70 +27,70 @@
 
 /* defines if an object type can be decoded by this library or not */
 static uint8_t ObjectTypesTable[32] = {
-    0, /* NULL */
+    0, /*  0 NULL */
 #ifdef MAIN_DEC
-    1, /* AAC Main */
+    1, /*  1 AAC Main */
 #else
-    0, /* AAC Main */
+    0, /*  1 AAC Main */
 #endif
-    1, /* AAC LC */
-    0, /* AAC SSR */
+    1, /*  2 AAC LC */
+    0, /*  3 AAC SSR */
 #ifdef LTP_DEC
-    1, /* AAC LTP */
+    1, /*  4 AAC LTP */
 #else
-    0, /* AAC LTP */
+    0, /*  4 AAC LTP */
 #endif
-    0, /* Reserved */
-    0, /* AAC Scalable */
-    0, /* TwinVQ */
-    0, /* CELP */
-    0, /* HVXC */
-    0, /* Reserved */
-    0, /* Reserved */
-    0, /* TTSI */
-    0, /* Main synthetic */
-    0, /* Wavetable synthesis */
-    0, /* General MIDI */
-    0, /* Algorithmic Synthesis and Audio FX */
+    0, /*  5 Reserved */
+    0, /*  6 AAC Scalable */
+    0, /*  7 TwinVQ */
+    0, /*  8 CELP */
+    0, /*  9 HVXC */
+    0, /* 10 Reserved */
+    0, /* 11 Reserved */
+    0, /* 12 TTSI */
+    0, /* 13 Main synthetic */
+    0, /* 14 Wavetable synthesis */
+    0, /* 15 General MIDI */
+    0, /* 16 Algorithmic Synthesis and Audio FX */
 
     /* MPEG-4 Version 2 */
 #ifdef ERROR_RESILIENCE
-    1, /* ER AAC LC */
-    0, /* (Reserved) */
+    1, /* 17 ER AAC LC */
+    0, /* 18 (Reserved) */
 #ifdef LTP_DEC
-    1, /* ER AAC LTP */
+    1, /* 19 ER AAC LTP */
 #else
-    0, /* ER AAC LTP */
+    0, /* 19 ER AAC LTP */
 #endif
-    0, /* ER AAC scalable */
-    0, /* ER TwinVQ */
-    0, /* ER BSAC */
+    0, /* 20 ER AAC scalable */
+    0, /* 21 ER TwinVQ */
+    0, /* 22 ER BSAC */
 #ifdef LD_DEC
-    1, /* ER AAC LD */
+    1, /* 23 ER AAC LD */
 #else
-    0, /* ER AAC LD */
+    0, /* 23 ER AAC LD */
 #endif
-    0, /* ER CELP */
-    0, /* ER HVXC */
-    0, /* ER HILN */
-    0, /* ER Parametric */
+    0, /* 24 ER CELP */
+    0, /* 25 ER HVXC */
+    0, /* 26 ER HILN */
+    0, /* 27 ER Parametric */
 #else /* No ER defined */
-    0, /* ER AAC LC */
-    0, /* (Reserved) */
-    0, /* ER AAC LTP */
-    0, /* ER AAC scalable */
-    0, /* ER TwinVQ */
-    0, /* ER BSAC */
-    0, /* ER AAC LD */
-    0, /* ER CELP */
-    0, /* ER HVXC */
-    0, /* ER HILN */
-    0, /* ER Parametric */
+    0, /* 17 ER AAC LC */
+    0, /* 18 (Reserved) */
+    0, /* 19 ER AAC LTP */
+    0, /* 20 ER AAC scalable */
+    0, /* 21 ER TwinVQ */
+    0, /* 22 ER BSAC */
+    0, /* 23 ER AAC LD */
+    0, /* 24 ER CELP */
+    0, /* 25 ER HVXC */
+    0, /* 26 ER HILN */
+    0, /* 27 ER Parametric */
 #endif
-    0, /* (Reserved) */
-    0, /* (Reserved) */
-    0, /* (Reserved) */
-    0  /* (Reserved) */
+    0, /* 28 (Reserved) */
+    0, /* 29 (Reserved) */
+    0, /* 30 (Reserved) */
+    0  /* 31 (Reserved) */
 };
 
 /* Table 1.6.1 */
@@ -137,7 +137,7 @@ int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
         return -2;
     }
 
-    if(ChannelsConfiguration > 7)
+    if (ChannelsConfiguration > 7)
     {
         return -3;
     }
@@ -154,7 +154,7 @@ int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
             frameLengthFlag);
 #ifdef ERROR_RESILIENCE
     } else if (ObjectTypeIndex >= ER_OBJECT_START) { /* ER */
-        uint8_t result = GASpecificConfig(&ld, channels, ObjectTypeIndex,
+        int8_t result = GASpecificConfig(&ld, channels, ObjectTypeIndex,
             aacSectionDataResilienceFlag,
             aacScalefactorDataResilienceFlag,
             aacSpectralDataResilienceFlag,

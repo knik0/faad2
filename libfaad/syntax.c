@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.20 2002/06/15 15:38:22 menno Exp $
+** $Id: syntax.c,v 1.21 2002/08/05 20:33:38 menno Exp $
 **/
 
 /*
@@ -40,15 +40,18 @@
 #ifdef SBR
 #include "sbr_syntax.h"
 #endif
+#ifdef ERROR_RESILIENCE
+#include "rvlc_scale_factors.h"
+#endif
 
 
 /* Table 4.4.1 */
-uint8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration,
-                         uint8_t object_type,
-                         uint8_t *aacSectionDataResilienceFlag,
-                         uint8_t *aacScalefactorDataResilienceFlag,
-                         uint8_t *aacSpectralDataResilienceFlag,
-                         uint8_t *frameLengthFlag)
+int8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration,
+                        uint8_t object_type,
+                        uint8_t *aacSectionDataResilienceFlag,
+                        uint8_t *aacScalefactorDataResilienceFlag,
+                        uint8_t *aacSpectralDataResilienceFlag,
+                        uint8_t *frameLengthFlag)
 {
     uint8_t dependsOnCoreCoder, extensionFlag;
     uint16_t coreCoderDelay;
@@ -657,12 +660,7 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
             DEBUGVAR(1,69,"individual_channel_stream(): tns_data_present"))) & 1)
         {
 #ifdef ERROR_RESILIENCE
-            /* TODO I don't understand this, but the "rewrite" software moves tns_data away */
-            if ((object_type != ER_LC) && (object_type != ER_LTP)
-#ifdef DRM
-                && (object_type != DRM_ER_LC)
-#endif
-                )
+            if (object_type < ER_OBJECT_START)
 #endif
                 tns_data(ics, &(ics->tns), ld);
         }
@@ -671,7 +669,7 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
         if ((ics->gain_control_data_present = faad_get1bit(ld
             DEBUGVAR(1,70,"individual_channel_stream(): gain_control_data_present"))) & 1)
         {
-#if 0
+#if 1
             return 1;
 #else
             gain_control_data(ld, ics);
@@ -680,26 +678,8 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
     }
 
 #ifdef ERROR_RESILIENCE
-    if (!aacSpectralDataResilienceFlag)
+    if (aacSpectralDataResilienceFlag)
     {
-        /* TODO I don't understand this, but the "rewrite" software
-                moves tns_data before spectral_data */
-        if ( (object_type == ER_LC) || (object_type == ER_LTP) 
-#ifdef DRM
-            && (object_type != DRM_ER_LC)
-#endif
-            )
-        {
-            if (ics->tns_data_present)
-                tns_data(ics, &(ics->tns), ld);
-        }
-#endif
-
-        /* decode the spectral data */
-        if ((result = spectral_data(ics, ld, spec_data, frame_len)) > 0)
-            return result;
-#ifdef ERROR_RESILIENCE
-    } else {
         ics->length_of_reordered_spectral_data = (uint16_t)faad_getbits(ld, 14
             DEBUGVAR(1,147,"individual_channel_stream(): length_of_reordered_spectral_data"));
         /* TODO: test for >6144/12288, see page 143 */
@@ -707,16 +687,39 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
             DEBUGVAR(1,148,"individual_channel_stream(): length_of_longest_codeword"));
         if (ics->length_of_longest_codeword >= 49)
             ics->length_of_longest_codeword = 49;
+    }
 
-        /* TODO I don't understand this, but the "rewrite" software
-                moves tns_data before spectral_data */
+    /* RVLC spectral data is put here */
+    if (aacScalefactorDataResilienceFlag)
+    {
+        if ((result = rvlc_decode_scale_factors(ics, ld)) > 0)
+            return result;
+    }
 
+    if ((object_type >= ER_OBJECT_START) 
+#ifdef DRM
+        && (object_type != DRM_ER_LC)
+#endif
+        )
+    {
         if (ics->tns_data_present)
             tns_data(ics, &(ics->tns), ld);
+    }
 
+    if (aacSpectralDataResilienceFlag)
+    {
         /* error resilient spectral data decoding */
         if ((result = reordered_spectral_data(ics, ld, spec_data, frame_len,
             aacSectionDataResilienceFlag)) > 0)
+        {
+            return result;
+        }
+    } else {
+#endif
+
+#ifdef ERROR_RESILIENCE
+        /* decode the spectral data */
+        if ((result = spectral_data(ics, ld, spec_data, frame_len)) > 0)
         {
             return result;
         }
@@ -729,7 +732,7 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
         if (ics->window_sequence != EIGHT_SHORT_SEQUENCE)
             pulse_decode(ics, spec_data);
         else
-            return 2; /* pulse coding not allowed for long blocks */
+            return 2; /* pulse coding not allowed for short blocks */
     }
 
     return 0;
@@ -770,6 +773,9 @@ static void section_data(ic_stream *ics, bitfile *ld
 
             ics->sect_cb[g][i] = (uint8_t)faad_getbits(ld, sect_cb_bits
                 DEBUGVAR(1,71,"section_data(): sect_cb"));
+
+            if (ics->sect_cb[g][i] == NOISE_HCB)
+                ics->noise_used = 1;
 
 #ifdef ERROR_RESILIENCE
             if (!aacSectionDataResilienceFlag ||
@@ -897,81 +903,11 @@ static uint8_t scale_factor_data(ic_stream *ics, bitfile *ld
         return decode_scale_factors(ics, ld);
 #ifdef ERROR_RESILIENCE
     } else {
-#if 0
-        uint32_t bits_used, length_of_rvlc_sf;
-        uint8_t bits = 11;
-
-        sf_concealment = faad_get1bit(ld
-            DEBUGVAR(1,149,"scale_factor_data(): sf_concealment"));
-        rev_global_gain = faad_getbits(ld, 8
-            DEBUGVAR(1,150,"scale_factor_data(): rev_global_gain"));
-
-        if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
-            bits = 9;
-
-        /* the number of bits used for the huffman codewords */
-        length_of_rvlc_sf = faad_getbits(ld, bits
-            DEBUGVAR(1,151,"scale_factor_data(): length_of_rvlc_sf"));
-
-        /* check how many bits are used in decoding the scalefactors
-           A better solution would be to read length_of_rvlc_sf ahead
-           in a buffer and use that to decode the scale factors
+        /* In ER AAC the parameters for RVLC are seperated from the actual
+           data that holds the scale_factors.
+           Strangely enough, 2 parameters for HCR are put inbetween them.
         */
-        bits_used = faad_get_processed_bits(ld);
-        decode_scale_factors(ics, ld);
-        bits_used = faad_get_processed_bits(ld) - bits_used;
-
-        /* return an error if the number of decoded bits is not correct
-           FAAD should be able to recover from this, for example by
-           setting all scalefactors to 0 (e.g. muting the frame)
-        */
-        if (bits_used != length_of_rvlc_sf)
-            return 8;
-
-        sf_escapes_present; 1 uimsbf
-
-        if (sf_escapes_present)
-        {
-            length_of_rvlc_escapes; 8 uimsbf
-
-            for (g = 0; g < num_window_groups; g++)
-            {
-                for (sfb = 0; sfb < max_sfb; sfb++)
-                {
-                    if (sect_cb[g][sfb] != ZERO_HCB)
-                    {
-                        if (is_intensity(g, sfb) &&
-                            dpcm_is_position[g][sfb] == ESC_FLAG)
-                        {
-                            rvlc_esc_sf[dpcm_is_position[g][sfb]]; 2..20 vlclbf
-                        } else {
-                            if (is_noise(g, sfb) &&
-                                dpcm_noise_nrg[g][sfb] == ESC_FLAG)
-                            {
-                                rvlc_esc_sf[dpcm_noise_nrg[g][sfb]]; 2..20 vlclbf
-                            } else {
-                                if (dpcm_sf[g][sfb] == ESC_FLAG)
-                                {
-                                    rvlc_esc_sf[dpcm_sf[g][sfb]]; 2..20 vlclbf
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (intensity_used &&
-                dpcm_is_position[g][sfb] == ESC_FLAG)
-            {
-                rvlc_esc_sf[dpcm_is_last_position]; 2..20 vlclbf
-            }
-        }
-
-        if (noise_used)
-        {
-            dpcm_noise_last_position; 9 uimsbf
-        }
-#endif
+        return rvlc_scale_factor_data(ics, ld);
     }
 #endif
 }

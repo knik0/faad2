@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.17 2002/06/15 15:10:47 menno Exp $
+** $Id: decoder.c,v 1.18 2002/08/05 20:33:38 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -331,6 +331,7 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
     memset(syntax_elements[ch_ele], 0, sizeof(element)); \
     syntax_elements[ch_ele]->ele_id  = id_syn_ele; \
     syntax_elements[ch_ele]->channel = channels; \
+    syntax_elements[ch_ele]->paired_channel = -1; \
  \
     if ((hInfo->error = single_lfe_channel_element(syntax_elements[ch_ele], \
         ld, spec_data[channels], sf_index, object_type, frame_len, \
@@ -353,6 +354,7 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
     memset(syntax_elements[ch_ele], 0, sizeof(element)); \
     syntax_elements[ch_ele]->ele_id  = id_syn_ele; \
     syntax_elements[ch_ele]->channel = channels; \
+    syntax_elements[ch_ele]->paired_channel = -1; \
  \
     if ((hInfo->error = single_lfe_channel_element(syntax_elements[ch_ele], \
         ld, spec_data[channels], sf_index, object_type, frame_len)) > 0) \
@@ -623,13 +625,9 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         for (i = 0; i < ch_ele; i++)
         {
             if (syntax_elements[i]->channel == ch)
-            {
                 ics = &(syntax_elements[i]->ics1);
-                break;
-            } else if (syntax_elements[i]->paired_channel == ch) {
+            else if (syntax_elements[i]->paired_channel == ch)
                 ics = &(syntax_elements[i]->ics2);
-                break;
-            }
         }
 
         /* inverse quantization */
@@ -664,12 +662,10 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                 ltp = &(ics->ltp);
                 pch = syntax_elements[i]->paired_channel;
                 right_channel = 0;
-                break;
             } else if (syntax_elements[i]->paired_channel == ch) {
                 ics = &(syntax_elements[i]->ics2);
                 ltp = &(ics->ltp2);
                 right_channel = 1;
-                break;
             }
         }
 
