@@ -1,28 +1,33 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
-**
+** Copyright (C) 2003-2005 M. Bakker, Ahead Software AG, http://www.nero.com
+**  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**
+** 
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
+** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
 ** forbidden.
 **
+** Software using this code must display the following message visibly in the
+** software:
+** "FAAD2 AAC/HE-AAC/HE-AACv2/DRM decoder (c) Ahead Software, www.nero.com"
+** in, for example, the about-box or help/startup screen.
+**
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.107 2004/09/08 09:43:11 gcp Exp $
+** $Id: decoder.c,v 1.108 2005/02/01 13:28:51 menno Exp $
 **/
 
 #include "common.h"
@@ -722,10 +727,74 @@ void* NEAACDECAPI NeAACDecDecode2(NeAACDecHandle hDecoder,
         sample_buffer, sample_buffer_size);
 }
 
+#ifdef DRM
+
+#define ERROR_STATE_INIT 6
+
+static void conceal_output(NeAACDecHandle hDecoder, uint16_t frame_len,
+                           uint8_t out_ch, void *sample_buffer)
+{
+    uint16_t i;
+    int16_t   *short_sample_buffer = (int16_t*)sample_buffer;
+    int32_t   *int_sample_buffer = (int32_t*)sample_buffer;
+#ifndef FIXED_POINT
+    float32_t *float_sample_buffer = (float32_t*)sample_buffer;
+    double    *double_sample_buffer = (double*)sample_buffer;
+#endif
+
+    static const int8_t mute_tab[ERROR_STATE_INIT+1] = { 0, 1, 1, 2, 2, 3, 3 };
+
+    if (hDecoder->error_state > 0)
+    {
+        switch (hDecoder->config.outputFormat)
+        {
+        case FAAD_FMT_16BIT:
+            for (i = 0; i < out_ch*frame_len; i++)
+            {
+                short_sample_buffer[i] >>= mute_tab[hDecoder->error_state];
+                //short_sample_buffer[i] = 0;
+            }
+
+            break;
+        case FAAD_FMT_24BIT:
+        case FAAD_FMT_32BIT:
+#ifdef FIXED_POINT
+        case FAAD_FMT_FIXED:
+#endif
+            for (i = 0; i < out_ch*frame_len; i++)
+            {
+                int_sample_buffer[i] >>= mute_tab[hDecoder->error_state];
+                //int_sample_buffer[i] = 0;
+            }
+            break;
+#ifndef FIXED_POINT
+        case FAAD_FMT_FLOAT:
+            for (i = 0; i < out_ch*frame_len; i++)
+            {
+                float_sample_buffer[i] /= (float)(1<<mute_tab[hDecoder->error_state]);
+                //float_sample_buffer[i] = 0;
+            }
+            break;
+        case FAAD_FMT_DOUBLE:
+            for (i = 0; i < out_ch*frame_len; i++)
+            {
+                double_sample_buffer[i] /= (float)(1<<mute_tab[hDecoder->error_state]);
+                //double_sample_buffer[i] = 0;
+            }
+            break;
+#endif
+        }
+
+        hDecoder->error_state--;
+    }
+}
+#endif
+
 static void* aac_frame_decode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
                               uint8_t *buffer, uint32_t buffer_size,
                               void **sample_buffer2, uint32_t sample_buffer_size)
 {
+    uint16_t i;
     uint8_t channels = 0;
     uint8_t output_channels = 0;
     bitfile ld;
@@ -752,6 +821,23 @@ static void* aac_frame_decode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
 
     memset(hInfo, 0, sizeof(NeAACDecFrameInfo));
     memset(hDecoder->internal_channel, 0, MAX_CHANNELS*sizeof(hDecoder->internal_channel[0]));
+
+
+    /* check for some common metadata tag types in the bitstream
+     * No need to return an error
+     */
+    /* ID3 */
+    if (buffer_size >= 128)
+    {
+        if (memcmp(buffer, "TAG", 3) == 0)
+        {
+            /* found it */
+            hInfo->bytesconsumed = 128; /* 128 bytes fixed size */
+            /* no error, but no output either */
+            return NULL;
+        }
+    }
+
 
     /* initialize the bitstream */
     faad_initbits(&ld, buffer, buffer_size);
@@ -780,7 +866,7 @@ static void* aac_frame_decode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
         /* We do not support stereo right now */
         if (0) //(hDecoder->channelConfiguration == 2)
         {
-            hInfo->error = 8; // Throw CRC error
+            hInfo->error = 28; // Throw CRC error
             goto error;
         }
 
@@ -808,14 +894,14 @@ static void* aac_frame_decode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
 #endif
 
     /* decode the complete bitstream */
-#ifdef SCALABLE_DEC
-    if ((hDecoder->object_type == 6) || (hDecoder->object_type == DRM_ER_LC))
+#ifdef DRM
+    if (/*(hDecoder->object_type == 6) ||*/ (hDecoder->object_type == DRM_ER_LC))
     {
-        aac_scalable_main_element(hDecoder, hInfo, &ld, &hDecoder->pce, hDecoder->drc);
+        DRM_aac_scalable_main_element(hDecoder, hInfo, &ld, &hDecoder->pce, hDecoder->drc);
     } else {
 #endif
         raw_data_block(hDecoder, hInfo, &ld, &hDecoder->pce, hDecoder->drc);
-#ifdef SCALABLE_DEC
+#ifdef DRM
     }
 #endif
 
@@ -978,8 +1064,14 @@ static void* aac_frame_decode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
     }
 #endif
 
+
     sample_buffer = output_to_PCM(hDecoder, hDecoder->time_out, sample_buffer,
         output_channels, frame_len, hDecoder->config.outputFormat);
+
+
+#ifdef DRM
+    //conceal_output(hDecoder, frame_len, output_channels, sample_buffer);
+#endif
 
 
     hDecoder->postSeekResetFlag = 0;
@@ -1012,6 +1104,30 @@ static void* aac_frame_decode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
     return sample_buffer;
 
 error:
+
+
+#ifdef DRM
+    hDecoder->error_state = ERROR_STATE_INIT;
+#endif
+
+    /* reset filterbank state */
+    for (i = 0; i < MAX_CHANNELS; i++)
+    {
+        if (hDecoder->fb_intermed[i] != NULL)
+        {
+            memset(hDecoder->fb_intermed[i], 0, hDecoder->frameLength*sizeof(real_t));
+        }
+    }
+#ifdef SBR_DEC
+    for (i = 0; i < MAX_SYNTAX_ELEMENTS; i++)
+    {
+        if (hDecoder->sbr[i] != NULL)
+        {
+            sbrReset(hDecoder->sbr[i]);
+        }
+    }
+#endif
+
 
     faad_endbits(&ld);
 
