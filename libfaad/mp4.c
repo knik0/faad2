@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mp4.c,v 1.9 2002/08/05 20:33:38 menno Exp $
+** $Id: mp4.c,v 1.10 2002/09/18 11:22:36 menno Exp $
 **/
 
 #include "common.h"
@@ -126,7 +126,6 @@ int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
     *sf_index = SamplingFrequencyIndex;
     *object_type = ObjectTypeIndex;
 
-
     if (ObjectTypesTable[ObjectTypeIndex] != 1)
     {
         return -1;
@@ -163,6 +162,13 @@ int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
             DEBUGVAR(1,143,"parse_audio_decoder_specific_info(): epConfig"));
         if (ep_config != 0)
             return -5;
+
+#if 0
+        printf("sect: %d scf: %d spec: %d\n",
+            *aacSectionDataResilienceFlag,
+            *aacScalefactorDataResilienceFlag,
+            *aacSpectralDataResilienceFlag);
+#endif
 
         return result;
 #endif

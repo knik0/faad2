@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.26 2002/08/10 19:01:19 menno Exp $
+** $Id: syntax.c,v 1.27 2002/09/18 11:22:36 menno Exp $
 **/
 
 /*
@@ -307,6 +307,17 @@ uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
             }
         }
 
+#ifdef ERROR_RESILIENCE
+        if ((object_type >= ER_OBJECT_START) && (ics1->predictor_data_present))
+        {
+            if ((ics1->ltp.data_present = faad_get1bit(ld
+                DEBUGVAR(1,50,"channel_pair_element(): ltp.data_present"))) & 1)
+            {
+                ltp_data(ics1, &(ics1->ltp), ld, object_type);
+            }
+        }
+#endif
+
         memcpy(ics2, ics1, sizeof(ic_stream));
     } else {
         ics1->ms_mask_present = 0;
@@ -321,6 +332,19 @@ uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
 #endif
         )) > 0)
         return result;
+
+#ifdef ERROR_RESILIENCE
+    if (cpe->common_window && (object_type >= ER_OBJECT_START) &&
+        (ics1->predictor_data_present))
+    {
+        if ((ics1->ltp2.data_present = faad_get1bit(ld
+            DEBUGVAR(1,50,"channel_pair_element(): ltp.data_present"))) & 1)
+        {
+            ltp_data(ics1, &(ics1->ltp2), ld, object_type);
+        }
+    }
+#endif
+
     if ((result = individual_channel_stream(cpe, ld, ics2, 0, spec_data2,
         sf_index, object_type, frame_len
 #ifdef ERROR_RESILIENCE
@@ -379,19 +403,32 @@ static uint8_t ics_info(ic_stream *ics, bitfile *ld, uint8_t common_window,
             }
 #ifdef LTP_DEC
             else { /* Long Term Prediction */
-                if ((ics->ltp.data_present = faad_get1bit(ld
-                    DEBUGVAR(1,50,"ics_info(): ltp.data_present"))) & 1)
+                if (object_type < ER_OBJECT_START)
                 {
-                    ltp_data(ics, &(ics->ltp), ld, object_type);
-                }
-                if (common_window)
-                {
-                    if ((ics->ltp2.data_present = faad_get1bit(ld
-                        DEBUGVAR(1,51,"ics_info(): ltp2.data_present"))) & 1)
+                    if ((ics->ltp.data_present = faad_get1bit(ld
+                        DEBUGVAR(1,50,"ics_info(): ltp.data_present"))) & 1)
                     {
-                        ltp_data(ics, &(ics->ltp2), ld, object_type);
+                        ltp_data(ics, &(ics->ltp), ld, object_type);
+                    }
+                    if (common_window)
+                    {
+                        if ((ics->ltp2.data_present = faad_get1bit(ld
+                            DEBUGVAR(1,51,"ics_info(): ltp2.data_present"))) & 1)
+                        {
+                            ltp_data(ics, &(ics->ltp2), ld, object_type);
+                        }
                     }
                 }
+#ifdef ERROR_RESILIENCE
+                if (!common_window && (object_type >= ER_OBJECT_START))
+                {
+                    if ((ics->ltp.data_present = faad_get1bit(ld
+                        DEBUGVAR(1,50,"ics_info(): ltp.data_present"))) & 1)
+                    {
+                        ltp_data(ics, &(ics->ltp), ld, object_type);
+                    }
+                }
+#endif
             }
 #endif
         }
@@ -411,7 +448,8 @@ static void pulse_data(pulse_info *pul, bitfile *ld)
     pul->pulse_start_sfb = (uint8_t)faad_getbits(ld, 6
         DEBUGVAR(1,57,"pulse_data(): pulse_start_sfb"));
 
-    for (i = 0; i < pul->number_pulse+1; i++) {
+    for (i = 0; i < pul->number_pulse+1; i++)
+    {
         pul->pulse_offset[i] = (uint8_t)faad_getbits(ld, 5
             DEBUGVAR(1,58,"pulse_data(): pulse_offset"));
         pul->pulse_amp[i] = (uint8_t)faad_getbits(ld, 4
@@ -749,6 +787,11 @@ static void section_data(ic_stream *ics, bitfile *ld
         sect_bits = 5;
     sect_esc_val = (1<<sect_bits) - 1;
 
+#if 0
+    printf("\ntotal sfb %d\n", ics->max_sfb);
+    printf("   sect    top     cb\n");
+#endif
+
     for (g = 0; g < ics->num_window_groups; g++)
     {
         uint8_t k = 0;
@@ -756,6 +799,9 @@ static void section_data(ic_stream *ics, bitfile *ld
 
         while (k < ics->max_sfb)
         {
+#ifdef ERROR_RESILIENCE
+            uint8_t vcb11 = 0;
+#endif
             uint8_t sfb;
             uint8_t sect_len_incr;
             uint16_t sect_len = 0;
@@ -773,21 +819,31 @@ static void section_data(ic_stream *ics, bitfile *ld
                 ics->noise_used = 1;
 
 #ifdef ERROR_RESILIENCE
-            if (!aacSectionDataResilienceFlag ||
-                (ics->sect_cb[g][i] < 11) ||
-                (ics->sect_cb[g][i] > 11 && ics->sect_cb[g][i] < 16))
+            if (aacSectionDataResilienceFlag)
             {
-#endif
-                while ((sect_len_incr = (uint8_t)faad_getbits(ld, sect_bits
-                    DEBUGVAR(1,72,"section_data(): sect_len_incr"))) == sect_esc_val)
+                if ((ics->sect_cb[g][i] == 11) ||
+                    ((ics->sect_cb[g][i] >= 16) && (ics->sect_cb[g][i] <= 32)))
                 {
-                    sect_len += sect_esc_val;
+                    vcb11 = 1;
                 }
-#ifdef ERROR_RESILIENCE
-            } else {
+            }
+            if (vcb11)
+            {
                 sect_len_incr = 1;
+            } else {
+#endif
+                sect_len_incr = (uint8_t)faad_getbits(ld, sect_bits
+                    DEBUGVAR(1,72,"section_data(): sect_len_incr"));
+#ifdef ERROR_RESILIENCE
             }
 #endif
+            while ((sect_len_incr == sect_esc_val) /* &&
+                (k+sect_len < ics->max_sfb)*/)
+            {
+                sect_len += sect_len_incr;
+                sect_len_incr = (uint8_t)faad_getbits(ld, sect_bits
+                    DEBUGVAR(1,72,"section_data(): sect_len_incr"));
+            }
 
             sect_len += sect_len_incr;
 
@@ -797,11 +853,22 @@ static void section_data(ic_stream *ics, bitfile *ld
             for (sfb = k; sfb < k + sect_len; sfb++)
                 ics->sfb_cb[g][sfb] = ics->sect_cb[g][i];
 
+#if 0
+            printf(" %6d %6d %6d\n",
+                i,
+                ics->sect_end[g][i],
+                ics->sect_cb[g][i]);
+#endif
+
             k += sect_len;
             i++;
         }
         ics->num_sec[g] = i;
     }
+
+#if 0
+    printf("\n");
+#endif
 }
 
 /*
