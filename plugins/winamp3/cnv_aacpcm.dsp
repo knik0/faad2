@@ -95,7 +95,7 @@ LINK32=xilink6.exe
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\sdk\studio\assert.cpp
+SOURCE=.\SDK\studio\assert.cpp
 # End Source File
 # Begin Source File
 
@@ -111,11 +111,19 @@ SOURCE=.\sdk\studio\corecb.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\sdk\common\depend.cpp
+SOURCE=.\SDK\bfc\depend.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\sdk\common\memblock.cpp
+SOURCE=.\SDK\bfc\encodedstr.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\SDK\bfc\foreach.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\SDK\bfc\memblock.cpp
 # End Source File
 # Begin Source File
 
@@ -123,11 +131,11 @@ SOURCE=.\sdk\common\nsGUID.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\sdk\common\pathparse.cpp
+SOURCE=.\SDK\bfc\util\pathparse.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\sdk\common\ptrlist.cpp
+SOURCE=.\SDK\bfc\ptrlist.cpp
 # End Source File
 # Begin Source File
 
@@ -135,11 +143,15 @@ SOURCE=.\sdk\studio\services\servicei.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\sdk\common\std.cpp
+SOURCE=.\SDK\bfc\std.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\sdk\common\string.cpp
+SOURCE=.\SDK\bfc\string.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\SDK\bfc\svc_enum.cpp
 # End Source File
 # Begin Source File
 

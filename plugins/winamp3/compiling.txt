@@ -1,0 +1,7 @@
+Get the latest Winamp3 SDK and copy the following folders from
+the "studio" folder in the SDK to the SDK folder in this directory.
+
+attribs
+bfc
+common
+studio
