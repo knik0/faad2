@@ -119,15 +119,15 @@ u_int32_t MP4File::ReadBytes(u_int8_t* pBytes, u_int32_t numBytes, FILE* pFile)
 	if (m_memoryBuffer == NULL) {
 #ifndef USE_FILE_CALLBACKS
 		if (fread(pBytes, 1, numBytes, pFile) != numBytes) {
-			if (numBytes == 0) {
-#else
-		if (m_MP4fread(pBytes, numBytes, m_userData) != numBytes) {
 			if (feof(pFile)) {
-#endif
 				throw new MP4Error(
 					"not enough bytes, reached end-of-file",
 					"MP4ReadBytes");
 			} else {
+#else
+		if (m_MP4fread(pBytes, numBytes, m_userData) != numBytes) {
+            {
+#endif
 				throw new MP4Error(errno, "MP4ReadBytes");
 			}
 		}

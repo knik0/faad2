@@ -161,7 +161,7 @@ static void *aac_decode(void *args)
     unsigned char       *buffer = 0;
     unsigned long       bufferconsumed = 0;
     unsigned long       samplerate = 0;
-    char            channels;
+    unsigned char       channels;
     unsigned long       buffervalid = 0;
     TitleInput      *input;
     char            *temp = g_strdup(filename);

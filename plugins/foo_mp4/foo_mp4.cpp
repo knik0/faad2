@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.32 2003/06/07 11:06:38 menno Exp $
+** $Id: foo_mp4.cpp,v 1.33 2003/06/19 21:20:59 menno Exp $
 **/
 
 #include <mp4.h>
@@ -27,15 +27,24 @@
 #include "foobar2000/SDK/componentversion.h"
 #include "foobar2000/SDK/tagread.h"
 
+//#define DBG_OUT(A) OutputDebugString(A)
+#define DBG_OUT(A)
+
+#if 0
 char *STRIP_REVISION(const char *str)
 {
     char *tmp = strchr(str, ' ');
-    tmp[strlen(tmp)-2] = '\0';
+    int len = lstrlen(tmp)-2;
+    if (len > 0 && tmp)
+        tmp[len] = '\0';
+    else
+        tmp = "000";
     return tmp;
 }
+#endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           STRIP_REVISION("$Revision: 1.32 $"),
+                           "$Revision: 1.33 $",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -343,17 +352,20 @@ private:
     static unsigned __int32 open_cb(const char *pName,
         const char *mode, void *userData)
     {
+        DBG_OUT("open_cb");
         return 1;
     }
 
     static void close_cb(void *userData)
     {
+        DBG_OUT("close_cb");
         return;
     }
 
     static unsigned __int32 read_cb(void *pBuffer, unsigned int nBytesToRead,
         void *userData)
     {
+        DBG_OUT("read_cb");
         reader *r = (reader*)userData;
         return r->read(pBuffer, nBytesToRead);
     }
@@ -361,24 +373,28 @@ private:
     static unsigned __int32 write_cb(void *pBuffer, unsigned int nBytesToWrite,
         void *userData)
     {
+        DBG_OUT("write_cb");
         reader *r = (reader*)userData;
         return r->write(pBuffer, nBytesToWrite);
     }
 
     static __int64 getpos_cb(void *userData)
     {
+        DBG_OUT("getpos_cb");
         reader *r = (reader*)userData;
         return r->get_position();
     }
 
     static __int32 setpos_cb(unsigned __int32 pos, void *userData)
     {
+        DBG_OUT("setpos_cb");
         reader *r = (reader*)userData;
         return !(r->seek(pos));
     }
 
     static __int64 filesize_cb(void *userData)
     {
+        DBG_OUT("filesize_cb");
         reader *r = (reader*)userData;
         return r->get_length();
     }

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: fixed.h,v 1.7 2003/05/16 08:31:12 menno Exp $
+** $Id: fixed.h,v 1.8 2003/06/19 21:20:59 menno Exp $
 **/
 
 #ifndef __FIXED_H__
@@ -47,7 +47,13 @@ static INLINE MUL(real_t A, real_t B)
     _asm {
         mov eax,A
         imul B
+#if 0
         shrd eax,edx,REAL_BITS
+#else
+        shr eax,REAL_BITS
+        shl edx,(32-REAL_BITS)
+        or eax,edx
+#endif
     }
 }
 
@@ -57,7 +63,13 @@ static INLINE MUL_C_C(real_t A, real_t B)
     _asm {
         mov eax,A
         imul B
+#if 0
         shrd eax,edx,COEF_BITS
+#else
+        shr eax,COEF_BITS
+        shl edx,(32-COEF_BITS)
+        or eax,edx
+#endif
     }
 }
 
@@ -67,7 +79,13 @@ static INLINE MUL_R_C(real_t A, real_t B)
     _asm {
         mov eax,A
         imul B
+#if 0
         shrd eax,edx,COEF_BITS
+#else
+        shr eax,COEF_BITS
+        shl edx,(32-COEF_BITS)
+        or eax,edx
+#endif
     }
 }
 
