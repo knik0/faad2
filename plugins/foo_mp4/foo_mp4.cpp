@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.30 2003/05/21 21:16:03 menno Exp $
+** $Id: foo_mp4.cpp,v 1.31 2003/05/29 19:56:49 menno Exp $
 **/
 
 #include <mp4.h>
@@ -35,7 +35,7 @@ char *STRIP_REVISION(const char *str)
 }
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           STRIP_REVISION("$Revision: 1.30 $"),
+                           STRIP_REVISION("$Revision: 1.31 $"),
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -251,7 +251,7 @@ public:
 
         return 1;
     }
-    
+
     virtual int is_our_content_type(const char *url, const char *type)
     {
         return !strcmp(type, "audio/mp4") || !strcmp(type, "audio/x-mp4");
@@ -473,15 +473,17 @@ public:
         } else if (memcmp(m_aac_buffer, "ADIF", 4) == 0) {
             int skip_size = (m_aac_buffer[4] & 0x80) ? 9 : 0;
             bitrate = ((unsigned int)(m_aac_buffer[4 + skip_size] & 0x0F)<<19) |
-                ((unsigned int)m_aac_buffer[4 + skip_size]<<11) |
-                ((unsigned int)m_aac_buffer[4 + skip_size]<<3) |
-                ((unsigned int)m_aac_buffer[4 + skip_size] & 0xE0);
+                ((unsigned int)m_aac_buffer[5 + skip_size]<<11) |
+                ((unsigned int)m_aac_buffer[6 + skip_size]<<3) |
+                ((unsigned int)m_aac_buffer[7 + skip_size] & 0xE0);
 
             length = (double)m_reader->get_length();
             if (length == -1.)
+            {
                 length = 1.;
-            else
-                length = (double)bitrate/((double)length*8.) + 0.5;
+            } else {
+                length = ((double)length*8.)/((double)bitrate) + 0.5;
+            }
 
             bitrate = (__int64)((double)bitrate/1000.0 + 0.5);
 
@@ -653,7 +655,7 @@ public:
             }
         }
     }
-    
+
     virtual int is_our_content_type(const char *url, const char *type)
     {
         return !strcmp(type, "audio/aac") || !strcmp(type, "audio/x-aac");
@@ -723,7 +725,7 @@ private:
         return 1;
     }
 
-    int advance_buffer(int bytes)
+    void advance_buffer(int bytes)
     {
         m_file_offset += bytes;
         m_aac_bytes_consumed = bytes;

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.28 2003/05/29 19:22:31 menno Exp $
+** $Id: in_mp4.c,v 1.29 2003/05/29 19:56:50 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -624,7 +624,7 @@ int play(char *fn)
 
         if (!(mp4state.m_aac_buffer = (unsigned char*)malloc(768*6)))
         {
-            //console::error("Memory allocation error.", "foo_mp4");
+            show_error(module.hMainWindow, "Memory allocation error.");
             return 0;
         }
         memset(mp4state.m_aac_buffer, 0, 768*6);
@@ -672,17 +672,17 @@ int play(char *fn)
         } else if (memcmp(mp4state.m_aac_buffer, "ADIF", 4) == 0) {
             int skip_size = (mp4state.m_aac_buffer[4] & 0x80) ? 9 : 0;
             bitrate = ((unsigned int)(mp4state.m_aac_buffer[4 + skip_size] & 0x0F)<<19) |
-                ((unsigned int)mp4state.m_aac_buffer[4 + skip_size]<<11) |
-                ((unsigned int)mp4state.m_aac_buffer[4 + skip_size]<<3) |
-                ((unsigned int)mp4state.m_aac_buffer[4 + skip_size] & 0xE0);
+                ((unsigned int)mp4state.m_aac_buffer[5 + skip_size]<<11) |
+                ((unsigned int)mp4state.m_aac_buffer[6 + skip_size]<<3) |
+                ((unsigned int)mp4state.m_aac_buffer[7 + skip_size] & 0xE0);
 
             length = (double)file_length(mp4state.aacfile);
-            if (length == 0)
+            if (length == -1)
             {
                 module.is_seekable = 0;
                 length = 0;
             } else {
-                length = (double)bitrate/((double)length*8.) + 0.5;
+                length = ((double)length*8.)/((double)bitrate) + 0.5;
             }
 
             mp4state.m_header_type = 2;
@@ -697,7 +697,7 @@ int play(char *fn)
             mp4state.m_aac_buffer, mp4state.m_aac_bytes_into_buffer,
             &mp4state.samplerate, &mp4state.channels)) < 0)
         {
-            //console::error("Can't initialize decoder library.", "foo_mp4");
+            show_error(module.hMainWindow, "Can't initialize decoder library.");
             return 0;
         }
         advance_buffer(&mp4state, mp4state.m_aac_bytes_consumed);
@@ -1001,15 +1001,15 @@ int getsonglength(char *fn)
         } else if (memcmp(len_state.m_aac_buffer, "ADIF", 4) == 0) {
             int skip_size = (len_state.m_aac_buffer[4] & 0x80) ? 9 : 0;
             bitrate = ((unsigned int)(len_state.m_aac_buffer[4 + skip_size] & 0x0F)<<19) |
-                ((unsigned int)len_state.m_aac_buffer[4 + skip_size]<<11) |
-                ((unsigned int)len_state.m_aac_buffer[4 + skip_size]<<3) |
-                ((unsigned int)len_state.m_aac_buffer[4 + skip_size] & 0xE0);
+                ((unsigned int)len_state.m_aac_buffer[5 + skip_size]<<11) |
+                ((unsigned int)len_state.m_aac_buffer[6 + skip_size]<<3) |
+                ((unsigned int)len_state.m_aac_buffer[7 + skip_size] & 0xE0);
 
             length = (double)file_length(len_state.aacfile);
-            if (length == 0)
+            if (length == -1)
                 length = 0;
             else
-                length = (double)bitrate/((double)length*8.) + 0.5;
+                length = ((double)length*8.)/((double)bitrate) + 0.5;
 
             bitrate = (__int64)((double)bitrate/1000.0 + 0.5);
 
@@ -1235,6 +1235,37 @@ DWORD WINAPI MP4PlayThread(void *b)
     return 0;
 }
 
+void *decode_aac_frame(state *st, faacDecFrameInfo *frameInfo)
+{
+    void *sample_buffer;
+
+    do
+    {
+        fill_buffer(st);
+
+        if (st->m_aac_bytes_into_buffer != 0)
+        {
+            sample_buffer = faacDecDecode(st->hDecoder, frameInfo,
+                st->m_aac_buffer, st->m_aac_bytes_into_buffer);
+
+            if (st->m_header_type != 1)
+            {
+                st->m_tail->offset = st->m_file_offset;
+                st->m_tail->next = (struct seek_list*)malloc(sizeof(struct seek_list));
+                st->m_tail = st->m_tail->next;
+                st->m_tail->next = NULL;
+            }
+
+            advance_buffer(st, frameInfo->bytesconsumed);
+        } else {
+            break;
+        }
+
+    } while (!frameInfo->samples && !frameInfo->error);
+
+    return sample_buffer;
+}
+
 int aac_seek(state *st, double seconds)
 {
     int i, frames;
@@ -1266,19 +1297,28 @@ int aac_seek(state *st, double seconds)
 
         return 1;
     } else {
-#if 1
-        return 0;
-#else
-        if (seconds > cur_pos_sec)
+        if (seconds > st->cur_pos_sec)
         {
-            frames = (int)((seconds - cur_pos_sec)*((double)m_samplerate/1024.0) + 0.5);
+            faacDecFrameInfo frameInfo;
+            memset(&frameInfo, 0, sizeof(faacDecFrameInfo));
+
+            frames = (int)((seconds - st->cur_pos_sec)*((double)st->samplerate/1024.0) + 0.5);
 
             if (frames > 0)
             {
                 for (i = 0; i < frames; i++)
                 {
-                    if (!run(NULL))
+                    decode_aac_frame(st, &frameInfo);
+
+                    if (frameInfo.error || (mp4state.m_aac_bytes_into_buffer == 0))
+                    {
+                        if (frameInfo.error)
+                        {
+                            if (faacDecGetErrorMessage(frameInfo.error) != NULL)
+                                show_error(module.hMainWindow, faacDecGetErrorMessage(frameInfo.error));
+                        }
                         return 1;
+                    }
                 }
             }
 
@@ -1286,7 +1326,6 @@ int aac_seek(state *st, double seconds)
         } else {
             return 0;
         }
-#endif
     }
 }
 
@@ -1330,42 +1369,19 @@ DWORD WINAPI AACPlayThread(void *b)
 
             Sleep(10);
         } else if (module.outMod->CanWrite() >= (1024*mp4state.channels*sizeof(short))) {
-#if 1
             faacDecFrameInfo frameInfo;
             void *sample_buffer;
 
             memset(&frameInfo, 0, sizeof(faacDecFrameInfo));
 
-            do
-            {
-                fill_buffer(&mp4state);
-
-                if (mp4state.m_aac_bytes_into_buffer != 0)
-                {
-                    sample_buffer = faacDecDecode(mp4state.hDecoder, &frameInfo,
-                        mp4state.m_aac_buffer, mp4state.m_aac_bytes_into_buffer);
-
-                    if (mp4state.m_header_type != 1)
-                    {
-                        mp4state.m_tail->offset = mp4state.m_file_offset;
-                        mp4state.m_tail->next = (struct seek_list*)malloc(sizeof(struct seek_list));
-                        mp4state.m_tail = mp4state.m_tail->next;
-                        mp4state.m_tail->next = NULL;
-                    }
-
-                    advance_buffer(&mp4state, frameInfo.bytesconsumed);
-                } else {
-                    break;
-                }
-
-            } while (!frameInfo.samples && !frameInfo.error);
+            sample_buffer = decode_aac_frame(&mp4state, &frameInfo);
 
             if (frameInfo.error || (mp4state.m_aac_bytes_into_buffer == 0))
             {
                 if (frameInfo.error)
                 {
-                    //if (faacDecGetErrorMessage(frameInfo.error) != NULL)
-                    //    console::error(faacDecGetErrorMessage(frameInfo.error), "foo_mp4");
+                    if (faacDecGetErrorMessage(frameInfo.error) != NULL)
+                        show_error(module.hMainWindow, faacDecGetErrorMessage(frameInfo.error));
                 }
                 done = 1;
             }
@@ -1412,105 +1428,6 @@ DWORD WINAPI AACPlayThread(void *b)
             mp4state.samplerate = frameInfo.samplerate;
 
             mp4state.cur_pos_sec += 1024.0/(double)mp4state.samplerate;
-#else
-            if (mp4state.last_frame)
-            {
-                done = 1;
-            } else {
-                long tmp, read;
-                unsigned char *buffer = mp4state.buffer;
-
-                do
-                {
-                    if (mp4state.bytes_consumed > 0)
-                    {
-                        if (mp4state.bytes_into_buffer)
-                        {
-                            memcpy(buffer, buffer+mp4state.bytes_consumed,
-                                mp4state.bytes_into_buffer);
-                        }
-
-                        if (mp4state.bytes_read < mp4state.filesize)
-                        {
-                            if (mp4state.bytes_read + mp4state.bytes_consumed < mp4state.filesize)
-                                tmp = mp4state.bytes_consumed;
-                            else
-                                tmp = mp4state.filesize - mp4state.bytes_read;
-                            read = fread(buffer + mp4state.bytes_into_buffer, 1, tmp, mp4state.aacfile);
-                            if (read == tmp)
-                            {
-                                mp4state.bytes_read += read;
-                                mp4state.bytes_into_buffer += read;
-                            }
-                        } else {
-                            if (mp4state.bytes_into_buffer)
-                            {
-                                memset(buffer + mp4state.bytes_into_buffer, 0,
-                                    mp4state.bytes_consumed);
-                            }
-                        }
-
-                        mp4state.bytes_consumed = 0;
-                    }
-
-                    if (mp4state.bytes_into_buffer < 1)
-                    {
-                        if (mp4state.bytes_read < mp4state.filesize)
-                        {
-                            show_error(module.hMainWindow, faacDecGetErrorMessage(frameInfo.error));
-                            mp4state.last_frame = 1;
-                        } else {
-                            mp4state.last_frame = 1;
-                        }
-                    }
-
-                    sample_buffer = faacDecDecode(mp4state.hDecoder, &frameInfo,
-                        buffer, mp4state.bytes_into_buffer);
-
-                    mp4state.bytes_consumed += frameInfo.bytesconsumed;
-                    mp4state.bytes_into_buffer -= mp4state.bytes_consumed;
-                } while (!frameInfo.samples && !frameInfo.error);
-
-                if (!killPlayThread && (frameInfo.samples > 0))
-                {
-                    if (res_table[m_resolution] == 24)
-                    {
-                        /* convert libfaad output (3 bytes packed in 4 bytes) */
-                        char *temp_buffer = convert3in4to3in3(sample_buffer, frameInfo.samples);
-                        memcpy((void*)sample_buffer, (void*)temp_buffer, frameInfo.samples*3);
-                        free(temp_buffer);
-                    }
-
-                    module.SAAddPCMData(sample_buffer, (int)mp4state.channels, res_table[m_resolution],
-                        mp4state.decode_pos_ms);
-                    module.VSAAddPCMData(sample_buffer, (int)mp4state.channels, res_table[m_resolution],
-                        mp4state.decode_pos_ms);
-                    ms = (int)floor(((float)frameInfo.samples*1000.0) /
-                        ((float)mp4state.samplerate*(float)frameInfo.channels));
-                    mp4state.decode_pos_ms += ms;
-
-                    l = frameInfo.samples * res_table[m_resolution] / 8;
-
-                    if (module.dsp_isactive())
-                    {
-                        void *dsp_buffer = malloc(l*2);
-                        memcpy(dsp_buffer, sample_buffer, l);
-
-                        l = module.dsp_dosamples((short*)dsp_buffer,
-                            frameInfo.samples/frameInfo.channels,
-                            res_table[m_resolution],
-                            frameInfo.channels,
-                            mp4state.samplerate) *
-                            (frameInfo.channels*(res_table[m_resolution]/8));
-
-                        module.outMod->Write(dsp_buffer, l);
-                        if (dsp_buffer) free(dsp_buffer);
-                    } else {
-                        module.outMod->Write(sample_buffer, l);
-                    }
-                }
-            }
-#endif
         } else {
             Sleep(10);
         }
