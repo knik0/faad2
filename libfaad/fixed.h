@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: fixed.h,v 1.2 2002/08/27 10:24:55 menno Exp $
+** $Id: fixed.h,v 1.3 2002/09/08 18:14:37 menno Exp $
 **/
 
 #ifndef __FIXED_H__
@@ -27,8 +27,6 @@ extern "C" {
 #endif
 
 
-#define COEF_1_BITS 31
-#define COEF_1_PRECISION (1 << COEF_1_BITS)
 #define COEF_BITS 28
 #define COEF_PRECISION (1 << COEF_BITS)
 #define REAL_BITS 7
@@ -38,7 +36,6 @@ extern "C" {
 typedef int32_t real_t;
 
 
-#define COEF_CONST_1(A) ((real_t)(A*(COEF_1_PRECISION)))
 #define REAL_CONST(A) ((real_t)(A*(REAL_PRECISION)))
 #define COEF_CONST(A) ((real_t)(A*(COEF_PRECISION)))
 
@@ -74,16 +71,6 @@ static INLINE MUL_R_C(real_t A, real_t B)
     }
 }
 
-/* multiply real with coef_1 */
-static INLINE MUL_R_1(real_t A, real_t B)
-{
-    _asm {
-        mov eax,A
-        imul B
-        shrd eax,edx,COEF_1_BITS
-    }
-}
-
 #else
 
   /* multiply real with real */
@@ -92,8 +79,6 @@ static INLINE MUL_R_1(real_t A, real_t B)
   #define MUL_C_C(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (COEF_BITS-1))) >> COEF_BITS)
   /* multiply real with coef */
   #define MUL_R_C(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (COEF_BITS-1))) >> COEF_BITS)
-  /* multiply real with coef_1 */
-  #define MUL_R_1(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (COEF_1_BITS-1))) >> COEF_1_BITS)
 
 #endif
 

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: drc.c,v 1.9 2002/08/27 10:24:55 menno Exp $
+** $Id: drc.c,v 1.10 2002/09/08 18:14:37 menno Exp $
 **/
 
 #include "common.h"
@@ -47,11 +47,67 @@ void drc_end(drc_info *drc)
     if (drc) free(drc);
 }
 
-#ifndef FIXED_POINT
+#ifdef FIXED_POINT
+static real_t drc_pow2_table[] =
+{
+    COEF_CONST(0.5146511183),
+    COEF_CONST(0.5297315472),
+    COEF_CONST(0.5452538663),
+    COEF_CONST(0.5612310242),
+    COEF_CONST(0.5776763484),
+    COEF_CONST(0.5946035575),
+    COEF_CONST(0.6120267717),
+    COEF_CONST(0.6299605249),
+    COEF_CONST(0.6484197773),
+    COEF_CONST(0.6674199271),
+    COEF_CONST(0.6869768237),
+    COEF_CONST(0.7071067812),
+    COEF_CONST(0.7278265914),
+    COEF_CONST(0.7491535384),
+    COEF_CONST(0.7711054127),
+    COEF_CONST(0.7937005260),
+    COEF_CONST(0.8169577266),
+    COEF_CONST(0.8408964153),
+    COEF_CONST(0.8655365610),
+    COEF_CONST(0.8908987181),
+    COEF_CONST(0.9170040432),
+    COEF_CONST(0.9438743127),
+    COEF_CONST(0.9715319412),
+    COEF_CONST(1.0000000000),
+    COEF_CONST(1.0293022366),
+    COEF_CONST(1.0594630944),
+    COEF_CONST(1.0905077327),
+    COEF_CONST(1.1224620483),
+    COEF_CONST(1.1553526969),
+    COEF_CONST(1.1892071150),
+    COEF_CONST(1.2240535433),
+    COEF_CONST(1.2599210499),
+    COEF_CONST(1.2968395547),
+    COEF_CONST(1.3348398542),
+    COEF_CONST(1.3739536475),
+    COEF_CONST(1.4142135624),
+    COEF_CONST(1.4556531828),
+    COEF_CONST(1.4983070769),
+    COEF_CONST(1.5422108254),
+    COEF_CONST(1.5874010520),
+    COEF_CONST(1.6339154532),
+    COEF_CONST(1.6817928305),
+    COEF_CONST(1.7310731220),
+    COEF_CONST(1.7817974363),
+    COEF_CONST(1.8340080864),
+    COEF_CONST(1.8877486254),
+    COEF_CONST(1.9430638823)
+};
+#endif
+
 void drc_decode(drc_info *drc, real_t *spec)
 {
     uint16_t i, bd, top;
-    real_t factor;
+#ifdef FIXED_POINT
+    int32_t exp, frac;
+#else
+    real_t factor, exp;
+#endif
     uint16_t bottom = 0;
 
     if (drc->num_bands == 1)
@@ -61,28 +117,47 @@ void drc_decode(drc_info *drc, real_t *spec)
     {
         top = 4 * (drc->band_top[bd] + 1);
 
+#ifndef FIXED_POINT
         /* Decode DRC gain factor */
         if (drc->dyn_rng_sgn[bd])  /* compress */
-            factor = REAL_CONST(exp(LN2 * (-drc->ctrl1 * drc->dyn_rng_ctl[bd]/24.0)));
+            exp = -drc->ctrl1 * (drc->dyn_rng_ctl[bd] - (DRC_REF_LEVEL - drc->prog_ref_level))/24.0;
         else /* boost */
-            factor = REAL_CONST(exp(LN2 * (drc->ctrl2 * drc->dyn_rng_ctl[bd]/24.0)));
-
-        /* Level alignment between different programs (if desired) */
-        /* If program reference normalization is done in the digital domain,
-           modify factor to perform normalization.
-           prog_ref_level can alternatively be passed to the system for
-           modification of the level in the analog domain. Analog level
-           modification avoids problems with reduced DAC SNR (if signal is
-           attenuated) or clipping (if signal is boosted)
-         */
-        factor = MUL(factor,
-            REAL_CONST(exp(LN05 * ((DRC_REF_LEVEL - drc->prog_ref_level)/24.0))));
+            exp = drc->ctrl2 * (drc->dyn_rng_ctl[bd] - (DRC_REF_LEVEL - drc->prog_ref_level))/24.0;
+        factor = REAL_CONST(pow(2.0, exp));
 
         /* Apply gain factor */
         for (i = bottom; i < top; i++)
             spec[i] = MUL(spec[i], factor);
+#else
+        /* Decode DRC gain factor */
+        if (drc->dyn_rng_sgn[bd])  /* compress */
+        {
+            exp = -1 * (drc->dyn_rng_ctl[bd] - (DRC_REF_LEVEL - drc->prog_ref_level))/ 24;
+            frac = -1 * (drc->dyn_rng_ctl[bd] - (DRC_REF_LEVEL - drc->prog_ref_level)) % 24;
+        } else { /* boost */
+            exp = (drc->dyn_rng_ctl[bd] - (DRC_REF_LEVEL - drc->prog_ref_level))/ 24;
+            frac = (drc->dyn_rng_ctl[bd] - (DRC_REF_LEVEL - drc->prog_ref_level)) % 24;
+        }
+
+        /* Apply gain factor */
+        if (exp < 0)
+        {
+            for (i = bottom; i < top; i++)
+            {
+                spec[i] >>= -exp;
+                if (frac)
+                    spec[i] = MUL(spec[i],drc_pow2_table[frac+23]);
+            }
+        } else {
+            for (i = bottom; i < top; i++)
+            {
+                spec[i] <<= exp;
+                if (frac)
+                    spec[i] = MUL(spec[i],drc_pow2_table[frac+23]);
+            }
+        }
+#endif
 
         bottom = top;
     }
 }
-#endif

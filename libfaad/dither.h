@@ -40,5 +40,4 @@ void                       Init_Dither ( unsigned char bits, unsigned char shapi
 }
 #endif 
 
-#endif __RAND_T_H
-
+#endif

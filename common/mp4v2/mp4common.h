@@ -22,6 +22,10 @@
 #ifndef __MP4_COMMON_INCLUDED__
 #define __MP4_COMMON_INCLUDED__
 
+// common includes for everything 
+// with an internal view of the library
+// i.e. all the .cpp's just #include "mp4common.h"
+
 #include "mpeg4ip.h"
 
 #include "mp4.h"

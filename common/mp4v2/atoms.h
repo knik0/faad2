@@ -22,6 +22,13 @@
 #ifndef __MP4_ATOMS_INCLUDED__
 #define __MP4_ATOMS_INCLUDED__
 
+// declare all the atom subclasses
+// i.e. spare us atom_xxxx.h for all the atoms
+//
+// The majority of atoms just need their own constructor declared
+// Some atoms have a few special needs
+// A small minority of atoms need lots of special handling
+
 class MP4RootAtom : public MP4Atom {
 public:
 	MP4RootAtom();

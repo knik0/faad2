@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.c,v 1.18 2002/08/27 18:16:12 menno Exp $
+** $Id: mdct.c,v 1.19 2002/09/08 18:14:37 menno Exp $
 **/
 
 /*
@@ -35,26 +35,20 @@
  *
  */
 
-
 #include "common.h"
 
 #include <stdlib.h>
 #include <assert.h>
 
-#ifdef USE_FFTW
-/* uses fftw (http://www.fftw.org) for very fast arbitrary-n FFT and IFFT */
-#include <fftw.h>
-#else
 #include "cfft.h"
-#endif
-
-
 #include "mdct.h"
+
 
 mdct_info *faad_mdct_init(uint16_t N)
 {
     uint16_t k;
-	float32_t scale = sqrt(2.0/(float32_t)N);
+    real_t cangle, sangle, c, s, cold;
+	real_t scale = COEF_CONST(sqrt(2.0/(float32_t)N));
 
     mdct_info *mdct = (mdct_info*)malloc(sizeof(mdct_info));
 
@@ -62,44 +56,33 @@ mdct_info *faad_mdct_init(uint16_t N)
 
     mdct->N = N;
     mdct->sincos = (faad_sincos*)malloc(N/4*sizeof(faad_sincos));
-#ifdef USE_FFTW
-    mdct->Z1 = (fftw_complex*)malloc(N/4*sizeof(fftw_complex));
-    mdct->Z2 = (fftw_complex*)malloc(N/4*sizeof(fftw_complex));
-#else
     mdct->Z1 = (real_t*)malloc(N/2*sizeof(real_t));
-    mdct->Z2 = (faad_complex*)malloc(N/4*sizeof(faad_complex));
-#endif
+    mdct->Z2 = (complex_t*)malloc(N/4*sizeof(complex_t));
+
+    cangle = COEF_CONST(cos(2.0 * M_PI / (float32_t)N));
+    sangle = COEF_CONST(sin(2.0 * M_PI / (float32_t)N));
+    c = COEF_CONST(cos(2.0 * M_PI * 0.125 / (float32_t)N));
+    s = COEF_CONST(sin(2.0 * M_PI * 0.125 / (float32_t)N));
 
     for (k = 0; k < N/4; k++)
     {
-        float32_t angle = 2.0 * M_PI * ((float32_t)k + 0.125)/(float32_t)N;
-        mdct->sincos[k].sin = COEF_CONST(-sin(angle)*scale);
-        mdct->sincos[k].cos = COEF_CONST(-cos(angle)*scale);
+        mdct->sincos[k].sin = -1*MUL_C_C(s,scale);
+        mdct->sincos[k].cos = -1*MUL_C_C(c,scale);
+
+        cold = c;
+        c = MUL_C_C(c,cangle) - MUL_C_C(s,sangle);
+        s = MUL_C_C(s,cangle) + MUL_C_C(cold,sangle);
     }
 
-#ifdef USE_FFTW
-    mdct->plan_backward = fftw_create_plan(N/4, FFTW_BACKWARD, FFTW_ESTIMATE);
-#ifdef LTP_DEC
-    mdct->plan_forward = fftw_create_plan(N/4, FFTW_FORWARD, FFTW_ESTIMATE);
-#endif
-#else
-    /* own implementation */
+    /* initialise fft */
     mdct->cfft = cffti(N/4);
-#endif
 
     return mdct;
 }
 
 void faad_mdct_end(mdct_info *mdct)
 {
-#ifdef USE_FFTW
-    fftw_destroy_plan(mdct->plan_backward);
-#ifdef LTP_DEC
-    fftw_destroy_plan(mdct->plan_forward);
-#endif
-#else
     cfftu(mdct->cfft);
-#endif
 
     if (mdct->Z2) free(mdct->Z2);
     if (mdct->Z1) free(mdct->Z1);
@@ -112,13 +95,8 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
 {
     uint16_t k;
 
-#ifdef USE_FFTW
-    fftw_complex *Z1    = mdct->Z1;
-    fftw_complex *Z2    = mdct->Z2;
-#else
-    real_t *Z1          = mdct->Z1;
-    faad_complex *Z2    = mdct->Z2;
-#endif
+    real_t *Z1    = mdct->Z1;
+    complex_t *Z2 = mdct->Z2;
     faad_sincos *sincos = mdct->sincos;
 
     uint16_t N  = mdct->N;
@@ -132,33 +110,20 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
         uint16_t n = k << 1;
         real_t x0 = X_in[         n];
         real_t x1 = X_in[N2 - 1 - n];
-#ifdef USE_FFTW
-        Z1[k].re  = MUL_R_C(x1, sincos[k].cos) - MUL_R_C(x0, sincos[k].sin);
-        Z1[k].im  = MUL_R_C(x0, sincos[k].cos) + MUL_R_C(x1, sincos[k].sin);
-#else
         Z1[n]   = MUL_R_C(x1, sincos[k].cos) - MUL_R_C(x0, sincos[k].sin);
         Z1[n+1] = MUL_R_C(x0, sincos[k].cos) + MUL_R_C(x1, sincos[k].sin);
-#endif
     }
 
     /* complex IFFT */
-#ifdef USE_FFTW
-    fftw_one(mdct->plan_backward, Z1, Z2);
-#else
     cfftb(mdct->cfft, Z1);
-#endif
 
     /* post-IFFT complex multiplication */
     for (k = 0; k < N4; k++)
     {
-#ifdef USE_FFTW
-        real_t zr = Z2[k].re;
-        real_t zi = Z2[k].im;
-#else
         uint16_t n = k << 1;
         real_t zr = Z1[n];
         real_t zi = Z1[n+1];
-#endif
+
         Z2[k].re  = MUL_R_C(zr, sincos[k].cos) - MUL_R_C(zi, sincos[k].sin);
         Z2[k].im  = MUL_R_C(zi, sincos[k].cos) + MUL_R_C(zr, sincos[k].sin);
     }
@@ -183,12 +148,7 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
 {
     uint16_t k;
 
-#ifdef USE_FFTW
-    fftw_complex *Z1 = mdct->Z1;
-    fftw_complex *Z2 = mdct->Z2;
-#else
     real_t *Z1 = mdct->Z1;
-#endif
     faad_sincos *sincos = mdct->sincos;
 
     uint16_t N  = mdct->N;
@@ -205,44 +165,25 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
         real_t zr =  X_in[N - N4 - 1 - n] + X_in[N - N4 +     n];
         real_t zi =  X_in[    N4 +     n] - X_in[    N4 - 1 - n];
 
-#ifdef USE_FFTW
-        Z1[k].re = -MUL_R_C(zr, sincos[k].cos) - MUL_R_C(zi, sincos[k].sin);
-        Z1[k].im = -MUL_R_C(zi, sincos[k].cos) + MUL_R_C(zr, sincos[k].sin);
-#else
         Z1[n]   = -MUL_R_C(zr, sincos[k].cos) - MUL_R_C(zi, sincos[k].sin);
         Z1[n+1] = -MUL_R_C(zi, sincos[k].cos) + MUL_R_C(zr, sincos[k].sin);
-#endif
 
         zr =  X_in[N2 - 1 - n] - X_in[        n];
         zi =  X_in[N2 +     n] + X_in[N - 1 - n];
 
-#ifdef USE_FFTW
-        Z1[k + N8].re = -MUL_R_C(zr, sincos[k + N8].cos) - MUL_R_C(zi, sincos[k + N8].sin);
-        Z1[k + N8].im = -MUL_R_C(zi, sincos[k + N8].cos) + MUL_R_C(zr, sincos[k + N8].sin);
-#else
         Z1[n   + N4] = -MUL_R_C(zr, sincos[k + N8].cos) - MUL_R_C(zi, sincos[k + N8].sin);
         Z1[n+1 + N4] = -MUL_R_C(zi, sincos[k + N8].cos) + MUL_R_C(zr, sincos[k + N8].sin);
-#endif
     }
 
     /* complex FFT */
-#ifdef USE_FFTW
-    fftw_one(mdct->plan_forward, Z1, Z2);
-#else
     cfftf(mdct->cfft, Z1);
-#endif
 
     /* post-FFT complex multiplication */
     for (k = 0; k < N4; k++)
     {
         uint16_t n = k << 1;
-#ifdef USE_FFTW
-        real_t zr = MUL(MUL_R_C(Z2[k].re, sincos[k].cos) + MUL_R_C(Z2[k].im, sincos[k].sin), scale);
-        real_t zi = MUL(MUL_R_C(Z2[k].im, sincos[k].cos) - MUL_R_C(Z2[k].re, sincos[k].sin), scale);
-#else
         real_t zr = MUL(MUL_R_C(Z1[n], sincos[k].cos) + MUL_R_C(Z1[n+1], sincos[k].sin), scale);
         real_t zi = MUL(MUL_R_C(Z1[n+1], sincos[k].cos) - MUL_R_C(Z1[n], sincos[k].sin), scale);
-#endif
 
         X_out[         n] =  zr;
         X_out[N2 - 1 - n] = -zi;

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ic_predict.c,v 1.8 2002/08/17 12:27:33 menno Exp $
+** $Id: ic_predict.c,v 1.9 2002/09/08 18:14:37 menno Exp $
 **/
 
 #include "common.h"
@@ -26,28 +26,6 @@
 #include "syntax.h"
 #include "ic_predict.h"
 #include "pns.h"
-
-static void flt_round_inf(real_t *pf)
-{
-    int32_t flg;
-    uint32_t tmp;
-    real_t *pt = (real_t *)&tmp;
-
-    *pt = *pf;
-    flg = tmp & (uint32_t)0x00008000;
-    tmp &= (uint32_t)0xffff0000;
-    *pf = *pt;
-
-    /* round 1/2 lsb toward infinity */
-    if (flg)
-    {
-        tmp &= (uint32_t)0xff800000; /* extract exponent and sign */
-        tmp |= (uint32_t)0x00010000; /* insert 1 lsb */
-        *pf += *pt;                  /* add 1 lsb and elided one */
-        tmp &= (uint32_t)0xff800000; /* extract exponent and sign */
-        *pf -= *pt;                  /* subtract elided one */
-    }
-}
 
 static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t pred)
 {
@@ -77,7 +55,6 @@ static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t 
             k2 = KOR[1]/VAR[1]*B;
 
         predictedvalue = MUL(k1, r[0]) + MUL(k2, r[1]);
-        flt_round_inf(&predictedvalue);
 
         *output = input + predictedvalue;
     } else {

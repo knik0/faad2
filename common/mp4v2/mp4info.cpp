@@ -49,8 +49,10 @@ static char* PrintAudioInfo(
 		MP4_MPEG2_AAC_SSR_AUDIO_TYPE,	// 0x68
 		MP4_MPEG2_AUDIO_TYPE,			// 0x69
 		MP4_MPEG1_AUDIO_TYPE,			// 0x6B
-		MP4_PCM16_AUDIO_TYPE,			
-		MP4_VORBIS_AUDIO_TYPE,			
+		MP4_PCM16_AUDIO_TYPE,
+		MP4_VORBIS_AUDIO_TYPE,
+		MP4_ALAW_AUDIO_TYPE,
+		MP4_ULAW_AUDIO_TYPE,
 	};
 	static const char* mpegAudioNames[] = {
 		"MPEG-2 AAC Main",
@@ -60,6 +62,8 @@ static char* PrintAudioInfo(
 		"MPEG-1 (MP3)",
 		"PCM16",
 		"OGG VORBIS",
+		"G.711 aLaw",
+		"G.711 uLaw",
 	};
 	static u_int8_t numMpegAudioTypes = 
 		sizeof(mpegAudioTypes) / sizeof(u_int8_t);
@@ -148,7 +152,9 @@ static char* PrintVideoInfo(
 		MP4_MPEG1_VIDEO_TYPE,			// 0x6A
 		MP4_JPEG_VIDEO_TYPE,			// 0x6C
 		MP4_YUV12_VIDEO_TYPE,			
-		MP4_H26L_VIDEO_TYPE			
+		MP4_H264_VIDEO_TYPE,
+		MP4_H263_VIDEO_TYPE,		
+		MP4_H261_VIDEO_TYPE,
 	};
 	static const char* mpegVideoNames[] = {
 		"MPEG-2 Simple",
@@ -160,7 +166,9 @@ static char* PrintVideoInfo(
 		"MPEG-1",
 		"JPEG",
 		"YUV12",
-		"H26L"
+		"H.264",
+		"H.263",
+		"H.261",
 	};
 	static u_int8_t numMpegVideoTypes = 
 		sizeof(mpegVideoTypes) / sizeof(u_int8_t);

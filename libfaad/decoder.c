@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.31 2002/09/05 20:10:53 menno Exp $
+** $Id: decoder.c,v 1.32 2002/09/08 18:14:37 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -85,14 +85,9 @@ faacDecHandle FAADAPI faacDecOpen()
 
     hDecoder->drc = drc_init(REAL_CONST(1.0), REAL_CONST(1.0));
 
-    hDecoder->iq_table = (real_t*)malloc(IQ_TABLE_SIZE*sizeof(real_t));
-
-    /* build table for inverse quantization */
-#if IQ_TABLE_SIZE && POW_TABLE_SIZE
+#if POW_TABLE_SIZE
     hDecoder->pow2_table = (real_t*)malloc(POW_TABLE_SIZE*sizeof(real_t));
-    build_tables(hDecoder->iq_table, hDecoder->pow2_table);
-#elif !POW_TABLE_SIZE
-    build_tables(hDecoder->iq_table, NULL);
+    build_tables(hDecoder->pow2_table);
 #endif
 
     return hDecoder;
@@ -328,9 +323,10 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
 
     drc_end(hDecoder->drc);
 
-    if (hDecoder->iq_table) free(hDecoder->iq_table);
+#ifndef FIXED_POINT
 #if POW_TABLE_SIZE
     if (hDecoder->pow2_table) free(hDecoder->pow2_table);
+#endif
 #endif
 
     if (hDecoder->sample_buffer) free(hDecoder->sample_buffer);
@@ -456,12 +452,13 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #ifdef LTP_DEC
     real_t **lt_pred_stat  =  hDecoder->lt_pred_stat;
 #endif
-    real_t *iq_table       =  hDecoder->iq_table;
+#ifndef FIXED_POINT
 #if POW_TABLE_SIZE
     real_t *pow2_table     =  hDecoder->pow2_table;
 #else
     real_t *pow2_table     =  NULL;
-#endif 
+#endif
+#endif
     uint8_t *window_shape_prev = hDecoder->window_shape_prev;
     real_t **time_out      =  hDecoder->time_out;
     fb_info *fb            =  hDecoder->fb;
@@ -646,11 +643,14 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         }
 
         /* inverse quantization */
-        inverse_quantization(spec_coef[ch], spec_data[ch], iq_table,
-            frame_len);
+        inverse_quantization(spec_coef[ch], spec_data[ch], frame_len);
 
         /* apply scalefactors */
+#ifdef FIXED_POINT
+        apply_scalefactors(ics, spec_coef[ch], frame_len);
+#else
         apply_scalefactors(ics, spec_coef[ch], pow2_table, frame_len);
+#endif
 
         /* deinterleave short block grouping */
         if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
@@ -761,14 +761,12 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         tns_decode_frame(ics, &(ics->tns), sf_index, object_type,
             spec_coef[ch], frame_len);
 
-#ifndef FIXED_POINT
         /* drc decoding */
         if (drc->present)
         {
             if (!drc->exclude_mask[ch] || !drc->excluded_chns_present)
                 drc_decode(drc, spec_coef[ch]);
         }
-#endif
 
         if (time_out[ch] == NULL)
         {

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: pns.h,v 1.8 2002/09/04 10:22:18 menno Exp $
+** $Id: pns.h,v 1.9 2002/09/08 18:14:37 menno Exp $
 **/
 
 #ifndef __PNS_H__
@@ -30,7 +30,12 @@ extern "C" {
 #include "common.h"
 
 #define NOISE_OFFSET 90
-#define MEAN_NRG 1.537228e+18 /* (2^31)^2 / 3 */
+/* #define MEAN_NRG 1.537228e+18 */ /* (2^31)^2 / 3 */
+#ifdef FIXED_POINT
+#define ISQRT_MEAN_NRG 0x1DC7 /* sqrt(1/sqrt(MEAN_NRG)) */
+#else
+#define ISQRT_MEAN_NRG 8.0655e-10 /* 1/sqrt(MEAN_NRG) */
+#endif
 
 
 void pns_decode(ic_stream *ics_left, ic_stream *ics_right,

@@ -280,6 +280,9 @@
 				RelativePath=".\ic_predict.h">
 			</File>
 			<File
+				RelativePath="iq_table.h">
+			</File>
+			<File
 				RelativePath=".\is.h">
 			</File>
 			<File
@@ -320,6 +323,9 @@
 			</File>
 			<File
 				RelativePath=".\sbr_syntax.h">
+			</File>
+			<File
+				RelativePath="sine_win.h">
 			</File>
 			<File
 				RelativePath=".\specrec.h">

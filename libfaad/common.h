@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.19 2002/08/27 18:16:12 menno Exp $
+** $Id: common.h,v 1.20 2002/09/08 18:14:37 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -44,18 +44,8 @@ extern "C" {
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #endif
 
-#ifndef LN2
-#define LN2 0.6931471805599453
-#endif
-
-#ifndef LN05
-#define LN05 -LN2
-#endif
 
 /* COMPILE TIME DEFINITIONS */
-
-/* use the somewhat faster, but a lot larger FFTW library */
-//#define USE_FFTW
 
 /* use double precision */
 /* #define USE_DOUBLE_PRECISION */
@@ -121,7 +111,6 @@ typedef float float32_t;
 
 #else /* Some other OS */
 
-
 #include <inttypes.h>
 
 #endif
@@ -129,7 +118,6 @@ typedef float float32_t;
 /* FIXED_POINT doesn't work with FFTW */
 #ifdef FIXED_POINT
   #undef MAIN_DEC
-  #undef USE_FFTW
 #endif
 
 
@@ -148,9 +136,7 @@ typedef float float32_t;
   #define MUL(A,B) ((A)*(B))
   #define MUL_C_C(A,B) ((A)*(B))
   #define MUL_R_C(A,B) ((A)*(B))
-  #define MUL_R_1(A,B) ((A)*(B))
 
-  #define COEF_CONST_1(A) ((real_t)A)
   #define REAL_CONST(A) ((real_t)A)
   #define COEF_CONST(A) ((real_t)A)
 
@@ -161,9 +147,7 @@ typedef float float32_t;
   #define MUL(A,B) ((A)*(B))
   #define MUL_C_C(A,B) ((A)*(B))
   #define MUL_R_C(A,B) ((A)*(B))
-  #define MUL_R_1(A,B) ((A)*(B))
 
-  #define COEF_CONST_1(A) ((real_t)A)
   #define REAL_CONST(A) ((real_t)A)
   #define COEF_CONST(A) ((real_t)A)
 
@@ -174,7 +158,6 @@ typedef float float32_t;
     #define sin sinf
     #define cos cosf
     #define log logf
-    #define exp expf
     #define floor floorf
     #define ceil ceilf
     #define sqrt sqrtf

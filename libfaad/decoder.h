@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.h,v 1.14 2002/08/30 19:03:48 menno Exp $
+** $Id: decoder.h,v 1.15 2002/09/08 18:14:37 menno Exp $
 **/
 
 #ifndef __DECODER_H__
@@ -100,13 +100,11 @@ typedef struct
     real_t *lt_pred_stat[MAX_CHANNELS];
 #endif
 
-    real_t exp_table[256];
-    real_t mnt_table[128];
-
-    real_t *iq_table;
+#ifndef FIXED_POINT
 #if POW_TABLE_SIZE
     real_t *pow2_table;
-#endif 
+#endif
+#endif
 
     /* Configuration data */
     faacDecConfiguration config;

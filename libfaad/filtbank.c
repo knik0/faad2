@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.c,v 1.18 2002/08/30 12:10:57 menno Exp $
+** $Id: filtbank.c,v 1.19 2002/09/08 18:14:37 menno Exp $
 **/
 
 #include "common.h"
@@ -27,12 +27,12 @@
 #include "filtbank.h"
 #include "syntax.h"
 #include "kbd_win.h"
+#include "sine_win.h"
 #include "mdct.h"
 
 
 fb_info *filter_bank_init(uint16_t frame_len)
 {
-    uint16_t i;
     uint16_t nshort = frame_len/8;
 #ifdef LD_DEC
     uint16_t frame_len_ld = frame_len/2;
@@ -44,47 +44,31 @@ fb_info *filter_bank_init(uint16_t frame_len)
     /* normal */
     fb->mdct256 = faad_mdct_init(2*nshort);
     fb->mdct2048 = faad_mdct_init(2*frame_len);
-
-    fb->long_window[0]  = (real_t*)malloc(frame_len*sizeof(real_t));
-    fb->short_window[0] = (real_t*)malloc(nshort*sizeof(real_t));
-#ifndef FIXED_POINT
-    fb->long_window[1]  = kbd_long;
-    fb->short_window[1] = kbd_short;
-#else
-    fb->long_window[1]  = (real_t*)malloc(frame_len*sizeof(real_t));
-    fb->short_window[1] = (real_t*)malloc(nshort*sizeof(real_t));
-
-    for (i = 0; i < frame_len; i++)
-        fb->long_window[1][i] = COEF_CONST(kbd_long[i]);
-    for (i = 0; i < nshort; i++)
-        fb->short_window[1][i] = COEF_CONST(kbd_short[i]);
-#endif
-
-    /* calculate the sine windows */
-    for (i = 0; i < frame_len; i++)
-        fb->long_window[0][i] = COEF_CONST(sin(M_PI / (2.0 * (float32_t)frame_len) * ((float32_t)i + 0.5)));
-    for (i = 0; i < nshort; i++)
-        fb->short_window[0][i] = COEF_CONST(sin(M_PI / (2.0 * (float32_t)nshort) * ((float32_t)i + 0.5)));
-
 #ifdef LD_DEC
     /* LD */
-    fb->mdct1024 = faad_mdct_init(frame_len_ld);
-
-    fb->ld_window[0] = (real_t*)malloc(frame_len_ld*sizeof(real_t));
-    fb->ld_window[1] = (real_t*)malloc(frame_len_ld*sizeof(real_t));
-
-    /* calculate the sine windows */
-    for (i = 0; i < frame_len_ld; i++)
-        fb->ld_window[0][i] = COEF_CONST(sin(M_PI / (2.0 * frame_len_ld) * (i + 0.5)));
-
-    /* low overlap window */
-    for (i = 0; i < 3*(frame_len_ld>>3); i++)
-        fb->ld_window[1][i] = COEF_CONST(0.0);
-    for (; i < 5*(frame_len_ld>>3); i++)
-        fb->ld_window[1][i] = COEF_CONST(sin((i-3*(frame_len_ld>>3)+0.5) * M_PI / (real_t)(frame_len_ld>>1)));
-    for (; i < frame_len_ld; i++)
-        fb->ld_window[1][i] = COEF_CONST(1.0);
+    fb->mdct1024 = faad_mdct_init(2*frame_len_ld);
 #endif
+
+    if (frame_len == 1024)
+    {
+        fb->long_window[0]  = sine_long_1024;
+        fb->short_window[0] = sine_short_128;
+        fb->long_window[1]  = kbd_long_1024;
+        fb->short_window[1] = kbd_short_128;
+#ifdef LD_DEC
+        fb->ld_window[0] = sine_mid_512;
+        fb->ld_window[1] = ld_mid_512;
+#endif
+    } else /* (frame_len == 960) */ {
+        fb->long_window[0]  = sine_long_960;
+        fb->short_window[0] = sine_short_120;
+        fb->long_window[1]  = kbd_long_960;
+        fb->short_window[1] = kbd_short_120;
+#ifdef LD_DEC
+        fb->ld_window[0] = sine_mid_480;
+        fb->ld_window[1] = ld_mid_480;
+#endif
+    }
 
     return fb;
 }
@@ -93,19 +77,8 @@ void filter_bank_end(fb_info *fb)
 {
     faad_mdct_end(fb->mdct256);
     faad_mdct_end(fb->mdct2048);
-
-    if (fb->long_window[0]) free(fb->long_window[0]);
-    if (fb->short_window[0]) free(fb->short_window[0]);
-#ifdef FIXED_POINT
-    if (fb->long_window[1]) free(fb->long_window[1]);
-    if (fb->short_window[1]) free(fb->short_window[1]);
-#endif
-
 #ifdef LD_DEC
     faad_mdct_end(fb->mdct1024);
-
-    if (fb->ld_window[0]) free(fb->ld_window[0]);
-    if (fb->ld_window[1]) free(fb->ld_window[1]);
 #endif
 
     if (fb) free(fb);
@@ -268,7 +241,7 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
 }
 
 #ifdef LTP_DEC
-/* only works for LTP -> no overlapping no short blocks */
+/* only works for LTP -> no overlapping, no short blocks */
 void filter_bank_ltp(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
                      uint8_t window_shape_prev, real_t *in_data, real_t *out_mdct,
                      uint8_t object_type, uint16_t frame_len)

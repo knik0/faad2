@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: pns.c,v 1.15 2002/09/05 20:10:53 menno Exp $
+** $Id: pns.c,v 1.16 2002/09/08 18:14:37 menno Exp $
 **/
 
 #include "common.h"
@@ -50,6 +50,48 @@ static INLINE int32_t random2()
     return (__r1 = (t3 >> 1) | t1 ) ^ (__r2 = (t4 + t4) | t2 );
 }
 
+#ifdef FIXED_POINT
+
+#define DIV(A, B) (((int64_t)A << COEF_BITS)/B)
+
+#define step(shift) \
+    if ((0x40000000l >> shift) + root <= value)       \
+    {                                                 \
+        value -= (0x40000000l >> shift) + root;       \
+        root = (root >> 1) | (0x40000000l >> shift);  \
+    } else {                                          \
+        root = root >> 1;                             \
+    }
+
+real_t fp_sqrt(real_t value)
+{
+    real_t root = 0;
+
+    step( 0); step( 2); step( 4); step( 6);
+    step( 8); step(10); step(12); step(14);
+    step(16); step(18); step(20); step(22);
+    step(24); step(26); step(28); step(30);
+
+    if (root < value)
+        ++root;
+
+    root <<= (COEF_BITS/2);
+
+    return root;
+}
+
+static real_t pow2_table[] =
+{
+    COEF_CONST(0.59460355750136),
+    COEF_CONST(0.70710678118655),
+    COEF_CONST(0.84089641525371),
+    COEF_CONST(1.0),
+    COEF_CONST(1.18920711500272),
+    COEF_CONST(1.41421356237310),
+    COEF_CONST(1.68179283050743)
+};
+#endif
+
 /* The function gen_rand_vector(addr, size) generates a vector of length
    <size> with signed random values of average energy MEAN_NRG per random
    value. A suitable random number generator can be realized using one
@@ -57,24 +99,66 @@ static INLINE int32_t random2()
 */
 static INLINE void gen_rand_vector(real_t *spec, int16_t scale_factor, uint16_t size)
 {
+#ifndef FIXED_POINT
     uint16_t i;
-    float32_t energy = 0.0;
+    real_t energy = 0.0;
+    int32_t exp, frac;
 
-    float32_t scale = 1.0/(float32_t)(size * sqrt(MEAN_NRG));
+    real_t scale = 1.0/(float32_t)size * ISQRT_MEAN_NRG;
 
     for (i = 0; i < size; i++)
     {
-        float32_t tmp = scale*(float32_t)random2();
-        spec[i] = REAL_CONST(tmp);
+        real_t tmp = scale*(real_t)random2();
+        spec[i] = tmp;
         energy += tmp*tmp;
     }
 
-    scale = 1.0/(float32_t)sqrt(energy);
-    scale *= (float32_t)pow(2.0, 0.25 * scale_factor);
+    scale = 1.0/(real_t)sqrt(energy);
+    scale *= (real_t)pow(2.0, 0.25 * scale_factor);
     for (i = 0; i < size; i++)
     {
-        spec[i] = MUL(spec[i],REAL_CONST(scale));
+        spec[i] *= scale;
     }
+#else
+    uint16_t i;
+    real_t energy = 0, scale;
+    int32_t exp, frac;
+
+    for (i = 0; i < size; i++)
+    {
+        real_t tmp = ISQRT_MEAN_NRG * random2();
+        tmp = MUL_C_C(COEF_CONST(1.0)/size, tmp);
+
+        energy += MUL_C_C(tmp,tmp);
+
+        /* convert COEF to REAL */
+        spec[i] = (tmp >> -(REAL_BITS-COEF_BITS));
+    }
+
+    energy = fp_sqrt(energy);
+    if (energy > 0)
+    {
+        scale = DIV(COEF_CONST(1),energy);
+
+        scale >>= -(REAL_BITS-COEF_BITS);
+
+        exp = scale_factor / 4;
+        frac = scale_factor % 4;
+
+        if (exp < 0)
+            scale >>= -exp;
+        else
+            scale <<= exp;
+
+        if (frac)
+            scale = MUL_R_C(scale, pow2_table[frac + 3]);
+
+        for (i = 0; i < size; i++)
+        {
+            spec[i] = MUL(spec[i], scale);
+        }
+    }
+#endif
 }
 
 void pns_decode(ic_stream *ics_left, ic_stream *ics_right,
