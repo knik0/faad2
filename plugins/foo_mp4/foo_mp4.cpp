@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.20 2003/04/26 13:25:13 menno Exp $
+** $Id: foo_mp4.cpp,v 1.21 2003/04/26 13:57:56 menno Exp $
 **/
 
 #include <mp4.h>
@@ -25,6 +25,7 @@
 #include "foobar2000/SDK/input.h"
 #include "foobar2000/SDK/console.h"
 #include "foobar2000/SDK/componentversion.h"
+#include "foobar2000/SDK/tagread.h"
 
 char *STRIP_REVISION(const char *str)
 {
@@ -34,7 +35,7 @@ char *STRIP_REVISION(const char *str)
 }
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           STRIP_REVISION("$Revision: 1.20 $"),
+                           STRIP_REVISION("$Revision: 1.21 $"),
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -228,6 +229,8 @@ private:
         int bread = 0;
         unsigned char channels = 0;
         unsigned long samplerate = 0;
+
+        tag_reader::process_file(m_reader, info);
 
         m_at_eof = 0;
 
