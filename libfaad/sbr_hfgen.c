@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfgen.c,v 1.5 2003/09/22 13:09:43 menno Exp $
+** $Id: sbr_hfgen.c,v 1.6 2003/09/25 12:04:31 menno Exp $
 **/
 
 /* High Frequency generation */
@@ -36,7 +36,7 @@
 #include "sbr_hfgen.h"
 #include "sbr_fbt.h"
 
-void hf_generation(sbr_info *sbr, qmf_t *Xlow,
+void hf_generation(sbr_info *sbr, const qmf_t *Xlow,
                    qmf_t *Xhigh
 #ifdef SBR_LOW_POWER
                    ,real_t *deg
@@ -109,6 +109,7 @@ void hf_generation(sbr_info *sbr, qmf_t *Xlow,
             bw = sbr->bwArray[ch][g];
             bw2 = MUL_C_C(bw, bw);
 
+
             /* do the patching */
             /* with or without filtering */
             if (bw2 > 0)
@@ -174,18 +175,15 @@ typedef struct
 
 #define SBR_ABS(A) ((A) < 0) ? -(A) : (A)
 
-static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t *buffer,
+#ifdef SBR_LOW_POWER
+static void auto_correlation(sbr_info *sbr, acorr_coef *ac, const qmf_t *buffer,
                              uint8_t bd, uint8_t len)
 {
     int8_t j, jminus1, jminus2;
     uint8_t offset;
-#ifdef FIXED_POINT
-    const real_t rel = COEF_CONST(0.9999999999999);
-    uint32_t maxi = 0;
-    uint32_t pow2, exp;
-#else
+    real_t r01, i01, r11;
     const real_t rel = 1 / (1 + 1e-6f);
-#endif
+
 #ifdef DRM
     if (sbr->Is_DRM_SBR)
         offset = sbr->tHFGen;
@@ -195,92 +193,82 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t *buffer,
         offset = sbr->tHFAdj;
     }
 
-#ifdef FIXED_POINT
-    /*
-     *  For computing the covariance matrix and the filter coefficients
-     *  in fixed point, all values are normalised so that the fixed point
-     *  values don't overflow.
-     */
-    for (j = offset-2; j < len + offset; j++)
-    {
-        maxi = max(SBR_ABS(QMF_RE(buffer[j*32 + bd])>>REAL_BITS), maxi);
-    }
-
-    /* find the first power of 2 bigger than max to avoid division */
-    pow2 = 1;
-    exp = 0;
-    while (maxi > pow2)
-    {
-        pow2 <<= 1;
-        exp++;
-    }
-#endif
-
     memset(ac, 0, sizeof(acorr_coef));
+
+    r01 = QMF_RE(buffer[(offset-1)*32 + bd]) * QMF_RE(buffer[(offset-2)*32 + bd]);
+    r11 = QMF_RE(buffer[(offset-2)*32 + bd]) * QMF_RE(buffer[(offset-2)*32 + bd]);
 
     for (j = offset; j < len + offset; j++)
     {
         jminus1 = j - 1;
-        jminus2 = jminus1 - 1;
+        jminus2 = j - 2;
 
-#ifdef SBR_LOW_POWER
-#ifdef FIXED_POINT
-        /* normalisation with rounding */
-        RE(ac->r01) += MUL(((QMF_RE(buffer[j*32 + bd])+(1<<(exp-1)))>>exp), ((QMF_RE(buffer[jminus1*32 + bd])+(1<<(exp-1)))>>exp));
-        RE(ac->r02) += MUL(((QMF_RE(buffer[j*32 + bd])+(1<<(exp-1)))>>exp), ((QMF_RE(buffer[jminus2*32 + bd])+(1<<(exp-1)))>>exp));
-        RE(ac->r11) += MUL(((QMF_RE(buffer[jminus1*32 + bd])+(1<<(exp-1)))>>exp), ((QMF_RE(buffer[jminus1*32 + bd])+(1<<(exp-1)))>>exp));
-        RE(ac->r12) += MUL(((QMF_RE(buffer[jminus1*32 + bd])+(1<<(exp-1)))>>exp), ((QMF_RE(buffer[jminus2*32 + bd])+(1<<(exp-1)))>>exp));
-        RE(ac->r22) += MUL(((QMF_RE(buffer[jminus2*32 + bd])+(1<<(exp-1)))>>exp), ((QMF_RE(buffer[jminus2*32 + bd])+(1<<(exp-1)))>>exp));
-#else
-        RE(ac->r01) += QMF_RE(buffer[j*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]);
+        RE(ac->r12) += r01;
+        r01 = QMF_RE(buffer[j*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]);
+        RE(ac->r01) += r01;
         RE(ac->r02) += QMF_RE(buffer[j*32 + bd]) * QMF_RE(buffer[jminus2*32 + bd]);
-        RE(ac->r11) += QMF_RE(buffer[jminus1*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]);
-        RE(ac->r12) += QMF_RE(buffer[jminus1*32 + bd]) * QMF_RE(buffer[jminus2*32 + bd]);
-        RE(ac->r22) += QMF_RE(buffer[jminus2*32 + bd]) * QMF_RE(buffer[jminus2*32 + bd]);
-#endif
-#else
-        /* RE(ac[0][1]) */
-        RE(ac->r01) += QMF_RE(buffer[j*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]) +
-            QMF_IM(buffer[j*32 + bd]) * QMF_IM(buffer[jminus1*32 + bd]);
-
-        /* IM(ac[0][1]) */
-        IM(ac->r01) += QMF_IM(buffer[j*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]) -
-            QMF_RE(buffer[j*32 + bd]) * QMF_IM(buffer[jminus1*32 + bd]);
-
-        /* RE(ac[0][2]) */
-        RE(ac->r02) += QMF_RE(buffer[j*32 + bd]) * QMF_RE(buffer[jminus2*32 + bd]) +
-            QMF_IM(buffer[j*32 + bd]) * QMF_IM(buffer[jminus2*32 + bd]);
-
-        /* IM(ac[0][2]) */
-        IM(ac->r02) += QMF_IM(buffer[j*32 + bd]) * QMF_RE(buffer[jminus2*32 + bd]) -
-            QMF_RE(buffer[j*32 + bd]) * QMF_IM(buffer[jminus2*32 + bd]);
-
-        /* RE(ac[1][1]) */
-        RE(ac->r11) += QMF_RE(buffer[jminus1*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]) +
-            QMF_IM(buffer[jminus1*32 + bd]) * QMF_IM(buffer[jminus1*32 + bd]);
-
-        /* RE(ac[1][2]) */
-        RE(ac->r12) += QMF_RE(buffer[jminus1*32 + bd]) * QMF_RE(buffer[jminus2*32 + bd]) +
-            QMF_IM(buffer[jminus1*32 + bd]) * QMF_IM(buffer[jminus2*32 + bd]);
-
-        /* IM(ac[1][2]) */
-        IM(ac->r12) += QMF_IM(buffer[jminus1*32 + bd]) * QMF_RE(buffer[jminus2*32 + bd]) -
-            QMF_RE(buffer[jminus1*32 + bd]) * QMF_IM(buffer[jminus2*32 + bd]);
-
-        /* RE(ac[2][2]) */
-        RE(ac->r22) += QMF_RE(buffer[jminus2*32 + bd]) * QMF_RE(buffer[jminus2*32 + bd]) +
-            QMF_IM(buffer[jminus2*32 + bd]) * QMF_IM(buffer[jminus2*32 + bd]);
-#endif
+        RE(ac->r22) += r11;
+        r11 = QMF_RE(buffer[jminus1*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]);
+        RE(ac->r11) += r11;
     }
 
-#ifdef SBR_LOW_POWER
     ac->det = MUL(RE(ac->r11), RE(ac->r22)) - MUL_R_C(MUL(RE(ac->r12), RE(ac->r12)), rel);
-#else
-    ac->det = RE(ac->r11) * RE(ac->r22) - rel * (RE(ac->r12) * RE(ac->r12) + IM(ac->r12) * IM(ac->r12));
-#endif
 }
+#else
+static void auto_correlation(sbr_info *sbr, acorr_coef *ac, const qmf_t *buffer,
+                             uint8_t bd, uint8_t len)
+{
+    int8_t j, jminus1, jminus2;
+    uint8_t offset;
+    real_t r01, i01, r11;
+    const real_t rel = 1 / (1 + 1e-6f);
 
-static void calc_prediction_coef(sbr_info *sbr, qmf_t *Xlow,
+#ifdef DRM
+    if (sbr->Is_DRM_SBR)
+        offset = sbr->tHFGen;
+    else
+#endif
+    {
+        offset = sbr->tHFAdj;
+    }
+
+    memset(ac, 0, sizeof(acorr_coef));
+
+    r01 = QMF_RE(buffer[(offset-1)*32 + bd]) * QMF_RE(buffer[(offset-2)*32 + bd]) +
+        QMF_IM(buffer[(offset-1)*32 + bd]) * QMF_IM(buffer[(offset-2)*32 + bd]);
+    i01 = QMF_IM(buffer[(offset-1)*32 + bd]) * QMF_RE(buffer[(offset-2)*32 + bd]) -
+        QMF_RE(buffer[(offset-1)*32 + bd]) * QMF_IM(buffer[(offset-2)*32 + bd]);
+    r11 = QMF_RE(buffer[(offset-2)*32 + bd]) * QMF_RE(buffer[(offset-2)*32 + bd]) +
+        QMF_IM(buffer[(offset-2)*32 + bd]) * QMF_IM(buffer[(offset-2)*32 + bd]);
+
+    for (j = offset; j < len + offset; j++)
+    {
+        jminus1 = j - 1;
+        jminus2 = j - 2;
+
+        RE(ac->r12) += r01;
+        IM(ac->r12) += i01;
+        r01 = QMF_RE(buffer[j*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]) +
+            QMF_IM(buffer[j*32 + bd]) * QMF_IM(buffer[jminus1*32 + bd]);
+        RE(ac->r01) += r01;
+        i01 = QMF_IM(buffer[j*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]) -
+            QMF_RE(buffer[j*32 + bd]) * QMF_IM(buffer[jminus1*32 + bd]);
+        IM(ac->r01) += i01;
+        RE(ac->r02) += QMF_RE(buffer[j*32 + bd]) * QMF_RE(buffer[jminus2*32 + bd]) +
+            QMF_IM(buffer[j*32 + bd]) * QMF_IM(buffer[jminus2*32 + bd]);
+        IM(ac->r02) += QMF_IM(buffer[j*32 + bd]) * QMF_RE(buffer[jminus2*32 + bd]) -
+            QMF_RE(buffer[j*32 + bd]) * QMF_IM(buffer[jminus2*32 + bd]);
+        RE(ac->r22) += r11;
+        r11 = QMF_RE(buffer[jminus1*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]) +
+            QMF_IM(buffer[jminus1*32 + bd]) * QMF_IM(buffer[jminus1*32 + bd]);
+        RE(ac->r11) += r11;
+    }
+
+    ac->det = RE(ac->r11) * RE(ac->r22) - rel * (RE(ac->r12) * RE(ac->r12) + IM(ac->r12) * IM(ac->r12));
+}
+#endif
+
+static void calc_prediction_coef(sbr_info *sbr, const qmf_t *Xlow,
                                  complex_t *alpha_0, complex_t *alpha_1
 #ifdef SBR_LOW_POWER
                                  , real_t *rxx
@@ -507,8 +495,7 @@ static void patch_construction(sbr_info *sbr)
             k = sbr->N_master;
     } while (sb != (sbr->kx + sbr->M));
 
-    if ((sbr->patchNoSubbands[sbr->noPatches-1] < 3) &&
-        (sbr->noPatches > 1))
+    if ((sbr->patchNoSubbands[sbr->noPatches-1] < 3) && (sbr->noPatches > 1))
     {
         sbr->noPatches--;
     }

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_qmf.c,v 1.11 2003/09/24 19:55:34 menno Exp $
+** $Id: sbr_qmf.c,v 1.12 2003/09/25 12:04:31 menno Exp $
 **/
 
 #include "common.h"
@@ -92,11 +92,11 @@ void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const real_t *input,
         /* window and summation to create array u */
         for (n = 0; n < 64; n++)
         {
-            u[n] = MUL_R_C(qmfa->x[n], qmf_c_2[n]) +
-                MUL_R_C(qmfa->x[n + 64], qmf_c_2[n + 64]) +
-                MUL_R_C(qmfa->x[n + 128], qmf_c_2[n + 128]) +
-                MUL_R_C(qmfa->x[n + 192], qmf_c_2[n + 192]) +
-                MUL_R_C(qmfa->x[n + 256], qmf_c_2[n + 256]);
+            u[n] = MUL_R_C(qmfa->x[n], qmf_c[2*n]) +
+                MUL_R_C(qmfa->x[n + 64], qmf_c[2*(n + 64)]) +
+                MUL_R_C(qmfa->x[n + 128], qmf_c[2*(n + 128)]) +
+                MUL_R_C(qmfa->x[n + 192], qmf_c[2*(n + 192)]) +
+                MUL_R_C(qmfa->x[n + 256], qmf_c[2*(n + 256)]);
         }
 
         /* calculate 32 subband samples by introducing X */
@@ -111,11 +111,16 @@ void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const real_t *input,
 
         for (n = 0; n < 32; n++)
         {
+            if (n < kx)
+            {
 #ifdef FIXED_POINT
-            QMF_RE(X[((l + offset)<<5) + n]) = u[n] << 1;
+                QMF_RE(X[((l + offset)<<5) + n]) = u[n] << 1;
 #else
-            QMF_RE(X[((l + offset)<<5) + n]) = 2. * u[n];
+                QMF_RE(X[((l + offset)<<5) + n]) = 2. * u[n];
 #endif
+            } else {
+                QMF_RE(X[((l + offset)<<5) + n]) = 0;
+            }
         }
 #else
         x[0] = u[0];
