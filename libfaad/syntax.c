@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.52 2003/09/09 18:09:52 menno Exp $
+** $Id: syntax.c,v 1.53 2003/09/10 12:25:54 menno Exp $
 **/
 
 /*
@@ -521,7 +521,12 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
 #endif
 
     /* new in corrigendum 14496-3:2002 */
-    faad_byte_align(ld);
+#ifdef DRM
+    if (hDecoder->object_type != DRM_ER_LC)
+#endif
+    {
+        faad_byte_align(ld);
+    }
 
     return elements;
 }

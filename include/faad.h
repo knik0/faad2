@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: faad.h,v 1.27 2003/08/07 17:21:21 menno Exp $
+** $Id: faad.h,v 1.28 2003/09/10 12:25:53 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -90,6 +90,13 @@ extern "C" {
 #define BACK_CHANNEL_CENTER  (8)
 #define LFE_CHANNEL          (9)
 #define UNKNOWN_CHANNEL      (0)
+
+/* DRM channel definitions */
+#define DRMCH_MONO          1
+#define DRMCH_STEREO        2
+#define DRMCH_SBR_MONO      3
+#define DRMCH_SBR_LC_STEREO 4
+#define DRMCH_SBR_STEREO    5
 
 
 /* A decode call can eat up to FAAD_MIN_STREAMSIZE bytes per decoded channel,
@@ -171,6 +178,8 @@ char FAADAPI faacDecInit2(faacDecHandle hDecoder, unsigned char *pBuffer,
 char FAADAPI faacDecInitDRM(faacDecHandle hDecoder, unsigned long samplerate,
                             unsigned char channels);
 
+void FAADAPI faacDecPostSeekReset(faacDecHandle hDecoder, long frame);
+
 void FAADAPI faacDecClose(faacDecHandle hDecoder);
 
 void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
@@ -181,8 +190,6 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 char FAADAPI AudioSpecificConfig(unsigned char *pBuffer,
                                  unsigned long buffer_size,
                                  mp4AudioSpecificConfig *mp4ASC);
-
-void FAADAPI faacDecPostSeekReset(faacDecHandle hDecoder, unsigned long frame);
 
 #ifdef _WIN32
   #pragma pack(pop)

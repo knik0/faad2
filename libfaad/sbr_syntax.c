@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_syntax.c,v 1.9 2003/09/09 18:37:32 menno Exp $
+** $Id: sbr_syntax.c,v 1.10 2003/09/10 12:25:54 menno Exp $
 **/
 
 #include "common.h"
@@ -181,7 +181,8 @@ uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint8_t id_aac)
             return result;
     }
 
-    sbr_data(ld, sbr, id_aac);
+    if ((result = sbr_data(ld, sbr, id_aac)) > 0)
+        return result;
 
     /* no error */
     return 0;

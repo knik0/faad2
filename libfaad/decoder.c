@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.64 2003/09/09 18:09:51 menno Exp $
+** $Id: decoder.c,v 1.65 2003/09/10 12:25:54 menno Exp $
 **/
 
 #include "common.h"
@@ -698,6 +698,12 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     uint8_t channels = 0, ch_ele = 0;
     uint8_t output_channels = 0;
     bitfile *ld = (bitfile*)malloc(sizeof(bitfile));
+    uint32_t bitsconsumed;
+#ifdef DRM
+    uint8_t *revbuffer;
+    uint8_t *prevbufstart;   
+    uint8_t *pbufend;   
+#endif
 
     /* local copy of globals */
     uint8_t sf_index, object_type, channelConfiguration, outputFormat;
@@ -820,7 +826,8 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
 
     /* no more bit reading after this */
-    hInfo->bytesconsumed = bit2byte(faad_get_processed_bits(ld));
+    bitsconsumed = faad_get_processed_bits(ld);
+    hInfo->bytesconsumed = bit2byte(bitsconsumed);
     if (ld->error)
     {
         hInfo->error = 14;
@@ -829,6 +836,37 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     faad_endbits(ld);
     if (ld) free(ld);
     ld = NULL;
+
+#ifdef DRM
+#ifdef SBR_DEC
+    if ((hDecoder->sbr_present_flag == 1) && (hDecoder->object_type == DRM_ER_LC))
+    {
+        hDecoder->sbr_used[0] = 1;
+
+        if (!hDecoder->sbr[0])
+            hDecoder->sbr[0] = sbrDecodeInit(hDecoder->frameLength, 1);
+
+        /* Reverse bit reading of SBR data in DRM audio frame */
+        revbuffer = (uint8_t*)malloc(buffer_size*sizeof(uint8_t));
+        prevbufstart = revbuffer;
+        pbufend = &buffer[buffer_size - 1];
+        for (i = 0; i < buffer_size; i++)
+            *prevbufstart++ = tabFlipbits[*pbufend--];
+
+        /* Set SBR data */
+        hDecoder->sbr[0]->data = revbuffer;
+        /* consider 8 bits from AAC-CRC */
+        hDecoder->sbr[0]->data_size_bits = buffer_size*8 - bitsconsumed - 8;
+        hDecoder->sbr[0]->data_size =
+            bit2byte(hDecoder->sbr[0]->data_size_bits + 8);
+
+        hDecoder->sbr[0]->lcstereo_flag = hDecoder->lcstereo_flag;
+
+        hDecoder->sbr[0]->sample_rate = set_sample_rate(hDecoder->sf_index);
+        hDecoder->sbr[0]->sample_rate *= 2;
+    }
+#endif
+#endif
 
     if (!hDecoder->adts_header_present && !hDecoder->adif_header_present)
     {
