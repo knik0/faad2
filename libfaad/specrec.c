@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.25 2003/09/09 18:09:52 menno Exp $
+** $Id: specrec.c,v 1.26 2003/09/24 08:05:44 menno Exp $
 **/
 
 /*
@@ -555,13 +555,8 @@ static real_t pow2_table[] =
 };
 #endif
 
-#ifdef FIXED_POINT
 void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics, real_t *x_invquant,
                         uint16_t frame_len)
-#else
-void apply_scalefactors(ic_stream *ics, real_t *x_invquant, real_t *pow2_table,
-                        uint16_t frame_len)
-#endif
 {
     uint8_t g, sfb;
     uint16_t top;
@@ -593,7 +588,7 @@ void apply_scalefactors(ic_stream *ics, real_t *x_invquant, real_t *pow2_table,
             top = ics->sect_sfb_offset[g][sfb+1];
 
 #ifndef FIXED_POINT
-            scale = get_scale_factor_gain(ics->scale_factors[g][sfb], pow2_table);
+            scale = get_scale_factor_gain(ics->scale_factors[g][sfb], hDecoder->pow2_table);
 #else
             exp = (ics->scale_factors[g][sfb] - 100) / 4;
             frac = (ics->scale_factors[g][sfb] - 100) % 4;

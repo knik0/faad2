@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.70 2003/09/23 08:12:29 menno Exp $
+** $Id: decoder.c,v 1.71 2003/09/24 08:05:44 menno Exp $
 **/
 
 #include "common.h"
@@ -34,7 +34,6 @@
 #include "decoder.h"
 #include "mp4.h"
 #include "syntax.h"
-#include "specrec.h"
 #include "tns.h"
 #include "pns.h"
 #include "is.h"
@@ -724,13 +723,6 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #ifdef LTP_DEC
     real_t **lt_pred_stat;
 #endif
-#ifndef FIXED_POINT
-#if POW_TABLE_SIZE
-    real_t *pow2_table;
-#else
-    real_t *pow2_table;
-#endif
-#endif
     real_t **time_out;
 #ifdef SBR_DEC
     real_t **time_out2;
@@ -748,7 +740,6 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     void *sample_buffer;
     element *syntax_elements[MAX_SYNTAX_ELEMENTS];
     element **elements;
-    int16_t *spec_data[MAX_CHANNELS];
     real_t *spec_coef[MAX_CHANNELS];
 
     /* safety checks */
@@ -765,13 +756,6 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #endif
 #ifdef LTP_DEC
     lt_pred_stat = hDecoder->lt_pred_stat;
-#endif
-#ifndef FIXED_POINT
-#if POW_TABLE_SIZE
-    pow2_table = hDecoder->pow2_table;
-#else
-    pow2_table = NULL;
-#endif
 #endif
     window_shape_prev = hDecoder->window_shape_prev;
     time_out = hDecoder->time_out;
@@ -826,7 +810,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
     /* decode the complete bitstream */
     elements = raw_data_block(hDecoder, hInfo, ld, syntax_elements,
-        spec_data, spec_coef, pce, drc);
+        spec_coef, pce, drc);
 
     ch_ele = hDecoder->fr_ch_ele;
     channels = hDecoder->fr_channels;
@@ -952,31 +936,6 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
     sample_buffer = hDecoder->sample_buffer;
 
-    /* noiseless coding is done, the rest of the tools come now */
-    for (ch = 0; ch < channels; ch++)
-    {
-        ic_stream *ics;
-
-        /* find the syntax element to which this channel belongs */
-        if (syntax_elements[hDecoder->channel_element[ch]]->channel == ch)
-            ics = &(syntax_elements[hDecoder->channel_element[ch]]->ics1);
-        else if (syntax_elements[hDecoder->channel_element[ch]]->paired_channel == ch)
-            ics = &(syntax_elements[hDecoder->channel_element[ch]]->ics2);
-
-        /* inverse quantization */
-        inverse_quantization(spec_coef[ch], spec_data[ch], frame_len);
-
-        /* apply scalefactors */
-#ifdef FIXED_POINT
-        apply_scalefactors(hDecoder, ics, spec_coef[ch], frame_len);
-#else
-        apply_scalefactors(ics, spec_coef[ch], pow2_table, frame_len);
-#endif
-
-        /* deinterleave short block grouping */
-        if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
-            quant_to_spec(ics, spec_coef[ch], frame_len);
-    }
 
     /* Because for ms, is and pns both channels spectral coefficients are needed
        we have to restart running through all channels here.
@@ -1224,7 +1183,6 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     for (ch = 0; ch < channels; ch++)
     {
         if (spec_coef[ch]) free(spec_coef[ch]);
-        if (spec_data[ch]) free(spec_data[ch]);
     }
 
     for (i = 0; i < ch_ele; i++)
@@ -1247,7 +1205,6 @@ error:
     for (ch = 0; ch < channels; ch++)
     {
         if (spec_coef[ch]) free(spec_coef[ch]);
-        if (spec_data[ch]) free(spec_data[ch]);
     }
 
     for (i = 0; i < ch_ele; i++)

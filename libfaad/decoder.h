@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.h,v 1.27 2003/09/09 18:09:51 menno Exp $
+** $Id: decoder.h,v 1.28 2003/09/24 08:05:44 menno Exp $
 **/
 
 #ifndef __DECODER_H__
@@ -120,16 +120,13 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
 element *decode_sce_lfe(faacDecHandle hDecoder,
                         faacDecFrameInfo *hInfo, bitfile *ld,
-                        int16_t **spec_data, real_t **spec_coef,
-                        uint8_t id_syn_ele);
+                        real_t **spec_coef, uint8_t id_syn_ele);
 element *decode_cpe(faacDecHandle hDecoder,
                     faacDecFrameInfo *hInfo, bitfile *ld,
-                    int16_t **spec_data, real_t **spec_coef,
-                    uint8_t id_syn_ele);
+                    real_t **spec_coef, uint8_t id_syn_ele);
 element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
                          bitfile *ld, element **elements,
-                         int16_t **spec_data, real_t **spec_coef,
-                         program_config *pce, drc_info *drc);
+                         real_t **spec_coef, program_config *pce, drc_info *drc);
 
 #ifdef _WIN32
   #pragma pack(pop)

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.h,v 1.35 2003/09/22 20:05:32 menno Exp $
+** $Id: syntax.h,v 1.36 2003/09/24 08:05:45 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -113,10 +113,10 @@ void get_adif_header(adif_header *adif, bitfile *ld);
 /* static functions */
 static uint8_t single_lfe_channel_element(faacDecHandle hDecoder,
                                           element *sce, bitfile *ld,
-                                          int16_t *spec_data);
+                                          real_t *spec_coef);
 static uint8_t channel_pair_element(faacDecHandle hDecoder, element *cpe,
-                                    bitfile *ld, int16_t *spec_data1,
-                                    int16_t *spec_data2);
+                                    bitfile *ld,
+                                    real_t *spec_coef1, real_t *spec_coef2);
 static uint8_t coupling_channel_element(faacDecHandle hDecoder, bitfile *ld);
 static uint16_t data_stream_element(faacDecHandle hDecoder, bitfile *ld);
 static uint8_t program_config_element(program_config *pce, bitfile *ld);
