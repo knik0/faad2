@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.64 2004/01/05 14:05:12 menno Exp $
+** $Id: syntax.c,v 1.65 2004/01/10 18:52:47 menno Exp $
 **/
 
 /*
@@ -443,14 +443,6 @@ void raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
 #endif
                     )) > 0)
                     return;
-#ifdef SBR_DEC
-                if (hDecoder->sbr_used[ch_ele-1])
-                {
-                    hDecoder->sbr_present_flag = 1;
-                    hDecoder->sbr[ch_ele-1]->sample_rate = get_sample_rate(hDecoder->sf_index);
-                    hDecoder->sbr[ch_ele-1]->sample_rate *= 2;
-                }
-#endif
                 break;
             }
         }
@@ -958,11 +950,14 @@ static uint8_t fill_element(faacDecHandle hDecoder, bitfile *ld, drc_info *drc
                     );
             }
 
-            /* read in all the SBR data for processing later on */
-            hDecoder->sbr[sbr_ele]->data = (uint8_t*)faad_getbitbuffer(ld, count*8);
-            hDecoder->sbr[sbr_ele]->data_size = count;
+            hDecoder->sbr_present_flag = 1;
+            hDecoder->sbr[sbr_ele]->sample_rate = get_sample_rate(hDecoder->sf_index);
+            hDecoder->sbr[sbr_ele]->sample_rate *= 2;
             /* save id of previous element, this sbr object belongs to that element */
             hDecoder->sbr[sbr_ele]->id_aac = hDecoder->element_id[sbr_ele];
+
+            /* parse the SBR data */
+            hDecoder->sbr[sbr_ele]->ret = sbr_extension_data(ld, hDecoder->sbr[sbr_ele], count);
         } else {
             hDecoder->sbr_used[sbr_ele] = 0;
 #endif

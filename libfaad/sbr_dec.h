@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.h,v 1.14 2004/01/05 14:05:12 menno Exp $
+** $Id: sbr_dec.h,v 1.15 2004/01/10 18:52:47 menno Exp $
 **/
 
 #ifndef __SBR_DEC_H__
@@ -32,6 +32,9 @@
 extern "C" {
 #endif
 
+#ifdef PS_DEC
+#include "ps_dec.h"
+#endif
 
 /* MAX_NTSRHFG: maximum of number_time_slots * rate + HFGen. 16*2+8 */
 #define MAX_NTSRHFG 40
@@ -58,6 +61,7 @@ typedef struct
 
     uint8_t rate;
     uint8_t just_seeked;
+    uint8_t ret;
 
     uint8_t amp_res[2];
 
@@ -140,9 +144,6 @@ typedef struct
     uint32_t frame;
     uint32_t header_count;
 
-    uint8_t *data;
-    uint16_t data_size;
-
     uint8_t id_aac;
     qmfa_info *qmfa[2];
     qmfs_info *qmfs[2];
@@ -153,7 +154,6 @@ typedef struct
 #ifdef DRM
 	int8_t lcstereo_flag;
 	uint8_t bs_dataextra;
-	uint16_t data_size_bits;
     uint8_t Is_DRM_SBR;
 #endif
 
@@ -161,6 +161,10 @@ typedef struct
 	uint8_t numTimeSlots;
 	uint8_t tHFGen;
 	uint8_t tHFAdj;
+
+#ifdef PS_DEC
+    ps_info ps;
+#endif
 
     /* to get it compiling */
     /* we'll see during the coding of all the tools, whether

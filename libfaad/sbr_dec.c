@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.c,v 1.19 2004/01/05 14:05:12 menno Exp $
+** $Id: sbr_dec.c,v 1.20 2004/01/10 18:52:47 menno Exp $
 **/
 
 
@@ -150,7 +150,7 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
     int16_t i, k, l;
 
     uint8_t dont_process = 0;
-    uint8_t ch, channels, ret;
+    uint8_t ch, channels;
     real_t *ch_buf;
 
     ALIGN qmf_t X[MAX_NTSR][64];
@@ -158,48 +158,15 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
     ALIGN real_t deg[64];
 #endif
 
-    bitfile *ld = NULL;
-
     channels = (sbr->id_aac == ID_SCE) ? 1 : 2;
 
-    if (sbr->data == NULL || sbr->data_size == 0)
-    {
-        ret = 1;
-    } else {
-        ld = (bitfile*)faad_malloc(sizeof(bitfile));
-
-        /* initialise and read the bitstream */
-        faad_initbits(ld, sbr->data, sbr->data_size);
-
-#ifdef DRM
-        if (sbr->Is_DRM_SBR)
-            faad_getbits(ld, 8); /* Skip 8-bit CRC */
-#endif
-
-        ret = sbr_extension_data(ld, sbr);
-
-#ifdef DRM
-        /* Check CRC */
-        if (sbr->Is_DRM_SBR)
-            ld->error = faad_check_CRC(ld, faad_get_processed_bits(ld) - 8);
-#endif
-
-        ret = ld->error ? ld->error : ret;
-        faad_endbits(ld);
-        if (ld) faad_free(ld);
-        ld = NULL;
-    }
-
-    if (sbr->data) faad_free(sbr->data);
-    sbr->data = NULL;
-
-    if (ret || (sbr->header_count == 0))
+    if (sbr->ret || (sbr->header_count == 0))
     {
         /* don't process just upsample */
         dont_process = 1;
 
         /* Re-activate reset for next frame */
-        if (ret && sbr->Reset)
+        if (sbr->ret && sbr->Reset)
             sbr->bs_start_freq_prev = -1;
     }
 

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: bits.c,v 1.30 2004/01/05 14:05:11 menno Exp $
+** $Id: bits.c,v 1.31 2004/01/10 18:52:47 menno Exp $
 **/
 
 #include "common.h"
@@ -99,8 +99,13 @@ void faad_flushbits_ex(bitfile *ld, uint32_t bits)
     uint32_t tmp;
 
     ld->bufa = ld->bufb;
-    tmp = getdword(ld->tail);
-    ld->tail++;
+    if (ld->no_more_reading == 0)
+    {
+        tmp = getdword(ld->tail);
+        ld->tail++;
+    } else {
+        tmp = 0;
+    }
     ld->bufb = tmp;
     ld->bits_left += (32 - bits);
     ld->bytes_used += 4;

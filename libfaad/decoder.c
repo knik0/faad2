@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.85 2004/01/06 11:59:48 menno Exp $
+** $Id: decoder.c,v 1.86 2004/01/10 18:52:47 menno Exp $
 **/
 
 #include "common.h"
@@ -36,8 +36,11 @@
 #include "syntax.h"
 #include "error.h"
 #include "output.h"
+#include "filtbank.h"
+#include "drc.h"
 #ifdef SBR_DEC
 #include "sbr_dec.h"
+#include "sbr_syntax.h"
 #endif
 #ifdef SSR_DEC
 #include "ssr.h"
@@ -850,7 +853,9 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #ifdef SBR_DEC
     if ((hDecoder->sbr_present_flag == 1) && (hDecoder->object_type == DRM_ER_LC))
     {
-        int32_t i;
+        uint32_t i;
+        uint16_t count = 0;
+        bitfile ld_sbr = {0};
 
         if (bitsconsumed + 8 > buffer_size*8)
         {
@@ -871,11 +876,9 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             *prevbufstart++ = tabFlipbits[*pbufend--];
 
         /* Set SBR data */
-        hDecoder->sbr[0]->data = revbuffer;
+        faad_initbits(&ld_sbr, revbuffer, buffer_size);
         /* consider 8 bits from AAC-CRC */
-        hDecoder->sbr[0]->data_size_bits = buffer_size*8 - bitsconsumed - 8;
-        hDecoder->sbr[0]->data_size =
-            bit2byte(hDecoder->sbr[0]->data_size_bits + 8);
+        count = (uint16_t)bit2byte(buffer_size*8 - bitsconsumed - 8);
 
         hDecoder->sbr[0]->lcstereo_flag = hDecoder->lcstereo_flag;
 
@@ -883,6 +886,17 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         hDecoder->sbr[0]->sample_rate *= 2;
 
         hDecoder->sbr[0]->id_aac = hDecoder->element_id[0];
+
+        faad_getbits(&ld_sbr, 8); /* Skip 8-bit CRC */
+
+        hDecoder->sbr[0]->ret = sbr_extension_data(&ld_sbr, hDecoder->sbr[0], count);
+
+        /* check CRC */
+        /* no need to check it if there was already an error */
+        if (hDecoder->sbr[0]->ret == 0)
+            hDecoder->sbr[0]->ret = faad_check_CRC(&ld_sbr, faad_get_processed_bits(&ld_sbr) - 8);
+
+        faad_endbits(&ld_sbr);
     }
 #endif
 #endif
@@ -964,8 +978,6 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                     , 0
 #endif
                     );
-                hDecoder->sbr[i]->data = NULL;
-                hDecoder->sbr[i]->data_size = 0;
                 hDecoder->sbr[i]->id_aac = hDecoder->element_id[i];
             }
 

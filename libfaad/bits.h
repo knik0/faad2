@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: bits.h,v 1.29 2004/01/05 14:05:11 menno Exp $
+** $Id: bits.h,v 1.30 2004/01/10 18:52:47 menno Exp $
 **/
 
 #ifndef __BITS_H__
@@ -126,8 +126,8 @@ static INLINE uint32_t faad_showbits(bitfile *ld, uint32_t bits)
 static INLINE void faad_flushbits(bitfile *ld, uint32_t bits)
 {
     /* do nothing if error */
-    if (ld->error != 0)
-        return;
+//    if (ld->error != 0)
+//        return;
 
     if (bits < ld->bits_left)
     {
@@ -142,8 +142,8 @@ static INLINE uint32_t faad_getbits(bitfile *ld, uint32_t n DEBUGDEC)
 {
     uint32_t ret;
 
-    if (ld->no_more_reading || n == 0)
-        return 0;
+//    if (ld->no_more_reading || n == 0)
+//        return 0;
 
     ret = faad_showbits(ld, n);
     faad_flushbits(ld, n);
@@ -160,12 +160,16 @@ static INLINE uint8_t faad_get1bit(bitfile *ld DEBUGDEC)
 {
     uint8_t r;
 
-    if (ld->bits_left == 0)
-        return (uint8_t)faad_getbits(ld, 1 DEBUGVAR(print,var,dbg));
+    if (ld->bits_left > 0)
+    {
+        ld->bits_left--;
+        r = (uint8_t)((ld->bufa >> ld->bits_left) & 1);
+        return r;
+    }
 
-    ld->bits_left--;
-    r = (uint8_t)((ld->bufa >> ld->bits_left) & 1);
-
+    /* bits_left == 0 */
+    r = (uint8_t)(ld->bufb >> 31);
+    faad_flushbits_ex(ld, 1);
     return r;
 }
 
