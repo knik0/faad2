@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.68 2003/09/22 18:22:19 menno Exp $
+** $Id: decoder.c,v 1.69 2003/09/22 20:05:32 menno Exp $
 **/
 
 #include "common.h"
@@ -914,6 +914,12 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     hInfo->object_type = hDecoder->object_type;
     /* sbr */
     hInfo->sbr = NO_SBR;
+    /* header type */
+    hInfo->header_type = RAW;
+    if (hDecoder->adif_header_present)
+        hInfo->header_type = ADIF;
+    if (hDecoder->adts_header_present)
+        hInfo->header_type = ADTS;
 
     /* check if frame has channel elements */
     if (channels == 0)

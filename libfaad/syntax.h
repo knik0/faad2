@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.h,v 1.34 2003/09/22 18:22:19 menno Exp $
+** $Id: syntax.h,v 1.35 2003/09/22 20:05:32 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -44,6 +44,11 @@ extern "C" {
 #define ER_LC     17
 #define ER_LTP    19
 #define DRM_ER_LC 27 /* special object type for DRM */
+
+/* header types */
+#define RAW        0
+#define ADIF       1
+#define ADTS       2
 
 /* SBR signalling */
 #define NO_SBR           0

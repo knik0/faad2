@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: faad.h,v 1.30 2003/09/22 18:22:19 menno Exp $
+** $Id: faad.h,v 1.31 2003/09/22 20:05:31 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -155,6 +155,9 @@ typedef struct faacDecFrameInfo
 
     /* MPEG-4 ObjectType */
     unsigned char object_type;
+
+    /* AAC header type; MP4 will be signalled as RAW also */
+    unsigned char header_type;
 
     /* multichannel configuration */
     unsigned char num_front_channels;

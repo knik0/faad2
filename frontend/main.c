@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.46 2003/09/22 18:22:19 menno Exp $
+** $Id: main.c,v 1.47 2003/09/22 20:05:31 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -111,9 +111,10 @@ void advance_buffer(aac_buffer *b, int bytes)
     b->bytes_into_buffer -= bytes;
 }
 
+static int adts_sample_rates[] = {96000,88200,64000,48000,44100,32000,24000,22050,16000,12000,11025,8000,7350,0,0,0};
+
 int adts_parse(aac_buffer *b, int *bitrate, float *length)
 {
-    static int sample_rates[] = {96000,88200,64000,48000,44100,32000,24000,22050,16000,12000,11025,8000};
     int frames, frame_length;
     int t_framelength = 0;
     int samplerate;
@@ -131,7 +132,7 @@ int adts_parse(aac_buffer *b, int *bitrate, float *length)
                 break;
 
             if (frames == 0)
-                samplerate = sample_rates[(b->buffer[2]&0x3c)>>2];
+                samplerate = adts_sample_rates[(b->buffer[2]&0x3c)>>2];
 
             frame_length = ((((unsigned int)b->buffer[3] & 0x3)) << 11)
                 | (((unsigned int)b->buffer[4]) << 3) | (b->buffer[5] >> 5);
@@ -246,6 +247,85 @@ void print_channel_info(faacDecFrameInfo *frameInfo)
     printf("\n");
 }
 
+int FindAdtsSRIndex(int sr)
+{
+    int i;
+
+	for (i = 0; i < 16; i++)
+    {
+		if (sr == adts_sample_rates[i])
+			return i;
+	}
+	return 16 - 1;
+}
+
+unsigned char *MakeAdtsHeader(int *dataSize, faacDecFrameInfo *hInfo)
+{
+    unsigned char *data;
+    int profile = (hInfo->object_type - 1) & 0x3;
+    int sr_index = ((hInfo->sbr == SBR_UPSAMPLED) || (hInfo->sbr == NO_SBR_UPSAMPLED)) ?
+        FindAdtsSRIndex(hInfo->samplerate / 2) : FindAdtsSRIndex(hInfo->samplerate);
+    int framesize = 7 + hInfo->bytesconsumed;
+
+    if (hInfo->header_type == ADTS)
+        framesize -= 7;
+
+    *dataSize = 7;
+
+    data = malloc(*dataSize * sizeof(unsigned char));
+    memset(data, 0, *dataSize * sizeof(unsigned char));
+
+    data[0] += 0xFF; /* 8b: syncword */
+
+    data[1] += 0xF0; /* 4b: syncword */
+    /* 1b: mpeg id = 0 */
+    /* 2b: layer = 0 */
+    data[1] += 1; /* 1b: protection absent */
+
+    data[2] += ((profile << 6) & 0xC0); /* 2b: profile */
+    data[2] += ((sr_index << 2) & 0x3C); /* 4b: sampling_frequency_index */
+    /* 1b: private = 0 */
+    data[2] += ((hInfo->channels >> 2) & 0x1); /* 1b: channel_configuration */
+
+    data[3] += ((hInfo->channels << 6) & 0xC0); /* 2b: channel_configuration */
+    /* 1b: original */
+    /* 1b: home */
+    /* 1b: copyright_id */
+    /* 1b: copyright_id_start */
+    data[3] += ((framesize >> 11) & 0x3); /* 2b: aac_frame_length */
+
+    data[4] += ((framesize >> 3) & 0xFF); /* 8b: aac_frame_length */
+
+    data[5] += ((framesize << 5) & 0xE0); /* 3b: aac_frame_length */
+    data[5] += ((0x7FF >> 6) & 0x1F); /* 5b: adts_buffer_fullness */
+
+    data[6] += ((0x7FF << 2) & 0x3F); /* 6b: adts_buffer_fullness */
+    /* 2b: num_raw_data_blocks */
+
+    return data;
+
+#if 0
+    // build adts header
+    adts.PutBits(0xFFF, 12);		// syncword
+    adts.PutBits(isMpeg2, 1);		// id
+    adts.PutBits(0, 2);				// layer
+    adts.PutBits(1, 1);				// protection_absent
+    adts.PutBits(profile, 2);		// profile
+    adts.PutBits(
+        MP4AV_AdtsFindSamplingRateIndex(samplingFrequency),
+        4);							// sampling_frequency_index
+    adts.PutBits(0, 1);				// private
+    adts.PutBits(channels, 3);		// channel_configuration
+    adts.PutBits(0, 1);				// original
+    adts.PutBits(0, 1);				// home
+
+    adts.PutBits(0, 1);				// copyright_id
+    adts.PutBits(0, 1);				// copyright_id_start
+    adts.PutBits(*pAdtsDataLength, 13);	// aac_frame_length
+    adts.PutBits(0x7FF, 11);		// adts_buffer_fullness
+    adts.PutBits(0, 2);				// num_raw_data_blocks
+#endif
+}
 
 /* globals */
 char *progName;
@@ -268,6 +348,7 @@ void usage(void)
     fprintf(stdout, "Options:\n");
     fprintf(stdout, " -h    Shows this help screen.\n");
     fprintf(stdout, " -i    Shows info about the input file.\n");
+    fprintf(stdout, " -a X  Write MPEG-4 AAC ADTS output file.\n");
     fprintf(stdout, " -o X  Set output filename.\n");
     fprintf(stdout, " -f X  Set output format. Valid values for X are:\n");
     fprintf(stdout, "        1:  Microsoft WAV format (default).\n");
@@ -299,9 +380,9 @@ void usage(void)
     return;
 }
 
-int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
+int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_stdout,
                   int def_srate, int object_type, int outputFormat, int fileType,
-                  int downMatrix, int infoOnly)
+                  int downMatrix, int infoOnly, int adts_out)
 {
     int tagsize;
     unsigned long samplerate;
@@ -309,6 +390,10 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
     void *sample_buffer;
 
     audio_file *aufile;
+
+    FILE *adtsFile;
+    unsigned char *adtsData;
+    int adtsDataSize;
 
     faacDecHandle hDecoder;
     faacDecFrameInfo frameInfo;
@@ -326,6 +411,16 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
     aac_buffer b;
 
     memset(&b, 0, sizeof(aac_buffer));
+
+    if (adts_out)
+    {
+        adtsFile = fopen(adts_fn, "wb");
+        if (adtsFile == NULL)
+        {
+            fprintf(stderr, "Error opening file: %s\n", adts_fn);
+            return 1;
+        }
+    }
 
     b.infile = fopen(aacfile, "rb");
     if (b.infile == NULL)
@@ -459,6 +554,20 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
         sample_buffer = faacDecDecode(hDecoder, &frameInfo,
             b.buffer, b.bytes_into_buffer);
 
+        if (adts_out == 1)
+        {
+            adtsData = MakeAdtsHeader(&adtsDataSize, &frameInfo);
+
+            /* write the adts header */
+            fwrite(adtsData, 1, adtsDataSize, adtsFile);
+
+            /* write the frame data */
+            if (frameInfo.header_type == ADTS)
+                fwrite(b.buffer + 7, 1, frameInfo.bytesconsumed - 7, adtsFile);
+            else
+                fwrite(b.buffer, 1, frameInfo.bytesconsumed, adtsFile);
+        }
+
         /* update buffer indices */
         advance_buffer(&b, frameInfo.bytesconsumed);
 
@@ -474,22 +583,27 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
             /* print some channel info */
             print_channel_info(&frameInfo);
 
-            /* open output file */
-            if (!to_stdout)
+            if (!adts_out)
             {
-                aufile = open_audio_file(sndfile, frameInfo.samplerate, frameInfo.channels,
-                    outputFormat, fileType, aacChannelConfig2wavexChannelMask(&frameInfo));
+                /* open output file */
+                if (!to_stdout)
+                {
+                    aufile = open_audio_file(sndfile, frameInfo.samplerate, frameInfo.channels,
+                        outputFormat, fileType, aacChannelConfig2wavexChannelMask(&frameInfo));
+                } else {
+                    aufile = open_audio_file("-", frameInfo.samplerate, frameInfo.channels,
+                        outputFormat, fileType, aacChannelConfig2wavexChannelMask(&frameInfo));
+                }
+                if (aufile == NULL)
+                {
+                    if (b.buffer)
+                        free(b.buffer);
+                    faacDecClose(hDecoder);
+                    fclose(b.infile);
+                    return 0;
+                }
             } else {
-                aufile = open_audio_file("-", frameInfo.samplerate, frameInfo.channels,
-                    outputFormat, fileType, aacChannelConfig2wavexChannelMask(&frameInfo));
-            }
-            if (aufile == NULL)
-            {
-                if (b.buffer)
-                    free(b.buffer);
-                faacDecClose(hDecoder);
-                fclose(b.infile);
-                return 0;
+                fprintf(stderr, "Writing output MPEG-4 AAC ADTS file.\n\n");
             }
             first_time = 0;
         }
@@ -505,7 +619,7 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
 #endif
         }
 
-        if ((frameInfo.error == 0) && (frameInfo.samples > 0))
+        if ((frameInfo.error == 0) && (frameInfo.samples > 0) && (!adts_out))
         {
             write_audio_file(aufile, sample_buffer, frameInfo.samples, 0);
         }
@@ -521,9 +635,14 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
 
     faacDecClose(hDecoder);
 
+    if (adts_out == 1)
+    {
+        fclose(adtsFile);
+    }
+
     fclose(b.infile);
 
-    if (!first_time)
+    if (!first_time && !adts_out)
         close_audio_file(aufile);
 
     if (b.buffer)
@@ -573,8 +692,9 @@ unsigned long srates[] =
     12000, 11025, 8000
 };
 
-int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
-                  int outputFormat, int fileType, int downMatrix, int noGapless, int infoOnly)
+int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
+                  int outputFormat, int fileType, int downMatrix, int noGapless,
+                  int infoOnly, int adts_out)
 {
     int track;
     unsigned long samplerate;
@@ -585,6 +705,10 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
     MP4SampleId sampleId, numSamples;
 
     audio_file *aufile;
+
+    FILE *adtsFile;
+    unsigned char *adtsData;
+    int adtsDataSize;
 
     faacDecHandle hDecoder;
     faacDecConfigurationPtr config;
@@ -611,6 +735,16 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
     config->outputFormat = outputFormat;
     config->downMatrix = downMatrix;
     faacDecSetConfiguration(hDecoder, config);
+
+    if (adts_out)
+    {
+        adtsFile = fopen(adts_fn, "wb");
+        if (adtsFile == NULL)
+        {
+            fprintf(stderr, "Error opening file: %s\n", adts_fn);
+            return 1;
+        }
+    }
 
     infile = MP4Read(mp4file, 0);
     if (!infile)
@@ -702,6 +836,16 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
 
         sample_buffer = faacDecDecode(hDecoder, &frameInfo, buffer, buffer_size);
 
+        if (adts_out == 1)
+        {
+            adtsData = MakeAdtsHeader(&adtsDataSize, &frameInfo);
+
+            /* write the adts header */
+            fwrite(adtsData, 1, adtsDataSize, adtsFile);
+
+            fwrite(buffer, 1, frameInfo.bytesconsumed, adtsFile);
+        }
+
         if (buffer) free(buffer);
 
         if (!noGapless)
@@ -732,23 +876,26 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
             /* print some channel info */
             print_channel_info(&frameInfo);
 
-            /* open output file */
-            if(!to_stdout)
+            if (!adts_out)
             {
-                aufile = open_audio_file(sndfile, frameInfo.samplerate, frameInfo.channels,
-                    outputFormat, fileType, aacChannelConfig2wavexChannelMask(&frameInfo));
-            } else {
+                /* open output file */
+                if(!to_stdout)
+                {
+                    aufile = open_audio_file(sndfile, frameInfo.samplerate, frameInfo.channels,
+                        outputFormat, fileType, aacChannelConfig2wavexChannelMask(&frameInfo));
+                } else {
 #ifdef _WIN32
-                setmode(fileno(stdout), O_BINARY);
+                    setmode(fileno(stdout), O_BINARY);
 #endif
-                aufile = open_audio_file("-", frameInfo.samplerate, frameInfo.channels,
-                    outputFormat, fileType, aacChannelConfig2wavexChannelMask(&frameInfo));
-            }
-            if (aufile == NULL)
-            {
-                faacDecClose(hDecoder);
-                MP4Close(infile);
-                return 0;
+                    aufile = open_audio_file("-", frameInfo.samplerate, frameInfo.channels,
+                        outputFormat, fileType, aacChannelConfig2wavexChannelMask(&frameInfo));
+                }
+                if (aufile == NULL)
+                {
+                    faacDecClose(hDecoder);
+                    MP4Close(infile);
+                    return 0;
+                }
             }
             first_time = 0;
         }
@@ -766,7 +913,7 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
 #endif
         }
 
-        if ((frameInfo.error == 0) && (sample_count > 0))
+        if ((frameInfo.error == 0) && (sample_count > 0) && (!adts_out))
         {
             write_audio_file(aufile, sample_buffer, sample_count, delay);
         }
@@ -781,9 +928,14 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
 
     faacDecClose(hDecoder);
 
+    if (adts_out == 1)
+    {
+        fclose(adtsFile);
+    }
+
     MP4Close(infile);
 
-    if (!first_time)
+    if (!first_time && !adts_out)
         close_audio_file(aufile);
 
     return frameInfo.error;
@@ -800,12 +952,14 @@ int main(int argc, char *argv[])
     int format = 1;
     int outputFormat = FAAD_FMT_16BIT;
     int outfile_set = 0;
+    int adts_out = 0;
     int showHelp = 0;
     int mp4file = 0;
     int noGapless = 0;
     char *fnp;
     char aacFileName[255];
     char audioFileName[255];
+    char adtsFileName[255];
     MP4FileHandle infile;
 
 /* System dependant types */
@@ -836,6 +990,7 @@ int main(int argc, char *argv[])
         int option_index = 0;
         static struct option long_options[] = {
             { "outfile",    0, 0, 'o' },
+            { "adtsout",    0, 0, 'a' },
             { "format",     0, 0, 'f' },
             { "bits",       0, 0, 'b' },
             { "samplerate", 0, 0, 's' },
@@ -847,7 +1002,7 @@ int main(int argc, char *argv[])
             { "help",       0, 0, 'h' }
         };
 
-        c = getopt_long(argc, argv, "o:s:f:b:l:wgdhi",
+        c = getopt_long(argc, argv, "o:a:s:f:b:l:wgdhi",
             long_options, &option_index);
 
         if (c == -1)
@@ -855,13 +1010,22 @@ int main(int argc, char *argv[])
 
         switch (c) {
         case 'o':
-            if (optarg) {
+            if (optarg)
+            {
                 outfile_set = 1;
                 strcpy(audioFileName, optarg);
             }
             break;
+        case 'a':
+            if (optarg)
+            {
+                adts_out = 1;
+                strcpy(adtsFileName, optarg);
+            }
+            break;
         case 's':
-            if (optarg) {
+            if (optarg)
+            {
                 char dr[10];
                 if (sscanf(optarg, "%s", dr) < 1) {
                     def_srate = 0;
@@ -871,9 +1035,11 @@ int main(int argc, char *argv[])
             }
             break;
         case 'f':
-            if (optarg) {
+            if (optarg)
+            {
                 char dr[10];
-                if (sscanf(optarg, "%s", dr) < 1) {
+                if (sscanf(optarg, "%s", dr) < 1)
+                {
                     format = 1;
                 } else {
                     format = atoi(dr);
@@ -883,9 +1049,11 @@ int main(int argc, char *argv[])
             }
             break;
         case 'b':
-            if (optarg) {
+            if (optarg)
+            {
                 char dr[10];
-                if (sscanf(optarg, "%s", dr) < 1) {
+                if (sscanf(optarg, "%s", dr) < 1)
+                {
                     outputFormat = FAAD_FMT_16BIT; /* just use default */
                 } else {
                     outputFormat = atoi(dr);
@@ -895,9 +1063,11 @@ int main(int argc, char *argv[])
             }
             break;
         case 'l':
-            if (optarg) {
+            if (optarg)
+            {
                 char dr[10];
-                if (sscanf(optarg, "%s", dr) < 1) {
+                if (sscanf(optarg, "%s", dr) < 1)
+                {
                     object_type = LC; /* default */
                 } else {
                     object_type = atoi(dr);
@@ -971,11 +1141,11 @@ int main(int argc, char *argv[])
 
     if (mp4file)
     {
-        result = decodeMP4file(aacFileName, audioFileName, writeToStdio,
-            outputFormat, format, downMatrix, noGapless, infoOnly);
+        result = decodeMP4file(aacFileName, audioFileName, adtsFileName, writeToStdio,
+            outputFormat, format, downMatrix, noGapless, infoOnly, adts_out);
     } else {
-        result = decodeAACfile(aacFileName, audioFileName, writeToStdio,
-            def_srate, object_type, outputFormat, format, downMatrix, infoOnly);
+        result = decodeAACfile(aacFileName, audioFileName, adtsFileName, writeToStdio,
+            def_srate, object_type, outputFormat, format, downMatrix, infoOnly, adts_out);
     }
 
 
