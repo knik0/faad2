@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.5 2002/01/23 23:42:14 menno Exp $
+** $Id: in_mp4.c,v 1.6 2002/01/24 09:27:54 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -678,7 +678,6 @@ void stop()
 
 int getsonglength(char *fn)
 {
-#if 0
     int track;
     long long msDuration;
 	MP4Duration length;
@@ -702,9 +701,6 @@ int getsonglength(char *fn)
     MP4Close(file);
 
     return msDuration;
-#else
-    return 0;
-#endif
 }
 
 int getlength()
