@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: cfft.h,v 1.12 2003/11/12 20:47:57 menno Exp $
+** $Id: cfft.h,v 1.13 2003/11/17 19:40:12 menno Exp $
 **/
 
 #ifndef __CFFT_H__
@@ -58,7 +58,7 @@ static void passf5(const uint16_t ido, const uint16_t l1, const complex_t *cc, c
                    const complex_t *wa1, const complex_t *wa2, const complex_t *wa3,
                    const complex_t *wa4, const int8_t isign);
 INLINE void cfftf1(uint16_t n, complex_t *c, complex_t *ch,
-                   uint16_t *ifac, complex_t *wa, int8_t isign);
+                   const uint16_t *ifac, const complex_t *wa, const int8_t isign);
 static void cffti1(uint16_t n, complex_t *wa, uint16_t *ifac);
 
 

@@ -1,6 +1,6 @@
 Summary:    C library and frontend for decoding MPEG2/4 AAC
 Name:       faad2
-Version:    2.0.031106
+Version:    2.0.rc3
 Release:    1
 License:    GPL
 Group:      Applications/Multimedia
@@ -55,11 +55,12 @@ This is a Quicktime library for UNIX in a freely redistributable,
 statically linkable library.
 
 %prep
-%setup -n %{name}
+#%setup -n %{name}
+%setup -n %{name}-%{version}
 #%patch -p0
 
 %build
-sh bootstrap
+#sh bootstrap
 ./configure --with-drm --with-xmms --prefix=/usr
 make
 

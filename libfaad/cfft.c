@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: cfft.c,v 1.19 2003/11/12 20:47:57 menno Exp $
+** $Id: cfft.c,v 1.20 2003/11/17 19:40:11 menno Exp $
 **/
 
 /*
@@ -585,7 +585,7 @@ static void passf5(const uint16_t ido, const uint16_t l1, const complex_t *cc,
   ----------------------------------------------------------------------*/
 
 INLINE void cfftf1(uint16_t n, complex_t *c, complex_t *ch,
-                   uint16_t *ifac, complex_t *wa, int8_t isign)
+                   const uint16_t *ifac, const complex_t *wa, const int8_t isign)
 {
     uint16_t i;
     uint16_t k1, l1, l2;
@@ -610,17 +610,17 @@ INLINE void cfftf1(uint16_t n, complex_t *c, complex_t *ch,
             ix3 = ix2 + ido;
 
             if (na == 0)
-                passf4(ido, l1, c, ch, &wa[iw], &wa[ix2], &wa[ix3], isign);
+                passf4((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)c, ch, &wa[iw], &wa[ix2], &wa[ix3], isign);
             else
-                passf4(ido, l1, ch, c, &wa[iw], &wa[ix2], &wa[ix3], isign);
+                passf4((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)ch, c, &wa[iw], &wa[ix2], &wa[ix3], isign);
 
             na = 1 - na;
             break;
         case 2:
             if (na == 0)
-                passf2(ido, l1, c, ch, &wa[iw], isign);
+                passf2((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)c, ch, &wa[iw], isign);
             else
-                passf2(ido, l1, ch, c, &wa[iw], isign);
+                passf2((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)ch, c, &wa[iw], isign);
 
             na = 1 - na;
             break;
@@ -628,9 +628,9 @@ INLINE void cfftf1(uint16_t n, complex_t *c, complex_t *ch,
             ix2 = iw + ido;
 
             if (na == 0)
-                passf3(ido, l1, c, ch, &wa[iw], &wa[ix2], isign);
+                passf3((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)c, ch, &wa[iw], &wa[ix2], isign);
             else
-                passf3(ido, l1, ch, c, &wa[iw], &wa[ix2], isign);
+                passf3((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)ch, c, &wa[iw], &wa[ix2], isign);
 
             na = 1 - na;
             break;
@@ -640,9 +640,9 @@ INLINE void cfftf1(uint16_t n, complex_t *c, complex_t *ch,
             ix4 = ix3 + ido;
 
             if (na == 0)
-                passf5(ido, l1, c, ch, &wa[iw], &wa[ix2], &wa[ix3], &wa[ix4], isign);
+                passf5((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)c, ch, &wa[iw], &wa[ix2], &wa[ix3], &wa[ix4], isign);
             else
-                passf5(ido, l1, ch, c, &wa[iw], &wa[ix2], &wa[ix3], &wa[ix4], isign);
+                passf5((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)ch, c, &wa[iw], &wa[ix2], &wa[ix3], &wa[ix4], isign);
 
             na = 1 - na;
             break;
@@ -664,12 +664,12 @@ INLINE void cfftf1(uint16_t n, complex_t *c, complex_t *ch,
 
 void cfftf(cfft_info *cfft, complex_t *c)
 {
-    cfftf1(cfft->n, c, cfft->work, cfft->ifac, cfft->tab, -1);
+    cfftf1(cfft->n, c, cfft->work, (const uint16_t*)cfft->ifac, (const complex_t*)cfft->tab, -1);
 }
 
 void cfftb(cfft_info *cfft, complex_t *c)
 {
-    cfftf1(cfft->n, c, cfft->work, cfft->ifac, cfft->tab, +1);
+    cfftf1(cfft->n, c, cfft->work, (const uint16_t*)cfft->ifac, (const complex_t*)cfft->tab, +1);
 }
 
 static void cffti1(uint16_t n, complex_t *wa, uint16_t *ifac)
@@ -809,3 +809,4 @@ void cfftu(cfft_info *cfft)
 
     if (cfft) free(cfft);
 }
+

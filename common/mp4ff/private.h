@@ -15,6 +15,7 @@ typedef __int32 int32_t;
 typedef unsigned __int32 uint32_t;
 typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
+typedef __int64 off_t;
 #else
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
@@ -463,9 +464,9 @@ typedef struct
 {
     size_t (*read)(void *buffer, size_t length);
     size_t (*write)(void *buffer, size_t length);
-    int64_t (*get_position)();
-    int64_t (*get_length)();
-    int (*seek)(int64_t position);
+    off_t (*get_position)();
+    off_t (*get_length)();
+    int (*seek)(off_t position);
 } mp4_callback_t;
 
 typedef struct

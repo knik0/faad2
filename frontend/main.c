@@ -22,13 +22,12 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.59 2003/11/06 15:45:08 menno Exp $
+** $Id: main.c,v 1.60 2003/11/17 19:40:11 menno Exp $
 **/
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-typedef __int64 off_t;
 #else
 #include <time.h>
 #endif
