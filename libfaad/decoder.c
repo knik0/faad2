@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.89 2004/01/13 20:35:14 menno Exp $
+** $Id: decoder.c,v 1.90 2004/01/14 09:09:13 menno Exp $
 **/
 
 #include "common.h"
@@ -371,6 +371,9 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
 {
     uint8_t i;
 
+    if (hDecoder == NULL)
+        return 1; /* error */
+
     /* Special object type defined for DRM */
     hDecoder->config.defObjectType = DRM_ER_LC;
 
@@ -420,10 +423,6 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
         hDecoder->time_out[i] = NULL;
         if (hDecoder->fb_intermed[i]) faad_free(hDecoder->fb_intermed[i]);
         hDecoder->fb_intermed[i] = NULL;
-#ifdef SBR_DEC
-        if (hDecoder->time_out2[i]) faad_free(hDecoder->time_out2[i]);
-        hDecoder->time_out2[i] = NULL;
-#endif
 #ifdef SSR_DEC
         if (hDecoder->ssr_overlap[i]) faad_free(hDecoder->ssr_overlap[i]);
         hDecoder->ssr_overlap[i] = NULL;
@@ -440,6 +439,14 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
         hDecoder->lt_pred_stat[i] = NULL;
 #endif
     }
+
+#ifdef SBR_DEC
+    for (i = 0; i < 32; i++)
+    {
+        if (hDecoder->sbr[i])
+            sbrDecodeEnd(hDecoder->sbr[i]);
+    }
+#endif
 
     return 0;
 }
@@ -745,7 +752,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     faad_initbits(&ld, buffer, buffer_size);
 
 #ifdef DRM
-    if (object_type == DRM_ER_LC)
+    if (hDecoder->object_type == DRM_ER_LC)
     {
         /* We do not support stereo right now */
         if (hDecoder->channelConfiguration == 2)
