@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.50 2003/08/30 09:08:38 menno Exp $
+** $Id: foo_mp4.cpp,v 1.52 2003/08/31 10:26:48 menno Exp $
 **/
 
 #include <mp4.h>
@@ -130,6 +130,7 @@ public:
         m_seekto = 0;
         m_framesize = 1024;
         if (mp4ASC.frameLengthFlag == 1) m_framesize = 960;
+        useAacLength = false;
 
         MP4Duration trackDuration = MP4GetTrackDuration(hFile, track);
         m_length = (double)(__int64)trackDuration / (double)m_timescale;
@@ -199,10 +200,16 @@ public:
 
                 if (buffer) free(buffer);
 
-                if (m_timescale != m_samplerate) {
+                if (useAacLength || (m_timescale != m_samplerate)) {
                     sample_count = frameInfo.channels ? frameInfo.samples/frameInfo.channels : 0;
                 } else {
                     sample_count = sample_dur;
+
+                    if (!useAacLength && !initial && m_seekto<sample_pos && (sample_dur*frameInfo.channels != frameInfo.samples))
+                    {
+                        console::info("MP4 seems to have incorrect frame duration, using values from AAC data");
+                        useAacLength = true;
+                    }
                 }
 
                 if (initial && (sample_count < m_framesize) && frameInfo.channels)
@@ -380,6 +387,7 @@ private:
     unsigned __int64 m_seekto;
     double m_length;
     bool m_eof;
+    bool useAacLength;
 
     int ReadMP4Tag(file_info *info)
     {
