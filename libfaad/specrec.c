@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.28 2003/10/09 20:04:25 menno Exp $
+** $Id: specrec.c,v 1.30 2003/11/02 20:24:05 menno Exp $
 **/
 
 /*
@@ -475,6 +475,24 @@ void build_tables(real_t *pow2_table)
 
 static INLINE real_t iquant(int16_t q, real_t *tab)
 {
+#ifdef SMALL_IQ_TAB
+    static const real_t errcorr[] = {
+        REAL_CONST(0), REAL_CONST(1.0/27.1), REAL_CONST(2.0/27.1), REAL_CONST(3.0/27.096),
+        REAL_CONST(4.0/27.093),  REAL_CONST(5.0/27.089), REAL_CONST(6.0/27.085), REAL_CONST(7.0/27.081),
+        REAL_CONST(8.0/27.077),  REAL_CONST(9.0/27.073), REAL_CONST(10.0/27.069), REAL_CONST(11.0/27.065),
+        REAL_CONST(12.0/27.061),  REAL_CONST(13.0/27.056), REAL_CONST(14.0/27.052), REAL_CONST(15.0/27.048),
+        REAL_CONST(16.0/27.044),  REAL_CONST(17.0/27.04), REAL_CONST(18.0/27.036), REAL_CONST(19.0/27.032),
+        REAL_CONST(20.0/27.028),  REAL_CONST(21.0/27.024), REAL_CONST(22.0/27.02), REAL_CONST(23.0/27.015),
+        REAL_CONST(24.0/27.011),  REAL_CONST(25.0/27.007), REAL_CONST(26.0/27.003), REAL_CONST(0)
+    };
+#else
+    static const real_t errcorr[] = {
+        REAL_CONST(0), REAL_CONST(1.0/8.0), REAL_CONST(2.0/8.0), REAL_CONST(3.0/8.0),
+        REAL_CONST(4.0/8.0),  REAL_CONST(5.0/8.0), REAL_CONST(6.0/8.0), REAL_CONST(7.0/8.0),
+        REAL_CONST(0)
+    };
+#endif
+    real_t x1, x2;
 #ifdef FIXED_POINT
     int16_t sgn = 1;
 
@@ -486,8 +504,17 @@ static INLINE real_t iquant(int16_t q, real_t *tab)
 
     if (q < IQ_TABLE_SIZE)
         return sgn * tab[q];
-    
-    return 0; /* sgn * tab[q>>3] * 16; */
+
+    /* linear interpolation */
+#ifndef SMALL_IQ_TAB
+    x1 = tab[q>>3];
+    x2 = tab[(q>>3) + 1];
+    return sgn * 16 * (MUL(errcorr[q&7],(x2-x1)) + x1);
+#else
+    x1 = tab[q/27];
+    x2 = tab[(q/27) + 1];
+    return sgn * 81 * (MUL(errcorr[q%27],(x2-x1)) + x1);
+#endif
 #else
     real_t sgn = REAL_CONST(1.0);
 
@@ -500,7 +527,16 @@ static INLINE real_t iquant(int16_t q, real_t *tab)
     if (q < IQ_TABLE_SIZE)
         return sgn * tab[q];
 
-    return sgn * pow(q, 4./3.);
+    /* linear interpolation */
+#ifndef SMALL_IQ_TAB
+    x1 = tab[q>>3];
+    x2 = tab[(q>>3) + 1];
+    return sgn * 16.0 * (errcorr[q&7] * (x2-x1) + x1);
+#else
+    x1 = tab[q/27];
+    x2 = tab[(q/27) + 1];
+    return sgn * 81.0 * (errcorr[q%27] * (x2-x1) + x1);
+#endif
 #endif
 }
 
@@ -552,10 +588,6 @@ static void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics,
     uint8_t groups = 0;
     uint16_t nshort = frame_len/8;
 
-    static real_t max_fp = 0;
-    static real_t max_exp = 0;
-    static real_t max_frac = 0;
-
     for (g = 0; g < ics->num_window_groups; g++)
     {
         uint16_t k = 0;
@@ -584,6 +616,9 @@ static void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics,
                 else
                     exp -= 7 /*10*/;
             }
+#if (REAL_BITS == 16)
+            exp--;
+#endif
 #endif
 
             /* minimum size of a sf band is 4 and always a multiple of 4 */

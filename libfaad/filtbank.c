@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: filtbank.c,v 1.28 2003/10/09 20:04:24 menno Exp $
+** $Id: filtbank.c,v 1.29 2003/10/19 18:11:19 menno Exp $
 **/
 
 #include "common.h"
@@ -157,7 +157,7 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
                   real_t *time_out, uint8_t object_type, uint16_t frame_len)
 {
     int16_t i;
-    real_t *transf_buf;
+    real_t transf_buf[2*1024] = {0};
 
     real_t *window_long;
     real_t *window_long_prev;
@@ -169,8 +169,6 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
     uint16_t trans = nshort/2;
 
     uint16_t nflat_ls = (nlong-nshort)/2;
-
-    transf_buf = (real_t*)malloc(2*nlong*sizeof(real_t));
 
 #ifdef LD_DEC
     if (object_type == LD)
@@ -266,8 +264,6 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
             time_out[nlong+i] = MUL_R_C(transf_buf[nlong+i],window_long[nlong-1-i]);
 		break;
     }
-
-    free(transf_buf);
 }
 
 #ifdef LTP_DEC
@@ -277,7 +273,7 @@ void filter_bank_ltp(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
                      uint8_t object_type, uint16_t frame_len)
 {
     int16_t i;
-    real_t *windowed_buf;
+    real_t windowed_buf[2*1024] = {0};
 
     real_t *window_long;
     real_t *window_long_prev;
@@ -289,8 +285,6 @@ void filter_bank_ltp(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
     uint16_t nflat_ls = (nlong-nshort)/2;
 
     assert(window_sequence != EIGHT_SHORT_SEQUENCE);
-
-    windowed_buf = (real_t*)malloc(nlong*2*sizeof(real_t));
 
 #ifdef LD_DEC
     if (object_type == LD)
@@ -342,7 +336,5 @@ void filter_bank_ltp(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
         mdct(fb, windowed_buf, out_mdct, 2*nlong);
         break;
     }
-
-    free(windowed_buf);
 }
 #endif

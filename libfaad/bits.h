@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: bits.h,v 1.23 2003/10/09 20:04:24 menno Exp $
+** $Id: bits.h,v 1.26 2003/11/04 21:43:30 menno Exp $
 **/
 
 #ifndef __BITS_H__
@@ -73,7 +73,7 @@ static uint32_t bitmask[] = {
     0xFFFFFFF, 0x1FFFFFFF, 0x3FFFFFFF, 0x7FFFFFFF
 };
 
-void faad_initbits(bitfile *ld, void *buffer, uint32_t buffer_size);
+void faad_initbits(bitfile *ld, const void *buffer, const uint32_t buffer_size);
 void faad_endbits(bitfile *ld);
 void faad_initbits_rev(bitfile *ld, void *buffer,
                        uint32_t bits_in_buffer);

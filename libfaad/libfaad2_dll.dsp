@@ -90,58 +90,6 @@ LINK32=xilink6.exe
 # Begin Group "Source Files"
 
 # PROP Default_Filter ""
-# Begin Group "codebook"
-
-# PROP Default_Filter ""
-# Begin Source File
-
-SOURCE=.\codebook\hcb_1.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_10.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_11.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_2.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_3.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_4.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_5.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_6.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_7.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_8.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_9.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_sf.c
-# End Source File
-# End Group
 # Begin Source File
 
 SOURCE=.\bits.c
@@ -153,10 +101,6 @@ SOURCE=.\cfft.c
 # Begin Source File
 
 SOURCE=.\common.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\data.c
 # End Source File
 # Begin Source File
 
@@ -181,6 +125,10 @@ SOURCE=.\filtbank.c
 # Begin Source File
 
 SOURCE=.\hcr.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\huffman.c
 # End Source File
 # Begin Source File
 
@@ -224,11 +172,59 @@ SOURCE=.\rvlc.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\sbr_dct.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_dec.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_e_nf.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_fbt.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_hfadj.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_hfgen.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_huff.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_qmf.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_syntax.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_tf_grid.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\specrec.c
 # End Source File
 # Begin Source File
 
 SOURCE=.\ssr.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\ssr_fb.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\ssr_ipqf.c
 # End Source File
 # Begin Source File
 

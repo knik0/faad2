@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mdct.c,v 1.29 2003/10/09 20:04:24 menno Exp $
+** $Id: mdct.c,v 1.30 2003/10/19 18:11:20 menno Exp $
 **/
 
 /*
@@ -144,7 +144,6 @@ mdct_info *faad_mdct_init(uint16_t N)
 
     mdct->N = N;
     mdct->sincos = (complex_t*)malloc(N/4*sizeof(complex_t));
-    mdct->Z1 = (complex_t*)malloc(N/4*sizeof(complex_t));
 
     N_idx = map_N_to_idx(N);
 
@@ -185,7 +184,6 @@ void faad_mdct_end(mdct_info *mdct)
     {
         cfftu(mdct->cfft);
 
-        if (mdct->Z1) free(mdct->Z1);
         if (mdct->sincos) free(mdct->sincos);
 
         free(mdct);
@@ -197,7 +195,7 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     uint16_t k;
 
     complex_t x;
-    complex_t *Z1 = mdct->Z1;
+    complex_t Z1[512];
     complex_t *sincos = mdct->sincos;
 
     uint16_t N  = mdct->N;
@@ -223,6 +221,22 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
 
         RE(Z1[k]) = MUL_R_C(RE(x), RE(sincos[k])) - MUL_R_C(IM(x), IM(sincos[k]));
         IM(Z1[k]) = MUL_R_C(IM(x), RE(sincos[k])) + MUL_R_C(RE(x), IM(sincos[k]));
+#if (REAL_BITS == 16)
+        if (abs(RE(Z1[k])) > REAL_CONST(16383.5))
+        {
+            if (RE(Z1[k]) > 0) RE(Z1[k]) = REAL_CONST(32767.0);
+            else RE(Z1[k]) = REAL_CONST(-32767.0);
+        } else {
+            RE(Z1[k]) *= 2;
+        }
+        if (abs(IM(Z1[k])) > REAL_CONST(16383.5))
+        {
+            if (IM(Z1[k]) > 0) IM(Z1[k]) = REAL_CONST(32767.0);
+            else IM(Z1[k]) = REAL_CONST(-32767.0);
+        } else {
+            IM(Z1[k]) *= 2;
+        }
+#endif
     }
 
     /* reordering */
@@ -237,6 +251,19 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
         X_out[N2 + N4 +     2*k] = -IM(Z1[         k]);
         X_out[N2 + N4 + 1 + 2*k] =  RE(Z1[N4 - 1 - k]);
     }
+
+#if 0
+    {
+        float max_fp = 0;
+        for (k = 0; k < N; k++)
+        {
+            if (fabs(X_out[k]/(float)(REAL_PRECISION)) > max_fp)
+                max_fp = fabs(X_out[k]/(float)(REAL_PRECISION));
+        }
+        if (max_fp > 32767>>1)
+            printf("m: %f\n", max_fp);
+    }
+#endif
 }
 
 #ifdef LTP_DEC
@@ -245,7 +272,7 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     uint16_t k;
 
     complex_t x;
-    complex_t *Z1 = mdct->Z1;
+    complex_t Z1[512];
     complex_t *sincos = mdct->sincos;
 
     uint16_t N  = mdct->N;

@@ -1,0 +1,42 @@
+Quicktime for Linux
+
+Author: Adam Williams    quicktime@altavista.net
+Homepage: heroinewarrior.com/quicktime
+Requires: libpthread
+------------------------------------------------------------------------
+
+***** 
+
+This is a Quicktime library for UNIX in a freely redistributable,
+statically linkable library.  You can statically link it in a program
+and charge money for the program.  The only condition is that if you
+use it in a program, you must put the author's name and email
+somewhere.  If you improve the library itself or add a free codec to
+it, you should release your improvements.  If you redistribute the
+code, you must also redistribute the author information and
+documentation.  At this time it's very popular to license stuff under
+the GPL.  You are free to include this library in a derived work and
+license the derived work under GPL.
+
+*****
+
+Building:
+type "make" in the quicktime/quicktime directory.
+type "make util" to get some Small Utilities.
+
+Configuration:
+
+The file "config.h" defines the size of a 16 bit word and what the
+maximum file size is.
+
+/*******************************************************
+ * References:
+ *********************************/
+
+Apple's quicktime file format information:
+
+http://developer.apple.com/techpubs/quicktime/qtdevdocs/REF/refQTFileFormat.htm
+
+Color space conversions:
+
+http://www.neuro.sfc.keio.ac.jp/~aly/polygon/info/color-space-faq.html

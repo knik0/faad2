@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.52 2003/10/17 17:05:34 ca5e Exp $
+** $Id: main.c,v 1.53 2003/10/19 18:11:19 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -32,12 +32,13 @@
 #include <time.h>
 #endif
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
 
 #include <faad.h>
-#include <mp4.h>
+#include <mp4ff.h>
 
 #include "audio.h"
 
@@ -160,6 +161,39 @@ int adts_parse(aac_buffer *b, int *bitrate, float *length)
         *length = 1;
 
     return 1;
+}
+
+
+FILE *g_mp4File = NULL;
+
+size_t read_callback(void *buffer, size_t length)
+{
+    return fread(buffer, length, 1, g_mp4File);
+}
+
+size_t write_callback(void *buffer, size_t length)
+{
+    return 0;
+}
+
+__int64 get_position_callback()
+{
+    return ftell(g_mp4File);
+}
+
+__int64 get_length_callback()
+{
+    __int64 oldpos, size = 0;
+    oldpos = ftell(g_mp4File);
+    fseek(g_mp4File, 0, SEEK_END);
+    size = ftell(g_mp4File);
+    fseek(g_mp4File, oldpos, SEEK_SET);
+    return size;
+}
+
+int seek_callback(__int64 position)
+{
+    return fseek(g_mp4File, position, SEEK_SET);
 }
 
 /* MicroSoft channel definitions */
@@ -634,24 +668,24 @@ int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_stdout,
     return frameInfo.error;
 }
 
-int GetAACTrack(MP4FileHandle infile)
+int GetAACTrack(mp4ff_t *infile)
 {
     /* find AAC track */
-    unsigned short i;
-    int rc;
-    int numTracks = MP4GetNumberOfTracks(infile, NULL, /* subType */ 0);
+    int i, rc;
+    int numTracks = mp4ff_audio_tracks(infile);
 
     for (i = 0; i < numTracks; i++)
     {
-        MP4TrackId trackId = MP4FindTrackId(infile, i, NULL, /* subType */ 0);
-        const char* trackType = MP4GetTrackType(infile, trackId);
+        //const char* trackType = mp4ff_audio_compressor(infile, i);
 
-        if (!strcmp(trackType, MP4_AUDIO_TRACK_TYPE))
+        //if (!strcmp(trackType, "soun"))
         {
             unsigned char *buff = NULL;
             int buff_size = 0;
             mp4AudioSpecificConfig mp4ASC;
-            MP4GetTrackESConfiguration(infile, trackId, &buff, &buff_size);
+
+            //MP4GetTrackESConfiguration(infile, trackId, &buff, &buff_size);
+            mp4ff_get_mp4_audio_decoder_config(infile, i, &buff, &buff_size);
 
             if (buff)
             {
@@ -660,7 +694,7 @@ int GetAACTrack(MP4FileHandle infile)
 
                 if (rc < 0)
                     return -1;
-                return trackId;
+                return i;
             }
         }
     }
@@ -684,8 +718,8 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
     unsigned char channels;
     void *sample_buffer;
 
-    MP4FileHandle infile;
-    MP4SampleId sampleId, numSamples;
+    mp4ff_t *infile;
+    long sampleId, numSamples;
 
     audio_file *aufile;
 
@@ -707,9 +741,20 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
 
     /* for gapless decoding */
     unsigned int useAacLength = 1;
-    unsigned int framesize;
     unsigned int initial = 1;
+    unsigned int framesize;
     unsigned long timescale;
+
+
+    /* initialise the callback structure */
+    mp4_callback_t *mp4cb = malloc(sizeof(mp4_callback_t));
+    g_mp4File = fopen(mp4file, "rb");
+    mp4cb->get_length = get_length_callback;
+    mp4cb->get_position = get_position_callback;
+    mp4cb->read = read_callback;
+    mp4cb->seek = seek_callback;
+    mp4cb->write = write_callback;
+
 
     hDecoder = faacDecOpen();
 
@@ -729,7 +774,7 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
         }
     }
 
-    infile = MP4Read(mp4file, 0);
+    infile = mp4ff_open(mp4cb, 1, 0, 0);
     if (!infile)
     {
         /* unable to open file */
@@ -737,6 +782,7 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
         return 1;
     }
 
+#if 0
     /* print some mp4 file info */
     fprintf(stderr, "%s file info:\n", mp4file);
     {
@@ -744,11 +790,14 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
         fprintf(stderr, "%s\n", file_info);
         free(file_info);
     }
+#endif
 
     if (infoOnly)
     {
         faacDecClose(hDecoder);
-        MP4Close(infile);
+        mp4ff_close(infile);
+        free(mp4cb);
+        fclose(g_mp4File);
         return 0;
     }
 
@@ -756,13 +805,15 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
     {
         fprintf(stderr, "Unable to find correct AAC sound track in the MP4 file.\n");
         faacDecClose(hDecoder);
-        MP4Close(infile);
+        mp4ff_close(infile);
+        free(mp4cb);
+        fclose(g_mp4File);
         return 1;
     }
 
     buffer = NULL;
     buffer_size = 0;
-    MP4GetTrackESConfiguration(infile, track, &buffer, &buffer_size);
+    mp4ff_get_mp4_audio_decoder_config(infile, track, &buffer, &buffer_size);
 
     if(faacDecInit2(hDecoder, buffer, buffer_size,
                     &samplerate, &channels) < 0)
@@ -770,7 +821,9 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
         /* If some error initializing occured, skip the file */
         fprintf(stderr, "Error initializing decoder library.\n");
         faacDecClose(hDecoder);
-        MP4Close(infile);
+        mp4ff_close(infile);
+        free(mp4cb);
+        fclose(g_mp4File);
         return 1;
     }
 
@@ -778,7 +831,7 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
     {
         mp4AudioSpecificConfig mp4ASC;
 
-        timescale = MP4GetTrackTimeScale(infile, track);
+        timescale = mp4ff_audio_time_scale(infile, track);
         framesize = 1024;
         useAacLength = 0;
 
@@ -794,12 +847,12 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
 
     if (buffer) free(buffer);
 
-    numSamples = MP4GetTrackNumberOfSamples(infile, track);
+    numSamples = mp4ff_audio_length(infile, track);
 
-    for (sampleId = 1; sampleId <= numSamples; sampleId++)
+    for (sampleId = 0; sampleId < numSamples; sampleId++)
     {
         int rc;
-        MP4Duration dur;
+        long dur;
         unsigned int sample_count;
         unsigned int delay = 0;
 
@@ -807,13 +860,18 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
         buffer = NULL;
         buffer_size = 0;
 
-        rc = MP4ReadSample(infile, track, sampleId, &buffer, &buffer_size,
-            NULL, &dur, NULL, NULL);
+        mp4ff_set_audio_position(infile, sampleId, track);
+        dur = mp4ff_get_sample_duration(infile, sampleId, track);
+        buffer_size = mp4ff_audio_frame_size(infile, sampleId, track);
+        buffer = (unsigned char*)malloc(buffer_size*sizeof(unsigned char));
+        rc = mp4ff_read_audio_frame(infile, buffer, buffer_size, track);
         if (rc == 0)
         {
             fprintf(stderr, "Reading from MP4 file failed.\n");
             faacDecClose(hDecoder);
-            MP4Close(infile);
+            mp4ff_close(infile);
+            free(mp4cb);
+            fclose(g_mp4File);
             return 1;
         }
 
@@ -850,9 +908,7 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
 
             if (initial && (sample_count < framesize*frameInfo.channels) && (frameInfo.samples > sample_count))
                 delay = frameInfo.samples - sample_count;
-        }
-        else
-        {
+        } else {
             sample_count = frameInfo.samples;
         }
 
@@ -879,7 +935,9 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
                 if (aufile == NULL)
                 {
                     faacDecClose(hDecoder);
-                    MP4Close(infile);
+                    mp4ff_close(infile);
+                    free(mp4cb);
+                    fclose(g_mp4File);
                     return 0;
                 }
             }
@@ -919,10 +977,13 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
         fclose(adtsFile);
     }
 
-    MP4Close(infile);
+    mp4ff_close(infile);
 
     if (!first_time && !adts_out)
         close_audio_file(aufile);
+
+    free(mp4cb);
+    fclose(g_mp4File);
 
     return frameInfo.error;
 }
@@ -947,7 +1008,8 @@ int main(int argc, char *argv[])
     char aacFileName[255];
     char audioFileName[255];
     char adtsFileName[255];
-    MP4FileHandle infile;
+    mp4_callback_t *mp4cb = malloc(sizeof(mp4_callback_t));
+    //MP4FileHandle infile;
 
 /* System dependant types */
 #ifdef _WIN32
@@ -1124,11 +1186,23 @@ int main(int argc, char *argv[])
         strcat(audioFileName, file_ext[format]);
     }
 
-    mp4file = 1;
-    infile = MP4Read(aacFileName, 0);
-    if (!infile)
-        mp4file = 0;
-    if (infile) MP4Close(infile);
+    //mp4file = 1;
+    //infile = MP4Read(aacFileName, 0);
+    //if (!infile)
+    //    mp4file = 0;
+    //if (infile) MP4Close(infile);
+
+    /* initialise the callback structure */
+    g_mp4File = fopen(aacFileName, "rb");
+    mp4cb->get_length = get_length_callback;
+    mp4cb->get_position = get_position_callback;
+    mp4cb->read = read_callback;
+    mp4cb->seek = seek_callback;
+    mp4cb->write = write_callback;
+
+    mp4file = mp4ff_check_sig(mp4cb);
+    free(mp4cb);
+    fclose(g_mp4File);
 
     if (mp4file)
     {
@@ -1139,7 +1213,6 @@ int main(int argc, char *argv[])
             def_srate, object_type, outputFormat, format, downMatrix, infoOnly, adts_out,
             old_format);
     }
-
 
     if (!result && !infoOnly)
     {

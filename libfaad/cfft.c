@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: cfft.c,v 1.14 2003/10/09 20:04:24 menno Exp $
+** $Id: cfft.c,v 1.15 2003/10/19 18:11:19 menno Exp $
 **/
 
 /*
@@ -52,8 +52,8 @@
    passf2, passf3, passf4, passf5. Complex FFT passes fwd and bwd.
   ----------------------------------------------------------------------*/
 
-static void passf2(uint16_t ido, uint16_t l1, complex_t *cc, complex_t *ch,
-                   complex_t *wa, int8_t isign)
+static void passf2(const uint16_t ido, const uint16_t l1, const complex_t *cc,
+                   complex_t *ch, const complex_t *wa, const int8_t isign)
 {
     uint16_t i, k, ah, ac;
 
@@ -93,8 +93,9 @@ static void passf2(uint16_t ido, uint16_t l1, complex_t *cc, complex_t *ch,
 }
 
 
-static void passf3(uint16_t ido, uint16_t l1, complex_t *cc, complex_t *ch,
-                   complex_t *wa1, complex_t *wa2, int8_t isign)
+static void passf3(const uint16_t ido, const uint16_t l1, const complex_t *cc,
+                   complex_t *ch, const complex_t *wa1, const complex_t *wa2,
+                   const int8_t isign)
 {
     static real_t taur = COEF_CONST(-0.5);
     static real_t taui = COEF_CONST(0.866025403784439);
@@ -157,9 +158,9 @@ static void passf3(uint16_t ido, uint16_t l1, complex_t *cc, complex_t *ch,
     }
 }
 
-
-static void passf4(uint16_t ido, uint16_t l1, complex_t *cc, complex_t *ch,
-                   complex_t *wa1, complex_t *wa2, complex_t *wa3, int8_t isign)
+static void passf4(const uint16_t ido, const uint16_t l1, const complex_t *cc,
+                   complex_t *ch, const complex_t *wa1, const complex_t *wa2,
+                   const complex_t *wa3, const int8_t isign)
 {
     uint16_t i, k, ac, ah;
 
@@ -235,10 +236,9 @@ static void passf4(uint16_t ido, uint16_t l1, complex_t *cc, complex_t *ch,
     }
 }
 
-
-static void passf5(uint16_t ido, uint16_t l1, complex_t *cc, complex_t *ch,
-                   complex_t *wa1, complex_t *wa2, complex_t *wa3, complex_t *wa4,
-                   int8_t isign)
+static void passf5(const uint16_t ido, const uint16_t l1, const complex_t *cc,
+                   complex_t *ch, const complex_t *wa1, const complex_t *wa2, const complex_t *wa3,
+                   const complex_t *wa4, const int8_t isign)
 {
     static real_t tr11 = COEF_CONST(0.309016994374947);
     static real_t ti11 = COEF_CONST(0.951056516295154);
