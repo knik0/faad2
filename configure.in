@@ -33,4 +33,4 @@ AC_OUTPUT_COMMANDS(,[cd common/mp4v2; aclocal -I .; autoheader; libtoolize --aut
 
 AC_CONFIG_SUBDIRS(common/mp4v2)
 
-AC_OUTPUT(libfaad/Makefile libfaad/fftw/Makefile common/Makefile  frontend/Makefile Makefile)
+AC_OUTPUT(libfaad/Makefile common/Makefile  frontend/Makefile Makefile)

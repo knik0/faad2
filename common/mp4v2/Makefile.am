@@ -1,5 +1,3 @@
-SUBDIRS = . test util
-
 INCLUDES = -I$(top_srcdir)/include
 
 AM_CXXFLAGS = -Wall 
