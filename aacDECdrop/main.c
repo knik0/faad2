@@ -632,7 +632,7 @@ BOOL CALLBACK QCProc(HWND hwndDlg, UINT message,
 					EnableWindow(GetDlgItem(hwndDlg, IDC_DECAU), FALSE);
 					EnableWindow(GetDlgItem(hwndDlg, IDC_24BIT), TRUE);
 					EnableWindow(GetDlgItem(hwndDlg, IDC_32BIT), TRUE);
-					EnableWindow(GetDlgItem(hwndDlg, IDC_FLOATS), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_FLOATS), TRUE);
 					EnableWindow(GetDlgItem(hwndDlg, IDC_16BIT), TRUE);
 					EnableWindow(GetDlgItem(hwndDlg, IDC_16BIT_DITHER), TRUE);
 					break;
