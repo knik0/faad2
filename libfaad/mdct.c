@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.c,v 1.5 2002/03/16 13:38:36 menno Exp $
+** $Id: mdct.c,v 1.6 2002/03/27 19:09:29 menno Exp $
 **/
 
 /*
@@ -369,7 +369,7 @@ void MDCT_256(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
 
 void IMDCT_2048(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data)
 {
-    fftw_complex FFTarray[512];    /* the array for in-place FFT */
+    fftw_complex FFTarray[512]; /* the array for in-place FFT */
     real_t tempr, tempi, fac;
 
 #ifdef USE_TWIDDLE_TABLE

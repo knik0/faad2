@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: tns.c,v 1.7 2002/03/16 19:18:11 menno Exp $
+** $Id: tns.c,v 1.8 2002/03/27 19:09:29 menno Exp $
 **/
 
 #include "common.h"
@@ -129,7 +129,7 @@ static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_c
     uint8_t coef_res2, s_mask, n_mask;
     int8_t tmp[TNS_MAX_ORDER+1];
     real_t tmp2[TNS_MAX_ORDER+1], b[TNS_MAX_ORDER+1];
-    real_t iqfac, iqfac_m;
+    real_t iqfac;
 
     /* Some internal tables */
     static uint8_t sgn_mask[] = { 0x2, 0x4, 0x8 };
@@ -145,11 +145,13 @@ static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_c
         tmp[i] = (coef[i] & s_mask) ? (coef[i] | n_mask) : coef[i];
 
     /* Inverse quantization */
-    iqfac = ((1 << (coef_res_bits-1)) - 0.5f) / M_PI_2;
-    iqfac_m = ((1 << (coef_res_bits-1)) + 0.5f) / M_PI_2;
+    if (tmp[i] >= 0)
+        iqfac = ((1 << (coef_res_bits-1)) - 0.5f) / M_PI_2;
+    else
+        iqfac = ((1 << (coef_res_bits-1)) + 0.5f) / M_PI_2;
 
     for (i = 0; i < order; i++)
-        tmp2[i] = (real_t)sin(tmp[i] / ((tmp[i] >= 0) ? iqfac : iqfac_m));
+        tmp2[i] = (real_t)sin(tmp[i] / iqfac);
 
     /* Conversion to LPC coefficients */
     a[0] = 1;

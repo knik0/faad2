@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.c,v 1.5 2002/03/16 13:38:37 menno Exp $
+** $Id: filtbank.c,v 1.6 2002/03/27 19:09:29 menno Exp $
 **/
 
 #include "common.h"
@@ -32,6 +32,21 @@
 void filter_bank_init(fb_info *fb)
 {
     uint16_t i;
+
+    /* normal */
+    mdct_init(&(fb->mdct256), 256);
+    mdct_init(&(fb->mdct2048), 2048);
+
+    fb->long_window[0]  = malloc(BLOCK_LEN_LONG*sizeof(real_t));
+    fb->short_window[0] = malloc(BLOCK_LEN_SHORT*sizeof(real_t));
+    fb->long_window[1]  = kbd_long;
+    fb->short_window[1] = kbd_short;
+
+    /* calculate the sine windows */
+    for (i = 0; i < BLOCK_LEN_LONG; i++)
+        fb->long_window[0][i] = (real_t)sin(M_PI / (2.0 * BLOCK_LEN_LONG) * (i + 0.5));
+    for (i = 0; i < BLOCK_LEN_SHORT; i++)
+        fb->short_window[0][i] = (real_t)sin(M_PI / (2.0 * BLOCK_LEN_SHORT) * (i + 0.5));
 
 #ifdef LD_DEC
     /* LD */
@@ -52,34 +67,19 @@ void filter_bank_init(fb_info *fb)
     for (; i < BLOCK_LEN_LD; i++)
         fb->ld_window[1][i] = 1.0;
 #endif
-
-    /* normal */
-    mdct_init(&(fb->mdct256), 256);
-    mdct_init(&(fb->mdct2048), 2048);
-
-    fb->long_window[0]  = malloc(BLOCK_LEN_LONG*sizeof(real_t));
-    fb->short_window[0] = malloc(BLOCK_LEN_SHORT*sizeof(real_t));
-    fb->long_window[1]  = kbd_long;
-    fb->short_window[1] = kbd_short;
-
-    /* calculate the sine windows */
-    for (i = 0; i < BLOCK_LEN_LONG; i++)
-        fb->long_window[0][i] = (real_t)sin(M_PI / (2.0 * BLOCK_LEN_LONG) * (i + 0.5));
-    for (i = 0; i < BLOCK_LEN_SHORT; i++)
-        fb->short_window[0][i] = (real_t)sin(M_PI / (2.0 * BLOCK_LEN_SHORT) * (i + 0.5));
 }
 
 void filter_bank_end(fb_info *fb)
 {
     mdct_end(&(fb->mdct256));
-#ifdef LD_DEC
-    mdct_end(&(fb->mdct1024));
-#endif
     mdct_end(&(fb->mdct2048));
 
     if (fb->long_window[0]) free(fb->long_window[0]);
     if (fb->short_window[0]) free(fb->short_window[0]);
+
 #ifdef LD_DEC
+    mdct_end(&(fb->mdct1024));
+
     if (fb->ld_window[0]) free(fb->ld_window[0]);
     if (fb->ld_window[1]) free(fb->ld_window[1]);
 #endif
@@ -179,14 +179,14 @@ static INLINE void imdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_
     case 2048:
         IMDCT_2048(&(fb->mdct2048), in_data, out_data);
         return;
+    case 256:
+        IMDCT_256(&(fb->mdct256), in_data, out_data);
+        return;
 #ifdef LD_DEC
     case 1024:
         IMDCT_1024(&(fb->mdct1024), in_data, out_data);
         return;
 #endif
-    case 256:
-        IMDCT_256(&(fb->mdct256), in_data, out_data);
-        return;
     }
 }
 
@@ -197,14 +197,14 @@ static INLINE void mdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_t
     case 2048:
         MDCT_2048(&(fb->mdct2048), in_data, out_data);
         return;
+    case 256:
+        MDCT_256(&(fb->mdct256), in_data, out_data);
+        return;
 #ifdef LD_DEC
     case 1024:
         MDCT_1024(&(fb->mdct1024), in_data, out_data);
         return;
 #endif
-    case 256:
-        MDCT_256(&(fb->mdct256), in_data, out_data);
-        return;
     }
 }
 
@@ -213,6 +213,7 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
                   real_t *time_out, uint8_t object_type)
 {
     real_t *o_buf, *transf_buf;
+    real_t *obuf_temp;
 
     real_t *window_long;
     real_t *window_long_prev;
@@ -294,7 +295,10 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
         break;
 
     case EIGHT_SHORT_SEQUENCE:
-        fp = o_buf + nflat_ls;
+        obuf_temp = malloc(2*nlong*sizeof(real_t));
+        vzero(obuf_temp+2*nlong-1, 2*nlong);
+
+		fp = obuf_temp;
         for (win = 8-1; win >= 0; --win)
         {
             /* inverse transform */
@@ -309,21 +313,27 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
 
             /* reversed window function on second half of the new data */
             vmult2(transf_buf+nshort, window_short+nshort-1, fp+nshort, nshort);
-
-            /* shift to next short block */
+			
+			/* shift to next short block */
             freq_in += nshort;
             fp      += nshort;
             window_short_prev_ptr = window_short;
         }
+
+        vadd(o_buf + 448, obuf_temp, o_buf + 448, nlong - 448);
+        vcopy(obuf_temp, o_buf + 448, nlong*2-nflat_ls);
+        
         vzero(o_buf+2*nlong-1, nflat_ls);
+
+        free(obuf_temp);
         break;
 
     case LONG_STOP_SEQUENCE:
         /* inverse transform */
         imdct(fb, freq_in, transf_buf, 2*nlong);
 
-        /* zero first part of first half of the data (window function = 0.0) */
-        vzero(transf_buf+nflat_ls-1, nflat_ls);
+		/* zero first part of first half of the data (window function = 0.0) */
+		vzero(transf_buf+nflat_ls-1, nflat_ls);
 
         /* window function (previous) on part of the first half of
            the new data */
@@ -335,14 +345,11 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
 
         /* overlap and add second half of the old data with first half
            of the new data */
-        vadd(transf_buf+nflat_ls, o_buf+nflat_ls, o_buf+nflat_ls, nshort);
+        vadd(transf_buf, o_buf, o_buf, nlong);
 
-        /* copy last part of first half of the data (window function = 1.0) */
-        vcopy(transf_buf+nflat_ls+nshort, o_buf+nflat_ls+nshort, nflat_ls);
-
-        /* reversed window function on second half of the new data */
+        /* reversed window function on second half of the new data */      
         vmult2(transf_buf+nlong, window_long+nlong-1, o_buf+nlong, nlong);
-        break;
+		break;
     }
 
     /* save second half of data */
