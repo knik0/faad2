@@ -74,19 +74,21 @@ BEGIN
     PUSHBUTTON      "Reset",RESET_BTN,7,112,50,14
 END
 
-IDD_ABOUT DIALOG DISCARDABLE  0, 0, 187, 114
+IDD_ABOUT DIALOG DISCARDABLE  0, 0, 191, 168
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About FAAD Plug-in"
 FONT 8, "MS Sans Serif"
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,68,93,50,14
-    CTEXT           "FAAD Input Plug-in for QCD v 1.0\nLast Modified Feb. 2003",
-                    IDC_STATIC,13,7,161,19
-    CTEXT           "Using: FAAD2 v1.2 beta by M. Bakker && menno",
-                    IDC_STATIC,7,33,173,8
-    LTEXT           "FAAD: http://www.audiocoding.com",IDC_STATIC,7,50,129,8
-    LTEXT           "Author: Shao Hao\nE-Mail: shaohao@elong.com",IDC_STATIC,
-                    9,67,140,20
+    DEFPUSHBUTTON   "OK",IDOK,70,147,50,14
+    CTEXT           "",IDC_PLUGINVER,29,73,133,16
+    CTEXT           "",IDC_FAADVER,40,123,111,8
+    LTEXT           "QCD Input Plug-in by",IDC_STATIC,62,97,67,8
+    CONTROL         107,IDC_LOGO,"Static",SS_BITMAP | SS_CENTERIMAGE | 
+                    SS_REALSIZEIMAGE,7,0,177,68
+    LTEXT           "Shao Hao",IDC_MAIL1,79,111,33,8
+    LTEXT           "M. Bakker",IDC_MAIL3,59,134,34,8
+    LTEXT           "menno",IDC_MAIL2,109,134,22,8
+    LTEXT           "&&",IDC_STATIC,97,134,8,8
 END
 
 
@@ -109,13 +111,19 @@ BEGIN
     IDD_ABOUT, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 180
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 107
+        RIGHTMARGIN, 184
+        BOTTOMMARGIN, 161
     END
 END
 #endif    // APSTUDIO_INVOKED
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_LOGO                BITMAP  DISCARDABLE     "logo.bmp"
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
 

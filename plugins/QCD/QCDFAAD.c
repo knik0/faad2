@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: QCDFAAD.c,v 1.1 2003/02/09 18:55:19 menno Exp $
+** $Id: QCDFAAD.c,v 1.2 2003/04/28 19:04:35 menno Exp $
 ** based on menno's in_faad.dll plugin for Winamp
 **
 ** The tag function has been removed because QCD supports ID3v1 & ID3v2 very well
@@ -28,6 +28,7 @@
 #include <windows.h>
 #include <mmreg.h>
 #include <commctrl.h>
+#include <shellapi.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "QCDInputDLL.h"
@@ -47,7 +48,7 @@ faacDecHandle hDecoder;
 faacDecFrameInfo frameInfo;
 
 HINSTANCE		hInstance;
-HWND			hwndPlayer;
+HWND			hwndPlayer, hwndConfig, hwndAbout;
 QCDModInitIn	sQCDCallbacks, *QCDCallbacks;
 BOOL			oldAPIs = 0;
 static char	lastfn[MAX_PATH]; // currently playing file (used for getting info on the current file)
@@ -73,9 +74,6 @@ FILE_STREAM *infile;
 /* Function definitions */
 int id3v2_tag(unsigned char *buffer);
 DWORD WINAPI PlayThread(void *b); // the decode thread procedure
-
-BOOL CALLBACK config_dialog_proc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK AboutProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);/* about dialogbox*/
 
 // general funcz
 static void show_error(const char *message,...)
@@ -130,7 +128,7 @@ void config_read()
     char stream_buffer_size[10];
 
     strcpy(variable_bitrate_display, "1");
-    strcpy(priority, "4");
+    strcpy(priority, "5");
     strcpy(memmap_file, "0");
     strcpy(local_buffer_size, "128");
     strcpy(stream_buffer_size, "64");
@@ -195,7 +193,7 @@ PLUGIN_API BOOL QInputModule(QCDModInitIn *ModInit, QCDModInfo *ModInfo)
 	ModInit->toModule.Configure			= Configure;
 	QCDCallbacks = ModInit;
 
-	ModInfo->moduleString = "FAAD Plugin v1.0";
+	ModInfo->moduleString = "FAAD Plugin v1.0b";
 	/* read config */
 	QCDCallbacks->Service(opGetPluginSettingsFile, INI_FILE, MAX_PATH, 0);
 
@@ -233,13 +231,6 @@ PLUGIN_API QCDModInitIn* INPUTDLL_ENTRY_POINT()
 }
 
 //----------------------------------------------------------------------------
-
-void Configure(int flags)
-{
-	HWND hwndConfig = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_CONFIG), hwndPlayer, config_dialog_proc);
-	if(hwndConfig)
-		ShowWindow(hwndConfig, SW_NORMAL);
-}
 
 BOOL CALLBACK config_dialog_proc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -344,13 +335,91 @@ BOOL CALLBACK config_dialog_proc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
     return FALSE;
 }
 
+
+void Configure(int flags)
+{
+	if(!IsWindow(hwndConfig))
+		hwndConfig = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_CONFIG), hwndPlayer, config_dialog_proc);
+	ShowWindow(hwndConfig, SW_NORMAL);
+}
+
 //-----------------------------------------------------------------------------
+// proc of "About Dialog"
+INT_PTR CALLBACK about_dialog_proc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	static RECT rcLOGO, rcMail1, rcMail2/*, rcMail3*/;
+	POINT ptMouse;
+	static char szPluginVer[] = "QCD FAAD Input Plug-in v1.0b\nCompiled on " __TIME__ ", " __DATE__;
+	static char szFLACVer[] = "Using: FAAD2 v "FAAD2_VERSION" by";
+
+	switch (uMsg)
+	{
+	case WM_INITDIALOG:
+	case WM_MOVE:
+		GetWindowRect(GetDlgItem(hwndDlg, IDC_LOGO), &rcLOGO);
+		GetWindowRect(GetDlgItem(hwndDlg, IDC_MAIL1), &rcMail1);
+		GetWindowRect(GetDlgItem(hwndDlg, IDC_MAIL2), &rcMail2);
+//		GetWindowRect(GetDlgItem(hwndDlg, IDC_MAIL2), &rcMail3);
+
+		SetDlgItemText(hwndDlg, IDC_PLUGINVER, szPluginVer);
+		SetDlgItemText(hwndDlg, IDC_FAADVER, szFLACVer);
+		
+		return TRUE;
+	case WM_MOUSEMOVE:
+		ptMouse.x = LOWORD(lParam);
+		ptMouse.y = HIWORD(lParam);
+		ClientToScreen(hwndDlg, &ptMouse);
+		if( (ptMouse.x >= rcLOGO.left && ptMouse.x <= rcLOGO.right && 
+			ptMouse.y >= rcLOGO.top && ptMouse.y<= rcLOGO.bottom) 
+			||
+			(ptMouse.x >= rcMail1.left && ptMouse.x <= rcMail1.right && 
+			ptMouse.y >= rcMail1.top && ptMouse.y<= rcMail1.bottom) 
+			||
+			(ptMouse.x >= rcMail2.left && ptMouse.x <= rcMail2.right && 
+			ptMouse.y >= rcMail2.top && ptMouse.y<= rcMail2.bottom) 
+/*			||
+			(ptMouse.x >= rcMail3.left && ptMouse.x <= rcMail3.right && 
+			ptMouse.y >= rcMail3.top && ptMouse.y<= rcMail3.bottom)*/ )
+			SetCursor(LoadCursor(NULL, MAKEINTRESOURCE(32649)));
+		else
+			SetCursor(LoadCursor(NULL, IDC_ARROW));
+
+		return TRUE;
+	case WM_LBUTTONDOWN:
+		ptMouse.x = LOWORD(lParam);
+		ptMouse.y = HIWORD(lParam);
+		ClientToScreen(hwndDlg, &ptMouse);
+		if(ptMouse.x >= rcLOGO.left && ptMouse.x <= rcLOGO.right && 
+			ptMouse.y >= rcLOGO.top && ptMouse.y<= rcLOGO.bottom)
+			ShellExecute(0, NULL, "http://www.audiocoding.com", NULL,NULL, SW_NORMAL);
+		else if(ptMouse.x >= rcMail1.left && ptMouse.x <= rcMail1.right && 
+			ptMouse.y >= rcMail1.top && ptMouse.y<= rcMail1.bottom)
+			ShellExecute(0, NULL, "mailto:shaohao@elong.com", NULL,NULL, SW_NORMAL);
+		else if(ptMouse.x >= rcMail2.left && ptMouse.x <= rcMail2.right && 
+			ptMouse.y >= rcMail2.top && ptMouse.y<= rcMail2.bottom)
+			ShellExecute(0, NULL, "mailto:menno@audiocoding.com", NULL,NULL, SW_NORMAL);
+/*		else if(ptMouse.x >= rcMail3.left && ptMouse.x <= rcMail3.right && 
+			ptMouse.y >= rcMail3.top && ptMouse.y<= rcMail3.bottom)
+			ShellExecute(0, NULL, "I don't know", NULL,NULL, SW_NORMAL);
+*/
+		return TRUE;
+	case WM_COMMAND:
+		switch(LOWORD(wParam))
+		{
+		case IDOK:
+		default:
+			DestroyWindow(hwndDlg);
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
 
 void About(int flags)
 {
-	HWND hwndAbout = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_ABOUT), hwndPlayer, AboutProc); 
-	if(hwndAbout)
-		ShowWindow(hwndAbout, SW_NORMAL);
+	if(!IsWindow(hwndAbout))
+		hwndAbout = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_ABOUT), hwndPlayer, about_dialog_proc); 
+	ShowWindow(hwndAbout, SW_SHOW);
 }
 
 //-----------------------------------------------------------------------------
@@ -368,14 +437,14 @@ BOOL Initialize(QCDModInfo *ModInfo, int flags)
 	QCDCallbacks->Service(opGetPluginSettingsFile, INI_FILE, MAX_PATH, 0);
     config_read();
 
-	ModInfo->moduleString = "FAAD Plugin v1.0";
+	ModInfo->moduleString = "FAAD Plugin v1.0b";
 	ModInfo->moduleExtensions = "AAC";
 
     /* Initialize winsock, necessary for streaming */
     WinsockInit();
 
 	// insert menu item into plugin menu
-	QCDCallbacks->Service(opSetPluginMenuItem, hInstance, IDD_CONFIG, (long)"FAAD Plug-in");
+//	QCDCallbacks->Service(opSetPluginMenuItem, hInstance, IDD_CONFIG, (long)"FAAD Plug-in");
 
 	return TRUE;
 }
@@ -392,15 +461,8 @@ void ShutDown(int flags)
     /* Deallocate winsock */
     WinsockDeInit();
 
-	if(seek_table)
-	{
-		free(seek_table);
-		seek_table = NULL;
-		seek_table_length = 0;
-	}
-
 	// delete the inserted plugin menu
-	QCDCallbacks->Service(opSetPluginMenuItem, hInstance, 0, 0);
+//	QCDCallbacks->Service(opSetPluginMenuItem, hInstance, 0, 0);
 }
 
 //-----------------------------------------------------------------------------
@@ -613,10 +675,9 @@ BOOL Play(LPCSTR medianame, int playfrom, int playto, int flags)
 		
 		get_AAC_format((char *)medianame, &file_info, &seek_table, &seek_table_length, 0);
 		
-		strcpy(lastfn,medianame);
-		paused = 0;
-		seek_needed = -1;
+		seek_needed = playfrom > 0 ? playfrom : -1;
 		killPlayThread = 0;
+		strcpy(lastfn,medianame);
 
 		/*
 		To RageAmp: This is really needed, because aacinfo isn't very accurate on ADIF files yet.
@@ -624,18 +685,6 @@ BOOL Play(LPCSTR medianame, int playfrom, int playto, int flags)
 		*/
 		file_info.sampling_rate = samplerate;
 		file_info.channels = frameInfo.channels;
-
-		// show constant bitrate at first
-		{
-			AudioInfo cai;
-			cai.struct_size = sizeof(AudioInfo);
-			cai.frequency = file_info.sampling_rate;
-			cai.bitrate = file_info.bitrate;
-			cai.mode = (channels == 2) ? 0 : 3;
-			cai.layer = 0;
-			cai.level = 0;
-			QCDCallbacks->Service(opSetAudioInfo, &cai, sizeof(AudioInfo), 0);
-		}
 
 		play_thread_handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) PlayThread, (void *) &killPlayThread, 0, &thread_id);
 		if(!play_thread_handle)
@@ -673,27 +722,23 @@ BOOL Stop(LPCSTR medianame, int flags)
 		sQCDCallbacks.toPlayer.OutputStop(flags);
 		
 		killPlayThread = 1;
-		if (WaitForSingleObject(play_thread_handle, INFINITE) == WAIT_TIMEOUT)
-            TerminateThread(play_thread_handle,0);
-        CloseHandle(play_thread_handle);
-        play_thread_handle = INVALID_HANDLE_VALUE;
-		
+		if(play_thread_handle != INVALID_HANDLE_VALUE)
+		{
+			if(WaitForSingleObject(play_thread_handle, INFINITE) == WAIT_TIMEOUT)
+			{
+//				MessageBox(hwndPlayer, "FAAD thread kill timeout", "debug", 0);
+				TerminateThread(play_thread_handle,0);
+			}
+			CloseHandle(play_thread_handle);
+			play_thread_handle = INVALID_HANDLE_VALUE;
+		}
+
 		if (oldAPIs)
 			QCDCallbacks->toPlayer.PlayStopped(lastfn);
 		
 		lastfn[0] = 0;
-		faacDecClose(hDecoder);
-		close_filestream(infile);
-		
-		if (memmap_buffer)
-			LocalFree(memmap_buffer);
-		if(seek_table)
-		{
-			free(seek_table);
-			seek_table = NULL;
-			seek_table_length = 0;
-		}
 	}
+
 	return TRUE;
 }
 
@@ -788,12 +833,12 @@ DWORD WINAPI PlayThread(void *b)
     {
  		/********************** SEEK ************************/
        if (!done && seek_needed >= 0)
-        {
+	   {
             int seconds;
 
-			QCDCallbacks->toPlayer.OutputFlush(0);
             // Round off to a second
             seconds = seek_needed - (seek_needed%1000);
+			QCDCallbacks->toPlayer.OutputFlush(decode_pos_ms);
             aac_seek(seconds, seek_table);
             decode_pos_ms = seconds;
 			decoded_frames = 0;
@@ -801,15 +846,15 @@ DWORD WINAPI PlayThread(void *b)
 			br_bytes_consumed = 0;
 
 			seek_needed = -1;
- 			done = FALSE;
 			updatePos = 1;
-       }
+	   }
 
 		/********************* QUIT *************************/
 		if (done)
 		{
 			if (QCDCallbacks->toPlayer.OutputDrain(0) && !(seek_needed >= 0))
 			{
+				play_thread_handle = INVALID_HANDLE_VALUE;
 				QCDCallbacks->toPlayer.OutputStop(STOPFLAG_PLAYDONE);
 				QCDCallbacks->toPlayer.PlayDone(lastfn);
 			}
@@ -824,16 +869,15 @@ DWORD WINAPI PlayThread(void *b)
         /******************* DECODE TO BUFFER ****************/
 		else
         {
-            if(last_frame)
-            {
-                done=1;
-            }
-            else
-            {
-                if (current_file_mode)
-                    bytesconsumed = PlayThread_memmap();
-                else
-					bytesconsumed = PlayThread_file();
+			if (current_file_mode)
+				bytesconsumed = PlayThread_memmap();
+			else
+				bytesconsumed = PlayThread_file();
+
+			if(last_frame)
+				done = TRUE;
+			else
+			{
 
 				decoded_frames++;
 				br_calc_frames++;
@@ -848,7 +892,7 @@ DWORD WINAPI PlayThread(void *b)
 					vai.bitrate = (int)((br_bytes_consumed * 8) / (decoded_frames / 43.07));
 					vai.mode = (channels == 2) ? 0 : 3;
 					vai.layer = 0;
-					vai.level = 0;
+					vai.level = file_info.version;
 					QCDCallbacks->Service(opSetAudioInfo, &vai, sizeof(AudioInfo), 0);
 
 					br_calc_frames = 0;
@@ -866,35 +910,54 @@ DWORD WINAPI PlayThread(void *b)
 					{
 						WriteDataStruct wd;
 
-						decode_pos_ms += (1024*1000)/file_info.sampling_rate;
-						
 						l = frameInfo.samples * sizeof(short);
 
+						decode_pos_ms += (1024*1000)/file_info.sampling_rate;
+						
 						wd.bytelen = l;
 						wd.data = sample_buffer;
 						wd.markerend = 0;
 						wd.markerstart = decode_pos_ms;
-						wd.bps = 16/*file_info.bitrate / frameInfo.samplerate*/;
+						wd.bps = 16;
 						wd.nch = frameInfo.channels;
-						wd.numsamples = frameInfo.samples/*wd.bytelen / (wd.bps / 8) / wd.nch*/;
+						wd.numsamples =l/file_info.channels/(16/8);
 						wd.srate = file_info.sampling_rate;
 						
 						if (!QCDCallbacks->toPlayer.OutputWrite(&wd))
 							done = TRUE;
 					}
-                }
-            }
-        }
+				}
+			}
+		}
         Sleep(10);
     }
-	
+
+	// close up
+	play_thread_handle = INVALID_HANDLE_VALUE;
+
+	faacDecClose(hDecoder);
+	hDecoder = INVALID_HANDLE_VALUE;
+	close_filestream(infile);
+	infile = NULL;
+
 	if(seek_table)
 	{
 		free(seek_table);
 		seek_table = NULL;
 		seek_table_length = 0;
 	}
-    
+
+	if(buffer)
+	{
+		LocalFree(buffer);
+		buffer = NULL;
+	}
+	if(memmap_buffer)
+	{
+		LocalFree(memmap_buffer);
+		memmap_buffer = NULL;
+	}
+
     return 0;
 }
 
@@ -905,7 +968,7 @@ int PlayThread_memmap()
         memmap_buffer + memmap_index, fileread - memmap_index - 1);
     if (frameInfo.error)
     {
-        show_error(faacDecGetErrorMessage(frameInfo.error));
+//        show_error(faacDecGetErrorMessage(frameInfo.error));
         last_frame = 1;
     }
 
@@ -920,7 +983,8 @@ int PlayThread_file()
 {
     int k;
 
-    if (buffercount > 0) {
+    if (buffercount > 0)
+	{
         for (k = 0; k < (768*2 - buffercount); k++)
             buffer[k] = buffer[k + buffercount];
 
@@ -931,7 +995,7 @@ int PlayThread_file()
     sample_buffer = (char*)faacDecDecode(hDecoder, &frameInfo, buffer, 768*2);
     if (frameInfo.error)
     {
-        show_error(faacDecGetErrorMessage(frameInfo.error));
+//        show_error(faacDecGetErrorMessage(frameInfo.error));
         last_frame = 1;
     }
 
@@ -942,23 +1006,6 @@ int PlayThread_file()
         last_frame = 1;
 
     return frameInfo.bytesconsumed;
-}
-
-
-// proc of "About Dialog"
-INT_PTR CALLBACK AboutProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	switch (uMsg)
-	{
-	case WM_COMMAND:
-		switch(LOWORD(wParam))
-		{
-		case IDOK:
-			DestroyWindow(hwndDlg);
-			return TRUE;
-		}
-	}
-	return FALSE;
 }
 
 // tag
