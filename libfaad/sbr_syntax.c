@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_syntax.c,v 1.22 2004/01/16 20:20:32 menno Exp $
+** $Id: sbr_syntax.c,v 1.23 2004/01/19 21:49:53 menno Exp $
 **/
 
 #include "common.h"
@@ -39,6 +39,9 @@
 #include "bits.h"
 #ifdef PS_DEC
 #include "ps_dec.h"
+#endif
+#ifdef DRM
+#include "drm_dec.h"
 #endif
 #include "analysis.h"
 
@@ -686,16 +689,15 @@ static void invf_mode(bitfile *ld, sbr_info *sbr, uint8_t ch)
 static uint16_t sbr_extension(bitfile *ld, sbr_info *sbr,
                               uint8_t bs_extension_id, uint16_t num_bits_left)
 {
-#ifdef DRM
-    if (sbr->Is_DRM_SBR)
-        return 0;
-#endif
-
     switch (bs_extension_id)
     {
 #ifdef PS_DEC
     case EXTENSION_ID_PS:
         return ps_data(&(sbr->ps), ld);
+#endif
+#ifdef DRM
+    case DRM_PARAMETRIC_STEREO:
+        return drm_ps_data(&(sbr->drm_ps), ld);
 #endif
     default:
         sbr->bs_extension_data = (uint8_t)faad_getbits(ld, 6
