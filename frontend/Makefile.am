@@ -1,6 +1,7 @@
 bin_PROGRAMS = faad
 
-faad_SOURCES = main.c audio.c $(top_srcdir)/common/faad/getopt.c
+faad_SOURCES = main.c audio.c $(top_srcdir)/common/faad/getopt.c \
+   audio.h
 
 AM_CFLAGS = -O2
 if HAVE_MPEG4IP

@@ -2,7 +2,7 @@
 
 aclocal -I .
 autoheader
-libtoolize --automake
-automake --add-missing
+libtoolize --automake --copy
+automake --add-missing --copy
 autoconf
 echo "Ready to run ./configure"

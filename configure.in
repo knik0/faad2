@@ -1,5 +1,5 @@
 AC_INIT()
-AM_INIT_AUTOMAKE(faad,2.0)
+AM_INIT_AUTOMAKE(faad2,2.0)
 
 AM_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
@@ -15,6 +15,7 @@ AC_PROG_RANLIB
 
 AM_CONFIG_HEADER(config.h)
 
+AC_ARG_WITH( xmms,[    --with-xmms  compile XMMS plugin],WITHXMMS=$withval, WITHXMMS=no)
 
 dnl Checks for header files required for mp4.h
 AC_HEADER_STDC
@@ -22,6 +23,8 @@ AC_CHECK_HEADERS(stdint.h inttypes.h)
 AC_CHECK_HEADERS(mathf.h)
 AC_CHECK_HEADERS(float.h)
 AC_CHECK_FUNCS(strchr memcpy)
+AC_CHECK_HEADERS(sys/time.h)
+AC_HEADER_TIME
 
 AC_C_INLINE
 AC_C_BIGENDIAN
@@ -69,11 +72,36 @@ if test x$external_mp4v2 = xyes; then
   AC_SUBST(MPEG4IP_PLAYER_PLUGIN_DIR)
 else
   AM_CONDITIONAL(HAVE_MPEG4IP, false)
-  AC_OUTPUT_COMMANDS(,[cd common/mp4v2; aclocal -I .; autoheader; libtoolize --automake; automake --add-missing; autoconf; cd -])
 fi
 
-AC_OUTPUT_COMMANDS(,[cd plugins/xmms; libtoolize; aclocal; autoconf; automake --add-missing; cd -])
+if test x$WITHXMMS = xyes; then
+  xmmsplugin=yes
+  AC_CHECK_PROGS(XMMS_CONFIG, xmms-config,"no_found")
+  if test "$XMMS_CONFIG" = "no_found"; then
+   AC_MSG_ERROR("*** xmms-config not found - omitting xmms plugin build")
+   xmmsplugin=no
+   AM_CONDITIONAL(HAVE_XMMS, false)
+  else
+   AM_CONDITIONAL(HAVE_XMMS, true)
+  fi
+else
+ AM_CONDITIONAL(HAVE_XMMS, false)
+ xmmsplugin=no
+fi
 
-AC_CONFIG_SUBDIRS(common/mp4v2 plugins/xmms)
-
-AC_OUTPUT(libfaad/Makefile common/Makefile  frontend/Makefile Makefile plugins/Makefile plugins/mpeg4ip/Makefile)
+if test x$external_mp4v2 = xyes; then
+  if test x$xmmsplugin = xyes; then
+    AC_CONFIG_SUBDIRS(common/mp4v2 plugins/xmms)
+    AC_OUTPUT(libfaad/Makefile common/Makefile frontend/Makefile Makefile plugins/Makefile plugins/mpeg4ip/Makefile plugins/xmms/Makefile plugins/xmms/src/Makefile)
+  else
+    AC_CONFIG_SUBDIRS(common/mp4v2)
+    AC_OUTPUT(libfaad/Makefile common/Makefile  frontend/Makefile Makefile plugins/Makefile plugins/mpeg4ip/Makefile)
+  fi
+else
+  if test x$xmmsplugin = xyes; then
+    AC_CONFIG_SUBDIRS(plugins/xmms)
+    AC_OUTPUT(libfaad/Makefile frontend/Makefile common/Makefile Makefile plugins/Makefile  common/mp4v2/Makefile plugins/xmms/Makefile plugins/xmms/src/Makefile)
+  else
+    AC_OUTPUT(libfaad/Makefile frontend/Makefile common/Makefile Makefile plugins/Makefile common/mp4v2/Makefile)
+  fi
+fi

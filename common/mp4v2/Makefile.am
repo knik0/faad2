@@ -4,6 +4,8 @@ AM_CXXFLAGS = -Wall
 
 lib_LTLIBRARIES = libmp4v2.la
 
+include_HEADERS = mp4.h mpeg4ip.h
+
 libmp4v2_la_SOURCES = \
     atom_co64.cpp \
     atom_cprt.cpp \
@@ -100,7 +102,6 @@ libmp4v2_la_SOURCES = \
     mp4file.h \
     mp4file_io.cpp \
     mp4info.cpp \
-    mp4meta.h \
     mp4meta.cpp \
     mp4property.cpp \
     mp4property.h \
@@ -115,7 +116,8 @@ libmp4v2_la_SOURCES = \
     qosqualifiers.cpp \
     qosqualifiers.h \
     rtphint.cpp \
-    rtphint.h 
+    rtphint.h \
+    systems.h
 
 EXTRA_DIST = API_CHANGES \
     INTERNALS \

@@ -1,7 +1,7 @@
 /*
-**			  AAC plugin for XMMS 1.2.7
-**				by ciberfred
-**		------------------------------------------------
+**            AAC plugin for XMMS 1.2.7
+**              by ciberfred
+**      ------------------------------------------------
 **
 ** need libfaad2     package from http://www.audiocoding.com
 ** and id3lib-3.8.x  package from http://id3lib.sourceforge.org
@@ -22,29 +22,29 @@
 #include "xmms/titlestring.h"
 #include "aac_utils.h"
 
-#define AAC_DESCRIPTION	"MPEG2/4 AAC player - 1.2.7"
-#define AAC_VERSION	"AAC player - 15 June 2003 (v0.4)"
-#define AAC_ABOUT	"Writen from scratch by ciberfred from France\n"
+#define AAC_DESCRIPTION "MPEG2/4 AAC player - 1.2.7"
+#define AAC_VERSION "AAC player - 15 June 2003 (v0.4)"
+#define AAC_ABOUT   "Writen from scratch by ciberfred from France\n"
 #define PATH2CONFIGFILE "/.xmms/Plugins/aacConfig.txt"
-#define BUFFER_SIZE	FAAD_MIN_STREAMSIZE*64
+#define BUFFER_SIZE FAAD_MIN_STREAMSIZE*64
 
-static void	aac_init(void);
-static void	aac_play(char*);
-static void	aac_stop(void);
-static void	aac_pause(short);
-static int	aac_getTime(void);
-static void	aac_seek(int);
-static void	aac_cleanup(void);
-static void	aac_about(void);
-static void	aac_configuration(void);
-static void	*aac_decode(void*);
+static void aac_init(void);
+static void aac_play(char*);
+static void aac_stop(void);
+static void aac_pause(short);
+static int  aac_getTime(void);
+static void aac_seek(int);
+static void aac_cleanup(void);
+static void aac_about(void);
+static void aac_configuration(void);
+static void *aac_decode(void*);
 
-static void	aac_getSongInfo(char*);
-static int	aac_isFile(char*);
+static void aac_getSongInfo(char*);
+static int  aac_isFile(char*);
 
-extern void	readID3tag(char*);
+extern void readID3tag(char*);
 extern GtkWidget *createDialogInfo(void);
-extern void	clearWindowDatas(void);
+extern void clearWindowDatas(void);
 
 static GtkWidget *infoBoxWindow = NULL;
 extern char *title, *artist, *album, *track, *genre;
@@ -57,39 +57,39 @@ extern char *title, *artist, *album, *track, *genre;
 
 InputPlugin aac_ip =
   {
-    0,		// handle
-    0,		// filename
+    0,      // handle
+    0,      // filename
     AAC_DESCRIPTION,// description
-    aac_init,	// init_func
-    aac_about,	// aboutbox
-    aac_configuration,		// configuration
-    aac_isFile,	// ???
-    0,		// scan dir
-    aac_play,	// when play button
-    aac_stop,	// when stop
-    aac_pause,	// when pause
-    aac_seek,	// when seek
-    0,		// set equalizer
-    aac_getTime,	// ???
-    0,		// get volume
-    0,		// set volume
-    aac_cleanup,	// the cleanup function :)
-    0,		// obsolete (???)
-    0,		// send visualisation data
-    0,		// set player window info
-    0,		// set song title text
-    0,	// get song title text to show on Playlist
+    aac_init,   // init_func
+    aac_about,  // aboutbox
+    aac_configuration,      // configuration
+    aac_isFile, // ???
+    0,      // scan dir
+    aac_play,   // when play button
+    aac_stop,   // when stop
+    aac_pause,  // when pause
+    aac_seek,   // when seek
+    0,      // set equalizer
+    aac_getTime,    // ???
+    0,      // get volume
+    0,      // set volume
+    aac_cleanup,    // the cleanup function :)
+    0,      // obsolete (???)
+    0,      // send visualisation data
+    0,      // set player window info
+    0,      // set song title text
+    0,  // get song title text to show on Playlist
     aac_getSongInfo,// file info box
-    0		// pointer to outputPlugin
+    0       // pointer to outputPlugin
   };
-static gboolean 	bPlaying = FALSE;
-static gboolean		bOutputOpen = FALSE;
-static pthread_t	decodeThread;
-static gboolean		bSeek = FALSE;
-static gint		seekPosition = -1; // track position
-static pthread_mutex_t	mutex = PTHREAD_MUTEX_INITIALIZER;
-static unsigned long	*positionTable = 0;
-int			aacType;
+static gboolean     bPlaying = FALSE;
+static gboolean     bOutputOpen = FALSE;
+static pthread_t    decodeThread;
+static gboolean     bSeek = FALSE;
+static gint     seekPosition = -1; // track position
+static pthread_mutex_t  mutex = PTHREAD_MUTEX_INITIALIZER;
+static unsigned long    *positionTable = 0;
+int         aacType;
 /*****************************************************************************/
 
 InputPlugin *get_iplugin_info(void)
@@ -100,7 +100,7 @@ InputPlugin *get_iplugin_info(void)
 
 static void aac_init(void)
 {
-  ConfigFile*	cfg;
+  ConfigFile*   cfg;
 
   memset(&decodeThread, 0, sizeof(pthread_t));
   cfg = xmms_cfg_open_default_file();
@@ -169,19 +169,19 @@ static void aac_getSongInfo(char *filename)
 
 static void *aac_decode(void *args)
 {
-  char 			*filename = args;
-  char			*xmmstitle=NULL;
-  FILE 			*file = NULL;
-  faacDecHandle		decoder = 0;
-  unsigned char		*buffer = 0;
-  unsigned long		bufferconsumed = 0;
-  unsigned long		samplerate = 0;
-  unsigned long		lenght=0;
-  char			channels;
-  unsigned long		buffervalid = 0;
-  TitleInput		*input;
-  char 			*temp = g_strdup(filename);
-  char			*ext  = strrchr(temp, '.');
+  char          *filename = args;
+  char          *xmmstitle=NULL;
+  FILE          *file = NULL;
+  faacDecHandle     decoder = 0;
+  unsigned char     *buffer = 0;
+  unsigned long     bufferconsumed = 0;
+  unsigned long     samplerate = 0;
+  unsigned long     lenght=0;
+  char          channels;
+  unsigned long     buffervalid = 0;
+  TitleInput        *input;
+  char          *temp = g_strdup(filename);
+  char          *ext  = strrchr(temp, '.');
 
   pthread_mutex_lock(&mutex);
   seekPosition=-1;
@@ -197,7 +197,7 @@ static void *aac_decode(void *args)
       g_print("erreur getAAC\n");
       fclose(file);
       if(positionTable){
-	free(positionTable); positionTable=0;
+    free(positionTable); positionTable=0;
       }
       pthread_mutex_unlock(&mutex);
       pthread_exit(NULL);
@@ -250,16 +250,16 @@ static void *aac_decode(void *args)
     if(bSeek){
       checkADTSForSeeking(file, &positionTable, &lenght);
       if((aacType = getAacInfo(file)) ==-1){
-	printf("erreur getAAC\n");
-	g_free(buffer); buffer=0;
-	faacDecClose(decoder);
-	fclose(file);
-	aac_ip.output->close_audio();
-	if(positionTable){
-	  free(positionTable); positionTable=0;
-	}
-	pthread_mutex_unlock(&mutex);
-	pthread_exit(NULL);
+    printf("erreur getAAC\n");
+    g_free(buffer); buffer=0;
+    faacDecClose(decoder);
+    fclose(file);
+    aac_ip.output->close_audio();
+    if(positionTable){
+      free(positionTable); positionTable=0;
+    }
+    pthread_mutex_unlock(&mutex);
+    pthread_exit(NULL);
       }
       printf("AAC-%s Type\n", aacType?"MPEG2":"MPEG4");
     }
@@ -275,7 +275,7 @@ static void *aac_decode(void *args)
   g_free(input->genre);
   g_free(input);
 
-  bufferconsumed = faacDecInit(decoder, buffer, &samplerate, &channels);
+  bufferconsumed = faacDecInit(decoder, buffer, buffervalid, &samplerate, &channels);
   if((bOutputOpen = aac_ip.output->open_audio(FMT_S16_NE, samplerate, channels)) == FALSE){
     printf("Output Error\n");
     g_free(buffer); buffer=0;
@@ -293,11 +293,11 @@ static void *aac_decode(void *args)
   }else{
     aac_ip.set_info(xmmstitle, -1, -1, samplerate, channels);
   }
-  aac_ip.output->flush(0);  
+  aac_ip.output->flush(0);
   while(bPlaying && buffervalid > 0){
-    faacDecFrameInfo	finfo;
-    unsigned long		samplesdecoded;
-    char			*sample_buffer = NULL;
+    faacDecFrameInfo    finfo;
+    unsigned long       samplesdecoded;
+    char            *sample_buffer = NULL;
 
     if(bSeek && seekPosition!=-1){
       fseek(file, positionTable[seekPosition], SEEK_SET);
@@ -312,7 +312,7 @@ static void *aac_decode(void *args)
       buffervalid += fread(&buffer[buffervalid], 1, BUFFER_SIZE-buffervalid, file);
       bufferconsumed = 0;
     }
-    sample_buffer = faacDecDecode(decoder, &finfo, buffer);
+    sample_buffer = faacDecDecode(decoder, &finfo, buffer, buffervalid);
     if(finfo.error){
       buffervalid = 0;
       printf("FAAD2 Error %s\n", faacDecGetErrorMessage(finfo.error));
@@ -359,19 +359,19 @@ static int aac_isFile(char *filename)
 
 static void aac_about(void)
 {
-  static GtkWidget	*aboutbox;
+  static GtkWidget  *aboutbox;
 
   if(aboutbox!=NULL)
     return;
 
   aboutbox = xmms_show_message(
-		 "About MPEG2/4-AAC plugin",
-		 "decoding engine : FAAD2 team\n"
-		 "Plugin coder : ciberfred",
- 	         "Ok", FALSE, NULL, NULL);
+         "About MPEG2/4-AAC plugin",
+         "decoding engine : FAAD2 team\n"
+         "Plugin coder : ciberfred",
+             "Ok", FALSE, NULL, NULL);
   gtk_signal_connect(GTK_OBJECT(aboutbox), "destroy",
-		     GTK_SIGNAL_FUNC(gtk_widget_destroyed),
-		     &aboutbox);
+             GTK_SIGNAL_FUNC(gtk_widget_destroyed),
+             &aboutbox);
 }
 
 
@@ -379,7 +379,7 @@ static  GtkWidget *checkbutton;
 static  GtkWidget *window;
 static void aac_configuration_save(GtkWidget *widget, gpointer data)
 {
-  ConfigFile	*cfg;
+  ConfigFile    *cfg;
   bSeek = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbutton));
   cfg = xmms_cfg_open_default_file();
   xmms_cfg_write_boolean(cfg, "AAC", "seeking", bSeek);
@@ -387,7 +387,7 @@ static void aac_configuration_save(GtkWidget *widget, gpointer data)
   gtk_widget_destroy(window);
 }
 
-static void	aac_configuration(void)
+static void aac_configuration(void)
 {
   GtkWidget *vbox, *hbox;
   GtkWidget *NotaBene;
@@ -395,8 +395,8 @@ static void	aac_configuration(void)
 
   window = gtk_window_new(GTK_WINDOW_DIALOG);
   gtk_signal_connect(GTK_OBJECT(window), "destroy",
-		     GTK_SIGNAL_FUNC(gtk_widget_destroyed),
-		     &window);
+             GTK_SIGNAL_FUNC(gtk_widget_destroyed),
+             &window);
   gtk_window_set_title(GTK_WINDOW(window), "AAC Plugin Configuration");
   gtk_widget_set_usize(window, 220, 200);
 
@@ -407,9 +407,9 @@ static void	aac_configuration(void)
   GTK_WIDGET_UNSET_FLAGS (NotaBene, GTK_CAN_FOCUS);
   gtk_text_insert(GTK_TEXT(NotaBene), NULL, NULL, NULL,
                    "Remember that unable seeking"
-		   " is not suitable for playing"
-		   " file from network.\n"
-		   "Seeking must read first all aac file before playing.",-1);
+           " is not suitable for playing"
+           " file from network.\n"
+           "Seeking must read first all aac file before playing.",-1);
   gtk_box_pack_start(GTK_BOX(vbox), NotaBene, FALSE, FALSE, 0);
 
   checkbutton = gtk_check_button_new_with_label("Unable Seeking");
@@ -422,13 +422,13 @@ static void	aac_configuration(void)
 
   button2 = gtk_button_new_with_label ("Save");
   gtk_signal_connect_object(GTK_OBJECT(button2), "clicked",
-			    GTK_SIGNAL_FUNC(aac_configuration_save),
-			    GTK_OBJECT(window));
+                GTK_SIGNAL_FUNC(aac_configuration_save),
+                GTK_OBJECT(window));
   gtk_box_pack_start(GTK_BOX(hbox), button2, FALSE, FALSE, 0);
   button2 = gtk_button_new_with_label ("Close");
   gtk_signal_connect_object(GTK_OBJECT(button2), "clicked",
-			    GTK_SIGNAL_FUNC(gtk_widget_destroy),
-			    GTK_OBJECT(window));
+                GTK_SIGNAL_FUNC(gtk_widget_destroy),
+                GTK_OBJECT(window));
   gtk_box_pack_start(GTK_BOX(hbox), button2, FALSE, FALSE, 0);
   gtk_widget_show_all(window);
 }
