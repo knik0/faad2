@@ -2376,13 +2376,33 @@ bool MP4File::TagAddEntry(MP4TrackId trackId,
         (MP4Property**)&pNameProperty);
     ASSERT(pNameProperty);
 
+    {
+        char name2[128];
+        if (strlen(name) > 126)
+        {
+            memcpy(name2, name, 127);
+            name2[127] = '\0';
+            pNameProperty->AddValue((char*)name2);
+        } else {
     pNameProperty->AddValue((char*)name);
+        }
+    }
 
     pTagAtom->FindProperty("TAG4.entries.value",
         (MP4Property**)&pValueProperty);
     ASSERT(pValueProperty);
 
+    {
+        char value2[128];
+        if (strlen(value) > 126)
+        {
+            memcpy(value2, value, 127);
+            value2[127] = '\0';
+            pValueProperty->AddValue((char*)value2);
+        } else {
     pValueProperty->AddValue((char*)value);
+        }
+    }
 
     pCountProperty->IncrementValue();
 
