@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.23 2003/04/27 12:05:33 menno Exp $
+** $Id: foo_mp4.cpp,v 1.24 2003/04/27 12:16:15 menno Exp $
 **/
 
 #include <mp4.h>
@@ -35,7 +35,7 @@ char *STRIP_REVISION(const char *str)
 }
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           STRIP_REVISION("$Revision: 1.23 $"),
+                           STRIP_REVISION("$Revision: 1.24 $"),
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -468,6 +468,8 @@ public:
         faacDecFrameInfo frameInfo;
         void *sample_buffer;
 
+        memset(&frameInfo, 0, sizeof(faacDecFrameInfo));
+
         do
         {
             if (m_aac_bytes_consumed > 0)
@@ -525,7 +527,10 @@ public:
         if (frameInfo.error || (m_aac_bytes_into_buffer == 0))
         {
             if (frameInfo.error)
-                console::error(faacDecGetErrorMessage(frameInfo.error), "foo_mp4");
+            {
+                if (faacDecGetErrorMessage(frameInfo.error) != NULL)
+                    console::error(faacDecGetErrorMessage(frameInfo.error), "foo_mp4");
+            }
             return 0;
         }
 
