@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfgen.c,v 1.4 2003/09/09 18:37:32 menno Exp $
+** $Id: sbr_hfgen.c,v 1.5 2003/09/22 13:09:43 menno Exp $
 **/
 
 /* High Frequency generation */
@@ -179,10 +179,12 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t *buffer,
 {
     int8_t j, jminus1, jminus2;
     uint8_t offset;
-    const real_t rel = COEF_CONST(0.9999999999999); // 1 / (1 + 1e-6f);
 #ifdef FIXED_POINT
+    const real_t rel = COEF_CONST(0.9999999999999);
     uint32_t maxi = 0;
     uint32_t pow2, exp;
+#else
+    const real_t rel = 1 / (1 + 1e-6f);
 #endif
 #ifdef DRM
     if (sbr->Is_DRM_SBR)
@@ -289,7 +291,7 @@ static void calc_prediction_coef(sbr_info *sbr, qmf_t *Xlow,
     real_t tmp;
     acorr_coef ac;
 
-    for (k = 1; k < sbr->kx; k++)
+    for (k = 1; k < sbr->f_master[0]; k++)
     {
 #ifdef DRM
         if (sbr->Is_DRM_SBR)
