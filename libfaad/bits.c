@@ -1,22 +1,22 @@
 /*
 ** FAAD - Freeware Advanced Audio Decoder
 ** Copyright (C) 2002 M. Bakker
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.c,v 1.19 2003/02/16 18:17:10 menno Exp $
+** $Id: bits.c,v 1.20 2003/02/16 19:16:12 menno Exp $
 **/
 
 #include "common.h"
@@ -68,7 +68,7 @@ void faad_endbits(bitfile *ld)
 
 uint32_t faad_get_processed_bits(bitfile *ld)
 {
-    return 8*(ld->bytes_used + (32 - ld->bits_left));
+    return 8 * (4*(ld->tail - ld->start) - 4) - (ld->bits_left);
 }
 
 uint8_t faad_byte_align(bitfile *ld)
@@ -107,7 +107,7 @@ uint8_t *faad_getbitbuffer(bitfile *ld, uint32_t bits
                        DEBUGDEC)
 {
     uint16_t i;
-	uint8_t temp;
+    uint8_t temp;
     uint16_t bytes = (uint16_t)bits / 8;
     uint8_t remainder = (uint8_t)bits % 8;
 
