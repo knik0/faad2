@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: audio.c,v 1.6 2002/08/13 19:16:07 menno Exp $
+** $Id: audio.c,v 1.7 2002/08/14 10:55:28 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <math.h>
 #include <faad.h>
 #include "audio.h"
 
@@ -51,6 +52,7 @@ audio_file *open_audio_file(char *infile, int samplerate, int channels,
         aufile->bits_per_sample = 24;
         break;
     case FAAD_FMT_32BIT:
+    case FAAD_FMT_FLOAT:
         aufile->bits_per_sample = 32;
         break;
     default:
@@ -74,9 +76,7 @@ audio_file *open_audio_file(char *infile, int samplerate, int channels,
 
     if (aufile->fileType == OUTPUT_WAV)
     {
-        write_wav_header(aufile->sndfile, aufile->samplerate,
-            aufile->bits_per_sample, aufile->channels,
-            aufile->samples);
+        write_wav_header(aufile);
     }
 
     return aufile;
@@ -93,6 +93,8 @@ int write_audio_file(audio_file *aufile, void *sample_buffer, int samples)
         return write_audio_24bit(aufile, sample_buffer, samples);
     case FAAD_FMT_32BIT:
         return write_audio_32bit(aufile, sample_buffer, samples);
+    case FAAD_FMT_FLOAT:
+        return write_audio_float(aufile, sample_buffer, samples);
     default:
         return 0;
     }
@@ -106,9 +108,7 @@ void close_audio_file(audio_file *aufile)
     {
         fseek(aufile->sndfile, 0, SEEK_SET);
 
-        write_wav_header(aufile->sndfile, aufile->samplerate,
-            aufile->bits_per_sample, aufile->channels,
-            aufile->samples);
+        write_wav_header(aufile);
     }
 
     fclose(aufile->sndfile);
@@ -116,15 +116,12 @@ void close_audio_file(audio_file *aufile)
     if (aufile) free(aufile);
 }
 
-static int write_wav_header(FILE *file, unsigned long samplerate,
-                            unsigned int bits_per_sample,
-                            unsigned int channels,
-                            unsigned long samples)
+static int write_wav_header(audio_file *aufile)
 {
     unsigned char header[44];
     unsigned char* p = header;
-    unsigned int bytes = (bits_per_sample + 7) / 8;
-    float data_size = (float)bytes * samples;
+    unsigned int bytes = (aufile->bits_per_sample + 7) / 8;
+    float data_size = (float)bytes * aufile->samples;
     unsigned long word32;
     int ret;
 
@@ -143,28 +140,33 @@ static int write_wav_header(FILE *file, unsigned long samplerate,
 
     *p++ = 0x10; *p++ = 0x00; *p++ = 0x00; *p++ = 0x00;
 
-    *p++ = 0x01; *p++ = 0x00;
+    if (aufile->outputFormat == FAAD_FMT_FLOAT)
+    {
+        *p++ = 0x03; *p++ = 0x00;
+    } else {
+        *p++ = 0x01; *p++ = 0x00;
+    }
 
-    *p++ = (unsigned char)(channels >> 0);
-    *p++ = (unsigned char)(channels >> 8);
+    *p++ = (unsigned char)(aufile->channels >> 0);
+    *p++ = (unsigned char)(aufile->channels >> 8);
 
-    *p++ = (unsigned char)(samplerate >>  0);
-    *p++ = (unsigned char)(samplerate >>  8);
-    *p++ = (unsigned char)(samplerate >> 16);
-    *p++ = (unsigned char)(samplerate >> 24);
+    *p++ = (unsigned char)(aufile->samplerate >>  0);
+    *p++ = (unsigned char)(aufile->samplerate >>  8);
+    *p++ = (unsigned char)(aufile->samplerate >> 16);
+    *p++ = (unsigned char)(aufile->samplerate >> 24);
 
-    word32 *= bytes * channels;
+    word32 *= bytes * aufile->channels;
     *p++ = (unsigned char)(word32 >>  0);
     *p++ = (unsigned char)(word32 >>  8);
     *p++ = (unsigned char)(word32 >> 16);
     *p++ = (unsigned char)(word32 >> 24);
 
-    word32 = bytes * channels;
+    word32 = bytes * aufile->channels;
     *p++ = (unsigned char)(word32 >>  0);
     *p++ = (unsigned char)(word32 >>  8);
 
-    *p++ = (unsigned char)(bits_per_sample >> 0);
-    *p++ = (unsigned char)(bits_per_sample >> 8);
+    *p++ = (unsigned char)(aufile->bits_per_sample >> 0);
+    *p++ = (unsigned char)(aufile->bits_per_sample >> 8);
 
     *p++ = 'd'; *p++ = 'a'; *p++ = 't'; *p++ = 'a';
 
@@ -175,7 +177,7 @@ static int write_wav_header(FILE *file, unsigned long samplerate,
     *p++ = (unsigned char)(word32 >> 16);
     *p++ = (unsigned char)(word32 >> 24);
 
-    ret = fwrite(header, sizeof(header), 1, file);
+    ret = fwrite(header, sizeof(header), 1, aufile->sndfile);
 
     return ret;
 }
@@ -243,6 +245,54 @@ static int write_audio_32bit(audio_file *aufile, void *sample_buffer,
         data[i*4+1] = (sample_buffer32[i] >> 8) & 0xFF;
         data[i*4+2] = (sample_buffer32[i] >> 16) & 0xFF;
         data[i*4+3] = (sample_buffer32[i] >> 24) & 0xFF;
+    }
+
+    ret = fwrite(data, samples, aufile->bits_per_sample/8, aufile->sndfile);
+
+    if (data) free(data);
+
+    return ret;
+}
+
+static int write_audio_float(audio_file *aufile, void *sample_buffer,
+                             unsigned int samples)
+{
+    int ret;
+    unsigned int i;
+    float *sample_buffer_f = (float*)sample_buffer;
+    unsigned char *data = malloc(samples*aufile->bits_per_sample*sizeof(char)/8);
+
+    aufile->samples += samples;
+
+    for (i = 0; i < samples; i++)
+    {
+        int exponent, mantissa, negative = 0 ;
+        float in = sample_buffer_f[i];
+
+        data[i*4] = 0; data[i*4+1] = 0; data[i*4+2] = 0; data[i*4+3] = 0;
+        if (in == 0.0)
+            continue;
+
+        if (in < 0.0)
+        {
+            in *= -1.0;
+            negative = 1;
+        }
+        in = frexp(in, &exponent);
+        exponent += 126;
+        in *= (float)0x1000000;
+        mantissa = (((int)in) & 0x7FFFFF);
+
+        if (negative)
+            data[i*4+3] |= 0x80;
+
+        if (exponent & 0x01)
+            data[i*4+2] |= 0x80;
+
+        data[i*4] = mantissa & 0xFF;
+        data[i*4+1] = (mantissa >> 8) & 0xFF;
+        data[i*4+2] |= (mantissa >> 16) & 0x7F;
+        data[i*4+3] |= (exponent >> 1) & 0x7F;
     }
 
     ret = fwrite(data, samples, aufile->bits_per_sample/8, aufile->sndfile);

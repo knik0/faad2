@@ -124,8 +124,8 @@ BEGIN
                     96,65,10
     CONTROL         "32 bit PCM",IDC_32BIT,"Button",BS_AUTORADIOBUTTON,15,
                     111,65,10
-    CONTROL         "32 bit floats",IDC_FLOATS,"Button",BS_AUTORADIOBUTTON | 
-                    WS_DISABLED,125,111,65,10
+    CONTROL         "32 bit floats",IDC_FLOATS,"Button",BS_AUTORADIOBUTTON,
+                    125,111,65,10
     GROUPBOX        "Object Type Settings",IDC_STATIC,7,133,241,50
     CONTROL         "Main",IDC_MAIN,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
                     15,147,65,10
