@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.63 2004/07/31 15:48:55 menno Exp $
+** $Id: common.h,v 1.64 2004/09/04 14:56:28 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -396,6 +396,7 @@ uint32_t wl_min_lzc(uint32_t x);
 #ifdef FIXED_POINT
 #define LOG2_MIN_INF REAL_CONST(-10000)
 int32_t log2_int(uint32_t val);
+int32_t log2_fix(uint32_t val);
 int32_t pow2_int(real_t val);
 real_t pow2_fix(real_t val);
 #endif

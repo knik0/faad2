@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: in_mp4.c,v 1.53 2004/09/03 21:49:56 gcp Exp $
+** $Id: in_mp4.c,v 1.54 2004/09/04 14:56:30 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -643,15 +643,21 @@ static void mp4fileinfo(mp4ff_t *mp4, char *info, size_t len)
     float seconds;
     int track;
 
+    NeAACDecHandle hDecoder;
+    NeAACDecFrameInfo frameInfo;
     mp4AudioSpecificConfig mp4ASC = {0};
     unsigned char *buffer = NULL;
     int buffer_size = 0;
+    unsigned long sr = 0;
+    unsigned char ch = 0;
 
     if ((track = GetAACTrack(mp4)) < 0)
     {
         info[0] = '\0';
         return;
     }
+
+    hDecoder = NeAACDecOpen();
 
     samples = mp4ff_num_samples(mp4, track);
 
@@ -663,13 +669,39 @@ static void mp4fileinfo(mp4ff_t *mp4, char *info, size_t len)
             if (mp4ASC.frameLengthFlag == 1) f = 960.0;
             if (mp4ASC.sbr_present_flag == 1) f *= 2;
         }
+
+        if(NeAACDecInit2(hDecoder, buffer, buffer_size, &sr, &ch) < 0)
+        {
+            /* If some error initializing occured, skip the file */
+            free(buffer);
+            return;
+        }
+
         free(buffer);
+        buffer = NULL;
     }
+
+    if (mp4ff_read_sample(mp4, track, 0, &buffer,  &buffer_size) == 0)
+    {
+        return;
+    }
+    NeAACDecDecode(hDecoder, &frameInfo, buffer, buffer_size);
+
+    if (buffer) free(buffer);
 
     seconds = (float)samples*(float)(f-1.0)/(float)mp4ASC.samplingFrequency;
 
-    wsprintf(info, "%s %d.%d secs, %d ch, %d Hz\n\n", ot[(mp4ASC.objectTypeIndex > 5)?0:mp4ASC.objectTypeIndex],
-        (int)(seconds), (int)(seconds*1000.0 + 0.5) % 1000, mp4ASC.channelsConfiguration, mp4ASC.samplingFrequency);
+    wsprintf(info, "MPEG-4 %s, %d.%d secs, %d ch, %d Hz\nSBR: %s\nParametric stereo: %s",
+        ot[(mp4ASC.objectTypeIndex > 5)?0:mp4ASC.objectTypeIndex],
+        (int)(seconds),
+        (int)(seconds*1000.0 + 0.5) % 1000,
+        mp4ASC.channelsConfiguration,
+        mp4ASC.samplingFrequency,
+        /* SBR: 0: off, 1: on; upsample, 2: on; downsampled, 3: off; upsampled */
+        (frameInfo.sbr == 0) ? "off" : ((frameInfo.sbr == 1) ? "on, normal" : ((frameInfo.sbr == 2) ? "on, downsampled" : "off, upsampled")),
+        (frameInfo.ps == 0) ? "no" : "yes");
+
+    NeAACDecClose(hDecoder);
 }
 
 BOOL CALLBACK mp4_info_dialog_proc(HWND hwndDlg, UINT message,

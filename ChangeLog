@@ -1,11 +1,29 @@
+3 september 2004  mbakker(at)nero.com
+    - neaacdec.h, decoder.c, syntax.c, structs.h: added output flag for PS
+
+3 september 2004  mbakker(at)nero.com
+    - common.c: added log2_fix()
+
+28 august 2004  gpascutto(at)nero.com
+    - sbr_syntax.c: bugfix with PS_DEC and DRM_PS defines
+
+21 august 2004  mbakker(at)nero.com
+    - cfft.c, cfft_tab.h: added size 128 fixed point FFT tables for HVXC
+
+18 august 2004  mbakker(at)nero.com
+    - sbr_syntax.c: allow only 1 PS data element per SBR extension data
+
+18 august 2004  gpascutto(at)nero.com
+    - specrec.c: safeguard against PS suddenly going on
+
+4 august 2004   gpascutto(at)nero.com
+    - drm_dec.c: make sure we still copy to the right channel if there's no data
+
 2 august 2004   gpascutto(at)nero.com
     - hcr.c: bugfix
 
 31 july 2004    gpascutto(at)nero.com
     - hcr.c: Rewritten and optimized
-
-30 july 2004    mbakker(at)nero.com
-    - /mp4ff/: conversion to c++, cleanup
 
 29 july 2004    mbakker(at)nero.com
     - /mp4ff/mp4ff.c,mp4atoms.c: support video decoding better
