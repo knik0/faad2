@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.c,v 1.6 2002/03/27 19:09:29 menno Exp $
+** $Id: filtbank.c,v 1.7 2002/04/07 21:26:04 menno Exp $
 **/
 
 #include "common.h"
@@ -34,8 +34,8 @@ void filter_bank_init(fb_info *fb)
     uint16_t i;
 
     /* normal */
-    mdct_init(&(fb->mdct256), 256);
-    mdct_init(&(fb->mdct2048), 2048);
+    faad_mdct_init(&(fb->mdct256), 256);
+    faad_mdct_init(&(fb->mdct2048), 2048);
 
     fb->long_window[0]  = malloc(BLOCK_LEN_LONG*sizeof(real_t));
     fb->short_window[0] = malloc(BLOCK_LEN_SHORT*sizeof(real_t));
@@ -50,7 +50,7 @@ void filter_bank_init(fb_info *fb)
 
 #ifdef LD_DEC
     /* LD */
-    mdct_init(&(fb->mdct1024), 1024);
+    faad_mdct_init(&(fb->mdct1024), 1024);
 
     fb->ld_window[0] = malloc(BLOCK_LEN_LD*sizeof(real_t));
     fb->ld_window[1] = malloc(BLOCK_LEN_LD*sizeof(real_t));
@@ -71,14 +71,14 @@ void filter_bank_init(fb_info *fb)
 
 void filter_bank_end(fb_info *fb)
 {
-    mdct_end(&(fb->mdct256));
-    mdct_end(&(fb->mdct2048));
+    faad_mdct_end(&(fb->mdct256));
+    faad_mdct_end(&(fb->mdct2048));
 
     if (fb->long_window[0]) free(fb->long_window[0]);
     if (fb->short_window[0]) free(fb->short_window[0]);
 
 #ifdef LD_DEC
-    mdct_end(&(fb->mdct1024));
+    faad_mdct_end(&(fb->mdct1024));
 
     if (fb->ld_window[0]) free(fb->ld_window[0]);
     if (fb->ld_window[1]) free(fb->ld_window[1]);
@@ -174,39 +174,49 @@ static INLINE void vadd(real_t *src1, real_t *src2, real_t *dest, uint16_t vlen)
 
 static INLINE void imdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_t len)
 {
+    mdct_info *mdct;
+
     switch (len)
     {
     case 2048:
-        IMDCT_2048(&(fb->mdct2048), in_data, out_data);
-        return;
+        mdct = &(fb->mdct2048);
+        break;
     case 256:
-        IMDCT_256(&(fb->mdct256), in_data, out_data);
-        return;
+        mdct = &(fb->mdct256);
+        break;
 #ifdef LD_DEC
     case 1024:
-        IMDCT_1024(&(fb->mdct1024), in_data, out_data);
-        return;
+        mdct = &(fb->mdct1024);
+        break;
 #endif
     }
+
+    faad_imdct(mdct, in_data, out_data);
 }
 
+#ifdef LTP_DEC
 static INLINE void mdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_t len)
 {
+    mdct_info *mdct;
+
     switch (len)
     {
     case 2048:
-        MDCT_2048(&(fb->mdct2048), in_data, out_data);
-        return;
+        mdct = &(fb->mdct2048);
+        break;
     case 256:
-        MDCT_256(&(fb->mdct256), in_data, out_data);
-        return;
+        mdct = &(fb->mdct256);
+        break;
 #ifdef LD_DEC
     case 1024:
-        MDCT_1024(&(fb->mdct1024), in_data, out_data);
-        return;
+        mdct = &(fb->mdct1024);
+        break;
 #endif
     }
+
+    faad_mdct(mdct, in_data, out_data);
 }
+#endif
 
 void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
                   uint8_t window_shape_prev, real_t *freq_in, real_t *time_buff,
@@ -358,6 +368,7 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
     free(transf_buf);
 }
 
+#ifdef LTP_DEC
 /* only works for LTP -> no overlapping */
 void filter_bank_ltp(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
                      uint8_t window_shape_prev, real_t *in_data, real_t *out_mdct,
@@ -442,3 +453,4 @@ void filter_bank_ltp(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
 
     free(windowed_buf);
 }
+#endif

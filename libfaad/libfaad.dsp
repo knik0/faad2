@@ -41,7 +41,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /G6 /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
+# ADD CPP /nologo /G6 /W3 /GX /O2 /I "fftw" /D "NDEBUG" /D "WIN32" /D "_MBCS" /D "_LIB" /D "FFTW_ENABLE_FLOAT" /YX /FD /c
 # ADD BASE RSC /l 0x413 /d "NDEBUG"
 # ADD RSC /l 0x413 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -64,7 +64,7 @@ LIB32=xilink6.exe -lib
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
+# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "fftw" /D "_DEBUG" /D "WIN32" /D "_MBCS" /D "_LIB" /D "FFTW_ENABLE_FLOAT" /YX /FD /GZ /c
 # ADD BASE RSC /l 0x413 /d "_DEBUG"
 # ADD RSC /l 0x413 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -133,6 +133,302 @@ SOURCE=.\codebook\hcb_9.c
 # Begin Source File
 
 SOURCE=.\codebook\hcb_sf.c
+# End Source File
+# End Group
+# Begin Group "fftw"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\fftw\config.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\executor.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fftwf77.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fftwnd.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_1.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_10.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_11.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_12.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_13.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_14.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_15.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_16.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_2.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_3.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_32.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_4.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_5.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_6.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_64.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_7.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_8.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fn_9.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_1.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_10.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_11.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_12.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_13.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_14.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_15.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_16.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_2.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_3.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_32.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_4.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_5.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_6.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_64.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_7.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_8.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fni_9.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_10.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_16.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_2.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_3.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_32.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_4.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_5.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_6.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_64.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_7.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_8.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftw_9.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_10.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_16.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_2.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_3.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_32.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_4.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_5.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_6.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_64.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_7.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_8.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\ftwi_9.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\generic.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\malloc.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\planner.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\putils.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\rader.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\timer.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\twiddle.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\wisdom.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\wisdomio.c
 # End Source File
 # End Group
 # Begin Source File
@@ -225,6 +521,10 @@ SOURCE=.\common.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\fftw\config.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\data.h
 # End Source File
 # Begin Source File
@@ -238,6 +538,18 @@ SOURCE=.\drc.h
 # Begin Source File
 
 SOURCE=.\error.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\f77_func.h
+# End Source File
+# Begin Source File
+
+SOURCE=".\fftw\fftw-int.h"
+# End Source File
+# Begin Source File
+
+SOURCE=.\fftw\fftw.h
 # End Source File
 # Begin Source File
 

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mp4.c,v 1.4 2002/03/16 13:38:36 menno Exp $
+** $Id: mp4.c,v 1.5 2002/04/07 21:26:04 menno Exp $
 **/
 
 #include "common.h"
@@ -28,10 +28,18 @@
 /* defines if an object type can be decoded by this library or not */
 static uint8_t ObjectTypesTable[32] = {
     0, /* NULL */
+#ifdef MAIN_DEC
     1, /* AAC Main */
+#else
+    0, /* AAC Main */
+#endif
     1, /* AAC LC */
     0, /* AAC SSR */
+#ifdef LTP_DEC
     1, /* AAC LTP */
+#else
+    0, /* AAC LTP */
+#endif
     0, /* Reserved */
     0, /* AAC Scalable */
     0, /* TwinVQ */

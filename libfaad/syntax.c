@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.9 2002/03/16 13:38:36 menno Exp $
+** $Id: syntax.c,v 1.10 2002/04/07 21:26:04 menno Exp $
 **/
 
 /*
@@ -432,7 +432,11 @@ uint8_t fill_element(bitfile *ld, drc_info *drc)
 static uint8_t individual_channel_stream(element *ele, bitfile *ld,
                                      ic_stream *ics, uint8_t scal_flag,
                                      int16_t *spec_data, uint8_t sf_index,
-                                     uint8_t object_type)
+                                     uint8_t object_type
+#ifdef ERROR_RESILIENCE
+                                     ,uint8_t aacSpectralDataResilienceFlag
+#endif
+                                     )
 {
     uint8_t result;
     uint16_t frame_len =
@@ -483,9 +487,25 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
         }
     }
 
-    /* decode the spectral data */
-    if ((result = spectral_data(ics, ld, spec_data, frame_len)) > 0)
-        return result;
+#ifdef ERROR_RESILIENCE
+    if (!aacSpectralDataResilienceFlag)
+    {
+#endif
+        /* decode the spectral data */
+        if ((result = spectral_data(ics, ld, spec_data, frame_len)) > 0)
+            return result;
+#ifdef ERROR_RESILIENCE
+    } else {
+        ics->length_of_reordered_spectral_data = (uint8_t)faad_getbits(ld, 14
+            DEBUGVAR(1,147,"individual_channel_stream(): length_of_reordered_spectral_data"));
+        ics->length_of_longest_codeword = (uint8_t)faad_getbits(ld, 6
+            DEBUGVAR(1,148,"individual_channel_stream(): length_of_longest_codeword"));
+
+        /* error resilient spectral data decoding */
+        if ((result = reordered_spectral_data()) > 0)
+            return result;
+    }
+#endif
 
     /* pulse coding reconstruction */
     if (ics->pulse_data_present)
@@ -500,7 +520,11 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
 }
 
 /* Table 4.4.25 */
-static void section_data(ic_stream *ics, bitfile *ld)
+static void section_data(ic_stream *ics, bitfile *ld
+#ifdef ERROR_RESILIENCE
+                         ,uint8_t aacSectionDataResilienceFlag
+#endif
+                         )
 {
     uint8_t g;
     uint8_t sect_esc_val, sect_bits;
@@ -521,15 +545,33 @@ static void section_data(ic_stream *ics, bitfile *ld)
             uint8_t sfb;
             uint8_t sect_len_incr;
             uint16_t sect_len = 0;
+            uint8_t sect_cb_bits = 4;
 
-            ics->sect_cb[g][i] = (uint8_t)faad_getbits(ld, 4
+#ifdef ERROR_RESILIENCE
+            if (aacSectionDataResilienceFlag)
+                sect_cb_bits = 5;
+#endif
+
+            ics->sect_cb[g][i] = (uint8_t)faad_getbits(ld, sect_cb_bits
                 DEBUGVAR(1,71,"section_data(): sect_cb"));
 
-            while ((sect_len_incr = (uint8_t)faad_getbits(ld, sect_bits
-                DEBUGVAR(1,72,"section_data(): sect_len_incr"))) == sect_esc_val)
+#ifdef ERROR_RESILIENCE
+            if (!aacSectionDataResilienceFlag ||
+                (ics->sect_cb[g][i] < 11) ||
+                (ics->sect_cb[g][i] > 11 && ics->sect_cb[g][i] < 16))
             {
-                sect_len += sect_esc_val;
+#endif
+                while ((sect_len_incr = (uint8_t)faad_getbits(ld, sect_bits
+                    DEBUGVAR(1,72,"section_data(): sect_len_incr"))) == sect_esc_val)
+                {
+                    sect_len += sect_esc_val;
+                }
+#ifdef ERROR_RESILIENCE
+            } else {
+                sect_len_incr = 1;
             }
+#endif
+
             sect_len += sect_len_incr;
 
             ics->sect_start[g][i] = k;
@@ -553,65 +595,171 @@ static void section_data(ic_stream *ics, bitfile *ld)
   differentially coded relative to the global gain.
 */
 /* Table 4.4.26 */
-static uint8_t scale_factor_data(ic_stream *ics, bitfile *ld)
+static uint8_t scale_factor_data(ic_stream *ics, bitfile *ld
+#ifdef ERROR_RESILIENCE
+                                 ,uint8_t aacScalefactorDataResilienceFlag
+#endif
+                                 )
 {
-    uint8_t g, sfb;
-    int8_t t;
-    uint8_t noise_pcm_flag = 1;
-    int16_t scale_factor = ics->global_gain;
-    int16_t is_position = 0;
-    int16_t noise_energy = ics->global_gain - 90;
-
-    for (g = 0; g < ics->num_window_groups; g++)
+#ifdef ERROR_RESILIENCE
+    if (!aacScalefactorDataResilienceFlag)
     {
-        for (sfb = 0; sfb < ics->max_sfb; sfb++)
+#endif
+        uint8_t g, sfb;
+        int8_t t;
+        uint8_t noise_pcm_flag = 1;
+        int16_t scale_factor = ics->global_gain;
+        int16_t is_position = 0;
+        int16_t noise_energy = ics->global_gain - 90;
+
+        for (g = 0; g < ics->num_window_groups; g++)
         {
-            switch (ics->sfb_cb[g][sfb])
+            for (sfb = 0; sfb < ics->max_sfb; sfb++)
             {
-            case ZERO_HCB: /* zero book */
-                ics->scale_factors[g][sfb] = 0;
-                break;
-            case INTENSITY_HCB: /* intensity books */
-            case INTENSITY_HCB2:
-
-                /* decode intensity position */
-                t = huffman_scale_factor(ld) - 60;
-                is_position += t;
-                ics->scale_factors[g][sfb] = is_position;
-
-                break;
-            case NOISE_HCB: /* noise books */
-
-                /* decode noise energy */
-                if (noise_pcm_flag)
+                switch (ics->sfb_cb[g][sfb])
                 {
-                    noise_pcm_flag = 0;
-                    t = faad_getbits(ld, 9
-                        DEBUGVAR(1,73,"scale_factor_data(): first noise")) - 256;
-                } else {
+                case ZERO_HCB: /* zero book */
+                    ics->scale_factors[g][sfb] = 0;
+                    break;
+                case INTENSITY_HCB: /* intensity books */
+                case INTENSITY_HCB2:
+
+                    /* decode intensity position */
                     t = huffman_scale_factor(ld) - 60;
+                    is_position += t;
+                    ics->scale_factors[g][sfb] = is_position;
+
+                    break;
+                case NOISE_HCB: /* noise books */
+
+                    /* decode noise energy */
+                    if (noise_pcm_flag)
+                    {
+                        noise_pcm_flag = 0;
+                        t = faad_getbits(ld, 9
+                            DEBUGVAR(1,73,"scale_factor_data(): first noise")) - 256;
+                    } else {
+                        t = huffman_scale_factor(ld) - 60;
+                    }
+                    noise_energy += t;
+                    ics->scale_factors[g][sfb] = noise_energy;
+
+                    break;
+                case BOOKSCL: /* invalid books */
+                    return 3;
+                default: /* spectral books */
+
+                    /* decode scale factor */
+                    t = huffman_scale_factor(ld) - 60;
+                    scale_factor += t;
+                    if (scale_factor < 0)
+                        return 4;
+                    ics->scale_factors[g][sfb] = scale_factor;
+
+                    break;
                 }
-                noise_energy += t;
-                ics->scale_factors[g][sfb] = noise_energy;
-
-                break;
-            case BOOKSCL: /* invalid books */
-                return 3;
-            default: /* spectral books */
-
-                /* decode scale factor */
-                t = huffman_scale_factor(ld) - 60;
-                scale_factor += t;
-                if (scale_factor < 0)
-                    return 4;
-                ics->scale_factors[g][sfb] = scale_factor;
-
-                break;
             }
         }
-    }
 
-    return 0;
+        return 0;
+#ifdef ERROR_RESILIENCE
+    } else {
+        uint8_t g, sfb;
+        uint8_t intensity_used = 0;
+        uint8_t noise_used = 0;
+        uint8_t bits = 11;
+
+        sf_concealment = faad_get1bit(ld
+            DEBUGVAR(1,149,"scale_factor_data(): sf_concealment"));
+        rev_global_gain = faad_getbits(ld, 8
+            DEBUGVAR(1,150,"scale_factor_data(): rev_global_gain"));
+
+        if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
+            bits = 9;
+
+        /* the number of bits used for the huffman codewords */
+        length_of_rvlc_sf = faad_getbits(ld, bits
+            DEBUGVAR(1,151,"scale_factor_data(): length_of_rvlc_sf"));
+
+        for (g = 0; g < num_window_groups; g++)
+        {
+            for (sfb = 0; sfb < max_sfb; sfb++)
+            {
+                if (sect_cb[g][sfb] != ZERO_HCB)
+                {
+                    if (is_intensity(g, sfb))
+                    {
+                        intensity_used = 1;
+                        rvlc_cod_sf[dpcm_is_position[g][sfb]]; 1..9 vlclbf
+                    } else {
+                        if (is_noise(g,sfb))
+                        {
+                            if (!noise_used)
+                            {
+                                noise_used = 1;
+                                dpcm_noise_nrg[g][sfb] = faad_getbits(ld, 9
+                                    DEBUGVAR(1,152,"scale_factor_data(): dpcm_noise_nrg"));
+                            } else {
+                                rvlc_cod_sf[dpcm_noise_nrg[g][sfb]]; 1..9 vlclbf
+                            }
+                        } else {
+                            rvlc_cod_sf[dpcm_sf[g][sfb]]; 1..9 vlclbf
+                        }
+                    }
+                }
+            }
+        }
+
+        if (intensity_used)
+        {
+            rvlc_cod_sf[dpcm_is_last_position]; 1..9 vlclbf
+        }
+
+        sf_escapes_present; 1 uimsbf
+
+        if (sf_escapes_present)
+        {
+            length_of_rvlc_escapes; 8 uimsbf
+
+            for (g = 0; g < num_window_groups; g++)
+            {
+                for (sfb = 0; sfb < max_sfb; sfb++)
+                {
+                    if (sect_cb[g][sfb] != ZERO_HCB)
+                    {
+                        if (is_intensity(g, sfb) &&
+                            dpcm_is_position[g][sfb] == ESC_FLAG)
+                        {
+                            rvlc_esc_sf[dpcm_is_position[g][sfb]]; 2..20 vlclbf
+                        } else {
+                            if (is_noise(g, sfb) &&
+                                dpcm_noise_nrg[g][sfb] == ESC_FLAG)
+                            {
+                                rvlc_esc_sf[dpcm_noise_nrg[g][sfb]]; 2..20 vlclbf
+                            } else {
+                                if (dpcm_sf[g][sfb] == ESC_FLAG)
+                                {
+                                    rvlc_esc_sf[dpcm_sf[g][sfb]]; 2..20 vlclbf
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (intensity_used &&
+                dpcm_is_position[g][sfb] == ESC_FLAG)
+            {
+                rvlc_esc_sf[dpcm_is_last_position]; 2..20 vlclbf
+            }
+        }
+
+        if (noise_used)
+        {
+            dpcm_noise_last_position; 9 uimsbf
+        }
+    }
+#endif
 }
 
 /* Table 4.4.27 */
@@ -794,6 +942,13 @@ static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data
 
     return 0;
 }
+
+#ifdef ERROR_RESILIENCE
+/* Table 156 */
+static uint8_t reordered_spectral_data()
+{
+}
+#endif
 
 /* Table 4.4.30 */
 static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count)

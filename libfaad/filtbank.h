@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.h,v 1.5 2002/03/16 13:38:37 menno Exp $
+** $Id: filtbank.h,v 1.6 2002/04/07 21:26:04 menno Exp $
 **/
 
 #ifndef __FILTBANK_H__
@@ -51,6 +51,7 @@ typedef struct
 void filter_bank_init(fb_info *fb);
 void filter_bank_end(fb_info *fb);
 
+#ifdef LTP_DEC
 void filter_bank_ltp(fb_info *fb,
                      uint8_t window_sequence,
                      uint8_t window_shape,
@@ -58,6 +59,7 @@ void filter_bank_ltp(fb_info *fb,
                      real_t *in_data,
                      real_t *out_mdct,
                      uint8_t object_type);
+#endif
 
 void ifilter_bank(fb_info *fb,
                   uint8_t window_sequence,

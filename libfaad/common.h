@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.5 2002/03/27 19:09:29 menno Exp $
+** $Id: common.h,v 1.6 2002/04/07 21:26:04 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -64,10 +64,6 @@ extern "C" {
 /* use double precision */
 /* #define USE_DOUBLE_PRECISION */
 
-/* use table lookup twiddle factors in MDCT [more memory, higher speed],
-   otherwise recurrence relations are used [no memory usage, lower speed,
-   and loss of accuracy] */
-#define USE_TWIDDLE_TABLE
 
 /* Allow decoding of MAIN profile AAC */
 #define MAIN_DEC
