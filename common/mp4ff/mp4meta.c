@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4meta.c,v 1.7 2003/12/14 16:47:08 menno Exp $
+** $Id: mp4meta.c,v 1.9 2003/12/23 18:53:24 menno Exp $
 **/
 
 #ifdef USE_TAGGING
@@ -246,11 +246,11 @@ static int32_t mp4ff_parse_tag(mp4ff_t *f, const uint8_t parent_atom_type, const
 						total = mp4ff_read_int16(f);
 						mp4ff_read_int16(f);
 
-						itoa(index,temp,10);
+						sprintf(temp,"%d",index);
 						mp4ff_tag_add_field(&(f->tags), parent_atom_type == ATOM_TRACK ? "track" : "disc", temp);
 						if (total>0)
 						{
-							itoa(total,temp,10);
+							sprintf(temp,"%d",total);
 							mp4ff_tag_add_field(&(f->tags), parent_atom_type == ATOM_TRACK ? "totaltracks" : "totaldiscs", temp);
 						}
 						done = 1;
