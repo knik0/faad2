@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.c,v 1.11 2002/08/05 20:33:38 menno Exp $
+** $Id: filtbank.c,v 1.12 2002/08/17 10:03:13 menno Exp $
 **/
 
 #include "common.h"
@@ -29,17 +29,19 @@
 #include "mdct.h"
 
 
-void filter_bank_init(fb_info *fb, uint16_t frame_len)
+fb_info *filter_bank_init(uint16_t frame_len)
 {
     uint16_t i;
     uint16_t nshort = frame_len/8;
 #ifdef LD_DEC
     uint16_t frame_len_ld = frame_len/2;
 #endif
+    fb_info *fb = malloc(sizeof(fb_info));
+    memset(fb, 0, sizeof(fb_info));
 
     /* normal */
-    faad_mdct_init(&(fb->mdct256), 2*nshort);
-    faad_mdct_init(&(fb->mdct2048), 2*frame_len);
+    fb->mdct256 = faad_mdct_init(2*nshort);
+    fb->mdct2048 = faad_mdct_init(2*frame_len);
 
     fb->long_window[0]  = malloc(frame_len*sizeof(real_t));
     fb->short_window[0] = malloc(nshort*sizeof(real_t));
@@ -54,7 +56,7 @@ void filter_bank_init(fb_info *fb, uint16_t frame_len)
 
 #ifdef LD_DEC
     /* LD */
-    faad_mdct_init(&(fb->mdct1024), frame_len_ld);
+    fb->mdct1024 = faad_mdct_init(frame_len_ld);
 
     fb->ld_window[0] = malloc(frame_len_ld*sizeof(real_t));
     fb->ld_window[1] = malloc(frame_len_ld*sizeof(real_t));
@@ -71,22 +73,26 @@ void filter_bank_init(fb_info *fb, uint16_t frame_len)
     for (; i < frame_len_ld; i++)
         fb->ld_window[1][i] = 1.0;
 #endif
+
+    return fb;
 }
 
 void filter_bank_end(fb_info *fb)
 {
-    faad_mdct_end(&(fb->mdct256));
-    faad_mdct_end(&(fb->mdct2048));
+    faad_mdct_end(fb->mdct256);
+    faad_mdct_end(fb->mdct2048);
 
     if (fb->long_window[0]) free(fb->long_window[0]);
     if (fb->short_window[0]) free(fb->short_window[0]);
 
 #ifdef LD_DEC
-    faad_mdct_end(&(fb->mdct1024));
+    faad_mdct_end(fb->mdct1024);
 
     if (fb->ld_window[0]) free(fb->ld_window[0]);
     if (fb->ld_window[1]) free(fb->ld_window[1]);
 #endif
+
+    if (fb) free(fb);
 }
 
 static INLINE void vcopy(real_t *src, real_t *dest, uint16_t vlen)
@@ -149,14 +155,6 @@ static INLINE void vadd(real_t *src1, real_t *src2, real_t *dest, uint16_t vlen)
     {
         *dest++ = *src1++ + *src2++; *dest++ = *src1++ + *src2++;
         *dest++ = *src1++ + *src2++; *dest++ = *src1++ + *src2++;
-/*
-        *dest++ = *src1++ + *src2++; *dest++ = *src1++ + *src2++;
-        *dest++ = *src1++ + *src2++; *dest++ = *src1++ + *src2++;
-        *dest++ = *src1++ + *src2++; *dest++ = *src1++ + *src2++;
-        *dest++ = *src1++ + *src2++; *dest++ = *src1++ + *src2++;
-        *dest++ = *src1++ + *src2++; *dest++ = *src1++ + *src2++;
-        *dest++ = *src1++ + *src2++; *dest++ = *src1++ + *src2++;
-*/
     }
 }
 
@@ -168,16 +166,16 @@ static INLINE void imdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_
     {
     case 2048:
     case 1920:
-        mdct = &(fb->mdct2048);
+        mdct = fb->mdct2048;
         break;
     case 256:
     case 240:
-        mdct = &(fb->mdct256);
+        mdct = fb->mdct256;
         break;
 #ifdef LD_DEC
     case 1024:
     case 960:
-        mdct = &(fb->mdct1024);
+        mdct = fb->mdct1024;
         break;
 #endif
     }
@@ -194,16 +192,16 @@ static INLINE void mdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_t
     {
     case 2048:
     case 1920:
-        mdct = &(fb->mdct2048);
+        mdct = fb->mdct2048;
         break;
     case 256:
     case 120:
-        mdct = &(fb->mdct256);
+        mdct = fb->mdct256;
         break;
 #ifdef LD_DEC
     case 1024:
     case 960:
-        mdct = &(fb->mdct1024);
+        mdct = fb->mdct1024;
         break;
 #endif
     }

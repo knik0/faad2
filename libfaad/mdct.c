@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.c,v 1.12 2002/08/10 19:01:18 menno Exp $
+** $Id: mdct.c,v 1.13 2002/08/17 10:03:15 menno Exp $
 **/
 
 /*
@@ -52,9 +52,11 @@
 
 #include "mdct.h"
 
-void faad_mdct_init(mdct_info *mdct, uint16_t N)
+mdct_info *faad_mdct_init(uint16_t N)
 {
     uint16_t k;
+
+    mdct_info *mdct = malloc(sizeof(mdct_info));
 
     assert(N % 8 == 0);
 
@@ -84,6 +86,8 @@ void faad_mdct_init(mdct_info *mdct, uint16_t N)
     /* own implementation */
     mdct->cfft = cffti(N/4);
 #endif
+
+    return mdct;
 }
 
 void faad_mdct_end(mdct_info *mdct)
@@ -100,6 +104,8 @@ void faad_mdct_end(mdct_info *mdct)
     if (mdct->Z2) free(mdct->Z2);
     if (mdct->Z1) free(mdct->Z1);
     if (mdct->sincos) free(mdct->sincos);
+
+    if (mdct) free(mdct);
 }
 
 void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)

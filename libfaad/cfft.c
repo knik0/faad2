@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: cfft.c,v 1.1 2002/07/14 19:11:11 menno Exp $
+** $Id: cfft.c,v 1.2 2002/08/17 10:03:10 menno Exp $
 **/
 
 /*
@@ -554,14 +554,14 @@ INLINE void cfftf1(uint16_t n, real_t *c, real_t *ch, real_t *wa,
         c[i] = ch[i];
 }
 
-void cfftf(cfft_info cfft, real_t *c)
+void cfftf(cfft_info *cfft, real_t *c)
 {
-    cfftf1(cfft.n, c, cfft.work, cfft.tab, cfft.ifac, -1);
+    cfftf1(cfft->n, c, cfft->work, cfft->tab, cfft->ifac, -1);
 }
 
-void cfftb(cfft_info cfft, real_t *c)
+void cfftb(cfft_info *cfft, real_t *c)
 {
-    cfftf1(cfft.n, c, cfft.work, cfft.tab, cfft.ifac, +1);
+    cfftf1(cfft->n, c, cfft->work, cfft->tab, cfft->ifac, +1);
 }
 
 static void cffti1(uint16_t n, real_t *wa, uint16_t *ifac)
@@ -651,21 +651,23 @@ startloop:
     }
 }
 
-cfft_info cffti(uint16_t n)
+cfft_info *cffti(uint16_t n)
 {
-    cfft_info cfft;
+    cfft_info *cfft = malloc(sizeof(cfft_info));
 
-    cfft.n = n;
-    cfft.work = malloc(2*n*sizeof(real_t));
-    cfft.tab = malloc(2*n*sizeof(real_t));
+    cfft->n = n;
+    cfft->work = malloc(2*n*sizeof(real_t));
+    cfft->tab = malloc(2*n*sizeof(real_t));
 
-    cffti1(n, cfft.tab, cfft.ifac);
+    cffti1(n, cfft->tab, cfft->ifac);
 
     return cfft;
 }
 
-void cfftu(cfft_info cfft)
+void cfftu(cfft_info *cfft)
 {
-    if (cfft.work) free(cfft.work);
-    if (cfft.tab) free(cfft.tab);
+    if (cfft->work) free(cfft->work);
+    if (cfft->tab) free(cfft->tab);
+
+    if (cfft) free(cfft);
 }

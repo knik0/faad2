@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.18 2002/08/05 20:33:38 menno Exp $
+** $Id: decoder.c,v 1.19 2002/08/17 10:03:12 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -55,7 +55,6 @@ faacDecHandle FAADAPI faacDecOpen()
         return NULL;
 
     memset(hDecoder, 0, sizeof(faacDecStruct));
-    memset(&hDecoder->fb, 0, sizeof(fb_info));
 
     hDecoder->config.outputFormat  = FAAD_FMT_16BIT;
     hDecoder->config.defObjectType = MAIN;
@@ -84,7 +83,7 @@ faacDecHandle FAADAPI faacDecOpen()
 #endif
     }
 
-    init_drc(&hDecoder->drc, 1.0f, 1.0f);
+    hDecoder->drc = drc_init(1.0f, 1.0f);
 #if IQ_TABLE_SIZE && POW_TABLE_SIZE
     build_tables(hDecoder->iq_table, hDecoder->pow2_table);
 #elif !POW_TABLE_SIZE
@@ -239,7 +238,7 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
     hDecoder->channelConfiguration = *channels;
 
     /* must be done before frameLength is divided by 2 for LD */
-    filter_bank_init(&hDecoder->fb, hDecoder->frameLength);
+    hDecoder->fb = filter_bank_init(hDecoder->frameLength);
 
 #ifdef LD_DEC
     if (hDecoder->object_type == LD)
@@ -289,7 +288,7 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
         hDecoder->frameLength = 960;
 
     /* must be done before frameLength is divided by 2 for LD */
-    filter_bank_init(&hDecoder->fb, hDecoder->frameLength);
+    hDecoder->fb = filter_bank_init(hDecoder->frameLength);
 
 #ifdef LD_DEC
     if (hDecoder->object_type == LD)
@@ -315,7 +314,9 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
 #endif
     }
 
-    filter_bank_end(&hDecoder->fb);
+    filter_bank_end(hDecoder->fb);
+
+    drc_end(hDecoder->drc);
 
     if (hDecoder->sample_buffer) free(hDecoder->sample_buffer);
 
@@ -449,8 +450,8 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     uint8_t *window_shape_prev = hDecoder->window_shape_prev;
     real_t **time_state    =  hDecoder->time_state;
     real_t **time_out      =  hDecoder->time_out;
-    fb_info *fb            = &hDecoder->fb;
-    drc_info *drc          = &hDecoder->drc;
+    fb_info *fb            =  hDecoder->fb;
+    drc_info *drc          =  hDecoder->drc;
     uint8_t outputFormat   =  hDecoder->config.outputFormat;
 #ifdef LTP_DEC
     uint16_t *ltp_lag      =  hDecoder->ltp_lag;

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.h,v 1.9 2002/07/14 19:11:12 menno Exp $
+** $Id: mdct.h,v 1.10 2002/08/17 10:03:16 menno Exp $
 **/
 
 #ifndef __MDCT_H__
@@ -56,12 +56,12 @@ typedef struct {
 #else
     real_t *Z1;
     faad_complex *Z2;
-    cfft_info cfft;
+    cfft_info *cfft;
 #endif
     uint16_t N;
 } mdct_info;
 
-void faad_mdct_init(mdct_info *mdct, uint16_t N);
+mdct_info *faad_mdct_init(uint16_t N);
 void faad_mdct_end(mdct_info *mdct);
 void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out);
 void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out);

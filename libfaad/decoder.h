@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.h,v 1.8 2002/08/13 19:16:07 menno Exp $
+** $Id: decoder.h,v 1.9 2002/08/17 10:03:12 menno Exp $
 **/
 
 #ifndef __DECODER_H__
@@ -85,8 +85,8 @@ typedef struct
 #ifdef LTP_DEC
     uint16_t ltp_lag[MAX_CHANNELS];
 #endif
-    fb_info fb;
-    drc_info drc;
+    fb_info *fb;
+    drc_info *drc;
 
     real_t *time_state[MAX_CHANNELS];
     real_t *time_out[MAX_CHANNELS];

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: drc.h,v 1.2 2002/02/18 10:01:05 menno Exp $
+** $Id: drc.h,v 1.3 2002/08/17 10:03:13 menno Exp $
 **/
 
 #ifndef __DRC_H__
@@ -28,7 +28,8 @@ extern "C" {
 
 #define DRC_REF_LEVEL 20*4 /* -20 dB */
 
-void init_drc(drc_info *drc, real_t cut, real_t boost);
+drc_info *drc_init(real_t cut, real_t boost);
+void drc_end(drc_info *drc);
 void drc_decode(drc_info *drc, real_t *spec);
 
 

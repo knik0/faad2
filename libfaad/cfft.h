@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: cfft.h,v 1.1 2002/07/14 19:11:11 menno Exp $
+** $Id: cfft.h,v 1.2 2002/08/17 10:03:11 menno Exp $
 **/
 
 #ifndef __CFFT_H__
@@ -34,10 +34,10 @@ typedef struct
     uint16_t n;
 } cfft_info;
 
-void cfftf(cfft_info cfft, real_t *c); // complex transform             
-void cfftb(cfft_info cfft, real_t *c); // its inverse                   
-cfft_info cffti(uint16_t n);    // initializer of the above routine pair
-void cfftu(cfft_info cfft);
+void cfftf(cfft_info *cfft, real_t *c); // complex transform             
+void cfftb(cfft_info *cfft, real_t *c); // its inverse                   
+cfft_info *cffti(uint16_t n);    // initializer of the above routine pair
+void cfftu(cfft_info *cfft);
 
 
 static void passf2(uint16_t ido, uint16_t l1, real_t *cc, real_t *ch,
