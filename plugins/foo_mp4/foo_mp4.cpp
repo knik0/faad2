@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.67 2003/10/29 18:14:46 ca5e Exp $
+** $Id: foo_mp4.cpp,v 1.68 2003/11/02 14:18:56 menno Exp $
 **/
 
 #include <mp4.h>
@@ -138,8 +138,15 @@ public:
             return 0;
         }
 
-        track = GetAACTrack(hFile);
+        track = GetAudioTrack(hFile);
         if (track < 0)
+        {
+            console::error("No valid audio track found.");
+            return 0;
+        }
+
+        unsigned __int8 audioType = MP4GetTrackEsdsObjectTypeId(hFile, track);
+        if (!MP4_IS_AAC_AUDIO_TYPE(audioType))
         {
             console::error("No valid AAC track found.");
             return 0;
@@ -148,21 +155,31 @@ public:
         buffer = NULL;
         buffer_size = 0;
         MP4GetTrackESConfiguration(hFile, track, &buffer, &buffer_size);
-        if (!buffer)
-        {
-            console::error("Unable to read track specific configuration.");
-            return 0;
-        }
 
-        AudioSpecificConfig((unsigned char*)buffer, buffer_size, &mp4ASC);
-
-        int rc = faacDecInit2(hDecoder, (unsigned char*)buffer, buffer_size,
-            (unsigned long*)&samplerate, (unsigned char*)&channels);
-        if (buffer) free(buffer);
-        if (rc < 0)
+        if (buffer_size == 0 || MP4_IS_MPEG2_AAC_AUDIO_TYPE(audioType))
         {
-            console::error("Unable to initialise FAAD2 library.");
-            return 0;
+            int rc = faacDecInit(hDecoder, (unsigned char*)buffer, buffer_size,
+                (unsigned long*)&samplerate, (unsigned char*)&channels);
+            if (buffer) free(buffer);
+            if (rc < 0)
+            {
+                console::error("Unable to initialise FAAD2 library.");
+                return 0;
+            }
+
+            mp4ASC.frameLengthFlag = 0;
+            mp4ASC.objectTypeIndex = audioType - 0x65;
+        } else {
+            AudioSpecificConfig((unsigned char*)buffer, buffer_size, &mp4ASC);
+
+            int rc = faacDecInit2(hDecoder, (unsigned char*)buffer, buffer_size,
+                (unsigned long*)&samplerate, (unsigned char*)&channels);
+            if (buffer) free(buffer);
+            if (rc < 0)
+            {
+                console::error("Unable to initialise FAAD2 library.");
+                return 0;
+            }
         }
 
         numSamples = MP4GetTrackNumberOfSamples(hFile, track);
@@ -575,35 +592,20 @@ private:
         return 1;
     }
 
-    int GetAACTrack(MP4FileHandle infile)
+    int GetAudioTrack(MP4FileHandle infile)
     {
         /* find AAC track */
-        int i, rc;
-        int numTracks = MP4GetNumberOfTracks(infile, NULL, /* subType */ 0);
+        int i;
+        int numTracks = MP4GetNumberOfTracks(infile, NULL, 0);
 
         for (i = 0; i < numTracks; i++)
         {
-            MP4TrackId trackId = MP4FindTrackId(infile, i, NULL, /* subType */ 0);
+            MP4TrackId trackId = MP4FindTrackId(infile, i, NULL, 0);
             const char* trackType = MP4GetTrackType(infile, trackId);
 
             if (!strcmp(trackType, MP4_AUDIO_TRACK_TYPE))
             {
-                unsigned char *buff = NULL;
-                int buff_size = 0;
-                mp4AudioSpecificConfig mp4ASC;
-
-                MP4GetTrackESConfiguration(infile, trackId,
-                    (unsigned __int8**)&buff, (unsigned __int32*)&buff_size);
-
-                if (buff)
-                {
-                    rc = AudioSpecificConfig(buff, buff_size, &mp4ASC);
-                    free(buff);
-
-                    if (rc < 0)
-                        return -1;
-                    return trackId;
-                }
+                return trackId;
             }
         }
 
