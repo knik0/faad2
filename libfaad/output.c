@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: output.c,v 1.30 2003/11/19 11:43:57 menno Exp $
+** $Id: output.c,v 1.31 2003/12/17 10:50:21 menno Exp $
 **/
 
 #include "common.h"
@@ -36,8 +36,8 @@
 
 #define FLOAT_SCALE (1.0f/(1<<15))
 
-#define DM_MUL ((real_t)1.0/((real_t)1.0+(real_t)sqrt(2.0)))
-
+#define DM_MUL REAL_CONST(0.4142135623730950488) // 1/(1+sqrt(2))
+#define RSQRT2 REAL_CONST(0.7071067811865475244) // 1/sqrt(2)
 
 static INLINE real_t get_sample(real_t **input, uint8_t channel, uint16_t sample,
                                 uint8_t downMatrix, uint8_t *internal_channel)
@@ -48,12 +48,12 @@ static INLINE real_t get_sample(real_t **input, uint8_t channel, uint16_t sample
     if (channel == 0)
     {
         return DM_MUL * (input[internal_channel[1]][sample] +
-            input[internal_channel[0]][sample]/(real_t)sqrt(2.) +
-            input[internal_channel[3]][sample]/(real_t)sqrt(2.));
+            input[internal_channel[0]][sample] * RSQRT2 +
+            input[internal_channel[3]][sample] * RSQRT2);
     } else {
         return DM_MUL * (input[internal_channel[2]][sample] +
-            input[internal_channel[0]][sample]/(real_t)sqrt(2.) +
-            input[internal_channel[4]][sample]/(real_t)sqrt(2.));
+            input[internal_channel[0]][sample] * RSQRT2 +
+            input[internal_channel[4]][sample] * RSQRT2);
     }
 }
 
@@ -69,6 +69,10 @@ void* output_to_PCM(faacDecHandle hDecoder,
     int32_t   *int_sample_buffer = (int32_t*)sample_buffer;
     float32_t *float_sample_buffer = (float32_t*)sample_buffer;
     double    *double_sample_buffer = (double*)sample_buffer;
+
+#ifdef PROFILE
+    int64_t count = faad_get_ts();
+#endif
 
     /* Copy output to a standard PCM buffer */
     for (ch = 0; ch < channels; ch++)
@@ -86,7 +90,7 @@ void* output_to_PCM(faacDecHandle hDecoder,
 #ifndef HAS_LRINTF
                     inp += 0.5f;
 #endif
-                    if (inp >= 32768.0f)
+                    if (inp >= 32767.0f)
                     {
                         inp = 32767.0f;
                     }
@@ -112,7 +116,7 @@ void* output_to_PCM(faacDecHandle hDecoder,
 #ifndef HAS_LRINTF
                     inp += 0.5f;
 #endif
-                    if (inp >= 8388608.0f)
+                    if (inp >= 8388607.0f)
                     {
                         inp = 8388607.0f;
                     }
@@ -138,7 +142,7 @@ void* output_to_PCM(faacDecHandle hDecoder,
 #ifndef HAS_LRINTF
                     inp += 0.5f;
 #endif
-                    if (inp >= 2147483648.0f)
+                    if (inp >= 2147483647.0f)
                     {
                         inp = 2147483647.0f;
                     }
@@ -172,6 +176,11 @@ void* output_to_PCM(faacDecHandle hDecoder,
             break;
         }
     }
+
+#ifdef PROFILE
+    count = faad_get_ts() - count;
+    hDecoder->output_cycles += count;
+#endif
 
     return sample_buffer;
 }
