@@ -2546,13 +2546,12 @@ extern "C" bool MP4TagDelete(MP4FileHandle hFile, MP4TrackId trackId)
 	}
 }
 
-extern "C" void MP4TagAddEntry(MP4FileHandle hFile, MP4TrackId trackId,
+extern "C" bool MP4TagAddEntry(MP4FileHandle hFile, MP4TrackId trackId,
                                const char *name, const char *value)
 {
 	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
 		try {
-			((MP4File*)hFile)->TagAddEntry(trackId, name, value);
-            return;
+			return ((MP4File*)hFile)->TagAddEntry(trackId, name, value);
 		}
 		catch (MP4Error* e) {
 			PRINT_ERROR(e);

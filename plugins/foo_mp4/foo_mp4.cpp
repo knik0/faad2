@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.11 2002/12/29 12:26:30 menno Exp $
+** $Id: foo_mp4.cpp,v 1.12 2002/12/29 13:13:36 menno Exp $
 **/
 
 #include <mp4.h>
@@ -147,19 +147,7 @@ public:
         if (track < 1) return 0;
 
         MP4TagDelete(hFile, track);
-
-        int numItems = info->meta_get_count();
-        if (numItems > 0)
-        {
-            MP4TagCreate(hFile, track);
-
-            for (int i = 0; i < numItems; i++)
-            {
-                const char *n = info->meta_enum_name(i);
-                const char *v = info->meta_enum_value(i);
-                MP4TagAddEntry(hFile, track, n, v);
-            }
-        }
+        MP4TagCreate(hFile, track);
 
         /* replay gain writing */
         const char *p = NULL;
@@ -176,6 +164,21 @@ public:
         p = info->info_get("REPLAYGAIN_ALBUM_GAIN");
         if (p)
             MP4TagAddEntry(hFile, track, "REPLAYGAIN_ALBUM_GAIN", p);
+
+        int numItems = info->meta_get_count();
+        if (numItems > 0)
+        {
+            for (int i = 0; i < numItems; i++)
+            {
+                const char *n = info->meta_enum_name(i);
+                const char *v = info->meta_enum_value(i);
+                MP4TagAddEntry(hFile, track, n, v);
+            }
+        }
+
+        numItems = MP4TagGetNumEntries(hFile, track);
+        if (numItems == 0)
+            MP4TagDelete(hFile, track);
 
         /* end */
         return 1;

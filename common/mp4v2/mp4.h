@@ -909,7 +909,7 @@ char* MP4BinaryToBase64(
 
 void MP4TagCreate(MP4FileHandle hFile, MP4TrackId trackId);
 bool MP4TagDelete(MP4FileHandle hFile, MP4TrackId trackId);
-void MP4TagAddEntry(MP4FileHandle hFile, MP4TrackId trackId,
+bool MP4TagAddEntry(MP4FileHandle hFile, MP4TrackId trackId,
                     const char *name, const char *value);
 #if 0
 void MP4TagDeleteEntry(MP4FileHandle hFile, MP4TrackId trackId,

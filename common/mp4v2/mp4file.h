@@ -425,7 +425,7 @@ public: /* equivalent to MP4 library API */
     /* tagging */
     void TagCreate(MP4TrackId trackId);
     bool TagDelete(MP4TrackId trackId);
-    void TagAddEntry(MP4TrackId trackId,
+    bool TagAddEntry(MP4TrackId trackId,
         const char *name, const char *value);
     u_int32_t TagGetNumEntries(MP4TrackId trackId);
     void TagGetEntry(MP4TrackId trackId, u_int32_t index,
