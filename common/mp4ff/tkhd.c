@@ -19,15 +19,15 @@ int mp4ff_tkhd_init(mp4ff_tkhd_t *tkhd)
 	mp4ff_matrix_init(&(tkhd->matrix));
 	tkhd->track_width = 0;
 	tkhd->track_height = 0;
-	tkhd->is_audio = FALSE;
-	tkhd->is_video = FALSE;
+	tkhd->is_audio = 0 /*FALSE*/;
+	tkhd->is_video = 0 /*FALSE*/;
 	return 0;
 }
 
 int mp4ff_tkhd_init_audio(mp4ff_t *file, 
 								mp4ff_tkhd_t *tkhd)
 {
-	tkhd->is_audio = TRUE;
+	tkhd->is_audio = 1 /*TRUE*/;
 }
 
 int mp4ff_tkhd_init_video(mp4ff_t *file, 
@@ -35,7 +35,7 @@ int mp4ff_tkhd_init_video(mp4ff_t *file,
 								int frame_w, 
 								int frame_h)
 {
-	tkhd->is_video = TRUE;
+	tkhd->is_video = 1 /*TRUE*/;
 	tkhd->track_width = frame_w;
 	tkhd->track_height = frame_h;
 	tkhd->volume = 0;

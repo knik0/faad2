@@ -293,9 +293,9 @@ int mp4ff_match_32(char *input, char *output)
 
 int mp4ff_read_mp4_descr_length(mp4ff_t *file)
 {
-	unsigned __int8 b;
-	unsigned __int8 numBytes = 0;
-	unsigned __int32 length = 0;
+	uint8_t b;
+	uint8_t numBytes = 0;
+	uint32_t length = 0;
 
 	do {
 		b = mp4ff_read_char(file);
@@ -308,9 +308,9 @@ int mp4ff_read_mp4_descr_length(mp4ff_t *file)
 
 int mp4ff_write_mp4_descr_length(mp4ff_t *file, int length, unsigned char compact)
 {
-	unsigned __int8 b;
-	__int8 i;
-	__int8 numBytes;
+	uint8_t b;
+	int8_t i;
+	int8_t numBytes;
 
 	if (compact) {
 		if (length <= 0x7F) {
@@ -346,7 +346,7 @@ void mp4ff_atom_hexdump(mp4ff_t* file, mp4ff_atom_t* atom)
 	mp4ff_set_position(file, atom->start);
 	printf("atom hex dump:\n");
 	for (i = 0; i < atom->size; i++) {
-		printf("%02x ", (unsigned __int8)mp4ff_read_char(file));
+		printf("%02x ", (uint8_t)mp4ff_read_char(file));
 		if ((i % 16) == 0 && i > 0) {
 			printf("\n");
 		}

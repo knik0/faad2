@@ -5,8 +5,6 @@
 extern "C" {
 #endif
 
-#include <windows.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 

@@ -82,7 +82,7 @@ int mp4ff_esds_dump(mp4ff_esds_t *esds)
 
 int mp4ff_read_esds(mp4ff_t *file, mp4ff_esds_t *esds)
 {
-	unsigned __int8 tag;
+	uint8_t tag;
 
 	esds->version = mp4ff_read_char(file);
 	esds->flags = mp4ff_read_int24(file);
@@ -145,7 +145,7 @@ int mp4ff_write_esds_common(mp4ff_t *file, mp4ff_esds_t *esds, int esid, unsigne
 
 	mp4ff_write_char(file, 0x03);	/* ES_DescrTag */
 	mp4ff_write_mp4_descr_length(file, 
-		3 + (5 + (13 + (5 + esds->decoderConfigLen))) + 3, FALSE);
+		3 + (5 + (13 + (5 + esds->decoderConfigLen))) + 3, /*FALSE*/0);
 
 	mp4ff_write_int16(file, esid);
 	mp4ff_write_char(file, 0x10);	/* streamPriorty = 16 (0-31) */
@@ -153,7 +153,7 @@ int mp4ff_write_esds_common(mp4ff_t *file, mp4ff_esds_t *esds, int esid, unsigne
 	/* DecoderConfigDescriptor */
 	mp4ff_write_char(file, 0x04);	/* DecoderConfigDescrTag */
 	mp4ff_write_mp4_descr_length(file, 
-		13 + (5 + esds->decoderConfigLen), FALSE);
+		13 + (5 + esds->decoderConfigLen), 0 /*FALSE*/);
 
 	mp4ff_write_char(file, objectType); /* objectTypeIndication */
 	mp4ff_write_char(file, streamType); /* streamType */
@@ -163,7 +163,7 @@ int mp4ff_write_esds_common(mp4ff_t *file, mp4ff_esds_t *esds, int esid, unsigne
 	mp4ff_write_int32(file, 0);		/* average bitrate */
 
 	mp4ff_write_char(file, 0x05);	/* DecSpecificInfoTag */
-	mp4ff_write_mp4_descr_length(file, esds->decoderConfigLen, FALSE);
+	mp4ff_write_mp4_descr_length(file, esds->decoderConfigLen, 0 /*FALSE*/);
 	mp4ff_write_data(file, esds->decoderConfig, esds->decoderConfigLen);
 
 	/* SLConfigDescriptor */

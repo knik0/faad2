@@ -7,6 +7,12 @@
 #define MAXTRACKS 1024
 
 #ifdef _WIN32
+typedef __int8 int8_t;
+typedef unsigned __int8 uint8_t;
+typedef __int16 int16_t;
+typedef unsigned __int16 uint16_t;
+typedef __int32 int32_t;
+typedef unsigned __int32 uint32_t;
 typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
 #else
@@ -16,6 +22,9 @@ typedef unsigned __int64 uint64_t;
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
+#define u_int8_t uint8_t
+#define u_int16_t uint16_t
+#define u_int32_t uint32_t
 #define u_int64_t uint64_t
 #endif
 
