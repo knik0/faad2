@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.76 2003/10/20 14:46:55 menno Exp $
+** $Id: decoder.c,v 1.77 2003/10/20 15:43:52 menno Exp $
 **/
 
 #include "common.h"
@@ -344,7 +344,11 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
     }
     hDecoder->channelConfiguration = mp4ASC.channelsConfiguration;
     if (mp4ASC.frameLengthFlag)
+#ifdef ALLOW_SMALL_FRAMELENGTH
         hDecoder->frameLength = 960;
+#else
+        return -1;
+#endif
 
     /* must be done before frameLength is divided by 2 for LD */
 #ifdef SSR_DEC
@@ -442,7 +446,8 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
 #ifdef LTP_DEC
         hDecoder->ltp_lag[i] = 0;
         if (hDecoder->lt_pred_stat[i]) free(hDecoder->lt_pred_stat[i]);
-        hDecoder->lt_pred_stat[i] = NULL; #endif
+        hDecoder->lt_pred_stat[i] = NULL;
+#endif
     }
 
     return 0;
@@ -726,7 +731,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     adts_header adts;
     uint8_t channels = 0, ch_ele = 0;
     uint8_t output_channels = 0;
-    bitfile *ld = (bitfile*)malloc(sizeof(bitfile));
+    bitfile ld;
     uint32_t bitsconsumed;
 #ifdef DRM
     uint8_t *revbuffer;
@@ -753,15 +758,12 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #endif
     fb_info *fb;
     drc_info *drc;
-#ifdef LTP_DEC
-    uint16_t *ltp_lag;
-#endif
     program_config *pce;
 
     void *sample_buffer;
 
     /* safety checks */
-    if ((hDecoder == NULL) || (hInfo == NULL) || (buffer == NULL) || (ld == NULL))
+    if ((hDecoder == NULL) || (hInfo == NULL) || (buffer == NULL))
     {
         return NULL;
     }
@@ -787,9 +789,6 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     fb = hDecoder->fb;
     drc = hDecoder->drc;
     outputFormat = hDecoder->config.outputFormat;
-#ifdef LTP_DEC
-    ltp_lag = hDecoder->ltp_lag;
-#endif
     pce = &hDecoder->pce;
     frame_len = hDecoder->frameLength;
 
@@ -798,12 +797,12 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     memset(hDecoder->internal_channel, 0, MAX_CHANNELS*sizeof(hDecoder->internal_channel[0]));
 
     /* initialize the bitstream */
-    faad_initbits(ld, buffer, buffer_size);
+    faad_initbits(&ld, buffer, buffer_size);
 
 #ifdef DRM
     if (object_type == DRM_ER_LC)
     {
-        faad_getbits(ld, 8
+        faad_getbits(&ld, 8
             DEBUGVAR(1,1,"faacDecDecode(): skip CRC"));
     }
 #endif
@@ -811,7 +810,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     if (hDecoder->adts_header_present)
     {
         adts.old_format = hDecoder->config.useOldADTSFormat;
-        if ((hInfo->error = adts_frame(&adts, ld)) > 0)
+        if ((hInfo->error = adts_frame(&adts, &ld)) > 0)
             goto error;
 
         /* MPEG2 does byte_alignment() here,
@@ -825,7 +824,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #endif
 
     /* decode the complete bitstream */
-    raw_data_block(hDecoder, hInfo, ld, pce, drc);
+    raw_data_block(hDecoder, hInfo, &ld, pce, drc);
 
     ch_ele = hDecoder->fr_ch_ele;
     channels = hDecoder->fr_channels;
@@ -835,16 +834,14 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
 
     /* no more bit reading after this */
-    bitsconsumed = faad_get_processed_bits(ld);
+    bitsconsumed = faad_get_processed_bits(&ld);
     hInfo->bytesconsumed = bit2byte(bitsconsumed);
-    if (ld->error)
+    if (ld.error)
     {
         hInfo->error = 14;
         goto error;
     }
-    faad_endbits(ld);
-    if (ld) free(ld);
-    ld = NULL;
+    faad_endbits(&ld);
 
 #ifdef DRM
 #ifdef SBR_DEC
@@ -1047,10 +1044,6 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     return sample_buffer;
 
 error:
-    /* free all memory that could have been allocated */
-    faad_endbits(ld);
-    if (ld) free(ld);
-
     /* cleanup */
 #ifdef ANALYSIS
     fflush(stdout);
