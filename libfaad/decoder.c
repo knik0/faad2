@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.106 2004/09/04 14:56:28 menno Exp $
+** $Id: decoder.c,v 1.107 2004/09/08 09:43:11 gcp Exp $
 **/
 
 #include "common.h"
@@ -142,15 +142,6 @@ NeAACDecHandle NEAACDECAPI NeAACDecOpen(void)
 #endif
 
     hDecoder->drc = drc_init(REAL_CONST(1.0), REAL_CONST(1.0));
-
-#ifdef USE_SSE
-    if (cpu_has_sse())
-    {
-        hDecoder->apply_sf_func = apply_scalefactors_sse;
-    } else {
-        hDecoder->apply_sf_func = apply_scalefactors;
-    }
-#endif
 
     return hDecoder;
 }

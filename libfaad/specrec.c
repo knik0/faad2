@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.55 2004/09/04 18:37:58 gcp Exp $
+** $Id: specrec.c,v 1.56 2004/09/08 09:43:11 gcp Exp $
 **/
 
 /*
@@ -864,7 +864,11 @@ uint8_t reconstruct_single_channel(NeAACDecHandle hDecoder, ic_stream *ics,
 
 
     /* always allocate 2 channels, PS can always "suddenly" turn up */
+#if (defined(PS_DEC) || defined(DRM_PS))
     output_channels = 2;
+#else
+    output_channels = 1;
+#endif
 
     if (hDecoder->element_output_channels[hDecoder->fr_ch_ele] == 0)
     {
@@ -953,16 +957,10 @@ uint8_t reconstruct_single_channel(NeAACDecHandle hDecoder, ic_stream *ics,
     if (hDecoder->object_type != SSR)
     {
 #endif
-#ifdef USE_SSE
-        hDecoder->fb->if_func(hDecoder->fb, ics->window_sequence, ics->window_shape,
-            hDecoder->window_shape_prev[sce->channel], spec_coef,
-            hDecoder->time_out[sce->channel], hDecoder->object_type, hDecoder->frameLength);
-#else
         ifilter_bank(hDecoder->fb, ics->window_sequence, ics->window_shape,
             hDecoder->window_shape_prev[sce->channel], spec_coef,
             hDecoder->time_out[sce->channel], hDecoder->fb_intermed[sce->channel],
             hDecoder->object_type, hDecoder->frameLength);
-#endif
 #ifdef SSR_DEC
     } else {
         ssr_decode(&(ics->ssr), hDecoder->fb, ics->window_sequence, ics->window_shape,
@@ -1031,6 +1029,7 @@ uint8_t reconstruct_single_channel(NeAACDecHandle hDecoder, ic_stream *ics,
 #endif
 
     /* copy L to R when no PS is used */
+#if (defined(PS_DEC) || defined(DRM_PS))
     if ((hDecoder->ps_used[hDecoder->fr_ch_ele] == 0))
     {
         uint8_t ele = hDecoder->fr_ch_ele;
@@ -1040,6 +1039,7 @@ uint8_t reconstruct_single_channel(NeAACDecHandle hDecoder, ic_stream *ics,
 
         memcpy(hDecoder->time_out[ch+1], hDecoder->time_out[ch], frame_size);
     }
+#endif
 
     return 0;
 }
@@ -1196,14 +1196,6 @@ uint8_t reconstruct_channel_pair(NeAACDecHandle hDecoder, ic_stream *ics1, ic_st
     if (hDecoder->object_type != SSR)
     {
 #endif
-#ifdef USE_SSE
-        hDecoder->fb->if_func(hDecoder->fb, ics1->window_sequence, ics1->window_shape,
-            hDecoder->window_shape_prev[cpe->channel], spec_coef1,
-            hDecoder->time_out[cpe->channel], hDecoder->object_type, hDecoder->frameLength);
-        hDecoder->fb->if_func(hDecoder->fb, ics2->window_sequence, ics2->window_shape,
-            hDecoder->window_shape_prev[cpe->paired_channel], spec_coef2,
-            hDecoder->time_out[cpe->paired_channel], hDecoder->object_type, hDecoder->frameLength);
-#else
         ifilter_bank(hDecoder->fb, ics1->window_sequence, ics1->window_shape,
             hDecoder->window_shape_prev[cpe->channel], spec_coef1,
             hDecoder->time_out[cpe->channel], hDecoder->fb_intermed[cpe->channel],
@@ -1212,7 +1204,6 @@ uint8_t reconstruct_channel_pair(NeAACDecHandle hDecoder, ic_stream *ics1, ic_st
             hDecoder->window_shape_prev[cpe->paired_channel], spec_coef2,
             hDecoder->time_out[cpe->paired_channel], hDecoder->fb_intermed[cpe->paired_channel],
             hDecoder->object_type, hDecoder->frameLength);
-#endif
 #ifdef SSR_DEC
     } else {
         ssr_decode(&(ics1->ssr), hDecoder->fb, ics1->window_sequence, ics1->window_shape,

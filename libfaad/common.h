@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.64 2004/09/04 14:56:28 menno Exp $
+** $Id: common.h,v 1.65 2004/09/08 09:43:11 gcp Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -125,12 +125,6 @@ extern "C" {
 # endif
 #endif
 
-#if ((defined(_WIN32) && !defined(_WIN32_WCE)) /* || ((__GNUC__ >= 3) && defined(__i386__)) */ )
-#ifndef FIXED_POINT
-/* includes <xmmintrin.h> to enable SSE intrinsics */
-//#define USE_SSE
-#endif
-#endif
 
 #ifdef FIXED_POINT
 #define DIV_R(A, B) (((int64_t)A << REAL_BITS)/B)
@@ -276,10 +270,6 @@ char *strchr(), *strrchr();
 #else /* Normal floating point operation */
 
   typedef float real_t;
-
-#ifdef USE_SSE
-# include <xmmintrin.h>
-#endif
 
   #define MUL_R(A,B) ((A)*(B))
   #define MUL_C(A,B) ((A)*(B))

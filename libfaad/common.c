@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.c,v 1.21 2004/09/04 14:56:28 menno Exp $
+** $Id: common.c,v 1.22 2004/09/08 09:43:11 gcp Exp $
 **/
 
 /* just some common functions that could be used anywhere */
@@ -33,67 +33,6 @@
 #include <stdlib.h>
 #include "syntax.h"
 
-#ifdef USE_SSE
-__declspec(naked) static int32_t __fastcall test_cpuid(void)
-{
-    __asm
-    {
-        pushf
-        pop eax
-        mov ecx,eax
-        xor eax,(1<<21)
-        push eax
-        popf
-        pushf
-        pop eax
-        push ecx
-        popf
-        cmp eax,ecx
-        mov eax,0
-        setne al
-        ret
-    }
-}
-
-__declspec(naked) static void __fastcall run_cpuid(int32_t param, int32_t out[4])
-{
-    __asm
-    {
-        pushad
-        push edx
-        mov eax,ecx
-        cpuid
-        pop edi
-        mov [edi+0],eax
-        mov [edi+4],ebx
-        mov [edi+8],ecx
-        mov [edi+12],edx
-        popad
-        ret
-    }
-}
-
-uint8_t cpu_has_sse()
-{
-    int32_t features[4];
-
-    if (test_cpuid())
-    {
-        run_cpuid(1, features);
-    }
-
-    /* check for SSE */
-    if (features[3] & 0x02000000)
-        return 1;
-
-    return 0;
-}
-#else
-uint8_t cpu_has_sse()
-{
-    return 0;
-}
-#endif
 
 /* Returns the sample rate index based on the samplerate */
 uint8_t get_sr_index(const uint32_t samplerate)

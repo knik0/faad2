@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: structs.h,v 1.41 2004/09/04 14:56:29 menno Exp $
+** $Id: structs.h,v 1.42 2004/09/08 09:43:11 gcp Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -76,9 +76,6 @@ typedef struct
     mdct_info *mdct2048;
 #ifdef PROFILE
     int64_t cycles;
-#endif
-#ifdef USE_SSE
-    void (*if_func)(void *a, uint8_t b, uint8_t c, uint8_t d, real_t *e, real_t *f, uint8_t g, uint16_t h);
 #endif
 } fb_info;
 
@@ -458,10 +455,6 @@ typedef struct
 
     /* Configuration data */
     NeAACDecConfiguration config;
-
-#ifdef USE_SSE
-    void (*apply_sf_func)(void *a, void *b, void *c, uint16_t d);
-#endif
 
 #ifdef PROFILE
     int64_t cycles;
