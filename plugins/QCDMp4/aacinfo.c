@@ -1,6 +1,6 @@
 /*
-** FAAD - Freeware Advanced Audio Decoder
-** Copyright (C) 2002 M. Bakker
+** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
+** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -16,7 +16,13 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: aacinfo.c,v 1.1 2003/04/28 19:07:57 menno Exp $
+** Any non-GPL usage of this software or parts of this software is strictly
+** forbidden.
+**
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+**
+** $Id: aacinfo.c,v 1.3 2003/12/06 04:24:17 rjamorim Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -108,13 +114,11 @@ static int read_ADTS_header(FILE *file, faadAACInfo *info)
         if (ID == 0)
         {
             info->version = 4;
-            frame_length = (((unsigned int)buffer[4]) << 5) |
-                ((unsigned int)buffer[5] >> 3);
         } else { /* MPEG-2 */
             info->version = 2;
-            frame_length = ((((unsigned int)buffer[3] & 0x3)) << 11)
-                | (((unsigned int)buffer[4]) << 3) | (buffer[5] >> 5);
         }
+        frame_length = ((((unsigned int)buffer[3] & 0x3)) << 11)
+            | (((unsigned int)buffer[4]) << 3) | (buffer[5] >> 5);
 
         t_framelength += frame_length;
 

@@ -25,10 +25,6 @@
 
 #include "QCDModInput.h"
 
-extern HINSTANCE		hInstance;
-extern HWND				hwndPlayer, hwndAbout;
-extern QCDModInitIn		sQCDCallbacks, *QCDCallbacks;
-
 // Calls from the Player
 int  GetMediaSupported(const char* medianame, MediaInfo *mediaInfo);
 int  GetTrackExtents(const char* medianame, TrackExtents *ext, int flags);
@@ -48,5 +44,3 @@ void Configure(int flags);
 void About(int flags);
 
 #endif //QCDInputDLL_H
-
-INT_PTR CALLBACK about_dialog_proc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);

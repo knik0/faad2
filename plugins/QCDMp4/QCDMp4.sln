@@ -1,21 +1,27 @@
-Microsoft Visual Studio Solution File, Format Version 7.00
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "in_mp4", "in_mp4.vcproj", "{2D8F479D-A591-4502-9456-398425D5F834}"
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QCDMp4", "QCDMp4.vcproj", "{2D8F479D-A591-4502-9456-398425D5F834}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2398BB2F-FFF9-490B-B4CC-863F2D21AE46} = {2398BB2F-FFF9-490B-B4CC-863F2D21AE46}
+		{8CAC9E26-BAA5-45A4-8721-E3170B3F8F49} = {8CAC9E26-BAA5-45A4-8721-E3170B3F8F49}
+		{82CAD808-21AF-40A6-92EC-AE01AA67B413} = {82CAD808-21AF-40A6-92EC-AE01AA67B413}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libfaad", "..\..\libfaad\libfaad.vcproj", "{82CAD808-21AF-40A6-92EC-AE01AA67B413}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libmp4v2_st", "..\..\common\mp4v2\libmp4v2_st60.vcproj", "{2398BB2F-FFF9-490B-B4CC-863F2D21AE46}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libmp4av_st", "..\..\common\mp4av\libmp4av_st.vcproj", "{8CAC9E26-BAA5-45A4-8721-E3170B3F8F49}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
-		ConfigName.0 = Debug
-		ConfigName.1 = Release
-	EndGlobalSection
-	GlobalSection(ProjectDependencies) = postSolution
-		{2D8F479D-A591-4502-9456-398425D5F834}.0 = {82CAD808-21AF-40A6-92EC-AE01AA67B413}
-		{2D8F479D-A591-4502-9456-398425D5F834}.1 = {8CAC9E26-BAA5-45A4-8721-E3170B3F8F49}
-		{2D8F479D-A591-4502-9456-398425D5F834}.2 = {2398BB2F-FFF9-490B-B4CC-863F2D21AE46}
+		Debug = Debug
+		Release = Release
 	EndGlobalSection
 	GlobalSection(ProjectConfiguration) = postSolution
 		{2D8F479D-A591-4502-9456-398425D5F834}.Debug.ActiveCfg = Debug|Win32

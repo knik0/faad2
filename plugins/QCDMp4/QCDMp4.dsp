@@ -25,7 +25,7 @@ CFG=QCDMp4 - Win32 Debug
 # PROP AllowPerConfigDependencies 0
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
-CPP=cl.exe
+CPP=xicl6.exe
 MTL=midl.exe
 RSC=rc.exe
 
@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /I "..\..\include" /I "..\..\common\mp4v2" /I "..\..\common\mp4av" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O1 /I "..\..\include" /I "..\..\common\mp4v2" /I "..\..\common\mp4av" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x413 /d "NDEBUG"
@@ -51,7 +51,7 @@ RSC=rc.exe
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
-LINK32=link.exe
+LINK32=xilink6.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386
 # ADD LINK32 ws2_32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386
 
@@ -69,7 +69,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "..\..\include" /I "..\..\common\mp4v2" /I "..\..\common\mp4av" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FR /YX /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "..\..\include" /I "..\..\common\mp4v2" /I "..\..\common\mp4av" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x413 /d "_DEBUG"
@@ -77,7 +77,7 @@ LINK32=link.exe
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
-LINK32=link.exe
+LINK32=xilink6.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
 # ADD LINK32 ws2_32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
 
@@ -96,10 +96,6 @@ SOURCE=.\aac2mp4.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\AAC2Mp4Enc.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\aacinfo.c
 # End Source File
 # Begin Source File
@@ -112,16 +108,16 @@ SOURCE=.\QCDMp4.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\QCDMp4Tag.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\utils.c
 # End Source File
 # End Group
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
-# Begin Source File
-
-SOURCE=.\aac2mp4.h
-# End Source File
 # Begin Source File
 
 SOURCE=.\aacinfo.h
@@ -136,23 +132,7 @@ SOURCE=..\..\include\faad.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\mbs.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\QCDConvertDLL.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\QCDInputDLL.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\QCDModDefs.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\QCDModEncode.h
 # End Source File
 # Begin Source File
 
@@ -160,7 +140,15 @@ SOURCE=.\QCDModInput.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\resource.h
+SOURCE=.\QCDTagsDLL.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\QCDModTagEditor.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\QCDModDefs.h
 # End Source File
 # Begin Source File
 
@@ -170,10 +158,6 @@ SOURCE=.\utils.h
 # Begin Group "Resource Files"
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
-# Begin Source File
-
-SOURCE=.\logo.bmp
-# End Source File
 # Begin Source File
 
 SOURCE=.\QCDMp4.rc

@@ -3,7 +3,7 @@ Microsoft Developer Studio Workspace File, Format Version 6.00
 
 ###############################################################################
 
-Project: "QCDMp4"=".\QCDMp4.dsp" - Package Owner=<4>
+Project: "QCDMp4"=.\QCDMp4.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -15,16 +15,16 @@ Package=<4>
     Project_Dep_Name libfaad
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name libmp4av_st
-    End Project Dependency
-    Begin Project Dependency
     Project_Dep_Name libmp4v2_st
     End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libmp4av_st
+    End Project Dependency
 }}}
 
 ###############################################################################
 
-Project: "libfaad"="..\..\libfaad\libfaad.dsp" - Package Owner=<4>
+Project: "libfaad"=..\..\libfaad\libfaad.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -36,7 +36,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "libmp4av_st"="..\..\common\mp4av\libmp4av_st.dsp" - Package Owner=<4>
+Project: "libmp4av_st"=..\..\common\mp4av\libmp4av_st.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -48,7 +48,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "libmp4v2_st"="..\..\common\mp4v2\libmp4v2_st60.dsp" - Package Owner=<4>
+Project: "libmp4v2_st"=..\..\common\mp4v2\libmp4v2_st60.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
