@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /G6 /W3 /GX /O2 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "WIN32_MEAN_AND_LEAN" /YX /FD /c
+# ADD CPP /nologo /G6 /W3 /GX /O2 /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "WIN32_MEAN_AND_LEAN" /D "WACLIENT_NOICONSUPPORT" /D "USE_ASM" /D "cnv_aacpcm_EXPORTS" /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x413 /d "NDEBUG"
@@ -69,7 +69,7 @@ LINK32=xilink6.exe
 # PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /GZ /c
-# ADD CPP /nologo /G6 /W3 /Gm /GX /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "WIN32_MEAN_AND_LEAN" /YX /FD /GZ /c
+# ADD CPP /nologo /G6 /W3 /Gm /GX /ZI /Od /I "../../include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "WIN32_MEAN_AND_LEAN" /D "WACLIENT_NOICONSUPPORT" /D "USE_ASM" /D "cnv_aacpcm_EXPORTS" /YX /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x413 /d "_DEBUG"
@@ -90,7 +90,7 @@ LINK32=xilink6.exe
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
-# Begin Group "sdk source"
+# Begin Group "wa3sdk"
 
 # PROP Default_Filter ""
 # Begin Source File
@@ -100,22 +100,6 @@ SOURCE=.\sdk\studio\assert.cpp
 # Begin Source File
 
 SOURCE=.\sdk\attribs\attribute.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\attribs\attrint.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\bitmap.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\blending.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\canvas.cpp
 # End Source File
 # Begin Source File
 
@@ -131,6 +115,10 @@ SOURCE=.\sdk\common\depend.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\sdk\common\memblock.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\sdk\common\nsGUID.cpp
 # End Source File
 # Begin Source File
@@ -139,15 +127,7 @@ SOURCE=.\sdk\common\pathparse.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\sdk\common\playstring.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\sdk\common\ptrlist.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\region.cpp
 # End Source File
 # Begin Source File
 
@@ -182,185 +162,9 @@ SOURCE=.\cnv_aacpcm.cpp
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
-# Begin Group "sdk"
+# Begin Group "wa3sdk_h"
 
 # PROP Default_Filter ""
-# Begin Source File
-
-SOURCE=.\sdk\studio\api.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\studio\apihelp.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\attribs\attrcb.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\attribs\attribute.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\attribs\attrint.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\basewnd.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\bitmap.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\blending.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\canvas.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\attribs\cfgitem.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\attribs\cfgitemi.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\studio\chunklist.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\common.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\compdb.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\studio\corecb.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\depend.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\drag.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\fontdef.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\guid.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\map.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\studio\mediainfo.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\multimap.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\named.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\nsGUID.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\pair.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\pathparse.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\platform\platform.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\playstring.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\ptrlist.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\region.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\rootcomp.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\rootwnd.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\scriptvar.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\studio\services\service.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\studio\services\servicei.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\studio\services\services.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\stack.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\std.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\studio\services\svc_fileread.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\studio\services\svc_mediaconverter.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\tlist.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\vcputypes.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\common\virtualwnd.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sdk\studio\wac.h
-# End Source File
 # End Group
 # Begin Source File
 

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: cnv_aacpcm.h,v 1.1 2002/01/21 20:38:34 menno Exp $
+** $Id: cnv_aacpcm.h,v 1.2 2002/02/17 11:09:51 menno Exp $
 **/
 
 #ifndef _CNV_AACPCM_H
@@ -29,21 +29,15 @@
 
 #define WACNAME WACcnv_aacpcm
 
-class WACNAME : public WAComponentClient, public CfgItemI
+class WACNAME : public WAComponentClient
 {
 public:
     WACNAME();
     virtual ~WACNAME();
 
-    virtual const char *getName() { return "AAC to PCM converter"; };
     virtual GUID getGUID();
 
     virtual void onRegisterServices();
-    virtual void onDestroy();
-
-    virtual int getDisplayComponent() { return FALSE; };
-
-    virtual CfgItem *getCfgInterface(int n) { return this; }
 };
 
 #endif
