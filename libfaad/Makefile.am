@@ -22,5 +22,6 @@ codebook/hcb_9.h codebook/hcb_10.h codebook/hcb_11.h codebook/hcb_sf.h
 
 
 AM_CFLAGS = -O2 -g
-LDFLAGS = -lm
+LIBTOOL_DEPS =
+LIBS =
 

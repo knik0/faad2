@@ -1,7 +1,7 @@
 AC_INIT()
 AM_INIT_AUTOMAKE(faad2,2.0)
 
-AM_PROG_LIBTOOL
+AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 
 dnl Checks for programs.
@@ -11,11 +11,14 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-AC_PROG_RANLIB
 
 AM_CONFIG_HEADER(config.h)
 
-AC_ARG_WITH( xmms,[    --with-xmms  compile XMMS plugin],WITHXMMS=$withval, WITHXMMS=no)
+AC_ARG_WITH( xmms,[    --with-xmms     compile XMMS plugin],WITHXMMS=$withval, WITHXMMS=no)
+
+AC_ARG_WITH( xmmsmp4,[    --with-xmmsmp4       compile XMMS MP4 plugin],WITHXMMSMP4=$withval, WITHXMMSMP4=no)
+
+AC_ARG_WITH( drm,[    --with-drm       compile libfaad with DRM support],WITHDRM=$withval, WITHDRM=no)
 
 dnl Checks for header files required for mp4.h
 AC_HEADER_STDC
@@ -70,8 +73,10 @@ if test x$external_mp4v2 = xyes; then
   AM_CONDITIONAL(HAVE_MPEG4IP, true)
   MPEG4IP_PLAYER_PLUGIN_DIR=`mpeg4ip-config --player-plugin-dir`  
   AC_SUBST(MPEG4IP_PLAYER_PLUGIN_DIR)
+  AC_OUTPUT(plugins/mpeg4ip/Makefile)
 else
   AM_CONDITIONAL(HAVE_MPEG4IP, false)
+  AC_OUTPUT(common/Makefile common/mp4v2/Makefile)
 fi
 
 if test x$WITHXMMS = xyes; then
@@ -83,25 +88,16 @@ if test x$WITHXMMS = xyes; then
    AM_CONDITIONAL(HAVE_XMMS, false)
   else
    AM_CONDITIONAL(HAVE_XMMS, true)
+   AC_CONFIG_SUBDIRS(plugins/xmms)
+   AC_OUTPUT(plugins/xmms/Makefile plugins/xmms/src/Makefile)
   fi
 else
  AM_CONDITIONAL(HAVE_XMMS, false)
  xmmsplugin=no
 fi
 
-if test x$external_mp4v2 = xyes; then
-  if test x$xmmsplugin = xyes; then
-    AC_CONFIG_SUBDIRS(common/mp4v2 plugins/xmms)
-    AC_OUTPUT(libfaad/Makefile common/Makefile frontend/Makefile Makefile plugins/Makefile plugins/mpeg4ip/Makefile plugins/xmms/Makefile plugins/xmms/src/Makefile)
-  else
-    AC_CONFIG_SUBDIRS(common/mp4v2)
-    AC_OUTPUT(libfaad/Makefile common/Makefile  frontend/Makefile Makefile plugins/Makefile plugins/mpeg4ip/Makefile)
-  fi
-else
-  if test x$xmmsplugin = xyes; then
-    AC_CONFIG_SUBDIRS(plugins/xmms)
-    AC_OUTPUT(libfaad/Makefile frontend/Makefile common/Makefile Makefile plugins/Makefile  common/mp4v2/Makefile plugins/xmms/Makefile plugins/xmms/src/Makefile)
-  else
-    AC_OUTPUT(libfaad/Makefile frontend/Makefile common/Makefile Makefile plugins/Makefile common/mp4v2/Makefile)
-  fi
+if test x$WITHDRM = xyes; then
+  AC_DEFINE(DRM, 1, [Define if you want to use libfaad together with Digital Radio Mondiale (DRM)])
 fi
+
+AC_OUTPUT(libfaad/Makefile frontend/Makefile common/Makefile Makefile plugins/Makefile)

@@ -1,18 +1,22 @@
-Microsoft Visual Studio Solution File, Format Version 7.00
+Microsoft Visual Studio Solution File, Format Version 8.00
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "faad", "faad.vcproj", "{2BD8CBB3-DFC9-4A6A-9B7A-07ED749BED58}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F450C38C-0A0D-4531-A17B-A5AF5320C7A7} = {F450C38C-0A0D-4531-A17B-A5AF5320C7A7}
+		{BC3EFE27-9015-4C9C-AD3C-72B3B7ED2114} = {BC3EFE27-9015-4C9C-AD3C-72B3B7ED2114}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libfaad", "..\libfaad\libfaad.vcproj", "{BC3EFE27-9015-4C9C-AD3C-72B3B7ED2114}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libmp4v2_st", "..\common\mp4v2\libmp4v2_st60.vcproj", "{F450C38C-0A0D-4531-A17B-A5AF5320C7A7}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
-		ConfigName.0 = Debug
-		ConfigName.1 = Release
-	EndGlobalSection
-	GlobalSection(ProjectDependencies) = postSolution
-		{2BD8CBB3-DFC9-4A6A-9B7A-07ED749BED58}.0 = {BC3EFE27-9015-4C9C-AD3C-72B3B7ED2114}
-		{2BD8CBB3-DFC9-4A6A-9B7A-07ED749BED58}.1 = {F450C38C-0A0D-4531-A17B-A5AF5320C7A7}
+		Debug = Debug
+		Release = Release
 	EndGlobalSection
 	GlobalSection(ProjectConfiguration) = postSolution
 		{2BD8CBB3-DFC9-4A6A-9B7A-07ED749BED58}.Debug.ActiveCfg = Debug|Win32
