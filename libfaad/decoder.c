@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.12 2002/03/16 13:38:37 menno Exp $
+** $Id: decoder.c,v 1.13 2002/03/16 19:18:11 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -127,6 +127,38 @@ static uint8_t get_sr_index(uint32_t samplerate)
     return 11;
 }
 
+/* Returns 0 if an object type is decodable, otherwise returns -1 */
+static int8_t can_decode_ot(uint8_t object_type)
+{
+    switch (object_type)
+    {
+    case LC:
+        return 0;
+    case MAIN:
+#ifdef MAIN_DEC
+        return 0;
+#else
+        return -1;
+#endif
+    case SSR:
+        return -1;
+    case LTP:
+#ifdef LTP_DEC
+        return 0;
+#else
+        return -1;
+#endif
+    case LD:
+#ifdef LD_DEC
+        return 0;
+#else
+        return -1;
+#endif
+    }
+
+    return -1;
+}
+
 int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
                         uint32_t *samplerate, uint8_t *channels)
 {
@@ -175,6 +207,9 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
         }
     }
     hDecoder->channelConfiguration = *channels;
+
+    if (can_decode_ot(hDecoder->object_type) < 0)
+        return -1;
 
     return bits;
 }

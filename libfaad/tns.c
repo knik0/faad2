@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: tns.c,v 1.6 2002/03/16 13:38:36 menno Exp $
+** $Id: tns.c,v 1.7 2002/03/16 19:18:11 menno Exp $
 **/
 
 #include "common.h"
@@ -145,8 +145,8 @@ static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_c
         tmp[i] = (coef[i] & s_mask) ? (coef[i] | n_mask) : coef[i];
 
     /* Inverse quantization */
-    iqfac = ((1 << (coef_res_bits-1)) - 0.5f) / (M_PI/2.0f);
-    iqfac_m = ((1 << (coef_res_bits-1)) + 0.5f) / (M_PI/2.0f);
+    iqfac = ((1 << (coef_res_bits-1)) - 0.5f) / M_PI_2;
+    iqfac_m = ((1 << (coef_res_bits-1)) + 0.5f) / M_PI_2;
 
     for (i = 0; i < order; i++)
         tmp2[i] = (real_t)sin(tmp[i] / ((tmp[i] >= 0) ? iqfac : iqfac_m));
