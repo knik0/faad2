@@ -41,6 +41,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "CB_Release"
 # PROP Target_Dir ""
 MTL=midl.exe
+F90=df.exe
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
 # ADD CPP /nologo /MD /W3 /GX /O2 /I ".\\" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "USE_FILE_CALLBACKS" /YX /FD /c
 # ADD BASE RSC /l 0x413 /d "NDEBUG"
@@ -65,6 +66,7 @@ LIB32=xilink6.exe -lib
 # PROP Intermediate_Dir "CB_Debug"
 # PROP Target_Dir ""
 MTL=midl.exe
+F90=df.exe
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /GZ /c
 # ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I ".\\" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "USE_FILE_CALLBACKS" /YX /FD /GZ /c
 # ADD BASE RSC /l 0x413 /d "_DEBUG"
@@ -131,11 +133,23 @@ SOURCE=.\atom_elst.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\atom_enca.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\atom_encv.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\atom_esds.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=.\atom_free.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\atom_frma.cpp
 # End Source File
 # Begin Source File
 
@@ -159,7 +173,15 @@ SOURCE=.\atom_hnti.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\atom_iKMS.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\atom_iods.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\atom_iSFM.cpp
 # End Source File
 # Begin Source File
 
@@ -176,6 +198,10 @@ SOURCE=.\atom_mdhd.cpp
 # Begin Source File
 
 SOURCE=.\atom_mdia.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\atom_meta.cpp
 # End Source File
 # Begin Source File
 
@@ -239,7 +265,19 @@ SOURCE=.\atom_rtp.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\atom_schi.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\atom_schm.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\atom_sdp.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\atom_sinf.cpp
 # End Source File
 # Begin Source File
 
@@ -284,10 +322,6 @@ SOURCE=.\atom_stsz.cpp
 # Begin Source File
 
 SOURCE=.\atom_stts.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\atom_tag4.cpp
 # End Source File
 # Begin Source File
 
@@ -396,6 +430,10 @@ SOURCE=.\mp4file_io.cpp
 # Begin Source File
 
 SOURCE=.\mp4info.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\mp4meta.cpp
 # End Source File
 # Begin Source File
 

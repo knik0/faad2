@@ -68,7 +68,7 @@ public:
 		bool* pIsSyncSample = NULL);
 
 	void WriteSample(
-		u_int8_t* pBytes, 
+		const u_int8_t* pBytes, 
 		u_int32_t numBytes,
 		MP4Duration duration = 0,
 		MP4Duration renderingOffset = 0, 

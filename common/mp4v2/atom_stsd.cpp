@@ -16,7 +16,8 @@
  * Copyright (C) Cisco Systems Inc. 2001.  All Rights Reserved.
  * 
  * Contributor(s): 
- *		Dave Mackie		dmackie@cisco.com
+ *		Dave Mackie			dmackie@cisco.com
+ *		Alix Marchandise-Franquet	alix@cisco.com
  */
 
 #include "mp4common.h"
@@ -32,8 +33,10 @@ MP4StsdAtom::MP4StsdAtom()
 	AddProperty(pCount);
 
 	ExpectChildAtom("mp4a", Optional, Many);
+	ExpectChildAtom("enca", Optional, Many);
 	ExpectChildAtom("mp4s", Optional, Many);
 	ExpectChildAtom("mp4v", Optional, Many);
+	ExpectChildAtom("encv", Optional, Many);
 	ExpectChildAtom("rtp ", Optional, Many);
 }
 

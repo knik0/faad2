@@ -16,7 +16,8 @@
  * Copyright (C) Cisco Systems Inc. 2001-2002.  All Rights Reserved.
  * 
  * Contributor(s): 
- *		Dave Mackie		dmackie@cisco.com
+ *		Dave Mackie		  dmackie@cisco.com
+ *		Alix Marchandise-Franquet alix@cisco.com
  */
 
 #include "mp4common.h"
@@ -63,7 +64,7 @@ static char* PrintAudioInfo(
 		"MPEG-2 (MP3)",
 		"MPEG-1 (MP3)",
 		"PCM16 (little endian)",
-		"OGG VORBIS",
+		"Vorbis",
 		"G.711 aLaw",
 		"G.711 uLaw",
 		"G.723.1",
@@ -73,7 +74,7 @@ static char* PrintAudioInfo(
 		sizeof(mpegAudioTypes) / sizeof(u_int8_t);
 
 	u_int8_t type =
-		MP4GetTrackAudioType(mp4File, trackId);
+		MP4GetTrackEsdsObjectTypeId(mp4File, trackId);
 	const char* typeName = "Unknown";
 
 	if (type == MP4_MPEG4_AUDIO_TYPE) {
@@ -99,11 +100,8 @@ static char* PrintAudioInfo(
 		MP4GetTrackDuration(mp4File, trackId);
 
 	double msDuration =
-#ifdef _WIN32
-		(int64_t)
-#endif
-		MP4ConvertFromTrackDuration(mp4File, trackId, 
-			trackDuration, MP4_MSECS_TIME_SCALE);
+		UINT64_TO_DOUBLE(MP4ConvertFromTrackDuration(mp4File, trackId, 
+			trackDuration, MP4_MSECS_TIME_SCALE));
 
 	u_int32_t avgBitRate =
 		MP4GetTrackBitRate(mp4File, trackId);
@@ -178,7 +176,7 @@ static char* PrintVideoInfo(
 		sizeof(mpegVideoTypes) / sizeof(u_int8_t);
 
 	u_int8_t type =
-		MP4GetTrackVideoType(mp4File, trackId);
+		MP4GetTrackEsdsObjectTypeId(mp4File, trackId);
 	const char* typeName = "Unknown";
 
 	if (type == MP4_MPEG4_VIDEO_TYPE) {
@@ -201,11 +199,8 @@ static char* PrintVideoInfo(
 		MP4GetTrackDuration(mp4File, trackId);
 
 	double msDuration =
-#ifdef _WIN32
-		(int64_t)
-#endif
-		MP4ConvertFromTrackDuration(mp4File, trackId, 
-			trackDuration, MP4_MSECS_TIME_SCALE);
+		UINT64_TO_DOUBLE(MP4ConvertFromTrackDuration(mp4File, trackId, 
+			trackDuration, MP4_MSECS_TIME_SCALE));
 
 	u_int32_t avgBitRate =
 		MP4GetTrackBitRate(mp4File, trackId);
@@ -267,8 +262,6 @@ static char* PrintTrackInfo(
 	const char* trackType = 
 		MP4GetTrackType(mp4File, trackId);
 
-    if (trackType) {
-
 	if (!strcmp(trackType, MP4_AUDIO_TRACK_TYPE)) {
 		trackInfo = PrintAudioInfo(mp4File, trackId);
 	} else if (!strcmp(trackType, MP4_VIDEO_TRACK_TYPE)) {
@@ -291,8 +284,6 @@ static char* PrintTrackInfo(
 					trackId, trackType);
 		}
 	}
-
-    }
 
 	return trackInfo;
 }

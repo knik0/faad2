@@ -16,7 +16,8 @@
  * Copyright (C) Cisco Systems Inc. 2001.  All Rights Reserved.
  * 
  * Contributor(s): 
- *		Dave Mackie		dmackie@cisco.com
+ *		Dave Mackie			dmackie@cisco.com
+ *		Alix Marchandise-Franquet	alix@cisco.com
  */
 
 #include "mp4common.h"
@@ -335,7 +336,7 @@ void MP4Track::ReadSampleFragment(
 }
 
 void MP4Track::WriteSample(
-	u_int8_t* pBytes, 
+	const u_int8_t* pBytes, 
 	u_int32_t numBytes,
 	MP4Duration duration, 
 	MP4Duration renderingOffset, 
@@ -823,7 +824,9 @@ void MP4Track::GetSampleTimes(MP4SampleId sampleId,
 
 		if (sampleId <= sid + sampleCount - 1) {
 			if (pStartTime) {
-				*pStartTime = elapsed + ((sampleId - sid) * sampleDelta);
+			  *pStartTime = (sampleId - sid);
+			  *pStartTime *= sampleDelta;
+			  *pStartTime += elapsed;
 			}
 			if (pDuration) {
 				*pDuration = sampleDelta;
@@ -1350,13 +1353,15 @@ const char* MP4Track::NormalizeTrackType(const char* type)
 {
 	if (!strcasecmp(type, "vide")
 	  || !strcasecmp(type, "video")
-	  || !strcasecmp(type, "mp4v")) {
+	  || !strcasecmp(type, "mp4v")
+	  || !strcasecmp(type, "encv")) {
 		return MP4_VIDEO_TRACK_TYPE;
 	}
 
 	if (!strcasecmp(type, "soun")
 	  || !strcasecmp(type, "sound")
 	  || !strcasecmp(type, "audio")
+	  || !strcasecmp(type, "enca")  // ismacrypt 
 	  || !strcasecmp(type, "mp4a")) {
 		return MP4_AUDIO_TRACK_TYPE;
 	}

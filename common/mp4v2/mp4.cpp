@@ -16,7 +16,8 @@
  * Copyright (C) Cisco Systems Inc. 2001.  All Rights Reserved.
  * 
  * Contributor(s): 
- *		Dave Mackie		dmackie@cisco.com
+ *		Dave Mackie			dmackie@cisco.com
+ *		Alix Marchandise-Franquet	alix@cisco.com
  */
 
 /* 
@@ -638,6 +639,24 @@ extern "C" MP4TrackId MP4AddAudioTrack(
 	return MP4_INVALID_TRACK_ID;
 }
 
+extern "C" MP4TrackId MP4AddEncAudioTrack(MP4FileHandle hFile, 
+					  u_int32_t timeScale, 
+					  MP4Duration sampleDuration, 
+					  u_int8_t audioType)
+{
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->
+	AddEncAudioTrack(timeScale, sampleDuration, audioType);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return MP4_INVALID_TRACK_ID;
+}
+
 extern "C" MP4TrackId MP4AddVideoTrack(
 	MP4FileHandle hFile, 
 	u_int32_t timeScale, 
@@ -657,6 +676,26 @@ extern "C" MP4TrackId MP4AddVideoTrack(
 		}
 	}
 	return MP4_INVALID_TRACK_ID;
+}
+
+extern "C" MP4TrackId MP4AddEncVideoTrack(MP4FileHandle hFile, 
+					  u_int32_t timeScale, 
+					  MP4Duration sampleDuration,
+					  u_int16_t width, 
+					  u_int16_t height, 
+					  u_int8_t videoType)
+{
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->AddEncVideoTrack(timeScale, sampleDuration, 
+						 width, height, videoType);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return MP4_INVALID_TRACK_ID;
 }
 
 extern "C" MP4TrackId MP4AddHintTrack(
@@ -693,20 +732,24 @@ extern "C" MP4TrackId MP4CloneTrack(
 	}
 
 	if (MP4_IS_VIDEO_TRACK_TYPE(trackType)) {
+                MP4SetVideoProfileLevel(dstFile, 
+                                        MP4GetVideoProfileLevel(srcFile));
 		dstTrackId = MP4AddVideoTrack(
 			dstFile,
 			MP4GetTrackTimeScale(srcFile, srcTrackId),
 			MP4GetTrackFixedSampleDuration(srcFile, srcTrackId),
 			MP4GetTrackVideoWidth(srcFile, srcTrackId),
 			MP4GetTrackVideoHeight(srcFile, srcTrackId),
-			MP4GetTrackVideoType(srcFile, srcTrackId));
+			MP4GetTrackEsdsObjectTypeId(srcFile, srcTrackId));
 
 	} else if (MP4_IS_AUDIO_TRACK_TYPE(trackType)) {
+                MP4SetAudioProfileLevel(dstFile, 
+                                        MP4GetAudioProfileLevel(srcFile));
 		dstTrackId = MP4AddAudioTrack(
 			dstFile,
 			MP4GetTrackTimeScale(srcFile, srcTrackId),
 			MP4GetTrackFixedSampleDuration(srcFile, srcTrackId),
-			MP4GetTrackAudioType(srcFile, srcTrackId));
+			MP4GetTrackEsdsObjectTypeId(srcFile, srcTrackId));
 
 	} else if (MP4_IS_OD_TRACK_TYPE(trackType)) {
 		dstTrackId = MP4AddODTrack(dstFile);
@@ -735,6 +778,8 @@ extern "C" MP4TrackId MP4CloneTrack(
 		dstTrackId,
 		MP4GetTrackTimeScale(srcFile, srcTrackId));
 
+	if (MP4_IS_AUDIO_TRACK_TYPE(trackType) 
+	    || MP4_IS_VIDEO_TRACK_TYPE(trackType)) {
 	// copy track ES configuration
 	u_int8_t* pConfig = NULL;
 	u_int32_t configSize = 0;
@@ -752,6 +797,7 @@ extern "C" MP4TrackId MP4CloneTrack(
 		configSize);
 
 		free(pConfig);
+	}
 
 	if (MP4_IS_HINT_TRACK_TYPE(trackType)) {
 		// probably not exactly what is wanted
@@ -787,89 +833,257 @@ extern "C" MP4TrackId MP4CloneTrack(
 	return dstTrackId;
 }
 
-extern "C" MP4TrackId MP4CopyTrack(
-	MP4FileHandle srcFile, 
-	MP4TrackId srcTrackId,
-	MP4FileHandle dstFile, 
-	bool applyEdits)
+// Given a track, make an encrypted clone of it in the dest. file
+extern "C" MP4TrackId MP4EncAndCloneTrack(MP4FileHandle srcFile, 
+					  MP4TrackId srcTrackId,
+					  MP4FileHandle dstFile)
 {
-	bool copySamples = true;	// LATER allow false => reference samples
+  MP4TrackId dstTrackId = MP4_INVALID_TRACK_ID;
 
-	MP4TrackId dstTrackId =
-		MP4CloneTrack(srcFile, srcTrackId, dstFile);
+  if (dstFile == NULL) {
+    dstFile = srcFile;
+  }
 
-	if (dstTrackId == MP4_INVALID_TRACK_ID) {
-		return dstTrackId;
-	}
+  const char* trackType = 
+    MP4GetTrackType(srcFile, srcTrackId);
 
-	bool viaEdits =
-		applyEdits && MP4GetTrackNumberOfEdits(srcFile, srcTrackId);
+  if (!trackType) {
+    return dstTrackId;
+  }
 
-	MP4SampleId sampleId = 0;
-	MP4SampleId numSamples = 
-		MP4GetTrackNumberOfSamples(srcFile, srcTrackId);
+  if (MP4_IS_VIDEO_TRACK_TYPE(trackType)) {
+    MP4SetVideoProfileLevel(dstFile, MP4GetVideoProfileLevel(srcFile));
+    dstTrackId = MP4AddEncVideoTrack(dstFile,
+				     MP4GetTrackTimeScale(srcFile, srcTrackId),
+				     MP4GetTrackFixedSampleDuration(srcFile, 
+								    srcTrackId),
+				     MP4GetTrackVideoWidth(srcFile, srcTrackId),
+				     MP4GetTrackVideoHeight(srcFile, srcTrackId),
+				     MP4GetTrackEsdsObjectTypeId(srcFile, 
+								 srcTrackId));
 
-	MP4Timestamp when = 0;
-	MP4Duration editsDuration = 
-		MP4GetTrackEditTotalDuration(srcFile, srcTrackId);
+  } else if (MP4_IS_AUDIO_TRACK_TYPE(trackType)) {
+    MP4SetAudioProfileLevel(dstFile, MP4GetAudioProfileLevel(srcFile));
+    dstTrackId = MP4AddEncAudioTrack(dstFile,
+				     MP4GetTrackTimeScale(srcFile, srcTrackId),
+				     MP4GetTrackFixedSampleDuration(srcFile, 
+								    srcTrackId),
+				     MP4GetTrackEsdsObjectTypeId(srcFile, 
+								 srcTrackId));
 
-	while (true) {
-		MP4Duration sampleDuration = MP4_INVALID_DURATION;
+  } else if (MP4_IS_OD_TRACK_TYPE(trackType)) {
+    dstTrackId = MP4AddODTrack(dstFile);
 
-		if (viaEdits) {
-			sampleId = MP4GetSampleIdFromEditTime(
-				srcFile,
-				srcTrackId,
-				when,
-				NULL,
-				&sampleDuration);
+  } else if (MP4_IS_SCENE_TRACK_TYPE(trackType)) {
+    dstTrackId = MP4AddSceneTrack(dstFile);
+    
+  } else if (MP4_IS_HINT_TRACK_TYPE(trackType)) {
+    dstTrackId = MP4AddHintTrack(dstFile,
+				 MP4GetHintTrackReferenceTrackId(srcFile, 
+								 srcTrackId));
 
-			// in theory, this shouldn't happen
-			if (sampleId == MP4_INVALID_SAMPLE_ID) {
-				MP4DeleteTrack(dstFile, dstTrackId);
-				return MP4_INVALID_TRACK_ID;
-			}
+  } else if (MP4_IS_SYSTEMS_TRACK_TYPE(trackType)) {
+    dstTrackId = MP4AddSystemsTrack(dstFile, trackType);
+    
+  } else {
+    dstTrackId = MP4AddTrack(dstFile, trackType);
+  }
 
-			when += sampleDuration;
+  if (dstTrackId == MP4_INVALID_TRACK_ID) {
+    return dstTrackId;
+  }
 
-			if (when >= editsDuration) {
-				break;
-			}
-		} else {
-			sampleId++;
-			if (sampleId > numSamples) {
-				break;
-			}
-		}
+  MP4SetTrackTimeScale(dstFile, 
+		       dstTrackId,
+		       MP4GetTrackTimeScale(srcFile, srcTrackId));
 
-		bool rc = false;
+  if (MP4_IS_AUDIO_TRACK_TYPE(trackType) 
+   || MP4_IS_VIDEO_TRACK_TYPE(trackType)) {
+    // copy track ES configuration
+    u_int8_t* pConfig = NULL;
+    u_int32_t configSize = 0;
+    if (MP4GetTrackESConfiguration(srcFile, srcTrackId,
+				   &pConfig, &configSize)) {
+    
+      if (pConfig != NULL) {
+	MP4SetTrackESConfiguration(dstFile, dstTrackId,
+				   pConfig, configSize);
+      }
+    }
+    if (pConfig != NULL)
+      free(pConfig);
+    }
 
-		if (copySamples) {
-			rc = MP4CopySample(
-				srcFile,
-				srcTrackId,
-				sampleId,
-				dstFile,
-				dstTrackId,
-				sampleDuration);
+  return dstTrackId;
+}
 
-		} else {
-			rc = MP4ReferenceSample(
-				srcFile,
-				srcTrackId,
-				sampleId,
-				dstFile,
-				dstTrackId,
-				sampleDuration);
-		}
+extern "C" MP4TrackId MP4CopyTrack(MP4FileHandle srcFile, 
+				   MP4TrackId srcTrackId,
+				   MP4FileHandle dstFile, 
+				   bool applyEdits)
+{
+  bool copySamples = true;	// LATER allow false => reference samples
 
-		if (!rc) {
-			MP4DeleteTrack(dstFile, dstTrackId);
-			return MP4_INVALID_TRACK_ID;
-		}
-	}
+  MP4TrackId dstTrackId =
+    MP4CloneTrack(srcFile, srcTrackId, dstFile);
 
-	return dstTrackId;
+  if (dstTrackId == MP4_INVALID_TRACK_ID) {
+    return dstTrackId;
+  }
+
+  bool viaEdits =
+    applyEdits && MP4GetTrackNumberOfEdits(srcFile, srcTrackId);
+
+  MP4SampleId sampleId = 0;
+  MP4SampleId numSamples = 
+    MP4GetTrackNumberOfSamples(srcFile, srcTrackId);
+
+  MP4Timestamp when = 0;
+  MP4Duration editsDuration = 
+    MP4GetTrackEditTotalDuration(srcFile, srcTrackId);
+
+  while (true) {
+    MP4Duration sampleDuration = MP4_INVALID_DURATION;
+
+    if (viaEdits) {
+      sampleId = MP4GetSampleIdFromEditTime(
+					    srcFile,
+					    srcTrackId,
+					    when,
+					    NULL,
+					    &sampleDuration);
+
+      // in theory, this shouldn't happen
+      if (sampleId == MP4_INVALID_SAMPLE_ID) {
+	MP4DeleteTrack(dstFile, dstTrackId);
+	return MP4_INVALID_TRACK_ID;
+      }
+
+      when += sampleDuration;
+      
+      if (when >= editsDuration) {
+	break;
+      }
+    } else {
+      sampleId++;
+      if (sampleId > numSamples) {
+	break;
+      }
+    }
+
+    bool rc = false;
+    
+    if (copySamples) {
+      rc = MP4CopySample(
+			 srcFile,
+			 srcTrackId,
+			 sampleId,
+			 dstFile,
+			 dstTrackId,
+			 sampleDuration);
+
+    } else {
+      rc = MP4ReferenceSample(
+			      srcFile,
+			      srcTrackId,
+			      sampleId,
+			      dstFile,
+			      dstTrackId,
+			      sampleDuration);
+    }
+
+    if (!rc) {
+      MP4DeleteTrack(dstFile, dstTrackId);
+      return MP4_INVALID_TRACK_ID;
+    }
+  }
+
+  return dstTrackId;
+}
+
+
+// Given a source track in a source file, make an encrypted copy of 
+// the track in the destination file, including sample encryption
+extern "C" MP4TrackId MP4EncAndCopyTrack(MP4FileHandle srcFile, 
+				      MP4TrackId srcTrackId,
+				      MP4FileHandle dstFile, 
+				      bool applyEdits)
+{
+  bool copySamples = true;	// LATER allow false => reference samples
+
+  MP4TrackId dstTrackId =
+    MP4EncAndCloneTrack(srcFile, srcTrackId, dstFile);
+
+  if (dstTrackId == MP4_INVALID_TRACK_ID) {
+    return dstTrackId;
+  }
+
+  bool viaEdits =
+    applyEdits && MP4GetTrackNumberOfEdits(srcFile, srcTrackId);
+
+  MP4SampleId sampleId = 0;
+  MP4SampleId numSamples = 
+    MP4GetTrackNumberOfSamples(srcFile, srcTrackId);
+
+  MP4Timestamp when = 0;
+  MP4Duration editsDuration = 
+    MP4GetTrackEditTotalDuration(srcFile, srcTrackId);
+
+  while (true) {
+    MP4Duration sampleDuration = MP4_INVALID_DURATION;
+
+    if (viaEdits) {
+      sampleId = MP4GetSampleIdFromEditTime(srcFile,
+					    srcTrackId,
+					    when,
+					    NULL,
+					    &sampleDuration);
+
+      // in theory, this shouldn't happen
+      if (sampleId == MP4_INVALID_SAMPLE_ID) {
+	MP4DeleteTrack(dstFile, dstTrackId);
+	return MP4_INVALID_TRACK_ID;
+      }
+
+      when += sampleDuration;
+
+      if (when >= editsDuration) {
+	break;
+      }
+    } else {
+      sampleId++;
+      if (sampleId > numSamples) {
+	break;
+      }
+    }
+
+    bool rc = false;
+
+    if (copySamples) {
+      // will need to encrypt the sample here
+      rc = MP4CopySample(srcFile,
+			 srcTrackId,
+			 sampleId,
+			 dstFile,
+			 dstTrackId,
+			 sampleDuration);
+
+    } else {
+      rc = MP4ReferenceSample(srcFile,
+			      srcTrackId,
+			      sampleId,
+			      dstFile,
+			      dstTrackId,
+			      sampleDuration);
+    }
+
+    if (!rc) {
+      MP4DeleteTrack(dstFile, dstTrackId);
+      return MP4_INVALID_TRACK_ID;
+    }
+  }
+
+  return dstTrackId;
 }
 
 extern "C" bool MP4DeleteTrack(
@@ -1002,12 +1216,16 @@ extern "C" bool MP4SetTrackTimeScale(
 	return false;
 }
 
+
+// This function should not be used anymore  
+// use MP4GetTrackEsdsObjectTypeId instead 
 extern "C" u_int8_t MP4GetTrackAudioType(
-	MP4FileHandle hFile, MP4TrackId trackId)
+     MP4FileHandle hFile, MP4TrackId trackId)
 {
 	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
 		try {
-			return ((MP4File*)hFile)->GetTrackAudioType(trackId);
+		  
+		  return ((MP4File*)hFile)->GetTrackAudioType(trackId);
 		}
 		catch (MP4Error* e) {
 			PRINT_ERROR(e);
@@ -1033,6 +1251,8 @@ extern "C" u_int8_t MP4GetTrackAudioMpeg4Type(
 }
 
 
+// This function should not be used anymore  
+// use MP4GetTrackEsdsObjectTypeId instead 
 extern "C" u_int8_t MP4GetTrackVideoType(
 	MP4FileHandle hFile, MP4TrackId trackId)
 {
@@ -1046,6 +1266,24 @@ extern "C" u_int8_t MP4GetTrackVideoType(
 		}
 	}
 	return MP4_INVALID_VIDEO_TYPE;
+}
+
+// Replacement to MP4GetTrackVideoType and MP4GetTrackAudioType
+// Basically does the same thing but with a more self-explanatory name
+extern "C" u_int8_t MP4GetTrackEsdsObjectTypeId(
+     MP4FileHandle hFile, MP4TrackId trackId)
+{
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      
+      return ((MP4File*)hFile)->GetTrackEsdsObjectTypeId(trackId);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return MP4_INVALID_AUDIO_TYPE;
 }
 
 extern "C" MP4Duration MP4GetTrackFixedSampleDuration(
@@ -1079,7 +1317,7 @@ extern "C" u_int32_t MP4GetTrackBitRate(
 	return 0;
 }
 
-extern "C" void MP4GetTrackESConfiguration(
+extern "C" bool MP4GetTrackESConfiguration(
 	MP4FileHandle hFile, MP4TrackId trackId, 
 	u_int8_t** ppConfig, u_int32_t* pConfigSize)
 {
@@ -1087,7 +1325,7 @@ extern "C" void MP4GetTrackESConfiguration(
 		try {
 			((MP4File*)hFile)->GetTrackESConfiguration(
 				trackId, ppConfig, pConfigSize);
-			return;
+			return true;
 		}
 		catch (MP4Error* e) {
 			PRINT_ERROR(e);
@@ -1096,7 +1334,7 @@ extern "C" void MP4GetTrackESConfiguration(
 	}
 	*ppConfig = NULL;
 	*pConfigSize = 0;
-	return;
+	return false;
 }
 
 extern "C" bool MP4SetTrackESConfiguration(
@@ -1137,8 +1375,8 @@ extern "C" u_int16_t MP4GetTrackVideoWidth(
 {
 	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
 		try {
-			return ((MP4File*)hFile)->GetTrackIntegerProperty(trackId,
-				"mdia.minf.stbl.stsd.mp4v.width");
+		       return ((MP4File*)hFile)->GetTrackIntegerProperty(trackId,
+				"mdia.minf.stbl.stsd.*.width");
 		}
 		catch (MP4Error* e) {
 			PRINT_ERROR(e);
@@ -1154,7 +1392,7 @@ extern "C" u_int16_t MP4GetTrackVideoHeight(
 	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
 		try {
 			return ((MP4File*)hFile)->GetTrackIntegerProperty(trackId,
-				"mdia.minf.stbl.stsd.mp4v.height");
+				"mdia.minf.stbl.stsd.*.height");
 		}
 		catch (MP4Error* e) {
 			PRINT_ERROR(e);
@@ -1400,7 +1638,7 @@ extern "C" bool MP4ReadSampleFromTime(
 extern "C" bool MP4WriteSample(
 	MP4FileHandle hFile,
 	MP4TrackId trackId,
-	u_int8_t* pBytes, 
+	const u_int8_t* pBytes, 
 	u_int32_t numBytes,
 	MP4Duration duration,
 	MP4Duration renderingOffset, 
@@ -1765,12 +2003,15 @@ extern "C" bool MP4SetHintTrackRtpPayload(
 	const char* pPayloadName,
 	u_int8_t* pPayloadNumber,
 	u_int16_t maxPayloadSize,
-	const char *encode_params)
+	const char *encode_params,
+	bool include_rtp_map,
+	bool include_mpeg4_esid)
 {
 	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
 		try {
 			((MP4File*)hFile)->SetHintTrackRtpPayload(
-				hintTrackId, pPayloadName, pPayloadNumber, maxPayloadSize, encode_params);
+				hintTrackId, pPayloadName, pPayloadNumber, maxPayloadSize, encode_params,
+				include_rtp_map, include_mpeg4_esid);
 			return true;
 		}
 		catch (MP4Error* e) {
@@ -2517,93 +2758,449 @@ extern "C" char* MP4BinaryToBase64(
 	return NULL;
 }
 
-/* tagging functions */
 
-extern "C" bool MP4TagDelete(MP4FileHandle hFile, MP4TrackId trackId)
+/* iTunes meta data handling */
+extern "C" bool MP4GetMetadataByIndex(MP4FileHandle hFile, u_int32_t index,
+                                       const char** ppName,
+                                       u_int8_t** ppValue, u_int32_t* pValueSize)
 {
 	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
 		try {
-			return ((MP4File*)hFile)->TagDelete(trackId);
+			return ((MP4File*)hFile)->GetMetadataByIndex(
+                index, ppName, ppValue, pValueSize);
 		}
 		catch (MP4Error* e) {
 			PRINT_ERROR(e);
 			delete e;
 		}
 	}
+    return false;
 }
 
-extern "C" bool MP4TagAddEntry(MP4FileHandle hFile, MP4TrackId trackId,
-                               const char *name, const char *value)
+extern "C" bool MP4MetadataDelete(MP4FileHandle hFile)
 {
 	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
 		try {
-			return ((MP4File*)hFile)->TagAddEntry(trackId, name, value);
+			return ((MP4File*)hFile)->MetadataDelete();
 		}
 		catch (MP4Error* e) {
 			PRINT_ERROR(e);
 			delete e;
 		}
 	}
+    return false;
 }
 
-#if 0
-extern "C" void MP4TagDeleteEntry(MP4FileHandle hFile, MP4TrackId trackId,
-                                  u_int32_t index)
+extern "C" bool MP4SetMetadataName(MP4FileHandle hFile,
+                                  const char* value)
 {
 	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
 		try {
-			((MP4File*)hFile)->TagDeleteEntry(trackId, index);
-            return;
+			return ((MP4File*)hFile)->SetMetadataName(value);
 		}
 		catch (MP4Error* e) {
 			PRINT_ERROR(e);
 			delete e;
 		}
 	}
-}
-#endif
-
-extern "C" u_int32_t MP4TagGetNumEntries(MP4FileHandle hFile, MP4TrackId trackId)
-{
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->TagGetNumEntries(trackId);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-            return 0;
-		}
-	}
+    return false;
 }
 
-extern "C" void MP4TagGetEntry(MP4FileHandle hFile, MP4TrackId trackId,
-                               u_int32_t index, const char **name,
-                               const char **value)
+extern "C" bool MP4GetMetadataName(MP4FileHandle hFile,
+                                   char** value)
 {
 	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
 		try {
-			((MP4File*)hFile)->TagGetEntry(trackId, index,
-                name, value);
-            return;
+			return ((MP4File*)hFile)->GetMetadataName(value);
 		}
 		catch (MP4Error* e) {
 			PRINT_ERROR(e);
 			delete e;
 		}
 	}
+    return false;
 }
 
-extern "C" bool MP4TagGetEntryByName(MP4FileHandle hFile, MP4TrackId trackId,
-                                     char *name, const char **value)
+extern "C" bool MP4SetMetadataWriter(MP4FileHandle hFile,
+                                     const char* value)
 {
 	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
 		try {
-			return ((MP4File*)hFile)->TagGetEntryByName(trackId, name, value);
+			return ((MP4File*)hFile)->SetMetadataWriter(value);
 		}
 		catch (MP4Error* e) {
 			PRINT_ERROR(e);
 			delete e;
 		}
 	}
+    return false;
+}
+
+extern "C" bool MP4GetMetadataWriter(MP4FileHandle hFile,
+                                   char** value)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->GetMetadataWriter(value);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4SetMetadataAlbum(MP4FileHandle hFile,
+                                    const char* value)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->SetMetadataAlbum(value);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4GetMetadataAlbum(MP4FileHandle hFile,
+                                    char** value)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->GetMetadataAlbum(value);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4SetMetadataArtist(MP4FileHandle hFile,
+                                     const char* value)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->SetMetadataArtist(value);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4GetMetadataArtist(MP4FileHandle hFile,
+                                     char** value)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->GetMetadataArtist(value);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4SetMetadataTool(MP4FileHandle hFile,
+                                   const char* value)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->SetMetadataTool(value);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4GetMetadataTool(MP4FileHandle hFile,
+                                   char** value)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->GetMetadataTool(value);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4SetMetadataComment(MP4FileHandle hFile,
+                                      const char* value)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->SetMetadataComment(value);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4GetMetadataComment(MP4FileHandle hFile,
+                                      char** value)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->GetMetadataComment(value);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4SetMetadataYear(MP4FileHandle hFile,
+                                   const char* value)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->SetMetadataYear(value);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4GetMetadataYear(MP4FileHandle hFile,
+                                   char** value)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->GetMetadataYear(value);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4SetMetadataTrack(MP4FileHandle hFile,
+                                    u_int16_t track, u_int16_t totalTracks)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->SetMetadataTrack(track, totalTracks);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4GetMetadataTrack(MP4FileHandle hFile,
+                                    u_int16_t* track, u_int16_t* totalTracks)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->GetMetadataTrack(track, totalTracks);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4SetMetadataDisk(MP4FileHandle hFile,
+                                   u_int16_t disk, u_int16_t totalDisks)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->SetMetadataDisk(disk, totalDisks);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4GetMetadataDisk(MP4FileHandle hFile,
+                                   u_int16_t* disk, u_int16_t* totalDisks)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->GetMetadataDisk(disk, totalDisks);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4SetMetadataGenre(MP4FileHandle hFile, u_int16_t genre)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->SetMetadataGenre(genre);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4GetMetadataGenre(MP4FileHandle hFile, u_int16_t* genre)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->GetMetadataGenre(genre);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4SetMetadataTempo(MP4FileHandle hFile, u_int16_t tempo)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->SetMetadataTempo(tempo);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4GetMetadataTempo(MP4FileHandle hFile, u_int16_t* tempo)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->GetMetadataTempo(tempo);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4SetMetadataCompilation(MP4FileHandle hFile, u_int8_t cpl)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->SetMetadataCompilation(cpl);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4GetMetadataCompilation(MP4FileHandle hFile, u_int8_t* cpl)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->GetMetadataCompilation(cpl);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4SetMetadataCoverArt(MP4FileHandle hFile,
+                                       u_int8_t *coverArt, u_int32_t size)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->SetMetadataCoverArt(coverArt, size);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4GetMetadataCoverArt(MP4FileHandle hFile,
+                                       u_int8_t **coverArt, u_int32_t* size)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->GetMetadataCoverArt(coverArt, size);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4SetMetadataFreeForm(MP4FileHandle hFile, char *name,
+                                       u_int8_t* pValue, u_int32_t valueSize)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->SetMetadataFreeForm(name, pValue, valueSize);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
+}
+
+extern "C" bool MP4GetMetadataFreeForm(MP4FileHandle hFile, char *name,
+                                       u_int8_t** pValue, u_int32_t* valueSize)
+{
+	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+		try {
+			return ((MP4File*)hFile)->GetMetadataFreeForm(name, pValue, valueSize);
+		}
+		catch (MP4Error* e) {
+			PRINT_ERROR(e);
+			delete e;
+		}
+	}
+    return false;
 }

@@ -210,7 +210,11 @@ inline void INT32TOSTR(u_int32_t i, char* s) {
 inline MP4Timestamp MP4GetAbsTimestamp() {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
-	return tv.tv_sec + 209606400;	// MP4 start date is 1/1/1904
+	MP4Timestamp ret;
+	ret = tv.tv_sec;
+	ret += 2082844800;
+	return ret;	// MP4 start date is 1/1/1904
+	// 208284480 is (((1970 - 1904) * 365) + 17) * 24 * 60 * 60
 }
 
 u_int64_t MP4ConvertTime(u_int64_t t, 

@@ -49,12 +49,14 @@ void MP4FtypAtom::Generate()
 {
 	MP4Atom::Generate();
 
-	((MP4StringProperty*)m_pProperties[0])->SetValue("isom");
+	((MP4StringProperty*)m_pProperties[0])->SetValue("mp42");
 
 	MP4StringProperty* pBrandProperty = (MP4StringProperty*)
 		((MP4TableProperty*)m_pProperties[3])->GetProperty(0);
 	ASSERT(pBrandProperty);
-	pBrandProperty->AddValue("mp41");
+	pBrandProperty->AddValue("mp42");
+	pBrandProperty->AddValue("isom");
+	((MP4Integer32Property*)m_pProperties[2])->IncrementValue();
 	((MP4Integer32Property*)m_pProperties[2])->IncrementValue();
 }
 

@@ -16,7 +16,8 @@
  * Copyright (C) Cisco Systems Inc. 2001.  All Rights Reserved.
  * 
  * Contributor(s): 
- *		Dave Mackie		dmackie@cisco.com
+ *		Dave Mackie		  dmackie@cisco.com
+ *              Alix Marchandise-Franquet alix@cisco.com
  */
 
 #include "mp4common.h"
@@ -201,6 +202,8 @@ void MP4File::CreateIsmaIodFromFile(
 	pEsProperty->SetTags(MP4ESDescrTag);
 
 	MP4IntegerProperty* pSetProperty;
+	MP4IntegerProperty* pSceneESID;
+	MP4IntegerProperty* pOdESID;
 
 	// OD
 	MP4Descriptor* pOdEsd =
@@ -208,8 +211,10 @@ void MP4File::CreateIsmaIodFromFile(
 	pOdEsd->Generate();
 
 	pOdEsd->FindProperty("ESID", 
-		(MP4Property**)&pSetProperty);
-	pSetProperty->SetValue(m_odTrackId);
+		(MP4Property**)&pOdESID);
+
+	// we set the OD ESID to a non-zero unique value
+	pOdESID->SetValue(m_odTrackId);
 
 	pOdEsd->FindProperty("URLFlag", 
 		(MP4Property**)&pSetProperty);
@@ -280,8 +285,9 @@ void MP4File::CreateIsmaIodFromFile(
 	pSceneEsd->Generate();
 
 	pSceneEsd->FindProperty("ESID", 
-		(MP4Property**)&pSetProperty);
-	pSetProperty->SetValue(sceneTrackId);
+		(MP4Property**)&pSceneESID);
+	// we set the Scene ESID to a non-zero unique value
+	pSceneESID->SetValue(sceneTrackId);
 
 	pSceneEsd->FindProperty("URLFlag", 
 		(MP4Property**)&pSetProperty);
@@ -346,6 +352,8 @@ void MP4File::CreateIsmaIodFromFile(
 	// now carefully replace esd properties before destroying
 	pOdEsd->SetProperty(8, pOrgOdEsdProperty);
 	pSceneEsd->SetProperty(8, pOrgSceneEsdProperty);
+	pSceneESID->SetValue(0); // restore 0 value
+	pOdESID->SetValue(0);
 
 	delete pIod;
 
@@ -477,7 +485,7 @@ void MP4File::CreateIsmaIodFromParams(
     delete pVideoEsdProperty;
 
 	VERBOSE_ISMA(GetVerbosity(),
-		printf("OD data =\n"); MP4HexDump(pBytes, numBytes));
+		printf("OD data = %llu bytes\n", numBytes); MP4HexDump(pBytes, numBytes));
 
 	char* odCmdBase64 = MP4ToBase64(pBytes, numBytes);
 
@@ -672,32 +680,37 @@ void MP4File::CreateIsmaODUpdateCommandFromFileForStream(
 	u_int64_t* pNumBytes)
 {
 	MP4DescriptorProperty* pAudioEsd = NULL;
-	MP4Integer8Property* pAudioSLConfig = NULL;
+	MP4Integer8Property* pAudioSLConfigPredef = NULL;
 	MP4BitfieldProperty* pAudioAccessUnitEndFlag = NULL;
 	int oldAudioUnitEndFlagValue = 0;
 	MP4DescriptorProperty* pVideoEsd = NULL;
-	MP4Integer8Property* pVideoSLConfig = NULL;
+	MP4Integer8Property* pVideoSLConfigPredef = NULL;
 	MP4BitfieldProperty* pVideoAccessUnitEndFlag = NULL;
 	int oldVideoUnitEndFlagValue = 0;
+	MP4IntegerProperty* pAudioEsdId = NULL;
+	MP4IntegerProperty* pVideoEsdId = NULL;
 
 	if (audioTrackId != MP4_INVALID_TRACK_ID) {
+		// changed mp4a to * to handle enca case
 		MP4Atom* pEsdsAtom = 
 			FindAtom(MakeTrackName(audioTrackId, 
-				"mdia.minf.stbl.stsd.mp4a.esds"));
+				"mdia.minf.stbl.stsd.*.esds"));
 		ASSERT(pEsdsAtom);
 
 		pAudioEsd = (MP4DescriptorProperty*)(pEsdsAtom->GetProperty(2));
+		// ESID is 0 for file, stream needs to be non-ze
+		pAudioEsd->FindProperty("ESID", 
+					(MP4Property**)&pAudioEsdId);
+
+		ASSERT(pAudioEsdId);
+		pAudioEsdId->SetValue(audioTrackId);
 
 		// SL config needs to change from 2 (file) to 1 (null)
 		pAudioEsd->FindProperty("slConfigDescr.predefined", 
-			(MP4Property**)&pAudioSLConfig);
-		ASSERT(pAudioSLConfig);
-#if 0
-		// changed 12/05/02 wmay
-		pAudioSLConfig->SetValue(1);
-#else
-		pAudioSLConfig->SetValue(0);
-#endif
+			(MP4Property**)&pAudioSLConfigPredef);
+		ASSERT(pAudioSLConfigPredef);
+		pAudioSLConfigPredef->SetValue(0);
+
 		pAudioEsd->FindProperty("slConfigDescr.useAccessUnitEndFlag",
 					(MP4Property **)&pAudioAccessUnitEndFlag);
 		oldAudioUnitEndFlagValue = 
@@ -706,23 +719,25 @@ void MP4File::CreateIsmaODUpdateCommandFromFileForStream(
 	}
 
 	if (videoTrackId != MP4_INVALID_TRACK_ID) {
+	  // changed mp4v to * to handle encv case
 		MP4Atom* pEsdsAtom = 
 			FindAtom(MakeTrackName(videoTrackId, 
-				"mdia.minf.stbl.stsd.mp4v.esds"));
+				"mdia.minf.stbl.stsd.*.esds"));
 		ASSERT(pEsdsAtom);
 
 		pVideoEsd = (MP4DescriptorProperty*)(pEsdsAtom->GetProperty(2));
+		pVideoEsd->FindProperty("ESID", 
+					(MP4Property**)&pVideoEsdId);
+
+		ASSERT(pVideoEsdId);
+		pVideoEsdId->SetValue(videoTrackId);
 
 		// SL config needs to change from 2 (file) to 1 (null)
 		pVideoEsd->FindProperty("slConfigDescr.predefined", 
-			(MP4Property**)&pVideoSLConfig);
-		ASSERT(pVideoSLConfig);
-#if 0
-		pVideoSLConfig->SetValue(1);
-		// changed 12/05/02 wmay
-#else
-		pVideoSLConfig->SetValue(0);
-#endif
+			(MP4Property**)&pVideoSLConfigPredef);
+		ASSERT(pVideoSLConfigPredef);
+		pVideoSLConfigPredef->SetValue(0);
+
 		pVideoEsd->FindProperty("slConfigDescr.useAccessUnitEndFlag",
 					(MP4Property **)&pVideoAccessUnitEndFlag);
 		oldVideoUnitEndFlagValue = 
@@ -732,16 +747,24 @@ void MP4File::CreateIsmaODUpdateCommandFromFileForStream(
 
 	CreateIsmaODUpdateCommandForStream(
 		pAudioEsd, pVideoEsd, ppBytes, pNumBytes);
-			
+	VERBOSE_ISMA(GetVerbosity(),
+		printf("After CreateImsaODUpdateCommandForStream len %llu =\n", *pNumBytes); MP4HexDump(*ppBytes, *pNumBytes));
 	// return SL config values to 2 (file)
-	if (pAudioSLConfig) {
-		pAudioSLConfig->SetValue(2);
+	// return ESID values to 0
+	if (pAudioSLConfigPredef) {
+		pAudioSLConfigPredef->SetValue(2);
+	}
+	if (pAudioEsdId) {
+	  pAudioEsdId->SetValue(0);
 	}
 	if (pAudioAccessUnitEndFlag) {
 	  pAudioAccessUnitEndFlag->SetValue(oldAudioUnitEndFlagValue );
 	}
-	if (pVideoSLConfig) {
-		pVideoSLConfig->SetValue(2);
+	if (pVideoEsdId) {
+	  pVideoEsdId->SetValue(0);
+	}
+	if (pVideoSLConfigPredef) {
+		pVideoSLConfigPredef->SetValue(2);
 	}
 	if (pVideoAccessUnitEndFlag) {
 	  pVideoAccessUnitEndFlag->SetValue(oldVideoUnitEndFlagValue );

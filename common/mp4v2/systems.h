@@ -27,6 +27,7 @@
 #define HAVE_IN_PORT_T
 #define HAVE_SOCKLEN_T
 #include <win32_ver.h>
+#define NEED_SDL_VIDEO_IN_MAIN_THREAD
 #else
 #undef PACKAGE
 #undef VERSION
@@ -35,10 +36,13 @@
 
 
 
+
 #ifdef WIN32
 
 #define _WIN32_WINNT 0x0400
+#define _WINSOCKAPI_
 #include <windows.h>
+#include <winsock2.h>
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -58,7 +62,7 @@ typedef __int32 int32_t;
 typedef __int16 int16_t;
 typedef __int8  int8_t;
 typedef unsigned short in_port_t;
-typedef unsigned int socklen_t;
+typedef int socklen_t;
 typedef int ssize_t;
 #define snprintf _snprintf
 #define strncasecmp _strnicmp
@@ -96,6 +100,7 @@ int gettimeofday(struct timeval *t, void *);
 #define LLD "%I64d"
 #define LLU "%I64u"
 #define LLX "%I64x"
+#define LLX16 "%016I64x"
 #define M_LLU 1000i64
 #define C_LLU 100i64
 #define I_LLU 1i64
@@ -122,8 +127,26 @@ int gettimeofday(struct timeval *t, void *);
 #define FOPEN_READ_BINARY "rb"
 #define FOPEN_WRITE_BINARY "wb"
 
+#define UINT64_TO_DOUBLE(a) ((double)((int64_t)(a)))
 #else /* UNIX */
+/*****************************************************************************
+ *   UNIX LIKE DEFINES BELOW THIS POINT
+ *****************************************************************************/
+#ifdef sun
+#include <sys/feature_tests.h>
+#endif
 
+#ifndef _FILE_OFFSET_BITS
+#define _FILE_OFFSET_BITS 64
+#else
+#if _FILE_OFFSET_BITS < 64
+#error File offset bits is already set to non-64 value
+#endif
+#endif
+
+#ifndef _LARGEFILE_SOURCE
+#define _LARGEFILE_SOURCE
+#endif
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -150,7 +173,16 @@ int gettimeofday(struct timeval *t, void *);
 #include <ctype.h>
 #include <netdb.h>
 #include <sys/stat.h>
+#ifdef TIME_WITH_SYS_TIME
 #include <sys/time.h>
+#include <time.h>
+#else
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#else
+#include <time.h>
+#endif
+#endif
 #include <sys/param.h>
 
 #define OPEN_RDWR O_RDWR
@@ -163,6 +195,7 @@ int gettimeofday(struct timeval *t, void *);
 #define LLD "%lld"
 #define LLU "%llu"
 #define LLX "%llx"
+#define LLX16 "%016llx"
 #define M_LLU 1000LLU
 #define C_LLU 100LLU
 #define I_LLU 1LLU
@@ -176,8 +209,12 @@ int gettimeofday(struct timeval *t, void *);
 
 #define FOPEN_READ_BINARY "r"
 #define FOPEN_WRITE_BINARY "w"
+#define UINT64_TO_DOUBLE(a) ((double)(a))
 #endif /* define unix */
 
+/*****************************************************************************
+ *             Generic type includes used in the whole package               *
+ *****************************************************************************/
 #include <stdarg.h>
 typedef void (*error_msg_func_t)(int loglevel,
 				 const char *lib,
@@ -228,7 +265,10 @@ char *strsep(char **strp, const char *delim);
 
 #define MALLOC_STRUCTURE(a) ((a *)malloc(sizeof(a)))
 
-#define CHECK_AND_FREE(a) if ((a) != NULL) { free((a)); (a) = NULL;}
+#define CHECK_AND_FREE(a) if ((a) != NULL) { free((void *)(a)); (a) = NULL;}
+
+#define NUM_ELEMENTS_IN_ARRAY(name) ((sizeof((name))) / (sizeof(*(name))))
+
 #ifndef HAVE_GLIB_H
 typedef char gchar;
 typedef unsigned char guchar;
@@ -264,7 +304,6 @@ typedef int8_t gint8;
 #ifndef FALSE
 #define FALSE 0
 #endif
-
 
 #endif /* __SYSTEMS_H__ */
 

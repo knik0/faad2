@@ -16,24 +16,23 @@
  * Copyright (C) Cisco Systems Inc. 2001.  All Rights Reserved.
  * 
  * Contributor(s): 
- *		Dave Mackie		dmackie@cisco.com
+ *		Alix Marchandise-Franquet alix@cisco.com
+ *
+ * ISMASampleFormatBox for ISMACrypt		
  */
 
 #include "mp4common.h"
 
-MP4UdtaAtom::MP4UdtaAtom() 
-	: MP4Atom("udta") 
+MP4ISFMAtom::MP4ISFMAtom() 
+	: MP4Atom("iSFM") 
 {
-	ExpectChildAtom("cprt", Optional, Many);
-	ExpectChildAtom("hnti", Optional, OnlyOne);
-	ExpectChildAtom("meta", Optional, OnlyOne);
-}
-
-void MP4UdtaAtom::Read() 
-{
-	if (ATOMID(m_pParentAtom->GetType()) == ATOMID("trak")) {
-		ExpectChildAtom("hinf", Optional, OnlyOne);
-	}
-
-	MP4Atom::Read();
+	AddVersionAndFlags(); /* 0, 1 */
+	AddProperty( /* 2 */
+		new MP4BitfieldProperty("selective-encryption", 1));
+	AddProperty( /* 3 */
+		new MP4BitfieldProperty("reserved", 7));
+	AddProperty( /* 4 */
+		new MP4Integer8Property("key-indicator-length"));	
+	AddProperty( /* 5 */
+		new MP4Integer8Property("IV-length"));	
 }

@@ -443,9 +443,141 @@ public:
 	void Write();
 };
 
-class MP4Tag4Atom : public MP4Atom {
+// ismacrypt
+class MP4EncaAtom : public MP4Atom {
 public:
-	MP4Tag4Atom();
+        MP4EncaAtom();
+        void Generate();
+};
+
+class MP4EncvAtom : public MP4Atom {
+public:
+        MP4EncvAtom();
+        void Generate();
+};
+
+class MP4FrmaAtom : public MP4Atom {
+public:
+        MP4FrmaAtom();
+};
+
+class MP4IKMSAtom : public MP4Atom {
+public:
+        MP4IKMSAtom();
+};
+
+class MP4ISFMAtom : public MP4Atom {
+public:
+        MP4ISFMAtom();
+};
+
+class MP4SchiAtom : public MP4Atom {
+public:
+        MP4SchiAtom();
+};
+
+class MP4SchmAtom : public MP4Atom {
+public:
+        MP4SchmAtom();
+};
+
+class MP4SinfAtom : public MP4Atom {
+public:
+        MP4SinfAtom();
+};
+
+/* iTunes META data atoms */
+class MP4MetaAtom : public MP4Atom {
+public:
+	MP4MetaAtom();
+};
+
+class MP4NameAtom : public MP4Atom {
+public:
+    MP4NameAtom();
+    void Read();
+};
+
+class MP4MeanAtom : public MP4Atom {
+public:
+    MP4MeanAtom();
+    void Read();
+};
+
+class MP4DataAtom : public MP4Atom {
+public:
+    MP4DataAtom();
+    void Read();
+};
+
+class MP4IlstAtom : public MP4Atom {
+public:
+	MP4IlstAtom();
+};
+
+class MP4DashAtom : public MP4Atom {
+public:
+    MP4DashAtom();
+};
+
+class MP4NamAtom : public MP4Atom {
+public:
+	MP4NamAtom();
+};
+
+class MP4ArtAtom : public MP4Atom {
+public:
+	MP4ArtAtom();
+};
+
+class MP4WrtAtom : public MP4Atom {
+public:
+	MP4WrtAtom();
+};
+
+class MP4AlbAtom : public MP4Atom {
+public:
+	MP4AlbAtom();
+};
+
+class MP4TrknAtom : public MP4Atom {
+public:
+	MP4TrknAtom();
+};
+
+class MP4DayAtom : public MP4Atom {
+public:
+	MP4DayAtom();
+};
+
+class MP4TooAtom : public MP4Atom {
+public:
+	MP4TooAtom();
+};
+
+class MP4GnreAtom : public MP4Atom {
+public:
+	MP4GnreAtom();
+};
+
+class MP4CpilAtom : public MP4Atom {
+public:
+	MP4CpilAtom();
+};
+
+class MP4TmpoAtom : public MP4Atom {
+public:
+	MP4TmpoAtom();
+};
+
+class MP4CmtAtom : public MP4Atom {
+public:
+	MP4CmtAtom();
+};
+
+class MP4DiskAtom : public MP4Atom {
+public:
+	MP4DiskAtom();
 };
 
 #endif /* __MP4_ATOMS_INCLUDED__ */

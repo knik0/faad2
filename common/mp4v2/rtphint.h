@@ -259,7 +259,9 @@ public:
 		const char* payloadName,
 		u_int8_t payloadNumber,
 		u_int16_t maxPayloadSize,
-		const char *encoding_parms);
+		const char *encoding_parms,
+		bool add_rtpmap,
+		bool add_mpeg4_esid);
 
 	void ReadHint(
 		MP4SampleId hintSampleId,

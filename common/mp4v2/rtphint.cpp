@@ -370,7 +370,9 @@ void MP4RtpHintTrack::SetPayload(
 	const char* payloadName,
 	u_int8_t payloadNumber,
 	u_int16_t maxPayloadSize, 
-	const char *encoding_parms)
+	const char *encoding_parms,
+	bool include_rtp_map,
+	bool include_mpeg4_esid)
 {
 	InitRefTrack();
 	InitPayload();
@@ -416,15 +418,22 @@ void MP4RtpHintTrack::SetPayload(
 
 	char* sdpBuf = (char*)MP4Malloc(
 		strlen(sdpMediaType) + strlen(rtpMapBuf) + 256);
-	sprintf(sdpBuf, 
-		"m=%s 0 RTP/AVP %u\015\012"
-		"a=rtpmap:%u %s\015\012"
-		"a=control:trackID=%u\015\012" 
-		"a=mpeg4-esid:%u\015\012",
-		sdpMediaType, payloadNumber,
-		payloadNumber, rtpMapBuf,
-		m_trackId,
-		m_pRefTrack->GetId());
+	uint32_t buflen;
+	buflen = sprintf(sdpBuf, 
+			 "m=%s 0 RTP/AVP %u\015\012"
+			 "a=control:trackID=%u\015\012",
+			 sdpMediaType, payloadNumber,
+			 m_trackId);
+	if (include_rtp_map) {
+	  buflen += sprintf(sdpBuf + buflen, 
+			    "a=rtpmap:%u %s\015\012",
+			    payloadNumber, rtpMapBuf);
+	}
+	if (include_mpeg4_esid) {
+	  sprintf(sdpBuf + buflen, 
+		  "a=mpeg4-esid:%u\015\012",
+		  m_pRefTrack->GetId());
+	}
 
 	MP4StringProperty* pSdpProperty = NULL;
 	m_pTrakAtom->FindProperty("trak.udta.hnti.sdp .sdpText",

@@ -16,24 +16,19 @@
  * Copyright (C) Cisco Systems Inc. 2001.  All Rights Reserved.
  * 
  * Contributor(s): 
- *		Dave Mackie		dmackie@cisco.com
+ *              Dave Mackie                dmackie@cisco.com
+ *		Alix Marchandise-Franquet  alix@cisco.com
+ *
+ * Add the ProtectionInfoBox for ISMACrypt
  */
 
 #include "mp4common.h"
 
-MP4UdtaAtom::MP4UdtaAtom() 
-	: MP4Atom("udta") 
+MP4SinfAtom::MP4SinfAtom() 
+	: MP4Atom("sinf") 
 {
-	ExpectChildAtom("cprt", Optional, Many);
-	ExpectChildAtom("hnti", Optional, OnlyOne);
-	ExpectChildAtom("meta", Optional, OnlyOne);
-}
-
-void MP4UdtaAtom::Read() 
-{
-	if (ATOMID(m_pParentAtom->GetType()) == ATOMID("trak")) {
-		ExpectChildAtom("hinf", Optional, OnlyOne);
-	}
-
-	MP4Atom::Read();
+	AddVersionAndFlags();
+	ExpectChildAtom("frma", Required, OnlyOne);
+	ExpectChildAtom("schm", Required, OnlyOne);
+	ExpectChildAtom("schi", Required, OnlyOne);
 }

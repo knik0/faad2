@@ -92,7 +92,7 @@ public:
 	MP4SLConfigDescriptor();
 	void Generate();
 	void Read(MP4File* pFile);
-protected:
+ protected:
 	void Mutate();
 };
 

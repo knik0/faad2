@@ -34,20 +34,20 @@
 u_int64_t MP4File::GetPosition(FILE* pFile)
 {
 	if (m_memoryBuffer == NULL) {
-        int64_t pos;
 #ifndef USE_FILE_CALLBACKS
+		fpos_t fpos;
 		if (pFile == NULL) {
 			ASSERT(m_pFile);
 			pFile = m_pFile;
 		}
 
-		fpos_t fpos;
 		if (fgetpos(pFile, &fpos) < 0) {
 			throw new MP4Error(errno, "MP4GetPosition");
 		}
 		return FPOS_TO_UINT64(fpos);
 #else
 
+        u_int64_t pos;
 		if ((pos = m_MP4fgetpos(m_userData)) < 0) {
 			throw new MP4Error(errno, "MP4GetPosition");
 		}
@@ -199,6 +199,7 @@ void MP4File::WriteBytes(u_int8_t* pBytes, u_int32_t numBytes, FILE* pFile)
 			ASSERT(m_pFile);
 			pFile = m_pFile;
 		}
+
 		u_int32_t rc = fwrite(pBytes, 1, numBytes, pFile);
 #else
 		u_int32_t rc = m_MP4fwrite(pBytes, numBytes, m_userData);
@@ -474,7 +475,7 @@ void MP4File::WriteCountedString(char* string,
 		WriteUInt8(charLength);
 	} else {
 		if (charLength > 255) {
-			throw new MP4Error(ERANGE, "MP4WriteCountedString");
+			throw new MP4Error(ERANGE, "Length is %d", "MP4WriteCountedString", charLength);
 		}
 		WriteUInt8(charLength);
 	}

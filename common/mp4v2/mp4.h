@@ -16,7 +16,8 @@
  * Copyright (C) Cisco Systems Inc. 2001.  All Rights Reserved.
  * 
  * Contributor(s): 
- *		Dave Mackie		dmackie@cisco.com
+ *		Dave Mackie			dmackie@cisco.com
+ *		Alix Marchandise-Franquet	alix@cisco.com
  */
 
 #ifndef __MP4_INCLUDED__
@@ -167,7 +168,8 @@ typedef u_int32_t	MP4EditId;
 #define MP4_IS_MPEG4_AAC_AUDIO_TYPE(mpeg4Type) \
 	(((mpeg4Type) >= MP4_MPEG4_AAC_MAIN_AUDIO_TYPE \
 		&& (mpeg4Type) <= MP4_MPEG4_AAC_LTP_AUDIO_TYPE) \
-	  || (mpeg4Type) == MP4_MPEG4_AAC_SCALABLE_AUDIO_TYPE)
+	  || (mpeg4Type) == MP4_MPEG4_AAC_SCALABLE_AUDIO_TYPE \
+          || (mpeg4Type) == 17)
 
 #define MP4_IS_AAC_AUDIO_TYPE(type) \
 	(MP4_IS_MPEG2_AAC_AUDIO_TYPE(type) \
@@ -206,15 +208,6 @@ typedef u_int32_t	MP4EditId;
 
 /* MP4 API declarations */
 
-typedef u_int32_t (*MP4OpenCallback)(const char *pName, const char *mode, void *userData);
-typedef void (*MP4CloseCallback)(void *userData);
-typedef u_int32_t (*MP4ReadCallback)(void *pBuffer, unsigned int nBytesToRead, void *userData);
-typedef u_int32_t (*MP4WriteCallback)(void *pBuffer, unsigned int nBytesToWrite, void *userData);
-typedef int32_t (*MP4SetposCallback)(u_int32_t pos, void *userData);
-typedef int64_t (*MP4GetposCallback)(void *userData);
-typedef int64_t (*MP4FilesizeCallback)(void *userData);
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -235,23 +228,6 @@ MP4FileHandle MP4Modify(
 MP4FileHandle MP4Read(
 	const char* fileName, 
 	u_int32_t verbosity DEFAULT(0));
-
-MP4FileHandle MP4ReadCb(u_int32_t verbosity,
-                        MP4OpenCallback MP4fopen,
-                        MP4CloseCallback MP4fclose,
-                        MP4ReadCallback MP4fread,
-                        MP4WriteCallback MP4fwrite,
-                        MP4SetposCallback MP4fsetpos,
-                        MP4GetposCallback MP4fgetpos,
-                        MP4FilesizeCallback MP4filesize,
-                        void *userData);
-
-MP4FileHandle MP4ModifyCb(int32_t verbosity,
-    bool useExtensibleFormat,
-    MP4OpenCallback MP4fopen, MP4CloseCallback MP4fclose,
-    MP4ReadCallback MP4fread, MP4WriteCallback MP4fwrite,
-    MP4SetposCallback MP4fsetpos, MP4GetposCallback MP4fgetpos,
-    MP4FilesizeCallback MP4filesize, void *userData);
 
 bool MP4Close(
 	MP4FileHandle hFile);
@@ -367,7 +343,21 @@ MP4TrackId MP4AddAudioTrack(
 	MP4Duration sampleDuration,
 	u_int8_t audioType DEFAULT(MP4_MPEG4_AUDIO_TYPE));
 
+MP4TrackId MP4AddEncAudioTrack(
+	MP4FileHandle hFile, 
+	u_int32_t timeScale, 
+	MP4Duration sampleDuration,
+	u_int8_t audioType DEFAULT(MP4_MPEG4_AUDIO_TYPE));
+
 MP4TrackId MP4AddVideoTrack(
+	MP4FileHandle hFile, 
+	u_int32_t timeScale, 
+	MP4Duration sampleDuration,
+	u_int16_t width, 
+	u_int16_t height,
+	u_int8_t videoType DEFAULT(MP4_MPEG4_VIDEO_TYPE));
+
+MP4TrackId MP4AddEncVideoTrack(
 	MP4FileHandle hFile, 
 	u_int32_t timeScale, 
 	MP4Duration sampleDuration,
@@ -384,7 +374,18 @@ MP4TrackId MP4CloneTrack(
 	MP4TrackId srcTrackId,
 	MP4FileHandle dstFile DEFAULT(MP4_INVALID_FILE_HANDLE));
 
+MP4TrackId MP4EncAndCloneTrack(
+	MP4FileHandle srcFile, 
+	MP4TrackId srcTrackId,
+	MP4FileHandle dstFile DEFAULT(MP4_INVALID_FILE_HANDLE));
+
 MP4TrackId MP4CopyTrack(
+	MP4FileHandle srcFile, 
+	MP4TrackId srcTrackId,
+	MP4FileHandle dstFile DEFAULT(MP4_INVALID_FILE_HANDLE), 
+	bool applyEdits DEFAULT(false));
+
+MP4TrackId MP4EncAndCopyTrack(
 	MP4FileHandle srcFile, 
 	MP4TrackId srcTrackId,
 	MP4FileHandle dstFile DEFAULT(MP4_INVALID_FILE_HANDLE), 
@@ -430,6 +431,7 @@ bool MP4SetTrackTimeScale(
 	MP4TrackId trackId, 
 	u_int32_t value);
 
+// Should not be used, replace with MP4GetTrackEsdsObjectTypeId
 u_int8_t MP4GetTrackAudioType(
 	MP4FileHandle hFile, 
 	MP4TrackId trackId);
@@ -438,7 +440,12 @@ u_int8_t MP4GetTrackAudioMpeg4Type(
 	MP4FileHandle hFile, 
 	MP4TrackId trackId);
 
+// Should not be used, replace with MP4GetTrackEsdsObjectTypeId
 u_int8_t MP4GetTrackVideoType(
+	MP4FileHandle hFile, 
+	MP4TrackId trackId);
+
+u_int8_t MP4GetTrackEsdsObjectTypeId(
 	MP4FileHandle hFile, 
 	MP4TrackId trackId);
 
@@ -451,7 +458,7 @@ u_int32_t MP4GetTrackBitRate(
 	MP4FileHandle hFile, 
 	MP4TrackId trackId);
 
-void MP4GetTrackESConfiguration(
+bool MP4GetTrackESConfiguration(
 	MP4FileHandle hFile, 
 	MP4TrackId trackId, 
 	u_int8_t** ppConfig, 
@@ -562,7 +569,7 @@ bool MP4ReadSampleFromTime(
 bool MP4WriteSample(
 	MP4FileHandle hFile,
 	MP4TrackId trackId,
-	u_int8_t* pBytes, 
+	const u_int8_t* pBytes, 
 	u_int32_t numBytes,
 	MP4Duration duration DEFAULT(MP4_INVALID_DURATION),
 	MP4Duration renderingOffset DEFAULT(0), 
@@ -644,7 +651,9 @@ bool MP4SetHintTrackRtpPayload(
 	const char* pPayloadName,
 	u_int8_t* pPayloadNumber,
 	u_int16_t maxPayloadSize DEFAULT(0),
-	const char *encode_params DEFAULT(NULL));
+	const char *encode_params DEFAULT(NULL),
+	bool include_rtp_map DEFAULT(true),
+	bool include_mpeg4_esid DEFAULT(true));
 
 const char* MP4GetSessionSdp(
 	MP4FileHandle hFile);
@@ -907,18 +916,73 @@ char* MP4BinaryToBase64(
 	const u_int8_t* pData, 
 	u_int32_t dataSize);
 
-bool MP4TagDelete(MP4FileHandle hFile, MP4TrackId trackId);
-bool MP4TagAddEntry(MP4FileHandle hFile, MP4TrackId trackId,
-                    const char *name, const char *value);
-#if 0
-void MP4TagDeleteEntry(MP4FileHandle hFile, MP4TrackId trackId,
-                       u_int32_t index);
-#endif
-u_int32_t MP4TagGetNumEntries(MP4FileHandle hFile, MP4TrackId trackId);
-void MP4TagGetEntry(MP4FileHandle hFile, MP4TrackId trackId,
-                    u_int32_t index, const char **name, const char **value);
-bool MP4TagGetEntryByName(MP4FileHandle hFile, MP4TrackId trackId,
-                          char *name, const char **value);
+/* iTunes metadata handling */
+bool MP4MetadataDelete(MP4FileHandle hFile);
+bool MP4GetMetadataByIndex(MP4FileHandle hFile, u_int32_t index,
+                           const char** ppName,
+                           u_int8_t** ppValue, u_int32_t* pValueSize);
+bool MP4SetMetadataName(MP4FileHandle hFile, const char* value);
+bool MP4GetMetadataName(MP4FileHandle hFile, char** value);
+bool MP4SetMetadataArtist(MP4FileHandle hFile, const char* value);
+bool MP4GetMetadataArtist(MP4FileHandle hFile, char** value);
+bool MP4SetMetadataWriter(MP4FileHandle hFile, const char* value);
+bool MP4GetMetadataWriter(MP4FileHandle hFile, char** value);
+bool MP4SetMetadataComment(MP4FileHandle hFile, const char* value);
+bool MP4GetMetadataComment(MP4FileHandle hFile, char** value);
+bool MP4SetMetadataTool(MP4FileHandle hFile, const char* value);
+bool MP4GetMetadataTool(MP4FileHandle hFile, char** value);
+bool MP4SetMetadataYear(MP4FileHandle hFile, const char* value);
+bool MP4GetMetadataYear(MP4FileHandle hFile, char** value);
+bool MP4SetMetadataAlbum(MP4FileHandle hFile, const char* value);
+bool MP4GetMetadataAlbum(MP4FileHandle hFile, char** value);
+bool MP4SetMetadataTrack(MP4FileHandle hFile,
+                         u_int16_t track, u_int16_t totalTracks);
+bool MP4GetMetadataTrack(MP4FileHandle hFile,
+                         u_int16_t* track, u_int16_t* totalTracks);
+bool MP4SetMetadataDisk(MP4FileHandle hFile,
+                        u_int16_t disk, u_int16_t totalDisks);
+bool MP4GetMetadataDisk(MP4FileHandle hFile,
+                        u_int16_t* disk, u_int16_t* totalDisks);
+bool MP4SetMetadataGenre(MP4FileHandle hFile, u_int16_t genre);
+bool MP4GetMetadataGenre(MP4FileHandle hFile, u_int16_t* genre);
+bool MP4SetMetadataTempo(MP4FileHandle hFile, u_int16_t tempo);
+bool MP4GetMetadataTempo(MP4FileHandle hFile, u_int16_t* tempo);
+bool MP4SetMetadataCompilation(MP4FileHandle hFile, u_int8_t cpl);
+bool MP4GetMetadataCompilation(MP4FileHandle hFile, u_int8_t* cpl);
+bool MP4SetMetadataCoverArt(MP4FileHandle hFile,
+                            u_int8_t *coverArt, u_int32_t size);
+bool MP4GetMetadataCoverArt(MP4FileHandle hFile,
+                            u_int8_t **coverArt, u_int32_t* size);
+bool MP4SetMetadataFreeForm(MP4FileHandle hFile, char *name,
+                            u_int8_t* pValue, u_int32_t valueSize);
+bool MP4GetMetadataFreeForm(MP4FileHandle hFile, char *name,
+                            u_int8_t** pValue, u_int32_t* valueSize);
+
+//#ifdef USE_FILE_CALLBACKS
+typedef u_int32_t (*MP4OpenCallback)(const char *pName, const char *mode, void *userData);
+typedef void (*MP4CloseCallback)(void *userData);
+typedef u_int32_t (*MP4ReadCallback)(void *pBuffer, unsigned int nBytesToRead, void *userData);
+typedef u_int32_t (*MP4WriteCallback)(void *pBuffer, unsigned int nBytesToWrite, void *userData);
+typedef int32_t (*MP4SetposCallback)(u_int32_t pos, void *userData);
+typedef int64_t (*MP4GetposCallback)(void *userData);
+typedef int64_t (*MP4FilesizeCallback)(void *userData);
+
+MP4FileHandle MP4ReadCb(u_int32_t verbosity,
+                        MP4OpenCallback MP4fopen,
+                        MP4CloseCallback MP4fclose,
+                        MP4ReadCallback MP4fread,
+                        MP4WriteCallback MP4fwrite,
+                        MP4SetposCallback MP4fsetpos,
+                        MP4GetposCallback MP4fgetpos,
+                        MP4FilesizeCallback MP4filesize,
+                        void *userData);
+MP4FileHandle MP4ModifyCb(int32_t verbosity,
+                          bool useExtensibleFormat,
+                          MP4OpenCallback MP4fopen, MP4CloseCallback MP4fclose,
+                          MP4ReadCallback MP4fread, MP4WriteCallback MP4fwrite,
+                          MP4SetposCallback MP4fsetpos, MP4GetposCallback MP4fgetpos,
+                          MP4FilesizeCallback MP4filesize, void *userData);
+//#endif
 
 #ifdef __cplusplus
 }
