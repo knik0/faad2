@@ -85,58 +85,6 @@ LIB32=xilink6.exe -lib
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
-# Begin Group "codebook"
-
-# PROP Default_Filter ""
-# Begin Source File
-
-SOURCE=.\codebook\hcb_1.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_10.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_11.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_2.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_3.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_4.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_5.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_6.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_7.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_8.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_9.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\codebook\hcb_sf.c
-# End Source File
-# End Group
 # Begin Source File
 
 SOURCE=.\bits.c
@@ -245,6 +193,58 @@ SOURCE=.\tns.c
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Group "codebook"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\codebook\hcb_1.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_10.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_11.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_2.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_3.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_4.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_5.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_6.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_7.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_8.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_9.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_sf.h
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=.\analysis.h

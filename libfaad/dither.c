@@ -6,7 +6,7 @@
  * random functions for dithering.
  *
  * last modified:
- * $Id: dither.c,v 1.7 2002/12/05 19:28:22 menno Exp $
+ * $Id: dither.c,v 1.8 2003/05/18 18:14:36 menno Exp $
  */
 #include "common.h"
 
@@ -114,10 +114,8 @@ Init_Dither ( unsigned char bits, unsigned char shapingtype )
 	static const float32_t*              F [] = { F44_0, F44_1, F44_2, F44_3 };
 	uint8_t                 index;
 
-	if (shapingtype < 0) shapingtype = 0;
 	if (shapingtype > 3) shapingtype = 3;
 	index = bits - 11 - shapingtype;
-	if (index < 0) index = 0;
 	if (index > 9) index = 9;
 
 	memset ( Dither.ErrorHistory , 0, sizeof (Dither.ErrorHistory ) );

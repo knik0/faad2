@@ -16,16 +16,13 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: hcb_3.c,v 1.2 2002/02/18 10:01:05 menno Exp $
+** $Id: hcb_3.h,v 1.1 2003/05/18 18:14:38 menno Exp $
 **/
-
-#include "../common.h"
-#include "hcb.h"
 
 /* Binary search huffman table HCB_3 */
 
 
-extern hcb_bin_quad hcb3[] = {
+static hcb_bin_quad hcb3[] = {
     { /*  0 */ 0, {  1,  2, 0, 0 } },
     { /*  1 */ 1, {  0,  0, 0, 0 } }, /* 0 */
     { /*  2 */ 0, {  1,  2, 0, 0 } },

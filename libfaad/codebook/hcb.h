@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: hcb.h,v 1.3 2002/05/31 18:06:50 menno Exp $
+** $Id: hcb.h,v 1.4 2003/05/18 18:14:37 menno Exp $
 **/
 
 #ifndef __HCB_H__
@@ -107,6 +107,7 @@ typedef struct
     int8_t data[2];
 } hcb_bin_pair;
 
+#if 0
 extern hcb hcb1_1[];
 extern hcb hcb2_1[];
 extern hcb hcb4_1[];
@@ -129,6 +130,25 @@ extern hcb_bin_pair hcb7[];
 extern hcb_bin_pair hcb9[];
 
 extern uint8_t hcb_sf[][2];
+
+#else
+
+#include "codebook/hcb_1.h"
+#include "codebook/hcb_2.h"
+#include "codebook/hcb_3.h"
+#include "codebook/hcb_4.h"
+#include "codebook/hcb_5.h"
+#include "codebook/hcb_6.h"
+#include "codebook/hcb_7.h"
+#include "codebook/hcb_8.h"
+#include "codebook/hcb_9.h"
+#include "codebook/hcb_10.h"
+#include "codebook/hcb_11.h"
+#include "codebook/hcb_sf.h"
+
+#endif
+
+
 
 #ifdef __cplusplus
 }

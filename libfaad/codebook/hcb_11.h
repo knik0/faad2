@@ -16,11 +16,8 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: hcb_11.c,v 1.2 2002/02/18 10:01:05 menno Exp $
+** $Id: hcb_11.h,v 1.1 2003/05/18 18:14:38 menno Exp $
 **/
-
-#include "../common.h"
-#include "hcb.h"
 
 /* 2-step huffman table HCB_11 */
 
@@ -30,7 +27,7 @@
  *
  * Used to find offset into 2nd step table and number of extra bits to get
  */
-extern hcb hcb11_1[] = {
+static hcb hcb11_1[] = {
     /* 4 bits */
     { /* 00000 */ 0, 0 },
     { /*       */ 0, 0 },
@@ -92,7 +89,7 @@ extern hcb hcb11_1[] = {
  *
  * Gives size of codeword and actual data (x,y,v,w)
  */
-extern hcb_2_pair hcb11_2[] = {
+static hcb_2_pair hcb11_2[] = {
     /* 4 */
     { 4,  0,  0 },
     { 4,  1,  1 },
