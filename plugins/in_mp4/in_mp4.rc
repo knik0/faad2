@@ -94,7 +94,7 @@ BEGIN
     LTEXT           "of",IDC_STATIC11,257,127,8,14,SS_CENTERIMAGE
 END
 
-IDD_CONFIG DIALOG DISCARDABLE  0, 0, 151, 108
+IDD_CONFIG DIALOG DISCARDABLE  0, 0, 233, 95
 STYLE DS_MODALFRAME | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Configuration"
 FONT 8, "MS Sans Serif"
@@ -109,12 +109,14 @@ BEGIN
                     37,10
     CONTROL         "32 bits",IDC_32BITS,"Button",BS_AUTORADIOBUTTON,77,51,
                     37,10
-    CONTROL         "Show errors",IDC_ERROR,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,7,70,53,10
+    CONTROL         "Downmix to stereo",IDC_DOWNMIX,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,152,13,74,10
     CONTROL         "Use for AAC",IDC_USEFORAAC,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,78,70,55,10
-    PUSHBUTTON      "Cancel",IDCANCEL,7,87,50,14
-    DEFPUSHBUTTON   "OK",IDOK,94,87,50,14
+                    WS_TABSTOP,152,27,55,10
+    CONTROL         "Show errors",IDC_ERROR,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,152,41,53,10
+    DEFPUSHBUTTON   "OK",IDOK,122,74,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,61,74,50,14
     GROUPBOX        "Priority",IDC_STATIC,7,7,57,58
     LTEXT           "Highest",IDC_STATIC,34,18,25,8
     LTEXT           "Normal",IDC_STATIC,34,35,23,8
@@ -142,9 +144,9 @@ BEGIN
     IDD_CONFIG, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 144
+        RIGHTMARGIN, 226
         TOPMARGIN, 7
-        BOTTOMMARGIN, 101
+        BOTTOMMARGIN, 88
     END
 END
 #endif    // APSTUDIO_INVOKED

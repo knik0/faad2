@@ -52,6 +52,7 @@
 #define IDC_STATIC10                    1034
 #define IDC_STATIC11                    1035
 #define IDC_STATIC12                    1036
+#define IDC_DOWNMIX                     1038
 
 // Next default values for new objects
 // 
@@ -59,7 +60,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        103
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1038
+#define _APS_NEXT_CONTROL_VALUE         1039
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

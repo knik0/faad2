@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: in_mp4.c,v 1.35 2003/07/29 08:20:14 menno Exp $
+** $Id: in_mp4.c,v 1.36 2003/08/02 22:34:46 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -168,6 +168,7 @@ void config_read()
     char resolution[10];
     char show_errors[10];
     char use_for_aac[10];
+    char downmix[10];
 
     config_init();
 
@@ -175,16 +176,19 @@ void config_read()
     strcpy(priority, "3");
     strcpy(resolution, "0");
     strcpy(use_for_aac, "1");
+    strcpy(downmix, "0");
 
     RS(priority);
     RS(resolution);
     RS(show_errors);
     RS(use_for_aac);
+    RS(downmix);
 
     m_priority = atoi(priority);
     m_resolution = atoi(resolution);
     m_show_errors = atoi(show_errors);
     m_use_for_aac = atoi(use_for_aac);
+    m_downmix = atoi(downmix);
 }
 
 void config_write()
@@ -193,16 +197,19 @@ void config_write()
     char resolution[10];
     char show_errors[10];
     char use_for_aac[10];
+    char downmix[10];
 
     itoa(m_priority, priority, 10);
     itoa(m_resolution, resolution, 10);
     itoa(m_show_errors, show_errors, 10);
     itoa(m_use_for_aac, use_for_aac, 10);
+    itoa(m_downmix, downmix, 10);
 
     WS(priority);
     WS(resolution);
     WS(show_errors);
     WS(use_for_aac);
+    WS(downmix);
 }
 
 void init()
@@ -537,6 +544,8 @@ BOOL CALLBACK config_dialog_proc(HWND hwndDlg, UINT message,
             SendMessage(GetDlgItem(hwndDlg, IDC_ERROR), BM_SETCHECK, BST_CHECKED, 0);
         if (m_use_for_aac)
             SendMessage(GetDlgItem(hwndDlg, IDC_USEFORAAC), BM_SETCHECK, BST_CHECKED, 0);
+        if (m_downmix)
+            SendMessage(GetDlgItem(hwndDlg, IDC_DOWNMIX), BM_SETCHECK, BST_CHECKED, 0);
         return TRUE;
 
     case WM_COMMAND:
@@ -547,6 +556,7 @@ BOOL CALLBACK config_dialog_proc(HWND hwndDlg, UINT message,
         case IDOK:
             m_show_errors = SendMessage(GetDlgItem(hwndDlg, IDC_ERROR), BM_GETCHECK, 0, 0);
             m_use_for_aac = SendMessage(GetDlgItem(hwndDlg, IDC_USEFORAAC), BM_GETCHECK, 0, 0);
+            m_downmix = SendMessage(GetDlgItem(hwndDlg, IDC_DOWNMIX), BM_GETCHECK, 0, 0);
             m_priority = SendMessage(GetDlgItem(hwndDlg, IDC_PRIORITY), TBM_GETPOS, 0, 0);
             for (i = 0; i < 6; i++)
             {
@@ -587,7 +597,7 @@ void about(HWND hwndParent)
     MessageBox(hwndParent,
         "AudioCoding.com MPEG-4 General Audio player " FAAD2_VERSION " compiled on " __DATE__ ".\n"
         "Visit the website for more info.\n"
-        "Copyright 2002 AudioCoding.com",
+        "Copyright 2002-2003 AudioCoding.com",
         "About",
         MB_OK);
 }
@@ -748,6 +758,7 @@ int play(char *fn)
 
     config = faacDecGetCurrentConfiguration(mp4state.hDecoder);
     config->outputFormat = m_resolution + 1;
+    config->downMatrix = m_downmix;
     faacDecSetConfiguration(mp4state.hDecoder, config);
 
     if (mp4state.filetype)
@@ -911,6 +922,9 @@ int play(char *fn)
             MP4Close(mp4state.mp4file);
         return -1;
     }
+
+    if (m_downmix && (mp4state.channels == 5 || mp4state.channels == 6))
+        mp4state.channels = 2;
 
     maxlatency = module.outMod->Open(mp4state.samplerate, (int)mp4state.channels,
         res_table[m_resolution], -1, -1);
