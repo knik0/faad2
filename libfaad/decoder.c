@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.98 2004/03/04 19:06:01 menno Exp $
+** $Id: decoder.c,v 1.99 2004/03/10 19:45:40 menno Exp $
 **/
 
 #include "common.h"
@@ -843,6 +843,17 @@ void* NEAACDECAPI NeAACDecDecode(NeAACDecHandle hDecoder,
     } else {
         output_channels = channels;
     }
+
+#if (defined(PS_DEC) || defined(DRM_PS))
+    hDecoder->upMatrix = 0;
+    /* check if we have a mono file */
+    if (output_channels == 1)
+    {
+        /* upMatrix to 2 channels for implicit signalling of PS */
+        hDecoder->upMatrix = 1;
+        output_channels = 2;
+    }
+#endif
 
     /* Make a channel configuration based on either a PCE or a channelConfiguration */
     create_channel_config(hDecoder, hInfo);

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: huffman.c,v 1.19 2004/02/26 09:29:27 menno Exp $
+** $Id: huffman.c,v 1.20 2004/03/10 19:45:41 menno Exp $
 **/
 
 #include "common.h"
@@ -120,8 +120,8 @@ static INLINE void huffman_sign_bits(bitfile *ld, int16_t *sp, uint8_t len)
 static INLINE int16_t huffman_getescape(bitfile *ld, int16_t sp)
 {
     uint8_t neg, i;
-    int32_t j;
-	int32_t off;
+    int16_t j;
+	int16_t off;
 
     if (sp < 0)
     {
@@ -143,7 +143,7 @@ static INLINE int16_t huffman_getescape(bitfile *ld, int16_t sp)
         }
     }
 
-    off = faad_getbits(ld, i
+    off = (int16_t)faad_getbits(ld, i
         DEBUGVAR(1,9,"huffman_getescape(): escape"));
 
     j = off | (1<<i);

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.74 2004/03/02 20:09:58 menno Exp $
+** $Id: syntax.c,v 1.75 2004/03/10 19:45:42 menno Exp $
 **/
 
 /*
@@ -1228,7 +1228,7 @@ void aac_scalable_main_element(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo
         /* check CRC */
         /* no need to check it if there was already an error */
         if (hDecoder->sbr[0]->ret == 0)
-            hDecoder->sbr[0]->ret = faad_check_CRC(&ld_sbr, faad_get_processed_bits(&ld_sbr) - 8);
+            hDecoder->sbr[0]->ret = (uint8_t)faad_check_CRC(&ld_sbr, (uint16_t)faad_get_processed_bits(&ld_sbr) - 8);
 
         faad_endbits(&ld_sbr);
 
@@ -1476,7 +1476,7 @@ static uint8_t individual_channel_stream(NeAACDecHandle hDecoder, element *ele,
 #ifdef DRM
     /* CRC check */
     if (hDecoder->object_type == DRM_ER_LC)
-        if ((result = faad_check_CRC(ld, faad_get_processed_bits(ld) - 8)) > 0)
+        if ((result = (uint8_t)faad_check_CRC(ld, (uint16_t)faad_get_processed_bits(ld) - 8)) > 0)
             return result;
 #endif
 

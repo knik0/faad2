@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.52 2004/03/04 19:06:01 menno Exp $
+** $Id: common.h,v 1.53 2004/03/10 19:45:40 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -101,15 +101,15 @@ extern "C" {
 
 #define SBR_DEC
 //#define SBR_LOW_POWER
-//#define PS_DEC
+#define PS_DEC
 
 /* FIXED POINT: No MAIN decoding, forced SBR Low Power decoder */
 #ifdef FIXED_POINT
 # ifdef MAIN_DEC
 #  undef MAIN_DEC
 # endif
-# ifdef SBR_DEC
-#  undef SBR_DEC
+# ifdef PS_DEC
+#  undef PS_DEC
 # endif
 #endif // FIXED_POINT
 

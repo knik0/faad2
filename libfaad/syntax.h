@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.h,v 1.51 2004/03/02 20:09:58 menno Exp $
+** $Id: syntax.h,v 1.54 2004/09/04 14:56:29 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -114,6 +114,8 @@ void raw_data_block(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
                     bitfile *ld, program_config *pce, drc_info *drc);
 uint8_t reordered_spectral_data(NeAACDecHandle hDecoder, ic_stream *ics, bitfile *ld,
                                 int16_t *spectral_data);
+void aac_scalable_main_element(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
+                               bitfile *ld, program_config *pce, drc_info *drc);
 
 
 #ifdef __cplusplus

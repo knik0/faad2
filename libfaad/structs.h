@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: structs.h,v 1.34 2004/03/02 20:09:58 menno Exp $
+** $Id: structs.h,v 1.35 2004/03/10 19:45:42 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -380,6 +380,7 @@ typedef struct
     uint32_t frame;
 
     uint8_t downMatrix;
+    uint8_t upMatrix;
     uint8_t first_syn_ele;
     uint8_t has_lfe;
     /* number of channels in current frame */

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: fixed.h,v 1.19 2004/02/26 09:29:26 menno Exp $
+** $Id: fixed.h,v 1.21 2004/03/19 10:37:55 menno Exp $
 **/
 
 #ifndef __FIXED_H__
@@ -80,6 +80,33 @@ static INLINE real_t MUL_C(real_t A, real_t B)
     }
 }
 
+static INLINE real_t MUL_Q2(real_t A, real_t B)
+{
+    _asm {
+        mov eax,A
+        imul B
+        shrd eax,edx,Q2_BITS
+    }
+}
+
+static INLINE real_t MUL_SHIFT6(real_t A, real_t B)
+{
+    _asm {
+        mov eax,A
+        imul B
+        shrd eax,edx,6
+    }
+}
+
+static INLINE real_t MUL_SHIFT23(real_t A, real_t B)
+{
+    _asm {
+        mov eax,A
+        imul B
+        shrd eax,edx,23
+    }
+}
+
 static INLINE real_t _MulHigh(real_t A, real_t B)
 {
     _asm {
@@ -129,6 +156,21 @@ static INLINE real_t MUL_R(real_t A, real_t B)
 static INLINE real_t MUL_C(real_t A, real_t B)
 {
     return arm_mul(A, B, COEF_BITS);
+}
+
+static INLINE real_t MUL_Q2(real_t A, real_t B)
+{
+    return arm_mul(A, B, Q2_BITS);
+}
+
+static INLINE real_t MUL_SHIFT6(real_t A, real_t B)
+{
+    return arm_mul(A, B, 6);
+}
+
+static INLINE real_t MUL_SHIFT23(real_t A, real_t B)
+{
+    return arm_mul(A, B, 23);
 }
 
 static INLINE real_t _MulHigh(real_t x, real_t y)
@@ -181,6 +223,9 @@ static INLINE void ComplexMult(real_t *y1, real_t *y2,
       return _MulHigh(A,B) << (32-FRAC_BITS);
   }
 #endif
+  #define MUL_Q2(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (Q2_BITS-1))) >> Q2_BITS)
+  #define MUL_SHIFT6(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (6-1))) >> 6)
+  #define MUL_SHIFT23(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (23-1))) >> 23)
 
 /* Complex multiplication */
 static INLINE void ComplexMult(real_t *y1, real_t *y2,
