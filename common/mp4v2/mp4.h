@@ -917,7 +917,7 @@ void MP4TagDeleteEntry(MP4FileHandle hFile, MP4TrackId trackId,
 u_int32_t MP4TagGetNumEntries(MP4FileHandle hFile, MP4TrackId trackId);
 void MP4TagGetEntry(MP4FileHandle hFile, MP4TrackId trackId,
                     u_int32_t index, const char **name, const char **value);
-bool MP4TagGetEntryNyName(MP4FileHandle hFile, MP4TrackId trackId,
+bool MP4TagGetEntryByName(MP4FileHandle hFile, MP4TrackId trackId,
                           char *name, const char **value);
 
 #ifdef __cplusplus

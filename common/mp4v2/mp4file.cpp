@@ -2489,7 +2489,7 @@ bool MP4File::TagGetEntryByName(MP4TrackId trackId, char *name,
 
         if (!strcmp(n, name))
         {
-            strcpy((char*)*value, v);
+            *value = v;
             return true;
         }
     }
