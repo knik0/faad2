@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.70 2004/01/29 11:31:11 menno Exp $
+** $Id: syntax.c,v 1.71 2004/02/04 19:55:03 menno Exp $
 **/
 
 /*
@@ -1141,6 +1141,8 @@ void aac_scalable_main_element(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
     else
         cpe.ele_id = ID_SCE;
 
+    hDecoder->element_output_channels[hDecoder->fr_ch_ele] = (this_layer_stereo ? 2 : 0);
+
     for (ch = 0; ch < (this_layer_stereo ? 2 : 1); ch++)
     {
         ic_stream *ics;
@@ -1152,8 +1154,6 @@ void aac_scalable_main_element(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
             ics = ics2;
             spec_data = spec_data2;
         }
-
-        hDecoder->internal_channel[channels+ch] = channels+ch;
 
         hInfo->error = individual_channel_stream(hDecoder, &cpe, ld, ics, 1, spec_data);
         if (hInfo->error > 0)
@@ -1240,9 +1240,19 @@ void aac_scalable_main_element(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
             return;
     }
 
+    /* map output channels position to internal data channels */
+    if (hDecoder->element_output_channels[hDecoder->fr_ch_ele] == 2)
+    {
+        /* this might be faulty when pce_set is true */
+        hDecoder->internal_channel[channels] = channels;
+        hDecoder->internal_channel[channels+1] = channels+1;
+    } else {
+        hDecoder->internal_channel[channels] = channels;
+    }
+
     hDecoder->element_id[hDecoder->fr_ch_ele] = cpe.ele_id;
 
-    hDecoder->fr_channels += (this_layer_stereo ? 2 : 1);
+    hDecoder->fr_channels += hDecoder->element_output_channels[hDecoder->fr_ch_ele];
     hDecoder->fr_ch_ele++;
 
     return;
@@ -1637,7 +1647,7 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
 
                 /* decode intensity position */
                 t = huffman_scale_factor(ld);
-                is_position += t;
+                is_position += (t - 60);
                 ics->scale_factors[g][sfb] = is_position;
 
                 break;
@@ -1651,6 +1661,7 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
                         DEBUGVAR(1,73,"scale_factor_data(): first noise")) - 256;
                 } else {
                     t = huffman_scale_factor(ld);
+                    t -= 60;
                 }
                 noise_energy += t;
                 ics->scale_factors[g][sfb] = noise_energy;
@@ -1664,7 +1675,7 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
 
                 /* decode scale factor */
                 t = huffman_scale_factor(ld);
-                scale_factor += t;
+                scale_factor += (t - 60);
                 if (scale_factor < 0 || scale_factor > 255)
                     return 4;
                 ics->scale_factors[g][sfb] = scale_factor;
