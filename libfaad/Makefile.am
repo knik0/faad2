@@ -18,4 +18,4 @@ ms.h output.h pns.h pulse.h rvlc.h sine_win.h ssr.h ssr_fb.h ssr_ipqf.h\
 ssr_win.h specrec.h syntax.h tns.h codebook/hcb.h
 
 
-CFLAGS = -O2
+AM_CFLAGS = -O2
