@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: pns.c,v 1.11 2002/08/26 18:41:47 menno Exp $
+** $Id: pns.c,v 1.12 2002/08/30 12:11:57 menno Exp $
 **/
 
 #include "common.h"
@@ -74,17 +74,24 @@ static INLINE uint32_t random2()
 static INLINE void gen_rand_vector(real_t *spec, uint16_t scale_factor, uint16_t size)
 {
     uint16_t i;
+    real_t energy = 0;
 
     /* 14496-3 says:
        scale = 1.0f/(size * (fftw_real)sqrt(MEAN_NRG));
     */
     float32_t scale = 1.0/(float32_t)sqrt(size * MEAN_NRG);
 
-    scale *= (float32_t)exp(LN2 * 0.25 * scale_factor);
-
     for (i = 0; i < size; i++)
     {
         spec[i] = REAL_CONST(scale*(float32_t)random2());
+        energy += MUL(spec[i],spec[i]);
+    }
+
+    scale = 1 / (float32_t)sqrt(energy);
+    scale *= (float32_t)pow(2.0, 0.25 * scale_factor);
+    for (i = 0; i < size; i++)
+    {
+        spec[i] = MUL(REAL_CONST(scale), spec[i]);
     }
 }
 
