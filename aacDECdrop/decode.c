@@ -16,8 +16,8 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decode.c,v 1.7 2002/08/13 19:16:06 menno Exp $
-** $Id: decode.c,v 1.7 2002/08/13 19:16:06 menno Exp $
+** $Id: decode.c,v 1.8 2002/08/13 19:28:08 menno Exp $
+** $Id: decode.c,v 1.8 2002/08/13 19:28:08 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -31,6 +31,7 @@
 #include <stdlib.h>
 
 #include <faad.h>
+#include <sndfile.h>
 #include <mp4.h>
 
 #include "audio.h"
@@ -137,6 +138,7 @@ int decodeAACfile(char *sndfile, int def_srate, aac_dec_opt *opt)
 	faacDecConfigurationPtr config;
 
 	int first_time = 1;
+	int i;
 
 
 	/* declare variables for buffering */
@@ -316,6 +318,7 @@ int decodeMP4file(char *sndfile, aac_dec_opt *opt)
 	audio_file *aufile;
 
 	faacDecHandle hDecoder;
+	faacDecConfigurationPtr config;
 	faacDecFrameInfo frameInfo;
 
 	unsigned char *buffer;
