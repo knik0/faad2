@@ -1,12 +1,12 @@
 #! /bin/sh
 
 case $OSTYPE in
-    darwin*)
+	darwin*)
 	LIBTOOLIZE=glibtoolize
 	;;
-    *)
+	*)
 	LIBTOOLIZE=libtoolize
-    ;;
+	;;
 esac
 
 aclocal -I .                   && \
