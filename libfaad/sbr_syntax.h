@@ -16,10 +16,8 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: sbr_syntax.h,v 1.3 2002/04/23 21:08:26 menno Exp $
+** $Id: sbr_syntax.h,v 1.4 2002/09/29 22:19:48 menno Exp $
 **/
-
-#ifdef SBR
 
 #ifndef __SBR_SYNTAX_H__
 #define __SBR_SYNTAX_H__
@@ -112,4 +110,3 @@ static void sinusoidal_coding(bitfile *ld, sbr_info *sbr, uint8_t ch);
 #endif
 #endif /* __SBR_SYNTAX_H__ */
 
-#endif /* SBR */

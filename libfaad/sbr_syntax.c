@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: sbr_syntax.c,v 1.4 2002/04/23 21:08:26 menno Exp $
+** $Id: sbr_syntax.c,v 1.5 2002/09/29 22:19:48 menno Exp $
 **/
 
 /*
@@ -61,6 +61,9 @@ uint8_t sbr_bitstream(bitfile *ld, sbr_info *sbr, uint8_t id_aac,
     } else if (bs_extension_type == SBR_STD) {
         sbr_data(ld, sbr, id_aac);
     }
+
+    /* no error */
+    return 0;
 }
 
 /* table 3 */
@@ -112,6 +115,18 @@ static void sbr_header(bitfile *ld, sbr_info *sbr, uint8_t id_aac)
             DEBUGVAR(1,217,"sbr_header(): bs_smoothing_mode"));
         faad_get1bit(ld
             DEBUGVAR(1,218,"sbr_header(): bs_reserved"));
+    }
+
+    /* if these are different from the previous frame: Reset = 1 */
+    if (bs_start_freq
+        bs_stop_freq
+        bs_freq_scale
+        bs_alter_scale
+        bs_xover_band
+        bs_noise_bands
+        )
+    {
+        Reset = 1
     }
 }
 

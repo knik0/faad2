@@ -25,7 +25,7 @@ CFG=libfaad - Win32 Debug
 # PROP AllowPerConfigDependencies 0
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
-CPP=xicl6.exe
+CPP=cl.exe
 RSC=rc.exe
 
 !IF  "$(CFG)" == "libfaad - Win32 Release"
@@ -47,7 +47,7 @@ RSC=rc.exe
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
-LIB32=xilink6.exe -lib
+LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
 
@@ -64,13 +64,13 @@ LIB32=xilink6.exe -lib
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /Zp8 /MTd /W3 /Gm /GX /ZI /Od /I "fftw" /D "_DEBUG" /D "WIN32" /D "_MBCS" /D "_LIB" /D "FFTW_ENABLE_FLOAT" /YX /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "fftw" /D "_DEBUG" /D "WIN32" /D "_MBCS" /D "_LIB" /D "FFTW_ENABLE_FLOAT" /YX /FD /GZ /c
 # ADD BASE RSC /l 0x413 /d "_DEBUG"
 # ADD RSC /l 0x413 /d "_DEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
-LIB32=xilink6.exe -lib
+LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
 
@@ -233,6 +233,10 @@ SOURCE=.\sbr_syntax.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\sbr_util.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\specrec.c
 # End Source File
 # Begin Source File
@@ -362,6 +366,10 @@ SOURCE=.\sbr_qmf.h
 # Begin Source File
 
 SOURCE=.\sbr_syntax.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_util.h
 # End Source File
 # Begin Source File
 

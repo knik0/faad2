@@ -91,10 +91,6 @@ SOURCE=.\audio.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\libfaad\cfft.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\common\faad\getopt.c
 # End Source File
 # Begin Source File

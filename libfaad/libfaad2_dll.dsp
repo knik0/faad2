@@ -25,7 +25,7 @@ CFG=libfaad2_dll - Win32 Debug
 # PROP AllowPerConfigDependencies 0
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
-CPP=xicl6.exe
+CPP=cl.exe
 MTL=midl.exe
 RSC=rc.exe
 
@@ -51,7 +51,7 @@ RSC=rc.exe
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
-LINK32=xilink6.exe
+LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
 # ADD LINK32 /nologo /dll /machine:I386 /out:"ReleaseDLL/libfaad2.dll"
 
@@ -77,7 +77,7 @@ LINK32=xilink6.exe
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
-LINK32=xilink6.exe
+LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
 # ADD LINK32 /nologo /dll /debug /machine:I386 /out:"DebugDLL/libfaad2.dll" /pdbtype:sept
 
@@ -152,6 +152,10 @@ SOURCE=.\cfft.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\common.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\data.c
 # End Source File
 # Begin Source File
@@ -217,6 +221,26 @@ SOURCE=.\reordered_spectral_data.c
 # Begin Source File
 
 SOURCE=.\rvlc_scale_factors.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_dec.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_huff.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_qmf.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_syntax.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_util.c
 # End Source File
 # Begin Source File
 
@@ -325,6 +349,26 @@ SOURCE=.\pulse.h
 # Begin Source File
 
 SOURCE=.\rvlc_scale_factors.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_dec.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_huff.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_qmf.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_syntax.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_util.h
 # End Source File
 # Begin Source File
 
