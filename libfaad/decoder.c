@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.33 2002/09/13 13:08:45 menno Exp $
+** $Id: decoder.c,v 1.34 2002/09/16 11:07:04 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -683,7 +683,10 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                 right_channel = 0;
             } else if (syntax_elements[i]->paired_channel == ch) {
                 ics = &(syntax_elements[i]->ics2);
-                ltp = &(ics->ltp2);
+                if (syntax_elements[i]->common_window)
+                    ltp = &(ics->ltp2);
+                else
+                    ltp = &(ics->ltp);
                 right_channel = 1;
             }
         }
