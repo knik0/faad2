@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: ps_dec.c,v 1.6 2004/04/12 18:17:42 menno Exp $
+** $Id: ps_dec.c,v 1.7 2004/05/17 10:18:03 menno Exp $
 **/
 
 #include "common.h"
@@ -36,7 +36,7 @@
 /* constants */
 #define NEGATE_IPD_MASK            (0x1000)
 #define DECAY_SLOPE                FRAC_CONST(0.05)
-#define COEF_SQRT2                 COEF_CONST(sqrt(2.0))
+#define COEF_SQRT2                 COEF_CONST(1.4142135623731)
 
 /* tables */
 /* filters are mirrored in coef 6, second half left out */
@@ -215,6 +215,30 @@ static hyb_info *hybrid_init()
     }
 
     return hyb;
+}
+
+static void hybrid_free(hyb_info *hyb)
+{
+    uint8_t i;
+
+    if (hyb->work)
+        faad_free(hyb->work);
+
+    for (i = 0; i < 5; i++)
+    {
+        if (hyb->buffer[i])
+            faad_free(hyb->buffer[i]);
+    }
+    if (hyb->buffer)
+        faad_free(hyb->buffer);
+
+    for (i = 0; i < hyb->frame_len; i++)
+    {
+        if (hyb->temp[i])
+            faad_free(hyb->temp[i]);
+    }
+    if (hyb->temp)
+        faad_free(hyb->temp);
 }
 
 /* real filter, size 2 */
@@ -430,14 +454,14 @@ static void channel_filter12(hyb_info *hyb, uint8_t frame_len, const real_t *fil
         {
             if (n == 0)
             {
-                input_re1[0] = filter[6] * QMF_RE(buffer[6+i]);
-                input_re2[0] = filter[6] * QMF_IM(buffer[6+i]);
+                input_re1[0] = MUL_F(QMF_RE(buffer[6+i]), filter[6]);
+                input_re2[0] = MUL_F(QMF_IM(buffer[6+i]), filter[6]);
             } else {
-                input_re1[6-n] = filter[n] * (QMF_RE(buffer[n+i]) + QMF_RE(buffer[12-n+i]));
-                input_re2[6-n] = filter[n] * (QMF_IM(buffer[n+i]) + QMF_IM(buffer[12-n+i]));
+                input_re1[6-n] = MUL_F((QMF_RE(buffer[n+i]) + QMF_RE(buffer[12-n+i])), filter[n]);
+                input_re2[6-n] = MUL_F((QMF_IM(buffer[n+i]) + QMF_IM(buffer[12-n+i])), filter[n]);
             }
-            input_im2[n] = filter[n] * (QMF_RE(buffer[n+i]) - QMF_RE(buffer[12-n+i]));
-            input_im1[n] = filter[n] * (QMF_IM(buffer[n+i]) - QMF_IM(buffer[12-n+i]));
+            input_im2[n] = MUL_F((QMF_RE(buffer[n+i]) - QMF_RE(buffer[12-n+i])), filter[n]);
+            input_im1[n] = MUL_F((QMF_IM(buffer[n+i]) - QMF_IM(buffer[12-n+i])), filter[n]);
         }
 
         DCT3_6_unscaled(out_re1, input_re1);
@@ -1703,6 +1727,9 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
 
 void ps_free(ps_info *ps)
 {
+    /* free hybrid filterbank structures */
+    hybrid_free(ps->hyb);
+
     faad_free(ps);
 }
 

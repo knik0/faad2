@@ -1,3 +1,39 @@
+17 may 2004      mbakker(at)nero.com
+    - syntax.c, decoder.c: Added some logging output
+
+17 may 2004      mbakker(at)nero.com
+    - mp4atom.c: Fixed an issue with broken MP4 files
+
+16 may 2004      mbakker(at)nero.com
+    - ps_dec.c: fixed point: forgot to convert a few multiplies
+
+14 may 2004      mbakker(at)nero.com
+    - sbr_*.c: reduced memory usage
+
+6 may 2004      mbakker(at)nero.com
+    - common.c: added some bit tricks and fixed point log2/pow2
+    - sbr_hfadj.c: log2/pow2 based gain calculation for SBR
+    - sbr_hfgen.c: use block exponent instead of stupid search to find max value
+
+5 may 2004      mbakker(at)nero.com
+    - decoder.c, neaacdec.h, decoder.h: added extra decode function to which a
+      buffer can be provided. Instead of the library providing a buffer.
+
+5 may 2004      mbakker(at)nero.com
+    - mdct.c: fixed fixed point MDCT with framesizes 960, 480, 120
+
+2 may 2004      mbakker(at)nero.com
+    - mdct_tab.h, mdct.c: Added tables for MDCT, for increased accuracy in fixed point
+    - specrec.c: Moved quantisation, scaling and reordering to 1 function
+
+20 april 2004   gpacutto(at)nero.com
+    - drm_dec.c, drm_dec.h: Don't do PS processing if no data was read this frame.
+      Fix for bitstread reading bug in specification.
+
+15 april 2004   mbakker(at)nero.com
+    - sbr_hfadj.c: fixed buffer overflow
+    - multiple: fixed some eVC problems
+
 12 april 2004   mbakker(at)nero.com
     - common.h, ps_dec.c: Updates for PS fixed point, should completely work now
 

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: cfft.c,v 1.25 2004/02/26 09:29:26 menno Exp $
+** $Id: cfft.c,v 1.28 2004/07/31 15:48:55 menno Exp $
 **/
 
 /*
@@ -1375,17 +1375,17 @@ cfft_info *cffti(uint16_t n)
 
     switch (n)
     {
-    case 64: cfft->tab = cfft_tab_64; break;
-    case 512: cfft->tab = cfft_tab_512; break;
+    case 64: cfft->tab = (complex_t*)cfft_tab_64; break;
+    case 512: cfft->tab = (complex_t*)cfft_tab_512; break;
 #ifdef LD_DEC
-    case 256: cfft->tab = cfft_tab_256; break;
+    case 256: cfft->tab = (complex_t*)cfft_tab_256; break;
 #endif
 
 #ifdef ALLOW_SMALL_FRAMELENGTH
-    case 60: cfft->tab = cfft_tab_60; break;
-    case 480: cfft->tab = cfft_tab_480; break;
+    case 60: cfft->tab = (complex_t*)cfft_tab_60; break;
+    case 480: cfft->tab = (complex_t*)cfft_tab_480; break;
 #ifdef LD_DEC
-    case 240: cfft->tab = cfft_tab_240; break;
+    case 240: cfft->tab = (complex_t*)cfft_tab_240; break;
 #endif
 #endif
     }

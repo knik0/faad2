@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: fixed.h,v 1.22 2004/04/12 18:17:42 menno Exp $
+** $Id: fixed.h,v 1.26 2004/09/04 14:56:28 menno Exp $
 **/
 
 #ifndef __FIXED_H__
@@ -53,6 +53,7 @@ typedef int32_t real_t;
 #define REAL_CONST(A) (((A) >= 0) ? ((real_t)((A)*(REAL_PRECISION)+0.5)) : ((real_t)((A)*(REAL_PRECISION)-0.5)))
 #define COEF_CONST(A) (((A) >= 0) ? ((real_t)((A)*(COEF_PRECISION)+0.5)) : ((real_t)((A)*(COEF_PRECISION)-0.5)))
 #define FRAC_CONST(A) (((A) == 1.00) ? ((real_t)FRAC_MAX) : (((A) >= 0) ? ((real_t)((A)*(FRAC_PRECISION)+0.5)) : ((real_t)((A)*(FRAC_PRECISION)-0.5))))
+//#define FRAC_CONST(A) (((A) >= 0) ? ((real_t)((A)*(FRAC_PRECISION)+0.5)) : ((real_t)((A)*(FRAC_PRECISION)-0.5)))
 
 #define Q2_BITS 22
 #define Q2_PRECISION (1 << Q2_BITS)
@@ -107,6 +108,7 @@ static INLINE real_t MUL_SHIFT23(real_t A, real_t B)
     }
 }
 
+#if 1
 static INLINE real_t _MulHigh(real_t A, real_t B)
 {
     _asm {
@@ -129,6 +131,24 @@ static INLINE void ComplexMult(real_t *y1, real_t *y2,
     *y1 = (_MulHigh(x1, c1) + _MulHigh(x2, c2))<<(FRAC_SIZE-FRAC_BITS);
     *y2 = (_MulHigh(x2, c1) - _MulHigh(x1, c2))<<(FRAC_SIZE-FRAC_BITS);
 }
+#else
+static INLINE real_t MUL_F(real_t A, real_t B)
+{
+    _asm {
+        mov eax,A
+        imul B
+        shrd eax,edx,FRAC_BITS
+    }
+}
+
+/* Complex multiplication */
+static INLINE void ComplexMult(real_t *y1, real_t *y2,
+    real_t x1, real_t x2, real_t c1, real_t c2)
+{
+    *y1 = MUL_F(x1, c1) + MUL_F(x2, c2);
+    *y2 = MUL_F(x2, c1) - MUL_F(x1, c2);
+}
+#endif
 
 #elif defined(__GNUC__) && defined (__arm__)
 

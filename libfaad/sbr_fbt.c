@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_fbt.c,v 1.13 2004/04/12 18:17:42 menno Exp $
+** $Id: sbr_fbt.c,v 1.16 2004/09/04 14:56:28 menno Exp $
 **/
 
 /* Calculate frequency band tables */
@@ -355,6 +355,9 @@ uint8_t master_frequency_table(sbr_info *sbr, uint8_t k0, uint8_t k2,
     uint8_t temp1[] = { 6, 5, 4 };
     real_t q, qk;
     int32_t A_1;
+#ifdef FIXED_POINT
+    real_t rk2, rk0;
+#endif
 
     /* mft only defined for k2 > k0 */
     if (k2 <= k0)
@@ -366,7 +369,9 @@ uint8_t master_frequency_table(sbr_info *sbr, uint8_t k0, uint8_t k2,
     bands = temp1[bs_freq_scale-1];
 
 #ifdef FIXED_POINT
-    if (REAL_CONST(k2) > MUL_R(REAL_CONST(k0),REAL_CONST(2.2449)))
+    rk0 = (real_t)k0 << REAL_BITS;
+    rk2 = (real_t)k2 << REAL_BITS;
+    if (rk2 > MUL_C(rk0, COEF_CONST(2.2449)))
 #else
     if ((float)k2/(float)k0 > 2.2449)
 #endif
@@ -384,10 +389,12 @@ uint8_t master_frequency_table(sbr_info *sbr, uint8_t k0, uint8_t k2,
         return 1;
 
     q = find_initial_power(nrBand0, k0, k1);
-    qk = REAL_CONST(k0);
 #ifdef FIXED_POINT
-    A_1 = (int32_t)((qk + REAL_CONST(0.5)) >> REAL_BITS);
+    qk = (real_t)k0 << REAL_BITS;
+    //A_1 = (int32_t)((qk + REAL_CONST(0.5)) >> REAL_BITS);
+    A_1 = k0;
 #else
+    qk = REAL_CONST(k0);
     A_1 = (int32_t)(qk + .5);
 #endif
     for (k = 0; k <= nrBand0; k++)
@@ -428,10 +435,12 @@ uint8_t master_frequency_table(sbr_info *sbr, uint8_t k0, uint8_t k2,
     nrBand1 = min(nrBand1, 63);
 
     q = find_initial_power(nrBand1, k1, k2);
-    qk = REAL_CONST(k1);
 #ifdef FIXED_POINT
-    A_1 = (int32_t)((qk + REAL_CONST(0.5)) >> REAL_BITS);
+    qk = (real_t)k1 << REAL_BITS;
+    //A_1 = (int32_t)((qk + REAL_CONST(0.5)) >> REAL_BITS);
+    A_1 = k1;
 #else
+    qk = REAL_CONST(k1);
     A_1 = (int32_t)(qk + .5);
 #endif
     for (k = 0; k <= nrBand1 - 1; k++)
@@ -677,7 +686,7 @@ restart:
                 nOctaves = REAL_CONST(log((float)limTable[k]/(float)limTable[k-1])/log(2.0));
 #else
 #ifdef FIXED_POINT
-                nOctaves = DIV_R(REAL_CONST(limTable[k]),REAL_CONST(limTable[k-1]));
+                nOctaves = DIV_R((limTable[k]<<REAL_BITS),REAL_CONST(limTable[k-1]));
 #else
                 nOctaves = (real_t)limTable[k]/(real_t)limTable[k-1];
 #endif

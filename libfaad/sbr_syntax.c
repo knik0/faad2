@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_syntax.c,v 1.30 2004/04/03 10:49:15 menno Exp $
+** $Id: sbr_syntax.c,v 1.31 2004/05/17 10:18:03 menno Exp $
 **/
 
 #include "common.h"
@@ -384,7 +384,9 @@ static uint8_t sbr_single_channel_element(bitfile *ld, sbr_info *sbr)
     sbr_envelope(ld, sbr, 0);
     sbr_noise(ld, sbr, 0);
 
+#ifndef FIXED_POINT
     envelope_noise_dequantisation(sbr, 0);
+#endif
 
     memset(sbr->bs_add_harmonic[0], 0, 64*sizeof(uint8_t));
 
@@ -544,11 +546,13 @@ static uint8_t sbr_channel_pair_element(bitfile *ld, sbr_info *sbr)
         if (sbr->bs_add_harmonic_flag[1])
             sinusoidal_coding(ld, sbr, 1);
     }
+#ifndef FIXED_POINT
     envelope_noise_dequantisation(sbr, 0);
     envelope_noise_dequantisation(sbr, 1);
 
     if (sbr->bs_coupling)
         unmap_envelope_noise(sbr);
+#endif
 
     sbr->bs_extended_data = faad_get1bit(ld
         DEBUGVAR(1,233,"sbr_channel_pair_element(): bs_extended_data[0]"));

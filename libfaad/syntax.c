@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.78 2004/04/03 10:49:15 menno Exp $
+** $Id: syntax.c,v 1.79 2004/05/17 10:18:03 menno Exp $
 **/
 
 /*
@@ -852,8 +852,14 @@ static uint8_t pulse_data(ic_stream *ics, pulse_info *pul, bitfile *ld)
     {
         pul->pulse_offset[i] = (uint8_t)faad_getbits(ld, 5
             DEBUGVAR(1,58,"pulse_data(): pulse_offset"));
+#if 0
+        printf("%d\n", pul->pulse_offset[i]);
+#endif
         pul->pulse_amp[i] = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,59,"pulse_data(): pulse_amp"));
+#if 0
+        printf("%d\n", pul->pulse_amp[i]);
+#endif
     }
 
     return 0;
@@ -1589,6 +1595,10 @@ static uint8_t section_data(NeAACDecHandle hDecoder, ic_stream *ics, bitfile *ld
             ics->sect_cb[g][i] = (uint8_t)faad_getbits(ld, sect_cb_bits
                 DEBUGVAR(1,71,"section_data(): sect_cb"));
 
+#if 0
+            printf("%d\n", ics->sect_cb[g][i]);
+#endif
+
             if (ics->sect_cb[g][i] == NOISE_HCB)
                 ics->noise_used = 1;
 
@@ -1624,13 +1634,25 @@ static uint8_t section_data(NeAACDecHandle hDecoder, ic_stream *ics, bitfile *ld
             ics->sect_start[g][i] = k;
             ics->sect_end[g][i] = k + sect_len;
 
+#if 0
+            printf("%d\n", ics->sect_start[g][i]);
+#endif
+#if 0
+            printf("%d\n", ics->sect_end[g][i]);
+#endif
+
             if (k + sect_len >= 8*15)
                 return 15;
             if (i >= 8*15)
                 return 15;
 
             for (sfb = k; sfb < k + sect_len; sfb++)
+            {
                 ics->sfb_cb[g][sfb] = ics->sect_cb[g][i];
+#if 0
+                printf("%d\n", ics->sfb_cb[g][sfb]);
+#endif
+            }
 
 #if 0
             printf(" %6d %6d %6d\n",
@@ -1643,6 +1665,9 @@ static uint8_t section_data(NeAACDecHandle hDecoder, ic_stream *ics, bitfile *ld
             i++;
         }
         ics->num_sec[g] = i;
+#if 0
+        printf("%d\n", ics->num_sec[g]);
+#endif
     }
 
 #if 0
@@ -1681,6 +1706,10 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
             {
             case ZERO_HCB: /* zero book */
                 ics->scale_factors[g][sfb] = 0;
+//#define SF_PRINT
+#ifdef SF_PRINT
+                printf("%d\n", ics->scale_factors[g][sfb]);
+#endif
                 break;
             case INTENSITY_HCB: /* intensity books */
             case INTENSITY_HCB2:
@@ -1689,6 +1718,9 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
                 t = huffman_scale_factor(ld);
                 is_position += (t - 60);
                 ics->scale_factors[g][sfb] = is_position;
+#ifdef SF_PRINT
+                printf("%d\n", ics->scale_factors[g][sfb]);
+#endif
 
                 break;
             case NOISE_HCB: /* noise books */
@@ -1705,6 +1737,9 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
                 }
                 noise_energy += t;
                 ics->scale_factors[g][sfb] = noise_energy;
+#ifdef SF_PRINT
+                printf("%d\n", ics->scale_factors[g][sfb]);
+#endif
 
                 break;
             default: /* spectral books */
@@ -1719,6 +1754,9 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
                 if (scale_factor < 0 || scale_factor > 255)
                     return 4;
                 ics->scale_factors[g][sfb] = scale_factor;
+#ifdef SF_PRINT
+                printf("%d\n", ics->scale_factors[g][sfb]);
+#endif
 
                 break;
             }
@@ -1778,6 +1816,9 @@ static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld)
     {
         tns->n_filt[w] = (uint8_t)faad_getbits(ld, n_filt_bits
             DEBUGVAR(1,74,"tns_data(): n_filt"));
+#if 0
+        printf("%d\n", tns->n_filt[w]);
+#endif
 
         if (tns->n_filt[w])
         {
@@ -1788,26 +1829,44 @@ static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld)
             } else {
                 start_coef_bits = 3;
             }
+#if 0
+            printf("%d\n", tns->coef_res[w]);
+#endif
         }
 
         for (filt = 0; filt < tns->n_filt[w]; filt++)
         {
             tns->length[w][filt] = (uint8_t)faad_getbits(ld, length_bits
                 DEBUGVAR(1,76,"tns_data(): length"));
+#if 0
+            printf("%d\n", tns->length[w][filt]);
+#endif
             tns->order[w][filt]  = (uint8_t)faad_getbits(ld, order_bits
                 DEBUGVAR(1,77,"tns_data(): order"));
+#if 0
+            printf("%d\n", tns->order[w][filt]);
+#endif
             if (tns->order[w][filt])
             {
                 tns->direction[w][filt] = faad_get1bit(ld
                     DEBUGVAR(1,78,"tns_data(): direction"));
+#if 0
+                printf("%d\n", tns->direction[w][filt]);
+#endif
                 tns->coef_compress[w][filt] = faad_get1bit(ld
                     DEBUGVAR(1,79,"tns_data(): coef_compress"));
+#if 0
+                printf("%d\n", tns->coef_compress[w][filt]);
+#endif
 
                 coef_bits = start_coef_bits - tns->coef_compress[w][filt];
                 for (i = 0; i < tns->order[w][filt]; i++)
                 {
                     tns->coef[w][filt][i] = (uint8_t)faad_getbits(ld, coef_bits
                         DEBUGVAR(1,80,"tns_data(): coef"));
+#if 0
+                    printf("%d\n", tns->coef[w][filt][i]);
+#endif
                 }
             }
         }
@@ -1910,6 +1969,16 @@ static uint8_t spectral_data(NeAACDecHandle hDecoder, ic_stream *ics, bitfile *l
             case NOISE_HCB:
             case INTENSITY_HCB:
             case INTENSITY_HCB2:
+//#define SD_PRINT
+#ifdef SD_PRINT
+                {
+                    int j;
+                    for (j = ics->sect_sfb_offset[g][ics->sect_start[g][i]]; j < ics->sect_sfb_offset[g][ics->sect_end[g][i]]; j++)
+                    {
+                        printf("%d\n", 0);
+                    }
+                }
+#endif
                 p += (ics->sect_sfb_offset[g][ics->sect_end[g][i]] -
                     ics->sect_sfb_offset[g][ics->sect_start[g][i]]);
                 break;
@@ -1919,6 +1988,15 @@ static uint8_t spectral_data(NeAACDecHandle hDecoder, ic_stream *ics, bitfile *l
                 {
                     if ((result = huffman_spectral_data(sect_cb, ld, &spectral_data[p])) > 0)
                         return result;
+#ifdef SD_PRINT
+                    {
+                        int j;
+                        for (j = p; j < p+inc; j++)
+                        {
+                            printf("%d\n", spectral_data[j]);
+                        }
+                    }
+#endif
                     p += inc;
                 }
                 break;

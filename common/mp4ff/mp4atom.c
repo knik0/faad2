@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4atom.c,v 1.20 2004/04/12 18:17:42 menno Exp $
+** $Id: mp4atom.c,v 1.21 2004/05/17 10:18:02 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -826,9 +826,11 @@ static int32_t mp4ff_read_meta(mp4ff_t *f, const uint64_t size)
     mp4ff_read_char(f); /* version */
     mp4ff_read_int24(f); /* flags */
 
-    while (sumsize < (size-12))
+    while (sumsize < (size-(header_size+4)))
     {
         subsize = mp4ff_atom_read_header(f, &atom_type, &header_size);
+        if (subsize <= header_size+4)
+            return 1;
         if (atom_type == ATOM_ILST)
         {
             mp4ff_parse_metadata(f, (uint32_t)(subsize-(header_size+4)));

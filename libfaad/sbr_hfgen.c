@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfgen.c,v 1.17 2004/04/12 18:17:42 menno Exp $
+** $Id: sbr_hfgen.c,v 1.18 2004/05/17 10:18:03 menno Exp $
 **/
 
 /* High Frequency generation */
@@ -39,18 +39,18 @@
 
 /* static function declarations */
 #ifdef SBR_LOW_POWER
-static void calc_prediction_coef_lp(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][32],
+static void calc_prediction_coef_lp(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
                                     complex_t *alpha_0, complex_t *alpha_1, real_t *rxx);
 static void calc_aliasing_degree(sbr_info *sbr, real_t *rxx, real_t *deg);
 #else
-static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][32],
+static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
                                  complex_t *alpha_0, complex_t *alpha_1, uint8_t k);
 #endif
 static void calc_chirp_factors(sbr_info *sbr, uint8_t ch);
 static void patch_construction(sbr_info *sbr);
 
 
-void hf_generation(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][32],
+void hf_generation(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
                    qmf_t Xhigh[MAX_NTSRHFG][64]
 #ifdef SBR_LOW_POWER
                    ,real_t *deg
@@ -67,12 +67,9 @@ void hf_generation(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][32],
     uint8_t first = sbr->t_E[ch][0];
     uint8_t last = sbr->t_E[ch][sbr->L_E[ch]];
 
+
     calc_chirp_factors(sbr, ch);
 
-    for (i = first; i < last; i++)
-    {
-        memset(Xhigh[i + offset], 0, 64 * sizeof(qmf_t));
-    }
 #ifdef SBR_LOW_POWER
     memset(deg, 0, 64*sizeof(real_t));
 #endif
@@ -84,8 +81,6 @@ void hf_generation(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][32],
 #ifdef SBR_LOW_POWER
     calc_prediction_coef_lp(sbr, Xlow, alpha_0, alpha_1, rxx);
     calc_aliasing_degree(sbr, rxx, deg);
-#else
-    //calc_prediction_coef(sbr, Xlow, alpha_0, alpha_1);
 #endif
 
     /* actual HF generation */
@@ -184,11 +179,9 @@ typedef struct
     real_t det;
 } acorr_coef;
 
-#define SBR_ABS(A) ((A) < 0) ? -(A) : (A)
-
 #ifdef SBR_LOW_POWER
 static void auto_correlation(sbr_info *sbr, acorr_coef *ac,
-                             qmf_t buffer[MAX_NTSRHFG][32],
+                             qmf_t buffer[MAX_NTSRHFG][64],
                              uint8_t bd, uint8_t len)
 {
     real_t r01 = 0, r02 = 0, r11 = 0;
@@ -204,27 +197,20 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac,
 
 
 #ifdef FIXED_POINT
-    /*
-     *  For computing the covariance matrix and the filter coefficients
-     *  in fixed point, all values are normalised so that the fixed point
-     *  values don't overflow.
-     */
-    for (j = offset-2; j < len + offset; j++)
+    mask = 0;
+
+    for (j = (offset-2); j < (len + offset); j++)
     {
-        maxi = max(SBR_ABS(QMF_RE(buffer[j][bd])>>REAL_BITS), maxi);
+        real_t x;
+        x = QMF_RE(buffer[j][bd])>>REAL_BITS;
+        mask |= x ^ (x >> 31);
     }
 
-    /* find the first power of 2 bigger than max to avoid division */
-    pow2 = 1;
-    exp = 0;
-    while (maxi > pow2)
-    {
-        pow2 <<= 1;
-        exp++;
-    }
+    exp = wl_min_lzc(mask);
 
     /* improves accuracy */
-    exp -= 1;
+    if (exp > 0)
+        exp -= 1;
 
     for (j = offset; j < len + offset; j++)
     {
@@ -264,14 +250,13 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac,
     ac->det = MUL_R(RE(ac->r11), RE(ac->r22)) - MUL_F(MUL_R(RE(ac->r12), RE(ac->r12)), rel);
 }
 #else
-static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t buffer[MAX_NTSRHFG][32],
+static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t buffer[MAX_NTSRHFG][64],
                              uint8_t bd, uint8_t len)
 {
     real_t r01r = 0, r01i = 0, r02r = 0, r02i = 0, r11r = 0;
 #ifdef FIXED_POINT
     const real_t rel = FRAC_CONST(0.999999); // 1 / (1 + 1e-6f);
-    uint32_t maxi = 0;
-    uint32_t pow2, exp;
+    uint32_t mask, exp;
 #else
     const real_t rel = 1 / (1 + 1e-6f);
 #endif
@@ -279,28 +264,22 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t buffer[MAX_NTS
     uint8_t offset = sbr->tHFAdj;
 
 #ifdef FIXED_POINT
-    /*
-     *  For computing the covariance matrix and the filter coefficients
-     *  in fixed point, all values are normalised so that the fixed point
-     *  values don't overflow.
-     */
-    for (j = offset-2; j < len + offset; j++)
+    mask = 0;
+
+    for (j = (offset-2); j < (len + offset); j++)
     {
-        maxi = max(SBR_ABS(QMF_RE(buffer[j][bd])>>REAL_BITS), maxi);
-        maxi = max(SBR_ABS(QMF_IM(buffer[j][bd])>>REAL_BITS), maxi);
+        real_t x;
+        x = QMF_RE(buffer[j][bd])>>REAL_BITS;
+        mask |= x ^ (x >> 31);
+        x = QMF_IM(buffer[j][bd])>>REAL_BITS;
+        mask |= x ^ (x >> 31);
     }
 
-    /* find the first power of 2 bigger than max to avoid division */
-    pow2 = 1;
-    exp = 0;
-    while (maxi > pow2)
-    {
-        pow2 <<= 1;
-        exp++;
-    }
+    exp = wl_min_lzc(mask);
 
     /* improves accuracy */
-    exp -= 1;
+    if (exp > 0)
+        exp -= 1;
 
     for (j = offset; j < len + offset; j++)
     {
@@ -369,7 +348,7 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t buffer[MAX_NTS
 
 /* calculate linear prediction coefficients using the covariance method */
 #ifndef SBR_LOW_POWER
-static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][32],
+static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
                                  complex_t *alpha_0, complex_t *alpha_1, uint8_t k)
 {
     real_t tmp;
@@ -421,7 +400,7 @@ static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][32],
     }
 }
 #else
-static void calc_prediction_coef_lp(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][32],
+static void calc_prediction_coef_lp(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
                                     complex_t *alpha_0, complex_t *alpha_1, real_t *rxx)
 {
     uint8_t k;

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_e_nf.c,v 1.14 2004/03/19 10:37:55 menno Exp $
+** $Id: sbr_e_nf.c,v 1.17 2004/09/04 14:56:28 menno Exp $
 **/
 
 #include "common.h"
@@ -138,6 +138,8 @@ void extract_noise_floor_data(sbr_info *sbr, uint8_t ch)
         }
     }
 }
+
+#ifndef FIXED_POINT
 
 /* table for Q_div values when no coupling */
 static const real_t Q_div_tab[31] = {
@@ -376,7 +378,6 @@ real_t calc_Q_div2(sbr_info *sbr, uint8_t ch, uint8_t m, uint8_t l)
     }
 }
 
-#ifndef FIXED_POINT
 static const real_t E_deq_tab[64] = {
     64.0f, 128.0f, 256.0f, 512.0f, 1024.0f, 2048.0f, 4096.0f, 8192.0f,
     16384.0f, 32768.0f, 65536.0f, 131072.0f, 262144.0f, 524288.0f, 1.04858E+006f, 2.09715E+006f,
@@ -387,14 +388,6 @@ static const real_t E_deq_tab[64] = {
     1.80144E+016f, 3.60288E+016f, 7.20576E+016f, 1.44115E+017f, 2.8823E+017f, 5.76461E+017f, 1.15292E+018f, 2.30584E+018f,
     4.61169E+018f, 9.22337E+018f, 1.84467E+019f, 3.68935E+019f, 7.3787E+019f, 1.47574E+020f, 2.95148E+020f, 5.90296E+020f
 };
-#else
-static const int32_t E_deq_tab[31] = {
-    1, 2, 4, 8, 16, 32, 64, 128,
-    256, 512, 1024, 2048, 4096, 8192, 16384, 32768,
-    65536, 131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608,
-    16777216, 33554432, 67108864, 134217728, 268435456, 536870912, 1073741824
-};
-#endif
 
 void envelope_noise_dequantisation(sbr_info *sbr, uint8_t ch)
 {
@@ -411,16 +404,10 @@ void envelope_noise_dequantisation(sbr_info *sbr, uint8_t ch)
                 /* +6 for the *64 and -10 for the /32 in the synthesis QMF (fixed)
                  * since this is a energy value: (x/32)^2 = (x^2)/1024
                  */
-                /* exp = (sbr->E[ch][k][l] >> amp) + 6 - 10; */
+                /* exp = (sbr->E[ch][k][l] >> amp) + 6; */
                 exp = (sbr->E[ch][k][l] >> amp);
 
-                if ((exp < 0) ||
-#ifndef FIXED_POINT
-                    (exp >= 64)
-#else
-                    (exp >= 32)
-#endif
-                    )
+                if ((exp < 0) || (exp >= 64))
                 {
                     sbr->E_orig[ch][k][l] = 0;
                 } else {
@@ -474,8 +461,7 @@ void unmap_envelope_noise(sbr_info *sbr)
     {
         for (k = 0; k < sbr->n[sbr->f[0][l]]; k++)
         {
-            /* +6: * 64 ; +1: * 2 ; -10: /1024 QMF (fixed) */
-            /* exp0 = (sbr->E[0][k][l] >> amp0) + 7 - 10 */
+            /* +6: * 64 ; +1: * 2 ; */
             exp0 = (sbr->E[0][k][l] >> amp0) + 1;
 
             /* UN_MAP removed: (x / 4096) same as (x >> 12) */
@@ -485,12 +471,7 @@ void unmap_envelope_noise(sbr_info *sbr)
             /* exp1 = (sbr->E[1][k][l] >> amp1) - 12; */
             exp1 = (sbr->E[1][k][l] >> amp1);
 
-            if ((exp0 < 0) ||
-#ifndef FIXED_POINT
-                (exp0 >= 64) ||
-#else
-                (exp0 >= 32) ||
-#endif
+            if ((exp0 < 0) || (exp0 >= 64) ||
                 (exp1 < 0) || (exp1 > 24))
             {
                 sbr->E_orig[1][k][l] = 0;
@@ -520,5 +501,7 @@ void unmap_envelope_noise(sbr_info *sbr)
         }
     }
 }
+
+#endif
 
 #endif

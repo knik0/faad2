@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.102 2004/04/03 10:49:14 menno Exp $
+** $Id: decoder.c,v 1.103 2004/05/17 10:18:02 menno Exp $
 **/
 
 #include "common.h"
@@ -49,6 +49,13 @@
 #ifdef ANALYSIS
 uint16_t dbg_count;
 #endif
+
+/* static function declarations */
+static void* aac_frame_decode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
+                              uint8_t *buffer, uint32_t buffer_size,
+                              void **sample_buffer, uint32_t sample_buffer_size);
+static void create_channel_config(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo);
+
 
 char* NEAACDECAPI NeAACDecGetErrorMessage(uint8_t errcode)
 {
@@ -706,6 +713,28 @@ void* NEAACDECAPI NeAACDecDecode(NeAACDecHandle hDecoder,
                                  NeAACDecFrameInfo *hInfo,
                                  uint8_t *buffer, uint32_t buffer_size)
 {
+    return aac_frame_decode(hDecoder, hInfo, buffer, buffer_size, NULL, 0);
+}
+
+void* NEAACDECAPI NeAACDecDecode2(NeAACDecHandle hDecoder,
+                                  NeAACDecFrameInfo *hInfo,
+                                  uint8_t *buffer, uint32_t buffer_size,
+                                  void **sample_buffer, uint32_t sample_buffer_size)
+{
+    if ((sample_buffer == NULL) || (sample_buffer_size == 0))
+    {
+        hInfo->error = 27;
+        return NULL;
+    }
+
+    return aac_frame_decode(hDecoder, hInfo, buffer, buffer_size,
+        sample_buffer, sample_buffer_size);
+}
+
+static void* aac_frame_decode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
+                              uint8_t *buffer, uint32_t buffer_size,
+                              void **sample_buffer2, uint32_t sample_buffer_size)
+{
     uint8_t channels = 0;
     uint8_t output_channels = 0;
     bitfile ld;
@@ -723,6 +752,10 @@ void* NEAACDECAPI NeAACDecDecode(NeAACDecHandle hDecoder,
         return NULL;
     }
 
+#if 0
+    printf("%d\n", buffer_size*8);
+#endif
+
     frame_len = hDecoder->frameLength;
 
 
@@ -731,6 +764,21 @@ void* NEAACDECAPI NeAACDecDecode(NeAACDecHandle hDecoder,
 
     /* initialize the bitstream */
     faad_initbits(&ld, buffer, buffer_size);
+
+#if 0
+    {
+        int i;
+        for (i = 0; i < ((buffer_size+3)>>2); i++)
+        {
+            uint8_t *buf;
+            buf = faad_getbitbuffer(&ld, 32);
+            printf("%d\n", getdword((void*)buf));
+            free(buf);
+        }
+        faad_endbits(&ld);
+        faad_initbits(&ld, buffer, buffer_size);
+    }
+#endif
 
 #ifdef DRM
     if (hDecoder->object_type == DRM_ER_LC)
@@ -873,14 +921,27 @@ void* NEAACDECAPI NeAACDecDecode(NeAACDecHandle hDecoder,
             stride = 2 * stride;
         }
 #endif
-        if (hDecoder->sample_buffer)
-            faad_free(hDecoder->sample_buffer);
-        hDecoder->sample_buffer = NULL;
-        hDecoder->sample_buffer = faad_malloc(frame_len*output_channels*stride);
+        /* check if we want to use internal sample_buffer */
+        if (sample_buffer_size == 0)
+        {
+            if (hDecoder->sample_buffer)
+                faad_free(hDecoder->sample_buffer);
+            hDecoder->sample_buffer = NULL;
+            hDecoder->sample_buffer = faad_malloc(frame_len*output_channels*stride);
+        } else if (sample_buffer_size < frame_len*output_channels*stride) {
+            /* provided sample buffer is not big enough */
+            hInfo->error = 27;
+            return NULL;
+        }
         hDecoder->alloced_channels = output_channels;
     }
 
-    sample_buffer = hDecoder->sample_buffer;
+    if (sample_buffer_size == 0)
+    {
+        sample_buffer = hDecoder->sample_buffer;
+    } else {
+        sample_buffer = *sample_buffer2;
+    }
 
 #ifdef SBR_DEC
     if ((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1))

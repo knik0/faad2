@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: error.c,v 1.25 2004/04/03 10:49:14 menno Exp $
+** $Id: error.c,v 1.28 2004/09/04 14:56:28 menno Exp $
 **/
 
 #include "common.h"
@@ -55,6 +55,7 @@ char *err_msg[] = {
     "First SBR frame is not the same as first AAC frame",
     "Unexpected fill element with SBR data",
     "Not all elements were provided with SBR data",
-    "LTP decoding not available"
+    "LTP decoding not available",
+    "Output data buffer too small"
 };
 

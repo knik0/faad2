@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.60 2004/04/21 11:34:19 danchr Exp $
+** $Id: common.h,v 1.61 2004/05/17 10:18:02 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -56,6 +56,7 @@ extern "C" {
 /* #define USE_DOUBLE_PRECISION */
 /* use fixed point reals */
 //#define FIXED_POINT
+//#define BIG_IQ_TABLE
 
 #ifdef _WIN32_WCE
 #define FIXED_POINT
@@ -95,6 +96,7 @@ extern "C" {
 // Define LC_ONLY_DECODER if you want a pure AAC LC decoder (independant of SBR_DEC and PS_DEC)
 //#define LC_ONLY_DECODER
 #ifdef LC_ONLY_DECODER
+  #undef LD_DEC
   #undef LTP_DEC
   #undef MAIN_DEC
   #undef SSR_DEC
@@ -385,6 +387,15 @@ typedef real_t complex_t[2];
 /* common functions */
 uint8_t cpu_has_sse(void);
 uint32_t random_int(void);
+uint32_t ones32(uint32_t x);
+uint32_t floor_log2(uint32_t x);
+uint32_t wl_min_lzc(uint32_t x);
+#ifdef FIXED_POINT
+#define LOG2_MIN_INF REAL_CONST(-10000)
+int32_t log2_int(uint32_t val);
+int32_t pow2_int(real_t val);
+real_t pow2_fix(real_t val);
+#endif
 uint8_t get_sr_index(const uint32_t samplerate);
 uint8_t max_pred_sfb(const uint8_t sr_index);
 uint8_t max_tns_sfb(const uint8_t sr_index, const uint8_t object_type,
