@@ -97,7 +97,7 @@ IDI_ICON1               ICON                    "resource/AAC01.ico"
 // Dialog
 //
 
-IDD_VOLUME DIALOGEX 0, 0, 255, 218
+IDD_VOLUME DIALOGEX 0, 0, 255, 236
 STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Decoder Options V1.2"
@@ -117,7 +117,7 @@ BEGIN
                     WS_DISABLED,15,60,65,10
     CONTROL         "DEC AU",IDC_DECAU,"Button",BS_AUTORADIOBUTTON | 
                     WS_DISABLED,125,60,65,10
-    GROUPBOX        "Output Sample Format Settings",IDC_STATIC,7,82,241,50
+    GROUPBOX        "Output Sample Format Settings",IDC_STATIC,7,82,241,65
     CONTROL         "16 bit PCM",IDC_16BIT,"Button",BS_AUTORADIOBUTTON | 
                     WS_GROUP,15,96,65,10
     CONTROL         "24 bit PCM",IDC_24BIT,"Button",BS_AUTORADIOBUTTON,125,
@@ -126,32 +126,32 @@ BEGIN
                     111,65,10
     CONTROL         "32 bit floats",IDC_FLOATS,"Button",BS_AUTORADIOBUTTON,
                     125,111,65,10
-    GROUPBOX        "Object Type Settings",IDC_STATIC,7,133,241,50
+    CONTROL         "16 bit PCM - Dithered",IDC_16BIT_DITHER,"Button",
+                    BS_AUTORADIOBUTTON,15,126,83,10
+    GROUPBOX        "Object Type Settings",IDC_STATIC,7,149,241,50
     CONTROL         "Main",IDC_MAIN,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
-                    15,147,65,10
+                    15,163,65,10
     CONTROL         "Low Complexity",IDC_LC,"Button",BS_AUTORADIOBUTTON,125,
-                    147,65,10
+                    163,65,10
     CONTROL         "Long Term Prediction",IDC_LTP,"Button",
-                    BS_AUTORADIOBUTTON,15,162,85,10
-    CONTROL         "Low Delay",IDC_LD,"Button",BS_AUTORADIOBUTTON,125,162,
+                    BS_AUTORADIOBUTTON,15,178,85,10
+    CONTROL         "Low Delay",IDC_LD,"Button",BS_AUTORADIOBUTTON,125,178,
                     65,10
-    DEFPUSHBUTTON   "Accept",IDC_BUTTON1,102,192,50,16
+    DEFPUSHBUTTON   "Accept",IDC_BUTTON1,102,210,50,16
 END
 
-IDD_ABOUT DIALOG  0, 0, 255, 194
+IDD_ABOUT DIALOGEX 0, 0, 255, 194
 STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | 
     WS_SYSMENU
-CAPTION "About aacDECdrop V1.2"
-FONT 8, "MS Sans Serif"
+CAPTION "About aacDECdrop V1.21"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     GROUPBOX        "",IDC_STATIC,7,5,241,157
     CTEXT           "A decoder to decode/playback aac/Mpeg4 files.",
                     IDC_STATIC,70,13,155,8
-    CTEXT           "Copyright 2002 John Edwards.",IDC_STATIC,70,29,97,8
-    CTEXT           "Utilises standard libfaad from Menno Bakker and",
-                    IDC_STATIC,70,37,153,8
-    CTEXT           "LibSndFile from Erik de Castro Lopo.",IDC_STATIC,70,45,
-                    115,8
+    CTEXT           "Copyright 2002 John Edwards.",IDC_STATIC,70,30,97,8
+    CTEXT           "Utilises standard libfaad2 from Menno Bakker.",
+                    IDC_STATIC,70,46,145,8
     LTEXT           "This program is free software; you can redistribute it and/or modify it",
                     IDC_STATIC,13,62,212,8
     LTEXT           "under the terms of the GNU Public Licence as published by the Free",

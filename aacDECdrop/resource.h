@@ -1,5 +1,5 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
+// Microsoft Visual C++ generated include file.
 // Used by Script.rc
 //
 #define IDD_VOLUME                      101
@@ -29,6 +29,7 @@
 #define IDC_LC                          1024
 #define IDC_LTP                         1025
 #define IDC_LD                          1026
+#define IDC_16BIT_DITHER                1027
 #define IDC_BUTTON6                     1033
 #define IDM_VOLUME                      40005
 #define IDM_STOP_DEC                    40006
@@ -44,7 +45,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         40018
-#define _APS_NEXT_CONTROL_VALUE         1021
+#define _APS_NEXT_CONTROL_VALUE         1028
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

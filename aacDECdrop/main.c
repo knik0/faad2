@@ -507,107 +507,56 @@ BOOL CALLBACK QCProc(HWND hwndDlg, UINT message,
 			if(iniSettings.decode_mode == 0)
 			{
 				CheckDlgButton(hwndDlg,IDC_PLAYBACK,TRUE);
-				CheckDlgButton(hwndDlg,IDC_DECODE,FALSE);
 				CheckDlgButton(hwndDlg,IDC_WAV,TRUE);
-				CheckDlgButton(hwndDlg,IDC_AIFF,FALSE);
-				CheckDlgButton(hwndDlg,IDC_SUNAU,FALSE);
-				CheckDlgButton(hwndDlg,IDC_DECAU,FALSE);
-				CheckDlgButton(hwndDlg,IDC_16BIT,TRUE);
-				CheckDlgButton(hwndDlg,IDC_24BIT,FALSE);
-				CheckDlgButton(hwndDlg,IDC_32BIT,FALSE);
-				CheckDlgButton(hwndDlg,IDC_FLOATS,FALSE);
+				if(iniSettings.outputFormat != 1
+					&& iniSettings.outputFormat != 5)
+					CheckDlgButton(hwndDlg,IDC_16BIT,TRUE);
+				else if(iniSettings.outputFormat == 1)
+					CheckDlgButton(hwndDlg,IDC_16BIT,TRUE);
+				else if(iniSettings.outputFormat == 5)
+					CheckDlgButton(hwndDlg,IDC_16BIT_DITHER,TRUE);
+				CheckDlgButton(hwndDlg,IDC_WAV,TRUE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_AIFF), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_SUNAU), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_DECAU), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_24BIT), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_32BIT), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_FLOATS), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_16BIT), TRUE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_16BIT_DITHER), TRUE);
 			}
 			else if(iniSettings.decode_mode == 1)
 			{
 				CheckDlgButton(hwndDlg,IDC_PLAYBACK,FALSE);
-				CheckDlgButton(hwndDlg,IDC_DECODE,TRUE);
 				if(iniSettings.outputFormat == 1)
-				{
 					CheckDlgButton(hwndDlg,IDC_16BIT,TRUE);
-					CheckDlgButton(hwndDlg,IDC_24BIT,FALSE);
-					CheckDlgButton(hwndDlg,IDC_32BIT,FALSE);
-					CheckDlgButton(hwndDlg,IDC_FLOATS,FALSE);
-				}
 				else if(iniSettings.outputFormat == 2)
-				{
-					CheckDlgButton(hwndDlg,IDC_16BIT,FALSE);
 					CheckDlgButton(hwndDlg,IDC_24BIT,TRUE);
-					CheckDlgButton(hwndDlg,IDC_32BIT,FALSE);
-					CheckDlgButton(hwndDlg,IDC_FLOATS,FALSE);
-				}
 				else if(iniSettings.outputFormat == 3)
-				{
-					CheckDlgButton(hwndDlg,IDC_16BIT,FALSE);
-					CheckDlgButton(hwndDlg,IDC_24BIT,FALSE);
 					CheckDlgButton(hwndDlg,IDC_32BIT,TRUE);
-					CheckDlgButton(hwndDlg,IDC_FLOATS,FALSE);
-				}
 				else if(iniSettings.outputFormat == 4)
-				{
-					CheckDlgButton(hwndDlg,IDC_16BIT,FALSE);
-					CheckDlgButton(hwndDlg,IDC_24BIT,FALSE);
-					CheckDlgButton(hwndDlg,IDC_32BIT,FALSE);
 					CheckDlgButton(hwndDlg,IDC_FLOATS,TRUE);
-				}
+				else if(iniSettings.outputFormat == 5)
+					CheckDlgButton(hwndDlg,IDC_16BIT_DITHER,TRUE);
 
 				if(iniSettings.fileType == 1)
-				{
 					CheckDlgButton(hwndDlg,IDC_WAV,TRUE);
-					CheckDlgButton(hwndDlg,IDC_AIFF,FALSE);
-					CheckDlgButton(hwndDlg,IDC_SUNAU,FALSE);
-					CheckDlgButton(hwndDlg,IDC_DECAU,FALSE);
-				}
 				else if(iniSettings.fileType == 2)
-				{
-					CheckDlgButton(hwndDlg,IDC_WAV,FALSE);
 					CheckDlgButton(hwndDlg,IDC_AIFF,TRUE);
-					CheckDlgButton(hwndDlg,IDC_SUNAU,FALSE);
-					CheckDlgButton(hwndDlg,IDC_DECAU,FALSE);
-				}
 				else if(iniSettings.fileType == 3)
-				{
-					CheckDlgButton(hwndDlg,IDC_WAV,FALSE);
-					CheckDlgButton(hwndDlg,IDC_AIFF,FALSE);
 					CheckDlgButton(hwndDlg,IDC_SUNAU,TRUE);
-					CheckDlgButton(hwndDlg,IDC_DECAU,FALSE);
-				}
 				else if(iniSettings.fileType == 4)
-				{
-					CheckDlgButton(hwndDlg,IDC_WAV,FALSE);
-					CheckDlgButton(hwndDlg,IDC_AIFF,FALSE);
-					CheckDlgButton(hwndDlg,IDC_SUNAU,FALSE);
 					CheckDlgButton(hwndDlg,IDC_DECAU,TRUE);
-				}
 			}
 
 			if(iniSettings.object_type == 0)
-			{
 				CheckDlgButton(hwndDlg,IDC_MAIN,TRUE);
-				CheckDlgButton(hwndDlg,IDC_LC,FALSE);
-				CheckDlgButton(hwndDlg,IDC_LTP,FALSE);
-				CheckDlgButton(hwndDlg,IDC_LD,FALSE);
-			}
 			else if(iniSettings.object_type == 1)
-			{
-				CheckDlgButton(hwndDlg,IDC_MAIN,FALSE);
 				CheckDlgButton(hwndDlg,IDC_LC,TRUE);
-				CheckDlgButton(hwndDlg,IDC_LTP,FALSE);
-				CheckDlgButton(hwndDlg,IDC_LD,FALSE);
-			}
 			else if(iniSettings.object_type == 3)
-			{
-				CheckDlgButton(hwndDlg,IDC_MAIN,FALSE);
-				CheckDlgButton(hwndDlg,IDC_LC,FALSE);
 				CheckDlgButton(hwndDlg,IDC_LTP,TRUE);
-				CheckDlgButton(hwndDlg,IDC_LD,FALSE);
-			}
 			else if(iniSettings.object_type == 23)
-			{
-				CheckDlgButton(hwndDlg,IDC_MAIN,FALSE);
-				CheckDlgButton(hwndDlg,IDC_LC,FALSE);
-				CheckDlgButton(hwndDlg,IDC_LTP,FALSE);
 				CheckDlgButton(hwndDlg,IDC_LD,TRUE);
-			}
 			break;
 
 		case WM_CLOSE:
@@ -641,6 +590,8 @@ BOOL CALLBACK QCProc(HWND hwndDlg, UINT message,
 						set_outputFormat(3);             // 32 bit PCM
 					else if (IsDlgButtonChecked(hwndDlg, IDC_FLOATS) == BST_CHECKED)
 						set_outputFormat(4);             // 32 bit floats
+					else if (IsDlgButtonChecked(hwndDlg, IDC_16BIT_DITHER) == BST_CHECKED)
+						set_outputFormat(5);             // 16 bit PCM dithered
 
 					if (IsDlgButtonChecked(hwndDlg, IDC_MAIN) == BST_CHECKED)
 						set_object_type(0);             // Main
@@ -659,138 +610,31 @@ BOOL CALLBACK QCProc(HWND hwndDlg, UINT message,
 					return TRUE;
 
 				case IDC_PLAYBACK:
-					CheckDlgButton(hwndDlg,IDC_DECODE,FALSE);
 					CheckDlgButton(hwndDlg,IDC_WAV,TRUE);
-					CheckDlgButton(hwndDlg,IDC_AIFF,FALSE);
-					CheckDlgButton(hwndDlg,IDC_SUNAU,FALSE);
-					CheckDlgButton(hwndDlg,IDC_DECAU,FALSE);
-					CheckDlgButton(hwndDlg,IDC_16BIT,TRUE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_AIFF), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_SUNAU), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_DECAU), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_24BIT), FALSE);
 					CheckDlgButton(hwndDlg,IDC_24BIT,FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_32BIT), FALSE);
 					CheckDlgButton(hwndDlg,IDC_32BIT,FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_FLOATS), FALSE);
 					CheckDlgButton(hwndDlg,IDC_FLOATS,FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_16BIT), TRUE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_16BIT_DITHER), TRUE);
+					if (IsDlgButtonChecked(hwndDlg, IDC_16BIT_DITHER) != BST_CHECKED
+						&& IsDlgButtonChecked(hwndDlg, IDC_16BIT) != BST_CHECKED)
+						CheckDlgButton(hwndDlg,IDC_16BIT,TRUE);
 					break;
 				case IDC_DECODE:
-					CheckDlgButton(hwndDlg,IDC_PLAYBACK,FALSE);
-					break;
-				case IDC_WAV:
-					CheckDlgButton(hwndDlg,IDC_AIFF,FALSE);
-					CheckDlgButton(hwndDlg,IDC_SUNAU,FALSE);
-					CheckDlgButton(hwndDlg,IDC_DECAU,FALSE);
-					break;
-				case IDC_AIFF:
-					if (IsDlgButtonChecked(hwndDlg, IDC_DECODE) == BST_CHECKED)
-					{
-						CheckDlgButton(hwndDlg,IDC_WAV,FALSE);
-						CheckDlgButton(hwndDlg,IDC_SUNAU,FALSE);
-						CheckDlgButton(hwndDlg,IDC_DECAU,FALSE);
-					}
-					else
-					{
-						CheckDlgButton(hwndDlg,IDC_WAV,TRUE);
-						CheckDlgButton(hwndDlg,IDC_AIFF,FALSE);
-						CheckDlgButton(hwndDlg,IDC_SUNAU,FALSE);
-						CheckDlgButton(hwndDlg,IDC_DECAU,FALSE);
-					}
-					break;
-				case IDC_SUNAU:
-					if (IsDlgButtonChecked(hwndDlg, IDC_DECODE) == BST_CHECKED)
-					{
-						CheckDlgButton(hwndDlg,IDC_WAV,FALSE);
-						CheckDlgButton(hwndDlg,IDC_AIFF,FALSE);
-						CheckDlgButton(hwndDlg,IDC_DECAU,FALSE);
-					}
-					else
-					{
-						CheckDlgButton(hwndDlg,IDC_WAV,TRUE);
-						CheckDlgButton(hwndDlg,IDC_AIFF,FALSE);
-						CheckDlgButton(hwndDlg,IDC_SUNAU,FALSE);
-						CheckDlgButton(hwndDlg,IDC_DECAU,FALSE);
-					}
-					break;
-				case IDC_DECAU:
-					if (IsDlgButtonChecked(hwndDlg, IDC_DECODE) == BST_CHECKED)
-					{
-						CheckDlgButton(hwndDlg,IDC_WAV,FALSE);
-						CheckDlgButton(hwndDlg,IDC_AIFF,FALSE);
-						CheckDlgButton(hwndDlg,IDC_SUNAU,FALSE);
-					}
-					else
-					{
-						CheckDlgButton(hwndDlg,IDC_WAV,TRUE);
-						CheckDlgButton(hwndDlg,IDC_AIFF,FALSE);
-						CheckDlgButton(hwndDlg,IDC_SUNAU,FALSE);
-						CheckDlgButton(hwndDlg,IDC_DECAU,FALSE);
-					}
-					break;
-				case IDC_16BIT:
-					CheckDlgButton(hwndDlg,IDC_24BIT,FALSE);
-					CheckDlgButton(hwndDlg,IDC_32BIT,FALSE);
-					CheckDlgButton(hwndDlg,IDC_FLOATS,FALSE);
-					break;
-				case IDC_24BIT:
-					if (IsDlgButtonChecked(hwndDlg, IDC_DECODE) == BST_CHECKED)
-					{
-						CheckDlgButton(hwndDlg,IDC_16BIT,FALSE);
-						CheckDlgButton(hwndDlg,IDC_32BIT,FALSE);
-						CheckDlgButton(hwndDlg,IDC_FLOATS,FALSE);
-					}
-					else
-					{
-						CheckDlgButton(hwndDlg,IDC_16BIT,TRUE);
-						CheckDlgButton(hwndDlg,IDC_24BIT,FALSE);
-						CheckDlgButton(hwndDlg,IDC_32BIT,FALSE);
-						CheckDlgButton(hwndDlg,IDC_FLOATS,FALSE);
-					}
-					break;
-				case IDC_32BIT:
-					if (IsDlgButtonChecked(hwndDlg, IDC_DECODE) == BST_CHECKED)
-					{
-						CheckDlgButton(hwndDlg,IDC_16BIT,FALSE);
-						CheckDlgButton(hwndDlg,IDC_24BIT,FALSE);
-						CheckDlgButton(hwndDlg,IDC_FLOATS,FALSE);
-					}
-					else
-					{
-						CheckDlgButton(hwndDlg,IDC_16BIT,TRUE);
-						CheckDlgButton(hwndDlg,IDC_24BIT,FALSE);
-						CheckDlgButton(hwndDlg,IDC_32BIT,FALSE);
-						CheckDlgButton(hwndDlg,IDC_FLOATS,FALSE);
-					}
-					break;
-				case IDC_FLOATS:
-					if (IsDlgButtonChecked(hwndDlg, IDC_DECODE) == BST_CHECKED)
-					{
-						CheckDlgButton(hwndDlg,IDC_16BIT,FALSE);
-						CheckDlgButton(hwndDlg,IDC_24BIT,FALSE);
-						CheckDlgButton(hwndDlg,IDC_32BIT,FALSE);
-					}
-					else
-					{
-						CheckDlgButton(hwndDlg,IDC_16BIT,TRUE);
-						CheckDlgButton(hwndDlg,IDC_24BIT,FALSE);
-						CheckDlgButton(hwndDlg,IDC_32BIT,FALSE);
-						CheckDlgButton(hwndDlg,IDC_FLOATS,FALSE);
-					}
-					break;
-				case IDC_MAIN:
-					CheckDlgButton(hwndDlg,IDC_LC,FALSE);
-					CheckDlgButton(hwndDlg,IDC_LTP,FALSE);
-					CheckDlgButton(hwndDlg,IDC_LD,FALSE);
-					break;
-				case IDC_LC:
-					CheckDlgButton(hwndDlg,IDC_MAIN,FALSE);
-					CheckDlgButton(hwndDlg,IDC_LTP,FALSE);
-					CheckDlgButton(hwndDlg,IDC_LD,FALSE);
-					break;
-				case IDC_LTP:
-					CheckDlgButton(hwndDlg,IDC_MAIN,FALSE);
-					CheckDlgButton(hwndDlg,IDC_LC,FALSE);
-					CheckDlgButton(hwndDlg,IDC_LD,FALSE);
-					break;
-				case IDC_LD:
-					CheckDlgButton(hwndDlg,IDC_MAIN,FALSE);
-					CheckDlgButton(hwndDlg,IDC_LC,FALSE);
-					CheckDlgButton(hwndDlg,IDC_LTP,FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_AIFF), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_SUNAU), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_DECAU), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_24BIT), TRUE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_32BIT), TRUE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_FLOATS), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_16BIT), TRUE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_16BIT_DITHER), TRUE);
 					break;
 				default:
 					break;
