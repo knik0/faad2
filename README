@@ -1,3 +1,4 @@
+
 Freeware Advanced Audio Decoder version 2
 http://www.audiocoding.com/
 
@@ -40,5 +41,66 @@ ACTIONS!
 ______
 PEOPLE
 
-FAAD2 is completely written by:
+FAAD2 is written by:
  - menno (menno@audiocoding.com).
+
+
+__________________________________
+REDISTRIBUTED OPEN SOURCE PACKAGES
+
+This is the list of redistributed open source packages that are included 
+in FAAD2:
+
+Name:       libsndfile
+Version:    0.0.27
+Origin:     http://www.zip.com.au/~erikd/libsndfile
+Author:     Erik de Castro Lopo
+Directory:  common/libsndfile
+License:    GNU Lesser General Public License, version 2.1 1999
+
+Name:       id3lib
+Version:    3.7.9
+Origin:     http://id3lib.sourceforge.net
+Author:     Dirk Mahoney, Scott Haug
+Directory:  common/id3lib
+License:    GNU Library General Public License, version 2, June 1991
+
+Name:       mp4v2
+Version:    0.9.2
+Origin:     http://mpeg4ip.sourceforge.net
+Author:     David Mackie
+Directory:  common/mp4v2
+License:    MPL, Mozilla Public License, version 1.1
+
+
+___________________
+DIRECTORY STRUCTURE
+
+faad2 - top level directory.
+
+   common - generally used libraries and code.
+
+      faad - general common functions like filereading and streaming
+             as well as getting info from aac files.
+
+      id3lib - id3 tag editor library.
+
+      libsndfile - general audio file reading library.
+
+      mp4v2 - MPEG-4 file reading library.
+
+   frontend - command line frontend to the FAAD2 library, also supports
+              MPEG-4 file decoding.
+
+   include - inlude file for teh FAAD2 library.
+
+   libfaad - the FAAD2 AAC decoder library.
+
+   plugins - plugins for all kinds of pograms.
+
+      in_mp4 - winamp MPEG-4 AAC file input plugin.
+
+      winamp - winamp2 AAC input plugin.
+
+      winamp3 - winamp3 AAC input plugin.
+

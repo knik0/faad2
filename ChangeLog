@@ -1,2 +1,406 @@
+2002-01-24  menno
+	* common/faad/aacinfo.c:
+		Always calculate filelength
 
-Initial revision
+	* plugins/in_mp4/in_mp4.c:
+		time calculation fixed
+
+2002-01-23  menno
+	* plugins/in_mp4/in_mp4.c:
+		mp4v2 doesn't seem to be reentrant
+		mp4 plugin looks stable now, although songlength is only known when playing the file
+
+	* frontend/main.c:
+	* plugins/in_mp4/in_mp4.c:
+		bugfix
+
+2002-01-22  menno
+	* libfaad/analysis.h:
+	* libfaad/bits.h:
+	* libfaad/debug.h:
+	* libfaad/libfaad.dsp:
+	* libfaad/syntax.c:
+		File renamed
+
+	* plugins/in_mp4/in_mp4.c:
+		strange value for thread priority
+
+2002-01-21  menno
+	* plugins/winamp3/aacpcm.cpp:
+	* plugins/winamp3/aacpcm.h:
+	* plugins/winamp3/cnv_aacpcm.cpp:
+	* plugins/winamp3/cnv_aacpcm.dsp:
+	* plugins/winamp3/cnv_aacpcm.dsw:
+	* plugins/winamp3/cnv_aacpcm.h:
+		Winamp3 plugin added
+
+	* plugins/in_mp4/in_mp4.c:
+	* plugins/winamp/in_faad.c:
+		Bugfix for config reading
+
+	* frontend/main.c:
+		Better mp4 file configuration handling
+
+	* common/mp4v2/Makefile.am:
+	* common/mp4v2/bootstrap:
+	* common/mp4v2/configure.in:
+	* common/mp4v2/systems.h:
+	* frontend/audio.c:
+	* frontend/main.c:
+		Small changes for linux
+
+	* common/id3lib/.cvsignore:
+	* common/id3lib/AUTHORS:
+	* common/id3lib/COPYING:
+	* common/id3lib/ChangeLog:
+	* common/id3lib/HISTORY:
+	* common/id3lib/INSTALL:
+	* common/id3lib/Makefile.am:
+	* common/id3lib/Makefile.in:
+	* common/id3lib/NEWS:
+	* common/id3lib/README:
+	* common/id3lib/THANKS:
+	* common/id3lib/TODO:
+	* common/id3lib/acconfig:
+	* common/id3lib/acconfig.h:
+	* common/id3lib/aclocal.m4:
+	* common/id3lib/config.guess:
+	* common/id3lib/config.h.in:
+	* common/id3lib/config.h.win32.in:
+	* common/id3lib/config.sub:
+	* common/id3lib/config.win32:
+	* common/id3lib/configure:
+	* common/id3lib/configure.in:
+	* common/id3lib/id3lib.spec.in:
+	* common/id3lib/include/.cvsignore:
+	* common/id3lib/include/Makefile.am:
+	* common/id3lib/include/Makefile.in:
+	* common/id3lib/include/id3.h:
+	* common/id3lib/include/id3/.cvsignore:
+	* common/id3lib/include/id3/Makefile.am:
+	* common/id3lib/include/id3/Makefile.in:
+	* common/id3lib/include/id3/error.h:
+	* common/id3lib/include/id3/field.h:
+	* common/id3lib/include/id3/flags.h:
+	* common/id3lib/include/id3/frame.h:
+	* common/id3lib/include/id3/globals.h:
+	* common/id3lib/include/id3/header.h:
+	* common/id3lib/include/id3/header_frame.h:
+	* common/id3lib/include/id3/header_tag.h:
+	* common/id3lib/include/id3/int28.h:
+	* common/id3lib/include/id3/misc_support.h:
+	* common/id3lib/include/id3/sized_types.h:
+	* common/id3lib/include/id3/spec.h:
+	* common/id3lib/include/id3/tag.h:
+	* common/id3lib/include/id3/uint28.h:
+	* common/id3lib/include/id3/utils.h:
+	* common/id3lib/install-sh:
+	* common/id3lib/libprj/.cvsignore:
+	* common/id3lib/libprj/Makefile.am:
+	* common/id3lib/libprj/id3lib.dsp:
+	* common/id3lib/libprj/id3lib.dsw:
+	* common/id3lib/libtool:
+	* common/id3lib/ltconfig:
+	* common/id3lib/ltmain.sh:
+	* common/id3lib/m4/.cvsignore:
+	* common/id3lib/m4/Makefile.am:
+	* common/id3lib/m4/Makefile.in:
+	* common/id3lib/m4/lf_bash.m4:
+	* common/id3lib/m4/lf_cc.m4:
+	* common/id3lib/m4/lf_cxx.m4:
+	* common/id3lib/m4/lf_cxx_convenience.m4:
+	* common/id3lib/m4/lf_fortran.m4:
+	* common/id3lib/m4/lf_host_type.m4:
+	* common/id3lib/m4/lf_lisp.m4:
+	* common/id3lib/m4/lf_local.m4:
+	* common/id3lib/m4/lf_nm.m4:
+	* common/id3lib/m4/lf_texidoc.m4:
+	* common/id3lib/m4/lf_txtc.m4:
+	* common/id3lib/m4/lf_warnings.m4:
+	* common/id3lib/m4/lf_x11.m4:
+	* common/id3lib/missing:
+	* common/id3lib/mkinstalldirs:
+	* common/id3lib/reconf:
+	* common/id3lib/rename.pl:
+	* common/id3lib/src/.cvsignore:
+	* common/id3lib/src/Makefile.am:
+	* common/id3lib/src/Makefile.in:
+	* common/id3lib/src/c_wrapper.cpp:
+	* common/id3lib/src/error.cpp:
+	* common/id3lib/src/field.cpp:
+	* common/id3lib/src/field_binary.cpp:
+	* common/id3lib/src/field_integer.cpp:
+	* common/id3lib/src/field_string_ascii.cpp:
+	* common/id3lib/src/field_string_unicode.cpp:
+	* common/id3lib/src/frame.cpp:
+	* common/id3lib/src/frame_parse.cpp:
+	* common/id3lib/src/frame_render.cpp:
+	* common/id3lib/src/globals.cpp:
+	* common/id3lib/src/header.cpp:
+	* common/id3lib/src/header_frame.cpp:
+	* common/id3lib/src/header_tag.cpp:
+	* common/id3lib/src/int28.cpp:
+	* common/id3lib/src/misc_support.cpp:
+	* common/id3lib/src/spec.cpp:
+	* common/id3lib/src/tag.cpp:
+	* common/id3lib/src/tag_file.cpp:
+	* common/id3lib/src/tag_find.cpp:
+	* common/id3lib/src/tag_parse.cpp:
+	* common/id3lib/src/tag_parse_lyrics3.cpp:
+	* common/id3lib/src/tag_parse_v1.cpp:
+	* common/id3lib/src/tag_render.cpp:
+	* common/id3lib/src/tag_sync.cpp:
+	* common/id3lib/src/uint28.cpp:
+	* common/id3lib/src/utils.cpp:
+	* common/id3lib/stamp-h.in:
+	* common/id3lib/win32/config.h:
+	* common/id3lib/zlib/.cvsignore:
+	* common/id3lib/zlib/Makefile.am:
+	* common/id3lib/zlib/Makefile.in:
+	* common/id3lib/zlib/include/.cvsignore:
+	* common/id3lib/zlib/include/Makefile.am:
+	* common/id3lib/zlib/include/Makefile.in:
+	* common/id3lib/zlib/include/deflate.h:
+	* common/id3lib/zlib/include/infblock.h:
+	* common/id3lib/zlib/include/infcodes.h:
+	* common/id3lib/zlib/include/inffast.h:
+	* common/id3lib/zlib/include/inffixed.h:
+	* common/id3lib/zlib/include/inftrees.h:
+	* common/id3lib/zlib/include/infutil.h:
+	* common/id3lib/zlib/include/trees.h:
+	* common/id3lib/zlib/include/zconf.h:
+	* common/id3lib/zlib/include/zlib.h:
+	* common/id3lib/zlib/include/zutil.h:
+	* common/id3lib/zlib/lib/.cvsignore:
+	* common/id3lib/zlib/lib/Makefile.am:
+	* common/id3lib/zlib/lib/Makefile.in:
+	* common/id3lib/zlib/prj/.cvsignore:
+	* common/id3lib/zlib/prj/Makefile.am:
+	* common/id3lib/zlib/prj/Makefile.in:
+	* common/id3lib/zlib/prj/zlib.dsp:
+	* common/id3lib/zlib/prj/zlib.dsw:
+	* common/id3lib/zlib/prj/zlib.mak:
+	* common/id3lib/zlib/src/.cvsignore:
+	* common/id3lib/zlib/src/Makefile.am:
+	* common/id3lib/zlib/src/Makefile.in:
+	* common/id3lib/zlib/src/adler32.c:
+	* common/id3lib/zlib/src/compress.c:
+	* common/id3lib/zlib/src/crc32.c:
+	* common/id3lib/zlib/src/deflate.c:
+	* common/id3lib/zlib/src/gzio.c:
+	* common/id3lib/zlib/src/infblock.c:
+	* common/id3lib/zlib/src/infcodes.c:
+	* common/id3lib/zlib/src/inffast.c:
+	* common/id3lib/zlib/src/inflate.c:
+	* common/id3lib/zlib/src/inftrees.c:
+	* common/id3lib/zlib/src/infutil.c:
+	* common/id3lib/zlib/src/trees.c:
+	* common/id3lib/zlib/src/uncompr.c:
+	* common/id3lib/zlib/src/zutil.c:
+		Added id3v2 library
+
+	* common/faad/filestream.c:
+	* common/faad/filestream.h:
+	* common/faad/id3v2tag.c:
+	* common/faad/id3v2tag.h:
+		Forgot something :-)
+
+2002-01-20  menno
+	* plugins/winamp/in2.h:
+	* plugins/winamp/in_faad.c:
+	* plugins/winamp/in_faad.dsp:
+	* plugins/winamp/in_faad.dsw:
+	* plugins/winamp/out.h:
+	* plugins/winamp/plugin_dlg.rc:
+	* plugins/winamp/resource.h:
+		Winamp2 AAC plugin
+		basically the same as old one, but with new library, and:
+		- new way of saving configuration (no more faad.dat)
+		- better multichannel handling
+
+	* plugins/in_mp4/in2.h:
+	* plugins/in_mp4/in_mp4.c:
+	* plugins/in_mp4/in_mp4.dsp:
+	* plugins/in_mp4/in_mp4.dsw:
+	* plugins/in_mp4/in_mp4.rc:
+	* plugins/in_mp4/out.h:
+	* plugins/in_mp4/resource.h:
+		MPEG-4 AAC Winamp input plugin!!
+
+	* include/faad.h:
+	* libfaad/decoder.c:
+	* libfaad/libfaad.dsp:
+	* libfaad/mp4.c:
+	* libfaad/mp4.h:
+	* libfaad/syntax.c:
+	* libfaad/syntax.h:
+		Changes for easier MP4 file playing
+
+2002-01-19  menno
+	* frontend/main.c:
+	* include/faad.h:
+	* libfaad/bits.c:
+	* libfaad/bits.h:
+	* libfaad/debug.h:
+	* libfaad/decoder.c:
+	* libfaad/decoder.h:
+	* libfaad/huffman.c:
+	* libfaad/huffman.h:
+	* libfaad/is.h:
+	* libfaad/libfaad.dsp:
+	* libfaad/pns.h:
+	* libfaad/syntax.c:
+	* libfaad/syntax.h:
+		- decodes mp4 files correctly
+		- bug fix in tns_data()
+		- added bitstream analysis
+
+	* libfaad/bits.c:
+	* libfaad/decoder.c:
+	* libfaad/huffman.h:
+	* libfaad/syntax.c:
+		Improved bitstream analysis
+
+	* libfaad/decoder.c:
+		improved error handling
+
+2002-01-16  menno
+	* libfaad/predict.c:
+		Removed double file
+
+	* frontend/main.c:
+		Buffer deallocation
+
+2002-01-15  menno
+	* common/mp4v2/COPYING:
+	* common/mp4v2/INTERNALS:
+	* common/mp4v2/Makefile.am:
+	* common/mp4v2/TODO:
+	* common/mp4v2/atom_co64.cpp:
+	* common/mp4v2/atom_cprt.cpp:
+	* common/mp4v2/atom_ctts.cpp:
+	* common/mp4v2/atom_dimm.cpp:
+	* common/mp4v2/atom_dinf.cpp:
+	* common/mp4v2/atom_dmax.cpp:
+	* common/mp4v2/atom_dmed.cpp:
+	* common/mp4v2/atom_dref.cpp:
+	* common/mp4v2/atom_drep.cpp:
+	* common/mp4v2/atom_edts.cpp:
+	* common/mp4v2/atom_elst.cpp:
+	* common/mp4v2/atom_esds.cpp:
+	* common/mp4v2/atom_free.cpp:
+	* common/mp4v2/atom_ftyp.cpp:
+	* common/mp4v2/atom_hdlr.cpp:
+	* common/mp4v2/atom_hinf.cpp:
+	* common/mp4v2/atom_hmhd.cpp:
+	* common/mp4v2/atom_hnti.cpp:
+	* common/mp4v2/atom_iods.cpp:
+	* common/mp4v2/atom_maxr.cpp:
+	* common/mp4v2/atom_mdat.cpp:
+	* common/mp4v2/atom_mdhd.cpp:
+	* common/mp4v2/atom_mdia.cpp:
+	* common/mp4v2/atom_mfhd.cpp:
+	* common/mp4v2/atom_minf.cpp:
+	* common/mp4v2/atom_moof.cpp:
+	* common/mp4v2/atom_moov.cpp:
+	* common/mp4v2/atom_mp4a.cpp:
+	* common/mp4v2/atom_mp4s.cpp:
+	* common/mp4v2/atom_mp4v.cpp:
+	* common/mp4v2/atom_mvex.cpp:
+	* common/mp4v2/atom_mvhd.cpp:
+	* common/mp4v2/atom_nmhd.cpp:
+	* common/mp4v2/atom_nump.cpp:
+	* common/mp4v2/atom_payt.cpp:
+	* common/mp4v2/atom_pmax.cpp:
+	* common/mp4v2/atom_root.cpp:
+	* common/mp4v2/atom_rtp.cpp:
+	* common/mp4v2/atom_sdp.cpp:
+	* common/mp4v2/atom_smhd.cpp:
+	* common/mp4v2/atom_snro.cpp:
+	* common/mp4v2/atom_stbl.cpp:
+	* common/mp4v2/atom_stco.cpp:
+	* common/mp4v2/atom_stdp.cpp:
+	* common/mp4v2/atom_stsc.cpp:
+	* common/mp4v2/atom_stsd.cpp:
+	* common/mp4v2/atom_stsh.cpp:
+	* common/mp4v2/atom_stss.cpp:
+	* common/mp4v2/atom_stsz.cpp:
+	* common/mp4v2/atom_stts.cpp:
+	* common/mp4v2/atom_tfhd.cpp:
+	* common/mp4v2/atom_tims.cpp:
+	* common/mp4v2/atom_tkhd.cpp:
+	* common/mp4v2/atom_tmax.cpp:
+	* common/mp4v2/atom_tmin.cpp:
+	* common/mp4v2/atom_tpyl.cpp:
+	* common/mp4v2/atom_traf.cpp:
+	* common/mp4v2/atom_trak.cpp:
+	* common/mp4v2/atom_tref.cpp:
+	* common/mp4v2/atom_treftype.cpp:
+	* common/mp4v2/atom_trex.cpp:
+	* common/mp4v2/atom_trpy.cpp:
+	* common/mp4v2/atom_trun.cpp:
+	* common/mp4v2/atom_tsro.cpp:
+	* common/mp4v2/atom_udta.cpp:
+	* common/mp4v2/atom_url.cpp:
+	* common/mp4v2/atom_urn.cpp:
+	* common/mp4v2/atom_vmhd.cpp:
+	* common/mp4v2/atoms.h:
+	* common/mp4v2/descriptors.cpp:
+	* common/mp4v2/descriptors.h:
+	* common/mp4v2/isma.cpp:
+	* common/mp4v2/libmp4v2.dsp:
+	* common/mp4v2/libmp4v260.dsp:
+	* common/mp4v2/libmp4v2_st.dsp:
+	* common/mp4v2/libmp4v2_st60.dsp:
+	* common/mp4v2/mp4.cpp:
+	* common/mp4v2/mp4.h:
+	* common/mp4v2/mp4array.h:
+	* common/mp4v2/mp4atom.cpp:
+	* common/mp4v2/mp4atom.h:
+	* common/mp4v2/mp4common.h:
+	* common/mp4v2/mp4container.cpp:
+	* common/mp4v2/mp4container.h:
+	* common/mp4v2/mp4descriptor.cpp:
+	* common/mp4v2/mp4descriptor.h:
+	* common/mp4v2/mp4file.cpp:
+	* common/mp4v2/mp4file.h:
+	* common/mp4v2/mp4file_io.cpp:
+	* common/mp4v2/mp4property.cpp:
+	* common/mp4v2/mp4property.h:
+	* common/mp4v2/mp4track.cpp:
+	* common/mp4v2/mp4track.h:
+	* common/mp4v2/mp4util.cpp:
+	* common/mp4v2/mp4util.h:
+	* common/mp4v2/mpeg4ip.h:
+	* common/mp4v2/need_for_win32.c:
+	* common/mp4v2/ocidescriptors.cpp:
+	* common/mp4v2/ocidescriptors.h:
+	* common/mp4v2/odcommands.cpp:
+	* common/mp4v2/odcommands.h:
+	* common/mp4v2/qosqualifiers.cpp:
+	* common/mp4v2/qosqualifiers.h:
+	* common/mp4v2/rtphint.cpp:
+	* common/mp4v2/rtphint.h:
+	* common/mp4v2/systems.h:
+	* common/mp4v2/win32_ver.h:
+	* frontend/audio.c:
+	* frontend/audio.h:
+	* frontend/faad.dsp:
+	* frontend/faad.dsw:
+	* frontend/main.c:
+	* libfaad/decoder.c:
+		Added MP4 file support
+
+	* frontend/main.c:
+		Oops, forgot to check for errors in MP4 file decoding
+
+	* frontend/main.c:
+		Bugfix for MP4 files
+
+	* frontend/main.c:
+		Fix for strange sample rate from MP4 files (sometimes it's an
+		index and sometimes it's the actual value)
+
+	* frontend/main.c:
+		Ouch, I need some rest :-)
+
