@@ -16,12 +16,13 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.5 2002/01/19 16:19:54 menno Exp $
+** $Id: decoder.c,v 1.6 2002/01/20 16:57:55 menno Exp $
 **/
 
 #include <stdlib.h>
 #include <memory.h>
 #include "decoder.h"
+#include "mp4.h"
 #include "syntax.h"
 #include "specrec.h"
 #include "data.h"
@@ -174,56 +175,6 @@ int FAADAPI faacDecInit(faacDecHandle hDecoder, unsigned char *buffer,
     return 0;
 }
 
-
-static unsigned long ObjectTypesTable[32] = {0, 1, 1, 1, 1, };
-
-int parse_audio_decoder_specific_info(faacDecHandle hDecoder,
-                                      unsigned char *pBuffer,
-                                      unsigned long *samplerate,
-                                      unsigned long *channels)
-{
-    bitfile ld;
-    unsigned long ObjectTypeIndex, SamplingFrequencyIndex,
-        ChannelsConfiguration;
-
-    faad_initbits(&ld, pBuffer);
-    faad_byte_align(&ld);
-
-    ObjectTypeIndex = faad_getbits(&ld, 5
-        DEBUGVAR(1,1,"parse_audio_decoder_specific_info(): ObjectTypeIndex"));
-
-    SamplingFrequencyIndex = faad_getbits(&ld, 4
-        DEBUGVAR(1,2,"parse_audio_decoder_specific_info(): SamplingFrequencyIndex"));
-
-    ChannelsConfiguration = faad_getbits(&ld, 4
-        DEBUGVAR(1,3,"parse_audio_decoder_specific_info(): ChannelsConfiguration"));
-
-    if (ObjectTypesTable[ObjectTypeIndex] != 1)
-    {
-        return -1;
-    }
-
-    *samplerate = sample_rates[SamplingFrequencyIndex];
-    if (*samplerate == 0)
-    {
-        return -2;
-    }
-
-    *channels = ChannelsConfiguration;
-
-    hDecoder->sf_index = SamplingFrequencyIndex;
-    hDecoder->object_type = ObjectTypeIndex - 1;
-
-    if(ChannelsConfiguration > 7)
-    {
-        return -3;
-    }
-
-    /* get GASpecificConfig */
-
-    return 0;
-}
-
 /* Init the library using a DecoderSpecificInfo */
 int FAADAPI faacDecInit2(faacDecHandle hDecoder, unsigned char *pBuffer,
                          unsigned long SizeOfDecoderSpecificInfo,
@@ -243,8 +194,9 @@ int FAADAPI faacDecInit2(faacDecHandle hDecoder, unsigned char *pBuffer,
         return -1;
     }
 
-    rc = parse_audio_decoder_specific_info(hDecoder, pBuffer,
-        samplerate, channels);
+    rc = AudioSpecificConfig(pBuffer, samplerate, channels,
+        &hDecoder->sf_index, &hDecoder->object_type);
+    hDecoder->object_type--; /* For AAC differs from MPEG-4 */
     if (rc != 0)
     {
         return rc;

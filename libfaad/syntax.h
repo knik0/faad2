@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.2 2002/01/19 09:39:41 menno Exp $
+** $Id: syntax.h,v 1.3 2002/01/20 16:57:55 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -256,6 +256,7 @@ typedef struct
     ic_stream ics2;
 } element; /* syntax element (SCE, CPE, LFE) */
 
+int GASpecificConfig(bitfile *ld, unsigned long *channelConfiguration);
 int single_lfe_channel_element(element *sce, bitfile *ld, short *spec_data,
                                int sf_index, int object_type);
 int channel_pair_element(element *cpe, bitfile *ld, short *spec_data1,

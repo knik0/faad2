@@ -129,6 +129,10 @@ SOURCE=.\mdct.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mp4.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\ms.c
 # End Source File
 # Begin Source File
@@ -210,6 +214,10 @@ SOURCE=.\lt_predict.h
 # Begin Source File
 
 SOURCE=.\mdct.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\mp4.h
 # End Source File
 # Begin Source File
 
