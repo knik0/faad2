@@ -16,12 +16,13 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.18 2002/08/30 20:52:43 menno Exp $
+** $Id: in_mp4.c,v 1.19 2002/09/03 21:22:53 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <commctrl.h>
+#include <commdlg.h>
 #include <stdlib.h>
 #include <math.h>
 #include <faad.h>
@@ -279,11 +280,33 @@ BOOL CALLBACK aac_info_dialog_proc(HWND hwndDlg, UINT message,
         {
         case IDC_CONVERT:
             {
-                int ret = covert_aac_to_mp4(info_fn);
-                if (ret)
+                char mp4FileName[256];
+                char *extension;
+                OPENFILENAME ofn;
+
+                lstrcpy(mp4FileName, info_fn);
+                extension = strrchr(mp4FileName, '.');
+                lstrcpy(extension, ".mp4");
+
+                memset(&ofn, 0, sizeof(OPENFILENAME));
+                ofn.lStructSize = sizeof(OPENFILENAME);
+                ofn.hwndOwner = hwndDlg;
+                ofn.hInstance = module.hDllInstance;
+                ofn.nMaxFileTitle = 31;
+                ofn.lpstrFile = (LPSTR)mp4FileName;
+                ofn.nMaxFile = _MAX_PATH;
+                ofn.lpstrFilter = "MP4 Files (*.mp4)\0*.mp4\0";
+                ofn.lpstrDefExt = "mp4";
+                ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
+                ofn.lpstrTitle = "Select Output File";
+
+                if (GetSaveFileName(&ofn))
                 {
-                    MessageBox(hwndDlg, "An error occured!", "An error occured!", MB_OK);
-                    return FALSE;
+                    if (covert_aac_to_mp4(info_fn, mp4FileName))
+                    {
+                        MessageBox(hwndDlg, "An error occured while converting AAC to MP4!", "An error occured!", MB_OK);
+                        return FALSE;
+                    }
                 }
                 return TRUE;
             }

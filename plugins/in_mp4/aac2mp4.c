@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: aac2mp4.c,v 1.1 2002/08/30 20:52:42 menno Exp $
+** $Id: aac2mp4.c,v 1.2 2002/09/03 21:22:53 menno Exp $
 **/
 
 #include <mpeg4ip.h>
@@ -25,19 +25,14 @@
 
 #include "aac2mp4.h"
 
-int covert_aac_to_mp4(char *inputFileName)
+int covert_aac_to_mp4(char *inputFileName, char *mp4FileName)
 {
     int Mp4TimeScale = 90000;
     int allMpeg4Streams = 0;
     MP4FileHandle mp4File;
     FILE* inFile;
-    char mp4FileName[256];
-    char* extension, *type;
+    char *type;
     MP4TrackId createdTrackId = MP4_INVALID_TRACK_ID;
-
-    lstrcpy(mp4FileName, inputFileName);
-    extension = strrchr(mp4FileName, '.');
-    lstrcpy(extension, ".mp4");
 
     mp4File = MP4Create(mp4FileName, 0, 0, 0);
     if (mp4File)
