@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.79 2003/11/04 21:43:30 menno Exp $
+** $Id: decoder.c,v 1.80 2003/11/05 09:32:04 menno Exp $
 **/
 
 #include "common.h"
@@ -824,6 +824,8 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #ifdef SBR_DEC
     if ((hDecoder->sbr_present_flag == 1) && (hDecoder->object_type == DRM_ER_LC))
     {
+        int32_t i;
+
         if (bitsconsumed + 8 > buffer_size*8)
         {
             hInfo->error = 14;
