@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.36 2003/07/07 09:48:31 menno Exp $
+** $Id: main.c,v 1.37 2003/07/07 21:11:17 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -34,14 +34,17 @@
 #include <mp4.h>
 
 #include "audio.h"
+#ifdef _WIN32
+#include "wave_out.h"
+#endif
 
 #ifndef min
 #define min(a,b) ( (a) < (b) ? (a) : (b) )
 #endif
 
-#define MAX_CHANNELS 6 /* make this higher to support files with
-
+#define MAX_CHANNELS 8 /* make this higher to support files with
                           more channels */
+
 /* FAAD file buffering routines */
 typedef struct {
     long bytes_into_buffer;
@@ -172,43 +175,51 @@ char *file_ext[] =
 
 void usage(void)
 {
-    fprintf(stderr, "\nUsage:\n");
-    fprintf(stderr, "%s [options] infile.aac\n", progName);
-    fprintf(stderr, "Options:\n");
-    fprintf(stderr, " -h    Shows this help screen.\n");
-    fprintf(stderr, " -i    Shows info about the input file.\n");
-    fprintf(stderr, " -o X  Set output filename.\n");
-    fprintf(stderr, " -f X  Set output format. Valid values for X are:\n");
-    fprintf(stderr, "        1:  Microsoft WAV format (default).\n");
-    fprintf(stderr, "        2:  RAW PCM data.\n");
-    fprintf(stderr, " -b X  Set output sample format. Valid values for X are:\n");
-    fprintf(stderr, "        1:  16 bit PCM data (default).\n");
-    fprintf(stderr, "        2:  24 bit PCM data.\n");
-    fprintf(stderr, "        3:  32 bit PCM data.\n");
-    fprintf(stderr, "        4:  32 bit floating point data.\n");
-    fprintf(stderr, "        5:  64 bit floating point data.\n");
-    fprintf(stderr, "        6:  16 bit PCM data (dithered).\n");
-    fprintf(stderr, "        7:  16 bit PCM data (dithered with LIGHT noise shaping).\n");
-    fprintf(stderr, "        8:  16 bit PCM data (dithered with MEDIUM noise shaping).\n");
-    fprintf(stderr, "        9:  16 bit PCM data (dithered with HEAVY noise shaping).\n");
-    fprintf(stderr, " -s X  Force the samplerate to X (for RAW files).\n");
-    fprintf(stderr, " -l X  Set object type. Supported object types:\n");
-    fprintf(stderr, "        0:  Main object type.\n");
-    fprintf(stderr, "        1:  LC (Low Complexity) object type.\n");
-    fprintf(stderr, "        3:  LTP (Long Term Prediction) object type.\n");
-    fprintf(stderr, "        23: LD (Low Delay) object type.\n");
-    fprintf(stderr, " -w    Write output to stdio instead of a file.\n");
-    fprintf(stderr, "Example:\n");
-    fprintf(stderr, "       faad infile.aac\n");
-    fprintf(stderr, "       faad infile.mp4\n");
-    fprintf(stderr, "       faad -o outfile.wav infile.aac\n");
-    fprintf(stderr, "       faad -w infile.aac > outfile.wav\n");
+    fprintf(stdout, "\nUsage:\n");
+    fprintf(stdout, "%s [options] infile.aac\n", progName);
+    fprintf(stdout, "Options:\n");
+    fprintf(stdout, " -h    Shows this help screen.\n");
+    fprintf(stdout, " -i    Shows info about the input file.\n");
+    fprintf(stdout, " -o X  Set output filename.\n");
+    fprintf(stdout, " -f X  Set output format. Valid values for X are:\n");
+    fprintf(stdout, "        1:  Microsoft WAV format (default).\n");
+    fprintf(stdout, "        2:  RAW PCM data.\n");
+    fprintf(stdout, " -b X  Set output sample format. Valid values for X are:\n");
+    fprintf(stdout, "        1:  16 bit PCM data (default).\n");
+    fprintf(stdout, "        2:  24 bit PCM data.\n");
+    fprintf(stdout, "        3:  32 bit PCM data.\n");
+    fprintf(stdout, "        4:  32 bit floating point data.\n");
+    fprintf(stdout, "        5:  64 bit floating point data.\n");
+    fprintf(stdout, "        6:  16 bit PCM data (dithered).\n");
+    fprintf(stdout, "        7:  16 bit PCM data (dithered with LIGHT noise shaping).\n");
+    fprintf(stdout, "        8:  16 bit PCM data (dithered with MEDIUM noise shaping).\n");
+    fprintf(stdout, "        9:  16 bit PCM data (dithered with HEAVY noise shaping).\n");
+    fprintf(stdout, " -s X  Force the samplerate to X (for RAW files).\n");
+    fprintf(stdout, " -l X  Set object type. Supported object types:\n");
+    fprintf(stdout, "        0:  Main object type.\n");
+    fprintf(stdout, "        1:  LC (Low Complexity) object type.\n");
+    fprintf(stdout, "        3:  LTP (Long Term Prediction) object type.\n");
+    fprintf(stdout, "        23: LD (Low Delay) object type.\n");
+    fprintf(stdout, " -w    Write output to stdio instead of a file.\n");
+#ifdef _WIN32
+    fprintf(stdout, " -p    Plays aac/mp4 files thru the soundcard using Windows audio.\n");
+    fprintf(stdout, " Playback Priority Options (ONE option ONLY may be used)\n");
+    fprintf(stdout, " -c X  Set playback priority class, where X =\n");
+    fprintf(stdout, "        0:  NORMAL priority.\n");
+    fprintf(stdout, "        1:  HIGH priority (default).\n");
+    fprintf(stdout, "        2:  REALTIME priority.\n");
+#endif
+    fprintf(stdout, "Example:\n");
+    fprintf(stdout, "       faad infile.aac\n");
+    fprintf(stdout, "       faad infile.mp4\n");
+    fprintf(stdout, "       faad -o outfile.wav infile.aac\n");
+    fprintf(stdout, "       faad -w infile.aac > outfile.wav\n");
     return;
 }
 
 int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
                   int def_srate, int object_type, int outputFormat, int fileType,
-                  int infoOnly)
+                  int infoOnly, int playback, unsigned int play_priority)
 {
     int tagsize;
     unsigned long samplerate;
@@ -336,7 +347,7 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
     fill_buffer(&b);
 
     /* print AAC file info */
-    fprintf(stderr, "AAC file info:\n");
+    fprintf(stderr, "%s file info:\n", aacfile);
     switch (header_type)
     {
     case 0:
@@ -356,8 +367,6 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
     {
         faacDecClose(hDecoder);
         fclose(b.infile);
-        if (!first_time)
-            close_audio_file(aufile);
         if (b.buffer)
             free(b.buffer);
         return 0;
@@ -391,28 +400,49 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
         /* open the sound file now that the number of channels are known */
         if (first_time && !frameInfo.error)
         {
-            if (!to_stdout)
+            if(to_stdout)
+                sndfile = NULL;
+
+            if(playback == 1)
             {
+#ifdef _WIN32
+                if (Set_WIN_Params(INVALID_FILEDESC, samplerate, SAMPLE_SIZE,
+                    frameInfo.channels, play_priority) < 0)
+                {
+                    fprintf(stderr, "ERROR: Can't access %s\n", "WAVE OUT");
+                    if (b.buffer)
+                        free(b.buffer);
+                    faacDecClose(hDecoder);
+                    fclose(b.infile);
+                    return 0;
+                }
+#endif
+            } else {
                 aufile = open_audio_file(sndfile, frameInfo.samplerate, frameInfo.channels,
                     outputFormat, fileType);
-            } else {
-                aufile = open_audio_file("-", frameInfo.samplerate, frameInfo.channels,
-                    outputFormat, fileType);
-            }
-            if (aufile == NULL)
-            {
-                if (b.buffer)
-                    free(b.buffer);
-                faacDecClose(hDecoder);
-                fclose(b.infile);
-                return 0;
+
+                if (aufile == NULL)
+                {
+                    if (b.buffer)
+                        free(b.buffer);
+                    faacDecClose(hDecoder);
+                    fclose(b.infile);
+                    return 0;
+                }
             }
             first_time = 0;
         }
 
         if ((frameInfo.error == 0) && (frameInfo.samples > 0))
         {
-            write_audio_file(aufile, sample_buffer, frameInfo.samples);
+            if(playback == 1)
+#ifdef _WIN32
+                WIN_Play_Samples((short*)sample_buffer, frameInfo.channels*frameInfo.samples);
+#else
+                fprintf(stderr, "Playback on anything other than WIN32 not possible.\n");
+#endif
+            else
+                write_audio_file(aufile, sample_buffer, frameInfo.samples);
         }
 
         /* fill buffer */
@@ -428,8 +458,15 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
 
     fclose(b.infile);
 
-    if (!first_time)
-        close_audio_file(aufile);
+    if (playback == 1)
+    {
+#ifdef _WIN32
+        WIN_Audio_close();
+#endif
+    } else {
+        if (!first_time)
+            close_audio_file(aufile, sndfile);
+    }
 
     if (b.buffer)
         free(b.buffer);
@@ -479,7 +516,8 @@ unsigned long srates[] =
 };
 
 int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
-                  int outputFormat, int fileType, int infoOnly)
+                  int outputFormat, int fileType, int infoOnly,
+                  int playback, unsigned int play_priority)
 {
     int track;
     unsigned int tracks;
@@ -526,7 +564,7 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
         char *file_info;
         unsigned int i;
 
-        fprintf(stderr, "MP4 file info:\n");
+        fprintf(stderr, "%s file info:\n", mp4file);
         for (i = 0; i < tracks; i++)
         {
             file_info = MP4Info(infile, i+1);
@@ -607,29 +645,45 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
         /* open the sound file now that the number of channels are known */
         if (first_time && !frameInfo.error)
         {
-            if(!to_stdout)
+            if (to_stdout)
+                sndfile = NULL;
+
+            if(playback == 1)
             {
+#ifdef _WIN32
+                if (Set_WIN_Params (INVALID_FILEDESC, samplerate, SAMPLE_SIZE,
+                    frameInfo.channels, play_priority) < 0)
+                {
+                    fprintf(stderr, "\nCan't access %s\n", "WAVE OUT");
+                    faacDecClose(hDecoder);
+                    MP4Close(infile);
+                    return (0);
+                }
+#endif
+            } else {
                 aufile = open_audio_file(sndfile, frameInfo.samplerate, frameInfo.channels,
                     outputFormat, fileType);
-            } else {
-#ifdef _WIN32
-                setmode(fileno(stdout), O_BINARY);
-#endif
-                aufile = open_audio_file("-", frameInfo.samplerate, frameInfo.channels,
-                    outputFormat, fileType);
-            }
-            if (aufile == NULL)
-            {
-                faacDecClose(hDecoder);
-                MP4Close(infile);
-                return 0;
+
+                if (aufile == NULL)
+                {
+                    faacDecClose(hDecoder);
+                    MP4Close(infile);
+                    return 0;
+                }
             }
             first_time = 0;
         }
 
         if ((frameInfo.error == 0) && (frameInfo.samples > 0))
         {
-            write_audio_file(aufile, sample_buffer, frameInfo.samples);
+            if (playback == 1)
+#ifdef _WIN32
+                WIN_Play_Samples((short*)sample_buffer, frameInfo.channels*frameInfo.samples);
+#else
+                fprintf(stderr, "Playback on anything other than WIN32 not possible.\n");
+#endif
+            else
+                write_audio_file(aufile, sample_buffer, frameInfo.samples);
         }
 
         if (frameInfo.error > 0)
@@ -644,8 +698,15 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
 
     MP4Close(infile);
 
-    if (!first_time)
-        close_audio_file(aufile);
+    if (playback == 1)
+    {
+#ifdef _WIN32
+        WIN_Audio_close();
+#endif
+    } else {
+        if (!first_time)
+            close_audio_file(aufile, sndfile);
+    }
 
     return frameInfo.error;
 }
@@ -661,6 +722,8 @@ int main(int argc, char *argv[])
     int outputFormat = FAAD_FMT_16BIT;
     int outfile_set = 0;
     int showHelp = 0;
+    int playback = 0;
+    unsigned int play_priority = 1;
     int mp4file = 0;
     char *fnp;
     char aacFileName[255];
@@ -700,11 +763,13 @@ int main(int argc, char *argv[])
             { "samplerate", 0, 0, 's' },
             { "objecttype", 0, 0, 'l' },
             { "info",       0, 0, 'i' },
+            { "playback",   0, 0, 'p' },
+            { "priority",   0, 0, 'c' },
             { "stdio",      0, 0, 'w' },
             { "help",       0, 0, 'h' }
         };
 
-        c = getopt_long(argc, argv, "o:s:f:b:l:whi",
+        c = getopt_long(argc, argv, "o:s:f:b:l:whipc:",
             long_options, &option_index);
 
         if (c == -1)
@@ -768,6 +833,26 @@ int main(int argc, char *argv[])
                 }
             }
             break;
+#ifdef _WIN32
+        case 'p':
+            playback = 1;
+            break;
+        case 'c':
+            if (optarg) {
+                char dr[10];
+                if (sscanf(optarg, "%s", dr) < 1) {
+                    play_priority = 1; /* default */
+                } else {
+                    play_priority = atoi(dr);
+                    if(play_priority > 2)
+                    {
+                        fprintf(stderr, "Warning: priority class %s not recognised, using default\n", optarg);
+                        play_priority = 1;
+                    }
+                }
+            }
+            break;
+#endif
         case 'w':
             writeToStdio = 1;
             break;
@@ -823,10 +908,11 @@ int main(int argc, char *argv[])
     if (mp4file)
     {
         result = decodeMP4file(aacFileName, audioFileName, writeToStdio,
-            outputFormat, format, infoOnly);
+            outputFormat, format, infoOnly, playback, play_priority);
     } else {
         result = decodeAACfile(aacFileName, audioFileName, writeToStdio,
-            def_srate, object_type, outputFormat, format, infoOnly);
+            def_srate, object_type, outputFormat, format, infoOnly,
+            playback, play_priority);
     }
 
 

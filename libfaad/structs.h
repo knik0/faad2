@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: structs.h,v 1.5 2003/02/09 20:42:49 menno Exp $
+** $Id: structs.h,v 1.6 2003/07/07 21:11:18 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -155,7 +155,8 @@ typedef struct
     uint8_t num_program_config_elements;
     uint32_t adif_buffer_fullness;
 
-    program_config pce;
+    /* maximum of 16 PCEs */
+    program_config pce[16];
 } adif_header;
 
 typedef struct
@@ -314,6 +315,9 @@ typedef struct faacDecFrameInfo
     uint8_t channels;
     uint8_t error;
     uint32_t samplerate;
+
+    /* multichannel configuration */
+    uint8_t channel_config[64];
 } faacDecFrameInfo;
 
 typedef struct
@@ -364,6 +368,11 @@ typedef struct
     real_t *pow2_table;
 #endif
 #endif
+
+    /* Program Config Element */
+    uint8_t pce_set;
+    program_config pce;
+    uint8_t channel_element[MAX_CHANNELS];
 
     /* Configuration data */
     faacDecConfiguration config;

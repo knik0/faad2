@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.h,v 1.17 2003/04/01 16:34:30 menno Exp $
+** $Id: bits.h,v 1.18 2003/07/07 21:11:18 menno Exp $
 **/
 
 #ifndef __BITS_H__
@@ -162,7 +162,7 @@ static INLINE uint8_t faad_get1bit(bitfile *ld DEBUGDEC)
         return (uint8_t)faad_getbits(ld, 1 DEBUGVAR(print,var,dbg));
 
     ld->bits_left--;
-    r = (ld->bufa >> ld->bits_left) & 1;
+    r = (uint8_t)((ld->bufa >> ld->bits_left) & 1);
 
     return r;
 }

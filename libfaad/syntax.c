@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.45 2003/06/23 15:21:20 menno Exp $
+** $Id: syntax.c,v 1.46 2003/07/07 21:11:18 menno Exp $
 **/
 
 /*
@@ -65,8 +65,10 @@ int8_t GASpecificConfig(bitfile *ld, mp4AudioSpecificConfig *mp4ASC)
         program_config_element(&pce, ld);
         mp4ASC->channelsConfiguration = pce.channels;
 
+        /*
         if (pce.num_valid_cc_elements)
             return -3;
+        */
     }
 
 #ifdef ERROR_RESILIENCE
@@ -154,12 +156,16 @@ uint8_t program_config_element(program_config *pce, bitfile *ld)
         if ((pce->front_element_is_cpe[i] = faad_get1bit(ld
             DEBUGVAR(1,26,"program_config_element(): front_element_is_cpe"))) & 1)
         {
+//            printf("CPE ");
             pce->channels += 2;
         } else {
+//            printf("SCE ");
             pce->channels++;
         }
         pce->front_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,27,"program_config_element(): front_element_tag_select"));
+
+//        printf("FRONT %d: %d\n", i, pce->front_element_tag_select[i]);
     }
 
     for (i = 0; i < pce->num_side_channel_elements; i++)
@@ -167,12 +173,16 @@ uint8_t program_config_element(program_config *pce, bitfile *ld)
         if ((pce->side_element_is_cpe[i] = faad_get1bit(ld
             DEBUGVAR(1,28,"program_config_element(): side_element_is_cpe"))) & 1)
         {
+//            printf("CPE ");
             pce->channels += 2;
         } else {
+//            printf("SCE ");
             pce->channels++;
         }
         pce->side_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,29,"program_config_element(): side_element_tag_select"));
+
+//        printf("SIDE %d: %d\n", i, pce->side_element_tag_select[i]);
     }
 
     for (i = 0; i < pce->num_back_channel_elements; i++)
@@ -180,12 +190,16 @@ uint8_t program_config_element(program_config *pce, bitfile *ld)
         if ((pce->back_element_is_cpe[i] = faad_get1bit(ld
             DEBUGVAR(1,30,"program_config_element(): back_element_is_cpe"))) & 1)
         {
+//            printf("CPE ");
             pce->channels += 2;
         } else {
+//            printf("SCE ");
             pce->channels++;
         }
         pce->back_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,31,"program_config_element(): back_element_tag_select"));
+
+//        printf("BACK %d: %d\n", i, pce->back_element_tag_select[i]);
     }
 
     for (i = 0; i < pce->num_lfe_channel_elements; i++)
@@ -193,17 +207,18 @@ uint8_t program_config_element(program_config *pce, bitfile *ld)
         pce->channels++;
         pce->lfe_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,32,"program_config_element(): lfe_element_tag_select"));
+
+//        printf("LFE %d: %d\n", i, pce->lfe_element_tag_select[i]);
     }
 
     for (i = 0; i < pce->num_assoc_data_elements; i++)
+    {
         pce->assoc_data_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
-        DEBUGVAR(1,33,"program_config_element(): assoc_data_element_tag_select"));
+            DEBUGVAR(1,33,"program_config_element(): assoc_data_element_tag_select"));
+    }
 
     for (i = 0; i < pce->num_valid_cc_elements; i++)
     {
-        /* have to count these as channels too?? (1 or 2) */
-        pce->channels += 2;
-
         pce->cc_element_is_ind_sw[i] = faad_get1bit(ld
             DEBUGVAR(1,34,"program_config_element(): cc_element_is_ind_sw"));
         pce->valid_cc_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
@@ -256,6 +271,11 @@ element *decode_sce_lfe(faacDecHandle hDecoder,
     hInfo->error = single_lfe_channel_element(hDecoder, ele,
         ld, spec_data[channels]);
 
+    if (id_syn_ele == ID_SCE)
+        hDecoder->channel_element[channels] = hDecoder->fr_ch_ele;
+    else /* LFE */
+        hDecoder->channel_element[channels] = hDecoder->fr_ch_ele;
+
     hDecoder->fr_channels++;
     hDecoder->fr_ch_ele++;
 
@@ -294,6 +314,9 @@ element *decode_cpe(faacDecHandle hDecoder,
 
     hInfo->error = channel_pair_element(hDecoder, ele,
         ld, spec_data[channels], spec_data[channels+1]);
+
+    hDecoder->channel_element[channels] = hDecoder->fr_ch_ele;
+    hDecoder->channel_element[channels+1] = hDecoder->fr_ch_ele;
 
     hDecoder->fr_channels += 2;
     hDecoder->fr_ch_ele++;
@@ -334,15 +357,18 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
                 if (hInfo->error > 0)
                     return elements;
                 break;
-            case ID_CCE: /* not implemented yet */
-                hInfo->error = 6;
-                return elements;
+            case ID_CCE: /* not implemented yet, but skip the bits */
+                hInfo->error = coupling_channel_element(hDecoder, ld);
+                if (hInfo->error > 0)
+                    return elements;
+                break;
             case ID_DSE:
                 data_stream_element(ld);
                 break;
             case ID_PCE:
                 if ((hInfo->error = program_config_element(pce, ld)) > 0)
                     return elements;
+                hDecoder->pce_set = 1;
                 break;
             case ID_FIL:
                 if ((hInfo->error = fill_element(ld, drc)) > 0)
@@ -770,6 +796,97 @@ static uint8_t pulse_data(ic_stream *ics, pulse_info *pul, bitfile *ld)
             DEBUGVAR(1,58,"pulse_data(): pulse_offset"));
         pul->pulse_amp[i] = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,59,"pulse_data(): pulse_amp"));
+    }
+
+    return 0;
+}
+
+/* Table 4.4.8: Currently just for skipping the bits... */
+static uint8_t coupling_channel_element(faacDecHandle hDecoder, bitfile *ld)
+{
+    uint8_t c, result = 0;
+    uint8_t ind_sw_cce_flag = 0;
+    uint8_t num_gain_element_lists = 0;
+    uint8_t num_coupled_elements = 0;
+
+    element el_empty;
+    ic_stream ics_empty;
+    int16_t sh_data[1024];
+
+    memset(&el_empty, 0, sizeof(element));
+    memset(&ics_empty, 0, sizeof(ic_stream));
+
+    faad_getbits(ld, LEN_TAG
+        DEBUGVAR(1,900,"coupling_channel_element(): element_instance_tag"));
+
+    ind_sw_cce_flag = faad_get1bit(ld
+        DEBUGVAR(1,901,"coupling_channel_element(): ind_sw_cce_flag"));
+    num_coupled_elements = faad_getbits(ld, 3
+        DEBUGVAR(1,902,"coupling_channel_element(): num_coupled_elements"));
+
+    for (c = 0; c < num_coupled_elements + 1; c++)
+    {
+        uint8_t cc_target_is_cpe, cc_target_tag_select;
+
+        num_gain_element_lists++;
+
+        cc_target_is_cpe = faad_get1bit(ld
+            DEBUGVAR(1,903,"coupling_channel_element(): cc_target_is_cpe"));
+        cc_target_tag_select = faad_getbits(ld, 4
+            DEBUGVAR(1,904,"coupling_channel_element(): cc_target_tag_select"));
+
+        if (cc_target_is_cpe)
+        {
+            uint8_t cc_l = faad_get1bit(ld
+                DEBUGVAR(1,905,"coupling_channel_element(): cc_l"));
+            uint8_t cc_r = faad_get1bit(ld
+                DEBUGVAR(1,906,"coupling_channel_element(): cc_r"));
+
+            if (cc_l && cc_r)
+                num_gain_element_lists++;
+        }
+    }
+
+    faad_get1bit(ld
+        DEBUGVAR(1,907,"coupling_channel_element(): cc_domain"));
+    faad_get1bit(ld
+        DEBUGVAR(1,908,"coupling_channel_element(): gain_element_sign"));
+    faad_getbits(ld, 2
+        DEBUGVAR(1,909,"coupling_channel_element(): gain_element_scale"));
+
+    if ((result = individual_channel_stream(hDecoder, &el_empty, ld, &ics_empty,
+        0, sh_data)) > 0)
+    {
+        return result;
+    }
+
+    for (c = 1; c < num_gain_element_lists; c++)
+    {
+        uint8_t cge;
+
+        if (ind_sw_cce_flag)
+        {
+            cge = 1;
+        } else {
+            cge = faad_get1bit(ld
+                DEBUGVAR(1,910,"coupling_channel_element(): common_gain_element_present"));
+        }
+
+        if (cge)
+        {
+            huffman_scale_factor(ld);
+        } else {
+            uint8_t g, sfb;
+
+            for (g = 0; g < ics_empty.num_window_groups; g++)
+            {
+                for (sfb = 0; sfb < ics_empty.max_sfb; sfb++)
+                {
+                    if (ics_empty.sfb_cb[g][sfb] != ZERO_HCB)
+                        huffman_scale_factor(ld);
+                }
+            }
+        }
     }
 
     return 0;
@@ -1624,17 +1741,17 @@ void get_adif_header(adif_header *adif, bitfile *ld)
     adif->num_program_config_elements = (uint8_t)faad_getbits(ld, 4
         DEBUGVAR(1,116,"get_adif_header(): num_program_config_elements"));
 
-    if(adif->bitstream_type == 0)
-    {
-        adif->adif_buffer_fullness = faad_getbits(ld, 20
-            DEBUGVAR(1,117,"get_adif_header(): adif_buffer_fullness"));
-    } else {
-        adif->adif_buffer_fullness = 0;
-    }
-
     for (i = 0; i < adif->num_program_config_elements + 1; i++)
     {
-        program_config_element(&adif->pce, ld);
+        if(adif->bitstream_type == 0)
+        {
+            adif->adif_buffer_fullness = faad_getbits(ld, 20
+                DEBUGVAR(1,117,"get_adif_header(): adif_buffer_fullness"));
+        } else {
+            adif->adif_buffer_fullness = 0;
+        }
+
+        program_config_element(&adif->pce[i], ld);
     }
 }
 

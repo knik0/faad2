@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.28 2003/06/23 15:21:20 menno Exp $
+** $Id: syntax.h,v 1.30 2003/07/08 13:45:45 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -99,6 +99,7 @@ static uint8_t single_lfe_channel_element(faacDecHandle hDecoder,
 static uint8_t channel_pair_element(faacDecHandle hDecoder, element *cpe,
                                     bitfile *ld, int16_t *spec_data1,
                                     int16_t *spec_data2);
+static uint8_t coupling_channel_element(faacDecHandle hDecoder, bitfile *ld);
 static uint16_t data_stream_element(bitfile *ld);
 static uint8_t program_config_element(program_config *pce, bitfile *ld);
 static uint8_t fill_element(bitfile *ld, drc_info *drc);

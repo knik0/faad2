@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.57 2003/06/23 15:21:19 menno Exp $
+** $Id: decoder.c,v 1.58 2003/07/07 21:11:18 menno Exp $
 **/
 
 #include "common.h"
@@ -178,11 +178,14 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
             get_adif_header(&adif, &ld);
             faad_byte_align(&ld);
 
-            hDecoder->sf_index = adif.pce.sf_index;
-            hDecoder->object_type = adif.pce.object_type;
+            hDecoder->sf_index = adif.pce[0].sf_index;
+            hDecoder->object_type = adif.pce[0].object_type;
 
             *samplerate = sample_rates[hDecoder->sf_index];
-            *channels = adif.pce.channels;
+            *channels = adif.pce[0].channels;
+
+            memcpy(&(hDecoder->pce), &(adif.pce[0]), sizeof(program_config));
+            hDecoder->pce_set = 1;
 
             bits = bit2byte(faad_get_processed_bits(&ld));
 
@@ -403,8 +406,8 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #ifdef LTP_DEC
     uint16_t *ltp_lag      =  hDecoder->ltp_lag;
 #endif
+    program_config *pce    = &(hDecoder->pce);
 
-    program_config pce;
     element *syntax_elements[MAX_SYNTAX_ELEMENTS];
     element **elements;
     int16_t *spec_data[MAX_CHANNELS];
@@ -447,7 +450,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
     /* decode the complete bitstream */
     elements = raw_data_block(hDecoder, hInfo, ld, syntax_elements,
-        spec_data, spec_coef, &pce, drc);
+        spec_data, spec_coef, pce, drc);
 
     ch_ele = hDecoder->fr_ch_ele;
     channels = hDecoder->fr_channels;
@@ -497,13 +500,10 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         ic_stream *ics;
 
         /* find the syntax element to which this channel belongs */
-        for (i = 0; i < ch_ele; i++)
-        {
-            if (syntax_elements[i]->channel == ch)
-                ics = &(syntax_elements[i]->ics1);
-            else if (syntax_elements[i]->paired_channel == ch)
-                ics = &(syntax_elements[i]->ics2);
-        }
+        if (syntax_elements[hDecoder->channel_element[ch]]->channel == ch)
+            ics = &(syntax_elements[hDecoder->channel_element[ch]]->ics1);
+        else if (syntax_elements[hDecoder->channel_element[ch]]->paired_channel == ch)
+            ics = &(syntax_elements[hDecoder->channel_element[ch]]->ics2);
 
         /* inverse quantization */
         inverse_quantization(spec_coef[ch], spec_data[ch], frame_len);
@@ -518,18 +518,6 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         /* deinterleave short block grouping */
         if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
             quant_to_spec(ics, spec_coef[ch], frame_len);
-
-#if 0
-        {
-            int rr;
-
-            for (rr = 0; rr < frame_len; rr++)
-            {
-//                if ((spec_coef[ch][rr] >> REAL_BITS) > (1<<12))
-                    printf(">>> %d\n", (spec_coef[ch][rr] >> REAL_BITS));
-            }
-        }
-#endif
     }
 
     /* Because for ms, is and pns both channels spectral coefficients are needed
@@ -543,23 +531,20 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         ltp_info *ltp;
 
         /* find the syntax element to which this channel belongs */
-        for (i = 0; i < ch_ele; i++)
+        if (syntax_elements[hDecoder->channel_element[ch]]->channel == ch)
         {
-            if (syntax_elements[i]->channel == ch)
-            {
-                ics = &(syntax_elements[i]->ics1);
-                icsr = &(syntax_elements[i]->ics2);
+            ics = &(syntax_elements[hDecoder->channel_element[ch]]->ics1);
+            icsr = &(syntax_elements[hDecoder->channel_element[ch]]->ics2);
+            ltp = &(ics->ltp);
+            pch = syntax_elements[hDecoder->channel_element[ch]]->paired_channel;
+            right_channel = 0;
+        } else if (syntax_elements[hDecoder->channel_element[ch]]->paired_channel == ch) {
+            ics = &(syntax_elements[hDecoder->channel_element[ch]]->ics2);
+            if (syntax_elements[hDecoder->channel_element[ch]]->common_window)
+                ltp = &(ics->ltp2);
+            else
                 ltp = &(ics->ltp);
-                pch = syntax_elements[i]->paired_channel;
-                right_channel = 0;
-            } else if (syntax_elements[i]->paired_channel == ch) {
-                ics = &(syntax_elements[i]->ics2);
-                if (syntax_elements[i]->common_window)
-                    ltp = &(ics->ltp2);
-                else
-                    ltp = &(ics->ltp);
-                right_channel = 1;
-            }
+            right_channel = 1;
         }
 
         /* pns decoding */

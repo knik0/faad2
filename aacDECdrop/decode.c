@@ -16,8 +16,8 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decode.c,v 1.13 2003/05/07 18:30:48 menno Exp $
-** $Id: decode.c,v 1.13 2003/05/07 18:30:48 menno Exp $
+** $Id: decode.c,v 1.14 2003/07/07 21:11:17 menno Exp $
+** $Id: decode.c,v 1.14 2003/07/07 21:11:17 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -42,7 +42,7 @@
 #define min(a,b) ( (a) < (b) ? (a) : (b) )
 #endif
 
-#define MAX_CHANNELS 6 /* make this higher to support files with
+#define MAX_CHANNELS 8 /* make this higher to support files with
                           more channels */
 
 /* FAAD file buffering routines */

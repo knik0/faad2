@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: output.c,v 1.16 2003/04/26 13:25:13 menno Exp $
+** $Id: output.c,v 1.17 2003/07/07 21:11:18 menno Exp $
 **/
 
 #include "common.h"
@@ -56,11 +56,11 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
     double    *double_sample_buffer = (double*)sample_buffer;
 
     /* Copy output to a standard PCM buffer */
-    switch (format)
+    for (ch = 0; ch < channels; ch++)
     {
-    case FAAD_FMT_16BIT:
-        for (ch = 0; ch < channels; ch++)
+        switch (format)
         {
+        case FAAD_FMT_16BIT:
             for(i = 0; i < frame_len; i++)
             {
                 int32_t tmp;
@@ -69,11 +69,8 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
                 ftemp = input[ch][i] + 0xff8000;
                 ftol(ftemp, short_sample_buffer[(i*channels)+ch]);
             }
-        }
-        break;
-    case FAAD_FMT_16BIT_DITHER:
-        for (ch = 0; ch < channels; ch++)
-        {
+            break;
+        case FAAD_FMT_16BIT_DITHER:
             for(i = 0; i < frame_len; i++, j++)
             {
                 double Sum = input[ch][i] * 65535.f;
@@ -87,13 +84,10 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
                     val = -(1<<15);
                 short_sample_buffer[(i*channels)+ch] = (int16_t)val;
             }
-        }
-        break;
-    case FAAD_FMT_16BIT_L_SHAPE:
-    case FAAD_FMT_16BIT_M_SHAPE:
-    case FAAD_FMT_16BIT_H_SHAPE:
-        for (ch = 0; ch < channels; ch++)
-        {
+            break;
+        case FAAD_FMT_16BIT_L_SHAPE:
+        case FAAD_FMT_16BIT_M_SHAPE:
+        case FAAD_FMT_16BIT_H_SHAPE:
             for(i = 0; i < frame_len; i++, j++)
             {
                 double Sum = input[ch][i] * 65535.f;
@@ -107,11 +101,8 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
                     val = -(1<<15);
                 short_sample_buffer[(i*channels)+ch] = (int16_t)val;
             }
-        }
-        break;
-    case FAAD_FMT_24BIT:
-        for (ch = 0; ch < channels; ch++)
-        {
+            break;
+        case FAAD_FMT_24BIT:
             for(i = 0; i < frame_len; i++)
             {
                 if (input[ch][i] > (1<<15)-1)
@@ -120,11 +111,8 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
                     input[ch][i] = -(1<<15);
                 int_sample_buffer[(i*channels)+ch] = ROUND(input[ch][i]*(1<<8));
             }
-        }
-        break;
-    case FAAD_FMT_32BIT:
-        for (ch = 0; ch < channels; ch++)
-        {
+            break;
+        case FAAD_FMT_32BIT:
             for(i = 0; i < frame_len; i++)
             {
                 if (input[ch][i] > (1<<15)-1)
@@ -133,38 +121,20 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
                     input[ch][i] = -(1<<15);
                 int_sample_buffer[(i*channels)+ch] = ROUND32(input[ch][i]*(1<<16));
             }
-        }
-        break;
-    case FAAD_FMT_FLOAT:
-        for (ch = 0; ch < channels; ch++)
-        {
+            break;
+        case FAAD_FMT_FLOAT:
             for(i = 0; i < frame_len; i++)
             {
-/*
-                if (input[ch][i] > (1<<15)-1)
-                    input[ch][i] = (1<<15)-1;
-                else if (input[ch][i] < -(1<<15))
-                    input[ch][i] = -(1<<15);
-*/
                 float_sample_buffer[(i*channels)+ch] = input[ch][i]*FLOAT_SCALE;
             }
-        }
-        break;
-    case FAAD_FMT_DOUBLE:
-        for (ch = 0; ch < channels; ch++)
-        {
+            break;
+        case FAAD_FMT_DOUBLE:
             for(i = 0; i < frame_len; i++)
             {
-/*
-                if (input[ch][i] > (1<<15)-1)
-                    input[ch][i] = (1<<15)-1;
-                else if (input[ch][i] < -(1<<15))
-                    input[ch][i] = -(1<<15);
-*/
                 double_sample_buffer[(i*channels)+ch] = (double)input[ch][i]*FLOAT_SCALE;
             }
+            break;
         }
-        break;
     }
 
     return sample_buffer;

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: audio.c,v 1.12 2003/02/27 11:37:26 menno Exp $
+** $Id: audio.c,v 1.13 2003/07/07 21:11:17 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -63,13 +63,17 @@ audio_file *open_audio_file(char *infile, int samplerate, int channels,
         return NULL;
     }
 
-#ifdef _WIN32
-    if(infile[0] == '-')
+    if(!infile)
     {
+#ifdef __BORLANDC__
         setmode(fileno(stdout), O_BINARY);
-    }
+#elif defined _MSC_VER || defined __MINGW32__
+        _setmode(_fileno(stdout), _O_BINARY);
 #endif
-    aufile->sndfile = fopen(infile, "wb");
+        aufile->sndfile = stdout;
+    } else {
+        aufile->sndfile = fopen(infile, "wb");
+    }
 
     if (aufile->sndfile == NULL)
     {
@@ -80,6 +84,7 @@ audio_file *open_audio_file(char *infile, int samplerate, int channels,
     if (aufile->fileType == OUTPUT_WAV)
     {
         write_wav_header(aufile);
+        aufile->total_samples = 0;
     }
 
     return aufile;
@@ -108,16 +113,15 @@ int write_audio_file(audio_file *aufile, void *sample_buffer, int samples)
     return 0;
 }
 
-void close_audio_file(audio_file *aufile)
+void close_audio_file(audio_file *aufile, char *fileName)
 {
-    if (aufile->fileType == OUTPUT_WAV)
+    if (aufile->fileType == OUTPUT_WAV && fileName)
     {
         fseek(aufile->sndfile, 0, SEEK_SET);
 
         write_wav_header(aufile);
+        fclose(aufile->sndfile);
     }
-
-    fclose(aufile->sndfile);
 
     if (aufile) free(aufile);
 }
@@ -127,8 +131,13 @@ static int write_wav_header(audio_file *aufile)
     unsigned char header[44];
     unsigned char* p = header;
     unsigned int bytes = (aufile->bits_per_sample + 7) / 8;
-    float data_size = (float)bytes * aufile->total_samples;
+    float data_size;
     unsigned long word32;
+
+    if (aufile->total_samples)
+        data_size  = aufile->total_samples * bytes;
+    else
+        data_size = (float)(long)(0x7fffffff);
 
     *p++ = 'R'; *p++ = 'I'; *p++ = 'F'; *p++ = 'F';
 

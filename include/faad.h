@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: faad.h,v 1.21 2003/04/02 20:07:45 menno Exp $
+** $Id: faad.h,v 1.22 2003/07/07 21:11:18 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -47,7 +47,7 @@ extern "C" {
 #define ER_LC     17
 #define ER_LTP    19
 #define LD        23
-#define DRM_ER_LC 27 /* special object type for DRM */
+#define DRM_ER_LC 32 /* special object type for DRM */
 
 /* header types */
 #define RAW        0
@@ -73,8 +73,21 @@ extern "C" {
 #define ERROR_RESILIENCE_CAP  (1<<4)
 #define FIXED_POINT_CAP       (1<<5)
 
-/* A decode call can eat up to FAAD_MIN_STREAMSIZE octets per decoded channel,
-   so at least so much octets per channel should be available in this stream */
+/* Channel definitions */
+#define FRONT_CHANNEL_CENTER (1)
+#define FRONT_CHANNEL_LEFT   (2)
+#define FRONT_CHANNEL_RIGHT  (3)
+#define SIDE_CHANNEL_LEFT    (4)
+#define SIDE_CHANNEL_RIGHT   (5)
+#define BACK_CHANNEL_LEFT    (6)
+#define BACK_CHANNEL_RIGHT   (7)
+#define BACK_CHANNEL_CENTER  (8)
+#define LFE_CHANNEL          (9)
+#define UNKNOWN_CHANNEL      (10)
+
+
+/* A decode call can eat up to FAAD_MIN_STREAMSIZE bytes per decoded channel,
+   so at least so much bytes per channel should be available in this stream */
 #define FAAD_MIN_STREAMSIZE 768 /* 6144 bits/channel */
 
 
@@ -114,6 +127,9 @@ typedef struct faacDecFrameInfo
     unsigned char channels;
     unsigned char error;
     unsigned long samplerate;
+
+    /* multichannel configuration */
+    unsigned char channel_config[64];
 } faacDecFrameInfo;
 
 char* FAADAPI faacDecGetErrorMessage(unsigned char errcode);

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.h,v 1.22 2003/04/02 20:07:46 menno Exp $
+** $Id: decoder.h,v 1.23 2003/07/07 21:11:18 menno Exp $
 **/
 
 #ifndef __DECODER_H__
@@ -64,6 +64,18 @@ extern "C" {
 #define LD_DEC_CAP            (1<<3)
 #define ERROR_RESILIENCE_CAP  (1<<4)
 #define FIXED_POINT_CAP       (1<<5)
+
+/* channel definitions */
+#define FRONT_CHANNEL_CENTER (1)
+#define FRONT_CHANNEL_LEFT   (2)
+#define FRONT_CHANNEL_RIGHT  (3)
+#define SIDE_CHANNEL_LEFT    (4)
+#define SIDE_CHANNEL_RIGHT   (5)
+#define BACK_CHANNEL_LEFT    (6)
+#define BACK_CHANNEL_RIGHT   (7)
+#define BACK_CHANNEL_CENTER  (8)
+#define LFE_CHANNEL          (9)
+#define UNKNOWN_CHANNEL      (10)
 
 int8_t* FAADAPI faacDecGetErrorMessage(uint8_t errcode);
 
