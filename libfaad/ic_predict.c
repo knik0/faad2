@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ic_predict.c,v 1.4 2002/05/24 17:26:12 menno Exp $
+** $Id: ic_predict.c,v 1.5 2002/06/03 15:03:46 menno Exp $
 **/
 
 #include "common.h"
@@ -106,7 +106,7 @@ static void reset_pred_state(pred_state *state)
 void pns_reset_pred_state(ic_stream *ics, pred_state *state)
 {
     uint8_t sfb, g, b;
-    uint16_t i, offs, size;
+    uint16_t i, offs, offs2;
 
     /* prediction only for long blocks */
     if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
@@ -121,9 +121,9 @@ void pns_reset_pred_state(ic_stream *ics, pred_state *state)
                 if (is_noise(ics, g, sfb))
                 {
                     offs = ics->swb_offset[sfb];
-                    size = ics->swb_offset[sfb+1] - offs;
+                    offs2 = ics->swb_offset[sfb+1];
 
-                    for (i = offs; i < size; i++)
+                    for (i = offs; i < offs2; i++)
                         reset_pred_state(&state[i]);
                 }
             }
