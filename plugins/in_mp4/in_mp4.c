@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: in_mp4.c,v 1.38 2003/08/03 18:00:15 menno Exp $
+** $Id: in_mp4.c,v 1.39 2003/09/03 20:19:07 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -181,6 +181,7 @@ void config_read()
     strcpy(use_for_aac, "1");
     strcpy(downmix, "0");
     strcpy(vbr_display, "1");
+    strcpy(titleformat, "%7");
 
     RS(priority);
     RS(resolution);
@@ -188,6 +189,7 @@ void config_read()
     RS(use_for_aac);
     RS(downmix);
     RS(vbr_display);
+    RS(titleformat);
 
     m_priority = atoi(priority);
     m_resolution = atoi(resolution);
@@ -219,6 +221,7 @@ void config_write()
     WS(use_for_aac);
     WS(downmix);
     WS(vbr_display);
+    WS(titleformat);
 }
 
 void init()
@@ -538,6 +541,118 @@ int infoDlg(char *fn, HWND hwndParent)
 
     return 0;
 }
+/* Get the title from the file */
+void ConstructTitle(MP4FileHandle file, char *filename, char *title, char *format)
+{
+    int some_info = 0;
+    char *in = format;
+    char *out = title;
+    char *bound = out + (MAX_PATH - 10 - 1);
+    char *pVal, dummy1[1024];
+    short dummy, dummy2;
+
+
+    while (*in && out < bound)
+    {
+        switch (*in)
+        {
+        case '%':
+            ++in;
+            break;
+
+        default:
+            *out++ = *in++;
+            continue;
+        }
+
+        /* handle % escape sequence */
+        switch (*in++)
+        {
+        case '0':
+            dummy = 0; dummy2 = 0;
+            if (MP4GetMetadataTrack(file, &dummy, &dummy2))
+            {
+                wsprintf(dummy1, "%d", dummy);
+                lstrcpy(out, dummy1); out += lstrlen(dummy1);
+                some_info = 1;
+            }
+            break;
+
+        case '1':
+            pVal = NULL;
+            if (MP4GetMetadataArtist(file, &pVal))
+            {
+                lstrcpy(out, pVal); out += lstrlen(pVal);
+                some_info = 1;
+            }
+            break;
+
+        case '2':
+            pVal = NULL;
+            if (MP4GetMetadataName(file, &pVal))
+            {
+                lstrcpy(out, pVal); out += lstrlen(pVal);
+                some_info = 1;
+            }
+            break;
+
+        case '3':
+            pVal = NULL;
+            if (MP4GetMetadataAlbum(file, &pVal))
+            {
+                lstrcpy(out, pVal); out += lstrlen(pVal);
+                some_info = 1;
+            }
+            break;
+
+        case '4':
+            pVal = NULL;
+            if (MP4GetMetadataYear(file, &pVal))
+            {
+                lstrcpy(out, pVal); out += lstrlen(pVal);
+                some_info = 1;
+            }
+            break;
+
+        case '5':
+            pVal = NULL;
+            if (MP4GetMetadataComment(file, &pVal))
+            {
+                lstrcpy(out, pVal); out += lstrlen(pVal);
+                some_info = 1;
+            }
+            break;
+
+        case '6':
+            pVal = NULL;
+            if (MP4GetMetadataGenre(file, &pVal))
+            {
+                lstrcpy(out, pVal); out += lstrlen(pVal);
+                some_info = 1;
+            }
+            break;
+
+        case '7':
+            {
+                char *p=filename+lstrlen(filename);
+                int len = 0;
+                while (*p != '\\' && p >= filename) { p--; len++; }
+                lstrcpy(out, ++p); out += len;
+                some_info = 1;
+                break;
+            }
+        }
+    }
+
+    *out = '\0';
+
+    if (!some_info)
+    {
+        char *p=filename+lstrlen(filename);
+        while (*p != '\\' && p >= filename) p--;
+        lstrcpy(title,++p);
+    }
+}
 
 BOOL CALLBACK config_dialog_proc(HWND hwndDlg, UINT message,
                                  WPARAM wParam, LPARAM lParam)
@@ -557,6 +672,7 @@ BOOL CALLBACK config_dialog_proc(HWND hwndDlg, UINT message,
             SendMessage(GetDlgItem(hwndDlg, IDC_DOWNMIX), BM_SETCHECK, BST_CHECKED, 0);
         if (m_vbr_display)
             SendMessage(GetDlgItem(hwndDlg, IDC_VBR), BM_SETCHECK, BST_CHECKED, 0);
+        SetDlgItemText(hwndDlg, IDC_TITLEFORMAT, titleformat);
         return TRUE;
 
     case WM_COMMAND:
@@ -569,6 +685,7 @@ BOOL CALLBACK config_dialog_proc(HWND hwndDlg, UINT message,
             m_use_for_aac = SendMessage(GetDlgItem(hwndDlg, IDC_USEFORAAC), BM_GETCHECK, 0, 0);
             m_downmix = SendMessage(GetDlgItem(hwndDlg, IDC_DOWNMIX), BM_GETCHECK, 0, 0);
             m_vbr_display = SendMessage(GetDlgItem(hwndDlg, IDC_VBR), BM_GETCHECK, 0, 0);
+            GetDlgItemText(hwndDlg, IDC_TITLEFORMAT, titleformat, MAX_PATH);
 
             m_priority = SendMessage(GetDlgItem(hwndDlg, IDC_PRIORITY), TBM_GETPOS, 0, 0);
             for (i = 0; i < 6; i++)
@@ -1266,11 +1383,16 @@ void getfileinfo(char *filename, char *title, int *length_in_ms)
 
         if (title)
         {
-            char *tmp2;
-            char *tmp = PathFindFileName(mp4state.filename);
-            strcpy(title, tmp);
-            tmp2 = strrchr(title, '.');
-            tmp2[0] = '\0';
+            if (mp4state.filetype == 0)
+            {
+                ConstructTitle(mp4state.mp4file, mp4state.filename, title, titleformat);
+            } else {
+                char *tmp2;
+                char *tmp = PathFindFileName(mp4state.filename);
+                strcpy(title, tmp);
+                tmp2 = strrchr(title, '.');
+                tmp2[0] = '\0';
+            }
         }
     } else {
         if (length_in_ms)
@@ -1278,11 +1400,18 @@ void getfileinfo(char *filename, char *title, int *length_in_ms)
 
         if (title)
         {
-            char *tmp2;
-            char *tmp = PathFindFileName(filename);
-            strcpy(title, tmp);
-            tmp2 = strrchr(title, '.');
-            tmp2[0] = '\0';
+            MP4FileHandle file = MP4_INVALID_FILE_HANDLE;
+            if (!(file = MP4Read(filename, 0)))
+            {
+                char *tmp2;
+                char *tmp = PathFindFileName(filename);
+                strcpy(title, tmp);
+                tmp2 = strrchr(title, '.');
+                tmp2[0] = '\0';
+            } else {
+                ConstructTitle(file, filename, title, titleformat);
+                MP4Close(file);
+            }
         }
     }
 }

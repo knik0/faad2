@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: config.c,v 1.5 2003/08/03 18:00:14 menno Exp $
+** $Id: config.c,v 1.6 2003/09/03 20:19:07 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -37,6 +37,7 @@ int m_show_errors = 1;
 int m_use_for_aac = 1;
 int m_downmix = 0;
 int m_vbr_display = 0;
+char titleformat[MAX_PATH];
 
 void _r_s(char *name,char *data, int mlen)
 {

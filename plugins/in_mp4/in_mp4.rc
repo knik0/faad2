@@ -94,7 +94,7 @@ BEGIN
     LTEXT           "of",IDC_STATIC11,257,127,8,14,SS_CENTERIMAGE
 END
 
-IDD_CONFIG DIALOG DISCARDABLE  0, 0, 233, 95
+IDD_CONFIG DIALOG DISCARDABLE  0, 0, 233, 166
 STYLE DS_MODALFRAME | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Configuration"
 FONT 8, "MS Sans Serif"
@@ -117,13 +117,23 @@ BEGIN
                     WS_TABSTOP,152,39,55,10
     CONTROL         "Show errors",IDC_ERROR,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,152,52,53,10
-    DEFPUSHBUTTON   "OK",IDOK,122,74,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,61,74,50,14
+    EDITTEXT        IDC_TITLEFORMAT,14,86,121,14,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,176,145,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,176,125,50,14
     GROUPBOX        "Priority",IDC_STATIC,7,7,57,58
     LTEXT           "Highest",IDC_STATIC,34,18,25,8
     LTEXT           "Normal",IDC_STATIC,34,35,23,8
     LTEXT           "Lowest",IDC_STATIC,34,52,24,8
     GROUPBOX        "Resolution",IDC_STATIC,71,7,73,58
+    GROUPBOX        "Title format",IDC_STATIC,7,72,137,87
+    LTEXT           "%0 - Track",IDC_STATIC,17,109,35,8
+    LTEXT           "%1 - Artist",IDC_STATIC,17,120,32,8
+    LTEXT           "%2 - Title",IDC_STATIC,17,131,30,8
+    LTEXT           "%3 - Album",IDC_STATIC,17,142,36,8
+    LTEXT           "%4 - Year",IDC_STATIC,68,109,31,8
+    LTEXT           "%5 - Comment",IDC_STATIC,68,120,46,8
+    LTEXT           "%6 - Genre",IDC_STATIC,68,131,36,8
+    LTEXT           "%7 - Filename",IDC_STATIC,68,142,44,8
 END
 
 
@@ -148,7 +158,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 226
         TOPMARGIN, 7
-        BOTTOMMARGIN, 88
+        BOTTOMMARGIN, 159
     END
 END
 #endif    // APSTUDIO_INVOKED
