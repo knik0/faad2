@@ -146,7 +146,7 @@
 			<Tool
 				Name="VCWebDeploymentTool"/>
 			<IntelOptions
-				CompilerName="0"/>
+				CompilerName="1"/>
 		</Configuration>
 	</Configurations>
 	<Files>

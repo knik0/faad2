@@ -35,7 +35,6 @@
 
 
 
-
 #ifdef WIN32
 
 #define _WIN32_WINNT 0x0400
@@ -265,6 +264,7 @@ typedef int8_t gint8;
 #ifndef FALSE
 #define FALSE 0
 #endif
+
 
 #endif /* __SYSTEMS_H__ */
 

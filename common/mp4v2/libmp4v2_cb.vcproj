@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.00"
-	Name="libmp4v2_st"
-	ProjectGUID="{0842E354-7635-4B5D-8709-9A373ED27DCA}"
+	Name="libmp4v2_cb"
+	ProjectGUID="{FAEB6203-052A-4073-AC1C-9CF6FB5B40CC}"
 	SccProjectName=""
 	SccLocalPath="">
 	<Platforms>
@@ -13,8 +13,8 @@
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\ST_Release"
-			IntermediateDirectory=".\ST_Release"
+			OutputDirectory=".\CB_Release"
+			IntermediateDirectory=".\CB_Release"
 			ConfigurationType="4"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="FALSE">
@@ -22,19 +22,18 @@
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories=".\"
-				PreprocessorDefinitions="WIN32,NDEBUG,_WINDOWS"
+				PreprocessorDefinitions="NDEBUG,WIN32,_WINDOWS,USE_FILE_CALLBACKS"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="TRUE"
 				UsePrecompiledHeader="2"
-				PrecompiledHeaderFile=".\ST_Release/libmp4v2_st60.pch"
-				AssemblerListingLocation=".\ST_Release/"
-				ObjectFile=".\ST_Release/"
-				ProgramDataBaseFileName=".\ST_Release/"
+				PrecompiledHeaderFile=".\CB_Release/libmp4v2_cb.pch"
+				AssemblerListingLocation=".\CB_Release/"
+				ObjectFile=".\CB_Release/"
+				ProgramDataBaseFileName=".\CB_Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				CompileAs="0"
-				AdditionalOptions="">
+				CompileAs="0">
 				<IntelOptions
 					Optimization="2"
 					InlineFuncExpansion="1"
@@ -43,19 +42,16 @@
 					RuntimeLibrary="2"
 					BufferSecurityCheck="1"
 					FunctionLevelLinking="1"
-					AllOptions="/c  /I &quot;.\\&quot; /nologo /W3 /O2 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\ST_Release/libmp4v2_st60.pch&quot; /Fo&quot;.\ST_Release/&quot; /Fd&quot;.\ST_Release/&quot; /Gd"
-					MSOriginalAdditionalOptions=""/>
+					AllOptions="/c  /I &quot;.\\&quot; /nologo /W3 /O2 /Ob1 /Oy /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_WINDOWS&quot; /D &quot;USE_FILE_CALLBACKS&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\CB_Release/libmp4v2_cb.pch&quot; /Fo&quot;.\CB_Release/&quot; /Fd&quot;.\CB_Release/&quot; /Gd"/>
 			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile=".\ST_Release\libmp4v2_st60.lib"
-				SuppressStartupBanner="TRUE"
-				AdditionalOptions="">
+				OutputFile=".\CB_Release\libmp4v2_cb.lib"
+				SuppressStartupBanner="TRUE">
 				<IntelOptions
-					AllOptions="/OUT:&quot;.\ST_Release\libmp4v2_st60.lib&quot; /NOLOGO"
-					MSOriginalAdditionalOptions=""/>
+					AllOptions="/OUT:&quot;.\CB_Release\libmp4v2_cb.lib&quot; /NOLOGO"/>
 			</Tool>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -67,7 +63,8 @@
 				Name="VCPreLinkEventTool"/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				Culture="1033"/>
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1043"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<IntelOptions
@@ -75,8 +72,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory=".\ST_Debug"
-			IntermediateDirectory=".\ST_Debug"
+			OutputDirectory=".\CB_Debug"
+			IntermediateDirectory=".\CB_Debug"
 			ConfigurationType="4"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="FALSE">
@@ -84,36 +81,33 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories=".\"
-				PreprocessorDefinitions="WIN32,_DEBUG,_WINDOWS"
-				RuntimeLibrary="1"
+				PreprocessorDefinitions="_DEBUG,WIN32,_WINDOWS,USE_FILE_CALLBACKS"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
-				PrecompiledHeaderFile=".\ST_Debug/libmp4v2_st60.pch"
-				AssemblerListingLocation=".\ST_Debug/"
-				ObjectFile=".\ST_Debug/"
-				ProgramDataBaseFileName=".\ST_Debug/"
+				PrecompiledHeaderFile=".\CB_Debug/libmp4v2_cb.pch"
+				AssemblerListingLocation=".\CB_Debug/"
+				ObjectFile=".\CB_Debug/"
+				ProgramDataBaseFileName=".\CB_Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="1"
-				CompileAs="0"
-				AdditionalOptions="">
+				DebugInformationFormat="4"
+				CompileAs="0">
 				<IntelOptions
 					Optimization="0"
 					MinimalRebuild="1"
 					BasicRuntimeChecks="3"
-					RuntimeLibrary="1"
-					AllOptions="/c  /I &quot;.\\&quot; /Z7 /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\ST_Debug/libmp4v2_st60.pch&quot; /Fo&quot;.\ST_Debug/&quot; /Fd&quot;.\ST_Debug/&quot; /Gd"
-					MSOriginalAdditionalOptions=""/>
+					RuntimeLibrary="3"
+					AllOptions="/c  /I &quot;.\\&quot; /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_WINDOWS&quot; /D &quot;USE_FILE_CALLBACKS&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\CB_Debug/libmp4v2_cb.pch&quot; /Fo&quot;.\CB_Debug/&quot; /Fd&quot;.\CB_Debug/&quot; /Gd"/>
 			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile=".\ST_Debug\libmp4v2_st60.lib"
-				SuppressStartupBanner="TRUE"
-				AdditionalOptions="">
+				OutputFile=".\CB_Debug\libmp4v2_cb.lib"
+				SuppressStartupBanner="TRUE">
 				<IntelOptions
-					AllOptions="/OUT:&quot;.\ST_Debug\libmp4v2_st60.lib&quot; /NOLOGO"
-					MSOriginalAdditionalOptions=""/>
+					AllOptions="/OUT:&quot;.\CB_Debug\libmp4v2_cb.lib&quot; /NOLOGO"/>
 			</Tool>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -125,17 +119,16 @@
 				Name="VCPreLinkEventTool"/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				Culture="1033"/>
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1043"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
-			<IntelOptions
-				CompilerName="1"/>
 		</Configuration>
 	</Configurations>
 	<Files>
 		<Filter
-			Name="source"
-			Filter=".c, .cpp">
+			Name="Source Files"
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
 				RelativePath=".\atom_co64.cpp"/>
 			<File
@@ -289,6 +282,8 @@
 			<File
 				RelativePath=".\mp4file_io.cpp"/>
 			<File
+				RelativePath=".\mp4info.cpp"/>
+			<File
 				RelativePath=".\mp4property.cpp"/>
 			<File
 				RelativePath=".\mp4track.cpp"/>
@@ -306,8 +301,10 @@
 				RelativePath=".\rtphint.cpp"/>
 		</Filter>
 		<Filter
-			Name="include"
-			Filter=".h">
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl">
+			<File
+				RelativePath=".\acconfig.h"/>
 			<File
 				RelativePath=".\atoms.h"/>
 			<File
@@ -347,8 +344,6 @@
 			<File
 				RelativePath=".\win32_ver.h"/>
 		</Filter>
-		<File
-			RelativePath=".\mp4info.cpp"/>
 	</Files>
 	<Globals/>
 </VisualStudioProject>

@@ -50,6 +50,44 @@ extern "C" MP4FileHandle MP4Read(const char* fileName, u_int32_t verbosity)
 	}
 }
 
+#ifdef USE_FILE_CALLBACKS
+extern "C" MP4FileHandle MP4ReadCb(const char* fileName, u_int32_t verbosity,
+                                   MP4OpenCallback MP4fopen,
+                                   MP4CloseCallback MP4fclose,
+                                   MP4ReadCallback MP4fread,
+                                   MP4WriteCallback MP4fwrite,
+                                   MP4SetposCallback MP4fsetpos,
+                                   MP4GetposCallback MP4fgetpos,
+                                   MP4FilesizeCallback MP4filesize,
+                                   void *userData
+                                   )
+{
+	MP4File* pFile = NULL;
+	try {
+		pFile = new MP4File(verbosity);
+
+        // Set user data and callbacks
+        pFile->m_userData = userData;
+        pFile->m_MP4fopen = MP4fopen;
+        pFile->m_MP4fclose = MP4fclose;
+        pFile->m_MP4fread = MP4fread;
+        pFile->m_MP4fwrite = MP4fwrite;
+        pFile->m_MP4fsetpos = MP4fsetpos;
+        pFile->m_MP4fgetpos = MP4fgetpos;
+        pFile->m_MP4filesize = MP4filesize;
+
+		pFile->Read(fileName);
+		return (MP4FileHandle)pFile;
+	}
+	catch (MP4Error* e) {
+		VERBOSE_ERROR(verbosity, e->Print());
+		delete e;
+		delete pFile;
+		return MP4_INVALID_FILE_HANDLE;
+	}
+}
+#endif
+
 extern "C" MP4FileHandle MP4Create(const char* fileName, 
 	u_int32_t verbosity, bool use64bits, bool useExtensibleFormat)
 {

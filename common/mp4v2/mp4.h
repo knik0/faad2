@@ -206,6 +206,15 @@ typedef u_int32_t	MP4EditId;
 
 /* MP4 API declarations */
 
+typedef u_int32_t (*MP4OpenCallback)(const char *pName, const char *mode, void *userData);
+typedef void (*MP4CloseCallback)(void *userData);
+typedef u_int32_t (*MP4ReadCallback)(void *pBuffer, unsigned int nBytesToRead, void *userData);
+typedef u_int32_t (*MP4WriteCallback)(void *pBuffer, unsigned int nBytesToWrite, void *userData);
+typedef int32_t (*MP4SetposCallback)(u_int32_t pos, void *userData);
+typedef int64_t (*MP4GetposCallback)(void *userData);
+typedef int64_t (*MP4FilesizeCallback)(void *userData);
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -226,6 +235,16 @@ MP4FileHandle MP4Modify(
 MP4FileHandle MP4Read(
 	const char* fileName, 
 	u_int32_t verbosity DEFAULT(0));
+
+MP4FileHandle MP4ReadCb(const char* fileName, u_int32_t verbosity,
+                        MP4OpenCallback MP4fopen,
+                        MP4CloseCallback MP4fclose,
+                        MP4ReadCallback MP4fread,
+                        MP4WriteCallback MP4fwrite,
+                        MP4SetposCallback MP4fsetpos,
+                        MP4GetposCallback MP4fgetpos,
+                        MP4FilesizeCallback MP4filesize,
+                        void *userData);
 
 bool MP4Close(
 	MP4FileHandle hFile);

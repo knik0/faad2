@@ -139,6 +139,8 @@
 				Culture="1043"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
+			<IntelOptions
+				CompilerName="1"/>
 		</Configuration>
 	</Configurations>
 	<Files>

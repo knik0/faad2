@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.5 2002/12/26 20:22:09 menno Exp $
+** $Id: foo_mp4.cpp,v 1.6 2002/12/27 20:01:52 menno Exp $
 **/
 
 #include <mp4.h>
@@ -28,17 +28,19 @@ class input_mp4 : public input
 {
 public:
 
-    virtual int test_filename(const WCHAR * fn,const WCHAR * ext)
+    virtual int test_filename(const WCHAR *fn, const WCHAR *ext)
     {
         return !wcsicmp(ext,L"MP4");
     }
 
-    virtual int open(reader * r,file_info * info,int full_open)
+    virtual int open(reader *r, file_info *info, int full_open)
     {
         unsigned __int8 *buffer;
         unsigned __int32 buffer_size;
         unsigned __int8 channels;
         faacDecConfigurationPtr config;
+
+        m_reader = r;
 
         hDecoder = faacDecOpen();
         if (!hDecoder) return 0;
@@ -47,11 +49,13 @@ public:
         config->outputFormat = FAAD_FMT_FLOAT;
         faacDecSetConfiguration(hDecoder, config);
 
-        char filename[_MAX_PATH];
-        int len = (wcslen(info->get_file_path())+1)*2;
-        WideCharToMultiByte(CP_ACP,0,info->get_file_path(),-1,filename,len,0,0);
+//        char filename[_MAX_PATH];
+//        int len = (wcslen(info->get_file_path())+1)*2;
+//        WideCharToMultiByte(CP_ACP,0,info->get_file_path(),-1,filename,len,0,0);
 
-        hFile = MP4Read(filename, 0);
+//        hFile = MP4Read(filename, 0);
+        hFile = MP4ReadCb("blablabla", 0, open_cb, close_cb, read_cb, write_cb,
+            setpos_cb, getpos_cb, filesize_cb, (void*)m_reader);
         if (hFile == MP4_INVALID_FILE_HANDLE) return 0;
 
         track = GetAACTrack(hFile);
@@ -153,6 +157,8 @@ public:
 
 private:
 
+    reader *m_reader;
+
     MP4FileHandle hFile;
     MP4SampleId sampleId, numSamples;
     int track;
@@ -198,6 +204,49 @@ private:
 
         /* can't decode this */
         return -1;
+    }
+
+    /* file callback stuff */
+    static unsigned __int32 open_cb(const char *pName,
+        const char *mode, void *userData)
+    {
+        return 1;
+    }
+
+    static void close_cb(void *userData)
+    {
+        return;
+    }
+
+    static unsigned __int32 read_cb(void *pBuffer, unsigned int nBytesToRead,
+        void *userData)
+    {
+        reader *r = (reader*)userData;
+        return r->read(pBuffer, nBytesToRead);
+    }
+
+    static unsigned __int32 write_cb(void *pBuffer, unsigned int nBytesToWrite,
+        void *userData)
+    {
+        return 0;
+    }
+
+    static __int64 getpos_cb(void *userData)
+    {
+        reader *r = (reader*)userData;
+        return r->get_position();
+    }
+
+    static __int32 setpos_cb(unsigned __int32 pos, void *userData)
+    {
+        reader *r = (reader*)userData;
+        return !(r->seek(pos));
+    }
+
+    static __int64 filesize_cb(void *userData)
+    {
+        reader *r = (reader*)userData;
+        return r->get_length();
     }
 };
 

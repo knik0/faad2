@@ -15,13 +15,13 @@ Package=<4>
     Project_Dep_Name libfaad
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name libmp4v2_st
-    End Project Dependency
-    Begin Project Dependency
     Project_Dep_Name pfc_unicode
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name foobar2000_SDK
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libmp4v2_cb
     End Project Dependency
 }}}
 
@@ -51,7 +51,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "libmp4v2_st"=..\..\common\mp4v2\libmp4v2_st60.dsp - Package Owner=<4>
+Project: "libmp4v2_cb"=..\..\common\mp4v2\libmp4v2_cb.dsp - Package Owner=<4>
 
 Package=<5>
 {{{

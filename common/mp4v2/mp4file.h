@@ -31,6 +31,17 @@ class MP4BytesProperty;
 class MP4Descriptor;
 class MP4DescriptorProperty;
 
+#ifdef USE_FILE_CALLBACKS
+typedef u_int32_t (*MP4OpenCallback)(const char *pName, const char *mode, void *userData);
+typedef void (*MP4CloseCallback)(void *userData);
+typedef u_int32_t (*MP4ReadCallback)(void *pBuffer, unsigned int nBytesToRead, void *userData);
+typedef u_int32_t (*MP4WriteCallback)(void *pBuffer, unsigned int nBytesToWrite, void *userData);
+typedef int32_t (*MP4SetposCallback)(u_int32_t pos, void *userData);
+typedef int64_t (*MP4GetposCallback)(void *userData);
+typedef int64_t (*MP4FilesizeCallback)(void *userData);
+#endif
+
+
 class MP4File {
 public: /* equivalent to MP4 library API */
 	MP4File(u_int32_t verbosity = 0);
@@ -500,6 +511,18 @@ public: /* equivalent to MP4 library API */
 		MP4Atom* pAncestorAtom,
 		const char* childName);
 
+#ifdef USE_FILE_CALLBACKS
+    MP4OpenCallback m_MP4fopen;
+    MP4CloseCallback m_MP4fclose;
+    MP4ReadCallback m_MP4fread;
+    MP4WriteCallback m_MP4fwrite;
+    MP4SetposCallback m_MP4fsetpos;
+    MP4GetposCallback m_MP4fgetpos;
+    MP4FilesizeCallback m_MP4filesize;
+
+    void *m_userData;
+#endif
+
 protected:
 	void Open(const char* fmode);
 	void ReadFromFile();
@@ -622,6 +645,16 @@ protected:
 	u_int8_t	m_bufReadBits;
 	u_int8_t	m_numWriteBits;
 	u_int8_t	m_bufWriteBits;
+
+#ifdef USE_FILE_CALLBACKS
+    static u_int32_t MP4fopen_cb(const char *pName, const char *mode, void *userData);
+    static void MP4fclose_cb(void *userData);
+    static u_int32_t MP4fread_cb(void *pBuffer, unsigned int nBytesToRead, void *userData);
+    static u_int32_t MP4fwrite_cb(void *pBuffer, unsigned int nBytesToWrite, void *userData);
+    static int32_t MP4fsetpos_cb(u_int32_t pos, void *userData);
+    static int64_t MP4fgetpos_cb(void *userData);
+    static int64_t MP4filesize_cb(void *userData);
+#endif
 };
 
 #endif /* __MP4_FILE_INCLUDED__ */

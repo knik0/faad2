@@ -672,6 +672,7 @@ FILE* MP4Track::GetSampleFile(MP4SampleId sampleId)
 	if (pUrlAtom->GetFlags() & 1) {
 		pFile = NULL;	// self-contained
 	} else {
+#ifndef USE_FILE_CALLBACKS
 		MP4StringProperty* pLocationProperty = NULL;
 		pUrlAtom->FindProperty(
 			"*.location", 
@@ -699,10 +700,17 @@ FILE* MP4Track::GetSampleFile(MP4SampleId sampleId)
 				}
 			}
 		} 
+#else
+        throw new MP4Error(errno, "Function not supported when using callbacks", "GetSampleFile");
+#endif
 	}
 
 	if (m_lastSampleFile) {
+#ifndef USE_FILE_CALLBACKS
 		fclose(m_lastSampleFile);
+#else
+        throw new MP4Error(errno, "Function not supported when using callbacks", "GetSampleFile");
+#endif
 	}
 
 	// cache the answer

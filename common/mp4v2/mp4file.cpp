@@ -47,6 +47,18 @@ MP4File::MP4File(u_int32_t verbosity)
 	m_bufReadBits = 0;
 	m_numWriteBits = 0;
 	m_bufWriteBits = 0;
+
+#ifdef USE_FILE_CALLBACKS
+    // These are the default for when no callbacks are specified
+    m_userData = (void*)this;
+    m_MP4fopen = MP4fopen_cb;
+    m_MP4fclose = MP4fclose_cb;
+    m_MP4fread = MP4fread_cb;
+    m_MP4fwrite = MP4fwrite_cb;
+    m_MP4fgetpos = MP4fgetpos_cb;
+    m_MP4fsetpos = MP4fsetpos_cb;
+    m_MP4filesize = MP4filesize_cb;
+#endif
 }
 
 MP4File::~MP4File()
@@ -187,6 +199,7 @@ void MP4File::Modify(const char* fileName)
 
 void MP4File::Optimize(const char* orgFileName, const char* newFileName)
 {
+#ifndef USE_FILE_CALLBACKS
 	m_fileName = MP4Stralloc(orgFileName);
 	m_mode = 'r';
 
@@ -233,6 +246,9 @@ void MP4File::Optimize(const char* orgFileName, const char* newFileName)
 	if (newFileName == NULL) {
 		Rename(m_fileName, orgFileName);
 	}
+#else
+    throw new MP4Error(errno, "Function not supported when using callbacks", "MP4Optimize");
+#endif
 }
 
 void MP4File::RewriteMdat(FILE* pReadFile, FILE* pWriteFile)
@@ -318,6 +334,7 @@ void MP4File::Open(const char* fmode)
 {
 	ASSERT(m_pFile == NULL);
 
+#ifndef USE_FILE_CALLBACKS
 #ifdef O_LARGEFILE
 	// UGH! fopen doesn't open a file in 64-bit mode, period.
 	// So we need to use open() and then fdopen()
@@ -347,13 +364,27 @@ void MP4File::Open(const char* fmode)
 	if (m_pFile == NULL) {
 		throw new MP4Error(errno, "failed", "MP4Open");
 	}
+#else
+    u_int32_t rc = m_MP4fopen(m_fileName, fmode, m_userData);
+    if (rc == 0) {
+		throw new MP4Error(errno, "failed", "MP4Open");
+    }
+#endif
 
 	if (m_mode == 'r') {
+#ifndef USE_FILE_CALLBACKS
 		struct stat s;
 		if (fstat(fileno(m_pFile), &s) < 0) {
 			throw new MP4Error(errno, "stat failed", "MP4Open");
 		}
 		m_orgFileSize = m_fileSize = s.st_size;
+#else
+        int64_t s = m_MP4filesize(m_userData);
+		if (s < 0) {
+			throw new MP4Error(errno, "retreiving filesize failed", "MP4Open");
+		}
+		m_orgFileSize = m_fileSize = (u_int64_t)s;
+#endif
 	} else {
 		m_orgFileSize = m_fileSize = 0;
 	}
@@ -515,8 +546,12 @@ void MP4File::Close()
 		FinishWrite();
 	}
 
-	fclose(m_pFile);
-	m_pFile = NULL;
+#ifndef USE_FILE_CALLBACKS
+    fclose(m_pFile);
+    m_pFile = NULL;
+#else
+	m_MP4fclose(this);
+#endif
 }
 
 const char* MP4File::TempFileName()
