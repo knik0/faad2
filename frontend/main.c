@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.50 2003/10/10 12:23:43 ca5e Exp $
+** $Id: main.c,v 1.51 2003/10/14 11:42:48 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -251,12 +251,12 @@ int FindAdtsSRIndex(int sr)
 {
     int i;
 
-	for (i = 0; i < 16; i++)
+    for (i = 0; i < 16; i++)
     {
-		if (sr == adts_sample_rates[i])
-			return i;
-	}
-	return 16 - 1;
+        if (sr == adts_sample_rates[i])
+            return i;
+    }
+    return 16 - 1;
 }
 
 unsigned char *MakeAdtsHeader(int *dataSize, faacDecFrameInfo *hInfo, int old_format)
@@ -347,7 +347,7 @@ void usage(void)
     fprintf(stdout, " -l X  Set object type. Supported object types:\n");
     fprintf(stdout, "        1:  Main object type.\n");
     fprintf(stdout, "        2:  LC (Low Complexity) object type.\n");
-    fprintf(stdout, "        3:  LTP (Long Term Prediction) object type.\n");
+    fprintf(stdout, "        4:  LTP (Long Term Prediction) object type.\n");
     fprintf(stdout, "        23: LD (Low Delay) object type.\n");
     fprintf(stdout, " -d    Down matrix 5.1 to 2 channels\n");
     fprintf(stdout, " -w    Write output to stdio instead of a file.\n");
