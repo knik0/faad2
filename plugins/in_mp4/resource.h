@@ -1,10 +1,11 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
+// Microsoft Visual C++ generated include file.
 // Used by in_mp4.rc
 //
 #define IDD_INFO                        101
 #define IDD_CONFIG                      102
 #define IDC_TYPE                        1000
+#define IDC_INFOTEXT                    1000
 #define IDC_DURATION                    1001
 #define IDC_BITRATE                     1002
 #define IDC_SAMPLERATE                  1003
@@ -19,6 +20,8 @@
 #define IDC_VFPS                        1008
 #define IDC_32BITS                      1008
 #define IDC_CHANNELS                    1009
+#define IDC_24BITS2                     1009
+#define IDC_16BITS_DITHERED             1009
 
 // Next default values for new objects
 // 

@@ -16,19 +16,29 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: utils.h,v 1.2 2002/08/14 17:55:20 menno Exp $
+** $Id: aacinfo.h,v 1.1 2002/08/14 17:55:49 menno Exp $
 **/
 
-#ifndef UTILS_INCLUDED
-#define UTILS_INCLUDED
+#ifndef AACINFO_INCLUDED
+#define AACINFO_INCLUDED
 
-#include <mp4.h>
+typedef struct {
+    int version;
+    int channels;
+    int sampling_rate;
+    int bitrate;
+    int length;
+    int object_type;
+    int headertype;
+} faadAACInfo;
 
-LPTSTR PathFindFileName(LPCTSTR pPath);
-int GetVideoTrack(MP4FileHandle infile);
-int GetAudioTrack(MP4FileHandle infile);
-int GetAACTrack(MP4FileHandle infile);
-int StringComp(char const *str1, char const *str2, unsigned long len);
-char *convert3in4to3in3(void *sample_buffer, int samples);
+int get_AAC_format(char *filename, faadAACInfo *info,
+                   unsigned long **seek_table, int *seek_table_len,
+                   int use_seek_table);
+
+static int read_ADIF_header(FILE *file, faadAACInfo *info);
+static int read_ADTS_header(FILE *file, faadAACInfo *info,
+                            unsigned long **seek_table, int *seek_table_len,
+                            int use_seek_table);
 
 #endif

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: utils.c,v 1.1 2002/08/09 21:48:12 menno Exp $
+** $Id: utils.c,v 1.2 2002/08/14 17:55:20 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -130,4 +130,20 @@ LPTSTR PathFindFileName(LPCTSTR pPath)
     }
 
     return (LPTSTR)pT;   // const -> non const
+}
+
+char *convert3in4to3in3(void *sample_buffer, int samples)
+{
+    int i;
+    long *sample_buffer24 = (long*)sample_buffer;
+    char *data = malloc(samples*3*sizeof(char));
+
+    for (i = 0; i < samples; i++)
+    {
+        data[i*3] = sample_buffer24[i] & 0xFF;
+        data[i*3+1] = (sample_buffer24[i] >> 8) & 0xFF;
+        data[i*3+2] = (sample_buffer24[i] >> 16) & 0xFF;
+    }
+
+    return data;
 }

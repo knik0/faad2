@@ -135,6 +135,9 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
+				RelativePath="aacinfo.c">
+			</File>
+			<File
 				RelativePath=".\config.c">
 			</File>
 			<File
@@ -148,6 +151,9 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
 			<File
+				RelativePath="aacinfo.h">
+			</File>
+			<File
 				RelativePath=".\config.h">
 			</File>
 			<File
@@ -158,6 +164,9 @@
 			</File>
 			<File
 				RelativePath=".\out.h">
+			</File>
+			<File
+				RelativePath="resource.h">
 			</File>
 			<File
 				RelativePath=".\utils.h">
