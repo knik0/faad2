@@ -6,7 +6,7 @@
  * random functions for dithering.
  *
  * last modified:
- * $Id: dither.c,v 1.6 2002/11/08 13:12:32 menno Exp $
+ * $Id: dither.c,v 1.7 2002/12/05 19:28:22 menno Exp $
  */
 #include "common.h"
 
@@ -14,6 +14,7 @@
 
 #include <string.h>
 #include "dither.h"
+#include "common.h"
 
 
 double

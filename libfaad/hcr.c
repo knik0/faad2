@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: hcr.c,v 1.1 2002/11/28 18:48:30 menno Exp $
+** $Id: hcr.c,v 1.2 2002/12/05 19:28:22 menno Exp $
 **/
 
 #include "common.h"
@@ -400,7 +400,8 @@ uint8_t reordered_spectral_data(faacDecHandle hDecoder, ic_stream *ics, bitfile 
     /* if we have a corrupted bitstream this can happen... */
     if ((ics->length_of_longest_codeword == 0) ||
         (ics->length_of_reordered_spectral_data <
-        ics->length_of_longest_codeword))
+        ics->length_of_longest_codeword) ||
+        (ics->max_sfb == 0))
     {
         return 10; /* this is not good... */
     }

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: rvlc.c,v 1.1 2002/11/28 18:48:30 menno Exp $
+** $Id: rvlc.c,v 1.2 2002/12/05 19:28:22 menno Exp $
 **/
 
 /* RVLC scalefactor decoding
@@ -435,9 +435,9 @@ static int8_t rvlc_huffman_sf(bitfile *ld_sf, bitfile *ld_esc,
     
     i = h->len;
     if (direction > 0)
-        cw = faad_getbits(ld_sf, i);
+        cw = faad_getbits(ld_sf, i DEBUGVAR(1,0,""));
     else
-        cw = faad_getbits_rev(ld_sf, i);
+        cw = faad_getbits_rev(ld_sf, i DEBUGVAR(1,0,""));
 
     while ((cw != h->cw)
         && (i < 10))
@@ -447,9 +447,9 @@ static int8_t rvlc_huffman_sf(bitfile *ld_sf, bitfile *ld_esc,
         i += j;
         cw <<= j;
         if (direction > 0)
-            cw |= faad_getbits(ld_sf, j);
+            cw |= faad_getbits(ld_sf, j DEBUGVAR(1,0,""));
         else
-            cw |= faad_getbits_rev(ld_sf, j);
+            cw |= faad_getbits_rev(ld_sf, j DEBUGVAR(1,0,""));
     }
 
     index = h->index;
@@ -499,9 +499,9 @@ static int8_t rvlc_huffman_esc(bitfile *ld,
         i += j;
         cw <<= j;
         if (direction > 0)
-            cw |= faad_getbits(ld, j);
+            cw |= faad_getbits(ld, j DEBUGVAR(1,0,""));
         else
-            cw |= faad_getbits_rev(ld, j);
+            cw |= faad_getbits_rev(ld, j DEBUGVAR(1,0,""));
     }
 
     return h->index;

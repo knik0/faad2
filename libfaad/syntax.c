@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.33 2002/12/05 18:01:57 menno Exp $
+** $Id: syntax.c,v 1.34 2002/12/05 19:28:22 menno Exp $
 **/
 
 /*
@@ -542,12 +542,40 @@ static uint8_t single_lfe_channel_element(faacDecHandle hDecoder,
                                           int16_t *spec_data)
 {
     ic_stream *ics = &(sce->ics1);
-
 #ifdef DRM
-    if (object_type != DRM_ER_LC)
+    uint8_t result;
+
+    if (hDecoder->object_type != DRM_ER_LC)
 #endif
     sce->element_instance_tag = (uint8_t)faad_getbits(ld, LEN_TAG
         DEBUGVAR(1,38,"single_lfe_channel_element(): element_instance_tag"));
+
+#ifdef DRM
+    if (hDecoder->object_type == DRM_ER_LC)
+    {
+        individual_channel_stream(hDecoder, sce, ld, ics, 0, spec_data);
+
+        if (ics->tns_data_present)
+            tns_data(ics, &(ics->tns), ld);
+
+        if ((result = faad_check_CRC( ld )) > 0)
+            return result;
+
+        /* error resilient spectral data decoding */
+        if ((result = reordered_spectral_data(hDecoder, ics, ld, spec_data)) > 0)
+            return result;
+
+        /* pulse coding reconstruction */
+        if (ics->pulse_data_present)
+        {
+            if (ics->window_sequence != EIGHT_SHORT_SEQUENCE)
+                pulse_decode(ics, spec_data);
+            else
+                return 2; /* pulse coding not allowed for short blocks */
+        }
+        return 0;
+    } else
+#endif
 
     return individual_channel_stream(hDecoder, sce, ld, ics, 0, spec_data);
 }
@@ -562,7 +590,7 @@ static uint8_t channel_pair_element(faacDecHandle hDecoder, element *cpe,
     ic_stream *ics2 = &(cpe->ics2);
 
 #ifdef DRM
-    if (object_type != DRM_ER_LC)
+    if (hDecoder->object_type != DRM_ER_LC)
 #endif
     cpe->element_instance_tag = (uint8_t)faad_getbits(ld, LEN_TAG
         DEBUGVAR(1,39,"channel_pair_element(): element_instance_tag"));
@@ -628,6 +656,44 @@ static uint8_t channel_pair_element(faacDecHandle hDecoder, element *cpe,
     {
         return result;
     }
+
+#ifdef DRM
+    if (hDecoder->object_type == DRM_ER_LC)
+    {
+        if (ics1->tns_data_present)
+            tns_data(ics1, &(ics1->tns), ld);
+
+        if (ics1->tns_data_present)
+            tns_data(ics2, &(ics2->tns), ld);
+
+        if ((result = faad_check_CRC( ld )) > 0)
+        {
+            printf("CRC wrong!\n");
+            return result;
+        }
+        /* error resilient spectral data decoding */
+        if ((result = reordered_spectral_data(hDecoder, ics1, ld, spec_data1)) > 0)
+            return result;
+        if ((result = reordered_spectral_data(hDecoder, ics2, ld, spec_data2)) > 0)
+            return result;
+        /* pulse coding reconstruction */
+        if (ics1->pulse_data_present)
+        {
+            if (ics1->window_sequence != EIGHT_SHORT_SEQUENCE)
+                pulse_decode(ics1, spec_data1);
+            else
+                return 2; /* pulse coding not allowed for short blocks */
+        }
+        if (ics2->pulse_data_present)
+        {
+            if (ics2->window_sequence != EIGHT_SHORT_SEQUENCE)
+                pulse_decode(ics2, spec_data2);
+            else
+                return 2; /* pulse coding not allowed for short blocks */
+        }
+        return 0;
+    } else
+#endif
 
     return 0;
 }
@@ -925,7 +991,10 @@ static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
             DEBUGVAR(1,70,"individual_channel_stream(): gain_control_data_present"))) & 1)
         {
 #ifdef SSR_DEC
-            gain_control_data(ld, ics);
+            if (hDecoder->object_type != SSR)
+                return 1;
+            else
+                gain_control_data(ld, ics);
 #else
             return 1;
 #endif
@@ -935,6 +1004,16 @@ static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
 #ifdef ERROR_RESILIENCE
     if (hDecoder->aacSpectralDataResilienceFlag)
     {
+#if 0
+        if (hDecoder->channelConfiguration == 2)
+        {
+            if (ics->length_of_reordered_spectral_data > 6144)
+                ics->length_of_reordered_spectral_data = 6144;
+        } else {
+            if (ics->length_of_reordered_spectral_data > 12288)
+                ics->length_of_reordered_spectral_data = 12288;
+        }
+#endif
         ics->length_of_reordered_spectral_data = (uint16_t)faad_getbits(ld, 14
             DEBUGVAR(1,147,"individual_channel_stream(): length_of_reordered_spectral_data"));
         /* TODO: test for >6144/12288, see page 143 */
@@ -950,6 +1029,11 @@ static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
         if ((result = rvlc_decode_scale_factors(ics, ld)) > 0)
             return result;
     }
+
+#ifdef DRM
+    if (hDecoder->object_type == DRM_ER_LC)
+        return 0;
+#endif
 
     if (hDecoder->object_type >= ER_OBJECT_START) 
     {

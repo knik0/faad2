@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.26 2002/11/28 18:48:29 menno Exp $
+** $Id: common.h,v 1.27 2002/12/05 19:28:22 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -26,15 +26,7 @@
 extern "C" {
 #endif
 
-#ifdef LINUX
-#define INLINE inline
-#else
-#ifdef _WIN32
 #define INLINE __inline
-#else
-#define INLINE
-#endif
-#endif
 
 #ifndef max
 #define max(a, b) (((a) > (b)) ? (a) : (b))
@@ -92,17 +84,46 @@ typedef __int64 int64_t;
 typedef __int32 int32_t;
 typedef __int16 int16_t;
 typedef __int8  int8_t;
-#ifndef FIXED_POINT
 typedef float float32_t;
+
+
+#else
+
+#ifdef HAVE_CONFIG_H
+#  include "../config.h"
 #endif
 
-
-#elif defined(LINUX) || defined(DJGPP)
-
-
-#if defined(LINUX)
-#include <stdint.h>
+#include <stdio.h>
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#if HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+#if STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
 #else
+# if HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif
+#if HAVE_STRING_H
+# if !STDC_HEADERS && HAVE_MEMORY_H
+#  include <memory.h>
+# endif
+# include <string.h>
+#endif
+#if HAVE_STRINGS_H
+# include <strings.h>
+#endif
+#if HAVE_INTTYPES_H
+# include <inttypes.h>
+#else
+# if HAVE_STDINT_H
+#  include <stdint.h>
+# else
+/* we need these... */
 typedef unsigned long long uint64_t;
 typedef unsigned long uint32_t;
 typedef unsigned short uint16_t;
@@ -111,15 +132,29 @@ typedef long long int64_t;
 typedef long int32_t;
 typedef short int16_t;
 typedef char int8_t;
-#ifndef FIXED_POINT
+# endif
+#endif
+#if HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
+#ifndef HAVE_FLOAT32_T
 typedef float float32_t;
 #endif
+
+#if STDC_HEADERS
+# include <string.h>
+#else
+# if !HAVE_STRCHR
+#  define strchr index
+#  define strrchr rindex
+# endif
+char *strchr(), *strrchr();
+# if !HAVE_MEMCPY
+#  define memcpy(d, s, n) bcopy((s), (d), (n))
+#  define memmove(d, s, n) bcopy((s), (d), (n))
+# endif
 #endif
-
-
-#else /* Some other OS */
-
-#include <inttypes.h>
 
 #endif
 
@@ -132,7 +167,11 @@ typedef float float32_t;
 
 #if defined(FIXED_POINT)
 
-  #include <math.h>
+  #ifdef HAS_MATHF_H
+    #include <mathf.h>
+  #else
+    #include <math.h>
+  #endif
 
   #include "fixed.h"
 
@@ -177,6 +216,7 @@ typedef float float32_t;
 
 #ifdef HAVE_SINF
 #  define sin sinf
+#error
 #endif
 #ifdef HAVE_COSF
 #  define cos cosf
@@ -184,13 +224,13 @@ typedef float float32_t;
 #ifdef HAVE_LOGF
 #  define log logf
 #endif
-#ifdef HAVE_POWF
-#  define pow powf
+#ifdef HAVE_EXPF
+#  define exp expf
 #endif
 #ifdef HAVE_FLOORF
 #  define floor floorf
 #endif
-#ifdef HAVE_FLOORF
+#ifdef HAVE_CEILF
 #  define ceil ceilf
 #endif
 #ifdef HAVE_SQRTF
@@ -208,9 +248,6 @@ typedef real_t complex_t[2];
 
 /* common functions */
 uint32_t int_log2(uint32_t val);
-int8_t can_decode_ot(uint8_t object_type);
-uint8_t get_sr_index(uint32_t samplerate);
-uint32_t random_int(void);
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f

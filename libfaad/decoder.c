@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.42 2002/12/05 18:01:49 menno Exp $
+** $Id: decoder.c,v 1.43 2002/12/05 19:28:22 menno Exp $
 **/
 
 #include "common.h"
@@ -40,8 +40,10 @@
 #include "error.h"
 #include "output.h"
 #include "dither.h"
+#ifdef SSR_DEC
 #include "ssr.h"
 #include "ssr_fb.h"
+#endif
 
 #ifdef ANALYSIS
 uint16_t dbg_count;
@@ -114,15 +116,6 @@ uint8_t FAADAPI faacDecSetConfiguration(faacDecHandle hDecoder,
                                     faacDecConfigurationPtr config)
 {
     hDecoder->config.defObjectType = config->defObjectType;
-#ifdef DRM
-    if (config->defObjectType == DRM_ER_LC)
-    {
-        hDecoder->aacSectionDataResilienceFlag = 1; /* VCB11 */
-        hDecoder->aacScalefactorDataResilienceFlag = 0; /* no RVLC */
-        hDecoder->aacSpectralDataResilienceFlag = 1; /* HCR */
-        hDecoder->frameLength = 960;
-    }
-#endif
     hDecoder->config.defSampleRate = config->defSampleRate;
     hDecoder->config.outputFormat  = config->outputFormat;
 
@@ -148,9 +141,6 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
     {
         faad_initbits(&ld, buffer, buffer_size);
 
-#ifdef DRM
-        if (hDecoder->object_type != DRM_ER_LC)
-#endif        
         /* Check if an ADIF header is present */
         if ((buffer[0] == 'A') && (buffer[1] == 'D') &&
             (buffer[2] == 'I') && (buffer[3] == 'F'))
@@ -186,9 +176,11 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
     hDecoder->channelConfiguration = *channels;
 
     /* must be done before frameLength is divided by 2 for LD */
+#ifdef SSR_DEC
     if (hDecoder->object_type == SSR)
         hDecoder->fb = ssr_filter_bank_init(hDecoder->frameLength/SSR_BANDS);
     else
+#endif
         hDecoder->fb = filter_bank_init(hDecoder->frameLength);
 
 #ifdef LD_DEC
@@ -249,15 +241,43 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
         hDecoder->frameLength = 960;
 
     /* must be done before frameLength is divided by 2 for LD */
+#ifdef SSR_DEC
     if (hDecoder->object_type == SSR)
         hDecoder->fb = ssr_filter_bank_init(hDecoder->frameLength/SSR_BANDS);
     else
+#endif
         hDecoder->fb = filter_bank_init(hDecoder->frameLength);
 
 #ifdef LD_DEC
     if (hDecoder->object_type == LD)
         hDecoder->frameLength >>= 1;
 #endif
+
+#ifndef FIXED_POINT
+    if (hDecoder->config.outputFormat >= 5)
+        Init_Dither(16, hDecoder->config.outputFormat - 5);
+#endif
+
+    return 0;
+}
+
+int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
+                              uint8_t channels)
+{
+    /* Special object type defined for DRM */
+    hDecoder->config.defObjectType = DRM_ER_LC;
+
+    hDecoder->config.defSampleRate = samplerate;
+    hDecoder->aacSectionDataResilienceFlag = 1; /* VCB11 */
+    hDecoder->aacScalefactorDataResilienceFlag = 0; /* no RVLC */
+    hDecoder->aacSpectralDataResilienceFlag = 1; /* HCR */
+    hDecoder->frameLength = 960;
+    hDecoder->sf_index = get_sr_index(hDecoder->config.defSampleRate);
+    hDecoder->object_type = hDecoder->config.defObjectType;
+    hDecoder->channelConfiguration = channels;
+
+    /* must be done before frameLength is divided by 2 for LD */
+    hDecoder->fb = filter_bank_init(hDecoder->frameLength);
 
 #ifndef FIXED_POINT
     if (hDecoder->config.outputFormat >= 5)
@@ -285,9 +305,11 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
 #endif
     }
 
+#ifdef SSR_DEC
     if (hDecoder->object_type == SSR)
         ssr_filter_bank_end(hDecoder->fb);
     else
+#endif
         filter_bank_end(hDecoder->fb);
 
     drc_end(hDecoder->drc);
@@ -357,6 +379,14 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
     /* initialize the bitstream */
     faad_initbits(ld, buffer, buffer_size);
+
+#ifdef DRM
+    if (object_type == DRM_ER_LC)
+    {
+        faad_getbits(ld, 8
+            DEBUGVAR(1,1,"faacDecDecode(): skip CRC"));
+    }
+#endif
 
     if (hDecoder->adts_header_present)
     {
