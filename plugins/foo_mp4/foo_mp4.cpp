@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.57 2003/09/09 18:52:21 ca5e Exp $
+** $Id: foo_mp4.cpp,v 1.58 2003/09/12 18:52:57 ca5e Exp $
 **/
 
 #include <mp4.h>
@@ -46,7 +46,7 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "1.56",
+                           "1.57",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -622,18 +622,6 @@ public:
         config->outputFormat = FAAD_FMT_DOUBLE;
         faacDecSetConfiguration(hDecoder, config);
 
-        tag_reader::g_run_multi(m_reader, info, "ape|id3v2|lyrics3|id3v1");
-
-        const char *p = info->meta_get("samples");
-        if (p) {
-            m_samples = (unsigned __int64)_atoi64(p);
-            info->info_set("samples", p);
-            info->meta_remove_field("samples");
-        } else {
-            p = info->info_get("samples");
-            if (p) m_samples = (unsigned __int64)_atoi64(p);
-        }
-
         m_at_eof = 0;
 
         if (!(m_aac_buffer = (unsigned char*)malloc(768*6)))
@@ -720,6 +708,7 @@ public:
 
         m_samplerate = samplerate;
         m_framesize = 1024;
+        m_length = length;
 
         if (flags & OPEN_FLAG_GET_INFO) {
             // decode first frame to get accurate info
@@ -731,9 +720,9 @@ public:
             m_samplerate = frameInfo.samplerate;
             m_framesize = (frameInfo.channels != 0) ? frameInfo.samples/frameInfo.channels : 0;
 
-            if (m_samples > 0) {
-                length = (double)(signed __int64)m_samples/(double)samplerate;
-            }
+            info->info_set_int("bitrate", bitrate);
+            info->info_set_int("channels", (__int64)channels);
+            info->info_set_int("samplerate", (__int64)m_samplerate);
 
             if (m_samplerate != samplerate)
                 info->info_set("codec", "AAC+SBR");
@@ -746,16 +735,6 @@ public:
             else if (m_header_type == 2)
                 info->info_set("stream type", "ADIF");
 
-            info->info_set_int("bitrate", bitrate);
-            info->info_set_int("channels", (__int64)channels);
-            info->info_set_int("samplerate", (__int64)m_samplerate);
-
-            if (m_samples > 0) {
-                length = (double)(signed __int64)m_samples/(double)samplerate;
-            }
-
-            info->set_length(length);
-
             if (flags & OPEN_FLAG_DECODE) {
                 if (hDecoder)
                     faacDecClose(hDecoder);
@@ -766,7 +745,23 @@ public:
             }
         }
 
-        m_length = length;
+        tag_reader::g_run_multi(m_reader, info, "ape|id3v2|lyrics3|id3v1");
+
+        const char *p = info->meta_get("samples");
+        if (p) {
+            m_samples = (unsigned __int64)_atoi64(p);
+            info->info_set("samples", p);
+            info->meta_remove_field("samples");
+        } else {
+            p = info->info_get("samples");
+            if (p) m_samples = (unsigned __int64)_atoi64(p);
+        }
+
+        if (m_samples > 0) {
+            m_length = (double)(signed __int64)m_samples/(double)samplerate;
+        }
+
+        info->set_length(m_length);
 
         return 1;
     }
