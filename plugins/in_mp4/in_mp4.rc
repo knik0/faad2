@@ -1,4 +1,4 @@
-// Microsoft Visual C++ generated resource script.
+//Microsoft Developer Studio generated resource script.
 //
 #include "resource.h"
 
@@ -27,18 +27,18 @@ LANGUAGE LANG_DUTCH, SUBLANG_DUTCH
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE 
+1 TEXTINCLUDE MOVEABLE PURE 
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE 
+2 TEXTINCLUDE MOVEABLE PURE 
 BEGIN
     "#include ""afxres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE 
+3 TEXTINCLUDE MOVEABLE PURE 
 BEGIN
     "\r\n"
     "\0"
@@ -53,10 +53,9 @@ END
 //
 
 IDD_INFO DIALOGEX 0, 0, 303, 207
-STYLE DS_SETFONT | DS_MODALFRAME | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_MODALFRAME | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "MPEG-4 File Info"
-FONT 8, "MS Sans Serif", 0, 0, 0x0
+FONT 8, "MS Sans Serif"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,246,186,50,14
     LTEXT           "Static",IDC_INFOTEXT,14,17,275,47,0,WS_EX_CLIENTEDGE
@@ -68,31 +67,32 @@ BEGIN
                     IDC_CONVERT1,24,98,255,27
 END
 
-IDD_CONFIG DIALOGEX 0, 0, 151, 108
-STYLE DS_SETFONT | DS_MODALFRAME | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
+IDD_CONFIG DIALOG DISCARDABLE  0, 0, 151, 108
+STYLE DS_MODALFRAME | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Configuration"
-FONT 8, "MS Sans Serif", 0, 0, 0x0
+FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         "Slider1",IDC_PRIORITY,"msctls_trackbar32",TBS_VERT | 
                     TBS_NOTICKS | WS_TABSTOP,13,15,18,46
     CONTROL         "16 bits",IDC_16BITS,"Button",BS_AUTORADIOBUTTON,77,18,
                     37,10
+    CONTROL         "16 bits dithered",IDC_16BITS_DITHERED,"Button",
+                    BS_AUTORADIOBUTTON,77,29,64,10
     CONTROL         "24 bits",IDC_24BITS,"Button",BS_AUTORADIOBUTTON,77,40,
                     37,10
     CONTROL         "32 bits",IDC_32BITS,"Button",BS_AUTORADIOBUTTON,77,51,
                     37,10
     CONTROL         "Show errors",IDC_ERROR,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,7,70,53,10
-    DEFPUSHBUTTON   "OK",IDOK,94,87,50,14
+    CONTROL         "Use for AAC",IDC_USEFORAAC,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,78,70,55,10
     PUSHBUTTON      "Cancel",IDCANCEL,7,87,50,14
+    DEFPUSHBUTTON   "OK",IDOK,94,87,50,14
     GROUPBOX        "Priority",IDC_STATIC,7,7,57,58
     LTEXT           "Highest",IDC_STATIC,34,18,25,8
     LTEXT           "Normal",IDC_STATIC,34,35,23,8
     LTEXT           "Lowest",IDC_STATIC,34,52,24,8
     GROUPBOX        "Resolution",IDC_STATIC,71,7,73,58
-    CONTROL         "16 bits dithered",IDC_16BITS_DITHERED,"Button",
-                    BS_AUTORADIOBUTTON,77,29,64,10
 END
 
 
@@ -102,7 +102,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
+GUIDELINES DESIGNINFO MOVEABLE PURE 
 BEGIN
     IDD_INFO, DIALOG
     BEGIN

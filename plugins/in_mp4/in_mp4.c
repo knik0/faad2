@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.25 2002/12/22 21:36:28 menno Exp $
+** $Id: in_mp4.c,v 1.26 2003/02/25 17:45:03 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -136,20 +136,24 @@ void config_read()
     char priority[10];
     char resolution[10];
     char show_errors[10];
+    char use_for_aac[10];
 
 	config_init();
 
     strcpy(show_errors, "1");
     strcpy(priority, "3");
     strcpy(resolution, "0");
+    strcpy(use_for_aac, "1");
 
     RS(priority);
 	RS(resolution);
 	RS(show_errors);
+    RS(use_for_aac);
 
     m_priority = atoi(priority);
     m_resolution = atoi(resolution);
     m_show_errors = atoi(show_errors);
+    m_use_for_aac = atoi(use_for_aac);
 }
 
 void config_write()
@@ -157,14 +161,17 @@ void config_write()
     char priority[10];
     char resolution[10];
     char show_errors[10];
+    char use_for_aac[10];
 
     itoa(m_priority, priority, 10);
     itoa(m_resolution, resolution, 10);
     itoa(m_show_errors, show_errors, 10);
+    itoa(m_use_for_aac, use_for_aac, 10);
 
     WS(priority);
 	WS(resolution);
 	WS(show_errors);
+	WS(use_for_aac);
 }
 
 void init()
@@ -369,6 +376,8 @@ BOOL CALLBACK config_dialog_proc(HWND hwndDlg, UINT message,
         SendMessage(GetDlgItem(hwndDlg, res_id_table[m_resolution]), BM_SETCHECK, BST_CHECKED, 0);
         if (m_show_errors)
             SendMessage(GetDlgItem(hwndDlg, IDC_ERROR), BM_SETCHECK, BST_CHECKED, 0);
+        if (m_use_for_aac)
+            SendMessage(GetDlgItem(hwndDlg, IDC_USEFORAAC), BM_SETCHECK, BST_CHECKED, 0);
         return TRUE;
 
     case WM_COMMAND:
@@ -378,6 +387,7 @@ BOOL CALLBACK config_dialog_proc(HWND hwndDlg, UINT message,
             return TRUE;
         case IDOK:
             m_show_errors = SendMessage(GetDlgItem(hwndDlg, IDC_ERROR), BM_GETCHECK, 0, 0);
+            m_use_for_aac = SendMessage(GetDlgItem(hwndDlg, IDC_USEFORAAC), BM_GETCHECK, 0, 0);
             m_priority = SendMessage(GetDlgItem(hwndDlg, IDC_PRIORITY), TBM_GETPOS, 0, 0);
             for (i = 0; i < 5; i++)
             {
@@ -421,9 +431,12 @@ int isourfile(char *fn)
     {
         return 1;
     }
-    if(StringComp(fn + strlen(fn) - 3, "AAC", 3) == 0)
+    if (m_use_for_aac)
     {
-        return 1;
+        if(StringComp(fn + strlen(fn) - 3, "AAC", 3) == 0)
+        {
+            return 1;
+        }
     }
 
     return 0;

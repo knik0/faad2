@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: config.c,v 1.1 2002/08/09 21:48:12 menno Exp $
+** $Id: config.c,v 1.2 2003/02/25 17:45:02 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -28,6 +28,7 @@ char INI_FILE[MAX_PATH];
 int m_priority = 3;
 int m_resolution = 0;
 int m_show_errors = 1;
+int m_use_for_aac = 1;
 
 void _r_s(char *name,char *data, int mlen)
 {
