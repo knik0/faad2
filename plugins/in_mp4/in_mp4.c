@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.21 2002/12/06 10:24:33 menno Exp $
+** $Id: in_mp4.c,v 1.22 2002/12/06 10:42:55 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -434,6 +434,10 @@ int play(char *fn)
         return -1;
     }
 
+    config = faacDecGetCurrentConfiguration(mp4state.hDecoder);
+    config->outputFormat = m_resolution + 1;
+    faacDecSetConfiguration(mp4state.hDecoder, config);
+
     if (mp4state.filetype)
     {
         long pos, tmp, read, tagsize;
@@ -551,10 +555,6 @@ int play(char *fn)
 
         module.is_seekable = 1;
     }
-
-    config = faacDecGetCurrentConfiguration(mp4state.hDecoder);
-    config->outputFormat = m_resolution + 1;
-    faacDecSetConfiguration(mp4state.hDecoder, config);
 
     if (mp4state.channels == 0)
     {
