@@ -1,6 +1,7 @@
 lib_LTLIBRARIES = libfaad.la
 
-include_HEADERS = $(top_srcdir)/include/faad.h
+include_HEADERS = $(top_srcdir)/include/faad.h \
+                  $(top_srcdir)/include/neaacdec.h
 
 libfaad_la_LDFLAGS = -lm
 
