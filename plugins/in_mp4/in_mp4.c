@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.27 2003/05/07 18:30:49 menno Exp $
+** $Id: in_mp4.c,v 1.28 2003/05/29 19:22:31 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -50,6 +50,7 @@ static int res_id_table[] = {
     IDC_24BITS,
     IDC_32BITS,
     0,
+    0,
     IDC_16BITS_DITHERED
 };
 static int res_table[] = {
@@ -57,12 +58,19 @@ static int res_table[] = {
     24,
     32,
     0,
+    0,
     16
 };
 static char info_fn[_MAX_PATH];
 
 // post this to the main window at end of file (after playback has stopped)
 #define WM_WA_AAC_EOF WM_USER+2
+
+struct seek_list
+{
+    struct seek_list *next;
+    __int64 offset;
+};
 
 typedef struct state
 {
@@ -85,13 +93,16 @@ typedef struct state
 
     /* AAC stuff */
     FILE *aacfile;
-    long filesize;
-    long bytes_read;
-    long bytes_into_buffer;
-    long bytes_consumed;
-    unsigned char *buffer;
-    long seconds;
-//    faadAACInfo aacInfo;
+    long m_aac_bytes_into_buffer;
+    long m_aac_bytes_consumed;
+    __int64 m_file_offset;
+    unsigned char *m_aac_buffer;
+    int m_at_eof;
+    double cur_pos_sec;
+    int m_header_type;
+    struct seek_list *m_head;
+    struct seek_list *m_tail;
+    unsigned long m_length;
 } state;
 
 static state mp4state;
@@ -111,10 +122,21 @@ void in_mp4_DebugOutput(char *message)
 {
     char s[1024];
 
-    sprintf(s, "%s: %s", mp4state.filename, message);
-    MessageBox(NULL, s, "Debug Message", MB_OK);
+    sprintf(s, "in_mp4: %s: %s", mp4state.filename, message);
+    OutputDebugString(s);
 }
 #endif
+
+int file_length(FILE *f)
+{
+    long end = 0;
+    long cur = ftell(f);
+    fseek(f, 0, SEEK_END);
+    end = ftell(f);
+    fseek(f, cur, SEEK_SET);
+
+    return end;
+}
 
 static void show_error(HWND hwnd, char *message, ...)
 {
@@ -389,7 +411,7 @@ BOOL CALLBACK config_dialog_proc(HWND hwndDlg, UINT message,
             m_show_errors = SendMessage(GetDlgItem(hwndDlg, IDC_ERROR), BM_GETCHECK, 0, 0);
             m_use_for_aac = SendMessage(GetDlgItem(hwndDlg, IDC_USEFORAAC), BM_GETCHECK, 0, 0);
             m_priority = SendMessage(GetDlgItem(hwndDlg, IDC_PRIORITY), TBM_GETPOS, 0, 0);
-            for (i = 0; i < 5; i++)
+            for (i = 0; i < 6; i++)
             {
                 if (SendMessage(GetDlgItem(hwndDlg, res_id_table[i]), BM_GETCHECK, 0, 0))
                 {
@@ -427,19 +449,124 @@ void about(HWND hwndParent)
 
 int isourfile(char *fn)
 {
-    if(StringComp(fn + strlen(fn) - 3, "MP4", 3) == 0)
+    if (!stricmp(fn + strlen(fn) - 3,"MP4") || !stricmp(fn + strlen(fn) - 3,"M4A"))
     {
         return 1;
-    }
-    if (m_use_for_aac)
-    {
-        if(StringComp(fn + strlen(fn) - 3, "AAC", 3) == 0)
+    } else if (m_use_for_aac) {
+        if (!stricmp(fn + strlen(fn) - 3,"AAC"))
         {
             return 1;
         }
     }
 
     return 0;
+}
+
+int fill_buffer(state *st)
+{
+    int bread;
+
+    if (st->m_aac_bytes_consumed > 0)
+    {
+        if (st->m_aac_bytes_into_buffer)
+        {
+            memmove((void*)st->m_aac_buffer, (void*)(st->m_aac_buffer + st->m_aac_bytes_consumed),
+                st->m_aac_bytes_into_buffer*sizeof(unsigned char));
+        }
+
+        if (!st->m_at_eof)
+        {
+            bread = fread((void*)(st->m_aac_buffer + st->m_aac_bytes_into_buffer),
+                1, st->m_aac_bytes_consumed, st->aacfile);
+
+            if (bread != st->m_aac_bytes_consumed)
+                st->m_at_eof = 1;
+
+            st->m_aac_bytes_into_buffer += bread;
+        }
+
+        st->m_aac_bytes_consumed = 0;
+
+        if (st->m_aac_bytes_into_buffer > 3)
+        {
+            if (memcmp(st->m_aac_buffer, "TAG", 3) == 0)
+                st->m_aac_bytes_into_buffer = 0;
+        }
+        if (st->m_aac_bytes_into_buffer > 11)
+        {
+            if (memcmp(st->m_aac_buffer, "LYRICSBEGIN", 11) == 0)
+                st->m_aac_bytes_into_buffer = 0;
+        }
+        if (st->m_aac_bytes_into_buffer > 8)
+        {
+            if (memcmp(st->m_aac_buffer, "APETAGEX", 8) == 0)
+                st->m_aac_bytes_into_buffer = 0;
+        }
+    }
+
+    return 1;
+}
+
+void advance_buffer(state *st, int bytes)
+{
+    st->m_file_offset += bytes;
+    st->m_aac_bytes_consumed = bytes;
+    st->m_aac_bytes_into_buffer -= bytes;
+}
+
+int adts_parse(state *st, __int64 *bitrate, double *length)
+{
+    static int sample_rates[] = {96000,88200,64000,48000,44100,32000,24000,22050,16000,12000,11025,8000};
+    int frames, frame_length;
+    int t_framelength = 0;
+    int samplerate;
+    double frames_per_sec, bytes_per_frame;
+
+    /* Read all frames to ensure correct time and bitrate */
+    for (frames = 0; /* */; frames++)
+    {
+        fill_buffer(st);
+
+        if (st->m_aac_bytes_into_buffer > 7)
+        {
+            /* check syncword */
+            if (!((st->m_aac_buffer[0] == 0xFF)&&((st->m_aac_buffer[1] & 0xF6) == 0xF0)))
+                break;
+
+            st->m_tail->offset = st->m_file_offset;
+            st->m_tail->next = (struct seek_list*)malloc(sizeof(struct seek_list));
+            st->m_tail = st->m_tail->next;
+            st->m_tail->next = NULL;
+
+            if (frames == 0)
+                samplerate = sample_rates[(st->m_aac_buffer[2]&0x3c)>>2];
+
+            frame_length = ((((unsigned int)st->m_aac_buffer[3] & 0x3)) << 11)
+                | (((unsigned int)st->m_aac_buffer[4]) << 3) | (st->m_aac_buffer[5] >> 5);
+
+            t_framelength += frame_length;
+
+            if (frame_length > st->m_aac_bytes_into_buffer)
+                break;
+
+            advance_buffer(st, frame_length);
+        } else {
+            break;
+        }
+    }
+
+    frames_per_sec = (double)samplerate/1024.0;
+    if (frames != 0)
+        bytes_per_frame = (double)t_framelength/(double)(frames*1000);
+    else
+        bytes_per_frame = 0;
+    *bitrate = (__int64)(8. * bytes_per_frame * frames_per_sec + 0.5);
+    if (frames_per_sec != 0)
+        *length = (double)frames/frames_per_sec;
+    else
+        *length = 1;
+
+    return 1;
 }
 
 int play(char *fn)
@@ -455,14 +582,17 @@ int play(char *fn)
     in_mp4_DebugOutput("play");
 #endif
 
-    mp4state.channels = 0;
-    mp4state.samplerate = 0;
-    mp4state.filetype = 0;
+    memset(&mp4state, 0, sizeof(state));
 
-    strcpy(mp4state.filename, fn);
+    lstrcpy(mp4state.filename, fn);
 
-    if(StringComp(fn + strlen(fn) - 3, "AAC", 3) == 0)
+    if (!(mp4state.mp4file = MP4Read(mp4state.filename, 0)))
+    {
         mp4state.filetype = 1;
+    } else {
+        MP4Close(mp4state.mp4file);
+        mp4state.filetype = 0;
+    }
 
     mp4state.hDecoder = faacDecOpen();
     if (!mp4state.hDecoder)
@@ -477,75 +607,105 @@ int play(char *fn)
 
     if (mp4state.filetype)
     {
-        long pos, tmp, read, tagsize;
+        int tagsize = 0, tmp = 0;
+        int bread = 0;
+        double length = 0.;
+        __int64 bitrate = 128;
 
-//        get_AAC_format(mp4state.filename, &mp4state.aacInfo);
+        module.is_seekable = 1;
 
-        mp4state.aacfile = fopen(mp4state.filename, "rb");
-        if (!mp4state.aacfile)
+        if (!(mp4state.aacfile = fopen(mp4state.filename, "rb")))
         {
-            show_error(module.hMainWindow, "Unable to open file.");
-            faacDecClose(mp4state.hDecoder);
-            return -1;
+            // error
+            return 0;
         }
 
-        pos = ftell(mp4state.aacfile);
-        fseek(mp4state.aacfile, 0, SEEK_END);
-        mp4state.filesize = ftell(mp4state.aacfile);
-        fseek(mp4state.aacfile, pos, SEEK_SET);
+        mp4state.m_at_eof = 0;
 
-        if (!(mp4state.buffer=(unsigned char*)malloc(768*48)))
+        if (!(mp4state.m_aac_buffer = (unsigned char*)malloc(768*6)))
         {
-            show_error(module.hMainWindow, "Memory allocation error.");
-            faacDecClose(mp4state.hDecoder);
-            fclose(mp4state.aacfile);
-            return -1;
+            //console::error("Memory allocation error.", "foo_mp4");
+            return 0;
         }
-        memset(mp4state.buffer, 0, 768*48);
+        memset(mp4state.m_aac_buffer, 0, 768*6);
 
-        if (mp4state.filesize < 768*48)
-            tmp = mp4state.filesize;
-        else
-            tmp = 768*48;
-        read = fread(mp4state.buffer, 1, tmp, mp4state.aacfile);
-        if (read == tmp)
-        {
-            mp4state.bytes_read = read;
-            mp4state.bytes_into_buffer = read;
-        } else {
-            show_error(module.hMainWindow, "Error reading from file.");
-            faacDecClose(mp4state.hDecoder);
-            fclose(mp4state.aacfile);
-            return -1;
-        }
+        bread = fread(mp4state.m_aac_buffer, 1, 768*6, mp4state.aacfile);
+        mp4state.m_aac_bytes_into_buffer = bread;
+        mp4state.m_aac_bytes_consumed = 0;
+        mp4state.m_file_offset = 0;
 
-        if (StringComp(mp4state.buffer, "ID3", 3) == 0)
+        if (bread != 768*6)
+            mp4state.m_at_eof = 1;
+
+        if (!memcmp(mp4state.m_aac_buffer, "ID3", 3))
         {
             /* high bit is not used */
-            tagsize = (mp4state.buffer[6] << 21) | (mp4state.buffer[7] << 14) |
-                (mp4state.buffer[8] <<  7) | (mp4state.buffer[9] <<  0);
+            tagsize = (mp4state.m_aac_buffer[6] << 21) | (mp4state.m_aac_buffer[7] << 14) |
+                (mp4state.m_aac_buffer[8] <<  7) | (mp4state.m_aac_buffer[9] <<  0);
 
             tagsize += 10;
-        } else {
-            tagsize = 0;
+            advance_buffer(&mp4state, tagsize);
         }
 
-        if ((mp4state.bytes_consumed = faacDecInit(mp4state.hDecoder,
-            mp4state.buffer+tagsize, mp4state.bytes_into_buffer,
+        mp4state.m_head = (struct seek_list*)malloc(sizeof(struct seek_list));
+        mp4state.m_tail = mp4state.m_head;
+        mp4state.m_tail->next = NULL;
+
+        mp4state.m_header_type = 0;
+        if ((mp4state.m_aac_buffer[0] == 0xFF) && ((mp4state.m_aac_buffer[1] & 0xF6) == 0xF0))
+        {
+            if (1) //(m_reader->can_seek())
+            {
+                adts_parse(&mp4state, &bitrate, &length);
+                fseek(mp4state.aacfile, tagsize, SEEK_SET);
+
+                bread = fread(mp4state.m_aac_buffer, 1, 768*6, mp4state.aacfile);
+                if (bread != 768*6)
+                    mp4state.m_at_eof = 1;
+                else
+                    mp4state.m_at_eof = 0;
+                mp4state.m_aac_bytes_into_buffer = bread;
+                mp4state.m_aac_bytes_consumed = 0;
+
+                mp4state.m_header_type = 1;
+            }
+        } else if (memcmp(mp4state.m_aac_buffer, "ADIF", 4) == 0) {
+            int skip_size = (mp4state.m_aac_buffer[4] & 0x80) ? 9 : 0;
+            bitrate = ((unsigned int)(mp4state.m_aac_buffer[4 + skip_size] & 0x0F)<<19) |
+                ((unsigned int)mp4state.m_aac_buffer[4 + skip_size]<<11) |
+                ((unsigned int)mp4state.m_aac_buffer[4 + skip_size]<<3) |
+                ((unsigned int)mp4state.m_aac_buffer[4 + skip_size] & 0xE0);
+
+            length = (double)file_length(mp4state.aacfile);
+            if (length == 0)
+            {
+                module.is_seekable = 0;
+                length = 0;
+            } else {
+                length = (double)bitrate/((double)length*8.) + 0.5;
+            }
+
+            mp4state.m_header_type = 2;
+        } else {
+            module.is_seekable = 0;
+        }
+
+        mp4state.m_length = (int)(length*1000.);
+
+        fill_buffer(&mp4state);
+        if ((mp4state.m_aac_bytes_consumed = faacDecInit(mp4state.hDecoder,
+            mp4state.m_aac_buffer, mp4state.m_aac_bytes_into_buffer,
             &mp4state.samplerate, &mp4state.channels)) < 0)
         {
-            show_error(module.hMainWindow, "Can't initialize library.");
-            faacDecClose(mp4state.hDecoder);
-            fclose(mp4state.aacfile);
-            return -1;
+            //console::error("Can't initialize decoder library.", "foo_mp4");
+            return 0;
         }
-        mp4state.bytes_consumed += tagsize;
-        mp4state.bytes_into_buffer -= mp4state.bytes_consumed;
+        advance_buffer(&mp4state, mp4state.m_aac_bytes_consumed);
 
-//        avg_bitrate = mp4state.aacInfo.bitrate;
-        avg_bitrate = 0;
-
-        module.is_seekable = 0;
+        if (mp4state.m_header_type == 2)
+            avg_bitrate = bitrate;
+        else
+            avg_bitrate = bitrate*1000;
     } else {
         mp4state.mp4file = MP4Read(mp4state.filename, 0);
         if (!mp4state.mp4file)
@@ -655,8 +815,7 @@ int play(char *fn)
 
     SetThreadAffinityMask(play_thread_handle, 1);
 
-    if (m_priority != 3)
-        SetThreadPriority(play_thread_handle, priority_table[m_priority]);
+    SetThreadPriority(play_thread_handle, priority_table[m_priority]);
 
     return 0;
 }
@@ -710,6 +869,8 @@ void setpan(int pan)
 
 void stop()
 {
+    struct seek_list *target = mp4state.m_head;
+
 #ifdef DEBUG_OUTPUT
     in_mp4_DebugOutput("stop");
 #endif
@@ -724,6 +885,16 @@ void stop()
         play_thread_handle = INVALID_HANDLE_VALUE;
     }
 
+
+    if (mp4state.m_aac_buffer)
+        free(mp4state.m_aac_buffer);
+
+    while (target)
+    {
+        struct seek_list *tmp = target;
+        target = target->next;
+        if (tmp) free(tmp);
+    }
     faacDecClose(mp4state.hDecoder);
     if (mp4state.filetype)
         fclose(mp4state.aacfile);
@@ -763,11 +934,102 @@ int getsonglength(char *fn)
 
         return msDuration;
     } else {
-//        faadAACInfo aacInfo;
-//        get_AAC_format(fn, &aacInfo);
+        int tagsize = 0;
+        int bread = 0;
+        double length = 0.;
+        __int64 bitrate = 128;
+        struct seek_list *target;
+        state len_state;
 
-//        return aacInfo.length;
-        return 0;
+        memset(&len_state, 0, sizeof(state));
+
+        if (!(len_state.aacfile = fopen(fn, "rb")))
+        {
+            // error
+            return 0;
+        }
+
+        len_state.m_at_eof = 0;
+
+        if (!(len_state.m_aac_buffer = (unsigned char*)malloc(768*6)))
+        {
+            //console::error("Memory allocation error.", "foo_mp4");
+            return 0;
+        }
+        memset(len_state.m_aac_buffer, 0, 768*6);
+
+        bread = fread(len_state.m_aac_buffer, 1, 768*6, len_state.aacfile);
+        len_state.m_aac_bytes_into_buffer = bread;
+        len_state.m_aac_bytes_consumed = 0;
+        len_state.m_file_offset = 0;
+
+        if (bread != 768*6)
+            len_state.m_at_eof = 1;
+
+        if (!memcmp(len_state.m_aac_buffer, "ID3", 3))
+        {
+            /* high bit is not used */
+            tagsize = (len_state.m_aac_buffer[6] << 21) | (len_state.m_aac_buffer[7] << 14) |
+                (len_state.m_aac_buffer[8] <<  7) | (len_state.m_aac_buffer[9] <<  0);
+
+            tagsize += 10;
+            advance_buffer(&len_state, tagsize);
+        }
+
+        len_state.m_head = (struct seek_list*)malloc(sizeof(struct seek_list));
+        len_state.m_tail = len_state.m_head;
+        len_state.m_tail->next = NULL;
+
+        len_state.m_header_type = 0;
+        if ((len_state.m_aac_buffer[0] == 0xFF) && ((len_state.m_aac_buffer[1] & 0xF6) == 0xF0))
+        {
+            if (1) //(m_reader->can_seek())
+            {
+                adts_parse(&len_state, &bitrate, &length);
+                fseek(len_state.aacfile, tagsize, SEEK_SET);
+
+                bread = fread(len_state.m_aac_buffer, 1, 768*6, len_state.aacfile);
+                if (bread != 768*6)
+                    len_state.m_at_eof = 1;
+                else
+                    len_state.m_at_eof = 0;
+                len_state.m_aac_bytes_into_buffer = bread;
+                len_state.m_aac_bytes_consumed = 0;
+
+                len_state.m_header_type = 1;
+            }
+        } else if (memcmp(len_state.m_aac_buffer, "ADIF", 4) == 0) {
+            int skip_size = (len_state.m_aac_buffer[4] & 0x80) ? 9 : 0;
+            bitrate = ((unsigned int)(len_state.m_aac_buffer[4 + skip_size] & 0x0F)<<19) |
+                ((unsigned int)len_state.m_aac_buffer[4 + skip_size]<<11) |
+                ((unsigned int)len_state.m_aac_buffer[4 + skip_size]<<3) |
+                ((unsigned int)len_state.m_aac_buffer[4 + skip_size] & 0xE0);
+
+            length = (double)file_length(len_state.aacfile);
+            if (length == 0)
+                length = 0;
+            else
+                length = (double)bitrate/((double)length*8.) + 0.5;
+
+            bitrate = (__int64)((double)bitrate/1000.0 + 0.5);
+
+            len_state.m_header_type = 2;
+        }
+
+        if (len_state.m_aac_buffer)
+            free(len_state.m_aac_buffer);
+
+        target = len_state.m_head;
+        while (target)
+        {
+            struct seek_list *tmp = target;
+            target = target->next;
+            if (tmp) free(tmp);
+        }
+
+        fclose(len_state.aacfile);
+
+        return (int)(length*1000.);
     }
 }
 
@@ -791,8 +1053,7 @@ int getlength()
 
         return msDuration;
     } else {
-//        return mp4state.aacInfo.length;
-        return 0;
+        return mp4state.m_length;
     }
     return 0;
 }
@@ -974,13 +1235,65 @@ DWORD WINAPI MP4PlayThread(void *b)
     return 0;
 }
 
+int aac_seek(state *st, double seconds)
+{
+    int i, frames;
+    int bread;
+    struct seek_list *target = st->m_head;
+
+    if (1 /*m_reader->can_seek()*/ && ((st->m_header_type == 1) || (seconds < st->cur_pos_sec)))
+    {
+        frames = (int)(seconds*((double)st->samplerate/1024.0) + 0.5);
+
+        for (i = 0; i < frames; i++)
+        {
+            if (target->next)
+                target = target->next;
+            else
+                return 1;
+        }
+        if (target->offset == 0 && frames > 0)
+            return 1;
+        fseek(st->aacfile, target->offset, SEEK_SET);
+
+        bread = fread(st->m_aac_buffer, 1, 768*6, st->aacfile);
+        if (bread != 768*6)
+            st->m_at_eof = 1;
+        else
+            st->m_at_eof = 0;
+        st->m_aac_bytes_into_buffer = bread;
+        st->m_aac_bytes_consumed = 0;
+
+        return 1;
+    } else {
+#if 1
+        return 0;
+#else
+        if (seconds > cur_pos_sec)
+        {
+            frames = (int)((seconds - cur_pos_sec)*((double)m_samplerate/1024.0) + 0.5);
+
+            if (frames > 0)
+            {
+                for (i = 0; i < frames; i++)
+                {
+                    if (!run(NULL))
+                        return 1;
+                }
+            }
+
+            return 1;
+        } else {
+            return 0;
+        }
+#endif
+    }
+}
+
 DWORD WINAPI AACPlayThread(void *b)
 {
     int done = 0;
     int l, ms;
-
-    void *sample_buffer;
-    faacDecFrameInfo frameInfo;
 
 #ifdef DEBUG_OUTPUT
     in_mp4_DebugOutput("AACPlayThread");
@@ -991,20 +1304,18 @@ DWORD WINAPI AACPlayThread(void *b)
 
     while (!*((int *)b))
     {
-#if 0
         /* seeking */
         if (mp4state.seek_needed != -1)
         {
-            int ms;
+            double ms;
 
             /* Round off to a second */
-            ms = mp4state.seek_needed - (mp4state.seek_needed%1000);
+            ms = mp4state.seek_needed/1000;
             module.outMod->Flush(mp4state.decode_pos_ms);
-            aac_seek(ms);
-            mp4state.decode_pos_ms = ms;
+            aac_seek(&mp4state, ms);
+            mp4state.decode_pos_ms = mp4state.seek_needed;
             mp4state.seek_needed = -1;
         }
-#endif
 
         if (done)
         {
@@ -1019,6 +1330,89 @@ DWORD WINAPI AACPlayThread(void *b)
 
             Sleep(10);
         } else if (module.outMod->CanWrite() >= (1024*mp4state.channels*sizeof(short))) {
+#if 1
+            faacDecFrameInfo frameInfo;
+            void *sample_buffer;
+
+            memset(&frameInfo, 0, sizeof(faacDecFrameInfo));
+
+            do
+            {
+                fill_buffer(&mp4state);
+
+                if (mp4state.m_aac_bytes_into_buffer != 0)
+                {
+                    sample_buffer = faacDecDecode(mp4state.hDecoder, &frameInfo,
+                        mp4state.m_aac_buffer, mp4state.m_aac_bytes_into_buffer);
+
+                    if (mp4state.m_header_type != 1)
+                    {
+                        mp4state.m_tail->offset = mp4state.m_file_offset;
+                        mp4state.m_tail->next = (struct seek_list*)malloc(sizeof(struct seek_list));
+                        mp4state.m_tail = mp4state.m_tail->next;
+                        mp4state.m_tail->next = NULL;
+                    }
+
+                    advance_buffer(&mp4state, frameInfo.bytesconsumed);
+                } else {
+                    break;
+                }
+
+            } while (!frameInfo.samples && !frameInfo.error);
+
+            if (frameInfo.error || (mp4state.m_aac_bytes_into_buffer == 0))
+            {
+                if (frameInfo.error)
+                {
+                    //if (faacDecGetErrorMessage(frameInfo.error) != NULL)
+                    //    console::error(faacDecGetErrorMessage(frameInfo.error), "foo_mp4");
+                }
+                done = 1;
+            }
+
+            if (!killPlayThread && (frameInfo.samples > 0))
+            {
+                if (res_table[m_resolution] == 24)
+                {
+                    /* convert libfaad output (3 bytes packed in 4 bytes) */
+                    char *temp_buffer = convert3in4to3in3(sample_buffer, frameInfo.samples);
+                    memcpy((void*)sample_buffer, (void*)temp_buffer, frameInfo.samples*3);
+                    free(temp_buffer);
+                }
+
+                module.SAAddPCMData(sample_buffer, (int)mp4state.channels, res_table[m_resolution],
+                    mp4state.decode_pos_ms);
+                module.VSAAddPCMData(sample_buffer, (int)mp4state.channels, res_table[m_resolution],
+                    mp4state.decode_pos_ms);
+                ms = (int)floor(((float)frameInfo.samples*1000.0) /
+                    ((float)mp4state.samplerate*(float)frameInfo.channels));
+                mp4state.decode_pos_ms += ms;
+
+                l = frameInfo.samples * res_table[m_resolution] / 8;
+
+                if (module.dsp_isactive())
+                {
+                    void *dsp_buffer = malloc(l*2);
+                    memcpy(dsp_buffer, sample_buffer, l);
+
+                    l = module.dsp_dosamples((short*)dsp_buffer,
+                        frameInfo.samples/frameInfo.channels,
+                        res_table[m_resolution],
+                        frameInfo.channels,
+                        mp4state.samplerate) *
+                        (frameInfo.channels*(res_table[m_resolution]/8));
+
+                    module.outMod->Write(dsp_buffer, l);
+                    if (dsp_buffer) free(dsp_buffer);
+                } else {
+                    module.outMod->Write(sample_buffer, l);
+                }
+            }
+
+            mp4state.samplerate = frameInfo.samplerate;
+
+            mp4state.cur_pos_sec += 1024.0/(double)mp4state.samplerate;
+#else
             if (mp4state.last_frame)
             {
                 done = 1;
@@ -1116,6 +1510,7 @@ DWORD WINAPI AACPlayThread(void *b)
                     }
                 }
             }
+#endif
         } else {
             Sleep(10);
         }
