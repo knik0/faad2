@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.74 2003/11/22 16:37:58 ca5e Exp $
+** $Id: foo_mp4.cpp,v 1.75 2003/11/22 18:08:05 ca5e Exp $
 **/
 
 #include <mp4.h>
@@ -383,57 +383,56 @@ public:
             MP4SetMetadataFreeForm(hFile, "REPLAYGAIN_ALBUM_GAIN", (unsigned __int8*)p, strlen(p));
 
         int numItems = info->meta_get_count();
-        if (numItems > 0)
+        for (int i = 0; i < numItems; i++)
         {
-            for (int i = 0; i < numItems; i++)
+            char *pName = (char *)info->meta_enum_name(i);
+            const char *val = info->meta_enum_value(i);
+            if (!pName || (pName && !*pName) || !val || (val && !*val)) continue;
+
+            if (!stricmp(pName, "TOTALTRACKS") || !stricmp(pName, "TOTALDISCS")) continue;
+
+            if (stricmp(pName, "TITLE") == 0)
             {
-                char *pName = (char*)info->meta_enum_name(i);
-                const char *val = info->meta_enum_value(i);
-                if (!val || (val && !*val)) continue;
-
-                if (stricmp(pName, "TOTALTRACKS") == 0 || stricmp(pName, "TOTALDISCS") == 0) continue;
-
-                if (stricmp(pName, "TITLE") == 0)
-                {
-                    MP4SetMetadataName(hFile, val);
-                } else if (stricmp(pName, "ARTIST") == 0) {
-                    MP4SetMetadataArtist(hFile, val);
-                } else if (stricmp(pName, "WRITER") == 0) {
-                    MP4SetMetadataWriter(hFile, val);
-                } else if (stricmp(pName, "ALBUM") == 0) {
-                    MP4SetMetadataAlbum(hFile, val);
-                } else if (stricmp(pName, "YEAR") == 0 || stricmp(pName, "DATE") == 0) {
-                    MP4SetMetadataYear(hFile, val);
-                } else if (stricmp(pName, "COMMENT") == 0) {
-                    MP4SetMetadataComment(hFile, val);
-                } else if (stricmp(pName, "GENRE") == 0) {
-                    MP4SetMetadataGenre(hFile, val);
-                } else if (stricmp(pName, "TRACKNUMBER") == 0) {
-                    int t1 = 0, t2 = 0;
-                    sscanf(val, "%d/%d", &t1, &t2);
-                    unsigned __int16 trkn = t1, tot = t2;
-                    const char *t = info->meta_get("TOTALTRACKS");
-                    if (t && *t) tot = atoi(t);
-                    MP4SetMetadataTrack(hFile, trkn, tot);
-                } else if (stricmp(pName, "DISKNUMBER") == 0 || stricmp(pName, "DISC") == 0) {
-                    int t1 = 0, t2 = 0;
-                    sscanf(val, "%d/%d", &t1, &t2);
-                    unsigned __int16 disk = t1, tot = t2;
-                    const char *t = info->meta_get("TOTALDISCS");
-                    if (t && *t) tot = atoi(t);
-                    MP4SetMetadataDisk(hFile, disk, tot);
-                } else if (stricmp(pName, "COMPILATION") == 0) {
-                    unsigned __int8 cpil = atoi(val);
-                    MP4SetMetadataCompilation(hFile, cpil);
-                } else if (stricmp(pName, "TEMPO") == 0) {
-                    unsigned __int16 tempo = atoi(val);
-                    MP4SetMetadataTempo(hFile, tempo);
-                } else {
-                    MP4SetMetadataFreeForm(hFile, pName, (unsigned __int8*)val, strlen(val));
-                }
+                MP4SetMetadataName(hFile, val);
+            } else if (stricmp(pName, "ARTIST") == 0) {
+                MP4SetMetadataArtist(hFile, val);
+            } else if (stricmp(pName, "WRITER") == 0) {
+                MP4SetMetadataWriter(hFile, val);
+            } else if (stricmp(pName, "ALBUM") == 0) {
+                MP4SetMetadataAlbum(hFile, val);
+            } else if (stricmp(pName, "YEAR") == 0 || stricmp(pName, "DATE") == 0) {
+                MP4SetMetadataYear(hFile, val);
+            } else if (stricmp(pName, "COMMENT") == 0) {
+                MP4SetMetadataComment(hFile, val);
+            } else if (stricmp(pName, "GENRE") == 0) {
+                MP4SetMetadataGenre(hFile, val);
+            } else if (stricmp(pName, "TRACKNUMBER") == 0 || stricmp(pName, "TRACK") == 0) {
+                int t1 = 0, t2 = 0;
+                sscanf(val, "%d/%d", &t1, &t2);
+                unsigned __int16 trkn = t1, tot = t2;
+                const char *t = info->meta_get("TOTALTRACKS");
+                if (t && *t) tot = atoi(t);
+                MP4SetMetadataTrack(hFile, trkn, tot);
+            } else if (stricmp(pName, "DISKNUMBER") == 0 || stricmp(pName, "DISC") == 0) {
+                int t1 = 0, t2 = 0;
+                sscanf(val, "%d/%d", &t1, &t2);
+                unsigned __int16 disk = t1, tot = t2;
+                const char *t = info->meta_get("TOTALDISCS");
+                if (t && *t) tot = atoi(t);
+                MP4SetMetadataDisk(hFile, disk, tot);
+            } else if (stricmp(pName, "COMPILATION") == 0) {
+                unsigned __int8 cpil = atoi(val);
+                MP4SetMetadataCompilation(hFile, cpil);
+            } else if (stricmp(pName, "TEMPO") == 0) {
+                unsigned __int16 tempo = atoi(val);
+                MP4SetMetadataTempo(hFile, tempo);
+            } else {
+                MP4SetMetadataFreeForm(hFile, pName, (unsigned __int8*)val, strlen(val));
             }
         }
 
+        MP4Close(hFile);
+        hFile = MP4_INVALID_FILE_HANDLE;
         /* end */
         return SET_INFO_SUCCESS;
     }
@@ -508,19 +507,20 @@ private:
 
     int ReadMP4Tag(file_info *info)
     {
-        unsigned __int32 valueSize = 0;
-        unsigned __int8 *pValue = 0;
-        char *pName = 0;
+        unsigned __int32 valueSize;
+        unsigned __int8 *pValue;
+        char *pName;
         unsigned int i = 0;
 
         do {
             valueSize = 0;
+            pValue = 0;
+            pName = 0;
 
-            MP4GetMetadataByIndex(hFile, i, (const char**)&pName, &pValue, &valueSize);
-
-            if (valueSize > 0)
+            if (MP4GetMetadataByIndex(hFile, i, (const char **)&pName, &pValue, &valueSize) &&
+                valueSize > 0 && pName && pValue)
             {
-                char *val = (char*)malloc((valueSize+1)*sizeof(char));
+                char *val = (char *)malloc((valueSize+1)*sizeof(char));
 
                 if (val)
                 {
