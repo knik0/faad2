@@ -224,6 +224,7 @@ static stdmeta_entry stdmetas[] =
 //	{"trkn","track"},
 //	{"disk","disc"},
 //	{"gnre","genre"},
+	{"covr","cover"},
 };
 
 

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4meta.c,v 1.10 2004/01/05 14:05:11 menno Exp $
+** $Id: mp4meta.c,v 1.13 2004/01/11 15:52:18 menno Exp $
 **/
 
 #ifdef USE_TAGGING
@@ -163,7 +163,7 @@ static int32_t mp4ff_set_metadata_name(mp4ff_t *f, const uint8_t atom_type, char
     static char *tag_names[] = {
         "unknown", "title", "artist", "writer", "album",
         "date", "tool", "comment", "genre", "track",
-        "disc", "compilation", "genre", "tempo"
+        "disc", "compilation", "genre", "tempo", "cover"
     };
     uint8_t tag_idx = 0;
 
@@ -182,6 +182,7 @@ static int32_t mp4ff_set_metadata_name(mp4ff_t *f, const uint8_t atom_type, char
     case ATOM_COMPILATION: tag_idx = 11; break;
     case ATOM_GENRE2: tag_idx = 12; break;
     case ATOM_TEMPO: tag_idx = 13; break;
+    case ATOM_COVER: tag_idx = 14; break;
     default: tag_idx = 0; break;
     }
 
@@ -403,6 +404,11 @@ int32_t mp4ff_meta_get_compilation(const mp4ff_t *f, char **value)
 int32_t mp4ff_meta_get_tempo(const mp4ff_t *f, char **value)
 {
     return mp4ff_meta_find_by_name(f, "tempo", value);
+}
+
+int32_t mp4ff_meta_get_coverart(const mp4ff_t *f, char **value)
+{
+    return mp4ff_meta_find_by_name(f, "cover", value);
 }
 
 #endif

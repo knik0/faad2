@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ffint.h,v 1.10 2004/01/05 14:05:11 menno Exp $
+** $Id: mp4ffint.h,v 1.11 2004/01/06 11:59:47 menno Exp $
 **/
 
 #ifndef MP4FF_INTERNAL_H
@@ -95,6 +95,7 @@ extern "C" {
 #define ATOM_COMPILATION 19
 #define ATOM_GENRE2 20
 #define ATOM_TEMPO 21
+#define ATOM_COVER 22
 
 #ifdef HAVE_CONFIG_H
 #include "../../config.h"
@@ -275,6 +276,7 @@ int32_t mp4ff_meta_get_track(const mp4ff_t *f, char **value);
 int32_t mp4ff_meta_get_disc(const mp4ff_t *f, char **value);
 int32_t mp4ff_meta_get_compilation(const mp4ff_t *f, char **value);
 int32_t mp4ff_meta_get_tempo(const mp4ff_t *f, char **value);
+int32_t mp4ff_meta_get_coverart(const mp4ff_t *f, char **value);
 #endif
 
 /* mp4ff.c */

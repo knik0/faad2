@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4atom.c,v 1.13 2004/01/05 14:05:11 menno Exp $
+** $Id: mp4atom.c,v 1.14 2004/01/06 11:59:47 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -154,6 +154,8 @@ static uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b,
         return ATOM_DISC;
     else if (mp4ff_atom_compare(a,b,c,d, 'g','n','r','e'))
         return ATOM_GENRE2;
+    else if (mp4ff_atom_compare(a,b,c,d, 'c','o','v','r'))
+		return ATOM_COVER;
     else if (mp4ff_atom_compare(a,b,c,d, 'c','p','i','l'))
         return ATOM_COMPILATION;
     else if (mp4ff_atom_compare(a,b,c,d, 'c','t','t','s'))

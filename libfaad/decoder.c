@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.84 2004/01/05 14:05:11 menno Exp $
+** $Id: decoder.c,v 1.85 2004/01/06 11:59:48 menno Exp $
 **/
 
 #include "common.h"
@@ -256,7 +256,7 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
 
 #ifdef SBR_DEC
     /* implicit signalling */
-    if (*samplerate <= 24000)
+    if (*samplerate <= 24000 && !(hDecoder->config.dontUpSampleImplicitSBR))
     {
         *samplerate *= 2;
         hDecoder->forceUpSampling = 1;
@@ -324,7 +324,10 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
 #endif
 #ifdef SBR_DEC
     hDecoder->sbr_present_flag = mp4ASC.sbr_present_flag;
-    hDecoder->forceUpSampling = mp4ASC.forceUpSampling;
+    if (hDecoder->config.dontUpSampleImplicitSBR == 0)
+        hDecoder->forceUpSampling = mp4ASC.forceUpSampling;
+    else
+        hDecoder->forceUpSampling = 0;
 
     /* AAC core decoder samplerate is 2 times as low */
     if (hDecoder->sbr_present_flag == 1 || hDecoder->forceUpSampling == 1)

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.69 2004/01/05 14:05:11 menno Exp $
+** $Id: main.c,v 1.70 2004/01/06 11:59:47 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -464,6 +464,7 @@ int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_stdout,
     config->outputFormat = outputFormat;
     config->downMatrix = downMatrix;
     config->useOldADTSFormat = old_format;
+    config->dontUpSampleImplicitSBR = 1;
     faacDecSetConfiguration(hDecoder, config);
 
     /* get AAC infos for printing */
@@ -735,6 +736,7 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
     config = faacDecGetCurrentConfiguration(hDecoder);
     config->outputFormat = outputFormat;
     config->downMatrix = downMatrix;
+    config->dontUpSampleImplicitSBR = 1;
     faacDecSetConfiguration(hDecoder, config);
 
     if (adts_out)
@@ -804,7 +806,7 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
         long samples = mp4ff_num_samples(infile, track);
         float f = 1024.0;
         float seconds;
-        if ((mp4ASC.sbr_present_flag == 1) || mp4ASC.forceUpSampling)
+        if (mp4ASC.sbr_present_flag == 1)
         {
             f = f * 2.0;
         }
