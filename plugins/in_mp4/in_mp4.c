@@ -1,22 +1,22 @@
 /*
 ** FAAD - Freeware Advanced Audio Decoder
 ** Copyright (C) 2002 M. Bakker
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.30 2003/05/31 13:18:05 menno Exp $
+** $Id: in_mp4.c,v 1.31 2003/06/13 18:36:43 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -146,11 +146,11 @@ static void show_error(HWND hwnd, char *message, ...)
 
 static void config_init()
 {
-	char *p=INI_FILE;
-	GetModuleFileName(NULL,INI_FILE,_MAX_PATH);
-	while (*p) p++;
-	while (p >= INI_FILE && *p != '.') p--;
-	strcpy(p+1,"ini");
+    char *p=INI_FILE;
+    GetModuleFileName(NULL,INI_FILE,_MAX_PATH);
+    while (*p) p++;
+    while (p >= INI_FILE && *p != '.') p--;
+    strcpy(p+1,"ini");
 }
 
 void config_read()
@@ -160,7 +160,7 @@ void config_read()
     char show_errors[10];
     char use_for_aac[10];
 
-	config_init();
+    config_init();
 
     strcpy(show_errors, "1");
     strcpy(priority, "3");
@@ -168,8 +168,8 @@ void config_read()
     strcpy(use_for_aac, "1");
 
     RS(priority);
-	RS(resolution);
-	RS(show_errors);
+    RS(resolution);
+    RS(show_errors);
     RS(use_for_aac);
 
     m_priority = atoi(priority);
@@ -191,9 +191,9 @@ void config_write()
     itoa(m_use_for_aac, use_for_aac, 10);
 
     WS(priority);
-	WS(resolution);
-	WS(show_errors);
-	WS(use_for_aac);
+    WS(resolution);
+    WS(show_errors);
+    WS(use_for_aac);
 }
 
 void init()
@@ -370,7 +370,7 @@ BOOL CALLBACK aac_info_dialog_proc(HWND hwndDlg, UINT message,
 
 int infoDlg(char *fn, HWND hwndParent)
 {
-    if(StringComp(fn + strlen(fn) - 3, "AAC", 3) == 0)
+    if(!stricmp(fn + strlen(fn) - 3,"AAC"))
     {
         lstrcpy(info_fn, fn);
 
@@ -393,8 +393,8 @@ BOOL CALLBACK config_dialog_proc(HWND hwndDlg, UINT message,
 
     switch (message) {
     case WM_INITDIALOG:
-		SendMessage(GetDlgItem(hwndDlg, IDC_PRIORITY), TBM_SETRANGE, TRUE, MAKELONG(1,5)); 
-		SendMessage(GetDlgItem(hwndDlg, IDC_PRIORITY), TBM_SETPOS, TRUE, m_priority);
+        SendMessage(GetDlgItem(hwndDlg, IDC_PRIORITY), TBM_SETRANGE, TRUE, MAKELONG(1,5));
+        SendMessage(GetDlgItem(hwndDlg, IDC_PRIORITY), TBM_SETPOS, TRUE, m_priority);
         SendMessage(GetDlgItem(hwndDlg, res_id_table[m_resolution]), BM_SETCHECK, BST_CHECKED, 0);
         if (m_show_errors)
             SendMessage(GetDlgItem(hwndDlg, IDC_ERROR), BM_SETCHECK, BST_CHECKED, 0);
@@ -912,7 +912,7 @@ int getsonglength(char *fn)
 {
     long msDuration = 0;
 
-    if(StringComp(fn + strlen(fn) - 3, "MP4", 3) == 0)
+    if(!stricmp(fn + strlen(fn) - 3,"MP4") || !stricmp(fn + strlen(fn) - 3,"M4A"))
     {
         int track;
         MP4Duration length;
@@ -1126,7 +1126,7 @@ DWORD WINAPI MP4PlayThread(void *b)
     in_mp4_DebugOutput("MP4PlayThread");
 #endif
 
-	PlayThreadAlive = 1;
+    PlayThreadAlive = 1;
     mp4state.last_frame = 0;
 
     while (!*((int *)b))
@@ -1143,7 +1143,7 @@ DWORD WINAPI MP4PlayThread(void *b)
                 mp4state.mp4track, duration, 0);
 
             mp4state.decode_pos_ms = mp4state.seek_needed;
-			mp4state.seek_needed = -1;
+            mp4state.seek_needed = -1;
         }
 
         if (done)
@@ -1236,8 +1236,8 @@ DWORD WINAPI MP4PlayThread(void *b)
         }
     }
 
-	PlayThreadAlive = 0;
-	
+    PlayThreadAlive = 0;
+
     return 0;
 }
 
@@ -1439,8 +1439,8 @@ DWORD WINAPI AACPlayThread(void *b)
         }
     }
 
-	PlayThreadAlive = 0;
-	
+    PlayThreadAlive = 0;
+
     return 0;
 }
 
