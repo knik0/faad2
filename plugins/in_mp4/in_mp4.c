@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.20 2002/11/01 11:19:36 menno Exp $
+** $Id: in_mp4.c,v 1.21 2002/12/06 10:24:33 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -89,7 +89,7 @@ typedef struct state
     long bytes_consumed;
     unsigned char *buffer;
     long seconds;
-    faadAACInfo aacInfo;
+//    faadAACInfo aacInfo;
 } state;
 
 static state mp4state;
@@ -361,8 +361,7 @@ BOOL CALLBACK config_dialog_proc(HWND hwndDlg, UINT message,
             m_priority = SendMessage(GetDlgItem(hwndDlg, IDC_PRIORITY), TBM_GETPOS, 0, 0);
             for (i = 0; i < 5; i++)
             {
-                int set = SendMessage(GetDlgItem(hwndDlg, res_id_table[i]), BM_GETCHECK, 0, 0);
-                if (set)
+                if (SendMessage(GetDlgItem(hwndDlg, res_id_table[i]), BM_GETCHECK, 0, 0))
                 {
                     m_resolution = i;
                     break;
@@ -439,7 +438,7 @@ int play(char *fn)
     {
         long pos, tmp, read, tagsize;
 
-        get_AAC_format(mp4state.filename, &mp4state.aacInfo);
+//        get_AAC_format(mp4state.filename, &mp4state.aacInfo);
 
         mp4state.aacfile = fopen(mp4state.filename, "rb");
         if (!mp4state.aacfile)
@@ -502,7 +501,8 @@ int play(char *fn)
         mp4state.bytes_consumed += tagsize;
         mp4state.bytes_into_buffer -= mp4state.bytes_consumed;
 
-        avg_bitrate = mp4state.aacInfo.bitrate;
+//        avg_bitrate = mp4state.aacInfo.bitrate;
+        avg_bitrate = 0;
 
         module.is_seekable = 0;
     } else {
@@ -700,10 +700,11 @@ int getsonglength(char *fn)
 
         return msDuration;
     } else {
-        faadAACInfo aacInfo;
-        get_AAC_format(fn, &aacInfo);
+//        faadAACInfo aacInfo;
+//        get_AAC_format(fn, &aacInfo);
 
-        return aacInfo.length;
+//        return aacInfo.length;
+        return 0;
     }
 }
 
@@ -727,7 +728,8 @@ int getlength()
 
         return msDuration;
     } else {
-        return mp4state.aacInfo.length;
+//        return mp4state.aacInfo.length;
+        return 0;
     }
     return 0;
 }
