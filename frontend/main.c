@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.55 2003/10/19 19:18:53 ca5e Exp $
+** $Id: main.c,v 1.56 2003/10/19 19:33:16 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -1021,10 +1021,9 @@ int main(int argc, char *argv[])
 
     unsigned long cap = faacDecGetCapabilities();
 
-    fprintf(stderr, " ****** FAAD2 (Freeware AAC Decoder) V%s ******\n\n", FAAD2_VERSION);
+    fprintf(stderr, " ****** Ahead Software MPEG-4 AAC Decoder V%s ******\n\n", FAAD2_VERSION);
     fprintf(stderr, "        Build: %s\n", __DATE__);
-    fprintf(stderr, "        Copyright: M. Bakker\n");
-    fprintf(stderr, "                   Ahead Software AG\n");
+    fprintf(stderr, "        Copyright 2002-2003: Ahead Software AG\n");
     fprintf(stderr, "        http://www.audiocoding.com\n");
     if (cap & FIXED_POINT_CAP)
         fprintf(stderr, "        Fixed point version\n");
