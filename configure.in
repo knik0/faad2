@@ -19,7 +19,7 @@ dnl Checks for header files required for mp4.h
 AC_CHECK_HEADERS(stdint.h inttypes.h)
 
 dnl Checks for sndfile library.
-AC_CHECK_LIB(sndfile, sf_open_read, have_sndfile_lib=yes)
+AC_CHECK_LIB(sndfile, sf_perror, have_sndfile_lib=yes)
 AC_CHECK_HEADER(sndfile.h, have_sndfile_hdr=yes)
 
 if test x$have_sndfile_lib != xyes -o x$have_sndfile_hdr != xyes; then
