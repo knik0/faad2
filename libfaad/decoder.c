@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.40 2002/11/28 18:48:29 menno Exp $
+** $Id: decoder.c,v 1.41 2002/12/02 20:27:51 menno Exp $
 **/
 
 #include "common.h"
@@ -81,6 +81,9 @@ faacDecHandle FAADAPI faacDecOpen()
     {
         hDecoder->window_shape_prev[i] = 0;
         hDecoder->time_out[i] = NULL;
+#ifdef SSR_DEC
+        hDecoder->ssr_overlap[i] = NULL;
+#endif
 #ifdef MAIN_DEC
         hDecoder->pred_stat[i] = NULL;
 #endif
@@ -271,6 +274,9 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
     for (i = 0; i < MAX_CHANNELS; i++)
     {
         if (hDecoder->time_out[i]) free(hDecoder->time_out[i]);
+#ifdef SSR_DEC
+        if (hDecoder->ssr_overlap[i]) free(hDecoder->ssr_overlap[i]);
+#endif
 #ifdef MAIN_DEC
         if (hDecoder->pred_stat[i]) free(hDecoder->pred_stat[i]);
 #endif
@@ -326,6 +332,9 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #endif
     uint8_t *window_shape_prev = hDecoder->window_shape_prev;
     real_t **time_out      =  hDecoder->time_out;
+#ifdef SSR_DEC
+    real_t **ssr_overlap   =  hDecoder->ssr_overlap;
+#endif
     fb_info *fb            =  hDecoder->fb;
     drc_info *drc          =  hDecoder->drc;
     uint8_t outputFormat   =  hDecoder->config.outputFormat;
@@ -458,7 +467,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         else if ((pch == -1) || ((pch != -1) && (!ics->ms_mask_present)))
             pns_decode(ics, NULL, spec_coef[ch], NULL, frame_len, 0);
 
-        if (!right_channel)
+        if (!right_channel && (pch != -1))
         {
             /* mid/side decoding */
             ms_decode(ics, icsr, spec_coef[ch], spec_coef[pch], frame_len);
@@ -551,9 +560,15 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                 time_out[ch], object_type, frame_len);
 #ifdef SSR_DEC
         } else {
+            if (ssr_overlap[ch] == NULL)
+            {
+                ssr_overlap[ch] = (real_t*)malloc(2*frame_len*sizeof(real_t));
+                memset(ssr_overlap[ch], 0, 2*frame_len*sizeof(real_t));
+            }
+
             ssr_decode(&(ics->ssr), fb, ics->window_sequence, ics->window_shape,
                 window_shape_prev[ch], spec_coef[ch],
-                time_out[ch], frame_len);
+                time_out[ch], ssr_overlap[ch], frame_len);
         }
 #endif
         /* save window shape for next frame */

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: structs.h,v 1.1 2002/11/28 18:48:30 menno Exp $
+** $Id: structs.h,v 1.2 2002/12/02 20:28:04 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -321,6 +321,10 @@ typedef struct
     drc_info *drc;
 
     real_t *time_out[MAX_CHANNELS];
+
+#ifdef SSR_DEC
+    real_t *ssr_overlap[MAX_CHANNELS];
+#endif
 
 #ifdef MAIN_DEC
     pred_state *pred_stat[MAX_CHANNELS];

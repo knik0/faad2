@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ssr.c,v 1.1 2002/11/28 18:48:30 menno Exp $
+** $Id: ssr.c,v 1.2 2002/12/02 20:27:59 menno Exp $
 **/
 
 #include "common.h"
@@ -31,11 +31,16 @@
 
 void ssr_decode(ssr_info *ssr, fb_info *fb, uint8_t window_sequence,
                 uint8_t window_shape, uint8_t window_shape_prev,
-                real_t *freq_in, real_t *time_out, uint16_t frame_len)
+                real_t *freq_in, real_t *time_out, real_t *overlap,
+                uint16_t frame_len)
 {
     uint8_t band;
     uint16_t ssr_frame_len = frame_len/SSR_BANDS;
     real_t time_tmp[2048];
+    real_t output[1024];
+
+    memset(output, 0, 1024*sizeof(real_t));
+    memset(time_tmp, 0, 2048*sizeof(real_t));
 
     for (band = 0; band < SSR_BANDS; band++)
     {
@@ -59,25 +64,62 @@ void ssr_decode(ssr_info *ssr, fb_info *fb, uint8_t window_sequence,
             freq_in + band*ssr_frame_len, time_tmp + band*ssr_frame_len,
             ssr_frame_len);
 
-#if 0
         /* gain control */
-        ssr_gain_control(ssr, time_tmp, window_sequence, ssr_frame_len);
-#endif
+        ssr_gain_control(ssr, time_tmp, output, overlap, band,
+            window_sequence, ssr_frame_len);
     }
 
 #if 0
     /* inverse pqf to bring subbands together again */
-    ssr_ipqf();
+    ssr_ipqf(ssr_info *ssr, real_t *time_tmp);
 #endif
 }
 
-static void ssr_gain_control(ssr_info *ssr, real_t *data, uint8_t window_sequence,
-                             uint16_t frame_len)
+static void ssr_gain_control(ssr_info *ssr, real_t *data, real_t *output,
+                             real_t *overlap, uint8_t band,
+                             uint8_t window_sequence, uint16_t frame_len)
 {
+    uint16_t i;
+
     if (window_sequence != EIGHT_SHORT_SEQUENCE)
     {
 //        ssr_gc_function();
+//        for (i = 0; i < frame_len*2; i++)
+//          input[band * frame_len*2 + i] *= gc_function[i];
+        for (i = 0; i < frame_len; i++)
+        {
+            output[band*frame_len + i] = overlap[band*frame_len + i] +
+                data[band*frame_len*2 + i];
+        }
+        for (i = 0; i < frame_len; i++)
+        {
+            overlap[band*frame_len + i] =
+                data[band*frame_len*2 + frame_len + i];
+        }
     } else {
+        uint8_t w;
+        for (w = 0; w < 8; w++)
+        {
+            uint16_t frame_len8 = frame_len/8;
+            uint16_t frame_len16 = frame_len/16;
+//            ssr_gc_function();
+//            for (i = 0; i < frame_len*2/8; i++)
+//                input[band*frame_len*2 + w*frame_len*2/8+j] *= gc_function[j];
+            for (i = 0; i < frame_len8; i++)
+            {
+                overlap[band*frame_len + i + 7*frame_len16 + w*frame_len8] +=
+                    data[band*frame_len*2 + 2*w*frame_len8 + i];
+            }
+            for (i = 0; i < frame_len8; i++)
+            {
+                overlap[band*frame_len + i + 7*frame_len16 + (w+1)*frame_len8] =
+                    data[band*frame_len*2 + 2*w*frame_len8 + frame_len8 + i];
+            }
+        }
+        for (i = 0; i < frame_len; i++)
+            output[band*frame_len + i] = overlap[band*frame_len + i];
+        for (i = 0; i < frame_len; i++)
+            overlap[band*frame_len + i] = overlap[band*frame_len + i + frame_len];
     }
 }
 
