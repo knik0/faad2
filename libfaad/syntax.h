@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.h,v 1.47 2004/01/28 19:17:26 menno Exp $
+** $Id: syntax.h,v 1.48 2004/01/29 11:31:11 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -110,10 +110,6 @@ int8_t GASpecificConfig(bitfile *ld, mp4AudioSpecificConfig *mp4ASC,
 
 uint8_t adts_frame(adts_header *adts, bitfile *ld);
 void get_adif_header(adif_header *adif, bitfile *ld);
-void decode_sce_lfe(faacDecHandle hDecoder, faacDecFrameInfo *hInfo, bitfile *ld,
-                    uint8_t id_syn_ele);
-void decode_cpe(faacDecHandle hDecoder, faacDecFrameInfo *hInfo, bitfile *ld,
-                uint8_t id_syn_ele);
 void raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
                     bitfile *ld, program_config *pce, drc_info *drc);
 uint8_t reordered_spectral_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,

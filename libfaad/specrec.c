@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.42 2004/01/28 19:17:26 menno Exp $
+** $Id: specrec.c,v 1.43 2004/01/29 11:31:11 menno Exp $
 **/
 
 /*
@@ -688,7 +688,8 @@ void apply_scalefactors_sse(faacDecHandle hDecoder, ic_stream *ics,
 }
 #endif
 
-static uint8_t allocate_single_channel(faacDecHandle hDecoder, uint8_t channel)
+static uint8_t allocate_single_channel(faacDecHandle hDecoder, uint8_t channel,
+                                       uint8_t output_channels)
 {
     uint8_t mul = 1;
 
@@ -732,6 +733,16 @@ static uint8_t allocate_single_channel(faacDecHandle hDecoder, uint8_t channel)
         hDecoder->time_out[channel] = (real_t*)faad_malloc(mul*hDecoder->frameLength*sizeof(real_t));
         memset(hDecoder->time_out[channel], 0, mul*hDecoder->frameLength*sizeof(real_t));
     }
+#if (defined(PS_DEC) || defined(DRM_PS))
+    if (output_channels == 2)
+    {
+        if (hDecoder->time_out[channel+1] == NULL)
+        {
+            hDecoder->time_out[channel+1] = (real_t*)faad_malloc(mul*hDecoder->frameLength*sizeof(real_t));
+            memset(hDecoder->time_out[channel+1], 0, mul*hDecoder->frameLength*sizeof(real_t));
+        }
+    }
+#endif
 
     if (hDecoder->fb_intermed[channel] == NULL)
     {
@@ -868,16 +879,33 @@ static uint8_t allocate_channel_pair(faacDecHandle hDecoder,
 uint8_t reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
                                    element *sce, int16_t *spec_data)
 {
-    uint8_t retval;
+    uint8_t retval, output_channels;
     ALIGN real_t spec_coef[1024];
 
 #ifdef PROFILE
     int64_t count = faad_get_ts();
 #endif
 
+
+    /* determine whether some mono->stereo tool is used */
+#if (defined(PS_DEC) || defined(DRM_PS))
+    output_channels = hDecoder->ps_used[hDecoder->fr_ch_ele] ? 2 : 1;
+#else
+    output_channels = 1;
+#endif
+    if (hDecoder->element_output_channels[hDecoder->fr_ch_ele] == 0)
+    {
+        /* element_output_channels not set yet */
+        hDecoder->element_output_channels[hDecoder->fr_ch_ele] = output_channels;
+    } else if (hDecoder->element_output_channels[hDecoder->fr_ch_ele] != output_channels) {
+        /* element inconsistency */
+        return 21;
+    }
+
+
     if (hDecoder->element_alloced[hDecoder->fr_ch_ele] == 0)
     {
-        retval = allocate_single_channel(hDecoder, sce->channel);
+        retval = allocate_single_channel(hDecoder, sce->channel, output_channels);
         if (retval > 0)
             return retval;
 
@@ -1013,8 +1041,20 @@ uint8_t reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
                 );
         }
 
-        retval = sbrDecodeSingleFrame(hDecoder->sbr[ele], hDecoder->time_out[ch],
-            hDecoder->postSeekResetFlag, hDecoder->forceUpSampling);
+        /* check if any of the PS tools is used */
+#if (defined(PS_DEC) || defined(DRM_PS))
+        if (output_channels == 1)
+        {
+#endif
+            retval = sbrDecodeSingleFrame(hDecoder->sbr[ele], hDecoder->time_out[ch],
+                hDecoder->postSeekResetFlag, hDecoder->forceUpSampling);
+#if (defined(PS_DEC) || defined(DRM_PS))
+        } else {
+            retval = sbrDecodeSingleFramePS(hDecoder->sbr[ele], hDecoder->time_out[ch],
+                hDecoder->time_out[ch+1], hDecoder->postSeekResetFlag,
+                hDecoder->forceUpSampling);
+        }
+#endif
         if (retval > 0)
             return retval;
     } else if (((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1))

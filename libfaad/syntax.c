@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.69 2004/01/28 19:17:26 menno Exp $
+** $Id: syntax.c,v 1.70 2004/01/29 11:31:11 menno Exp $
 **/
 
 /*
@@ -52,6 +52,10 @@
 
 
 /* static function declarations */
+static void decode_sce_lfe(faacDecHandle hDecoder, faacDecFrameInfo *hInfo, bitfile *ld,
+                           uint8_t id_syn_ele);
+static void decode_cpe(faacDecHandle hDecoder, faacDecFrameInfo *hInfo, bitfile *ld,
+                       uint8_t id_syn_ele);
 static uint8_t single_lfe_channel_element(faacDecHandle hDecoder, bitfile *ld,
                                           uint8_t channel, uint8_t *tag);
 static uint8_t channel_pair_element(faacDecHandle hDecoder, bitfile *ld,
@@ -310,9 +314,9 @@ static uint8_t program_config_element(program_config *pce, bitfile *ld)
     return 0;
 }
 
-void decode_sce_lfe(faacDecHandle hDecoder,
-                    faacDecFrameInfo *hInfo, bitfile *ld,
-                    uint8_t id_syn_ele)
+static void decode_sce_lfe(faacDecHandle hDecoder,
+                           faacDecFrameInfo *hInfo, bitfile *ld,
+                           uint8_t id_syn_ele)
 {
     uint8_t channels = hDecoder->fr_channels;
     uint8_t tag = 0;
@@ -328,25 +332,35 @@ void decode_sce_lfe(faacDecHandle hDecoder,
         return;
     }
 
-    if (id_syn_ele == ID_SCE)
-        hDecoder->channel_element[channels] = hDecoder->fr_ch_ele;
-    else /* LFE */
-        hDecoder->channel_element[channels] = hDecoder->fr_ch_ele;
+    /* for SCE hDecoder->element_output_channels[] is not set here because this
+       can become 2 when some form of Parametric Stereo coding is used
+    */
+
+    /* save the syntax element id */
     hDecoder->element_id[hDecoder->fr_ch_ele] = id_syn_ele;
 
+    /* decode the element */
     hInfo->error = single_lfe_channel_element(hDecoder, ld, channels, &tag);
 
-    if (hDecoder->pce_set)
-        hDecoder->internal_channel[hDecoder->pce.sce_channel[tag]] = channels;
-    else
+    /* map output channels position to internal data channels */
+    if (hDecoder->element_output_channels[hDecoder->fr_ch_ele] == 2)
+    {
+        /* this might be faulty when pce_set is true */
         hDecoder->internal_channel[channels] = channels;
+        hDecoder->internal_channel[channels+1] = channels+1;
+    } else {
+        if (hDecoder->pce_set)
+            hDecoder->internal_channel[hDecoder->pce.sce_channel[tag]] = channels;
+        else
+            hDecoder->internal_channel[channels] = channels;
+    }
 
-    hDecoder->fr_channels++;
+    hDecoder->fr_channels += hDecoder->element_output_channels[hDecoder->fr_ch_ele];
     hDecoder->fr_ch_ele++;
 }
 
-void decode_cpe(faacDecHandle hDecoder, faacDecFrameInfo *hInfo, bitfile *ld,
-                uint8_t id_syn_ele)
+static void decode_cpe(faacDecHandle hDecoder, faacDecFrameInfo *hInfo, bitfile *ld,
+                       uint8_t id_syn_ele)
 {
     uint8_t channels = hDecoder->fr_channels;
     uint8_t tag = 0;
@@ -362,12 +376,24 @@ void decode_cpe(faacDecHandle hDecoder, faacDecFrameInfo *hInfo, bitfile *ld,
         return;
     }
 
-    hDecoder->channel_element[channels] = hDecoder->fr_ch_ele;
-    hDecoder->channel_element[channels+1] = hDecoder->fr_ch_ele;
+    /* for CPE the number of output channels is always 2 */
+    if (hDecoder->element_output_channels[hDecoder->fr_ch_ele] == 0)
+    {
+        /* element_output_channels not set yet */
+        hDecoder->element_output_channels[hDecoder->fr_ch_ele] = 2;
+    } else if (hDecoder->element_output_channels[hDecoder->fr_ch_ele] != 2) {
+        /* element inconsistency */
+        hInfo->error = 21;
+        return;
+    }
+
+    /* save the syntax element id */
     hDecoder->element_id[hDecoder->fr_ch_ele] = id_syn_ele;
 
+    /* decode the element */
     hInfo->error = channel_pair_element(hDecoder, ld, channels, &tag);
 
+    /* map output channel position to internal data channels */
     if (hDecoder->pce_set)
     {
         hDecoder->internal_channel[hDecoder->pce.cpe_channel[tag]] = channels;
@@ -971,6 +997,12 @@ static uint8_t fill_element(faacDecHandle hDecoder, bitfile *ld, drc_info *drc
 
             /* parse the SBR data */
             hDecoder->sbr[sbr_ele]->ret = sbr_extension_data(ld, hDecoder->sbr[sbr_ele], count);
+#if (defined(PS_DEC) || defined(DRM_PS))
+            if (hDecoder->sbr[sbr_ele]->ps_used)
+            {
+                hDecoder->ps_used[sbr_ele] = 1;
+            }
+#endif
         } else {
 #endif
             while (count > 0)
@@ -1122,7 +1154,6 @@ void aac_scalable_main_element(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
         }
 
         hDecoder->internal_channel[channels+ch] = channels+ch;
-        hDecoder->channel_element[channels+ch] = hDecoder->fr_ch_ele;
 
         hInfo->error = individual_channel_stream(hDecoder, &cpe, ld, ics, 1, spec_data);
         if (hInfo->error > 0)
@@ -1178,6 +1209,12 @@ void aac_scalable_main_element(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
         faad_getbits(&ld_sbr, 8); /* Skip 8-bit CRC */
 
         hDecoder->sbr[0]->ret = sbr_extension_data(&ld_sbr, hDecoder->sbr[0], count);
+#if (defined(PS_DEC) || defined(DRM_PS))
+        if (hDecoder->sbr[0]->ps_used)
+        {
+            hDecoder->ps_used[0] = 1;
+        }
+#endif
 
         /* check CRC */
         /* no need to check it if there was already an error */

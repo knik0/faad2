@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: structs.h,v 1.30 2004/01/28 19:17:26 menno Exp $
+** $Id: structs.h,v 1.31 2004/01/29 11:31:11 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -381,12 +381,26 @@ typedef struct
     uint8_t downMatrix;
     uint8_t first_syn_ele;
     uint8_t has_lfe;
+    /* number of channels in current frame */
     uint8_t fr_channels;
+    /* number of elements in current frame */
     uint8_t fr_ch_ele;
 
-    void *sample_buffer;
-    uint8_t alloced_channels;
+    /* element_output_channels:
+       determines the number of channels the element will output
+    */
+    uint8_t element_output_channels[MAX_SYNTAX_ELEMENTS];
+    /* element_alloced:
+       determines whether the data needed for the element is allocated or not
+    */
     uint8_t element_alloced[MAX_SYNTAX_ELEMENTS];
+    /* alloced_channels:
+       determines the number of channels where output data is allocated for
+    */
+    uint8_t alloced_channels;
+
+    /* output data buffer */
+    void *sample_buffer;
 
     uint8_t window_shape_prev[MAX_CHANNELS];
 #ifdef LTP_DEC
@@ -401,12 +415,16 @@ typedef struct
 #ifdef SBR_DEC
     int8_t sbr_present_flag;
     int8_t forceUpSampling;
+    /* determines whether SBR data is allocated for the gives element */
     uint8_t sbr_alloced[MAX_SYNTAX_ELEMENTS];
 
     sbr_info *sbr[MAX_SYNTAX_ELEMENTS];
 #ifdef DRM
     int8_t lcstereo_flag;
 #endif
+#endif
+#if (defined(PS_DEC) || defined(DRM_PS))
+    uint8_t ps_used[MAX_SYNTAX_ELEMENTS];
 #endif
 
 #ifdef SSR_DEC
@@ -426,7 +444,6 @@ typedef struct
     uint8_t pce_set;
     program_config pce;
     uint8_t element_id[MAX_CHANNELS];
-    uint8_t channel_element[MAX_CHANNELS];
     uint8_t internal_channel[MAX_CHANNELS];
 
     /* Configuration data */

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.h,v 1.21 2004/01/20 18:42:51 menno Exp $
+** $Id: sbr_dec.h,v 1.22 2004/01/29 11:31:11 menno Exp $
 **/
 
 #ifndef __SBR_DEC_H__
@@ -169,6 +169,9 @@ typedef struct
 #ifdef PS_DEC
     ps_info ps;
 #endif
+#if (defined(PS_DEC) || defined(DRM_PS))
+    uint8_t ps_used;
+#endif
 
     /* to get it compiling */
     /* we'll see during the coding of all the tools, whether
@@ -221,6 +224,10 @@ uint8_t sbrDecodeCoupleFrame(sbr_info *sbr, real_t *left_chan, real_t *right_cha
                              const uint8_t just_seeked, const uint8_t upsample_only);
 uint8_t sbrDecodeSingleFrame(sbr_info *sbr, real_t *channel,
                              const uint8_t just_seeked, const uint8_t upsample_only);
+#if (defined(PS_DEC) || defined(DRM_PS))
+uint8_t sbrDecodeSingleFramePS(sbr_info *sbr, real_t *left_channel, real_t *right_channel,
+                               const uint8_t just_seeked, const uint8_t upsample_only);
+#endif
 
 
 #ifdef __cplusplus
