@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.10 2002/05/30 17:57:36 menno Exp $
+** $Id: in_mp4.c,v 1.11 2002/07/25 15:59:43 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -128,7 +128,7 @@ int GetAACTrack(MP4FileHandle infile)
             if (buff)
             {
                 rc = AudioSpecificConfig(buff, &dummy32, &dummy8, &dummy8, &dummy8,
-                    &dummy8, &dummy8, &dummy8);
+                    &dummy8, &dummy8, &dummy8, &dummy8);
                 free(buff);
 
                 if (rc < 0)
@@ -361,7 +361,7 @@ BOOL CALLBACK info_dialog_proc(HWND hwndDlg, UINT message,
             if (buff)
             {
                 AudioSpecificConfig(buff, &timeScale, &ch, &sf, &type,
-                    &dummy8, &dummy8, &dummy8);
+                    &dummy8, &dummy8, &dummy8, &dummy8);
                 typeName = mpeg4AudioNames[type];
                 free(buff);
 
