@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.40 2004/01/14 20:32:30 menno Exp $
+** $Id: specrec.c,v 1.41 2004/01/16 20:20:32 menno Exp $
 **/
 
 /*
@@ -588,7 +588,8 @@ void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics,
         {
             top = ics->sect_sfb_offset[g][sfb+1];
 
-            /* this could be scalefactor for IS or PNS, those could be negative or bigger then 255??? */
+            /* this could be scalefactor for IS or PNS, those can be negative or bigger then 255 */
+            /* just ignore them */
             if (ics->scale_factors[g][sfb] < 0 || ics->scale_factors[g][sfb] > 255)
             {
                 exp = 0;
@@ -790,12 +791,12 @@ uint8_t reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
     {
         mul = 1;
 #ifdef SBR_DEC
-        hDecoder->sbr_alloced = 0;
+        hDecoder->sbr_alloced[hDecoder->fr_ch_ele] = 0;
         if ((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1))
         {
             /* SBR requires 2 times as much output data */
             mul = 2;
-            hDecoder->sbr_alloced = 1;
+            hDecoder->sbr_alloced[hDecoder->fr_ch_ele] = 1;
         }
 #endif
         hDecoder->time_out[sce->channel] = (real_t*)faad_malloc(mul*hDecoder->frameLength*sizeof(real_t));
@@ -858,7 +859,7 @@ uint8_t reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
 
 #ifdef SBR_DEC
     if (((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1))
-        && hDecoder->sbr_alloced)
+        && hDecoder->sbr_alloced[hDecoder->fr_ch_ele])
     {
         uint8_t ele = hDecoder->fr_ch_ele;
         uint8_t ch = sce->channel;
@@ -874,11 +875,14 @@ uint8_t reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
                 );
         }
 
-        sbrDecodeSingleFrame(hDecoder->sbr[ele], hDecoder->time_out[ch],
+        retval = sbrDecodeSingleFrame(hDecoder->sbr[ele], hDecoder->time_out[ch],
             hDecoder->postSeekResetFlag, hDecoder->forceUpSampling);
-    } else {
-        hDecoder->sbr_present_flag = 0;
-        hDecoder->forceUpSampling = 0;
+        if (retval > 0)
+            return retval;
+    } else if (((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1))
+        && !hDecoder->sbr_alloced[hDecoder->fr_ch_ele])
+    {
+        return 23;
     }
 #endif
 
@@ -976,7 +980,7 @@ uint8_t reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_str
     if (is_ltp_ot(hDecoder->object_type))
     {
         ltp_info *ltp1 = &(ics1->ltp);
-        ltp_info *ltp2 = (cpe->common_window) ? &(ics2->ltp2) : &(ics2->ltp) ;
+        ltp_info *ltp2 = (cpe->common_window) ? &(ics2->ltp2) : &(ics2->ltp);
 #ifdef LD_DEC
         if (hDecoder->object_type == LD)
         {
@@ -1036,12 +1040,12 @@ uint8_t reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_str
     {
         mul = 1;
 #ifdef SBR_DEC
-        hDecoder->sbr_alloced = 0;
+        hDecoder->sbr_alloced[hDecoder->fr_ch_ele] = 0;
         if ((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1))
         {
             /* SBR requires 2 times as much output data */
             mul = 2;
-            hDecoder->sbr_alloced = 1;
+            hDecoder->sbr_alloced[hDecoder->fr_ch_ele] = 1;
         }
 #endif
         hDecoder->time_out[cpe->channel] = (real_t*)faad_malloc(mul*hDecoder->frameLength*sizeof(real_t));
@@ -1140,7 +1144,7 @@ uint8_t reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_str
 
 #ifdef SBR_DEC
     if (((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1))
-        && hDecoder->sbr_alloced)
+        && hDecoder->sbr_alloced[hDecoder->fr_ch_ele])
     {
         uint8_t ele = hDecoder->fr_ch_ele;
         uint8_t ch0 = cpe->channel;
@@ -1157,12 +1161,15 @@ uint8_t reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_str
                 );
         }
 
-        sbrDecodeCoupleFrame(hDecoder->sbr[ele],
+        retval = sbrDecodeCoupleFrame(hDecoder->sbr[ele],
             hDecoder->time_out[ch0], hDecoder->time_out[ch1],
             hDecoder->postSeekResetFlag, hDecoder->forceUpSampling);
-    } else {
-        hDecoder->sbr_present_flag = 0;
-        hDecoder->forceUpSampling = 0;
+        if (retval > 0)
+            return retval;
+    } else if (((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1))
+        && !hDecoder->sbr_alloced[hDecoder->fr_ch_ele])
+    {
+        return 23;
     }
 #endif
 

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: bits.h,v 1.33 2004/01/14 20:36:22 menno Exp $
+** $Id: bits.h,v 1.34 2004/01/16 20:20:32 menno Exp $
 **/
 
 #ifndef __BITS_H__
@@ -178,7 +178,7 @@ static INLINE uint8_t faad_get1bit(bitfile *ld DEBUGDEC)
     r = (uint8_t)(ld->bufb >> 31);
     faad_flushbits_ex(ld, 1);
 #else
-    r = faad_getbits(ld, 1);
+    r = (uint8_t)faad_getbits(ld, 1);
 #endif
     return r;
 }

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.91 2004/01/14 20:32:30 menno Exp $
+** $Id: decoder.c,v 1.92 2004/01/16 20:20:32 menno Exp $
 **/
 
 #include "common.h"
@@ -128,7 +128,7 @@ faacDecHandle FAADAPI faacDecOpen(void)
     }
 
 #ifdef SBR_DEC
-    for (i = 0; i < 32; i++)
+    for (i = 0; i < MAX_SYNTAX_ELEMENTS; i++)
     {
         hDecoder->sbr[i] = NULL;
     }
@@ -441,7 +441,7 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
     }
 
 #ifdef SBR_DEC
-    for (i = 0; i < 32; i++)
+    for (i = 0; i < MAX_SYNTAX_ELEMENTS; i++)
     {
         if (hDecoder->sbr[i])
             sbrDecodeEnd(hDecoder->sbr[i]);
@@ -497,7 +497,7 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
     if (hDecoder->sample_buffer) faad_free(hDecoder->sample_buffer);
 
 #ifdef SBR_DEC
-    for (i = 0; i < 32; i++)
+    for (i = 0; i < MAX_SYNTAX_ELEMENTS; i++)
     {
         if (hDecoder->sbr[i])
             sbrDecodeEnd(hDecoder->sbr[i]);
@@ -803,6 +803,13 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     if (hInfo->error > 0)
         goto error;
 
+    /* safety check */
+    if (channels == 0 || channels > MAX_CHANNELS)
+    {
+        /* invalid number of channels */
+        hInfo->error = 12;
+        goto error;
+    }
 
     /* no more bit reading after this */
     bitsconsumed = faad_get_processed_bits(&ld);
@@ -862,7 +869,8 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     }
 
     /* allocate the buffer for the final samples */
-    if (hDecoder->sample_buffer == NULL)
+    if ((hDecoder->sample_buffer == NULL) ||
+        (hDecoder->alloced_channels != output_channels))
     {
         static const uint8_t str[] = { sizeof(int16_t), sizeof(int32_t), sizeof(int32_t),
             sizeof(float32_t), sizeof(double), sizeof(int16_t), sizeof(int16_t),
@@ -873,7 +881,11 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         if ((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1))
             stride = 2 * stride;
 #endif
-        hDecoder->sample_buffer = faad_malloc(frame_len*channels*stride);
+        if (hDecoder->sample_buffer)
+            faad_free(hDecoder->sample_buffer);
+        hDecoder->sample_buffer = NULL;
+        hDecoder->sample_buffer = faad_malloc(frame_len*output_channels*stride);
+        hDecoder->alloced_channels = output_channels;
     }
 
     sample_buffer = hDecoder->sample_buffer;
@@ -881,10 +893,22 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #ifdef SBR_DEC
     if ((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1))
     {
+        uint8_t ele;
+
         /* this data is different when SBR is used or when the data is upsampled */
         frame_len *= 2;
         hInfo->samples *= 2;
         hInfo->samplerate *= 2;
+
+        /* check if every element was provided with SBR data */
+        for (ele = 0; ele < hDecoder->fr_ch_ele; ele++)
+        {
+            if (hDecoder->sbr[ele] == NULL)
+            {
+                hInfo->error = 25;
+                goto error;
+            }
+        }
 
         /* sbr */
         if (hDecoder->sbr_present_flag == 1)

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_syntax.c,v 1.21 2004/01/13 14:24:10 menno Exp $
+** $Id: sbr_syntax.c,v 1.22 2004/01/16 20:20:32 menno Exp $
 **/
 
 #include "common.h"
@@ -105,7 +105,7 @@ static void sbr_reset(sbr_info *sbr)
 /* table 2 */
 uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint16_t cnt)
 {
-    uint8_t result;
+    uint8_t result = 0;
     uint16_t num_align_bits = 0;
     uint16_t num_sbr_bits = (uint16_t)faad_get_processed_bits(ld);
 
@@ -149,27 +149,30 @@ uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint16_t cnt)
             if (sbr->sample_rate >= 48000)
             {
                 if ((k2 - sbr->k0) > 32)
-                    return 1;
+                    result += 1;
             } else if (sbr->sample_rate <= 32000) {
                 if ((k2 - sbr->k0) > 48)
-                    return 1;
+                    result += 1;
             } else { /* (sbr->sample_rate == 44100) */
                 if ((k2 - sbr->k0) > 45)
-                    return 1;
+                    result += 1;
             }
 
             if (sbr->bs_freq_scale == 0)
             {
-                master_frequency_table_fs0(sbr, sbr->k0, k2, sbr->bs_alter_scale);
+                result += master_frequency_table_fs0(sbr, sbr->k0, k2,
+                    sbr->bs_alter_scale);
             } else {
-                master_frequency_table(sbr, sbr->k0, k2, sbr->bs_freq_scale,
+                result += master_frequency_table(sbr, sbr->k0, k2, sbr->bs_freq_scale,
                     sbr->bs_alter_scale);
             }
-            if ((result = derived_frequency_table(sbr, sbr->bs_xover_band, k2)) > 0)
-                return result;
+            result += derived_frequency_table(sbr, sbr->bs_xover_band, k2);
+
+            result = (result > 0) ? 1 : 0;
         }
 
-        result = sbr_data(ld, sbr);
+        if (result == 0)
+            result = sbr_data(ld, sbr);
     } else {
         result = 1;
     }
@@ -633,6 +636,9 @@ static uint8_t sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch)
         sbr->L_E[ch] = min(bs_num_env, 5);
     else
         sbr->L_E[ch] = min(bs_num_env, 4);
+
+    if (sbr->L_E[ch] <= 0)
+        return 1;
 
     if (sbr->L_E[ch] > 1)
         sbr->L_Q[ch] = 2;

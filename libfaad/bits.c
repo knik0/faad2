@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: bits.c,v 1.34 2004/01/14 20:32:30 menno Exp $
+** $Id: bits.c,v 1.35 2004/01/16 20:20:32 menno Exp $
 **/
 
 #include "common.h"
@@ -74,7 +74,13 @@ void faad_initbits(bitfile *ld, const void *_buffer, const uint32_t buffer_size)
 void faad_endbits(bitfile *ld)
 {
     if (ld)
-        if (ld->buffer) faad_free(ld->buffer);
+    {
+        if (ld->buffer)
+        {
+            faad_free(ld->buffer);
+            ld->buffer = NULL;
+        }
+    }
 }
 
 uint32_t faad_get_processed_bits(bitfile *ld)

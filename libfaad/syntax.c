@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.67 2004/01/14 20:32:30 menno Exp $
+** $Id: syntax.c,v 1.68 2004/01/16 20:20:32 menno Exp $
 **/
 
 /*
@@ -118,7 +118,8 @@ int8_t GASpecificConfig(bitfile *ld, mp4AudioSpecificConfig *mp4ASC,
     mp4ASC->extensionFlag = faad_get1bit(ld DEBUGVAR(1,141,"GASpecificConfig(): ExtensionFlag"));
     if (mp4ASC->channelsConfiguration == 0)
     {
-        program_config_element(&pce, ld);
+        if (program_config_element(&pce, ld))
+            return -3;
         //mp4ASC->channelsConfiguration = pce.channels;
 
         if (pce_out != NULL)
@@ -158,7 +159,7 @@ int8_t GASpecificConfig(bitfile *ld, mp4AudioSpecificConfig *mp4ASC,
    PCEs transmitted in raw data blocks cannot be used to convey decoder
    configuration information.
 */
-uint8_t program_config_element(program_config *pce, bitfile *ld)
+static uint8_t program_config_element(program_config *pce, bitfile *ld)
 {
     uint8_t i;
 
@@ -303,6 +304,9 @@ uint8_t program_config_element(program_config *pce, bitfile *ld)
     }
     pce->comment_field_data[i] = 0;
 
+    if (pce->channels > MAX_CHANNELS)
+        return 22;
+
     return 0;
 }
 
@@ -431,15 +435,21 @@ void raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
                 data_stream_element(hDecoder, ld);
                 break;
             case ID_PCE:
-                if ((hInfo->error = program_config_element(pce, ld)) > 0)
-                    return;
-                hDecoder->pce_set = 1;
+                /* 14496-4: 5.6.4.1.2.1.3: */
+                /* program_configuration_element()'s in access units shall be ignored */
+                program_config_element(pce, ld);
+                //if ((hInfo->error = program_config_element(pce, ld)) > 0)
+                //    return;
+                //hDecoder->pce_set = 1;
                 break;
             case ID_FIL:
                 /* one sbr_info describes a channel_element not a channel! */
+                /* if we encounter SBR data here: error */
+                /* SBR data will be read directly in the SCE/LFE/CPE element */
                 if ((hInfo->error = fill_element(hDecoder, ld, drc
 #ifdef SBR_DEC
-                    , (ch_ele == 0) ? 0 : (ch_ele-1)
+                    //, (ch_ele == 0) ? INVALID_SBR_ELEMENT : (ch_ele-1)
+                    , INVALID_SBR_ELEMENT
 #endif
                     )) > 0)
                     return;
@@ -968,6 +978,9 @@ static uint8_t fill_element(faacDecHandle hDecoder, bitfile *ld, drc_info *drc
         if ((bs_extension_type == EXT_SBR_DATA) ||
             (bs_extension_type == EXT_SBR_DATA_CRC))
         {
+            if (sbr_ele == INVALID_SBR_ELEMENT)
+                return 24;
+
             if (!hDecoder->sbr[sbr_ele])
             {
                 hDecoder->sbr[sbr_ele] = sbrDecodeInit(hDecoder->frameLength,

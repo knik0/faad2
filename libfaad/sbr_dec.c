@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.c,v 1.24 2004/01/14 20:32:30 menno Exp $
+** $Id: sbr_dec.c,v 1.25 2004/01/16 20:20:32 menno Exp $
 **/
 
 
@@ -42,7 +42,7 @@
 #include "sbr_hfadj.h"
 
 /* static function declarations */
-static void sbr_save_prev_data(sbr_info *sbr, uint8_t ch);
+static uint8_t sbr_save_prev_data(sbr_info *sbr, uint8_t ch);
 
 sbr_info *sbrDecodeInit(uint16_t framelength, uint8_t id_aac,
                         uint32_t sample_rate
@@ -120,7 +120,7 @@ void sbrDecodeEnd(sbr_info *sbr)
     }
 }
 
-static void sbr_save_prev_data(sbr_info *sbr, uint8_t ch)
+static uint8_t sbr_save_prev_data(sbr_info *sbr, uint8_t ch)
 {
     uint8_t i;
 
@@ -130,21 +130,14 @@ static void sbr_save_prev_data(sbr_info *sbr, uint8_t ch)
     sbr->L_E_prev[ch] = sbr->L_E[ch];
 
     /* sbr->L_E[ch] can become 0 on files with bit errors */
-    if (sbr->L_E[ch] > 0)
+    if (sbr->L_E[ch] <= 0)
+        return 19;
+
+    sbr->f_prev[ch] = sbr->f[ch][sbr->L_E[ch] - 1];
+    for (i = 0; i < 64; i++)
     {
-        sbr->f_prev[ch] = sbr->f[ch][sbr->L_E[ch] - 1];
-        for (i = 0; i < 64; i++)
-        {
-            sbr->E_prev[ch][i] = sbr->E[ch][i][sbr->L_E[ch] - 1];
-            sbr->Q_prev[ch][i] = sbr->Q[ch][i][sbr->L_Q[ch] - 1];
-        }
-    } else {
-        sbr->f_prev[ch] = 0;
-        for (i = 0; i < 64; i++)
-        {
-            sbr->E_prev[ch][i] = 0;
-            sbr->Q_prev[ch][i] = 0;
-        }
+        sbr->E_prev[ch][i] = sbr->E[ch][i][sbr->L_E[ch] - 1];
+        sbr->Q_prev[ch][i] = sbr->Q[ch][i][sbr->L_Q[ch] - 1];
     }
 
     for (i = 0; i < 64; i++)
@@ -157,6 +150,8 @@ static void sbr_save_prev_data(sbr_info *sbr, uint8_t ch)
         sbr->prevEnvIsShort[ch] = 0;
     else
         sbr->prevEnvIsShort[ch] = -1;
+
+    return 0;
 }
 
 static void sbr_process_channel(sbr_info *sbr, real_t *channel_buf,
@@ -252,10 +247,6 @@ static void sbr_process_channel(sbr_info *sbr, real_t *channel_buf,
             else
                 xover_band = sbr->kx;
 
-            /* kx can be > 32 in cases of bit errors */
-            /* TODO: should be checked somewhere else */
-            xover_band = min(xover_band, 32);
-
             for (k = 0; k < xover_band; k++)
             {
                 QMF_RE(X[l][k]) = QMF_RE(sbr->Xcodec[ch][l + sbr->tHFAdj][k]);
@@ -290,17 +281,18 @@ static void sbr_process_channel(sbr_info *sbr, real_t *channel_buf,
     }
 }
 
-void sbrDecodeCoupleFrame(sbr_info *sbr, real_t *left_chan, real_t *right_chan,
-                          const uint8_t just_seeked, const uint8_t upsample_only)
+uint8_t sbrDecodeCoupleFrame(sbr_info *sbr, real_t *left_chan, real_t *right_chan,
+                             const uint8_t just_seeked, const uint8_t upsample_only)
 {
     uint8_t dont_process = 0;
+    uint8_t ret = 0;
 
     if (sbr == NULL)
-        return;
+        return 20;
 
     /* case can occur due to bit errors */
     if (sbr->id_aac != ID_CPE)
-        return;
+        return 21;
 
     if (sbr->ret || (sbr->header_count == 0))
     {
@@ -325,26 +317,31 @@ void sbrDecodeCoupleFrame(sbr_info *sbr, real_t *left_chan, real_t *right_chan,
     if (sbr->bs_header_flag)
         sbr->just_seeked = 0;
 
-    if (sbr->header_count != 0)
+    if (sbr->header_count != 0 && sbr->ret == 0)
     {
-        sbr_save_prev_data(sbr, 0);
-        sbr_save_prev_data(sbr, 1);
+        ret = sbr_save_prev_data(sbr, 0);
+        if (ret) return ret;
+        ret = sbr_save_prev_data(sbr, 1);
+        if (ret) return ret;
     }
 
     sbr->frame++;
+
+    return 0;
 }
 
-void sbrDecodeSingleFrame(sbr_info *sbr, real_t *channel,
-                          const uint8_t just_seeked, const uint8_t upsample_only)
+uint8_t sbrDecodeSingleFrame(sbr_info *sbr, real_t *channel,
+                             const uint8_t just_seeked, const uint8_t upsample_only)
 {
     uint8_t dont_process = 0;
+    uint8_t ret = 0;
 
     if (sbr == NULL)
-        return;
+        return 20;
 
     /* case can occur due to bit errors */
     if (sbr->id_aac != ID_SCE && sbr->id_aac != ID_LFE)
-        return;
+        return 21;
 
     if (sbr->ret || (sbr->header_count == 0))
     {
@@ -368,12 +365,15 @@ void sbrDecodeSingleFrame(sbr_info *sbr, real_t *channel,
     if (sbr->bs_header_flag)
         sbr->just_seeked = 0;
 
-    if (sbr->header_count != 0)
+    if (sbr->header_count != 0 && sbr->ret == 0)
     {
-        sbr_save_prev_data(sbr, 0);
+        ret = sbr_save_prev_data(sbr, 0);
+        if (ret) return ret;
     }
 
     sbr->frame++;
+
+    return 0;
 }
 
 #endif
