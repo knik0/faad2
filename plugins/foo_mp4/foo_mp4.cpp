@@ -1,19 +1,19 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.47 2003/08/14 18:40:08 menno Exp $
+** $Id: foo_mp4.cpp,v 1.48 2003/08/16 13:14:51 menno Exp $
 **/
 
 #include <mp4.h>
@@ -46,7 +46,7 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "1.46",
+                           "1.50",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -129,14 +129,10 @@ public:
         m_framesize = 1024;
         if (mp4ASC.frameLengthFlag == 1) m_framesize = 960;
 
-        double secs = 0;
-        if (mp4ASC.sbr_present_flag == 1)
-        {
-            secs = (double)(MP4GetTrackNumberOfSamples(hFile, track)-1)*2048.0/(double)mp4ASC.samplingFrequency;
-        } else {
-            secs = (double)(MP4GetTrackNumberOfSamples(hFile, track)-1)*1024.0/(double)mp4ASC.samplingFrequency;
-        }
-        m_length = secs;
+        MP4Duration trackDuration = MP4GetTrackDuration(hFile, track);
+        m_samples = trackDuration;
+        m_length = (double)(__int64)trackDuration / (double)mp4ASC.samplingFrequency;
+        info->set_length(m_length);
         info->info_set_int("bitrate",(__int64)(1.0/1000.0 *
             (double)(__int64)MP4GetTrackIntegerProperty(hFile,
             track, "mdia.minf.stbl.stsd.mp4a.esds.decConfigDescr.avgBitrate")) + 0.5);
@@ -149,13 +145,8 @@ public:
             info->info_set("codec", "AAC");
         }
 
-        ReadMP4Tag(info);
-
-        if (m_samples > 0) {
-            m_length = (double)(signed __int64)m_samples/(double)samplerate;
-            info->info_set_int("samples", (__int64)m_samples);
-        }
-        info->set_length(m_length);
+        if (flags & OPEN_FLAG_GET_INFO)
+            ReadMP4Tag(info);
 
         return 1;
     }
@@ -381,17 +372,15 @@ public:
             return true;
         }
 
-        double msecs = seconds * 1.0e3;
+        MP4Duration sample = (MP4Duration)(seconds * m_samplerate + 0.5);
 
         do {
-            if (msecs > 10.0) msecs -= 10.0; else msecs = 0;
-            MP4Duration duration = MP4ConvertToTrackDuration(hFile,
-                track, msecs, MP4_MSECS_TIME_SCALE);
-            sampleId = MP4GetSampleIdFromTime(hFile,
-                track, duration, 0);
+            if (sample > 2048) sample -= 2048; else sample = 0;
+            MP4Duration duration = MP4ConvertToTrackDuration(hFile, track, sample, m_samplerate);
+            sampleId = MP4GetSampleIdFromTime(hFile, track, duration, 0);
             m_samplepos = (unsigned __int64)sampleId * m_framesize;
             m_seekskip = (int)((unsigned __int64)(seconds * m_samplerate + 0.5) - m_samplepos);
-            if (msecs == 0) break;
+            if (sample == 0) break;
         } while (m_seekskip < 0);
 
         if (sampleId == MP4_INVALID_SAMPLE_ID) return false;
@@ -490,6 +479,7 @@ private:
                     wsprintf(t, "%d BPM", tempo);
                     info->meta_add("TEMPO", t);
                 } else if (memcmp(pName, "NDFL", 4) == 0) {
+                    /*
                     unsigned __int8 *data = NULL;
                     unsigned __int32 valueSize = 0;
                     MP4GetMetadataFreeForm(hFile, "NDFL", &data, &valueSize);
@@ -503,6 +493,7 @@ private:
                         // len = number of samples in whole file per channel
                         m_samples = ((data[0] << 56) | (data[1] << 48) | (data[2] << 40) | (data[3] << 32) | (data[4] << 24) | (data[5] << 16) | (data[6] << 8) | data[7]);
                     }
+                    */
                 } else {
                     float f = 0;
                     if (!stricmp(pName, "REPLAYGAIN_TRACK_PEAK"))
