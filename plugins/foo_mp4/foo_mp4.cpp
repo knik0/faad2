@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.6 2002/12/27 20:01:52 menno Exp $
+** $Id: foo_mp4.cpp,v 1.7 2002/12/27 23:06:37 menno Exp $
 **/
 
 #include <mp4.h>
@@ -28,9 +28,9 @@ class input_mp4 : public input
 {
 public:
 
-    virtual int test_filename(const WCHAR *fn, const WCHAR *ext)
+    virtual int test_filename(const char * fn,const char * ext)
     {
-        return !wcsicmp(ext,L"MP4");
+        return !stricmp(ext,"MP4");
     }
 
     virtual int open(reader *r, file_info *info, int full_open)
@@ -79,11 +79,11 @@ public:
             length, MP4_MSECS_TIME_SCALE);
         info->set_length((double)msDuration/1000.0);
 
-        info->info_set_int(L"bitrate",(__int64)(1.0/1000.0 *
+        info->info_set_int("bitrate",(__int64)(1.0/1000.0 *
             (double)(__int64)MP4GetTrackIntegerProperty(hFile,
             track, "mdia.minf.stbl.stsd.mp4a.esds.decConfigDescr.avgBitrate")) + 0.5);
-        info->info_set_int(L"channels", (__int64)channels);
-        info->info_set_int(L"samplerate", (__int64)m_samplerate);
+        info->info_set_int("channels", (__int64)channels);
+        info->info_set_int("samplerate", (__int64)m_samplerate);
 
         return 1;
     }
