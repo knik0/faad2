@@ -22,12 +22,14 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ff.c,v 1.13 2004/01/05 14:05:11 menno Exp $
+** $Id: mp4ff.c,v 1.15 2004/01/11 15:52:18 menno Exp $
 **/
 
 #include <stdlib.h>
 #include <string.h>
 #include "mp4ffint.h"
+
+#include "drms.h"
 
 mp4ff_t *mp4ff_open_read(mp4ff_callback_t *f)
 {
@@ -70,6 +72,10 @@ void mp4ff_close(mp4ff_t *ff)
 				free(ff->track[i]->ctts_sample_count);
 			if (ff->track[i]->ctts_sample_offset)
 				free(ff->track[i]->ctts_sample_offset);
+#ifdef ITUNES_DRM
+            if (ff->track[i]->p_drms)
+                drms_free(ff->track[i]->p_drms);
+#endif
             free(ff->track[i]);
         }
     }
@@ -91,7 +97,7 @@ static void mp4ff_track_add(mp4ff_t *f)
 }
 
 /* parse atoms that are sub atoms of other atoms */
-static int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size)
+int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size)
 {
     uint64_t size;
     uint8_t atom_type = 0;
@@ -376,7 +382,7 @@ int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,
 
     mp4ff_set_sample_position(f, track, sample);
 
-    return mp4ff_read_data(f, *audio_buffer, *bytes);
+    result = mp4ff_read_data(f, *audio_buffer, *bytes);
 
     if (!result)
 	{
@@ -385,16 +391,33 @@ int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,
         return 0;
 	}
 
+#ifdef ITUNES_DRM
+    if (f->track[track]->p_drms != NULL)
+    {
+        drms_decrypt(f->track[track]->p_drms, (uint32_t*)*audio_buffer, *bytes);
+    }
+#endif
+
     return *bytes;
 }
 
 
 int32_t mp4ff_read_sample_v2(mp4ff_t *f, const int track, const int sample,unsigned char *buffer)
 {
+    int32_t result = 0;
 	int32_t size = mp4ff_audio_frame_size(f,track,sample);
 	if (size<=0) return 0;
 	mp4ff_set_sample_position(f, track, sample);
-	return mp4ff_read_data(f,buffer,size);
+	result = mp4ff_read_data(f,buffer,size);
+
+#ifdef ITUNES_DRM
+    if (f->track[track]->p_drms != NULL)
+    {
+        drms_decrypt(f->track[track]->p_drms, (uint32_t*)buffer, size);
+    }
+#endif
+
+    return result;
 }
 
 int32_t mp4ff_read_sample_getsize(mp4ff_t *f, const int track, const int sample)

@@ -22,12 +22,13 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4atom.c,v 1.14 2004/01/06 11:59:47 menno Exp $
+** $Id: mp4atom.c,v 1.15 2004/01/10 18:55:24 menno Exp $
 **/
 
 #include <stdlib.h>
 #include "mp4ffint.h"
 
+#include "drms.h"
 
 /* parse atom header size */
 static int32_t mp4ff_atom_get_size(const int8_t *data)
@@ -111,6 +112,10 @@ static uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b,
             return ATOM_STZ2;
         else if (mp4ff_atom_compare(a,b,c,d, 's','k','i','p'))
             return ATOM_SKIP;
+        else if (mp4ff_atom_compare(a,b,c,d, 's','i','n','f'))
+            return ATOM_SINF;
+        else if (mp4ff_atom_compare(a,b,c,d, 's','c','h','i'))
+            return ATOM_SCHI;
     } else if (a == '©') {
         if (mp4ff_atom_compare(a,b,c,d, '©','n','a','m'))
             return ATOM_TITLE;
@@ -160,6 +165,14 @@ static uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b,
         return ATOM_COMPILATION;
     else if (mp4ff_atom_compare(a,b,c,d, 'c','t','t','s'))
 		return ATOM_CTTS;
+    else if (mp4ff_atom_compare(a,b,c,d, 'd','r','m','s'))
+		return ATOM_DRMS;
+    else if (mp4ff_atom_compare(a,b,c,d, 'f','r','m','a'))
+		return ATOM_FRMA;
+    else if (mp4ff_atom_compare(a,b,c,d, 'p','r','i','v'))
+		return ATOM_PRIV;
+    else if (mp4ff_atom_compare(a,b,c,d, 'i','v','i','v'))
+		return ATOM_IVIV;
 	else
         return ATOM_UNKNOWN;
 }
@@ -311,6 +324,134 @@ static int32_t mp4ff_read_mp4a(mp4ff_t *f)
     return 0;
 }
 
+#ifdef ITUNES_DRM
+static int32_t mp4ff_read_drms(mp4ff_t *f, uint64_t skip)
+{
+    uint64_t size;
+    int32_t i;
+    uint8_t atom_type = 0;
+    uint8_t header_size = 0;
+    uint32_t drms_user_key[4];
+
+    if (drms_get_user_key(NULL, drms_user_key) == 0)
+    {
+        f->track[f->total_tracks - 1]->p_drms = drms_alloc();
+
+        drms_init( f->track[f->total_tracks - 1]->p_drms,
+            DRMS_INIT_UKEY, (uint8_t *)drms_user_key,
+            sizeof(drms_user_key) );
+    }
+
+    for (i = 0; i < 6; i++)
+    {
+        mp4ff_read_char(f); /* reserved */
+    }
+    /* data_reference_index */ mp4ff_read_int16(f);
+
+    mp4ff_read_int32(f); /* reserved */
+    mp4ff_read_int32(f); /* reserved */
+
+    f->track[f->total_tracks - 1]->channelCount = mp4ff_read_int16(f);
+    f->track[f->total_tracks - 1]->sampleSize = mp4ff_read_int16(f);
+
+    mp4ff_read_int16(f);
+    mp4ff_read_int16(f);
+
+    f->track[f->total_tracks - 1]->sampleRate = mp4ff_read_int16(f);
+
+    mp4ff_read_int16(f);
+
+    size = mp4ff_atom_read_header(f, &atom_type, &header_size);
+    if (atom_type == ATOM_ESDS)
+    {
+        mp4ff_read_esds(f);
+    }
+    mp4ff_set_position(f, skip+size+28);
+
+    size = mp4ff_atom_read_header(f, &atom_type, &header_size);
+    if (atom_type == ATOM_SINF)
+    {
+        parse_sub_atoms(f, size-header_size);
+    }
+
+    return 0;
+}
+
+static int32_t mp4ff_read_frma(mp4ff_t *f)
+{
+    uint8_t atom_type;
+    int8_t type[4];
+
+    mp4ff_read_data(f, type, 4);
+
+    atom_type = mp4ff_atom_name_to_type(type[0], type[1], type[2], type[3]);
+
+    if (atom_type == ATOM_MP4A)
+    {
+        f->track[f->total_tracks - 1]->type = TRACK_AUDIO;
+    } else if (atom_type == ATOM_MP4V) {
+        f->track[f->total_tracks - 1]->type = TRACK_VIDEO;
+    } else if (atom_type == ATOM_MP4S) {
+        f->track[f->total_tracks - 1]->type = TRACK_SYSTEM;
+    } else {
+        f->track[f->total_tracks - 1]->type = TRACK_UNKNOWN;
+    }
+
+    return 0;
+}
+
+static int32_t mp4ff_read_name(mp4ff_t *f, uint64_t size)
+{
+    uint8_t *data = malloc(size);
+    mp4ff_read_data(f, data, size);
+
+    if (f->track[f->total_tracks - 1]->p_drms != NULL)
+    {
+        drms_init(f->track[f->total_tracks - 1]->p_drms,
+            DRMS_INIT_NAME, data, strlen(data) );
+    }
+
+    if (data)
+        free(data);
+
+    return 0;
+}
+
+static int32_t mp4ff_read_priv(mp4ff_t *f, uint64_t size)
+{
+    uint8_t *data = malloc(size);
+    mp4ff_read_data(f, data, size);
+
+    if (f->track[f->total_tracks - 1]->p_drms != 0)
+    {
+        drms_init(f->track[f->total_tracks - 1]->p_drms,
+            DRMS_INIT_PRIV, data, size );
+    }
+
+    if (data)
+        free(data);
+
+    return 0;
+}
+
+static int32_t mp4ff_read_iviv(mp4ff_t *f, uint64_t size)
+{
+    uint8_t *data = malloc(size);
+    mp4ff_read_data(f, data, size);
+
+    if (f->track[f->total_tracks - 1]->p_drms != 0)
+    {
+        drms_init(f->track[f->total_tracks - 1]->p_drms,
+            DRMS_INIT_IVIV, data, sizeof(uint32_t) * 4 );
+    }
+
+    if (data)
+        free(data);
+
+    return 0;
+}
+#endif
+
 static int32_t mp4ff_read_stsd(mp4ff_t *f)
 {
     int32_t i;
@@ -337,6 +478,12 @@ static int32_t mp4ff_read_stsd(mp4ff_t *f)
             f->track[f->total_tracks - 1]->type = TRACK_VIDEO;
         } else if (atom_type == ATOM_MP4S) {
             f->track[f->total_tracks - 1]->type = TRACK_SYSTEM;
+#ifdef ITUNES_DRM
+        } else if (atom_type == ATOM_DRMS) {
+            // track type is read from the "frma" atom
+            f->track[f->total_tracks - 1]->type = TRACK_UNKNOWN;
+            mp4ff_read_drms(f, skip-size+header_size);
+#endif
         } else {
             f->track[f->total_tracks - 1]->type = TRACK_UNKNOWN;
         }
@@ -609,6 +756,17 @@ int32_t mp4ff_atom_read(mp4ff_t *f, const int32_t size, const uint8_t atom_type)
     } else if (atom_type == ATOM_MDHD) {
         /* track header */
         mp4ff_read_mdhd(f);
+#ifdef ITUNES_DRM
+    } else if (atom_type == ATOM_FRMA) {
+        /* DRM track format */
+        mp4ff_read_frma(f);
+    } else if (atom_type == ATOM_IVIV) {
+        mp4ff_read_iviv(f, size-8);
+    } else if (atom_type == ATOM_NAME) {
+        mp4ff_read_name(f, size-8);
+    } else if (atom_type == ATOM_PRIV) {
+        mp4ff_read_priv(f, size-8);
+#endif
 #ifdef USE_TAGGING
     } else if (atom_type == ATOM_META) {
         /* iTunes Metadata box */

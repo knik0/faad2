@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ffint.h,v 1.11 2004/01/06 11:59:47 menno Exp $
+** $Id: mp4ffint.h,v 1.12 2004/01/10 18:55:24 menno Exp $
 **/
 
 #ifndef MP4FF_INTERNAL_H
@@ -33,6 +33,9 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include "mp4ff_int_types.h"
+
+
+//#define ITUNES_DRM
 
 
 #define MAX_TRACKS 1024
@@ -68,6 +71,9 @@ extern "C" {
 #define ATOM_NAME 149 /* iTunes Metadata name box */
 #define ATOM_DATA 150 /* iTunes Metadata data box */
 #define ATOM_CTTS 151
+#define ATOM_FRMA 152
+#define ATOM_IVIV 153
+#define ATOM_PRIV 154
 
 #define ATOM_UNKNOWN 255
 #define ATOM_FREE ATOM_UNKNOWN
@@ -96,6 +102,9 @@ extern "C" {
 #define ATOM_GENRE2 20
 #define ATOM_TEMPO 21
 #define ATOM_COVER 22
+#define ATOM_DRMS 23
+#define ATOM_SINF 24
+#define ATOM_SCHI 25
 
 #ifdef HAVE_CONFIG_H
 #include "../../config.h"
@@ -176,6 +185,11 @@ typedef struct
 	
 	uint32_t timeScale;
 	uint64_t duration;
+
+#ifdef ITUNES_DRM
+    /* drms */
+    void *p_drms;
+#endif
 
 } mp4ff_track_t;
 
