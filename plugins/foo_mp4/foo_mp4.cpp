@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.27 2003/04/27 18:53:22 menno Exp $
+** $Id: foo_mp4.cpp,v 1.28 2003/04/28 10:16:03 menno Exp $
 **/
 
 #include <mp4.h>
@@ -35,7 +35,7 @@ char *STRIP_REVISION(const char *str)
 }
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           STRIP_REVISION("$Revision: 1.27 $"),
+                           STRIP_REVISION("$Revision: 1.28 $"),
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -439,19 +439,14 @@ public:
         if (bread != 768*6)
             m_at_eof = 1;
 
-        if (!stricmp((const char*)m_aac_buffer, "ID3"))
+        if (!memcmp(m_aac_buffer, "ID3", 3))
         {
             /* high bit is not used */
             tagsize = (m_aac_buffer[6] << 21) | (m_aac_buffer[7] << 14) |
                 (m_aac_buffer[8] <<  7) | (m_aac_buffer[9] <<  0);
 
             tagsize += 10;
-        }
-
-        if (tagsize)
-        {
             advance_buffer(tagsize);
-            fill_buffer();
         }
 
         m_head = (struct seek_list*)malloc(sizeof(struct seek_list));
@@ -494,6 +489,7 @@ public:
             m_header_type = 2;
         }
 
+        fill_buffer();
         if ((m_aac_bytes_consumed = faacDecInit(hDecoder,
             m_aac_buffer, m_aac_bytes_into_buffer,
             &samplerate, &channels)) < 0)
@@ -504,6 +500,12 @@ public:
         advance_buffer(m_aac_bytes_consumed);
 
         info->info_set("codec", "AAC");
+        if (m_header_type == 0)
+            info->info_set("stream type", "RAW");
+        else if (m_header_type == 1)
+            info->info_set("stream type", "ADTS");
+        else if (m_header_type == 2)
+            info->info_set("stream type", "ADIF");
         info->set_length(length);
 
         info->info_set_int("bitrate", bitrate);
