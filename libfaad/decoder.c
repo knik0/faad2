@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.86 2004/01/10 18:52:47 menno Exp $
+** $Id: decoder.c,v 1.87 2004/01/12 18:55:40 menno Exp $
 **/
 
 #include "common.h"
@@ -876,9 +876,9 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             *prevbufstart++ = tabFlipbits[*pbufend--];
 
         /* Set SBR data */
-        faad_initbits(&ld_sbr, revbuffer, buffer_size);
         /* consider 8 bits from AAC-CRC */
-        count = (uint16_t)bit2byte(buffer_size*8 - bitsconsumed - 8);
+        count = (uint16_t)bit2byte(buffer_size*8 - bitsconsumed);
+        faad_initbits(&ld_sbr, revbuffer, count);
 
         hDecoder->sbr[0]->lcstereo_flag = hDecoder->lcstereo_flag;
 

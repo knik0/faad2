@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_syntax.c,v 1.19 2004/01/10 18:52:47 menno Exp $
+** $Id: sbr_syntax.c,v 1.21 2004/01/13 14:24:10 menno Exp $
 **/
 
 #include "common.h"
@@ -174,18 +174,23 @@ uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint16_t cnt)
         result = 1;
     }
 
-    num_sbr_bits = (uint16_t)faad_get_processed_bits(ld) - num_sbr_bits;
-    /* -4 does not apply, bs_extension_type is re-read in this function */
-    num_align_bits = 8*cnt /*- 4*/ - num_sbr_bits;
-
-    while (num_align_bits > 7)
+#ifdef DRM
+    if (!sbr->Is_DRM_SBR)
+#endif
     {
-        faad_getbits(ld, 8
+        num_sbr_bits = (uint16_t)faad_get_processed_bits(ld) - num_sbr_bits;
+        /* -4 does not apply, bs_extension_type is re-read in this function */
+        num_align_bits = 8*cnt /*- 4*/ - num_sbr_bits;
+
+        while (num_align_bits > 7)
+        {
+            faad_getbits(ld, 8
+                DEBUGVAR(1,999,"sbr_bitstream(): num_align_bits"));
+            num_align_bits -= 8;
+        }
+        faad_getbits(ld, num_align_bits
             DEBUGVAR(1,999,"sbr_bitstream(): num_align_bits"));
-        num_align_bits -= 8;
     }
-    faad_getbits(ld, num_align_bits
-        DEBUGVAR(1,999,"sbr_bitstream(): num_align_bits"));
 
     return result;
 }
@@ -675,6 +680,11 @@ static void invf_mode(bitfile *ld, sbr_info *sbr, uint8_t ch)
 static uint16_t sbr_extension(bitfile *ld, sbr_info *sbr,
                               uint8_t bs_extension_id, uint16_t num_bits_left)
 {
+#ifdef DRM
+    if (sbr->Is_DRM_SBR)
+        return 0;
+#endif
+
     switch (bs_extension_id)
     {
 #ifdef PS_DEC
@@ -682,14 +692,9 @@ static uint16_t sbr_extension(bitfile *ld, sbr_info *sbr,
         return ps_data(&(sbr->ps), ld);
 #endif
     default:
-#ifdef DRM
-        if (!sbr->Is_DRM_SBR)
-#endif
-        {
-            sbr->bs_extension_data = (uint8_t)faad_getbits(ld, 6
-                DEBUGVAR(1,279,"sbr_single_channel_element(): bs_extension_data"));
-            return 6;
-        }
+        sbr->bs_extension_data = (uint8_t)faad_getbits(ld, 6
+            DEBUGVAR(1,279,"sbr_single_channel_element(): bs_extension_data"));
+        return 6;
     }
 }
 
