@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ffint.h,v 1.14 2004/01/11 15:52:18 menno Exp $
+** $Id: mp4ffint.h,v 1.15 2004/01/14 20:50:22 menno Exp $
 **/
 
 #ifndef MP4FF_INTERNAL_H
@@ -35,7 +35,9 @@ extern "C" {
 #include "mp4ff_int_types.h"
 
 
+#ifdef _WIN32
 #define ITUNES_DRM
+#endif
 
 
 #define MAX_TRACKS 1024
