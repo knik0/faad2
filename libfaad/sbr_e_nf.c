@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_e_nf.c,v 1.7 2003/11/02 20:24:05 menno Exp $
+** $Id: sbr_e_nf.c,v 1.8 2003/11/12 20:47:58 menno Exp $
 **/
 
 #include "common.h"
@@ -172,8 +172,8 @@ void envelope_noise_dequantisation(sbr_info *sbr, uint8_t ch)
 void unmap_envelope_noise(sbr_info *sbr)
 {
     uint8_t l, k;
-    real_t amp0 = (sbr->amp_res[0]) ? (real_t)1.0 : (real_t)0.5;
-    real_t amp1 = (sbr->amp_res[1]) ? (real_t)1.0 : (real_t)0.5;
+    uint8_t amp0 = (sbr->amp_res[0]) ? 0 : 1;
+    uint8_t amp1 = (sbr->amp_res[1]) ? 0 : 1;
 
     for (l = 0; l < sbr->L_E[0]; l++)
     {
@@ -187,7 +187,7 @@ void unmap_envelope_noise(sbr_info *sbr)
             r_temp = (real_t)pow(2, sbr->E[1][k][l]*amp1 - 12);
 
             sbr->E_orig[1][k][l] = l_temp / ((real_t)1.0 + r_temp);
-            sbr->E_orig[0][k][l] = MUL(r_temp, sbr->E_orig[1][k][l]);
+            sbr->E_orig[0][k][l] = MUL_R(r_temp, sbr->E_orig[1][k][l]);
         }
     }
     for (l = 0; l < sbr->L_Q[0]; l++)
@@ -206,7 +206,7 @@ void unmap_envelope_noise(sbr_info *sbr)
                 r_temp = (real_t)pow(2.0, sbr->Q[1][k][l] - 12);
 
                 sbr->Q_orig[1][k][l] = l_temp / ((real_t)1.0 + r_temp);
-                sbr->Q_orig[0][k][l] = MUL(r_temp, sbr->Q_orig[1][k][l]);
+                sbr->Q_orig[0][k][l] = MUL_R(r_temp, sbr->Q_orig[1][k][l]);
             }
         }
     }

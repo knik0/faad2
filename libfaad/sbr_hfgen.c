@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfgen.c,v 1.9 2003/11/02 20:24:05 menno Exp $
+** $Id: sbr_hfgen.c,v 1.10 2003/11/12 20:47:58 menno Exp $
 **/
 
 /* High Frequency generation */
@@ -66,6 +66,11 @@ void hf_generation(sbr_info *sbr, const qmf_t Xlow[MAX_NTSRHFG][32],
 
     calc_chirp_factors(sbr, ch);
 
+    for (i = first; i < last; i++)
+    {
+        memset(Xhigh[i + offset], 0, 64 * sizeof(qmf_t));
+    }
+
     if ((ch == 0) && (sbr->Reset))
         patch_construction(sbr);
 
@@ -107,18 +112,18 @@ void hf_generation(sbr_info *sbr, const qmf_t Xlow[MAX_NTSRHFG][32],
             g = sbr->table_map_k_to_g[k];
 
             bw = sbr->bwArray[ch][g];
-            bw2 = MUL_C_C(bw, bw);
+            bw2 = MUL_C(bw, bw);
 
 
             /* do the patching */
             /* with or without filtering */
             if (bw2 > 0)
             {
-                RE(a0) = MUL_R_C(RE(alpha_0[p]), bw);
-                RE(a1) = MUL_R_C(RE(alpha_1[p]), bw2);
+                RE(a0) = MUL_C(RE(alpha_0[p]), bw);
+                RE(a1) = MUL_C(RE(alpha_1[p]), bw2);
 #ifndef SBR_LOW_POWER
-                IM(a0) = MUL_R_C(IM(alpha_0[p]), bw);
-                IM(a1) = MUL_R_C(IM(alpha_1[p]), bw2);
+                IM(a0) = MUL_C(IM(alpha_0[p]), bw);
+                IM(a1) = MUL_C(IM(alpha_1[p]), bw2);
 #endif
 
 				for (l = first; l < last; l++)
@@ -130,8 +135,8 @@ void hf_generation(sbr_info *sbr, const qmf_t Xlow[MAX_NTSRHFG][32],
 
 #ifdef SBR_LOW_POWER
                     QMF_RE(Xhigh[l + offset][k]) += (
-                        MUL(RE(a0), QMF_RE(Xlow[l - 1 + offset][p])) +
-                        MUL(RE(a1), QMF_RE(Xlow[l - 2 + offset][p])));
+                        MUL_R(RE(a0), QMF_RE(Xlow[l - 1 + offset][p])) +
+                        MUL_R(RE(a1), QMF_RE(Xlow[l - 2 + offset][p])));
 #else
                     QMF_RE(Xhigh[l + offset][k]) += (
                         RE(a0) * QMF_RE(Xlow[l - 1 + offset][p]) -
@@ -210,7 +215,7 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac,
     RE(ac->r02) = r02;
     RE(ac->r11) = r11;
 
-    ac->det = MUL(RE(ac->r11), RE(ac->r22)) - MUL_R_C(MUL(RE(ac->r12), RE(ac->r12)), rel);
+    ac->det = MUL_R(RE(ac->r11), RE(ac->r22)) - MUL_C(MUL_R(RE(ac->r12), RE(ac->r12)), rel);
 }
 #else
 static void auto_correlation(sbr_info *sbr, acorr_coef *ac, const qmf_t buffer[MAX_NTSRHFG][32],
@@ -292,7 +297,7 @@ static void calc_prediction_coef(sbr_info *sbr, const qmf_t Xlow[MAX_NTSRHFG][32
         {
             RE(alpha_1[k]) = 0;
         } else {
-            tmp = MUL(RE(ac.r01), RE(ac.r12)) - MUL(RE(ac.r02), RE(ac.r11));
+            tmp = MUL_R(RE(ac.r01), RE(ac.r12)) - MUL_R(RE(ac.r02), RE(ac.r11));
             RE(alpha_1[k]) = SBR_DIV(tmp, ac.det);
         }
 
@@ -300,7 +305,7 @@ static void calc_prediction_coef(sbr_info *sbr, const qmf_t Xlow[MAX_NTSRHFG][32
         {
             RE(alpha_0[k]) = 0;
         } else {
-            tmp = RE(ac.r01) + MUL(RE(alpha_1[k]), RE(ac.r12));
+            tmp = RE(ac.r01) + MUL_R(RE(alpha_1[k]), RE(ac.r12));
             RE(alpha_0[k]) = -SBR_DIV(tmp, RE(ac.r11));
         }
 
@@ -372,10 +377,10 @@ static void calc_aliasing_degree(sbr_info *sbr, real_t *rxx, real_t *deg)
 
                 if (rxx[k-2] > REAL_CONST(0.0))
                 {
-                    deg[k-1] = REAL_CONST(1.0) - MUL(rxx[k-1], rxx[k-1]);
+                    deg[k-1] = REAL_CONST(1.0) - MUL_R(rxx[k-1], rxx[k-1]);
                 }
             } else if (rxx[k-2] > REAL_CONST(0.0)) {
-                deg[k]   = REAL_CONST(1.0) - MUL(rxx[k-1], rxx[k-1]);
+                deg[k]   = REAL_CONST(1.0) - MUL_R(rxx[k-1], rxx[k-1]);
             }
         }
 
@@ -387,10 +392,10 @@ static void calc_aliasing_degree(sbr_info *sbr, real_t *rxx, real_t *deg)
 
                 if (rxx[k-2] < REAL_CONST(0.0))
                 {
-                    deg[k-1] = REAL_CONST(1.0) - MUL(rxx[k-1], rxx[k-1]);
+                    deg[k-1] = REAL_CONST(1.0) - MUL_R(rxx[k-1], rxx[k-1]);
                 }
             } else if (rxx[k-2] < REAL_CONST(0.0)) {
-                deg[k] = REAL_CONST(1.0) - MUL(rxx[k-1], rxx[k-1]);
+                deg[k] = REAL_CONST(1.0) - MUL_R(rxx[k-1], rxx[k-1]);
             }
         }
     }
@@ -430,9 +435,9 @@ static void calc_chirp_factors(sbr_info *sbr, uint8_t ch)
         sbr->bwArray[ch][i] = mapNewBw(sbr->bs_invf_mode[ch][i], sbr->bs_invf_mode_prev[ch][i]);
 
         if (sbr->bwArray[ch][i] < sbr->bwArray_prev[ch][i])
-            sbr->bwArray[ch][i] = MUL_C_C(COEF_CONST(0.75), sbr->bwArray[ch][i]) + MUL_C_C(COEF_CONST(0.25), sbr->bwArray_prev[ch][i]);
+            sbr->bwArray[ch][i] = MUL_C(COEF_CONST(0.75), sbr->bwArray[ch][i]) + MUL_C(COEF_CONST(0.25), sbr->bwArray_prev[ch][i]);
         else
-            sbr->bwArray[ch][i] = MUL_C_C(COEF_CONST(0.90625), sbr->bwArray[ch][i]) + MUL_C_C(COEF_CONST(0.09375), sbr->bwArray_prev[ch][i]);
+            sbr->bwArray[ch][i] = MUL_C(COEF_CONST(0.90625), sbr->bwArray[ch][i]) + MUL_C(COEF_CONST(0.09375), sbr->bwArray_prev[ch][i]);
 
         if (sbr->bwArray[ch][i] < COEF_CONST(0.015625))
             sbr->bwArray[ch][i] = COEF_CONST(0.0);
@@ -488,7 +493,7 @@ static void patch_construction(sbr_info *sbr)
             msb = sbr->kx;
         }
 
-        if (sb == sbr->f_master[k])
+        if (sbr->f_master[k] - sb < 3)
             k = sbr->N_master;
     } while (sb != (sbr->kx + sbr->M));
 

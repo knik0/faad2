@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.60 2003/11/04 21:43:30 menno Exp $
+** $Id: syntax.c,v 1.61 2003/11/12 20:47:59 menno Exp $
 **/
 
 /*
@@ -377,7 +377,11 @@ void raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
                     return;
                 break;
             case ID_CCE: /* not implemented yet, but skip the bits */
+#ifdef COUPLING_DEC
                 hInfo->error = coupling_channel_element(hDecoder, ld);
+#else
+                hInfo->error = 6;
+#endif
                 if (hInfo->error > 0)
                     return;
                 break;
@@ -813,6 +817,7 @@ static uint8_t pulse_data(ic_stream *ics, pulse_info *pul, bitfile *ld)
     return 0;
 }
 
+#ifdef COUPLING_DEC
 /* Table 4.4.8: Currently just for skipping the bits... */
 static uint8_t coupling_channel_element(faacDecHandle hDecoder, bitfile *ld)
 {
@@ -900,6 +905,7 @@ static uint8_t coupling_channel_element(faacDecHandle hDecoder, bitfile *ld)
 
     return 0;
 }
+#endif
 
 /* Table 4.4.10 */
 static uint16_t data_stream_element(faacDecHandle hDecoder, bitfile *ld)

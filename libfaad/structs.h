@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: structs.h,v 1.20 2003/11/04 21:43:30 menno Exp $
+** $Id: structs.h,v 1.21 2003/11/12 20:47:59 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__

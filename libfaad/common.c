@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.c,v 1.11 2003/11/04 21:43:30 menno Exp $
+** $Id: common.c,v 1.12 2003/11/12 20:47:57 menno Exp $
 **/
 
 /* just some common functions that could be used anywhere */
@@ -78,6 +78,41 @@ uint8_t max_pred_sfb(uint8_t sr_index)
         return pred_sfb_max[sr_index];
 
     return 0;
+}
+
+uint8_t max_tns_sfb(uint8_t sr_index, uint8_t object_type, uint8_t is_short)
+{
+    /* entry for each sampling rate	
+     * 1    Main/LC long window
+     * 2    Main/LC short window
+     * 3    SSR long window
+     * 4    SSR short window
+     */
+    static const uint8_t tns_sbf_max[][4] =
+    {
+        {31,  9, 28, 7}, /* 96000 */
+        {31,  9, 28, 7}, /* 88200 */
+        {34, 10, 27, 7}, /* 64000 */
+        {40, 14, 26, 6}, /* 48000 */
+        {42, 14, 26, 6}, /* 44100 */
+        {51, 14, 26, 6}, /* 32000 */
+        {46, 14, 29, 7}, /* 24000 */
+        {46, 14, 29, 7}, /* 22050 */
+        {42, 14, 23, 8}, /* 16000 */
+        {42, 14, 23, 8}, /* 12000 */
+        {42, 14, 23, 8}, /* 11025 */
+        {39, 14, 19, 7}, /*  8000 */
+        {39, 14, 19, 7}, /*  7350 */
+        {0,0,0,0},
+        {0,0,0,0},
+        {0,0,0,0}
+    };
+    uint8_t i = 0;
+
+    if (is_short) i++;
+    if (object_type == SSR) i += 2;
+
+    return tns_sbf_max[sr_index][i];
 }
 
 /* Returns 0 if an object type is decodable, otherwise returns -1 */

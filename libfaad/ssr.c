@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: ssr.c,v 1.9 2003/11/04 21:43:30 menno Exp $
+** $Id: ssr.c,v 1.11 2003/12/17 14:43:16 menno Exp $
 **/
 
 #include "common.h"
@@ -87,7 +87,7 @@ static void ssr_gain_control(ssr_info *ssr, real_t *data, real_t *output,
     if (window_sequence != EIGHT_SHORT_SEQUENCE)
     {
         ssr_gc_function(ssr, &prev_fmd[band * frame_len*2],
-            gc_function, window_sequence, frame_len);
+            gc_function, window_sequence, band, frame_len);
 
         for (i = 0; i < frame_len*2; i++)
             data[band * frame_len*2 + i] *= gc_function[i];
@@ -133,7 +133,7 @@ static void ssr_gain_control(ssr_info *ssr, real_t *data, real_t *output,
 
 static void ssr_gc_function(ssr_info *ssr, real_t *prev_fmd,
                             real_t *gc_function, uint8_t window_sequence,
-                            uint16_t frame_len)
+                            uint8_t band, uint16_t frame_len)
 {
     uint16_t i;
     uint16_t len_area1, len_area2;

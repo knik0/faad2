@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: bits.h,v 1.26 2003/11/04 21:43:30 menno Exp $
+** $Id: bits.h,v 1.28 2003/12/17 14:43:16 menno Exp $
 **/
 
 #ifndef __BITS_H__
@@ -89,14 +89,26 @@ static INLINE uint32_t getdword(void *mem)
 {
 #ifdef ARM
     uint32_t tmp;
+#ifndef ARCH_IS_BIG_ENDIAN
+    ((uint8_t*)&tmp)[0] = ((uint8_t*)mem)[3];
+    ((uint8_t*)&tmp)[1] = ((uint8_t*)mem)[2];
+    ((uint8_t*)&tmp)[2] = ((uint8_t*)mem)[1];
+    ((uint8_t*)&tmp)[3] = ((uint8_t*)mem)[0];
+#else
     ((uint8_t*)&tmp)[0] = ((uint8_t*)mem)[0];
     ((uint8_t*)&tmp)[1] = ((uint8_t*)mem)[1];
     ((uint8_t*)&tmp)[2] = ((uint8_t*)mem)[2];
     ((uint8_t*)&tmp)[3] = ((uint8_t*)mem)[3];
+#endif
 
     return tmp;
 #else
-    return *(uint32_t*)mem;
+    uint32_t tmp;
+    tmp = *(uint32_t*)mem;
+#ifndef ARCH_IS_BIG_ENDIAN
+    BSWAP(tmp);
+#endif
+    return tmp;
 #endif
 }
 
@@ -200,9 +212,6 @@ static INLINE void faad_flushbits_rev(bitfile *ld, uint32_t bits)
 
         ld->bufa = ld->bufb;
         tmp = getdword(ld->start);
-#ifndef ARCH_IS_BIG_ENDIAN
-        BSWAP(tmp);
-#endif
         ld->bufb = tmp;
         ld->start--;
         ld->bits_left += (32 - bits);

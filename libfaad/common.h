@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.37 2003/11/07 21:04:14 menno Exp $
+** $Id: common.h,v 1.38 2003/11/12 20:47:57 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -76,9 +76,6 @@ extern "C" {
 #define LTP_DEC
 #endif
 #endif
-
-// Define SMALL_IQ_TAB for smaller lookup table (also bigger error)
-//#define SMALL_IQ_TAB
 
 #define ALLOW_SMALL_FRAMELENGTH
 
@@ -243,28 +240,46 @@ char *strchr(), *strrchr();
 
   #include <math.h>
 
-  #define MUL(A,B) ((A)*(B))
-  #define MUL_C_C(A,B) ((A)*(B))
-  #define MUL_R_C(A,B) ((A)*(B))
+  #define MUL_R(A,B) ((A)*(B))
+  #define MUL_C(A,B) ((A)*(B))
+  #define MUL_F(A,B) ((A)*(B))
+
+  /* Complex multiplication */
+  static INLINE void ComplexMult(real_t *y1, real_t *y2,
+      real_t x1, real_t x2, real_t c1, real_t c2)
+  {
+      *y1 = MUL_F(x1, c1) + MUL_F(x2, c2);
+      *y2 = MUL_F(x2, c1) - MUL_F(x1, c2);
+  }
 
   #define REAL_CONST(A) ((real_t)(A))
   #define COEF_CONST(A) ((real_t)(A))
+  #define FRAC_CONST(A) ((real_t)(A)) /* pure fractional part */
 
 #else /* Normal floating point operation */
 
   typedef float real_t;
 
-  #define MUL(A,B) ((A)*(B))
-  #define MUL_C_C(A,B) ((A)*(B))
-  #define MUL_R_C(A,B) ((A)*(B))
+  #define MUL_R(A,B) ((A)*(B))
+  #define MUL_C(A,B) ((A)*(B))
+  #define MUL_F(A,B) ((A)*(B))
 
   #define REAL_CONST(A) ((real_t)(A))
   #define COEF_CONST(A) ((real_t)(A))
+  #define FRAC_CONST(A) ((real_t)(A)) /* pure fractional part */
+
+  /* Complex multiplication */
+  static INLINE void ComplexMult(real_t *y1, real_t *y2,
+      real_t x1, real_t x2, real_t c1, real_t c2)
+  {
+      *y1 = MUL_F(x1, c1) + MUL_F(x2, c2);
+      *y2 = MUL_F(x2, c1) - MUL_F(x1, c2);
+  }
 
 
   #ifdef _WIN32
     #define HAS_LRINTF
-    __inline int lrintf(float f)
+    static INLINE int lrintf(float f)
     {
         int i;
         __asm
@@ -342,6 +357,7 @@ int32_t int_log2(int32_t val);
 uint32_t random_int(void);
 uint8_t get_sr_index(uint32_t samplerate);
 uint8_t max_pred_sfb(uint8_t sr_index);
+uint8_t max_tns_sfb(uint8_t sr_index, uint8_t object_type, uint8_t is_short);
 uint32_t get_sample_rate(uint8_t sr_index);
 int8_t can_decode_ot(uint8_t object_type);
 

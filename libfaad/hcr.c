@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: hcr.c,v 1.10 2003/11/04 21:43:30 menno Exp $
+** $Id: hcr.c,v 1.12 2003/12/17 14:43:16 menno Exp $
 **/
 
 #include "common.h"
@@ -157,7 +157,7 @@ uint8_t reordered_spectral_data(faacDecHandle hDecoder, ic_stream *ics, bitfile 
     uint16_t nshort = hDecoder->frameLength/8;
 
 
-    memset (spectral_data, 0, hDecoder->frameLength*sizeof(uint16_t));
+    /*memset (spectral_data, 0, hDecoder->frameLength*sizeof(uint16_t));*/
 
     if (ics->length_of_reordered_spectral_data == 0)
         return 0; /* nothing to do */

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_syntax.c,v 1.14 2003/11/02 20:24:05 menno Exp $
+** $Id: sbr_syntax.c,v 1.15 2003/11/12 20:47:58 menno Exp $
 **/
 
 #include "common.h"
@@ -41,6 +41,15 @@
 
 static void sbr_reset(sbr_info *sbr)
 {
+#if 0
+    printf("%d\n", sbr->bs_start_freq_prev);
+    printf("%d\n", sbr->bs_stop_freq_prev);
+    printf("%d\n", sbr->bs_freq_scale_prev);
+    printf("%d\n", sbr->bs_alter_scale_prev);
+    printf("%d\n", sbr->bs_xover_band_prev);
+    printf("%d\n\n", sbr->bs_noise_bands_prev);
+#endif
+
     /* if these are different from the previous frame: Reset = 1 */
     if ((sbr->bs_start_freq != sbr->bs_start_freq_prev) ||
         (sbr->bs_stop_freq != sbr->bs_stop_freq_prev) ||
@@ -398,6 +407,10 @@ static uint8_t sbr_single_channel_element(bitfile *ld, sbr_info *sbr)
                     DEBUGVAR(1,279,"sbr_single_channel_element(): bs_extension_data"));
             }
         }
+
+        /* Corrigendum */
+        faad_getbits(ld, nr_bits_left
+            DEBUGVAR(1,280,"sbr_single_channel_element(): nr_bits_left"));
     }
 
     return 0;
@@ -576,9 +589,13 @@ static uint8_t sbr_channel_pair_element(bitfile *ld, sbr_info *sbr)
 #endif
             {
                 sbr->bs_extension_data = faad_getbits(ld, 6
-                    DEBUGVAR(1,280,"sbr_single_channel_element(): bs_extension_data"));
+                    DEBUGVAR(1,280,"sbr_channel_pair_element(): bs_extension_data"));
             }
         }
+
+        /* Corrigendum */
+        faad_getbits(ld, nr_bits_left
+            DEBUGVAR(1,280,"sbr_channel_pair_element(): nr_bits_left"));
     }
 
     return 0;

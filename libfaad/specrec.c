@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.32 2003/11/06 14:08:58 menno Exp $
+** $Id: specrec.c,v 1.33 2003/11/12 20:47:59 menno Exp $
 **/
 
 /*
@@ -475,25 +475,13 @@ void build_tables(real_t *pow2_table)
 
 static INLINE real_t iquant(int16_t q, real_t *tab)
 {
-#ifdef SMALL_IQ_TAB
-    static const real_t errcorr[] = {
-        REAL_CONST(0), REAL_CONST(1.0/27.1), REAL_CONST(2.0/27.1), REAL_CONST(3.0/27.096),
-        REAL_CONST(4.0/27.093),  REAL_CONST(5.0/27.089), REAL_CONST(6.0/27.085), REAL_CONST(7.0/27.081),
-        REAL_CONST(8.0/27.077),  REAL_CONST(9.0/27.073), REAL_CONST(10.0/27.069), REAL_CONST(11.0/27.065),
-        REAL_CONST(12.0/27.061),  REAL_CONST(13.0/27.056), REAL_CONST(14.0/27.052), REAL_CONST(15.0/27.048),
-        REAL_CONST(16.0/27.044),  REAL_CONST(17.0/27.04), REAL_CONST(18.0/27.036), REAL_CONST(19.0/27.032),
-        REAL_CONST(20.0/27.028),  REAL_CONST(21.0/27.024), REAL_CONST(22.0/27.02), REAL_CONST(23.0/27.015),
-        REAL_CONST(24.0/27.011),  REAL_CONST(25.0/27.007), REAL_CONST(26.0/27.003), REAL_CONST(0)
-    };
-#else
+#ifdef FIXED_POINT
     static const real_t errcorr[] = {
         REAL_CONST(0), REAL_CONST(1.0/8.0), REAL_CONST(2.0/8.0), REAL_CONST(3.0/8.0),
         REAL_CONST(4.0/8.0),  REAL_CONST(5.0/8.0), REAL_CONST(6.0/8.0), REAL_CONST(7.0/8.0),
         REAL_CONST(0)
     };
-#endif
     real_t x1, x2;
-#ifdef FIXED_POINT
     int16_t sgn = 1;
 
     if (q < 0)
@@ -506,15 +494,9 @@ static INLINE real_t iquant(int16_t q, real_t *tab)
         return sgn * tab[q];
 
     /* linear interpolation */
-#ifndef SMALL_IQ_TAB
     x1 = tab[q>>3];
     x2 = tab[(q>>3) + 1];
-    return sgn * 16 * (MUL(errcorr[q&7],(x2-x1)) + x1);
-#else
-    x1 = tab[q/27];
-    x2 = tab[(q/27) + 1];
-    return sgn * 81 * (MUL(errcorr[q%27],(x2-x1)) + x1);
-#endif
+    return sgn * 16 * (MUL_R(errcorr[q&7],(x2-x1)) + x1);
 #else
     real_t sgn = REAL_CONST(1.0);
 
@@ -636,10 +618,10 @@ static void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics,
 
                 if (frac)
                 {
-                    x_invquant[k+(groups*nshort)]   = MUL_R_C(x_invquant[k+(groups*nshort)],pow2_table[frac + 3]);
-                    x_invquant[k+(groups*nshort)+1] = MUL_R_C(x_invquant[k+(groups*nshort)+1],pow2_table[frac + 3]);
-                    x_invquant[k+(groups*nshort)+2] = MUL_R_C(x_invquant[k+(groups*nshort)+2],pow2_table[frac + 3]);
-                    x_invquant[k+(groups*nshort)+3] = MUL_R_C(x_invquant[k+(groups*nshort)+3],pow2_table[frac + 3]);
+                    x_invquant[k+(groups*nshort)]   = MUL_C(x_invquant[k+(groups*nshort)],pow2_table[frac + 3]);
+                    x_invquant[k+(groups*nshort)+1] = MUL_C(x_invquant[k+(groups*nshort)+1],pow2_table[frac + 3]);
+                    x_invquant[k+(groups*nshort)+2] = MUL_C(x_invquant[k+(groups*nshort)+2],pow2_table[frac + 3]);
+                    x_invquant[k+(groups*nshort)+3] = MUL_C(x_invquant[k+(groups*nshort)+3],pow2_table[frac + 3]);
                 }
 #endif
             }

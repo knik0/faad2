@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: cfft.c,v 1.18 2003/11/04 21:50:34 menno Exp $
+** $Id: cfft.c,v 1.19 2003/11/12 20:47:57 menno Exp $
 **/
 
 /*
@@ -65,23 +65,46 @@ static void passf2(const uint16_t ido, const uint16_t l1, const complex_t *cc,
             IM(ch[ah+l1]) = IM(cc[ac]) - IM(cc[ac+1]);
         }
     } else {
-        for (k = 0; k < l1; k++)
+        if (isign == 1)
         {
-            ah = k*ido;
-            ac = 2*k*ido;
-
-            for (i = 0; i < ido; i++)
+            for (k = 0; k < l1; k++)
             {
-                complex_t t2;
+                ah = k*ido;
+                ac = 2*k*ido;
 
-                RE(ch[ah+i]) = RE(cc[ac+i]) + RE(cc[ac+i+ido]);
-                RE(t2)       = RE(cc[ac+i]) - RE(cc[ac+i+ido]);
+                for (i = 0; i < ido; i++)
+                {
+                    complex_t t2;
 
-                IM(ch[ah+i]) = IM(cc[ac+i]) + IM(cc[ac+i+ido]);
-                IM(t2)       = IM(cc[ac+i]) - IM(cc[ac+i+ido]);
+                    RE(ch[ah+i]) = RE(cc[ac+i]) + RE(cc[ac+i+ido]);
+                    RE(t2)       = RE(cc[ac+i]) - RE(cc[ac+i+ido]);
 
-                RE(ch[ah+i+l1*ido]) = MUL_R_C(RE(t2),RE(wa[i])) - MUL_R_C(IM(t2),IM(wa[i]))*isign;
-                IM(ch[ah+i+l1*ido]) = MUL_R_C(IM(t2),RE(wa[i])) + MUL_R_C(RE(t2),IM(wa[i]))*isign;
+                    IM(ch[ah+i]) = IM(cc[ac+i]) + IM(cc[ac+i+ido]);
+                    IM(t2)       = IM(cc[ac+i]) - IM(cc[ac+i+ido]);
+
+                    ComplexMult(&IM(ch[ah+i+l1*ido]), &RE(ch[ah+i+l1*ido]),
+                        IM(t2), RE(t2), RE(wa[i]), IM(wa[i]));
+                }
+            }
+        } else {
+            for (k = 0; k < l1; k++)
+            {
+                ah = k*ido;
+                ac = 2*k*ido;
+
+                for (i = 0; i < ido; i++)
+                {
+                    complex_t t2;
+
+                    RE(ch[ah+i]) = RE(cc[ac+i]) + RE(cc[ac+i+ido]);
+                    RE(t2)       = RE(cc[ac+i]) - RE(cc[ac+i+ido]);
+
+                    IM(ch[ah+i]) = IM(cc[ac+i]) + IM(cc[ac+i+ido]);
+                    IM(t2)       = IM(cc[ac+i]) - IM(cc[ac+i+ido]);
+
+                    ComplexMult(&RE(ch[ah+i+l1*ido]), &IM(ch[ah+i+l1*ido]),
+                        RE(t2), IM(t2), RE(wa[i]), IM(wa[i]));
+                }
             }
         }
     }
@@ -92,62 +115,120 @@ static void passf3(const uint16_t ido, const uint16_t l1, const complex_t *cc,
                    complex_t *ch, const complex_t *wa1, const complex_t *wa2,
                    const int8_t isign)
 {
-    static real_t taur = COEF_CONST(-0.5);
-    static real_t taui = COEF_CONST(0.866025403784439);
+    static real_t taur = FRAC_CONST(-0.5);
+    static real_t taui = FRAC_CONST(0.866025403784439);
     uint16_t i, k, ac, ah;
     complex_t c2, c3, d2, d3, t2;
 
     if (ido == 1)
     {
-        for (k = 0; k < l1; k++)
+        if (isign == 1)
         {
-            ac = 3*k+1;
-            ah = k;
+            for (k = 0; k < l1; k++)
+            {
+                ac = 3*k+1;
+                ah = k;
 
-            RE(t2) = RE(cc[ac]) + RE(cc[ac+1]);
-            IM(t2) = IM(cc[ac]) + IM(cc[ac+1]);
-            RE(c2) = RE(cc[ac-1]) + MUL_R_C(RE(t2),taur);
-            IM(c2) = IM(cc[ac-1]) + MUL_R_C(IM(t2),taur);
+                RE(t2) = RE(cc[ac]) + RE(cc[ac+1]);
+                IM(t2) = IM(cc[ac]) + IM(cc[ac+1]);
+                RE(c2) = RE(cc[ac-1]) + MUL_F(RE(t2),taur);
+                IM(c2) = IM(cc[ac-1]) + MUL_F(IM(t2),taur);
 
-            RE(ch[ah]) = RE(cc[ac-1]) + RE(t2);
-            IM(ch[ah]) = IM(cc[ac-1]) + IM(t2);
+                RE(ch[ah]) = RE(cc[ac-1]) + RE(t2);
+                IM(ch[ah]) = IM(cc[ac-1]) + IM(t2);
 
-            RE(c3) = MUL_R_C((RE(cc[ac]) - RE(cc[ac+1])), taui)*isign;
-            IM(c3) = MUL_R_C((IM(cc[ac]) - IM(cc[ac+1])), taui)*isign;
+                RE(c3) = MUL_F((RE(cc[ac]) - RE(cc[ac+1])), taui);
+                IM(c3) = MUL_F((IM(cc[ac]) - IM(cc[ac+1])), taui);
 
-            RE(ch[ah+l1]) = RE(c2) - IM(c3);
-            IM(ch[ah+l1]) = IM(c2) + RE(c3);
-            RE(ch[ah+2*l1]) = RE(c2) + IM(c3);
-            IM(ch[ah+2*l1]) = IM(c2) - RE(c3);
+                RE(ch[ah+l1]) = RE(c2) - IM(c3);
+                IM(ch[ah+l1]) = IM(c2) + RE(c3);
+                RE(ch[ah+2*l1]) = RE(c2) + IM(c3);
+                IM(ch[ah+2*l1]) = IM(c2) - RE(c3);
+            }
+        } else {
+            for (k = 0; k < l1; k++)
+            {
+                ac = 3*k+1;
+                ah = k;
+
+                RE(t2) = RE(cc[ac]) + RE(cc[ac+1]);
+                IM(t2) = IM(cc[ac]) + IM(cc[ac+1]);
+                RE(c2) = RE(cc[ac-1]) + MUL_F(RE(t2),taur);
+                IM(c2) = IM(cc[ac-1]) + MUL_F(IM(t2),taur);
+
+                RE(ch[ah]) = RE(cc[ac-1]) + RE(t2);
+                IM(ch[ah]) = IM(cc[ac-1]) + IM(t2);
+
+                RE(c3) = MUL_F((RE(cc[ac]) - RE(cc[ac+1])), taui);
+                IM(c3) = MUL_F((IM(cc[ac]) - IM(cc[ac+1])), taui);
+
+                RE(ch[ah+l1]) = RE(c2) + IM(c3);
+                IM(ch[ah+l1]) = IM(c2) - RE(c3);
+                RE(ch[ah+2*l1]) = RE(c2) - IM(c3);
+                IM(ch[ah+2*l1]) = IM(c2) + RE(c3);
+            }
         }
     } else {
-        for (k = 0; k < l1; k++)
+        if (isign == 1)
         {
-            for (i = 0; i < ido; i++)
+            for (k = 0; k < l1; k++)
             {
-                ac = i + (3*k+1)*ido;
-                ah = i + k * ido;
+                for (i = 0; i < ido; i++)
+                {
+                    ac = i + (3*k+1)*ido;
+                    ah = i + k * ido;
 
-                RE(t2) = RE(cc[ac]) + RE(cc[ac+ido]);
-                RE(c2) = RE(cc[ac-ido]) + MUL_R_C(RE(t2),taur);
-                IM(t2) = IM(cc[ac]) + IM(cc[ac+ido]);
-                IM(c2) = IM(cc[ac-ido]) + MUL_R_C(IM(t2),taur);
+                    RE(t2) = RE(cc[ac]) + RE(cc[ac+ido]);
+                    RE(c2) = RE(cc[ac-ido]) + MUL_F(RE(t2),taur);
+                    IM(t2) = IM(cc[ac]) + IM(cc[ac+ido]);
+                    IM(c2) = IM(cc[ac-ido]) + MUL_F(IM(t2),taur);
 
-                RE(ch[ah]) = RE(cc[ac-ido]) + RE(t2);
-                IM(ch[ah]) = IM(cc[ac-ido]) + IM(t2);
+                    RE(ch[ah]) = RE(cc[ac-ido]) + RE(t2);
+                    IM(ch[ah]) = IM(cc[ac-ido]) + IM(t2);
 
-                RE(c3) = MUL_R_C((RE(cc[ac]) - RE(cc[ac+ido])), taui)*isign;
-                IM(c3) = MUL_R_C((IM(cc[ac]) - IM(cc[ac+ido])), taui)*isign;
+                    RE(c3) = MUL_F((RE(cc[ac]) - RE(cc[ac+ido])), taui);
+                    IM(c3) = MUL_F((IM(cc[ac]) - IM(cc[ac+ido])), taui);
 
-                RE(d2) = RE(c2) - IM(c3);
-                IM(d3) = IM(c2) - RE(c3);
-                RE(d3) = RE(c2) + IM(c3);
-                IM(d2) = IM(c2) + RE(c3);
+                    RE(d2) = RE(c2) - IM(c3);
+                    IM(d3) = IM(c2) - RE(c3);
+                    RE(d3) = RE(c2) + IM(c3);
+                    IM(d2) = IM(c2) + RE(c3);
 
-                RE(ch[ah+l1*ido]) = MUL_R_C(RE(d2),RE(wa1[i])) - MUL_R_C(IM(d2),IM(wa1[i]))*isign;
-                IM(ch[ah+l1*ido]) = MUL_R_C(IM(d2),RE(wa1[i])) + MUL_R_C(RE(d2),IM(wa1[i]))*isign;
-                RE(ch[ah+l1*2*ido]) = MUL_R_C(RE(d3),RE(wa2[i])) - MUL_R_C(IM(d3),IM(wa2[i]))*isign;
-                IM(ch[ah+l1*2*ido]) = MUL_R_C(IM(d3),RE(wa2[i])) + MUL_R_C(RE(d3),IM(wa2[i]))*isign;
+                    ComplexMult(&IM(ch[ah+l1*ido]), &RE(ch[ah+l1*ido]),
+                        IM(d2), RE(d2), RE(wa1[i]), IM(wa1[i]));
+                    ComplexMult(&IM(ch[ah+2*l1*ido]), &RE(ch[ah+2*l1*ido]),
+                        IM(d3), RE(d3), RE(wa2[i]), IM(wa2[i]));
+                }
+            }
+        } else {
+            for (k = 0; k < l1; k++)
+            {
+                for (i = 0; i < ido; i++)
+                {
+                    ac = i + (3*k+1)*ido;
+                    ah = i + k * ido;
+
+                    RE(t2) = RE(cc[ac]) + RE(cc[ac+ido]);
+                    RE(c2) = RE(cc[ac-ido]) + MUL_F(RE(t2),taur);
+                    IM(t2) = IM(cc[ac]) + IM(cc[ac+ido]);
+                    IM(c2) = IM(cc[ac-ido]) + MUL_F(IM(t2),taur);
+
+                    RE(ch[ah]) = RE(cc[ac-ido]) + RE(t2);
+                    IM(ch[ah]) = IM(cc[ac-ido]) + IM(t2);
+
+                    RE(c3) = MUL_F((RE(cc[ac]) - RE(cc[ac+ido])), taui);
+                    IM(c3) = MUL_F((IM(cc[ac]) - IM(cc[ac+ido])), taui);
+
+                    RE(d2) = RE(c2) + IM(c3);
+                    IM(d3) = IM(c2) + RE(c3);
+                    RE(d3) = RE(c2) - IM(c3);
+                    IM(d2) = IM(c2) - RE(c3);
+
+                    ComplexMult(&RE(ch[ah+l1*ido]), &IM(ch[ah+l1*ido]),
+                        RE(d2), IM(d2), RE(wa1[i]), IM(wa1[i]));
+                    ComplexMult(&RE(ch[ah+2*l1*ido]), &IM(ch[ah+2*l1*ido]),
+                        RE(d3), IM(d3), RE(wa2[i]), IM(wa2[i]));
+                }
             }
         }
     }
@@ -161,71 +242,145 @@ static void passf4(const uint16_t ido, const uint16_t l1, const complex_t *cc,
 
     if (ido == 1)
     {
-        for (k = 0; k < l1; k++)
+        if (isign == 1)
         {
-            complex_t t1, t2, t3, t4;
+            for (k = 0; k < l1; k++)
+            {
+                complex_t t1, t2, t3, t4;
 
-            ac = 4*k;
-            ah = k;
+                ac = 4*k;
+                ah = k;
 
-            RE(t2) = RE(cc[ac])   + RE(cc[ac+2]);
-            RE(t1) = RE(cc[ac])   - RE(cc[ac+2]);
-            IM(t2) = IM(cc[ac])   + IM(cc[ac+2]);
-            IM(t1) = IM(cc[ac])   - IM(cc[ac+2]);
-            RE(t3) = RE(cc[ac+1]) + RE(cc[ac+3]);
-            IM(t4) = RE(cc[ac+1]) - RE(cc[ac+3]);
-            IM(t3) = IM(cc[ac+3]) + IM(cc[ac+1]);
-            RE(t4) = IM(cc[ac+3]) - IM(cc[ac+1]);
+                RE(t2) = RE(cc[ac])   + RE(cc[ac+2]);
+                RE(t1) = RE(cc[ac])   - RE(cc[ac+2]);
+                IM(t2) = IM(cc[ac])   + IM(cc[ac+2]);
+                IM(t1) = IM(cc[ac])   - IM(cc[ac+2]);
+                RE(t3) = RE(cc[ac+1]) + RE(cc[ac+3]);
+                IM(t4) = RE(cc[ac+1]) - RE(cc[ac+3]);
+                IM(t3) = IM(cc[ac+3]) + IM(cc[ac+1]);
+                RE(t4) = IM(cc[ac+3]) - IM(cc[ac+1]);
 
-            RE(ch[ah])      = RE(t2) + RE(t3);
-            RE(ch[ah+2*l1]) = RE(t2) - RE(t3);
+                RE(ch[ah])      = RE(t2) + RE(t3);
+                RE(ch[ah+2*l1]) = RE(t2) - RE(t3);
 
-            IM(ch[ah])      = IM(t2) + IM(t3);
-            IM(ch[ah+2*l1]) = IM(t2) - IM(t3);
+                IM(ch[ah])      = IM(t2) + IM(t3);
+                IM(ch[ah+2*l1]) = IM(t2) - IM(t3);
 
-            RE(ch[ah+l1])   = RE(t1) + RE(t4)*isign;
-            RE(ch[ah+3*l1]) = RE(t1) - RE(t4)*isign;
+                RE(ch[ah+l1])   = RE(t1) + RE(t4);
+                RE(ch[ah+3*l1]) = RE(t1) - RE(t4);
 
-            IM(ch[ah+l1])   = IM(t1) + IM(t4)*isign;
-            IM(ch[ah+3*l1]) = IM(t1) - IM(t4)*isign;
+                IM(ch[ah+l1])   = IM(t1) + IM(t4);
+                IM(ch[ah+3*l1]) = IM(t1) - IM(t4);
+            }
+        } else {
+            for (k = 0; k < l1; k++)
+            {
+                complex_t t1, t2, t3, t4;
+
+                ac = 4*k;
+                ah = k;
+
+                RE(t2) = RE(cc[ac])   + RE(cc[ac+2]);
+                RE(t1) = RE(cc[ac])   - RE(cc[ac+2]);
+                IM(t2) = IM(cc[ac])   + IM(cc[ac+2]);
+                IM(t1) = IM(cc[ac])   - IM(cc[ac+2]);
+                RE(t3) = RE(cc[ac+1]) + RE(cc[ac+3]);
+                IM(t4) = RE(cc[ac+1]) - RE(cc[ac+3]);
+                IM(t3) = IM(cc[ac+3]) + IM(cc[ac+1]);
+                RE(t4) = IM(cc[ac+3]) - IM(cc[ac+1]);
+
+                RE(ch[ah])      = RE(t2) + RE(t3);
+                RE(ch[ah+2*l1]) = RE(t2) - RE(t3);
+
+                IM(ch[ah])      = IM(t2) + IM(t3);
+                IM(ch[ah+2*l1]) = IM(t2) - IM(t3);
+
+                RE(ch[ah+l1])   = RE(t1) - RE(t4);
+                RE(ch[ah+3*l1]) = RE(t1) + RE(t4);
+
+                IM(ch[ah+l1])   = IM(t1) - IM(t4);
+                IM(ch[ah+3*l1]) = IM(t1) + IM(t4);
+            }
         }
     } else {
-        for (k = 0; k < l1; k++)
+        if (isign == 1)
         {
-            ac = 4*k*ido;
-            ah = k*ido;
-
-            for (i = 0; i < ido; i++)
+            for (k = 0; k < l1; k++)
             {
-                complex_t c2, c3, c4, t1, t2, t3, t4;
+                ac = 4*k*ido;
+                ah = k*ido;
 
-                RE(t2) = RE(cc[ac+i]) + RE(cc[ac+i+2*ido]);
-                RE(t1) = RE(cc[ac+i]) - RE(cc[ac+i+2*ido]);
-                IM(t2) = IM(cc[ac+i]) + IM(cc[ac+i+2*ido]);
-                IM(t1) = IM(cc[ac+i]) - IM(cc[ac+i+2*ido]);
-                RE(t3) = RE(cc[ac+i+ido]) + RE(cc[ac+i+3*ido]);
-                IM(t4) = RE(cc[ac+i+ido]) - RE(cc[ac+i+3*ido]);
-                IM(t3) = IM(cc[ac+i+3*ido]) + IM(cc[ac+i+ido]);
-                RE(t4) = IM(cc[ac+i+3*ido]) - IM(cc[ac+i+ido]);
+                for (i = 0; i < ido; i++)
+                {
+                    complex_t c2, c3, c4, t1, t2, t3, t4;
 
-                RE(c2) = RE(t1) + RE(t4)*isign;
-                RE(c4) = RE(t1) - RE(t4)*isign;
+                    RE(t2) = RE(cc[ac+i]) + RE(cc[ac+i+2*ido]);
+                    RE(t1) = RE(cc[ac+i]) - RE(cc[ac+i+2*ido]);
+                    IM(t2) = IM(cc[ac+i]) + IM(cc[ac+i+2*ido]);
+                    IM(t1) = IM(cc[ac+i]) - IM(cc[ac+i+2*ido]);
+                    RE(t3) = RE(cc[ac+i+ido]) + RE(cc[ac+i+3*ido]);
+                    IM(t4) = RE(cc[ac+i+ido]) - RE(cc[ac+i+3*ido]);
+                    IM(t3) = IM(cc[ac+i+3*ido]) + IM(cc[ac+i+ido]);
+                    RE(t4) = IM(cc[ac+i+3*ido]) - IM(cc[ac+i+ido]);
 
-                IM(c2) = IM(t1) + IM(t4)*isign;
-                IM(c4) = IM(t1) - IM(t4)*isign;
+                    RE(c2) = RE(t1) + RE(t4);
+                    RE(c4) = RE(t1) - RE(t4);
 
-                RE(ch[ah+i]) = RE(t2) + RE(t3);
-                RE(c3)       = RE(t2) - RE(t3);
+                    IM(c2) = IM(t1) + IM(t4);
+                    IM(c4) = IM(t1) - IM(t4);
 
-                IM(ch[ah+i]) = IM(t2) + IM(t3);
-                IM(c3)       = IM(t2) - IM(t3);
+                    RE(ch[ah+i]) = RE(t2) + RE(t3);
+                    RE(c3)       = RE(t2) - RE(t3);
 
-                IM(ch[ah+i+l1*ido])   = MUL_R_C(IM(c2),RE(wa1[i])) + MUL_R_C(RE(c2),IM(wa1[i]))*isign;
-                RE(ch[ah+i+l1*ido])   = MUL_R_C(RE(c2),RE(wa1[i])) - MUL_R_C(IM(c2),IM(wa1[i]))*isign;
-                IM(ch[ah+i+2*l1*ido]) = MUL_R_C(IM(c3),RE(wa2[i])) + MUL_R_C(RE(c3),IM(wa2[i]))*isign;
-                RE(ch[ah+i+2*l1*ido]) = MUL_R_C(RE(c3),RE(wa2[i])) - MUL_R_C(IM(c3),IM(wa2[i]))*isign;
-                IM(ch[ah+i+3*l1*ido]) = MUL_R_C(IM(c4),RE(wa3[i])) + MUL_R_C(RE(c4),IM(wa3[i]))*isign;
-                RE(ch[ah+i+3*l1*ido]) = MUL_R_C(RE(c4),RE(wa3[i])) - MUL_R_C(IM(c4),IM(wa3[i]))*isign;
+                    IM(ch[ah+i]) = IM(t2) + IM(t3);
+                    IM(c3)       = IM(t2) - IM(t3);
+
+                    ComplexMult(&IM(ch[ah+i+l1*ido]), &RE(ch[ah+i+l1*ido]),
+                        IM(c2), RE(c2), RE(wa1[i]), IM(wa1[i]));
+                    ComplexMult(&IM(ch[ah+i+2*l1*ido]), &RE(ch[ah+i+2*l1*ido]),
+                        IM(c3), RE(c3), RE(wa2[i]), IM(wa2[i]));
+                    ComplexMult(&IM(ch[ah+i+3*l1*ido]), &RE(ch[ah+i+3*l1*ido]),
+                        IM(c4), RE(c4), RE(wa3[i]), IM(wa3[i]));
+                }
+            }
+        } else {
+            for (k = 0; k < l1; k++)
+            {
+                ac = 4*k*ido;
+                ah = k*ido;
+
+                for (i = 0; i < ido; i++)
+                {
+                    complex_t c2, c3, c4, t1, t2, t3, t4;
+
+                    RE(t2) = RE(cc[ac+i]) + RE(cc[ac+i+2*ido]);
+                    RE(t1) = RE(cc[ac+i]) - RE(cc[ac+i+2*ido]);
+                    IM(t2) = IM(cc[ac+i]) + IM(cc[ac+i+2*ido]);
+                    IM(t1) = IM(cc[ac+i]) - IM(cc[ac+i+2*ido]);
+                    RE(t3) = RE(cc[ac+i+ido]) + RE(cc[ac+i+3*ido]);
+                    IM(t4) = RE(cc[ac+i+ido]) - RE(cc[ac+i+3*ido]);
+                    IM(t3) = IM(cc[ac+i+3*ido]) + IM(cc[ac+i+ido]);
+                    RE(t4) = IM(cc[ac+i+3*ido]) - IM(cc[ac+i+ido]);
+
+                    RE(c2) = RE(t1) - RE(t4);
+                    RE(c4) = RE(t1) + RE(t4);
+
+                    IM(c2) = IM(t1) - IM(t4);
+                    IM(c4) = IM(t1) + IM(t4);
+
+                    RE(ch[ah+i]) = RE(t2) + RE(t3);
+                    RE(c3)       = RE(t2) - RE(t3);
+
+                    IM(ch[ah+i]) = IM(t2) + IM(t3);
+                    IM(c3)       = IM(t2) - IM(t3);
+
+                    ComplexMult(&RE(ch[ah+i+l1*ido]), &IM(ch[ah+i+l1*ido]),
+                        RE(c2), IM(c2), RE(wa1[i]), IM(wa1[i]));
+                    ComplexMult(&RE(ch[ah+i+2*l1*ido]), &IM(ch[ah+i+2*l1*ido]),
+                        RE(c3), IM(c3), RE(wa2[i]), IM(wa2[i]));
+                    ComplexMult(&RE(ch[ah+i+3*l1*ido]), &IM(ch[ah+i+3*l1*ido]),
+                        RE(c4), IM(c4), RE(wa3[i]), IM(wa3[i]));
+                }
             }
         }
     }
@@ -235,96 +390,190 @@ static void passf5(const uint16_t ido, const uint16_t l1, const complex_t *cc,
                    complex_t *ch, const complex_t *wa1, const complex_t *wa2, const complex_t *wa3,
                    const complex_t *wa4, const int8_t isign)
 {
-    static real_t tr11 = COEF_CONST(0.309016994374947);
-    static real_t ti11 = COEF_CONST(0.951056516295154);
-    static real_t tr12 = COEF_CONST(-0.809016994374947);
-    static real_t ti12 = COEF_CONST(0.587785252292473);
+    static real_t tr11 = FRAC_CONST(0.309016994374947);
+    static real_t ti11 = FRAC_CONST(0.951056516295154);
+    static real_t tr12 = FRAC_CONST(-0.809016994374947);
+    static real_t ti12 = FRAC_CONST(0.587785252292473);
     uint16_t i, k, ac, ah;
     complex_t c2, c3, c4, c5, d3, d4, d5, d2, t2, t3, t4, t5;
 
     if (ido == 1)
     {
-        for (k = 0; k < l1; k++)
+        if (isign == 1)
         {
-            ac = 5*k + 1;
-            ah = k;
+            for (k = 0; k < l1; k++)
+            {
+                ac = 5*k + 1;
+                ah = k;
 
-            RE(t2) = RE(cc[ac]) + RE(cc[ac+3]);
-            IM(t2) = IM(cc[ac]) + IM(cc[ac+3]);
-            RE(t3) = RE(cc[ac+1]) + RE(cc[ac+2]);
-            IM(t3) = IM(cc[ac+1]) + IM(cc[ac+2]);
-            RE(t4) = RE(cc[ac+1]) - RE(cc[ac+2]);
-            IM(t4) = IM(cc[ac+1]) - IM(cc[ac+2]);
-            RE(t5) = RE(cc[ac]) - RE(cc[ac+3]);
-            IM(t5) = IM(cc[ac]) - IM(cc[ac+3]);
+                RE(t2) = RE(cc[ac]) + RE(cc[ac+3]);
+                IM(t2) = IM(cc[ac]) + IM(cc[ac+3]);
+                RE(t3) = RE(cc[ac+1]) + RE(cc[ac+2]);
+                IM(t3) = IM(cc[ac+1]) + IM(cc[ac+2]);
+                RE(t4) = RE(cc[ac+1]) - RE(cc[ac+2]);
+                IM(t4) = IM(cc[ac+1]) - IM(cc[ac+2]);
+                RE(t5) = RE(cc[ac]) - RE(cc[ac+3]);
+                IM(t5) = IM(cc[ac]) - IM(cc[ac+3]);
 
-            RE(ch[ah]) = RE(cc[ac-1]) + RE(t2) + RE(t3);
-            IM(ch[ah]) = IM(cc[ac-1]) + IM(t2) + IM(t3);
+                RE(ch[ah]) = RE(cc[ac-1]) + RE(t2) + RE(t3);
+                IM(ch[ah]) = IM(cc[ac-1]) + IM(t2) + IM(t3);
 
-            RE(c2) = RE(cc[ac-1]) + MUL_R_C(RE(t2),tr11) + MUL_R_C(RE(t3),tr12);
-            IM(c2) = IM(cc[ac-1]) + MUL_R_C(IM(t2),tr11) + MUL_R_C(IM(t3),tr12);
-            RE(c3) = RE(cc[ac-1]) + MUL_R_C(RE(t2),tr12) + MUL_R_C(RE(t3),tr11);
-            IM(c3) = IM(cc[ac-1]) + MUL_R_C(IM(t2),tr12) + MUL_R_C(IM(t3),tr11);
-            RE(c4) = (MUL_R_C(RE(t5),ti12)*isign - MUL_R_C(RE(t4),ti11));
-            IM(c4) = (MUL_R_C(IM(t5),ti12)*isign - MUL_R_C(IM(t4),ti11));
-            RE(c5) = (MUL_R_C(RE(t5),ti11)*isign + MUL_R_C(RE(t4),ti12));
-            IM(c5) = (MUL_R_C(IM(t5),ti11)*isign + MUL_R_C(IM(t4),ti12));
+                RE(c2) = RE(cc[ac-1]) + MUL_F(RE(t2),tr11) + MUL_F(RE(t3),tr12);
+                IM(c2) = IM(cc[ac-1]) + MUL_F(IM(t2),tr11) + MUL_F(IM(t3),tr12);
+                RE(c3) = RE(cc[ac-1]) + MUL_F(RE(t2),tr12) + MUL_F(RE(t3),tr11);
+                IM(c3) = IM(cc[ac-1]) + MUL_F(IM(t2),tr12) + MUL_F(IM(t3),tr11);
 
-            RE(ch[ah+l1]) = RE(c2) - IM(c5);
-            IM(ch[ah+l1]) = IM(c2) + RE(c5);
-            RE(ch[ah+2*l1]) = RE(c3) - IM(c4);
-            IM(ch[ah+2*l1]) = IM(c3) + RE(c4);
-            RE(ch[ah+3*l1]) = RE(c3) + IM(c4);
-            IM(ch[ah+3*l1]) = IM(c3) - RE(c4);
-            RE(ch[ah+4*l1]) = RE(c2) + IM(c5);
-            IM(ch[ah+4*l1]) = IM(c2) - RE(c5);
+                ComplexMult(&RE(c5), &RE(c4),
+                    ti11, ti12, RE(t5), RE(t4));
+                ComplexMult(&IM(c5), &IM(c4),
+                    ti11, ti12, IM(t5), IM(t4));
+
+                RE(ch[ah+l1]) = RE(c2) - IM(c5);
+                IM(ch[ah+l1]) = IM(c2) + RE(c5);
+                RE(ch[ah+2*l1]) = RE(c3) - IM(c4);
+                IM(ch[ah+2*l1]) = IM(c3) + RE(c4);
+                RE(ch[ah+3*l1]) = RE(c3) + IM(c4);
+                IM(ch[ah+3*l1]) = IM(c3) - RE(c4);
+                RE(ch[ah+4*l1]) = RE(c2) + IM(c5);
+                IM(ch[ah+4*l1]) = IM(c2) - RE(c5);
+            }
+        } else {
+            for (k = 0; k < l1; k++)
+            {
+                ac = 5*k + 1;
+                ah = k;
+
+                RE(t2) = RE(cc[ac]) + RE(cc[ac+3]);
+                IM(t2) = IM(cc[ac]) + IM(cc[ac+3]);
+                RE(t3) = RE(cc[ac+1]) + RE(cc[ac+2]);
+                IM(t3) = IM(cc[ac+1]) + IM(cc[ac+2]);
+                RE(t4) = RE(cc[ac+1]) - RE(cc[ac+2]);
+                IM(t4) = IM(cc[ac+1]) - IM(cc[ac+2]);
+                RE(t5) = RE(cc[ac]) - RE(cc[ac+3]);
+                IM(t5) = IM(cc[ac]) - IM(cc[ac+3]);
+
+                RE(ch[ah]) = RE(cc[ac-1]) + RE(t2) + RE(t3);
+                IM(ch[ah]) = IM(cc[ac-1]) + IM(t2) + IM(t3);
+
+                RE(c2) = RE(cc[ac-1]) + MUL_F(RE(t2),tr11) + MUL_F(RE(t3),tr12);
+                IM(c2) = IM(cc[ac-1]) + MUL_F(IM(t2),tr11) + MUL_F(IM(t3),tr12);
+                RE(c3) = RE(cc[ac-1]) + MUL_F(RE(t2),tr12) + MUL_F(RE(t3),tr11);
+                IM(c3) = IM(cc[ac-1]) + MUL_F(IM(t2),tr12) + MUL_F(IM(t3),tr11);
+
+                ComplexMult(&RE(c4), &RE(c5),
+                    ti12, ti11, RE(t5), RE(t4));
+                ComplexMult(&IM(c4), &IM(c5),
+                    ti12, ti12, IM(t5), IM(t4));
+
+                RE(ch[ah+l1]) = RE(c2) + IM(c5);
+                IM(ch[ah+l1]) = IM(c2) - RE(c5);
+                RE(ch[ah+2*l1]) = RE(c3) + IM(c4);
+                IM(ch[ah+2*l1]) = IM(c3) - RE(c4);
+                RE(ch[ah+3*l1]) = RE(c3) - IM(c4);
+                IM(ch[ah+3*l1]) = IM(c3) + RE(c4);
+                RE(ch[ah+4*l1]) = RE(c2) - IM(c5);
+                IM(ch[ah+4*l1]) = IM(c2) + RE(c5);
+            }
         }
     } else {
-        for (k = 0; k < l1; k++)
+        if (isign == 1)
         {
-            for (i = 0; i < ido; i++)
+            for (k = 0; k < l1; k++)
             {
-                ac = i + (k*5 + 1) * ido;
-                ah = i + k * ido;
+                for (i = 0; i < ido; i++)
+                {
+                    ac = i + (k*5 + 1) * ido;
+                    ah = i + k * ido;
 
-                RE(t2) = RE(cc[ac]) + RE(cc[ac+3*ido]);
-                IM(t2) = IM(cc[ac]) + IM(cc[ac+3*ido]);
-                RE(t3) = RE(cc[ac+ido]) + RE(cc[ac+2*ido]);
-                IM(t3) = IM(cc[ac+ido]) + IM(cc[ac+2*ido]);
-                RE(t4) = RE(cc[ac+ido]) - RE(cc[ac+2*ido]);
-                IM(t4) = IM(cc[ac+ido]) - IM(cc[ac+2*ido]);
-                RE(t5) = RE(cc[ac]) - RE(cc[ac+3*ido]);
-                IM(t5) = IM(cc[ac]) - IM(cc[ac+3*ido]);
+                    RE(t2) = RE(cc[ac]) + RE(cc[ac+3*ido]);
+                    IM(t2) = IM(cc[ac]) + IM(cc[ac+3*ido]);
+                    RE(t3) = RE(cc[ac+ido]) + RE(cc[ac+2*ido]);
+                    IM(t3) = IM(cc[ac+ido]) + IM(cc[ac+2*ido]);
+                    RE(t4) = RE(cc[ac+ido]) - RE(cc[ac+2*ido]);
+                    IM(t4) = IM(cc[ac+ido]) - IM(cc[ac+2*ido]);
+                    RE(t5) = RE(cc[ac]) - RE(cc[ac+3*ido]);
+                    IM(t5) = IM(cc[ac]) - IM(cc[ac+3*ido]);
 
-                RE(ch[ah]) = RE(cc[ac-ido]) + RE(t2) + RE(t3);
-                IM(ch[ah]) = IM(cc[ac-ido]) + IM(t2) + IM(t3);
+                    RE(ch[ah]) = RE(cc[ac-ido]) + RE(t2) + RE(t3);
+                    IM(ch[ah]) = IM(cc[ac-ido]) + IM(t2) + IM(t3);
 
-                RE(c2) = RE(cc[ac-ido]) + MUL_R_C(RE(t2),tr11) + MUL_R_C(RE(t3),tr12);
-                IM(c2) = IM(cc[ac-ido]) + MUL_R_C(IM(t2),tr11) + MUL_R_C(IM(t3),tr12);
-                RE(c3) = RE(cc[ac-ido]) + MUL_R_C(RE(t2),tr12) + MUL_R_C(RE(t3),tr11);
-                IM(c3) = IM(cc[ac-ido]) + MUL_R_C(IM(t2),tr12) + MUL_R_C(IM(t3),tr11);
-                RE(c4) = (MUL_R_C(RE(t5),ti12)*isign - MUL_R_C(RE(t4),ti11));
-                IM(c4) = (MUL_R_C(IM(t5),ti12)*isign - MUL_R_C(IM(t4),ti11));
-                RE(c5) = (MUL_R_C(RE(t5),ti11)*isign + MUL_R_C(RE(t4),ti12));
-                IM(c5) = (MUL_R_C(IM(t5),ti11)*isign + MUL_R_C(IM(t4),ti12));
+                    RE(c2) = RE(cc[ac-ido]) + MUL_F(RE(t2),tr11) + MUL_F(RE(t3),tr12);
+                    IM(c2) = IM(cc[ac-ido]) + MUL_F(IM(t2),tr11) + MUL_F(IM(t3),tr12);
+                    RE(c3) = RE(cc[ac-ido]) + MUL_F(RE(t2),tr12) + MUL_F(RE(t3),tr11);
+                    IM(c3) = IM(cc[ac-ido]) + MUL_F(IM(t2),tr12) + MUL_F(IM(t3),tr11);
 
-                IM(d2) = IM(c2) + RE(c5);
-                IM(d3) = IM(c3) + RE(c4);
-                RE(d4) = RE(c3) + IM(c4);
-                RE(d5) = RE(c2) + IM(c5);
-                RE(d2) = RE(c2) - IM(c5);
-                IM(d5) = IM(c2) - RE(c5);
-                RE(d3) = RE(c3) - IM(c4);
-                IM(d4) = IM(c3) - RE(c4);
+                    ComplexMult(&RE(c5), &RE(c4),
+                        ti11, ti12, RE(t5), RE(t4));
+                    ComplexMult(&IM(c5), &IM(c4),
+                        ti11, ti12, IM(t5), IM(t4));
 
-                RE(ch[ah+l1*ido]) = MUL_R_C(RE(d2),RE(wa1[i])) - MUL_R_C(IM(d2),IM(wa1[i]))*isign;
-                IM(ch[ah+l1*ido]) = MUL_R_C(IM(d2),RE(wa1[i])) + MUL_R_C(RE(d2),IM(wa1[i]))*isign;
-                RE(ch[ah+2*l1*ido]) = MUL_R_C(RE(d3),RE(wa2[i])) - MUL_R_C(IM(d3),IM(wa2[i]))*isign;
-                IM(ch[ah+2*l1*ido]) = MUL_R_C(IM(d3),RE(wa2[i])) + MUL_R_C(RE(d3),IM(wa2[i]))*isign;
-                RE(ch[ah+3*l1*ido]) = MUL_R_C(RE(d4),RE(wa3[i])) - MUL_R_C(IM(d4),IM(wa3[i]))*isign;
-                IM(ch[ah+3*l1*ido]) = MUL_R_C(IM(d4),RE(wa3[i])) + MUL_R_C(RE(d4),IM(wa3[i]))*isign;
-                RE(ch[ah+4*l1*ido]) = MUL_R_C(RE(d5),RE(wa4[i])) - MUL_R_C(IM(d5),IM(wa4[i]))*isign;
-                IM(ch[ah+4*l1*ido]) = MUL_R_C(IM(d5),RE(wa4[i])) + MUL_R_C(RE(d5),IM(wa4[i]))*isign;
+                    IM(d2) = IM(c2) + RE(c5);
+                    IM(d3) = IM(c3) + RE(c4);
+                    RE(d4) = RE(c3) + IM(c4);
+                    RE(d5) = RE(c2) + IM(c5);
+                    RE(d2) = RE(c2) - IM(c5);
+                    IM(d5) = IM(c2) - RE(c5);
+                    RE(d3) = RE(c3) - IM(c4);
+                    IM(d4) = IM(c3) - RE(c4);
+
+                    ComplexMult(&IM(ch[ah+l1*ido]), &RE(ch[ah+l1*ido]),
+                        IM(d2), RE(d2), RE(wa1[i]), IM(wa1[i]));
+                    ComplexMult(&IM(ch[ah+2*l1*ido]), &RE(ch[ah+2*l1*ido]),
+                        IM(d3), RE(d3), RE(wa2[i]), IM(wa2[i]));
+                    ComplexMult(&IM(ch[ah+3*l1*ido]), &RE(ch[ah+3*l1*ido]),
+                        IM(d4), RE(d4), RE(wa3[i]), IM(wa3[i]));
+                    ComplexMult(&IM(ch[ah+4*l1*ido]), &RE(ch[ah+4*l1*ido]),
+                        IM(d5), RE(d5), RE(wa4[i]), IM(wa4[i]));
+                }
+            }
+        } else {
+            for (k = 0; k < l1; k++)
+            {
+                for (i = 0; i < ido; i++)
+                {
+                    ac = i + (k*5 + 1) * ido;
+                    ah = i + k * ido;
+
+                    RE(t2) = RE(cc[ac]) + RE(cc[ac+3*ido]);
+                    IM(t2) = IM(cc[ac]) + IM(cc[ac+3*ido]);
+                    RE(t3) = RE(cc[ac+ido]) + RE(cc[ac+2*ido]);
+                    IM(t3) = IM(cc[ac+ido]) + IM(cc[ac+2*ido]);
+                    RE(t4) = RE(cc[ac+ido]) - RE(cc[ac+2*ido]);
+                    IM(t4) = IM(cc[ac+ido]) - IM(cc[ac+2*ido]);
+                    RE(t5) = RE(cc[ac]) - RE(cc[ac+3*ido]);
+                    IM(t5) = IM(cc[ac]) - IM(cc[ac+3*ido]);
+
+                    RE(ch[ah]) = RE(cc[ac-ido]) + RE(t2) + RE(t3);
+                    IM(ch[ah]) = IM(cc[ac-ido]) + IM(t2) + IM(t3);
+
+                    RE(c2) = RE(cc[ac-ido]) + MUL_F(RE(t2),tr11) + MUL_F(RE(t3),tr12);
+                    IM(c2) = IM(cc[ac-ido]) + MUL_F(IM(t2),tr11) + MUL_F(IM(t3),tr12);
+                    RE(c3) = RE(cc[ac-ido]) + MUL_F(RE(t2),tr12) + MUL_F(RE(t3),tr11);
+                    IM(c3) = IM(cc[ac-ido]) + MUL_F(IM(t2),tr12) + MUL_F(IM(t3),tr11);
+
+                    ComplexMult(&RE(c4), &RE(c5),
+                        ti12, ti11, RE(t5), RE(t4));
+                    ComplexMult(&IM(c4), &IM(c5),
+                        ti12, ti12, IM(t5), IM(t4));
+
+                    IM(d2) = IM(c2) - RE(c5);
+                    IM(d3) = IM(c3) - RE(c4);
+                    RE(d4) = RE(c3) - IM(c4);
+                    RE(d5) = RE(c2) - IM(c5);
+                    RE(d2) = RE(c2) + IM(c5);
+                    IM(d5) = IM(c2) + RE(c5);
+                    RE(d3) = RE(c3) + IM(c4);
+                    IM(d4) = IM(c3) + RE(c4);
+
+                    ComplexMult(&RE(ch[ah+l1*ido]), &IM(ch[ah+l1*ido]),
+                        RE(d2), IM(d2), RE(wa1[i]), IM(wa1[i]));
+                    ComplexMult(&RE(ch[ah+2*l1*ido]), &IM(ch[ah+2*l1*ido]),
+                        RE(d3), IM(d3), RE(wa2[i]), IM(wa2[i]));
+                    ComplexMult(&RE(ch[ah+3*l1*ido]), &IM(ch[ah+3*l1*ido]),
+                        RE(d4), IM(d4), RE(wa3[i]), IM(wa3[i]));
+                    ComplexMult(&RE(ch[ah+4*l1*ido]), &IM(ch[ah+4*l1*ido]),
+                        RE(d5), IM(d5), RE(wa4[i]), IM(wa4[i]));
+                }
             }
         }
     }

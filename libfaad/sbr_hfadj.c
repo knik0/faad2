@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfadj.c,v 1.7 2003/11/02 20:24:05 menno Exp $
+** $Id: sbr_hfadj.c,v 1.8 2003/11/12 20:47:58 menno Exp $
 **/
 
 /* High Frequency adjustment */
@@ -209,9 +209,9 @@ static void estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
 
                 for (i = l_i + sbr->tHFAdj; i < u_i + sbr->tHFAdj; i++)
                 {
-                    nrg += MUL(QMF_RE(Xsbr[i][m + sbr->kx]), QMF_RE(Xsbr[i][m + sbr->kx]))
+                    nrg += MUL_R(QMF_RE(Xsbr[i][m + sbr->kx]), QMF_RE(Xsbr[i][m + sbr->kx]))
 #ifndef SBR_LOW_POWER
-                        + MUL(QMF_IM(Xsbr[i][m + sbr->kx]), QMF_IM(Xsbr[i][m + sbr->kx]))
+                        + MUL_R(QMF_IM(Xsbr[i][m + sbr->kx]), QMF_IM(Xsbr[i][m + sbr->kx]))
 #endif
                         ;
                 }
@@ -238,15 +238,15 @@ static void estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
                     l_i = sbr->t_E[ch][l];
                     u_i = sbr->t_E[ch][l+1];
 
-                    div = (real_t)((u_i - l_i)*(k_h - k_l + 1));
+                    div = (real_t)((u_i - l_i)*(k_h - k_l));
 
                     for (i = l_i + sbr->tHFAdj; i < u_i + sbr->tHFAdj; i++)
                     {
                         for (j = k_l; j < k_h; j++)
                         {
-                            nrg += MUL(QMF_RE(Xsbr[i][j]), QMF_RE(Xsbr[i][j]))
+                            nrg += MUL_R(QMF_RE(Xsbr[i][j]), QMF_RE(Xsbr[i][j]))
 #ifndef SBR_LOW_POWER
-                                + MUL(QMF_IM(Xsbr[i][j]), QMF_IM(Xsbr[i][j]))
+                                + MUL_R(QMF_IM(Xsbr[i][j]), QMF_IM(Xsbr[i][j]))
 #endif
                                 ;
                         }
@@ -263,6 +263,7 @@ static void estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
 }
 
 #define EPS (1e-12)
+
 #define ONE (1)
 
 
@@ -316,18 +317,22 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
                 div2 = adj->Q_mapped[m][l] / (1 + adj->Q_mapped[m][l]);
                 Q_M = sbr->E_orig[ch][table_map_res_to_m[m]][l] * div2;
 
-                if (adj->S_mapped[m][l] == 0)
+                /* 12-Nov: Changed S_mapped to S_index_mapped */
+                if (adj->S_index_mapped[m][l] == 0)
                 {
                     S_M[m] = 0;
-
-                    /* fixed point: delta* can stay since it's either 1 or 0 */
-                    d = (1 + sbr->E_curr[ch][m][l]) * (1 + delta*adj->Q_mapped[m][l]);
-                    G = sbr->E_orig[ch][table_map_res_to_m[m]][l] / d;
                 } else {
                     real_t div;
 
-                    div = adj->S_mapped[m][l] / (1. + adj->Q_mapped[m][l]);
+                    div = adj->S_index_mapped[m][l] / (1. + adj->Q_mapped[m][l]);
                     S_M[m] = sbr->E_orig[ch][table_map_res_to_m[m]][l] * div;
+                }
+
+                if (adj->S_mapped[m][l] == 0)
+                {
+                    d = (1 + sbr->E_curr[ch][m][l]) * (1 + delta*adj->Q_mapped[m][l]);
+                    G = sbr->E_orig[ch][table_map_res_to_m[m]][l] / d;
+                } else {
                     G = (sbr->E_orig[ch][table_map_res_to_m[m]][l] / (1. + sbr->E_curr[ch][m][l])) * div2;
                 }
 
@@ -437,7 +442,7 @@ static void aliasing_reduction(sbr_info *sbr, sbr_hfadj_info *adj, real_t *deg, 
                 /* E_total_est: integer */
                 /* E_total: integer */
                 E_total_est += sbr->E_curr[ch][m-sbr->kx][l];
-                E_total += MUL(sbr->E_curr[ch][m-sbr->kx][l], adj->G_lim_boost[l][m-sbr->kx]);
+                E_total += MUL_R(sbr->E_curr[ch][m-sbr->kx][l], adj->G_lim_boost[l][m-sbr->kx]);
             }
 
             /* G_target: fixed point */
@@ -459,11 +464,11 @@ static void aliasing_reduction(sbr_info *sbr, sbr_hfadj_info *adj, real_t *deg, 
                     alpha = deg[m];
                 }
 
-                adj->G_lim_boost[l][m-sbr->kx] = MUL(alpha, G_target) +
-                    MUL((REAL_CONST(1)-alpha), adj->G_lim_boost[l][m-sbr->kx]);
+                adj->G_lim_boost[l][m-sbr->kx] = MUL_R(alpha, G_target) +
+                    MUL_R((REAL_CONST(1)-alpha), adj->G_lim_boost[l][m-sbr->kx]);
 
                 /* acc: integer */
-                acc += MUL(adj->G_lim_boost[l][m-sbr->kx], sbr->E_curr[ch][m-sbr->kx][l]);
+                acc += MUL_R(adj->G_lim_boost[l][m-sbr->kx], sbr->E_curr[ch][m-sbr->kx][l]);
             }
 
             /* acc: fixed point */
@@ -471,10 +476,9 @@ static void aliasing_reduction(sbr_info *sbr, sbr_hfadj_info *adj, real_t *deg, 
                 acc = 0;
             else
                 acc = E_total / (acc + EPS);
-
             for(m = sbr->f_group[l][(k<<1)]; m < sbr->f_group[l][(k<<1) + 1]; m++)
             {
-                adj->G_lim_boost[l][m-sbr->kx] = MUL(acc, adj->G_lim_boost[l][m-sbr->kx]);
+                adj->G_lim_boost[l][m-sbr->kx] = MUL_R(acc, adj->G_lim_boost[l][m-sbr->kx]);
             }
         }
     }
@@ -546,7 +550,6 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
             assembly_reset = 0;
         }
 
-
         for (i = sbr->t_E[ch][l]; i < sbr->t_E[ch][l+1]; i++)
         {
 #ifdef SBR_LOW_POWER
@@ -571,8 +574,8 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
                 {
                     for (n = 0; n <= 4; n++)
                     {
-                        G_filt += MUL_R_C(sbr->G_temp_prev[ch][n][m], h_smooth[j]);
-                        Q_filt += MUL_R_C(sbr->Q_temp_prev[ch][n][m], h_smooth[j]);
+                        G_filt += MUL_C(sbr->G_temp_prev[ch][n][m], h_smooth[j]);
+                        Q_filt += MUL_C(sbr->Q_temp_prev[ch][n][m], h_smooth[j]);
                         j++;
                     }
                 } else {
@@ -587,24 +590,24 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
 
                 /* the smoothed gain values are applied to Xsbr */
                 /* V is defined, not calculated */
-                QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) = MUL(G_filt, QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]))
-                    + MUL_R_C(Q_filt, RE(V[fIndexNoise]));
+                QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) = MUL_R(G_filt, QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]))
+                    + MUL_F(Q_filt, RE(V[fIndexNoise]));
                 if (sbr->bs_extension_id == 3 && sbr->bs_extension_data == 42)
                     QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) = 16428320;
 #ifndef SBR_LOW_POWER
-                QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) = MUL(G_filt, QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]))
-                    + MUL_R_C(Q_filt, IM(V[fIndexNoise]));
+                QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) = MUL_R(G_filt, QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]))
+                    + MUL_F(Q_filt, IM(V[fIndexNoise]));
 #endif
 
 
                 if (adj->S_index_mapped[m][l])
                 {
                     int8_t rev = ((m + sbr->kx) & 1) ? -1 : 1;
-                    QMF_RE(psi) = MUL(adj->S_M_boost[l][m], phi_re[fIndexSine]);
+                    QMF_RE(psi) = MUL_R(adj->S_M_boost[l][m], phi_re[fIndexSine]);
                     QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) += QMF_RE(psi);
 
 #ifndef SBR_LOW_POWER
-                    QMF_IM(psi) = rev * MUL(adj->S_M_boost[l][m], phi_im[fIndexSine]);
+                    QMF_IM(psi) = rev * MUL_R(adj->S_M_boost[l][m], phi_im[fIndexSine]);
                     QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) += QMF_IM(psi);
 #else
                     i_min1 = (fIndexSine - 1) & 3;
@@ -613,23 +616,23 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
                     if (m == 0)
                     {
                         QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx - 1]) -=
-                            (rev * MUL_R_C(MUL(adj->S_M_boost[l][0], phi_re[i_plus1]), COEF_CONST(0.00815)));
+                            (rev * MUL_C(MUL_R(adj->S_M_boost[l][0], phi_re[i_plus1]), COEF_CONST(0.00815)));
                         QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
-                            (rev * MUL_R_C(MUL(adj->S_M_boost[l][1], phi_re[i_plus1]), COEF_CONST(0.00815)));
+                            (rev * MUL_C(MUL_R(adj->S_M_boost[l][1], phi_re[i_plus1]), COEF_CONST(0.00815)));
                     }
                     if ((m > 0) && (m < sbr->M - 1) && (sinusoids < 16))
                     {
                         QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
-                            (rev * MUL_R_C(MUL(adj->S_M_boost[l][m - 1], phi_re[i_min1]), COEF_CONST(0.00815)));
+                            (rev * MUL_C(MUL_R(adj->S_M_boost[l][m - 1], phi_re[i_min1]), COEF_CONST(0.00815)));
                         QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
-                            (rev * MUL_R_C(MUL(adj->S_M_boost[l][m + 1], phi_re[i_plus1]), COEF_CONST(0.00815)));
+                            (rev * MUL_C(MUL_R(adj->S_M_boost[l][m + 1], phi_re[i_plus1]), COEF_CONST(0.00815)));
                     }
                     if ((m == sbr->M - 1) && (sinusoids < 16) && (m + sbr->kx + 1 < 63))
                     {
                         QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
-                            (rev * MUL_R_C(MUL(adj->S_M_boost[l][m - 1], phi_re[i_min1]), COEF_CONST(0.00815)));
+                            (rev * MUL_C(MUL_R(adj->S_M_boost[l][m - 1], phi_re[i_min1]), COEF_CONST(0.00815)));
                         QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx + 1]) -=
-                            (rev * MUL_R_C(MUL(adj->S_M_boost[l][m + 1], phi_re[i_min1]), COEF_CONST(0.00815)));
+                            (rev * MUL_C(MUL_R(adj->S_M_boost[l][m + 1], phi_re[i_min1]), COEF_CONST(0.00815)));
                     }
 
                     sinusoids++;

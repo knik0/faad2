@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mdct.c,v 1.33 2003/11/06 14:08:58 menno Exp $
+** $Id: mdct.c,v 1.34 2003/11/12 20:47:58 menno Exp $
 **/
 
 /*
@@ -64,23 +64,57 @@
 #ifdef FIXED_POINT
 real_t const_tab[][5] =
 {
-    { COEF_CONST(1), COEF_CONST(0.9999952938), COEF_CONST(0.0030679568),
-        COEF_CONST(0.9999999265), COEF_CONST(0.0003834952) }, /* 2048 */
-    { COEF_CONST(/* sqrt(1024/960) */ 1.03279556), COEF_CONST(0.9999946356), COEF_CONST(0.0032724866),
-        COEF_CONST(0), COEF_CONST(0.0004090615) }, /* 1920 */
-    { COEF_CONST(1), COEF_CONST(0.9999811649), COEF_CONST(0.0061358847),
-        COEF_CONST(0.9999997020), COEF_CONST(0.0007669903) }, /* 1024 */
-    { COEF_CONST(/* sqrt(512/480) */ 1.03279556), COEF_CONST(0.9999786019), COEF_CONST(0.0065449383),
-        COEF_CONST(0.9999996424), COEF_CONST(0.0008181230) }, /* 960 */
-    { COEF_CONST(1), COEF_CONST(0.9996988177), COEF_CONST(0.0245412290),
-        COEF_CONST(0.9999952912), COEF_CONST(0.0030679568) }, /* 256 */
-    { COEF_CONST(/* sqrt(256/240) */ 1.03279556), COEF_CONST(0.9996573329), COEF_CONST(0.0261769500),
-        COEF_CONST(0.9999946356), COEF_CONST(0.0032724866) }  /* 240 */
+    {    /* 2048 */
+        COEF_CONST(1),
+        FRAC_CONST(0.99999529380957619),
+        FRAC_CONST(0.0030679567629659761),
+        FRAC_CONST(0.99999992646571789),
+        FRAC_CONST(0.00038349518757139556)
+    }, { /* 1920 */
+        COEF_CONST(/* sqrt(1024/960) */ 1.0327955589886444),
+        FRAC_CONST(0.99999464540169647),
+        FRAC_CONST(0.0032724865065266251),
+        FRAC_CONST(0.99999991633432805),
+        FRAC_CONST(0.00040906153202803459)
+    }, { /* 1024 */
+        COEF_CONST(1),
+        FRAC_CONST(0.99998117528260111),
+        FRAC_CONST(0.0061358846491544753),
+        FRAC_CONST(0.99999970586288223),
+        FRAC_CONST(0.00076699031874270449)
+    }, { /* 960 */
+        COEF_CONST(/* sqrt(512/480) */ 1.0327955589886444),
+        FRAC_CONST(0.99997858166412923),
+        FRAC_CONST(0.0065449379673518581),
+        FRAC_CONST(0.99999966533732598),
+        FRAC_CONST(0.00081812299560725323)
+    }, { /* 256 */
+        COEF_CONST(1),
+        FRAC_CONST(0.99969881869620425),
+        FRAC_CONST(0.024541228522912288),
+        FRAC_CONST(0.99999529380957619),
+        FRAC_CONST(0.0030679567629659761)
+    }, {  /* 240 */
+        COEF_CONST(/* sqrt(256/240) */ 1.0327955589886444),
+        FRAC_CONST(0.99965732497555726),
+        FRAC_CONST(0.026176948307873149),
+        FRAC_CONST(0.99999464540169647),
+        FRAC_CONST(0.0032724865065266251)
+    }
 #ifdef SSR_DEC
-   ,{ COEF_CONST(0), COEF_CONST(0.999924702), COEF_CONST(0.012271538),
-        COEF_CONST(0.999998823), COEF_CONST(0.00153398) }, /* 512 */
-    { COEF_CONST(0), COEF_CONST(0.995184727), COEF_CONST(0.09801714),
-        COEF_CONST(0.999924702), COEF_CONST(0.012271538) }  /* 64 */
+    ,{   /* 512 */
+        COEF_CONST(1),
+        FRAC_CONST(0.9999247018391445),
+        FRAC_CONST(0.012271538285719925),
+        FRAC_CONST(0.99999882345170188),
+        FRAC_CONST(0.0015339801862847655)
+    }, { /* 64 */
+        COEF_CONST(1),
+        FRAC_CONST(0.99518472667219693),
+        FRAC_CONST(0.098017140329560604),
+        FRAC_CONST(0.9999247018391445),
+        FRAC_CONST(0.012271538285719925)
+    }
 #endif
 };
 #endif
@@ -140,16 +174,16 @@ mdct_info *faad_mdct_init(uint16_t N)
     for (k = 0; k < N/4; k++)
     {
 #ifdef FIXED_POINT
-        RE(mdct->sincos[k]) = -1*MUL_C_C(c,scale);
-        IM(mdct->sincos[k]) = -1*MUL_C_C(s,scale);
+        RE(mdct->sincos[k]) = c; //MUL_C_C(c,scale);
+        IM(mdct->sincos[k]) = s; //MUL_C_C(s,scale);
 
         cold = c;
-        c = MUL_C_C(c,cangle) - MUL_C_C(s,sangle);
-        s = MUL_C_C(s,cangle) + MUL_C_C(cold,sangle);
+        c = MUL_F(c,cangle) - MUL_F(s,sangle);
+        s = MUL_F(s,cangle) + MUL_F(cold,sangle);
 #else
         /* no recurrence, just sines */
-        RE(mdct->sincos[k]) = -scale*(real_t)(cos(2.0*M_PI*(k+1./8.) / (real_t)N));
-        IM(mdct->sincos[k]) = -scale*(real_t)(sin(2.0*M_PI*(k+1./8.) / (real_t)N));
+        RE(mdct->sincos[k]) = scale*(real_t)(cos(2.0*M_PI*(k+1./8.) / (real_t)N));
+        IM(mdct->sincos[k]) = scale*(real_t)(sin(2.0*M_PI*(k+1./8.) / (real_t)N));
 #endif
     }
 
@@ -187,8 +221,8 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     /* pre-IFFT complex multiplication */
     for (k = 0; k < N4; k++)
     {
-        RE(Z1[k]) = MUL_R_C(X_in[N2 - 1 - 2*k], RE(sincos[k])) - MUL_R_C(X_in[2*k], IM(sincos[k]));
-        IM(Z1[k]) = MUL_R_C(X_in[2*k], RE(sincos[k])) + MUL_R_C(X_in[N2 - 1 - 2*k], IM(sincos[k]));
+        ComplexMult(&IM(Z1[k]), &RE(Z1[k]),
+            X_in[2*k], X_in[N2 - 1 - 2*k], RE(sincos[k]), IM(sincos[k]));
     }
 
     /* complex IFFT, any non-scaling FFT can be used here */
@@ -199,9 +233,9 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     {
         RE(x) = RE(Z1[k]);
         IM(x) = IM(Z1[k]);
+        ComplexMult(&IM(Z1[k]), &RE(Z1[k]),
+            IM(x), RE(x), RE(sincos[k]), IM(sincos[k]));
 
-        RE(Z1[k]) = MUL_R_C(RE(x), RE(sincos[k])) - MUL_R_C(IM(x), IM(sincos[k]));
-        IM(Z1[k]) = MUL_R_C(IM(x), RE(sincos[k])) + MUL_R_C(RE(x), IM(sincos[k]));
 #ifdef FIXED_POINT
 #if (REAL_BITS == 16)
         if (abs(RE(Z1[k])) > REAL_CONST(16383.5))
@@ -263,20 +297,20 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
         RE(x) = X_in[N - N4 - 1 - n] + X_in[N - N4 +     n];
         IM(x) = X_in[    N4 +     n] - X_in[    N4 - 1 - n];
 
-        RE(Z1[k]) = -MUL_R_C(RE(x), RE(sincos[k])) - MUL_R_C(IM(x), IM(sincos[k]));
-        IM(Z1[k]) = -MUL_R_C(IM(x), RE(sincos[k])) + MUL_R_C(RE(x), IM(sincos[k]));
+        ComplexMult(&RE(Z1[k]), &IM(Z1[k]),
+            RE(x), IM(x), RE(sincos[k]), IM(sincos[k]));
 
-        RE(Z1[k]) = MUL(RE(Z1[k]), scale);
-        IM(Z1[k]) = MUL(IM(Z1[k]), scale);
+        RE(Z1[k]) = MUL_R(RE(Z1[k]), scale);
+        IM(Z1[k]) = MUL_R(IM(Z1[k]), scale);
 
         RE(x) =  X_in[N2 - 1 - n] - X_in[        n];
         IM(x) =  X_in[N2 +     n] + X_in[N - 1 - n];
 
-        RE(Z1[k + N8]) = -MUL_R_C(RE(x), RE(sincos[k + N8])) - MUL_R_C(IM(x), IM(sincos[k + N8]));
-        IM(Z1[k + N8]) = -MUL_R_C(IM(x), RE(sincos[k + N8])) + MUL_R_C(RE(x), IM(sincos[k + N8]));
+        ComplexMult(&RE(Z1[k + N8]), &IM(Z1[k + N8]),
+            RE(x), IM(x), RE(sincos[k + N8]), IM(sincos[k + N8]));
 
-        RE(Z1[k + N8]) = MUL(RE(Z1[k + N8]), scale);
-        IM(Z1[k + N8]) = MUL(IM(Z1[k + N8]), scale);
+        RE(Z1[k + N8]) = MUL_R(RE(Z1[k + N8]), scale);
+        IM(Z1[k + N8]) = MUL_R(IM(Z1[k + N8]), scale);
     }
 
     /* complex FFT, any non-scaling FFT can be used here  */
@@ -286,13 +320,13 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     for (k = 0; k < N4; k++)
     {
         uint16_t n = k << 1;
-        RE(x) = MUL_R_C(RE(Z1[k]), RE(sincos[k])) + MUL_R_C(IM(Z1[k]), IM(sincos[k]));
-        IM(x) = MUL_R_C(IM(Z1[k]), RE(sincos[k])) - MUL_R_C(RE(Z1[k]), IM(sincos[k]));
+        ComplexMult(&RE(x), &IM(x),
+            RE(Z1[k]), IM(Z1[k]), RE(sincos[k]), IM(sincos[k]));
 
-        X_out[         n] =  RE(x);
-        X_out[N2 - 1 - n] = -IM(x);
-        X_out[N2 +     n] =  IM(x);
-        X_out[N  - 1 - n] = -RE(x);
+        X_out[         n] = -RE(x);
+        X_out[N2 - 1 - n] =  IM(x);
+        X_out[N2 +     n] = -IM(x);
+        X_out[N  - 1 - n] =  RE(x);
     }
 }
 #endif

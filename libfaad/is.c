@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: is.c,v 1.16 2003/11/04 21:43:30 menno Exp $
+** $Id: is.c,v 1.17 2003/11/12 20:47:58 menno Exp $
 **/
 
 #include "common.h"
@@ -86,13 +86,13 @@ void is_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec,
                     {
                         k = (group*nshort)+i;
 #ifndef FIXED_POINT
-                        r_spec[k] = MUL(l_spec[k], scale);
+                        r_spec[k] = MUL_R(l_spec[k], scale);
 #else
                         if (exp < 0)
                             r_spec[k] = l_spec[k] << -exp;
                         else
                             r_spec[k] = l_spec[k] >> exp;
-                        r_spec[k] = MUL_R_C(r_spec[k], pow05_table[frac + 3]);
+                        r_spec[k] = MUL_C(r_spec[k], pow05_table[frac + 3]);
 #endif
                         if (is_intensity(icsr, g, sfb) != invert_intensity(ics, g, sfb))
                             r_spec[k] = -r_spec[k];

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: tns.c,v 1.26 2003/11/04 21:43:30 menno Exp $
+** $Id: tns.c,v 1.28 2003/12/17 14:43:17 menno Exp $
 **/
 
 #include "common.h"
@@ -71,7 +71,8 @@ void tns_decode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
 {
     uint8_t w, f, tns_order;
     int8_t inc;
-    uint16_t bottom, top, start, end, size;
+    int16_t size;
+    uint16_t bottom, top, start, end;
     uint16_t nshort = frame_len/8;
     real_t lpc[TNS_MAX_ORDER+1];
 
@@ -93,10 +94,16 @@ void tns_decode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
             tns_decode_coef(tns_order, tns->coef_res[w]+3,
                 tns->coef_compress[w][f], tns->coef[w][f], lpc);
 
-            start = ics->swb_offset[min(bottom, ics->max_sfb)];
-            end = ics->swb_offset[min(top, ics->max_sfb)];
+            start = min(bottom, max_tns_sfb(sr_index, object_type, (ics->window_sequence == EIGHT_SHORT_SEQUENCE)));
+            start = min(start, ics->max_sfb);
+            start = ics->swb_offset[start];
 
-            if ((size = end - start) <= 0)
+            end = min(top, max_tns_sfb(sr_index, object_type, (ics->window_sequence == EIGHT_SHORT_SEQUENCE)));
+            end = min(end, ics->max_sfb);
+            end = ics->swb_offset[end];
+
+            size = end - start;
+            if (size <= 0)
                 continue;
 
             if (tns->direction[w][f])
@@ -118,7 +125,8 @@ void tns_encode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
 {
     uint8_t w, f, tns_order;
     int8_t inc;
-    uint16_t bottom, top, start, end, size;
+    int16_t size;
+    uint16_t bottom, top, start, end;
     uint16_t nshort = frame_len/8;
     real_t lpc[TNS_MAX_ORDER+1];
 
@@ -140,10 +148,16 @@ void tns_encode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
             tns_decode_coef(tns_order, tns->coef_res[w]+3,
                 tns->coef_compress[w][f], tns->coef[w][f], lpc);
 
-            start = ics->swb_offset[min(bottom, ics->max_sfb)];
-            end = ics->swb_offset[min(top, ics->max_sfb)];
+            start = min(bottom, max_tns_sfb(sr_index, object_type, (ics->window_sequence == EIGHT_SHORT_SEQUENCE)));
+            start = min(start, ics->max_sfb);
+            start = ics->swb_offset[start];
 
-            if ((size = end - start) <= 0)
+            end = min(top, max_tns_sfb(sr_index, object_type, (ics->window_sequence == EIGHT_SHORT_SEQUENCE)));
+            end = min(end, ics->max_sfb);
+            end = ics->swb_offset[end];
+
+            size = end - start;
+            if (size <= 0)
                 continue;
 
             if (tns->direction[w][f])
@@ -192,7 +206,7 @@ static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_c
     for (m = 1; m <= order; m++)
     {
         for (i = 1; i < m; i++) /* loop only while i<m */
-            b[i] = a[i] + MUL_C_C(tmp2[m-1], a[m-i]);
+            b[i] = a[i] + MUL_C(tmp2[m-1], a[m-i]);
 
         for (i = 1; i < m; i++) /* loop only while i<m */
             a[i] = b[i];
@@ -225,7 +239,7 @@ static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
         y = *spectrum;
 
         for (j = 0; j < order; j++)
-            y -= MUL_R_C(state[j], lpc[j+1]);
+            y -= MUL_C(state[j], lpc[j+1]);
 
         for (j = order-1; j > 0; j--)
             state[j] = state[j-1];
@@ -260,7 +274,7 @@ static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
         y = *spectrum;
 
         for (j = 0; j < order; j++)
-            y += MUL_R_C(state[j], lpc[j+1]);
+            y += MUL_C(state[j], lpc[j+1]);
 
         for (j = order-1; j > 0; j--)
             state[j] = state[j-1];

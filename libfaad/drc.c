@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: drc.c,v 1.18 2003/11/04 21:43:30 menno Exp $
+** $Id: drc.c,v 1.19 2003/11/12 20:47:57 menno Exp $
 **/
 
 #include "common.h"
@@ -153,14 +153,14 @@ void drc_decode(drc_info *drc, real_t *spec)
             {
                 spec[i] >>= -exp;
                 if (frac)
-                    spec[i] = MUL(spec[i],drc_pow2_table[frac+23]);
+                    spec[i] = MUL_R(spec[i],drc_pow2_table[frac+23]);
             }
         } else {
             for (i = bottom; i < top; i++)
             {
                 spec[i] <<= exp;
                 if (frac)
-                    spec[i] = MUL(spec[i],drc_pow2_table[frac+23]);
+                    spec[i] = MUL_R(spec[i],drc_pow2_table[frac+23]);
             }
         }
 #endif

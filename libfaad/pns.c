@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: pns.c,v 1.26 2003/11/04 21:43:30 menno Exp $
+** $Id: pns.c,v 1.28 2003/12/17 14:43:16 menno Exp $
 **/
 
 #include "common.h"
@@ -116,7 +116,7 @@ static INLINE void gen_rand_vector(real_t *spec, int16_t scale_factor, uint16_t 
         else
             tmp = (tmp & ((1<<(REAL_BITS-1))-1));
 
-        energy += MUL(tmp,tmp);
+        energy += MUL_R(tmp,tmp);
 
         spec[i] = tmp;
     }
@@ -138,11 +138,11 @@ static INLINE void gen_rand_vector(real_t *spec, int16_t scale_factor, uint16_t 
             scale <<= exp;
 
         if (frac)
-            scale = MUL_R_C(scale, pow2_table[frac + 3]);
+            scale = MUL_C(scale, pow2_table[frac + 3]);
 
         for (i = 0; i < size; i++)
         {
-            spec[i] = MUL(spec[i], scale);
+            spec[i] = MUL_R(spec[i], scale);
         }
     }
 #endif

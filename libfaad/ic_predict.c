@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: ic_predict.c,v 1.17 2003/11/04 21:43:30 menno Exp $
+** $Id: ic_predict.c,v 1.18 2003/11/12 20:47:57 menno Exp $
 **/
 
 #include "common.h"
@@ -35,7 +35,7 @@
 #include "pns.h"
 
 
-static void flt_round(real_t *pf)
+static void flt_round(float32_t *pf)
 {
     int32_t flg;
     uint32_t tmp, tmp1, tmp2;
@@ -52,13 +52,13 @@ static void flt_round(real_t *pf)
         tmp2 = tmp;                             /* add 1 lsb and elided one */
         tmp &= (uint32_t)0xff800000;       /* extract exponent and sign */
         
-        *pf = *(real_t*)&tmp1 + *(real_t*)&tmp2 - *(real_t*)&tmp;
+        *pf = *(float32_t*)&tmp1 + *(float32_t*)&tmp2 - *(float32_t*)&tmp;
     } else {
-        *pf = *(real_t*)&tmp;
+        *pf = *(float32_t*)&tmp;
     }
 }
 
-static int16_t quant_pred(real_t x)
+static int16_t quant_pred(float32_t x)
 {
     int16_t q;
     uint32_t *tmp = (uint32_t*)&x;
@@ -68,9 +68,9 @@ static int16_t quant_pred(real_t x)
     return q;
 }
 
-static real_t inv_quant_pred(int16_t q)
+static float32_t inv_quant_pred(int16_t q)
 {
-    real_t x;
+    float32_t x;
     uint32_t *tmp = (uint32_t*)&x;
     *tmp = ((uint32_t)q)<<16;
 
@@ -97,6 +97,7 @@ static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t 
     VAR[1] = inv_quant_pred(state->VAR[1]);
 
 
+#if 1
     tmp = state->VAR[0];
     j = (tmp >> 7);
     i = tmp & 0x7f;
@@ -107,9 +108,27 @@ static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t 
     } else {
         k1 = REAL_CONST(0);
     }
+#else
+
+    {
+#define B 0.953125
+        real_t c = COR[0];
+        real_t v = VAR[0];
+        real_t tmp;
+        if (c == 0 || v <= 1)
+        {
+            k1 = 0;
+        } else {
+            tmp = B / v;
+            flt_round(&tmp);
+            k1 = c * tmp;
+        }
+    }
+#endif
 
     if (pred)
     {
+#if 1
         tmp = state->VAR[1];
         j = (tmp >> 7);
         i = tmp & 0x7f;
@@ -120,8 +139,23 @@ static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t 
         } else {
             k2 = REAL_CONST(0);
         }
+#else
 
-        predictedvalue  = k1*r[0] + k2*r[1];
+#define B 0.953125
+        real_t c = COR[1];
+        real_t v = VAR[1];
+        real_t tmp;
+        if (c == 0 || v <= 1)
+        {
+            k2 = 0;
+        } else {
+            tmp = B / v;
+            flt_round(&tmp);
+            k2 = c * tmp;
+        }
+#endif
+
+        predictedvalue = k1*r[0] + k2*r[1];
         flt_round(&predictedvalue);
         *output = input + predictedvalue;
     }

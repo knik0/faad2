@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: filtbank.c,v 1.31 2003/11/04 21:43:30 menno Exp $
+** $Id: filtbank.c,v 1.32 2003/11/12 20:47:57 menno Exp $
 **/
 
 #include "common.h"
@@ -195,17 +195,17 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
         imdct(fb, freq_in, transf_buf, 2*nlong);
         for (i = 0; i < nlong; i+=4)
         {
-            time_out[i]   = time_out[nlong+i]   + MUL_R_C(transf_buf[i],window_long_prev[i]);
-            time_out[i+1] = time_out[nlong+i+1] + MUL_R_C(transf_buf[i+1],window_long_prev[i+1]);
-            time_out[i+2] = time_out[nlong+i+2] + MUL_R_C(transf_buf[i+2],window_long_prev[i+2]);
-            time_out[i+3] = time_out[nlong+i+3] + MUL_R_C(transf_buf[i+3],window_long_prev[i+3]);
+            time_out[i]   = time_out[nlong+i]   + MUL_F(transf_buf[i],window_long_prev[i]);
+            time_out[i+1] = time_out[nlong+i+1] + MUL_F(transf_buf[i+1],window_long_prev[i+1]);
+            time_out[i+2] = time_out[nlong+i+2] + MUL_F(transf_buf[i+2],window_long_prev[i+2]);
+            time_out[i+3] = time_out[nlong+i+3] + MUL_F(transf_buf[i+3],window_long_prev[i+3]);
         }
         for (i = 0; i < nlong; i+=4)
         {
-            time_out[nlong+i]   = MUL_R_C(transf_buf[nlong+i],window_long[nlong-1-i]);
-            time_out[nlong+i+1] = MUL_R_C(transf_buf[nlong+i+1],window_long[nlong-2-i]);
-            time_out[nlong+i+2] = MUL_R_C(transf_buf[nlong+i+2],window_long[nlong-3-i]);
-            time_out[nlong+i+3] = MUL_R_C(transf_buf[nlong+i+3],window_long[nlong-4-i]);
+            time_out[nlong+i]   = MUL_F(transf_buf[nlong+i],window_long[nlong-1-i]);
+            time_out[nlong+i+1] = MUL_F(transf_buf[nlong+i+1],window_long[nlong-2-i]);
+            time_out[nlong+i+2] = MUL_F(transf_buf[nlong+i+2],window_long[nlong-3-i]);
+            time_out[nlong+i+3] = MUL_F(transf_buf[nlong+i+3],window_long[nlong-4-i]);
         }
         break;
 
@@ -213,15 +213,15 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
         imdct(fb, freq_in, transf_buf, 2*nlong);
         for (i = 0; i < nlong; i+=4)
         {
-            time_out[i]   = time_out[nlong+i]   + MUL_R_C(transf_buf[i],window_long_prev[i]);
-            time_out[i+1] = time_out[nlong+i+1] + MUL_R_C(transf_buf[i+1],window_long_prev[i+1]);
-            time_out[i+2] = time_out[nlong+i+2] + MUL_R_C(transf_buf[i+2],window_long_prev[i+2]);
-            time_out[i+3] = time_out[nlong+i+3] + MUL_R_C(transf_buf[i+3],window_long_prev[i+3]);
+            time_out[i]   = time_out[nlong+i]   + MUL_F(transf_buf[i],window_long_prev[i]);
+            time_out[i+1] = time_out[nlong+i+1] + MUL_F(transf_buf[i+1],window_long_prev[i+1]);
+            time_out[i+2] = time_out[nlong+i+2] + MUL_F(transf_buf[i+2],window_long_prev[i+2]);
+            time_out[i+3] = time_out[nlong+i+3] + MUL_F(transf_buf[i+3],window_long_prev[i+3]);
         }
         for (i = 0; i < nflat_ls; i++)
             time_out[nlong+i] = transf_buf[nlong+i];
         for (i = 0; i < nshort; i++)
-            time_out[nlong+nflat_ls+i] = MUL_R_C(transf_buf[nlong+nflat_ls+i],window_short[nshort-i-1]);
+            time_out[nlong+nflat_ls+i] = MUL_F(transf_buf[nlong+nflat_ls+i],window_short[nshort-i-1]);
         for (i = 0; i < nflat_ls; i++)
             time_out[nlong+nflat_ls+nshort+i] = 0;
         break;
@@ -239,18 +239,18 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
             time_out[i] = time_out[nlong+i];
         for(i = nshort-1; i >= 0; i--)
         {
-            time_out[nflat_ls+         i] = time_out[nlong+nflat_ls+         i] + MUL_R_C(transf_buf[nshort*0+i],window_short_prev[i]);
-            time_out[nflat_ls+1*nshort+i] = time_out[nlong+nflat_ls+nshort*1+i] + MUL_R_C(transf_buf[nshort*1+i],window_short[nshort-1-i]) + MUL_R_C(transf_buf[nshort*2+i],window_short[i]);
-            time_out[nflat_ls+2*nshort+i] = time_out[nlong+nflat_ls+nshort*2+i] + MUL_R_C(transf_buf[nshort*3+i],window_short[nshort-1-i]) + MUL_R_C(transf_buf[nshort*4+i],window_short[i]);
-            time_out[nflat_ls+3*nshort+i] = time_out[nlong+nflat_ls+nshort*3+i] + MUL_R_C(transf_buf[nshort*5+i],window_short[nshort-1-i]) + MUL_R_C(transf_buf[nshort*6+i],window_short[i]);
+            time_out[nflat_ls+         i] = time_out[nlong+nflat_ls+         i] + MUL_F(transf_buf[nshort*0+i],window_short_prev[i]);
+            time_out[nflat_ls+1*nshort+i] = time_out[nlong+nflat_ls+nshort*1+i] + MUL_F(transf_buf[nshort*1+i],window_short[nshort-1-i]) + MUL_F(transf_buf[nshort*2+i],window_short[i]);
+            time_out[nflat_ls+2*nshort+i] = time_out[nlong+nflat_ls+nshort*2+i] + MUL_F(transf_buf[nshort*3+i],window_short[nshort-1-i]) + MUL_F(transf_buf[nshort*4+i],window_short[i]);
+            time_out[nflat_ls+3*nshort+i] = time_out[nlong+nflat_ls+nshort*3+i] + MUL_F(transf_buf[nshort*5+i],window_short[nshort-1-i]) + MUL_F(transf_buf[nshort*6+i],window_short[i]);
             if (i < trans)
-                time_out[nflat_ls+4*nshort+i] = time_out[nlong+nflat_ls+nshort*4+i] + MUL_R_C(transf_buf[nshort*7+i],window_short[nshort-1-i]) + MUL_R_C(transf_buf[nshort*8+i],window_short[i]);
+                time_out[nflat_ls+4*nshort+i] = time_out[nlong+nflat_ls+nshort*4+i] + MUL_F(transf_buf[nshort*7+i],window_short[nshort-1-i]) + MUL_F(transf_buf[nshort*8+i],window_short[i]);
             else
-                time_out[nflat_ls+4*nshort+i] = MUL_R_C(transf_buf[nshort*7+i],window_short[nshort-1-i]) + MUL_R_C(transf_buf[nshort*8+i],window_short[i]);
-            time_out[nflat_ls+5*nshort+i] = MUL_R_C(transf_buf[nshort*9+i],window_short[nshort-1-i]) + MUL_R_C(transf_buf[nshort*10+i],window_short[i]);
-            time_out[nflat_ls+6*nshort+i] = MUL_R_C(transf_buf[nshort*11+i],window_short[nshort-1-i]) + MUL_R_C(transf_buf[nshort*12+i],window_short[i]);
-            time_out[nflat_ls+7*nshort+i] = MUL_R_C(transf_buf[nshort*13+i],window_short[nshort-1-i]) + MUL_R_C(transf_buf[nshort*14+i],window_short[i]);
-            time_out[nflat_ls+8*nshort+i] = MUL_R_C(transf_buf[nshort*15+i],window_short[nshort-1-i]);
+                time_out[nflat_ls+4*nshort+i] = MUL_F(transf_buf[nshort*7+i],window_short[nshort-1-i]) + MUL_F(transf_buf[nshort*8+i],window_short[i]);
+            time_out[nflat_ls+5*nshort+i] = MUL_F(transf_buf[nshort*9+i],window_short[nshort-1-i]) + MUL_F(transf_buf[nshort*10+i],window_short[i]);
+            time_out[nflat_ls+6*nshort+i] = MUL_F(transf_buf[nshort*11+i],window_short[nshort-1-i]) + MUL_F(transf_buf[nshort*12+i],window_short[i]);
+            time_out[nflat_ls+7*nshort+i] = MUL_F(transf_buf[nshort*13+i],window_short[nshort-1-i]) + MUL_F(transf_buf[nshort*14+i],window_short[i]);
+            time_out[nflat_ls+8*nshort+i] = MUL_F(transf_buf[nshort*15+i],window_short[nshort-1-i]);
         }
         for (i = 0; i < nflat_ls; i++)
             time_out[nlong+nflat_ls+nshort+i] = 0;
@@ -261,11 +261,11 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
         for (i = 0; i < nflat_ls; i++)
             time_out[i] = time_out[nlong+i];
         for (i = 0; i < nshort; i++)
-            time_out[nflat_ls+i] = time_out[nlong+nflat_ls+i] + MUL_R_C(transf_buf[nflat_ls+i],window_short_prev[i]);
+            time_out[nflat_ls+i] = time_out[nlong+nflat_ls+i] + MUL_F(transf_buf[nflat_ls+i],window_short_prev[i]);
         for (i = 0; i < nflat_ls; i++)
             time_out[nflat_ls+nshort+i] = time_out[nlong+nflat_ls+nshort+i] + transf_buf[nflat_ls+nshort+i];
         for (i = 0; i < nlong; i++)
-            time_out[nlong+i] = MUL_R_C(transf_buf[nlong+i],window_long[nlong-1-i]);
+            time_out[nlong+i] = MUL_F(transf_buf[nlong+i],window_long[nlong-1-i]);
 		break;
     }
 }
@@ -310,19 +310,19 @@ void filter_bank_ltp(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
     case ONLY_LONG_SEQUENCE:
         for (i = nlong-1; i >= 0; i--)
         {
-            windowed_buf[i] = MUL_R_C(in_data[i], window_long_prev[i]);
-            windowed_buf[i+nlong] = MUL_R_C(in_data[i+nlong], window_long[nlong-1-i]);
+            windowed_buf[i] = MUL_F(in_data[i], window_long_prev[i]);
+            windowed_buf[i+nlong] = MUL_F(in_data[i+nlong], window_long[nlong-1-i]);
         }
         mdct(fb, windowed_buf, out_mdct, 2*nlong);
         break;
 
     case LONG_START_SEQUENCE:
         for (i = 0; i < nlong; i++)
-            windowed_buf[i] = MUL_R_C(in_data[i], window_long_prev[i]);
+            windowed_buf[i] = MUL_F(in_data[i], window_long_prev[i]);
         for (i = 0; i < nflat_ls; i++)
             windowed_buf[i+nlong] = in_data[i+nlong];
         for (i = 0; i < nshort; i++)
-            windowed_buf[i+nlong+nflat_ls] = MUL_R_C(in_data[i+nlong+nflat_ls], window_short[nshort-1-i]);
+            windowed_buf[i+nlong+nflat_ls] = MUL_F(in_data[i+nlong+nflat_ls], window_short[nshort-1-i]);
         for (i = 0; i < nflat_ls; i++)
             windowed_buf[i+nlong+nflat_ls+nshort] = 0;
         mdct(fb, windowed_buf, out_mdct, 2*nlong);
@@ -332,11 +332,11 @@ void filter_bank_ltp(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
         for (i = 0; i < nflat_ls; i++)
             windowed_buf[i] = 0;
         for (i = 0; i < nshort; i++)
-            windowed_buf[i+nflat_ls] = MUL_R_C(in_data[i+nflat_ls], window_short_prev[i]);
+            windowed_buf[i+nflat_ls] = MUL_F(in_data[i+nflat_ls], window_short_prev[i]);
         for (i = 0; i < nflat_ls; i++)
             windowed_buf[i+nflat_ls+nshort] = in_data[i+nflat_ls+nshort];
         for (i = 0; i < nlong; i++)
-            windowed_buf[i+nlong] = MUL_R_C(in_data[i+nlong], window_long[nlong-1-i]);
+            windowed_buf[i+nlong] = MUL_F(in_data[i+nlong], window_long[nlong-1-i]);
         mdct(fb, windowed_buf, out_mdct, 2*nlong);
         break;
     }
