@@ -1,0 +1,21 @@
+2001-09-16  Erik de Castro Lopo  <erikd AT zip DOT com DOT au>
+
+    * code.c
+    Added #includes fro string.h and stdlib.h.
+
+2000-10-27  Erik de Castro Lopo  <erikd AT zip DOT com DOT au>
+
+    * config.h
+    Removed some commented out #defines (ie //*efine) which were causing problems on
+	the Sun cc compiler.
+
+2000-02-29  Erik de Castro Lopo  <erikd AT zip DOT com DOT au>
+
+    * private.h
+    Added #defines to emulate normal compile time options.
+
+2000-02-28  Erik de Castro Lopo  <erikd AT zip DOT com DOT au>
+
+    * everthing
+    Created this directory and copied files from libgsm.
+    http://kbs.cs.tu-berlin.de/~jutta/toast.html

@@ -1,0 +1,95 @@
+Version 0.0.26 (2001-09-30)
+  * Offical release.
+  * Changed how A-law and u-law WAV file headers are written to allow files generated
+    by libsndfile to be read by M$ windoze.
+  * Added IRCAM file support.
+  * Minor bug fixes.
+  * This will be the last release in the 0.0.X development stream apart from bug fixes.
+    A new deveopement stream with minor interface changes in already in development.
+
+Version 0.0.25 (2001-09-24)
+  * Offical release.
+  * Added sf_command () interface which allows switching normalisation on and off for
+    sf_read/write_float () methods.  
+  * Minor bug fixes.
+  * This will be the last release in the 0.0.X development stream apart from bug fixes.
+    A new deveopement stream with minor interface changes in already in development.
+
+Version 0.0.24 (2001-08-19)
+  * Offical release.
+  * Massive refactoring of header reading code for all file formats.
+  * Added sf_read_float () and sf_write_float () interfaces.
+  * Minor bug fixes.
+
+Version 0.0.23 (2001-07-06)
+  * Offical release.
+  * Massive refactoring of header writing code for all file formats.
+  * Added support for Sphere NIST.
+  * Added support for 32 bit float AIFF and little endian AIFF files (Mac OSX).
+  * Added read and write support for the PEAK chunk in 32 bit float AIFF and WAV files.
+  * Added support for REX files (Propellorheads Reason).
+  * Minor bug fixes.
+
+Version 0.0.22 (2000-10-17)
+  * Offical release.
+  * Bug fix in G723 AU file handling.
+
+Version 0.0.21 (2000-08-16)
+  * Offical release.
+  * AU files without the normal AU file header are now recognised as headerless
+    8kHz 8 bit ulaw encoded files.
+  * Added handling for G721 4bit APDCM encoded AU files.
+  * Added handling for G723 3bit APDCM encoded AU files.
+  * Improved Win32 compiling and use instructions from Mike Ricos.
+  * License change from GPL to LGPL.
+
+Version 0.0.20 (2000-05-30)
+  * Offical release.
+  * Minor bug fix for LinuxPPC (endian issues).
+
+Version 0.0.19 (2000-05-20)
+  * Offical release.
+  * Minor bug fix for handling GSM 6.10 encoded WAV files on big endian machines.
+
+Version 0.0.18 (2000-04-25)
+  * Offical release.
+  * Added handling for GSM 6.10 encoded WAV files.
+  * Minor bug fixes.
+
+Version 0.0.17 (1999-11-16)
+  * Offical release.
+  * New file formats (SVX and PAF).
+  * Minor bug fixes.
+
+Version 0.0.16 (1999-07-31)
+  * Offical release.
+  * Fixed minor MacOS configuration issues.
+
+Version 0.0.15 (1999-07-30)
+  * Offical release.
+  * Added MS ADPCM WAV file write.
+  * Added WAV and AU file A-law and u-law encoding.
+  * Added RAW header-less PCM file handling.
+  * Added MacOS support (thanks to Ben "Jacobs").
+
+Version 0.0.12 (1999-06-19)
+  * Offical release.
+  * Code cleanup to remove compiler warning messages.
+
+Version 0.0.10 (1999-06-12)
+  * Unoffical release.
+  * Changes to low level code which improve error detection and handling.
+  * Added read-only handling of Microsoft ADPCM WAV files.
+  * Added Win32 support (almost exclusively due to Albert Faber, thanks).
+  * Fixed bug in IMA ADPCM file writing.
+
+Version 0.0.9 (1999-03-14)
+  * Add handling of IMA ADPCM WAV files.
+  * Add new function sf_get_header_info and add example program sfinfo.
+  * Implemented 8 bit PCM data formats for AIFF, AU and WAV.
+  
+Version 0.0.8 (1999-02-16)
+  * First offical release.
+
+Version 0.0.7 (1999-02-13)
+  * First unoffical release.

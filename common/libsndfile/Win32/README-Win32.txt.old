@@ -1,0 +1,32 @@
+The MSCV++ workspace and project files have been broken for some time and I 
+have not found anyone willing to fix them or provide new ones. I hope the
+following instructions will be sufficient for Win32 to users to build, test
+and use this library.
+
+It is assumed that when you unzip the source code package you will keep the
+directory structure of the archive.
+
+The source code for the library it self is in following directories under 
+the main libsndfile directory:
+
+		src/
+		src/GSM610/
+
+To build the library you need to create a project containing all the *.c files 
+in these two directories. In addition, you should copy the two header files
+in the Win32/ directory (config.h and unistd.h) to the src/ directory. In the
+case of config.h you will be overwriting the existing config.h file.
+
+The test programs are all in the directory tests/ which contains one .c file
+for each test program. To create all the test programs you will need to 
+compile each of these test programs and link it to the library.
+
+Finally, there is also a directory examples/, which contains a number of small
+example programs. These can be compiled and linked much like the files in the
+tests/ directory.
+
+Anybody who can add to or clarify these instructions should should send me 
+email at <erikd@zip.com.au>.
+
+Erik de Castro Lopo
+May 30th, 2000

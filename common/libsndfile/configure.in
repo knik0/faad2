@@ -1,0 +1,145 @@
+# Configure `libsndfile'.
+# Copyright (C) 1999-2001 Erik de Castro Lopo (erikd@zip.com.au).
+
+dnl Require autoconf version >= 2.12
+
+AC_PREREQ(2.12)			
+AC_INIT(src/sndfile.c)
+AC_CANONICAL_SYSTEM
+
+AM_INIT_AUTOMAKE(libsndfile,0.0.27)
+
+dnl This is the version info according to the libtool versioning system.
+dnl It does *not* correspond to the release number.
+
+SHARED_VERSION_INFO="0:27:0"
+
+dnl Process this file with autoconf to produce a configure script.
+
+AM_CONFIG_HEADER(src/config.h)
+
+AC_PROG_CC
+AC_PROG_INSTALL
+
+AC_PROG_MAKE_SET
+AC_PROG_LN_S
+AM_PROG_LIBTOOL
+
+AC_HEADER_STDC
+
+AC_CHECK_HEADERS(endian.h)
+
+AC_CHECK_FUNCS(fopen fread fwrite fclose fseek ftell malloc free snprintf vsnprintf)
+
+AC_TYPE_SIZE_T
+AC_TYPE_OFF_T
+
+AC_CHECK_SIZEOF(short,2)
+AC_CHECK_SIZEOF(int,4)
+AC_CHECK_SIZEOF(long,8)
+AC_CHECK_SIZEOF(float,4)
+AC_CHECK_SIZEOF(double,4)
+AC_CHECK_SIZEOF(void*,8)
+
+AC_ARG_ENABLE(justsrc,  [  --enable-justsrc             only compile library sources ],
+	ac_arg_justsrc="Y", ac_arg_justsrc="N")
+
+AC_ARG_ENABLE(gcc-pipe, [  --disable-gcc-pipe           disable gcc -pipe option ],
+	ac_arg_gcc_pipe="N", ac_arg_gcc_pipe="Y")
+
+AC_ARG_ENABLE(gcc-opt,  [  --disable-gcc-opt            disable gcc optimisations ],
+	ac_arg_gcc_opt="N", ac_arg_gcc_opt="Y")
+
+AC_ARG_ENABLE(force-broken-float,  
+						[  --enable-force-broken-float  force use of broken float code ],
+	ac_arg_broken_float="Y", ac_arg_broken_float="N")
+
+if test $ac_cv_prog_gcc = yes ; then
+	CFLAGS="$CFLAGS -g -O2 -Wstrict-prototypes"
+	if test "$ac_arg_gcc_opt" = "N" ; then
+		CFLAGS="$CFLAGS -g -O0 -Wstrict-prototypes"
+		AC_MSG_WARN([[*** Compiler optimisations switched off. ***]])
+		fi
+	dnl Disable -Wall and -pedantic for Apple Darwin/Rhapsody.
+	dnl System headers on these systems are broken.
+	case "$target_os" in 
+		darwin* | rhapsody*)
+			;;
+		*)
+			CFLAGS="$CFLAGS -Wall -pedantic"
+			;;
+		esac
+	if test $ac_arg_gcc_pipe != "N" ; then
+	 	CFLAGS="$CFLAGS -pipe"
+	 	fi
+	fi
+	
+if test $cross_compiling = yes ; then
+	AC_MSG_WARN([[******************************************************************]])
+	AC_MSG_WARN([[*** We are cross-compiling, so have to assume sizeof (short) == 2 ]])
+	AC_MSG_WARN([[*** and sizeof (int) == 4. If this is not the case there is no    ]])
+	AC_MSG_WARN([[*** chance of this working. Please contact the mantainer.         ]])
+	AC_MSG_WARN([[******************************************************************]])
+	fi
+	
+if test $ac_cv_sizeof_int != 4 ; then
+	AC_MSG_WARN([[******************************************************************]])
+	AC_MSG_WARN([[*** sizeof (int) != 4                                             ]])
+	AC_MSG_WARN([[******************************************************************]])
+	fi
+
+if test $ac_cv_sizeof_short != 2 ; then
+	AC_MSG_WARN([[******************************************************************]])
+	AC_MSG_WARN([[*** sizeof (short) != 2.                                          ]])
+	AC_MSG_WARN([[******************************************************************]])
+	fi
+	
+if test $ac_cv_sizeof_float != 4 ; then
+	AC_MSG_WARN([[******************************************************************]])
+	AC_MSG_WARN([[*** sizeof (float) != 4.                                          ]])
+	AC_MSG_WARN([[******************************************************************]])
+	fi
+	
+if test $ac_cv_sizeof_double != 8 ; then
+	AC_MSG_WARN([[******************************************************************]])
+	AC_MSG_WARN([[*** sizeof (double) != 8.                                         ]])
+	AC_MSG_WARN([[******************************************************************]])
+	fi
+
+case "$target_cpu" in
+	alpha* | i?86 )
+		AC_DEFINE(GUESS_LITTLE_ENDIAN,1)
+		AC_DEFINE(GUESS_BIG_ENDIAN,0)
+		;;
+		
+	hppa* | m68* | mips* | powerpc* | hppa* | sparc*)
+		AC_DEFINE(GUESS_LITTLE_ENDIAN,0)
+		AC_DEFINE(GUESS_BIG_ENDIAN,1)
+		;;
+
+	*)
+		AC_MSG_WARN([[*****************************************************************]])
+		AC_MSG_WARN([[*** Not able to determine endian-ness of processor.              ]])
+		AC_MSG_WARN([[*** You will need to edit src/config.h before compiling.         ]])
+		AC_MSG_WARN([[*****************************************************************]])
+		;;
+esac
+
+subdirs="src/GSM610 src/G72x src"
+if test $ac_arg_justsrc = "N" ; then
+	subdirs="$subdirs examples doc tests"
+	fi
+
+if test $ac_arg_broken_float = "Y" ; then
+	AC_DEFINE(FORCE_BROKEN_FLOAT,1)
+	AC_MSG_WARN([[*** Testing code for processors that can't read/write IEEE floats.]])
+else
+	AC_DEFINE(FORCE_BROKEN_FLOAT,0)
+	fi
+ 
+AC_SUBST(subdirs)
+AC_SUBST(SHARED_VERSION_INFO)
+
+AC_OUTPUT(Makefile src/Makefile src/GSM610/Makefile src/G72x/Makefile \
+			examples/Makefile tests/Makefile doc/Makefile Win32/Makefile \
+			MacOS/Makefile libsndfile.spec)

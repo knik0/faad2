@@ -1,0 +1,87 @@
+/* src/config.h.in.  Generated automatically from configure.in by autoheader 2.13.  */
+
+/* Define to `long' if <sys/types.h> doesn't define.  */
+#undef off_t
+
+/* Define to `unsigned' if <sys/types.h> doesn't define.  */
+#undef size_t
+
+/* Define if you have the ANSI C header files.  */
+#undef STDC_HEADERS
+
+/* Define to `long' if <sys/types.h> doesn't define.  */
+#undef off_t
+
+/* Define to `unsigned' if <sys/types.h> doesn't define.  */
+#undef size_t
+
+/* Define if you have the ANSI C header files.  */
+#undef STDC_HEADERS
+
+/* Set to 1 if the processor is big endian, otherwise set to 0.  */
+#undef GUESS_BIG_ENDIAN
+
+/* Set to 1 if the processor is little endian, otherwise set to 0.  */
+#undef GUESS_LITTLE_ENDIAN
+
+/* Set to 1 to force the use of code for processors with broken floats */
+/* Otherwise set it to 0.  */
+#undef FORCE_BROKEN_FLOAT
+
+/* The number of bytes in a double.  */
+#undef SIZEOF_DOUBLE
+
+/* The number of bytes in a float.  */
+#undef SIZEOF_FLOAT
+
+/* The number of bytes in a int.  */
+#undef SIZEOF_INT
+
+/* The number of bytes in a long.  */
+#undef SIZEOF_LONG
+
+/* The number of bytes in a short.  */
+#undef SIZEOF_SHORT
+
+/* The number of bytes in a void*.  */
+#undef SIZEOF_VOIDP
+
+/* Define if you have the fclose function.  */
+#undef HAVE_FCLOSE
+
+/* Define if you have the fopen function.  */
+#undef HAVE_FOPEN
+
+/* Define if you have the fread function.  */
+#undef HAVE_FREAD
+
+/* Define if you have the free function.  */
+#undef HAVE_FREE
+
+/* Define if you have the fseek function.  */
+#undef HAVE_FSEEK
+
+/* Define if you have the ftell function.  */
+#undef HAVE_FTELL
+
+/* Define if you have the fwrite function.  */
+#undef HAVE_FWRITE
+
+/* Define if you have the malloc function.  */
+#undef HAVE_MALLOC
+
+/* Define if you have the snprintf function.  */
+#undef HAVE_SNPRINTF
+
+/* Define if you have the vsnprintf function.  */
+#undef HAVE_VSNPRINTF
+
+/* Define if you have the <endian.h> header file.  */
+#undef HAVE_ENDIAN_H
+
+/* Name of package */
+#undef PACKAGE
+
+/* Version number of package */
+#undef VERSION
+
