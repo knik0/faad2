@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: hcr.c,v 1.16 2004/07/31 15:48:56 menno Exp $
+** $Id: hcr.c,v 1.18 2004/09/04 14:56:28 menno Exp $
 **/
 
 #include "common.h"
@@ -374,6 +374,9 @@ uint8_t reordered_spectral_data(NeAACDecHandle hDecoder, ic_stream *ics,
             {
                 const uint16_t segment_idx = (trial + codewordBase) % numberOfSegments;
                 const uint16_t codeword_idx = codewordBase + set*numberOfSegments - numberOfSegments;
+
+                /* data up */
+                if (codeword_idx >= numberOfCodewords - numberOfSegments) break;
 
                 if (!codeword[codeword_idx].decoded && segment[segment_idx].len > 0)
                 {
