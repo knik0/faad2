@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: in_mp4.c,v 1.41 2003/10/10 13:29:38 ca5e Exp $
+** $Id: in_mp4.c,v 1.42 2003/10/12 13:30:06 ca5e Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -857,7 +857,7 @@ void ConstructTitle(MP4FileHandle file, char *filename, char *title, char *forma
         case '7':
             {
                 const char *p=strrchr(filename,'\\');
-                if (!p) p=filename;
+                if (!p) p=filename; else p++;
                 out += ConvertANSIToUTF8(p, out);
                 some_info = 1;
                 break;
