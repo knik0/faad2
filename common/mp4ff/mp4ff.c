@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ff.c,v 1.15 2004/01/11 15:52:18 menno Exp $
+** $Id: mp4ff.c,v 1.16 2004/03/27 11:14:48 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -39,7 +39,20 @@ mp4ff_t *mp4ff_open_read(mp4ff_callback_t *f)
 
     ff->stream = f;
 
-    parse_atoms(ff);
+    parse_atoms(ff,0);
+
+    return ff;
+}
+
+mp4ff_t *mp4ff_open_read_metaonly(mp4ff_callback_t *f)
+{
+    mp4ff_t *ff = malloc(sizeof(mp4ff_t));
+
+    memset(ff, 0, sizeof(mp4ff_t));
+
+    ff->stream = f;
+
+    parse_atoms(ff,1);
 
     return ff;
 }
@@ -96,8 +109,35 @@ static void mp4ff_track_add(mp4ff_t *f)
     memset(f->track[f->total_tracks - 1], 0, sizeof(mp4ff_track_t));
 }
 
+static int need_parse_when_meta_only(uint8_t atom_type)
+{
+	switch(atom_type)
+	{
+	case ATOM_EDTS:
+//	case ATOM_MDIA:
+//	case ATOM_MINF:
+	case ATOM_DRMS:
+	case ATOM_SINF:
+	case ATOM_SCHI:
+//	case ATOM_STBL:
+//	case ATOM_STSD:
+	case ATOM_STTS:
+	case ATOM_STSZ:
+	case ATOM_STZ2:
+	case ATOM_STCO:
+	case ATOM_STSC:
+//	case ATOM_CTTS:
+	case ATOM_FRMA:
+	case ATOM_IVIV:
+	case ATOM_PRIV:
+		return 0;
+	default:
+		return 1;
+	}
+}
+
 /* parse atoms that are sub atoms of other atoms */
-int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size)
+int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size,int meta_only)
 {
     uint64_t size;
     uint8_t atom_type = 0;
@@ -122,9 +162,12 @@ int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size)
         }
 
         /* parse subatoms */
-        if (atom_type < SUBATOMIC)
+		if (meta_only && !need_parse_when_meta_only(atom_type))
+		{
+			mp4ff_set_position(f, mp4ff_position(f)+size-header_size);
+		} else if (atom_type < SUBATOMIC)
         {
-            parse_sub_atoms(f, size-header_size);
+            parse_sub_atoms(f, size-header_size,meta_only);
         } else {
             mp4ff_atom_read(f, (uint32_t)size, atom_type);
         }
@@ -134,7 +177,7 @@ int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size)
 }
 
 /* parse root atoms */
-int32_t parse_atoms(mp4ff_t *f)
+int32_t parse_atoms(mp4ff_t *f,int meta_only)
 {
     uint64_t size;
     uint8_t atom_type = 0;
@@ -162,9 +205,12 @@ int32_t parse_atoms(mp4ff_t *f)
         }
 
         /* parse subatoms */
-        if (atom_type < SUBATOMIC)
+		if (meta_only && !need_parse_when_meta_only(atom_type))
+		{
+			mp4ff_set_position(f, mp4ff_position(f)+size-header_size);
+		} else if (atom_type < SUBATOMIC)
         {
-            parse_sub_atoms(f, size-header_size);
+            parse_sub_atoms(f, size-header_size,meta_only);
         } else {
             /* skip this atom */
             mp4ff_set_position(f, mp4ff_position(f)+size-header_size);

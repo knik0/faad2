@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.c,v 1.32 2004/03/19 10:37:55 menno Exp $
+** $Id: sbr_dec.c,v 1.33 2004/03/27 11:14:49 menno Exp $
 **/
 
 
@@ -373,11 +373,7 @@ uint8_t sbrDecodeCoupleFrame(sbr_info *sbr, real_t *left_chan, real_t *right_cha
     {
         sbr_qmf_synthesis_32(sbr, sbr->qmfs[0], X, left_chan);
     } else {
-#ifndef USE_SSE
         sbr_qmf_synthesis_64(sbr, sbr->qmfs[0], X, left_chan);
-#else
-        sbr->qmfs[ch]->qmf_func(sbr, sbr->qmfs[0], X, left_chan);
-#endif
     }
 
     sbr_process_channel(sbr, right_chan, X, 1, dont_process, downSampledSBR);
@@ -386,11 +382,7 @@ uint8_t sbrDecodeCoupleFrame(sbr_info *sbr, real_t *left_chan, real_t *right_cha
     {
         sbr_qmf_synthesis_32(sbr, sbr->qmfs[1], X, right_chan);
     } else {
-#ifndef USE_SSE
         sbr_qmf_synthesis_64(sbr, sbr->qmfs[1], X, right_chan);
-#else
-        sbr->qmfs[ch]->qmf_func(sbr, sbr->qmfs[1], X, right_chan);
-#endif
     }
 
     if (sbr->bs_header_flag)
@@ -446,11 +438,7 @@ uint8_t sbrDecodeSingleFrame(sbr_info *sbr, real_t *channel,
     {
         sbr_qmf_synthesis_32(sbr, sbr->qmfs[0], X, channel);
     } else {
-#ifndef USE_SSE
         sbr_qmf_synthesis_64(sbr, sbr->qmfs[0], X, channel);
-#else
-        sbr->qmfs[ch]->qmf_func(sbr, sbr->qmfs[0], X, channel);
-#endif
     }
 
     if (sbr->bs_header_flag)
@@ -538,13 +526,8 @@ uint8_t sbrDecodeSingleFramePS(sbr_info *sbr, real_t *left_channel, real_t *righ
         sbr_qmf_synthesis_32(sbr, sbr->qmfs[0], X_left, left_channel);
         sbr_qmf_synthesis_32(sbr, sbr->qmfs[1], X_right, right_channel);
     } else {
-#ifndef USE_SSE
         sbr_qmf_synthesis_64(sbr, sbr->qmfs[0], X_left, left_channel);
         sbr_qmf_synthesis_64(sbr, sbr->qmfs[1], X_right, right_channel);
-#else
-        sbr->qmfs[ch]->qmf_func(sbr, sbr->qmfs[0], X_left, left_channel);
-        sbr->qmfs[ch]->qmf_func(sbr, sbr->qmfs[1], X_right, right_channel);
-#endif
     }
 
     if (sbr->bs_header_flag)

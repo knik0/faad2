@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4atom.c,v 1.17 2004/01/11 15:52:18 menno Exp $
+** $Id: mp4atom.c,v 1.18 2004/03/27 11:14:48 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -371,7 +371,7 @@ static int32_t mp4ff_read_drms(mp4ff_t *f, uint64_t skip)
     size = mp4ff_atom_read_header(f, &atom_type, &header_size);
     if (atom_type == ATOM_SINF)
     {
-        parse_sub_atoms(f, size-header_size);
+        parse_sub_atoms(f, size-header_size,0);
     }
 
     return 0;

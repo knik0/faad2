@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.56 2004/03/19 10:37:55 menno Exp $
+** $Id: common.h,v 1.58 2004/04/03 10:49:14 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -37,7 +37,7 @@ extern "C" {
 #endif
 
 #define INLINE __inline
-#if defined(_WIN32) && !defined(_WIN32_WCE)
+#if 0 //defined(_WIN32) && !defined(_WIN32_WCE)
 #define ALIGN __declspec(align(16))
 #else
 #define ALIGN

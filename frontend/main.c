@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.75 2004/03/10 19:45:40 menno Exp $
+** $Id: main.c,v 1.76 2004/03/27 11:14:49 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -1025,13 +1025,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, " Floating point version\n");
     fprintf(stderr, "\n");
     fprintf(stderr, " This program is free software; you can redistribute it and/or modify\n");
-    fprintf(stderr, " it under the terms of the GNU General Public License as published by\n");
-    fprintf(stderr, " the Free Software Foundation; either version 2 of the License, or\n");
-    fprintf(stderr, " (at your option) any later version.\n");
-    fprintf(stderr, "\n");
-    fprintf(stderr, " You should have received a copy of the GNU General Public License\n");
-    fprintf(stderr, " along with this program; if not, write to the Free Software\n");
-    fprintf(stderr, " Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.\n");
+    fprintf(stderr, " it under the terms of the GNU General Public License.\n");
     fprintf(stderr, "\n");
     fprintf(stderr, " **************************************************************************\n\n");
 

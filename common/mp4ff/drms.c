@@ -2,7 +2,7 @@
  * drms.c : DRMS
  *****************************************************************************
  * Copyright (C) 2004 VideoLAN
- * $Id: drms.c,v 1.3 2004/01/11 15:52:18 menno Exp $
+ * $Id: drms.c,v 1.4 2004/03/27 11:14:48 menno Exp $
  *
  * Author: Jon Lech Johansen <jon-vl@nanocrew.net>
  *
@@ -23,6 +23,7 @@
 
 #include <stdlib.h>                                      /* malloc(), free() */
 
+/* #include <vlc/vlc.h> */
 #include "mp4ffint.h"
 
 #ifdef ITUNES_DRM

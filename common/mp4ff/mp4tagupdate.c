@@ -606,7 +606,7 @@ int32_t mp4ff_meta_update(mp4ff_callback_t *f,const mp4ff_metadata_t * data)
     ff->stream = f;
 	mp4ff_set_position(ff,0);
 
-    parse_atoms(ff);
+    parse_atoms(ff,1);
 
 
 	if (!modify_moov(ff,data,&new_moov_data,&new_moov_size))

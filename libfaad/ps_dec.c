@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: ps_dec.c,v 1.2 2004/03/19 10:37:55 menno Exp $
+** $Id: ps_dec.c,v 1.3 2004/03/27 11:14:49 menno Exp $
 **/
 
 #include "common.h"
@@ -225,41 +225,28 @@ static void channel_filter2(hyb_info *hyb, uint8_t frame_len, const real_t *filt
 
     for (i = 0; i < frame_len; i++)
     {
+        real_t r0 = MUL_F(filter[0],(QMF_RE(buffer[0+i]) + QMF_RE(buffer[12+i])));
+        real_t r1 = MUL_F(filter[1],(QMF_RE(buffer[1+i]) + QMF_RE(buffer[11+i])));
+        real_t r2 = MUL_F(filter[2],(QMF_RE(buffer[2+i]) + QMF_RE(buffer[10+i])));
+        real_t r3 = MUL_F(filter[3],(QMF_RE(buffer[3+i]) + QMF_RE(buffer[9+i])));
+        real_t r4 = MUL_F(filter[4],(QMF_RE(buffer[4+i]) + QMF_RE(buffer[8+i])));
+        real_t r5 = MUL_F(filter[5],(QMF_RE(buffer[5+i]) + QMF_RE(buffer[7+i])));
+        real_t r6 = MUL_F(filter[6],QMF_RE(buffer[6+i]));
+        real_t i0 = MUL_F(filter[0],(QMF_IM(buffer[0+i]) + QMF_IM(buffer[12+i])));
+        real_t i1 = MUL_F(filter[1],(QMF_IM(buffer[1+i]) + QMF_IM(buffer[11+i])));
+        real_t i2 = MUL_F(filter[2],(QMF_IM(buffer[2+i]) + QMF_IM(buffer[10+i])));
+        real_t i3 = MUL_F(filter[3],(QMF_IM(buffer[3+i]) + QMF_IM(buffer[9+i])));
+        real_t i4 = MUL_F(filter[4],(QMF_IM(buffer[4+i]) + QMF_IM(buffer[8+i])));
+        real_t i5 = MUL_F(filter[5],(QMF_IM(buffer[5+i]) + QMF_IM(buffer[7+i])));
+        real_t i6 = MUL_F(filter[6],QMF_IM(buffer[6+i]));
+
         /* q = 0 */
-        QMF_RE(X_hybrid[i][0]) =
-            MUL_F(filter[0],(QMF_RE(buffer[0+i]) + QMF_RE(buffer[12+i]))) +
-            MUL_F(filter[1],(QMF_RE(buffer[1+i]) + QMF_RE(buffer[11+i]))) +
-            MUL_F(filter[2],(QMF_RE(buffer[2+i]) + QMF_RE(buffer[10+i]))) +
-            MUL_F(filter[3],(QMF_RE(buffer[3+i]) + QMF_RE(buffer[9+i]))) +
-            MUL_F(filter[4],(QMF_RE(buffer[4+i]) + QMF_RE(buffer[8+i]))) +
-            MUL_F(filter[5],(QMF_RE(buffer[5+i]) + QMF_RE(buffer[7+i]))) +
-            MUL_F(filter[6],QMF_RE(buffer[6+i]));
-        QMF_IM(X_hybrid[i][0]) =
-            MUL_F(filter[0],(QMF_IM(buffer[0+i]) + QMF_IM(buffer[12+i]))) +
-            MUL_F(filter[1],(QMF_IM(buffer[1+i]) + QMF_IM(buffer[11+i]))) +
-            MUL_F(filter[2],(QMF_IM(buffer[2+i]) + QMF_IM(buffer[10+i]))) +
-            MUL_F(filter[3],(QMF_IM(buffer[3+i]) + QMF_IM(buffer[9+i]))) +
-            MUL_F(filter[4],(QMF_IM(buffer[4+i]) + QMF_IM(buffer[8+i]))) +
-            MUL_F(filter[5],(QMF_IM(buffer[5+i]) + QMF_IM(buffer[7+i]))) +
-            MUL_F(filter[6],QMF_IM(buffer[6+i]));
+        QMF_RE(X_hybrid[i][0]) = r0 + r1 + r2 + r3 + r4 + r5 + r6;
+        QMF_IM(X_hybrid[i][0]) = i0 + i1 + i2 + i3 + i4 + i5 + i6;
 
         /* q = 1 */
-        QMF_RE(X_hybrid[i][1]) =
-            MUL_F(filter[0],(QMF_RE(buffer[0+i]) + QMF_RE(buffer[12+i]))) -
-            MUL_F(filter[1],(QMF_RE(buffer[1+i]) + QMF_RE(buffer[11+i]))) +
-            MUL_F(filter[2],(QMF_RE(buffer[2+i]) + QMF_RE(buffer[10+i]))) -
-            MUL_F(filter[3],(QMF_RE(buffer[3+i]) + QMF_RE(buffer[9+i]))) +
-            MUL_F(filter[4],(QMF_RE(buffer[4+i]) + QMF_RE(buffer[8+i]))) -
-            MUL_F(filter[5],(QMF_RE(buffer[5+i]) + QMF_RE(buffer[7+i]))) +
-            MUL_F(filter[6],QMF_RE(buffer[6+i]));
-        QMF_IM(X_hybrid[i][1]) =
-            MUL_F(filter[0],(QMF_IM(buffer[0+i]) + QMF_IM(buffer[12+i]))) -
-            MUL_F(filter[1],(QMF_IM(buffer[1+i]) + QMF_IM(buffer[11+i]))) +
-            MUL_F(filter[2],(QMF_IM(buffer[2+i]) + QMF_IM(buffer[10+i]))) -
-            MUL_F(filter[3],(QMF_IM(buffer[3+i]) + QMF_IM(buffer[9+i]))) +
-            MUL_F(filter[4],(QMF_IM(buffer[4+i]) + QMF_IM(buffer[8+i]))) -
-            MUL_F(filter[5],(QMF_IM(buffer[5+i]) + QMF_IM(buffer[7+i]))) +
-            MUL_F(filter[6],QMF_IM(buffer[6+i]));
+        QMF_RE(X_hybrid[i][1]) = r0 - r1 + r2 - r3 + r4 - r5 + r6;
+        QMF_IM(X_hybrid[i][1]) = i0 - i1 + i2 - i3 + i4 - i5 + i6;
     }
 }
 

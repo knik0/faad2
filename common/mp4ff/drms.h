@@ -2,7 +2,7 @@
  * drms.h : DRMS
  *****************************************************************************
  * Copyright (C) 2004 VideoLAN
- * $Id: drms.h,v 1.3 2004/01/11 15:52:18 menno Exp $
+ * $Id: drms.h,v 1.4 2004/03/27 11:14:48 menno Exp $
  *
  * Author: Jon Lech Johansen <jon-vl@nanocrew.net>
  *
@@ -20,7 +20,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111, USA.
  *****************************************************************************/
-
 
 #define DRMS_INIT_UKEY  0
 #define DRMS_INIT_IVIV  1

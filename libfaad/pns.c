@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: pns.c,v 1.30 2004/02/26 09:29:27 menno Exp $
+** $Id: pns.c,v 1.31 2004/03/27 11:14:49 menno Exp $
 **/
 
 #include "common.h"
@@ -70,9 +70,6 @@ real_t fp_sqrt(real_t value)
 
 static real_t pow2_table[] =
 {
-    COEF_CONST(0.59460355750136),
-    COEF_CONST(0.70710678118655),
-    COEF_CONST(0.84089641525371),
     COEF_CONST(1.0),
     COEF_CONST(1.18920711500272),
     COEF_CONST(1.41421356237310),
@@ -131,8 +128,8 @@ static INLINE void gen_rand_vector(real_t *spec, int16_t scale_factor, uint16_t 
     {
         scale = DIV(REAL_CONST(1),energy);
 
-        exp = scale_factor / 4;
-        frac = scale_factor % 4;
+        exp = scale_factor >> 2;
+        frac = scale_factor & 3;
 
         /* IMDCT pre-scaling */
         exp -= sub;
@@ -143,7 +140,7 @@ static INLINE void gen_rand_vector(real_t *spec, int16_t scale_factor, uint16_t 
             scale <<= exp;
 
         if (frac)
-            scale = MUL_C(scale, pow2_table[frac + 3]);
+            scale = MUL_C(scale, pow2_table[frac]);
 
         for (i = 0; i < size; i++)
         {

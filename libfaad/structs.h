@@ -1,19 +1,19 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: structs.h,v 1.36 2004/03/11 11:40:13 menno Exp $
+** $Id: structs.h,v 1.37 2004/03/27 11:14:49 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -305,59 +305,59 @@ typedef struct
 typedef struct mp4AudioSpecificConfig
 {
     /* Audio Specific Info */
-    uint8_t objectTypeIndex;
-    uint8_t samplingFrequencyIndex;
-    uint32_t samplingFrequency;
-    uint8_t channelsConfiguration;
+    /*uint8_t*/ unsigned char objectTypeIndex;
+    /*uint8_t*/ unsigned char samplingFrequencyIndex;
+    /*uint32_t*/ unsigned long samplingFrequency;
+    /*uint8_t*/ unsigned char channelsConfiguration;
 
     /* GA Specific Info */
-    uint8_t frameLengthFlag;
-    uint8_t dependsOnCoreCoder;
-    uint16_t coreCoderDelay;
-    uint8_t extensionFlag;
-    uint8_t aacSectionDataResilienceFlag;
-    uint8_t aacScalefactorDataResilienceFlag;
-    uint8_t aacSpectralDataResilienceFlag;
-    uint8_t epConfig;
+    /*uint8_t*/ unsigned char frameLengthFlag;
+    /*uint8_t*/ unsigned char dependsOnCoreCoder;
+    /*uint16_t*/ unsigned short coreCoderDelay;
+    /*uint8_t*/ unsigned char extensionFlag;
+    /*uint8_t*/ unsigned char aacSectionDataResilienceFlag;
+    /*uint8_t*/ unsigned char aacScalefactorDataResilienceFlag;
+    /*uint8_t*/ unsigned char aacSpectralDataResilienceFlag;
+    /*uint8_t*/ unsigned char epConfig;
 
-    int8_t sbr_present_flag;
-    int8_t forceUpSampling;
-    int8_t downSampledSBR;
+    /*uint8_t*/ char sbr_present_flag;
+    /*uint8_t*/ char forceUpSampling;
+    /*uint8_t*/ char downSampledSBR;
 } mp4AudioSpecificConfig;
 
 typedef struct NeAACDecConfiguration
 {
-    uint8_t defObjectType;
-    uint32_t defSampleRate;
-    uint8_t outputFormat;
-    uint8_t downMatrix;
-    uint8_t useOldADTSFormat;
-    uint8_t dontUpSampleImplicitSBR;
+    /*uint8_t*/ unsigned char defObjectType;
+    /*uint32_t*/ unsigned long defSampleRate;
+    /*uint8_t*/ unsigned char outputFormat;
+    /*uint8_t*/ unsigned char downMatrix;
+    /*uint8_t*/ unsigned char useOldADTSFormat;
+    /*uint8_t*/ unsigned char dontUpSampleImplicitSBR;
 } NeAACDecConfiguration, *NeAACDecConfigurationPtr;
 
 typedef struct NeAACDecFrameInfo
 {
-    uint32_t bytesconsumed;
-    uint32_t samples;
-    uint8_t channels;
-    uint8_t error;
-    uint32_t samplerate;
+    /*uint32_t*/ unsigned long bytesconsumed;
+    /*uint32_t*/ unsigned long samples;
+    /*uint8_t*/ unsigned char channels;
+    /*uint8_t*/ unsigned char error;
+    /*uint32_t*/ unsigned long samplerate;
 
     /* SBR: 0: off, 1: on; normal, 2: on; downsampled */
-    uint8_t sbr;
+    /*uint8_t*/ unsigned char sbr;
 
     /* MPEG-4 ObjectType */
-    uint8_t object_type;
+    /*uint8_t*/ unsigned char object_type;
 
     /* AAC header type; MP4 will be signalled as RAW also */
-    uint8_t header_type;
+    /*uint8_t*/ unsigned char header_type;
 
     /* multichannel configuration */
-    uint8_t num_front_channels;
-    uint8_t num_side_channels;
-    uint8_t num_back_channels;
-    uint8_t num_lfe_channels;
-    uint8_t channel_position[MAX_CHANNELS];
+    /*uint8_t*/ unsigned char num_front_channels;
+    /*uint8_t*/ unsigned char num_side_channels;
+    /*uint8_t*/ unsigned char num_back_channels;
+    /*uint8_t*/ unsigned char num_lfe_channels;
+    /*uint8_t*/ unsigned char channel_position[MAX_CHANNELS];
 } NeAACDecFrameInfo;
 
 typedef struct
