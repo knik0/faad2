@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.19 2002/06/15 15:10:47 menno Exp $
+** $Id: syntax.c,v 1.20 2002/06/15 15:38:22 menno Exp $
 **/
 
 /*
@@ -837,8 +837,10 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
             case INTENSITY_HCB2:
 
                 /* decode intensity position */
-                t = huffman_scale_factor(ld) - 60;
-                is_position += t;
+                t = huffman_scale_factor(ld);
+                if (t < 0)
+                    return 9;
+                is_position += (t - 60);
                 ics->scale_factors[g][sfb] = is_position;
 
                 break;
@@ -851,7 +853,10 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
                     t = faad_getbits(ld, 9
                         DEBUGVAR(1,73,"scale_factor_data(): first noise")) - 256;
                 } else {
-                    t = huffman_scale_factor(ld) - 60;
+                    t = huffman_scale_factor(ld);
+                    if (t < 0)
+                        return 9;
+                    t -= 60;
                 }
                 noise_energy += t;
                 ics->scale_factors[g][sfb] = noise_energy;
@@ -862,8 +867,10 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
             default: /* spectral books */
 
                 /* decode scale factor */
-                t = huffman_scale_factor(ld) - 60;
-                scale_factor += t;
+                t = huffman_scale_factor(ld);
+                if (t < 0)
+                    return 9;
+                scale_factor += (t - 60);
                 if (scale_factor < 0)
                     return 4;
                 ics->scale_factors[g][sfb] = scale_factor;
@@ -1100,6 +1107,7 @@ static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data
     uint16_t k, p = 0;
     uint8_t groups = 0;
     uint8_t sect_cb;
+    uint8_t result;
     uint16_t nshort = frame_len/8;
 
     sp = spectral_data;
@@ -1134,7 +1142,8 @@ static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data
 
                     inc = (sect_cb < FIRST_PAIR_HCB) ? QUAD_LEN : PAIR_LEN;
 
-                    huffman_spectral_data(sect_cb, ld, sp);
+                    if ((result = huffman_spectral_data(sect_cb, ld, sp)) > 0)
+                        return result;
                     if (unsigned_cb[sect_cb])
                         huffman_sign_bits(ld, sp, inc);
                     k += inc;

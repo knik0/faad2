@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: huffman.h,v 1.8 2002/06/15 15:10:47 menno Exp $
+** $Id: huffman.h,v 1.9 2002/06/15 15:38:22 menno Exp $
 **/
 
 #ifndef __HUFFMAN_H__
@@ -34,7 +34,7 @@ extern "C" {
 #include "codebook/hcb.h"
 
 
-static INLINE uint8_t huffman_scale_factor(bitfile *ld)
+static INLINE int8_t huffman_scale_factor(bitfile *ld)
 {
     uint16_t offset = 0;
 
@@ -43,14 +43,13 @@ static INLINE uint8_t huffman_scale_factor(bitfile *ld)
         uint8_t b = faad_get1bit(ld
             DEBUGVAR(1,255,"huffman_scale_factor()"));
         offset += hcb_sf[offset][b];
+
+        if (offset > 240)
+        {
+            /* printf("ERROR: offset into hcb_sf = %d >240!\n", offset); */
+            return -1;
+        }
     }
-#ifdef ANALYSIS
-    if (offset>240)
-    {
-        printf("ERROR: offset into hcb_sf = %d >240!\n", offset);
-        return 0;
-    }
-#endif
 
     return hcb_sf[offset][0];
 }
@@ -74,13 +73,11 @@ static hcb_bin_pair *hcb_bin_table[] = {
 
 static uint8_t hcbN[] = { 0, 5, 5, 0, 5, 0, 5, 0, 5, 0, 6, 5 };
 
-#ifdef ANALYSIS
 static int hcb_2_quad_table_size[] = { 0, 114, 86, 0, 185, 0, 0, 0, 0, 0, 0, 0 };
 static int hcb_2_pair_table_size[] = { 0, 0, 0, 0, 0, 0, 126, 0, 83, 0, 210, 373 };
-static int hcb_bin_table_size[] = { 0, 0, 0, 0, 0, 161, 0, 127, 0, 337, 0, 0 };
-#endif
+static int hcb_bin_table_size[] = { 0, 0, 0, 161, 0, 161, 0, 127, 0, 337, 0, 0 };
 
-static INLINE void huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
+static INLINE uint8_t huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
 {
     uint32_t cw;
     uint16_t offset = 0;
@@ -106,20 +103,19 @@ static INLINE void huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
             faad_flushbits(ld, hcb_2_quad_table[cb][offset].bits);
         }
 
-#ifdef ANALYSIS
         if (offset > hcb_2_quad_table_size[cb])
         {
-            printf("ERROR: offset into hcb_2_quad_table = %d >%d!\n", offset,
-                hcb_2_quad_table_size[cb]);
-            return;
+            /* printf("ERROR: offset into hcb_2_quad_table = %d >%d!\n", offset,
+                hcb_2_quad_table_size[cb]); */
+            return 10;
         }
-#endif
 
         sp[0] = hcb_2_quad_table[cb][offset].x;
         sp[1] = hcb_2_quad_table[cb][offset].y;
         sp[2] = hcb_2_quad_table[cb][offset].v;
         sp[3] = hcb_2_quad_table[cb][offset].w;
-        break;
+
+        return 0;
 
     case 6: /* 2-step method for data pairs */
     case 8:
@@ -148,18 +144,17 @@ static INLINE void huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
             faad_flushbits(ld, hcb_2_pair_table[cb][offset].bits);
         }
 
-#ifdef ANALYSIS
         if (offset > hcb_2_pair_table_size[cb])
         {
-            printf("ERROR: offset into hcb_2_pair_table = %d >%d!\n", offset,
-                hcb_2_pair_table_size[cb]);
-            return;
+            /* printf("ERROR: offset into hcb_2_pair_table = %d >%d!\n", offset,
+                hcb_2_pair_table_size[cb]); */
+            return 10;
         }
-#endif
 
         sp[0] = hcb_2_pair_table[cb][offset].x;
         sp[1] = hcb_2_pair_table[cb][offset].y;
-        break;
+
+        return 0;
 
     case 3: /* binary search for data quadruples */
 
@@ -170,12 +165,19 @@ static INLINE void huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
             offset += hcb3[offset].data[b];
         }
 
+        if (offset > hcb_bin_table_size[cb])
+        {
+            /* printf("ERROR: offset into hcb_bin_table = %d >%d!\n", offset,
+                hcb_bin_table_size[cb]); */
+            return 10;
+        }
+
         sp[0] = hcb3[offset].data[0];
         sp[1] = hcb3[offset].data[1];
         sp[2] = hcb3[offset].data[2];
         sp[3] = hcb3[offset].data[3];
 
-        break;
+        return 0;
 
     case 5: /* binary search for data pairs */
     case 7:
@@ -188,20 +190,24 @@ static INLINE void huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
             offset += hcb_bin_table[cb][offset].data[b];
         }
 
-#ifdef ANALYSIS
         if (offset > hcb_bin_table_size[cb])
         {
-            printf("ERROR: offset into hcb_2_pair_table = %d >%d!\n", offset,
-                hcb_bin_table_size[cb]);
-            return;
+            /* printf("ERROR: offset into hcb_bin_table = %d >%d!\n", offset,
+                hcb_bin_table_size[cb]); */
+            return 10;
         }
-#endif
 
         sp[0] = hcb_bin_table[cb][offset].data[0];
         sp[1] = hcb_bin_table[cb][offset].data[1];
 
-        break;
+        return 0;
+
+    default:
+        /* Non existent codebook number, something went wrong */
+        return 11;
     }
+
+    return 0;
 }
 
 static INLINE void huffman_sign_bits(bitfile *ld, int16_t *sp, uint8_t len)

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: error.c,v 1.4 2002/04/18 18:08:06 menno Exp $
+** $Id: error.c,v 1.5 2002/06/15 15:38:22 menno Exp $
 **/
 
 #include "common.h"
@@ -31,5 +31,8 @@ extern uint8_t *err_msg[] = {
     "Unable to find ADTS syncword",
     "Channel coupling not yet implemented",
     "Channel configuration not allowed in error resilient frame",
-    "Bit error in error resilient scalefactor decoding"
+    "Bit error in error resilient scalefactor decoding",
+    "Error decoding huffman scalefactor (bitstream error)",
+    "Error decoding huffman codeword (bitstream error)",
+    "Non existent huffman codebook number found"
 };
