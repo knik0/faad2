@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.16 2002/06/13 11:03:27 menno Exp $
+** $Id: decoder.c,v 1.17 2002/06/15 15:10:47 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -105,6 +105,15 @@ uint8_t FAADAPI faacDecSetConfiguration(faacDecHandle hDecoder,
                                     faacDecConfigurationPtr config)
 {
     hDecoder->config.defObjectType = config->defObjectType;
+#ifdef DRM
+    if (config->defObjectType == DRM_ER_LC)
+    {
+        hDecoder->aacSectionDataResilienceFlag = 1; /* VCB11 */
+        hDecoder->aacScalefactorDataResilienceFlag = 0; /* no RVLC */
+        hDecoder->aacSpectralDataResilienceFlag = 1; /* HCR */
+        hDecoder->frameLength = 960;
+    }
+#endif
     hDecoder->config.defSampleRate = config->defSampleRate;
     hDecoder->config.outputFormat  = config->outputFormat;
 
@@ -155,6 +164,9 @@ static int8_t can_decode_ot(uint8_t object_type)
     /* ER object types */
 #ifdef ERROR_RESILIENCE
     case ER_LC:
+#ifdef DRM
+    case DRM_ER_LC:
+#endif
         return 0;
     case ER_LTP:
 #ifdef LTP_DEC
@@ -191,6 +203,9 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
     {
         faad_initbits(&ld, buffer);
 
+#ifdef DRM
+        if (hDecoder->object_type != DRM_ER_LC)
+#endif        
         /* Check if an ADIF header is present */
         if ((buffer[0] == 'A') && (buffer[1] == 'D') &&
             (buffer[2] == 'I') && (buffer[3] == 'F'))

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.13 2002/06/13 11:03:28 menno Exp $
+** $Id: syntax.h,v 1.14 2002/06/15 15:10:47 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -35,6 +35,8 @@ extern "C" {
 #define LD      23
 #define ER_LC   17
 #define ER_LTP  19
+#define DRM_ER_LC   27 /* special object type for DRM */
+
 
 /* First object type that has ER */
 #define ER_OBJECT_START 17

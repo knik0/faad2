@@ -368,6 +368,15 @@ uint8_t reordered_spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_d
 	if (ics->length_of_reordered_spectral_data == 0)
     		return 0; /* nothing to do */
 
+    /* if we have a corrupted bitstream this can happen... */
+    if ((ics->length_of_longest_codeword == 0) ||
+        (ics->length_of_reordered_spectral_data <
+        ics->length_of_longest_codeword))
+    {
+        return 0; /* this is not good... */
+    }
+
+
 	/* store the offset into the spectral data for all the window groups because we can't do it later */
     
     sp_offset[0] = 0;
@@ -565,6 +574,21 @@ uint8_t reordered_spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_d
         for (i=0; i < numberOfSegments; i++)
         	rewind_bits( &Segment[ i ] );
 	}
+
+#ifdef ANALYSIS
+    {
+        int i, r=0;
+        for (i=0; i< numberOfSegments; i++)
+            r += Segment[ i ].len;
+        if (r != 0)
+            printf("reordered_spectral_data: %d bits remaining!\n", r);
+        for (i=0; i< NrCodeWords - numberOfSegments; i++)
+        {
+            if (Codewords[ i ].decoded == 0)
+                printf("reordered_spectral_data: Undecoded Codebooks remaining!\n", r);
+        }
+    }
+#endif
 
     return 0;
 }

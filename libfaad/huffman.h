@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: huffman.h,v 1.7 2002/05/31 18:06:49 menno Exp $
+** $Id: huffman.h,v 1.8 2002/06/15 15:10:47 menno Exp $
 **/
 
 #ifndef __HUFFMAN_H__
@@ -40,9 +40,18 @@ static INLINE uint8_t huffman_scale_factor(bitfile *ld)
 
     while (hcb_sf[offset][1])
     {
-        uint8_t b = faad_get1bit(ld);
+        uint8_t b = faad_get1bit(ld
+            DEBUGVAR(1,255,"huffman_scale_factor()"));
         offset += hcb_sf[offset][b];
     }
+#ifdef ANALYSIS
+    if (offset>240)
+    {
+        printf("ERROR: offset into hcb_sf = %d >240!\n", offset);
+        return 0;
+    }
+#endif
+
     return hcb_sf[offset][0];
 }
 
@@ -65,6 +74,11 @@ static hcb_bin_pair *hcb_bin_table[] = {
 
 static uint8_t hcbN[] = { 0, 5, 5, 0, 5, 0, 5, 0, 5, 0, 6, 5 };
 
+#ifdef ANALYSIS
+static int hcb_2_quad_table_size[] = { 0, 114, 86, 0, 185, 0, 0, 0, 0, 0, 0, 0 };
+static int hcb_2_pair_table_size[] = { 0, 0, 0, 0, 0, 0, 126, 0, 83, 0, 210, 373 };
+static int hcb_bin_table_size[] = { 0, 0, 0, 0, 0, 161, 0, 127, 0, 337, 0, 0 };
+#endif
 
 static INLINE void huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
 {
@@ -91,6 +105,15 @@ static INLINE void huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
         } else {
             faad_flushbits(ld, hcb_2_quad_table[cb][offset].bits);
         }
+
+#ifdef ANALYSIS
+        if (offset > hcb_2_quad_table_size[cb])
+        {
+            printf("ERROR: offset into hcb_2_quad_table = %d >%d!\n", offset,
+                hcb_2_quad_table_size[cb]);
+            return;
+        }
+#endif
 
         sp[0] = hcb_2_quad_table[cb][offset].x;
         sp[1] = hcb_2_quad_table[cb][offset].y;
@@ -125,6 +148,15 @@ static INLINE void huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
             faad_flushbits(ld, hcb_2_pair_table[cb][offset].bits);
         }
 
+#ifdef ANALYSIS
+        if (offset > hcb_2_pair_table_size[cb])
+        {
+            printf("ERROR: offset into hcb_2_pair_table = %d >%d!\n", offset,
+                hcb_2_pair_table_size[cb]);
+            return;
+        }
+#endif
+
         sp[0] = hcb_2_pair_table[cb][offset].x;
         sp[1] = hcb_2_pair_table[cb][offset].y;
         break;
@@ -133,7 +165,8 @@ static INLINE void huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
 
         while (!hcb3[offset].is_leaf)
         {
-            uint8_t b = faad_get1bit(ld);
+            uint8_t b = faad_get1bit(ld
+                DEBUGVAR(1,255,"huffman_spectral_data():3"));
             offset += hcb3[offset].data[b];
         }
 
@@ -150,9 +183,19 @@ static INLINE void huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
 
         while (!hcb_bin_table[cb][offset].is_leaf)
         {
-            uint8_t b = faad_get1bit(ld);
+            uint8_t b = faad_get1bit(ld
+                DEBUGVAR(1,255,"huffman_spectral_data():9"));
             offset += hcb_bin_table[cb][offset].data[b];
         }
+
+#ifdef ANALYSIS
+        if (offset > hcb_bin_table_size[cb])
+        {
+            printf("ERROR: offset into hcb_2_pair_table = %d >%d!\n", offset,
+                hcb_bin_table_size[cb]);
+            return;
+        }
+#endif
 
         sp[0] = hcb_bin_table[cb][offset].data[0];
         sp[1] = hcb_bin_table[cb][offset].data[1];

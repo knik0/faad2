@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.18 2002/06/13 11:03:28 menno Exp $
+** $Id: syntax.c,v 1.19 2002/06/15 15:10:47 menno Exp $
 **/
 
 /*
@@ -244,6 +244,9 @@ uint8_t single_lfe_channel_element(element *sce, bitfile *ld, int16_t *spec_data
 {
     ic_stream *ics = &(sce->ics1);
 
+#ifdef DRM
+    if (object_type != DRM_ER_LC)
+#endif
     sce->element_instance_tag = (uint8_t)faad_getbits(ld, LEN_TAG
         DEBUGVAR(1,38,"single_lfe_channel_element(): element_instance_tag"));
 
@@ -272,6 +275,9 @@ uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
     ic_stream *ics1 = &(cpe->ics1);
     ic_stream *ics2 = &(cpe->ics2);
 
+#ifdef DRM
+    if (object_type != DRM_ER_LC)
+#endif
     cpe->element_instance_tag = (uint8_t)faad_getbits(ld, LEN_TAG
         DEBUGVAR(1,39,"channel_pair_element(): element_instance_tag"));
 
@@ -652,7 +658,11 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
         {
 #ifdef ERROR_RESILIENCE
             /* TODO I don't understand this, but the "rewrite" software moves tns_data away */
-            if ((object_type != ER_LC) && (object_type != ER_LTP))
+            if ((object_type != ER_LC) && (object_type != ER_LTP)
+#ifdef DRM
+                && (object_type != DRM_ER_LC)
+#endif
+                )
 #endif
                 tns_data(ics, &(ics->tns), ld);
         }
@@ -674,7 +684,12 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
     {
         /* TODO I don't understand this, but the "rewrite" software
                 moves tns_data before spectral_data */
-        if ( (object_type == ER_LC) || (object_type == ER_LTP) ) {
+        if ( (object_type == ER_LC) || (object_type == ER_LTP) 
+#ifdef DRM
+            && (object_type != DRM_ER_LC)
+#endif
+            )
+        {
             if (ics->tns_data_present)
                 tns_data(ics, &(ics->tns), ld);
         }
