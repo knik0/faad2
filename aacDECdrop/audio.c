@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: audio.c,v 1.2 2002/04/14 16:31:02 menno Exp $
+** $Id: audio.c,v 1.3 2002/07/25 12:30:57 menno Exp $
 **/
 
 #include <fcntl.h>
@@ -36,26 +36,22 @@ audio_file *open_audio_file(char *infile, int samplerate, int channels,
     switch (outputFormat)
     {
     case FAAD_FMT_16BIT:
-        aufile->sfinfo.pcmbitwidth = 16;
-        aufile->sfinfo.format      = ((1<<(fileType+15)) | SF_FORMAT_PCM);
+        aufile->sfinfo.format      = ((1<<(fileType+15)) | SF_FORMAT_PCM_16);
         break;
     case FAAD_FMT_24BIT:
-        aufile->sfinfo.pcmbitwidth = 24;
-        aufile->sfinfo.format      = ((1<<(fileType+15)) | SF_FORMAT_PCM);
+        aufile->sfinfo.format      = ((1<<(fileType+15)) | SF_FORMAT_PCM_24);
         break;
     case FAAD_FMT_32BIT:
-        aufile->sfinfo.pcmbitwidth = 32;
-        aufile->sfinfo.format      = ((1<<(fileType+15)) | SF_FORMAT_PCM);
+        aufile->sfinfo.format      = ((1<<(fileType+15)) | SF_FORMAT_PCM_32);
         break;
     case FAAD_FMT_FLOAT:
-        aufile->sfinfo.pcmbitwidth = 32;
         aufile->sfinfo.format      = ((1<<(fileType+15)) | SF_FORMAT_FLOAT);
         break;
     }
     aufile->sfinfo.channels = channels;
     aufile->sfinfo.samples  = 0;
 
-    aufile->sndfile = sf_open_write(infile, &aufile->sfinfo);
+    aufile->sndfile = sf_open(infile, SFM_WRITE, &aufile->sfinfo);
 
     if (aufile->sndfile == NULL)
     {
