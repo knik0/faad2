@@ -75,6 +75,8 @@ MP4Atom* MP4Atom::CreateAtom(const char* type)
 	pAtom = new MP4CprtAtom();
       } else if (ATOMID(type) == ATOMID("cpil")) { /* Apple iTunes */
 	pAtom = new MP4CpilAtom();
+      } else if (ATOMID(type) == ATOMID("covr")) { /* Apple iTunes */
+	pAtom = new MP4CovrAtom();
       }
       break;
     case 'd':

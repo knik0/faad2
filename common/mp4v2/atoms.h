@@ -575,6 +575,11 @@ public:
 	MP4TmpoAtom();
 };
 
+class MP4CovrAtom : public MP4Atom {
+public:
+	MP4CovrAtom();
+};
+
 class MP4CmtAtom : public MP4Atom {
 public:
 	MP4CmtAtom();

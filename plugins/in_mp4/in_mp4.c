@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: in_mp4.c,v 1.49 2004/01/02 16:38:48 ca5e Exp $
+** $Id: in_mp4.c,v 1.50 2004/01/05 20:03:29 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -277,6 +277,8 @@ int ReadMP4Tag(MP4FileHandle file, medialib_tags *tags)
                 } else {
                     tag_add_field(tags, pName, val, valueSize);
                 }
+            } else if (memcmp(pName, "covr", 4) == 0) {
+                tag_add_field(tags, "cover", val, valueSize);
             } else if (memcmp(pName, "gnre", 4) == 0) {
                 char *t=0;
                 if (MP4GetMetadataGenre(file, &t))
@@ -401,6 +403,10 @@ int mp4_set_metadata(MP4FileHandle file, const char *item, const char *val, size
     else if (!stricmp(item, "tool"))
     {
         if (MP4SetMetadataTool(file, val)) return 1;
+    }
+    else if (!stricmp(item, "cover"))
+    {
+        if (MP4SetMetadataCoverArt(file, val, v_len)) return 1;
     }
     else
     {
