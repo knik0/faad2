@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ff.c,v 1.11 2003/12/15 17:48:33 menno Exp $
+** $Id: mp4ff.c,v 1.12 2003/12/23 18:53:24 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -376,10 +376,30 @@ int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,
 
     mp4ff_set_sample_position(f, track, sample);
 
-    result = mp4ff_read_data(f, *audio_buffer, *bytes);
+    return mp4ff_read_data(f, *audio_buffer, *bytes);
 
     if (!result)
+	{
+		free(*audio_buffer);
+		*audio_buffer = 0;
         return 0;
+	}
 
     return *bytes;
+}
+
+
+int32_t mp4ff_read_sample_v2(mp4ff_t *f, const int track, const int sample,unsigned char *buffer)
+{
+	int32_t size = mp4ff_audio_frame_size(f,track,sample);
+	if (size<=0) return 0;
+	mp4ff_set_sample_position(f, track, sample);
+	return mp4ff_read_data(f,buffer,size);
+}
+
+int32_t mp4ff_read_sample_getsize(mp4ff_t *f, const int track, const int sample)
+{
+	int32_t temp = mp4ff_audio_frame_size(f, track, sample);
+	if (temp<0) temp = 0;
+	return temp;
 }

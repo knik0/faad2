@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ff.h,v 1.14 2003/12/15 17:48:33 menno Exp $
+** $Id: mp4ff.h,v 1.15 2003/12/23 18:53:24 menno Exp $
 **/
 
 #ifndef MP4FF_H
@@ -58,8 +58,15 @@ int64_t mp4ff_get_sample_position(const mp4ff_t *f, const int32_t track, const i
 int32_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int32_t sample);
 int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip);
 int32_t mp4ff_find_sample_use_offsets(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip);
+
 int32_t mp4ff_read_sample(mp4ff_t *f, const int track, const int sample,
                           unsigned char **audio_buffer,  unsigned int *bytes);
+
+int32_t mp4ff_read_sample_v2(mp4ff_t *f, const int track, const int sample,unsigned char *buffer);//returns 0 on error, number of bytes read on success, use mp4ff_read_sample_getsize() to check buffer size needed
+int32_t mp4ff_read_sample_getsize(mp4ff_t *f, const int track, const int sample);//returns 0 on error, buffer size needed for mp4ff_read_sample_v2() on success
+
+
+
 int32_t mp4ff_get_decoder_config(const mp4ff_t *f, const int track,
                              unsigned char** ppBuf, unsigned int* pBufSize);
 int32_t mp4ff_get_track_type(const mp4ff_t *f, const int track);
