@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ffint.h,v 1.13 2004/01/11 13:59:33 menno Exp $
+** $Id: mp4ffint.h,v 1.14 2004/01/11 15:52:18 menno Exp $
 **/
 
 #ifndef MP4FF_INTERNAL_H
@@ -74,8 +74,6 @@ extern "C" {
 #define ATOM_FRMA 152
 #define ATOM_IVIV 153
 #define ATOM_PRIV 154
-#define ATOM_USER 155
-#define ATOM_KEY  156
 
 #define ATOM_UNKNOWN 255
 #define ATOM_FREE ATOM_UNKNOWN

@@ -2,7 +2,7 @@
  * drmstables.h : DRMS tables
  *****************************************************************************
  * Copyright (C) 2004 VideoLAN
- * $Id: drmstables.h,v 1.1 2004/01/10 18:55:24 menno Exp $
+ * $Id: drmstables.h,v 1.2 2004/01/11 15:52:18 menno Exp $
  *
  * Author: Jon Lech Johansen <jon-vl@nanocrew.net>
  *
@@ -20,6 +20,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111, USA.
  *****************************************************************************/
+
 
 static uint32_t p_drms_tab1[ 10 ] =
 {

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4atom.c,v 1.16 2004/01/11 13:59:33 menno Exp $
+** $Id: mp4atom.c,v 1.17 2004/01/11 15:52:18 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -173,10 +173,6 @@ static uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b,
 		return ATOM_PRIV;
     else if (mp4ff_atom_compare(a,b,c,d, 'i','v','i','v'))
 		return ATOM_IVIV;
-    else if (mp4ff_atom_compare(a,b,c,d, 'u','s','e','r'))
-		return ATOM_USER;
-    else if (mp4ff_atom_compare(a,b,c,d, 'k','e','y',' '))
-		return ATOM_KEY;
 	else
         return ATOM_UNKNOWN;
 }
@@ -335,8 +331,16 @@ static int32_t mp4ff_read_drms(mp4ff_t *f, uint64_t skip)
     int32_t i;
     uint8_t atom_type = 0;
     uint8_t header_size = 0;
+    uint32_t drms_user_key[4];
 
-    f->track[f->total_tracks - 1]->p_drms = drms_alloc();
+    if (drms_get_user_key(NULL, drms_user_key) == 0)
+    {
+        f->track[f->total_tracks - 1]->p_drms = drms_alloc();
+
+        drms_init( f->track[f->total_tracks - 1]->p_drms,
+            DRMS_INIT_UKEY, (uint8_t *)drms_user_key,
+            sizeof(drms_user_key) );
+    }
 
     for (i = 0; i < 6; i++)
     {
@@ -439,40 +443,6 @@ static int32_t mp4ff_read_iviv(mp4ff_t *f, uint64_t size)
     {
         drms_init(f->track[f->total_tracks - 1]->p_drms,
             DRMS_INIT_IVIV, data, sizeof(uint32_t) * 4 );
-    }
-
-    if (data)
-        free(data);
-
-    return 0;
-}
-
-static int32_t mp4ff_read_user(mp4ff_t *f, uint64_t size)
-{
-    uint8_t *data = malloc(size);
-    mp4ff_read_data(f, data, size);
-
-    if (f->track[f->total_tracks - 1]->p_drms != 0)
-    {
-        drms_init(f->track[f->total_tracks - 1]->p_drms,
-            DRMS_INIT_USER, data, sizeof(uint32_t) * 4 );
-    }
-
-    if (data)
-        free(data);
-
-    return 0;
-}
-
-static int32_t mp4ff_read_key(mp4ff_t *f, uint64_t size)
-{
-    uint8_t *data = malloc(size);
-    mp4ff_read_data(f, data, size);
-
-    if (f->track[f->total_tracks - 1]->p_drms != 0)
-    {
-        drms_init(f->track[f->total_tracks - 1]->p_drms,
-            DRMS_INIT_KEY, data, sizeof(uint32_t) * 4 );
     }
 
     if (data)
@@ -796,10 +766,6 @@ int32_t mp4ff_atom_read(mp4ff_t *f, const int32_t size, const uint8_t atom_type)
         mp4ff_read_name(f, size-8);
     } else if (atom_type == ATOM_PRIV) {
         mp4ff_read_priv(f, size-8);
-    } else if (atom_type == ATOM_USER) {
-        mp4ff_read_user(f, size-8);
-    } else if (atom_type == ATOM_KEY) {
-        mp4ff_read_key(f, size-8);
 #endif
 #ifdef USE_TAGGING
     } else if (atom_type == ATOM_META) {

@@ -2,7 +2,7 @@
  * drms.h : DRMS
  *****************************************************************************
  * Copyright (C) 2004 VideoLAN
- * $Id: drms.h,v 1.2 2004/01/11 13:59:33 menno Exp $
+ * $Id: drms.h,v 1.3 2004/01/11 15:52:18 menno Exp $
  *
  * Author: Jon Lech Johansen <jon-vl@nanocrew.net>
  *
@@ -21,11 +21,11 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111, USA.
  *****************************************************************************/
 
-#define DRMS_INIT_KEY  0
+
+#define DRMS_INIT_UKEY  0
 #define DRMS_INIT_IVIV  1
 #define DRMS_INIT_NAME  2
 #define DRMS_INIT_PRIV  3
-#define DRMS_INIT_USER  4
 
 extern int drms_get_sys_key( uint32_t *p_sys_key );
 extern int drms_get_user_key( uint32_t *p_sys_key,
