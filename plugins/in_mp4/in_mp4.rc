@@ -61,7 +61,11 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,246,186,50,14
     LTEXT           "Static",IDC_INFOTEXT,14,17,275,47,0,WS_EX_CLIENTEDGE
     GROUPBOX        "Track info",IDC_STATIC,7,7,289,64
-    GROUPBOX        "User data",IDC_STATIC,7,77,289,104
+    GROUPBOX        "User data",IDC_USERDATA,7,76,289,104
+    PUSHBUTTON      "Convert Now!",IDC_CONVERT,111,150,81,14
+    GROUPBOX        "Convert to MP4",IDC_CONVERT2,7,81,289,99
+    CTEXT           "You can convert this file to MP4 if you like. This does not involve re-encoding, only the container format is changed. Advantages of MP4 files are that they are playable by a lot more players and they will have a lot of support in the future.",
+                    IDC_CONVERT1,24,102,255,27
 END
 
 IDD_CONFIG DIALOGEX 0, 0, 151, 108

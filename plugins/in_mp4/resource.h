@@ -17,11 +17,15 @@
 #define IDC_16BITS                      1006
 #define IDC_VSIZE                       1007
 #define IDC_24BITS                      1007
+#define IDC_CONVERT                     1007
 #define IDC_VFPS                        1008
 #define IDC_32BITS                      1008
+#define IDC_CONVERT2                    1008
 #define IDC_CHANNELS                    1009
 #define IDC_24BITS2                     1009
 #define IDC_16BITS_DITHERED             1009
+#define IDC_CONVERT1                    1009
+#define IDC_USERDATA                    1010
 
 // Next default values for new objects
 // 
@@ -29,7 +33,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        103
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1007
+#define _APS_NEXT_CONTROL_VALUE         1011
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

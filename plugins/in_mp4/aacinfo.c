@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: aacinfo.c,v 1.2 2002/08/15 17:41:44 menno Exp $
+** $Id: aacinfo.c,v 1.3 2002/08/30 20:52:43 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -125,9 +125,12 @@ static int read_ADTS_header(FILE *file, faadAACInfo *info)
 
     if (frames > 0)
     {
+        float sec_per_frame, bytes_per_frame;
         info->sampling_rate = sample_rates[sr_idx];
-        info->bitrate = (int)(((t_framelength / frames) * (info->sampling_rate/1024.0)) +0.5)*8;
-        info->length = (int)((float)(frames/frames_per_sec))*1000;
+        sec_per_frame = (float)info->sampling_rate/1024.0;
+        bytes_per_frame = (float)t_framelength / (float)frames;
+        info->bitrate = 8 * (int)floor(bytes_per_frame * sec_per_frame);
+        info->length = (int)floor((float)frames/frames_per_sec)*1000;
     } else {
         info->sampling_rate = 4;
         info->bitrate = 128000;

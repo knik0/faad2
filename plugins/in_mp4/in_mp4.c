@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.17 2002/08/18 18:18:37 menno Exp $
+** $Id: in_mp4.c,v 1.18 2002/08/30 20:52:43 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -32,6 +32,7 @@
 #include "utils.h"
 #include "config.h"
 #include "aacinfo.h"
+#include "aac2mp4.h"
 
 static long priority_table[] = {
     0,
@@ -170,6 +171,13 @@ BOOL CALLBACK mp4_info_dialog_proc(HWND hwndDlg, UINT message,
 
     switch (message) {
     case WM_INITDIALOG:
+        EnableWindow(GetDlgItem(hwndDlg,IDC_CONVERT), FALSE) ;
+        ShowWindow(GetDlgItem(hwndDlg,IDC_CONVERT), SW_HIDE);
+        EnableWindow(GetDlgItem(hwndDlg,IDC_CONVERT1), FALSE) ;
+        ShowWindow(GetDlgItem(hwndDlg,IDC_CONVERT1), SW_HIDE);
+        EnableWindow(GetDlgItem(hwndDlg,IDC_CONVERT2), FALSE) ;
+        ShowWindow(GetDlgItem(hwndDlg,IDC_CONVERT2), SW_HIDE);
+
         file = MP4Read(info_fn, 0);
 
         if (!file)
@@ -230,16 +238,33 @@ BOOL CALLBACK aac_info_dialog_proc(HWND hwndDlg, UINT message,
                                    WPARAM wParam, LPARAM lParam)
 {
     faadAACInfo aacInfo;
-    char *info_text;
+    char *info_text, *header_string;
 
     switch (message) {
     case WM_INITDIALOG:
+        EnableWindow(GetDlgItem(hwndDlg,IDC_USERDATA), FALSE) ;
+        ShowWindow(GetDlgItem(hwndDlg,IDC_USERDATA), SW_HIDE);
+
         info_text = malloc(1024*sizeof(char));
 
         get_AAC_format(info_fn, &aacInfo);
 
-        sprintf(info_text, "%s AAC %s, %d sec, %d kbps, %d Hz",
+        switch (aacInfo.headertype)
+        {
+        case 0: /* RAW */
+            header_string = "";
+            break;
+        case 1: /* ADIF */
+            header_string = " ADIF";
+            break;
+        case 2: /* ADTS */
+            header_string = " ADTS";
+            break;
+        }
+
+        sprintf(info_text, "%s AAC %s%s, %d sec, %d kbps, %d Hz",
             (aacInfo.version==2)?"MPEG-2":"MPEG-4", get_ot_string(aacInfo.object_type),
+            header_string,
             (int)((float)aacInfo.length/1000.0), (int)((float)aacInfo.bitrate/1000.0+0.5),
             aacInfo.sampling_rate);
 
@@ -250,7 +275,18 @@ BOOL CALLBACK aac_info_dialog_proc(HWND hwndDlg, UINT message,
         return TRUE;
 
     case WM_COMMAND:
-        switch (LOWORD(wParam)) {
+        switch (LOWORD(wParam))
+        {
+        case IDC_CONVERT:
+            {
+                int ret = covert_aac_to_mp4(info_fn);
+                if (ret)
+                {
+                    MessageBox(hwndDlg, "An error occured!", "An error occured!", MB_OK);
+                    return FALSE;
+                }
+                return TRUE;
+            }
         case IDCANCEL:
         case IDOK:
             EndDialog(hwndDlg, wParam);
@@ -330,7 +366,7 @@ void config(HWND hwndParent)
 void about(HWND hwndParent)
 {
     MessageBox(hwndParent,
-        "AudioCoding.com MPEG-4 General Audio player " FAAD2_VERSION "\n"
+        "AudioCoding.com MPEG-4 General Audio player " FAAD2_VERSION " compiled on " __DATE__ ".\n"
         "Visit the website for more info.\n"
         "Copyright 2002 AudioCoding.com",
         "About",
@@ -971,7 +1007,7 @@ DWORD WINAPI AACPlayThread(void *b)
 static In_Module module =
 {
     IN_VER,
-    "AudioCoding.com MPEG-4 General Audio player: " FAAD2_VERSION,
+    "AudioCoding.com MPEG-4 General Audio player: " FAAD2_VERSION " compiled on " __DATE__,
     0,  // hMainWindow
     0,  // hDllInstance
     "MP4\0MPEG-4 Files (*.MP4)\0AAC\0AAC Files (*.AAC)\0"

@@ -135,7 +135,13 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
+				RelativePath="aac2mp4.c">
+			</File>
+			<File
 				RelativePath="aacinfo.c">
+			</File>
+			<File
+				RelativePath="aactrack.cpp">
 			</File>
 			<File
 				RelativePath=".\config.c">
@@ -144,12 +150,27 @@
 				RelativePath=".\in_mp4.c">
 			</File>
 			<File
+				RelativePath="mbs.cpp">
+			</File>
+			<File
+				RelativePath="mp4av_aac.cpp">
+			</File>
+			<File
+				RelativePath="mp4av_adts.cpp">
+			</File>
+			<File
+				RelativePath="mp4av_audio.cpp">
+			</File>
+			<File
 				RelativePath=".\utils.c">
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
+			<File
+				RelativePath="aac2mp4.h">
+			</File>
 			<File
 				RelativePath="aacinfo.h">
 			</File>
