@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: data.h,v 1.5 2002/09/15 22:02:30 menno Exp $
+** $Id: data.h,v 1.6 2002/12/22 19:58:31 menno Exp $
 **/
 
 #ifndef __DATA_H__
@@ -27,6 +27,7 @@ extern "C" {
 #endif
 
 extern uint8_t num_swb_1024_window[];
+extern uint8_t num_swb_960_window[];
 #ifdef LD_DEC
 extern uint8_t num_swb_512_window[];
 extern uint8_t num_swb_480_window[];

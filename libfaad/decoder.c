@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.45 2002/12/11 11:36:13 menno Exp $
+** $Id: decoder.c,v 1.46 2002/12/22 19:58:31 menno Exp $
 **/
 
 #include "common.h"
@@ -149,6 +149,7 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
             hDecoder->adif_header_present = 1;
 
             get_adif_header(&adif, &ld);
+            faad_byte_align(&ld);
 
             hDecoder->sf_index = adif.pce.sf_index;
             hDecoder->object_type = adif.pce.object_type;
@@ -420,7 +421,6 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
 
     /* no more bit reading after this */
-    faad_byte_align(ld);
     hInfo->bytesconsumed = bit2byte(faad_get_processed_bits(ld));
     faad_endbits(ld);
     if (ld) free(ld);

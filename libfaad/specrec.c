@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: specrec.c,v 1.17 2002/11/28 18:48:30 menno Exp $
+** $Id: specrec.c,v 1.18 2002/12/22 19:58:31 menno Exp $
 **/
 
 /*
@@ -73,7 +73,10 @@ uint8_t window_grouping_info(faacDecHandle hDecoder, ic_stream *ics)
                 ics->num_swb = num_swb_480_window[sf_index];
         } else {
 #endif
-            ics->num_swb = num_swb_1024_window[sf_index];
+            if (hDecoder->frameLength == 1024)
+                ics->num_swb = num_swb_1024_window[sf_index];
+            else /* if (hDecoder->frameLength == 960) */
+                ics->num_swb = num_swb_960_window[sf_index];
 #ifdef LD_DEC
         }
 #endif

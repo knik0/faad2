@@ -16,15 +16,11 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.36 2002/12/10 19:45:36 menno Exp $
+** $Id: syntax.c,v 1.37 2002/12/22 19:58:31 menno Exp $
 **/
 
 /*
    Reads the AAC bitstream as defined in 14496-3 (MPEG-4 Audio)
-
-   (Note that there are some differences with 13818-7 (MPEG2), these
-   are also read correctly when the MPEG ID is known (can be found in
-   an ADTS header)).
 */
 
 #include "common.h"
@@ -448,6 +444,9 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
 #endif
     }
 #endif
+
+    /* new in corrigendum 14496-3:2002 */
+    faad_byte_align(ld);
 
     return elements;
 }
@@ -1269,10 +1268,6 @@ static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld)
 
 #ifdef LTP_DEC
 /* Table 4.4.28 */
-/*
-   The limit MAX_LTP_SFB is not defined in 14496-3, this is a bug in the document
-   and will be corrected in one of the corrigenda.
-*/
 static void ltp_data(faacDecHandle hDecoder, ic_stream *ics, ltp_info *ltp, bitfile *ld)
 {
     uint8_t sfb, w;
@@ -1389,7 +1384,10 @@ static uint8_t spectral_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld
 /* Table 4.4.30 */
 static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count)
 {
-    uint16_t i, n;
+    uint16_t i, n, dataElementLength;
+    uint8_t dataElementLengthPart;
+    uint8_t align = 4, data_element_version, loopCounter;
+
     uint8_t extension_type = (uint8_t)faad_getbits(ld, 4
         DEBUGVAR(1,87,"extension_payload(): extension_type"));
 
@@ -1408,13 +1406,38 @@ static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count)
                 DEBUGVAR(1,88,"extension_payload(): fill_byte")); /* must be ‘10100101’ */
         }
         return count;
+    case EXT_DATA_ELEMENT:
+        data_element_version = faad_getbits(ld, 4
+            DEBUGVAR(1,400,"extension_payload(): data_element_version"));
+        switch (data_element_version)
+        {
+        case ANC_DATA:
+            loopCounter = 0;
+            dataElementLength = 0;
+            do {
+                dataElementLengthPart = faad_getbits(ld, 8
+                    DEBUGVAR(1,401,"extension_payload(): dataElementLengthPart"));
+                dataElementLength += dataElementLengthPart;
+                loopCounter++;
+            } while (dataElementLengthPart == 255);
+
+            for (i = 0; i < dataElementLength; i++)
+            {
+                /* data_element_byte[i] = */ faad_getbits(ld, 8
+                    DEBUGVAR(1,402,"extension_payload(): data_element_byte"));
+                return (dataElementLength+loopCounter+1);
+            }
+        default:
+            align = 0;
+        }
+    case EXT_FIL:
     default:
-        faad_getbits(ld, 4
-            DEBUGVAR(1,137,"extension_payload(): fill_nibble"));
+        faad_getbits(ld, align
+            DEBUGVAR(1,88,"extension_payload(): fill_nibble"));
         for (i = 0; i < count-1; i++)
         {
             /* other_bits[i] = */ faad_getbits(ld, 8
-               DEBUGVAR(1,89,"extension_payload(): fill_byte"));
+               DEBUGVAR(1,89,"extension_payload(): fill_bit"));
         }
         return count;
     }
@@ -1550,16 +1573,16 @@ void get_adif_header(adif_header *adif, bitfile *ld)
     adif->num_program_config_elements = (uint8_t)faad_getbits(ld, 4
         DEBUGVAR(1,116,"get_adif_header(): num_program_config_elements"));
 
+    if(adif->bitstream_type == 0)
+    {
+        adif->adif_buffer_fullness = faad_getbits(ld, 20
+            DEBUGVAR(1,117,"get_adif_header(): adif_buffer_fullness"));
+    } else {
+        adif->adif_buffer_fullness = 0;
+    }
+
     for (i = 0; i < adif->num_program_config_elements + 1; i++)
     {
-        if(adif->bitstream_type == 0)
-        {
-            adif->adif_buffer_fullness = faad_getbits(ld, 20
-                DEBUGVAR(1,117,"get_adif_header(): adif_buffer_fullness"));
-        } else {
-            adif->adif_buffer_fullness = 0;
-        }
-
         program_config_element(&adif->pce, ld);
     }
 }
@@ -1618,11 +1641,13 @@ static uint8_t adts_fixed_header(adts_header *adts, bitfile *ld)
         DEBUGVAR(1,126,"adts_fixed_header(): original"));
     adts->home = faad_get1bit(ld
         DEBUGVAR(1,127,"adts_fixed_header(): home"));
+/* Removed in corrigendum 14496-3:2002
     if (adts->id == 0)
     {
         adts->emphasis = (uint8_t)faad_getbits(ld, 2
             DEBUGVAR(1,128,"adts_fixed_header(): emphasis"));
     }
+*/
 
     return 0;
 }

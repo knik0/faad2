@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.23 2002/11/28 18:48:30 menno Exp $
+** $Id: syntax.h,v 1.24 2002/12/22 19:58:31 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -49,8 +49,11 @@ extern "C" {
 #define LEN_TAG   4
 #define LEN_BYTE  8
 
-#define EXT_FILL_DATA     1
+#define EXT_FIL            0
+#define EXT_FILL_DATA      1
+#define EXT_DATA_ELEMENT   2
 #define EXT_DYNAMIC_RANGE 11
+#define ANC_DATA           0
 
 /* Syntax elements */
 #define ID_SCE 0x0

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: pns.c,v 1.19 2002/11/28 18:48:30 menno Exp $
+** $Id: pns.c,v 1.20 2002/12/22 19:58:31 menno Exp $
 **/
 
 #include "common.h"
@@ -193,22 +193,10 @@ void pns_decode(ic_stream *ics_left, ic_stream *ics_right,
                 {
                     if (is_noise(ics_right, g, sfb))
                     {
-                        if (ics_left->ms_mask_present == 1)
+                        if (((ics_left->ms_mask_present == 1) &&
+                            (ics_left->ms_used[g][sfb])) ||
+                            (ics_left->ms_mask_present == 2))
                         {
-                            if (ics_left->ms_used[g][sfb])
-                            {
-                                uint16_t c;
-
-                                offs = ics_right->swb_offset[sfb];
-                                size = ics_right->swb_offset[sfb+1] - offs;
-
-                                for (c = 0; c < size; c++)
-                                {
-                                    spec_right[(group*nshort) + offs + c] =
-                                        spec_left[(group*nshort) + offs + c];
-                                }
-                            }
-                        } else if (ics_left->ms_mask_present == 2) {
                             uint16_t c;
 
                             offs = ics_right->swb_offset[sfb];
