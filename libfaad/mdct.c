@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.c,v 1.17 2002/08/27 10:24:55 menno Exp $
+** $Id: mdct.c,v 1.18 2002/08/27 18:16:12 menno Exp $
 **/
 
 /*
@@ -196,19 +196,7 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     uint16_t N4 = N >> 2;
     uint16_t N8 = N >> 3;
 
-#ifdef FIXED_POINT
-	int16_t shift = -5;
-    real_t scale;
-	float32_t NN = N;
-	while (NN >= 0.5)
-	{
-		NN /= 2;
-		shift++;
-	}
-	scale = COEF_CONST(NN);
-#else
-    real_t scale = N;
-#endif
+	real_t scale = REAL_CONST(N);
 
     /* pre-FFT complex multiplication */
     for (k = 0; k < N8; k++)
@@ -216,11 +204,6 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
         uint16_t n = k << 1;
         real_t zr =  X_in[N - N4 - 1 - n] + X_in[N - N4 +     n];
         real_t zi =  X_in[    N4 +     n] - X_in[    N4 - 1 - n];
-
-#ifdef FIXED_POINT
-		zr <<= 5;
-		zi <<= 5;
-#endif
 
 #ifdef USE_FFTW
         Z1[k].re = -MUL_R_C(zr, sincos[k].cos) - MUL_R_C(zi, sincos[k].sin);
@@ -254,15 +237,11 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     {
         uint16_t n = k << 1;
 #ifdef USE_FFTW
-        real_t zr = MUL_R_C(MUL_R_C(Z2[k].re, sincos[k].cos) + MUL_R_C(Z2[k].im, sincos[k].sin), scale);
-        real_t zi = MUL_R_C(MUL_R_C(Z2[k].im, sincos[k].cos) - MUL_R_C(Z2[k].re, sincos[k].sin), scale);
+        real_t zr = MUL(MUL_R_C(Z2[k].re, sincos[k].cos) + MUL_R_C(Z2[k].im, sincos[k].sin), scale);
+        real_t zi = MUL(MUL_R_C(Z2[k].im, sincos[k].cos) - MUL_R_C(Z2[k].re, sincos[k].sin), scale);
 #else
-        real_t zr = MUL_R_C(MUL_R_C(Z1[n], sincos[k].cos) + MUL_R_C(Z1[n+1], sincos[k].sin), scale);
-        real_t zi = MUL_R_C(MUL_R_C(Z1[n+1], sincos[k].cos) - MUL_R_C(Z1[n], sincos[k].sin), scale);
-#endif
-#ifdef FIXED_POINT
-		zr <<= shift;
-		zi <<= shift;
+        real_t zr = MUL(MUL_R_C(Z1[n], sincos[k].cos) + MUL_R_C(Z1[n+1], sincos[k].sin), scale);
+        real_t zi = MUL(MUL_R_C(Z1[n+1], sincos[k].cos) - MUL_R_C(Z1[n], sincos[k].sin), scale);
 #endif
 
         X_out[         n] =  zr;

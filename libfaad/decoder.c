@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.23 2002/08/27 10:24:54 menno Exp $
+** $Id: decoder.c,v 1.24 2002/08/27 18:16:12 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -682,7 +682,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             /* allocate the state only when needed */
             if (pred_stat[ch] == NULL)
             {
-                pred_stat[ch] = (real_t*)malloc(frame_len * sizeof(pred_state));
+                pred_stat[ch] = (pred_state*)malloc(frame_len * sizeof(pred_state));
                 reset_all_predictors(pred_stat[ch], frame_len);
             }
 
@@ -697,7 +697,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         }
 #endif
 #ifdef LTP_DEC
-        else if ((object_type == LTP)
+        if ((object_type == LTP)
 #ifdef ERROR_RESILIENCE
             || (object_type == ER_LTP)
 #endif

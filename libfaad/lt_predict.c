@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: lt_predict.c,v 1.8 2002/08/27 10:24:55 menno Exp $
+** $Id: lt_predict.c,v 1.9 2002/08/27 18:16:12 menno Exp $
 **/
 
 
@@ -32,14 +32,14 @@
 
 static real_t codebook[8] =
 {
-    REAL_CONST(0.570829),
-    REAL_CONST(0.696616),
-    REAL_CONST(0.813004),
-    REAL_CONST(0.911304),
-    REAL_CONST(0.984900),
-    REAL_CONST(1.067894),
-    REAL_CONST(1.194601),
-    REAL_CONST(1.369533)
+    COEF_CONST(0.570829),
+    COEF_CONST(0.696616),
+    COEF_CONST(0.813004),
+    COEF_CONST(0.911304),
+    COEF_CONST(0.984900),
+    COEF_CONST(1.067894),
+    COEF_CONST(1.194601),
+    COEF_CONST(1.369533)
 };
 
 void lt_prediction(ic_stream *ics, ltp_info *ltp, real_t *spec,
@@ -65,8 +65,8 @@ void lt_prediction(ic_stream *ics, ltp_info *ltp, real_t *spec,
             {
                 /* The extra lookback M (N/2 for LD, 0 for LTP) is handled
                    in the buffer updating */
-                x_est[i] = MUL(codebook[ltp->coef],
-                    lt_pred_stat[num_samples + i - ltp->lag]);
+                x_est[i] = MUL_R_C(lt_pred_stat[num_samples + i - ltp->lag],
+                    codebook[ltp->coef]);
             }
 
             filter_bank_ltp(fb, ics->window_sequence, win_shape, win_shape_prev,

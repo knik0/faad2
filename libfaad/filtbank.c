@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.c,v 1.16 2002/08/27 10:24:55 menno Exp $
+** $Id: filtbank.c,v 1.17 2002/08/27 18:16:12 menno Exp $
 **/
 
 #include "common.h"
@@ -79,11 +79,11 @@ fb_info *filter_bank_init(uint16_t frame_len)
 
     /* low overlap window */
     for (i = 0; i < 3*(frame_len_ld>>3); i++)
-        fb->ld_window[1][i] = 0.0;
+        fb->ld_window[1][i] = COEF_CONST(0.0);
     for (; i < 5*(frame_len_ld>>3); i++)
         fb->ld_window[1][i] = COEF_CONST(sin((i-3*(frame_len_ld>>3)+0.5) * M_PI / (real_t)(frame_len_ld>>1)));
     for (; i < frame_len_ld; i++)
-        fb->ld_window[1][i] = 1.0;
+        fb->ld_window[1][i] = COEF_CONST(1.0);
 #endif
 
     return fb;

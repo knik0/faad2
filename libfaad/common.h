@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.18 2002/08/27 10:24:54 menno Exp $
+** $Id: common.h,v 1.19 2002/08/27 18:16:12 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -126,12 +126,9 @@ typedef float float32_t;
 
 #endif
 
-/* FIXED_POINT doesn't work everywhere yet */
+/* FIXED_POINT doesn't work with FFTW */
 #ifdef FIXED_POINT
   #undef MAIN_DEC
-  #undef LTP_DEC
-  #undef LD_DEC
-  #undef SBR
   #undef USE_FFTW
 #endif
 
