@@ -22,33 +22,20 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.75 2003/11/22 18:08:05 ca5e Exp $
+** $Id: foo_mp4.cpp,v 1.76 2003/12/11 18:38:13 menno Exp $
 **/
 
-#include <mp4.h>
-#include <faad.h>
 #include "foobar2000/SDK/foobar2000.h"
 #include "foobar2000/foo_input_std/id3v2_hacks.h"
-#include "convert.h"
+#define USE_TAGGING
+#include <mp4ff.h>
+#include <faad.h>
 
 //#define DBG_OUT(A) OutputDebugString(A)
 #define DBG_OUT(A)
 
-#if 0
-char *STRIP_REVISION(const char *str)
-{
-    char *tmp = strchr(str, ' ');
-    int len = lstrlen(tmp)-2;
-    if (len > 0 && tmp)
-        tmp[len] = '\0';
-    else
-        tmp = "000";
-    return tmp;
-}
-#endif
-
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "1.69",
+                           "2.0",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 static const char *object_type_string(int type)
@@ -92,9 +79,153 @@ static const char *object_type_string(int type)
     return types[type-1];
 }
 
+static int GetAACTrack(mp4ff_t *infile)
+{
+    /* find AAC track */
+    int i, rc;
+    int numTracks = mp4ff_total_tracks(infile);
+
+    for (i = 0; i < numTracks; i++)
+    {
+        unsigned char *buff = NULL;
+        unsigned int buff_size = 0;
+        mp4AudioSpecificConfig mp4ASC;
+
+        mp4ff_get_decoder_config(infile, i, &buff, &buff_size);
+
+        if (buff)
+        {
+            rc = AudioSpecificConfig(buff, buff_size, &mp4ASC);
+            free(buff);
+
+            if (rc < 0)
+                continue;
+            return i;
+        }
+    }
+
+    /* can't decode this */
+    return -1;
+}
+
+static const char * tech_info_fields[] = {"replaygain_track_gain","replaygain_track_peak","replaygain_album_gain","replaygain_album_peak","tool"};
+
+const char * check_tech_info(const char * name)
+{
+	unsigned n;
+	for(n=0;n<tabsize(tech_info_fields);n++)
+	{
+		if (!stricmp_utf8(name,tech_info_fields[n])) return tech_info_fields[n];
+	}
+	return 0;
+}
+
+
+static void meta_mp4_to_fb2k(const char * name,const char * value,file_info * out)
+{
+	{
+		const char * p_tech_info = check_tech_info(name);
+		if (p_tech_info)
+		{
+			out->info_set(p_tech_info,value);
+			return;
+		}
+	}
+
+	if (!stricmp_utf8(name,"track")) name = "tracknumber";
+
+	out->meta_add(name,value);
+}
+
+
+static void meta_fb2k_to_mp4(const char * name,const char * value,string_base & out_name,string_base & out_value)
+{
+	if (!stricmp_utf8(name,"tracknumber"))
+	{
+		out_name = "track";
+		out_value = value;
+	}
+	else
+	{
+		out_name = name;
+		out_value = value;
+	}
+}
+
 class input_mp4 : public input
 {
 public:
+    int track;
+    unsigned long m_samplerate;
+    unsigned char channels;
+    void *sample_buffer;
+
+    mp4ff_t *infile;
+    long sampleId, numSamples;
+
+	reader * mp4file;
+
+    faacDecHandle hDecoder;
+    faacDecFrameInfo frameInfo;
+    mp4AudioSpecificConfig mp4ASC;
+
+    unsigned char *buffer;
+    unsigned int buffer_size;
+
+
+    /* for gapless decoding */
+    unsigned int framesize;
+	mp4ff_callback_t mp4cb;
+	
+	double m_length;
+	uint32_t m_timescale;
+	uint32_t m_skip_samples;
+	uint32_t m_skip_frames;
+	bool m_firstframe;
+
+    static uint32_t callback_read(void *udata, void *buffer, uint32_t length)
+	{
+		return reinterpret_cast<input_mp4*>(udata)->mp4file->read(buffer,length);
+	}
+
+    static uint32_t callback_write(void *udata, void *buffer, uint32_t length)
+	{
+		return reinterpret_cast<input_mp4*>(udata)->mp4file->write(buffer,length);
+	}
+
+    static uint32_t callback_seek(void *udata, uint64_t position)
+	{
+		return reinterpret_cast<input_mp4*>(udata)->mp4file->seek(position) ? 1 : 0;
+	}
+	
+	static uint32_t callback_truncate(void *udata)
+	{
+		return reinterpret_cast<input_mp4*>(udata)->mp4file->set_eof() ? 1 : 0;
+	}
+	
+	void cleanup()
+	{
+		if (infile) {mp4ff_close(infile);infile=0;}
+		if (hDecoder) {faacDecClose(hDecoder);hDecoder=0;}
+	}
+
+    input_mp4()
+    {
+		mp4cb.user_data = reinterpret_cast<void*>(this);
+		mp4cb.read = callback_read;
+		mp4cb.write = callback_write;
+		mp4cb.seek = callback_seek;
+		mp4cb.truncate = callback_truncate;
+
+		m_skip_frames = 0;
+		hDecoder = 0;
+		infile = 0;
+    }
+
+    ~input_mp4()
+    {
+		cleanup();
+    }
 
     virtual bool test_filename(const char * fn,const char * ext)
     {
@@ -103,383 +234,320 @@ public:
 
     virtual bool open(reader *r, file_info *info, unsigned flags)
     {
-        unsigned __int8 *buffer;
-        unsigned __int32 buffer_size;
-        unsigned __int8 channels;
-        unsigned __int32 samplerate;
+		cleanup();
 
-        faacDecConfigurationPtr config;
-        mp4AudioSpecificConfig mp4ASC;
+		mp4file = r;
 
-        m_reader = r;
+		hDecoder = faacDecOpen();
+		if (hDecoder == 0)
+		{
+			cleanup();
+			console::error("Failed to open FAAD2 library.");
+			return 0;
+		}
 
-        if (!m_reader->can_seek())
-        {
-            console::error("MP4 file needs seeking.");
-            return 0;
-        }
+		{
+			faacDecConfigurationPtr config;
+            config = faacDecGetCurrentConfiguration(hDecoder);
+            config->outputFormat = FAAD_FMT_DOUBLE;
+            faacDecSetConfiguration(hDecoder, config);
+		}
 
-        hDecoder = faacDecOpen();
-        if (!hDecoder)
-        {
-            console::error("Failed to open FAAD2 library.");
-            return 0;
-        }
 
-        config = faacDecGetCurrentConfiguration(hDecoder);
-        config->outputFormat = FAAD_FMT_DOUBLE;
-        faacDecSetConfiguration(hDecoder, config);
+		infile = mp4ff_open_read(&mp4cb);
+		if (!infile)
+		{
+			cleanup();
+			console::error("Error parsing MP4 file.");
+			return 0;
+		}
 
-        hFile = MP4ReadCb(0, open_cb, close_cb, read_cb, write_cb,
-            setpos_cb, getpos_cb, filesize_cb, (void*)m_reader);
-        if (hFile == MP4_INVALID_FILE_HANDLE)
-        {
-            console::error("Failed to open MP4 file.");
-            return 0;
-        }
+		if ((track = GetAACTrack(infile)) < 0)
+		{
+			cleanup();
+			console::error("Unable to find correct AAC sound track in the MP4 file.");
+			return 0;
+		}
 
-        track = GetAudioTrack(hFile);
-        if (track < 0)
-        {
-            console::error("No valid audio track found.");
-            return 0;
-        }
 
-        unsigned __int8 audioType = MP4GetTrackEsdsObjectTypeId(hFile, track);
-        if (!MP4_IS_AAC_AUDIO_TYPE(audioType))
-        {
-            console::error("No valid AAC track found.");
-            return 0;
-        }
 
-        buffer = NULL;
-        buffer_size = 0;
-        MP4GetTrackESConfiguration(hFile, track, &buffer, &buffer_size);
 
-        int ADIF_ASC = 0;
-        if ((buffer_size >= 4) && ((buffer[0] == 'A') && (buffer[1] == 'D') &&
-            (buffer[2] == 'I') && (buffer[3] == 'F')))
-        {
-            ADIF_ASC = 1;
-        }
+		buffer = NULL;
+		buffer_size = 0;
+		mp4ff_get_decoder_config(infile, track, &buffer, &buffer_size);
 
-        if (buffer_size == 0 || ADIF_ASC == 1 /*MP4_IS_MPEG2_AAC_AUDIO_TYPE(audioType)*/)
-        {
-            int rc = faacDecInit(hDecoder, (unsigned char*)buffer, buffer_size,
-                (unsigned long*)&samplerate, (unsigned char*)&channels);
-            if (buffer) free(buffer);
-            if (rc < 0)
-            {
-                console::error("Unable to initialise FAAD2 library.");
-                return 0;
-            }
+		if(faacDecInit2(hDecoder, buffer, buffer_size,
+						&m_samplerate,&channels) < 0)
+		{
+			cleanup();
+			console::error("Error initializing decoder library.");
+			
+			return 0;
+		}
 
-            mp4ASC.frameLengthFlag = 0;
-            mp4ASC.objectTypeIndex = audioType - 0x65;
-        } else {
-            AudioSpecificConfig((unsigned char*)buffer, buffer_size, &mp4ASC);
+		m_timescale = mp4ff_time_scale(infile,track);
+		framesize = 1024;
 
-            int rc = faacDecInit2(hDecoder, (unsigned char*)buffer, buffer_size,
-                (unsigned long*)&samplerate, (unsigned char*)&channels);
-            if (buffer) free(buffer);
-            if (rc < 0)
-            {
-                console::error("Unable to initialise FAAD2 library.");
-                return 0;
-            }
-        }
+		if (buffer)
+		{
+			if (AudioSpecificConfig(buffer, buffer_size, &mp4ASC) >= 0)
+			{
+				if (mp4ASC.frameLengthFlag == 1) framesize = 960;
+				if (mp4ASC.sbr_present_flag == 1) framesize *= 2;
+			}
+			free(buffer);
+		}
 
-        numSamples = MP4GetTrackNumberOfSamples(hFile, track);
-        sampleId = 1;
+		{
+			char *tag = NULL, *item = NULL;
+			int k, j;
+			static const char *ot[6] = { "NULL", "MAIN AAC", "LC AAC", "SSR AAC", "LTP AAC", "HE AAC" };
+			const long samples = mp4ff_num_samples(infile, track);
+			double f = 1024.0;
+			double seconds;
 
-        m_timescale = MP4GetTrackTimeScale(hFile, track);
-        m_samplerate = samplerate;
-        m_seekto = 0;
-        m_framesize = 1024;
-        if (mp4ASC.frameLengthFlag == 1) m_framesize = 960;
-        useAacLength = false;
+			if ((mp4ASC.sbr_present_flag == 1) || mp4ASC.forceUpSampling) f = f * 2.0;
+			seconds = (float)samples*(float)(f-1.0)/(float)mp4ASC.samplingFrequency;
 
-        {
-            MP4Timestamp sample_pos;
-            MP4Duration sample_dur;
-            unsigned char *buf = NULL;
-            unsigned __int32 buf_size = 0;
-            MP4ReadSample(hFile, track, 1, (unsigned __int8**)&buf,
-                &buf_size, &sample_pos, &sample_dur, NULL, NULL);
-            if (buf) free(buf);
-            m_delaydur = (unsigned int)sample_dur;
-        }
-        MP4Duration trackDuration = MP4GetTrackDuration(hFile, track) - m_delaydur;
-        m_length = (double)(__int64)trackDuration / (double)m_timescale;
-        info->set_length(m_length);
-        info->info_set_int("bitrate",(__int64)(1.0/1000.0 *
-            (double)(__int64)MP4GetTrackIntegerProperty(hFile,
-            track, "mdia.minf.stbl.stsd.mp4a.esds.decConfigDescr.avgBitrate") + 0.5));
-        info->info_set_int("channels", (__int64)channels);
-        info->info_set_int("samplerate", (__int64)samplerate);
+			
+			if (m_timescale<=0)
+				m_length = -1.0;
+			else
+			{
+				int64_t duration = mp4ff_get_track_duration(infile,track);
+				if (duration == -1)
+					m_length = -1.0;
+				else
+				{
+					m_length = (double)duration / (double)m_timescale;
+				}
+			}
 
-        const char *profile_str = object_type_string(mp4ASC.objectTypeIndex);
-        if (profile_str)
-            info->info_set("aac_profile", profile_str);
+			info->set_length(m_length);
 
-        if (mp4ASC.sbr_present_flag == 1) {
-            info->info_set("codec", "AAC+SBR");
-            m_framesize *= 2;
-        } else {
-            info->info_set("codec", "AAC");
-        }
 
-        if (flags & OPEN_FLAG_GET_INFO)
-            ReadMP4Tag(info);
+			if (flags & OPEN_FLAG_GET_INFO)
+			{
+				info->info_set_int("bitrate",(mp4ff_get_avg_bitrate(infile,track) + 500) / 1000);
+				info->info_set_int("channels",mp4ASC.channelsConfiguration);
+				info->info_set_int("samplerate",mp4ASC.samplingFrequency);
+				info->info_set("codec","AAC");
+				info->info_set("aac_profile",ot[(mp4ASC.objectTypeIndex > 5)?0:mp4ASC.objectTypeIndex]);
+
+				j = mp4ff_meta_get_num_items(infile);
+				for (k = 0; k < j; k++)
+				{
+					if (mp4ff_meta_get_by_index(infile, k, &item, &tag))
+					{
+						if (item != NULL && tag != NULL)
+						{
+							meta_mp4_to_fb2k(item,tag,info);
+							free(item); item = NULL;
+							free(tag); tag = NULL;
+						}
+					}
+				}
+			}
+		}
+
+		numSamples = mp4ff_num_samples(infile, track);
+
+		m_skip_samples = 0;
+
+		sampleId = 0;
+
+		m_firstframe = true;
+		m_skip_frames = 1;
 
         return 1;
-    }
-
-    input_mp4()
-    {
-        hFile = MP4_INVALID_FILE_HANDLE;
-        hDecoder = NULL;
-        m_eof = false;
-    }
-
-    ~input_mp4()
-    {
-        if (hFile != MP4_INVALID_FILE_HANDLE)
-            MP4Close(hFile);
-        if (hDecoder)
-            faacDecClose(hDecoder);
     }
 
     virtual int run(audio_chunk * chunk)
     {
-        faacDecFrameInfo frameInfo;
-        audio_sample *sample_buffer;
-        MP4Timestamp sample_pos;
-        MP4Duration sample_dur;
-        unsigned __int64 sample_count;
-        unsigned __int64 delay = 0;
-        bool initial = (sampleId == 1);
+		if (hDecoder==0)
+		{
+			console::error("Attempting to decode while not open.");
+			return -1;
+		}
 
-        do {
-            if (m_eof || (sampleId > numSamples)) return 0;
+		if (sampleId >= numSamples) return 0;
 
-            if (sampleId == MP4_INVALID_SAMPLE_ID)
-            {
-                console::error("Invalid sampleId.");
-                return 0;//-1;
-            }
+		bool done = false;
 
-            do {
-                unsigned char *buffer = NULL;
-                unsigned __int32 buffer_size = 0;
-                delay = 0;
+		do		
+		{
+			int rc;
+			unsigned int duration;
+			unsigned int aac_sample_count;
+			unsigned int delay = 0;
 
-                MP4ReadSample(hFile, track, sampleId,
-                    (unsigned __int8**)&buffer, &buffer_size,
-                    &sample_pos, &sample_dur, NULL, NULL);
-                if (sampleId == 1) sample_dur -= m_delaydur;
-                sample_pos -= m_delaydur;
-                sampleId++;
+			/* get acces unit from MP4 file */
+			buffer = NULL;
+			buffer_size = 0;
 
-                sample_buffer = (audio_sample*)faacDecDecode(hDecoder, &frameInfo, buffer, buffer_size);
+			duration = mp4ff_get_sample_duration(infile, track, sampleId);
+			rc = mp4ff_read_sample(infile, track, sampleId, &buffer,  &buffer_size);
+			if (rc == 0)
+			{
+				cleanup();
+				console::error("Reading from MP4 file failed.");
+				return -1;
+			}
 
-                if (buffer) free(buffer);
+			sample_buffer = faacDecDecode(hDecoder, &frameInfo, buffer, buffer_size);
 
-                if (useAacLength || (m_timescale != m_samplerate)) {
-                    sample_count = frameInfo.channels ? frameInfo.samples/frameInfo.channels : 0;
-                } else {
-                    sample_count = sample_dur;
+			if (buffer) free(buffer);
 
-                    if (!useAacLength && !initial && m_seekto<sample_pos && (sampleId < numSamples/2) && (sample_dur*frameInfo.channels != frameInfo.samples))
-                    {
-                        console::info("MP4 seems to have incorrect frame duration, using values from AAC data");
-                        useAacLength = true;
-                    }
-                }
+			if (frameInfo.channels<=0)
+			{
+				cleanup();
+				console::error("Internal decoder error.");
+				return -1;
+			}
 
-                if (initial && (sample_count < m_framesize) && frameInfo.channels)
-                    delay = (frameInfo.samples/frameInfo.channels) - sample_count;
+			if (frameInfo.error > 0)
+			{
+				console::warning(faacDecGetErrorMessage(frameInfo.error));
+			}
 
-                if (frameInfo.error || !sample_buffer)
-                {
-                    const char *msg;
-                    if (frameInfo.error)
-                        msg = faacDecGetErrorMessage(frameInfo.error);
-                    else
-                        msg = "faacDecDecode() error";
-                    console::warning(msg);
-                    if (sampleId > numSamples) return 0;//-1;
-                    console::info("Skipping frame");
-                    sample_count = 0;
-                }
-            } while (frameInfo.error || frameInfo.samples == 0 || frameInfo.channels == 0 || sample_count == 0);
+			if (m_skip_frames>0) m_skip_frames--;
+			else if (frameInfo.error==0)
+			{
 
-            unsigned __int64 skip = (sample_pos < m_seekto) ? (m_seekto - sample_pos) : 0;
+				aac_sample_count = frameInfo.samples / frameInfo.channels;
+				
+				if (m_firstframe && duration < aac_sample_count)
+					delay += aac_sample_count - duration;
 
-            if (skip < sample_count)
-            {
-                if (frameInfo.channels == 6 && frameInfo.num_lfe_channels)
-                {
-                    //channel order for 5.1: L/R/C/LF/BL/BR
-                    audio_sample r1, r2, r3, r4, r5, r6;
-                    for (unsigned int i = 0; i < frameInfo.samples; i += frameInfo.channels)
-                    {
-                        r1 = sample_buffer[i];
-                        r2 = sample_buffer[i+1];
-                        r3 = sample_buffer[i+2];
-                        r4 = sample_buffer[i+3];
-                        r5 = sample_buffer[i+4];
-                        r6 = sample_buffer[i+5];
-                        sample_buffer[i] = r2;
-                        sample_buffer[i+1] = r3;
-                        sample_buffer[i+2] = r1;
-                        sample_buffer[i+3] = r6;
-                        sample_buffer[i+4] = r4;
-                        sample_buffer[i+5] = r5;
-                    }
-                }
+				if (m_skip_samples)//for sample-accurate seeking
+				{
+					unsigned int delta = m_skip_samples;
+					if (delta > duration) delta = duration;
+					delay += delta;
+					duration -= delta;
+					m_skip_samples -= delta;
+				}
+				
 
-                unsigned int samples = (unsigned int)(sample_count - skip);
+				if (duration > 0)
+				{
+					chunk->set_data_64((const double*)sample_buffer + delay * frameInfo.channels,duration,frameInfo.channels,m_samplerate);
+					done = true;
+					m_firstframe = false;
+				}
+			}
+			sampleId++;
+		}
+		while(!done && sampleId < numSamples);
+		
 
-                chunk->set_data((audio_sample*)sample_buffer + (unsigned int)(skip+delay)*frameInfo.channels,
-                    samples, frameInfo.channels, frameInfo.samplerate);
-
-                m_seekto = 0;
-            }
-        } while (sample_pos + sample_dur <= m_seekto);
-
-        return 1;
+        return done ? 1 : 0;
     }
 
     virtual set_info_t set_info(reader *r, const file_info * info)
     {
-        m_reader = r;
+#if 0
+/* metadata tag structure */
+typedef struct
+{
+    char *item;
+    char *value;
+} mp4ff_tag_t;
 
-        hFile = MP4ModifyCb(0, 0, open_cb, close_cb, read_cb, write_cb,
-            setpos_cb, getpos_cb, filesize_cb, (void*)m_reader);
-        if (hFile == MP4_INVALID_FILE_HANDLE) return SET_INFO_FAILURE;
+/* metadata list structure */
+typedef struct
+{
+    mp4ff_tag_t *tags;
+    uint32_t count;
+} mp4ff_metadata_t;
+#endif
 
-        MP4MetadataDelete(hFile);
-        MP4Close(hFile);
 
-        hFile = MP4ModifyCb(0, 0, open_cb, close_cb, read_cb, write_cb,
-            setpos_cb, getpos_cb, filesize_cb, (void*)m_reader);
-        if (hFile == MP4_INVALID_FILE_HANDLE) return SET_INFO_FAILURE;
 
-        const char *p = info->info_get("TOOL");
-        if (p && *p)
-            MP4SetMetadataTool(hFile, p);
-        p = info->info_get("REPLAYGAIN_TRACK_PEAK");
-        if (p && *p)
-            MP4SetMetadataFreeForm(hFile, "REPLAYGAIN_TRACK_PEAK", (unsigned __int8*)p, strlen(p));
-        p = info->info_get("REPLAYGAIN_TRACK_GAIN");
-        if (p && *p)
-            MP4SetMetadataFreeForm(hFile, "REPLAYGAIN_TRACK_GAIN", (unsigned __int8*)p, strlen(p));
-        p = info->info_get("REPLAYGAIN_ALBUM_PEAK");
-        if (p && *p)
-            MP4SetMetadataFreeForm(hFile, "REPLAYGAIN_ALBUM_PEAK", (unsigned __int8*)p, strlen(p));
-        p = info->info_get("REPLAYGAIN_ALBUM_GAIN");
-        if (p && *p)
-            MP4SetMetadataFreeForm(hFile, "REPLAYGAIN_ALBUM_GAIN", (unsigned __int8*)p, strlen(p));
+		unsigned rv;
+		ptr_list_t<char> freeme;
+		mem_block_list_t<mp4ff_tag_t> tags;
+		mp4ff_metadata_t mp4meta;
 
-        int numItems = info->meta_get_count();
-        for (int i = 0; i < numItems; i++)
-        {
-            char *pName = (char *)info->meta_enum_name(i);
-            const char *val = info->meta_enum_value(i);
-            if (!pName || (pName && !*pName) || !val || (val && !*val)) continue;
+		{
+			string8_fastalloc name,value;
+			mp4ff_tag_t tag;
 
-            if (!stricmp(pName, "TOTALTRACKS") || !stricmp(pName, "TOTALDISCS")) continue;
+			unsigned n, m;
+			
+			m = info->meta_get_count();
+			for(n=0;n<m;n++)
+			{
+				meta_fb2k_to_mp4(info->meta_enum_name(n),info->meta_enum_value(n),name,value);
+				freeme.add_item(tag.item = strdup(name));
+				freeme.add_item(tag.value = strdup(value));
+				tags.add_item(tag);
+			}
 
-            if (stricmp(pName, "TITLE") == 0)
-            {
-                MP4SetMetadataName(hFile, val);
-            } else if (stricmp(pName, "ARTIST") == 0) {
-                MP4SetMetadataArtist(hFile, val);
-            } else if (stricmp(pName, "WRITER") == 0) {
-                MP4SetMetadataWriter(hFile, val);
-            } else if (stricmp(pName, "ALBUM") == 0) {
-                MP4SetMetadataAlbum(hFile, val);
-            } else if (stricmp(pName, "YEAR") == 0 || stricmp(pName, "DATE") == 0) {
-                MP4SetMetadataYear(hFile, val);
-            } else if (stricmp(pName, "COMMENT") == 0) {
-                MP4SetMetadataComment(hFile, val);
-            } else if (stricmp(pName, "GENRE") == 0) {
-                MP4SetMetadataGenre(hFile, val);
-            } else if (stricmp(pName, "TRACKNUMBER") == 0 || stricmp(pName, "TRACK") == 0) {
-                int t1 = 0, t2 = 0;
-                sscanf(val, "%d/%d", &t1, &t2);
-                unsigned __int16 trkn = t1, tot = t2;
-                const char *t = info->meta_get("TOTALTRACKS");
-                if (t && *t) tot = atoi(t);
-                MP4SetMetadataTrack(hFile, trkn, tot);
-            } else if (stricmp(pName, "DISKNUMBER") == 0 || stricmp(pName, "DISC") == 0) {
-                int t1 = 0, t2 = 0;
-                sscanf(val, "%d/%d", &t1, &t2);
-                unsigned __int16 disk = t1, tot = t2;
-                const char *t = info->meta_get("TOTALDISCS");
-                if (t && *t) tot = atoi(t);
-                MP4SetMetadataDisk(hFile, disk, tot);
-            } else if (stricmp(pName, "COMPILATION") == 0) {
-                unsigned __int8 cpil = atoi(val);
-                MP4SetMetadataCompilation(hFile, cpil);
-            } else if (stricmp(pName, "TEMPO") == 0) {
-                unsigned __int16 tempo = atoi(val);
-                MP4SetMetadataTempo(hFile, tempo);
-            } else {
-                MP4SetMetadataFreeForm(hFile, pName, (unsigned __int8*)val, strlen(val));
-            }
-        }
 
-        MP4Close(hFile);
-        hFile = MP4_INVALID_FILE_HANDLE;
-        /* end */
-        return SET_INFO_SUCCESS;
+			m = info->info_get_count();
+
+			for(n=0;n<m;n++)
+			{
+				const char * p_name = check_tech_info(info->info_enum_name(n));
+				if (p_name)
+				{
+					tag.item = const_cast<char*>(p_name);
+					tag.value = const_cast<char*>(info->info_enum_value(n));
+					tags.add_item(tag);
+				}
+			}
+		}
+
+		mp4meta.count = tags.get_count();
+		mp4meta.tags = const_cast<mp4ff_tag_t*>(tags.get_ptr());
+
+		mp4file = r;
+		rv = mp4ff_meta_update(&mp4cb,&mp4meta);
+		mp4file = 0;
+
+		freeme.free_all();
+
+		return rv ? SET_INFO_SUCCESS : SET_INFO_FAILURE;
+
     }
 
     virtual bool seek(double seconds)
     {
+		if (hDecoder == 0)
+		{
+			console::error("Attempting to seek while not open.");
+			return false;
+		}
         if (seconds >= m_length) {
-            m_eof = true;
+            sampleId = numSamples;
             return true;
         }
+		
+		int64_t offset = (int64_t)(seconds * m_timescale);
+		int32_t skip_samples;
+		int32_t dest_sample = mp4ff_find_sample(infile,track,offset,&skip_samples);
+		if (dest_sample == (-1)) return false;
+		if (dest_sample>0)
+		{
+			dest_sample--;
+			m_skip_frames = 1;
+		}
+		else
+		{//should never happen
+			m_skip_frames = 1;
+		}
 
-        unsigned int frame = (unsigned int)((double)m_framesize * ((double)m_timescale / (double)m_samplerate) + 0.5);
-        if (frame == 0) frame = 1;
-        m_seekto = (unsigned __int64)(seconds * m_timescale + 0.5) + frame;
-        MP4Duration target = m_seekto - frame + m_delaydur;
+		sampleId = dest_sample;
+		
+		m_skip_samples = MulDiv(skip_samples,m_samplerate,m_timescale);
 
-        while (1) {
-            MP4Duration duration = MP4ConvertToTrackDuration(hFile, track, target, m_timescale);
-            sampleId = MP4GetSampleIdFromTime(hFile, track, duration, 0);
-            if (sampleId == MP4_INVALID_SAMPLE_ID) return false;
-            MP4Timestamp position = MP4GetSampleTime(hFile, track, sampleId);
-            if (position <= m_seekto + m_delaydur) break;
-            if (target == 0) return false;
-            if (target > frame) target -= frame; else target = 0;
-        }
-
-        /*
-        unsigned int frame = (unsigned int)((double)m_framesize * ((double)m_samplerate / (double)m_timescale) + 0.5);
-        if (frame == 0) frame = 1;
-
-        m_seekto = (unsigned __int64)(seconds * m_timescale + 0.5) + frame;
-        MP4Duration target = m_seekto - frame;
-
-        while (1) {
-            MP4Duration duration = MP4ConvertToTrackDuration(hFile, track, target, m_timescale);
-            sampleId = MP4GetSampleIdFromTime(hFile, track, duration, 0);
-            if (sampleId == MP4_INVALID_SAMPLE_ID) return false;
-            MP4Timestamp position = MP4GetSampleTime(hFile, track, sampleId);
-            if (position <= m_seekto) break;
-            if (target == 0) return false;
-            if (target > frame) target -= frame; else target = 0;
-        }
-        */
+		m_firstframe = sampleId < numSamples / 2;
 
         faacDecPostSeekReset(hDecoder, -1);
 
         return true;
+
     }
 
     virtual bool is_our_content_type(const char *url, const char *type)
@@ -488,223 +556,9 @@ public:
     }
 
 private:
-
-    reader *m_reader;
-
-    faacDecHandle hDecoder;
-
-    MP4FileHandle hFile;
-    MP4SampleId sampleId, numSamples;
-    MP4TrackId track;
-    unsigned int m_timescale;
-    unsigned int m_samplerate;
-    unsigned int m_framesize;
-    unsigned int m_delaydur;
-    unsigned __int64 m_seekto;
-    double m_length;
-    bool m_eof;
-    bool useAacLength;
-
-    int ReadMP4Tag(file_info *info)
-    {
-        unsigned __int32 valueSize;
-        unsigned __int8 *pValue;
-        char *pName;
-        unsigned int i = 0;
-
-        do {
-            valueSize = 0;
-            pValue = 0;
-            pName = 0;
-
-            if (MP4GetMetadataByIndex(hFile, i, (const char **)&pName, &pValue, &valueSize) &&
-                valueSize > 0 && pName && pValue)
-            {
-                char *val = (char *)malloc((valueSize+1)*sizeof(char));
-
-                if (val)
-                {
-                    memcpy(val, pValue, valueSize*sizeof(char));
-                    val[valueSize] = '\0';
-
-                    if (pName[0] == '©')
-                    {
-                        if (memcmp(pName, "©nam", 4) == 0)
-                        {
-                            info->meta_add("TITLE", val);
-                        } else if (memcmp(pName, "©ART", 4) == 0) {
-                            info->meta_add("ARTIST", val);
-                        } else if (memcmp(pName, "©wrt", 4) == 0) {
-                            info->meta_add("WRITER", val);
-                        } else if (memcmp(pName, "©alb", 4) == 0) {
-                            info->meta_add("ALBUM", val);
-                        } else if (memcmp(pName, "©day", 4) == 0) {
-                            info->meta_add("DATE", val);
-                        } else if (memcmp(pName, "©too", 4) == 0) {
-                            info->info_set("tool", val);
-                        } else if (memcmp(pName, "©cmt", 4) == 0) {
-                            info->meta_add("COMMENT", val);
-                        } else if (memcmp(pName, "©gen", 4) == 0) {
-                            info->meta_add("GENRE", val);
-                        } else {
-                            info->meta_add(pName, val);
-                        }
-                    } else if (memcmp(pName, "gnre", 4) == 0) {
-                        char *t=0;
-                        if (MP4GetMetadataGenre(hFile, &t) && t)
-                            info->meta_add("GENRE", t);
-                    } else if (memcmp(pName, "trkn", 4) == 0) {
-                        unsigned __int16 trkn = 0, tot = 0;
-                        if (MP4GetMetadataTrack(hFile, &trkn, &tot))
-                        {
-                            char t[64];
-                            if (tot > 0)
-                            {
-                                wsprintf(t, "%d/%d", (int)trkn, (int)tot);
-                                info->meta_add("TRACKNUMBER", t);
-                                wsprintf(t, "%d", (int)tot);
-                                info->meta_add("TOTALTRACKS", t);
-                            }
-                            else
-                            {
-                                wsprintf(t, "%d", (int)trkn);
-                                info->meta_add("TRACKNUMBER", t);
-                            }
-                        }
-                    } else if (memcmp(pName, "disk", 4) == 0) {
-                        unsigned __int16 disk = 0, tot = 0;
-                        if (MP4GetMetadataDisk(hFile, &disk, &tot))
-                        {
-                            char t[64];
-                            if (tot > 0)
-                            {
-                                wsprintf(t, "%d/%d", (int)disk, (int)tot);
-                                info->meta_add("DISC", t);
-                                wsprintf(t, "%d", (int)tot);
-                                info->meta_add("TOTALDISCS", t);
-                            }
-                            else
-                            {
-                                wsprintf(t, "%d", (int)disk);
-                                info->meta_add("DISC", t);
-                            }
-                            //info->meta_add("DISKNUMBER", t);
-                        }
-                    } else if (memcmp(pName, "cpil", 4) == 0) {
-                        unsigned __int8 cpil = 0;
-                        if (MP4GetMetadataCompilation(hFile, &cpil))
-                        {
-                            char t[64];
-                            wsprintf(t, "%d", (int)cpil);
-                            info->meta_add("COMPILATION", t);
-                        }
-                    } else if (memcmp(pName, "tmpo", 4) == 0) {
-                        unsigned __int16 tempo = 0;
-                        if (MP4GetMetadataTempo(hFile, &tempo))
-                        {
-                            char t[64];
-                            wsprintf(t, "%d BPM", (int)tempo);
-                            info->meta_add("TEMPO", t);
-                        }
-                    } else if (memcmp(pName, "NDFL", 4) == 0) {
-                        /* Removed */
-                    } else {
-                        if (!stricmp(pName, "REPLAYGAIN_TRACK_PEAK"))
-                        {
-                            info->info_set_replaygain_track_peak(pfc_string_to_float(val));
-                        } else if (!stricmp(pName, "REPLAYGAIN_TRACK_GAIN")) {
-                            info->info_set_replaygain_track_gain(pfc_string_to_float(val));
-                        } else if (!stricmp(pName, "REPLAYGAIN_ALBUM_PEAK")) {
-                            info->info_set_replaygain_album_peak(pfc_string_to_float(val));
-                        } else if (!stricmp(pName, "REPLAYGAIN_ALBUM_GAIN")) {
-                            info->info_set_replaygain_album_gain(pfc_string_to_float(val));
-                        } else {
-                            info->meta_add(pName, val);
-                        }
-                    }
-
-                    free(val);
-                }
-            }
-
-            i++;
-        } while (valueSize > 0);
-
-        return 1;
-    }
-
-    int GetAudioTrack(MP4FileHandle infile)
-    {
-        /* find AAC track */
-        int i;
-        int numTracks = MP4GetNumberOfTracks(infile, NULL, 0);
-
-        for (i = 0; i < numTracks; i++)
-        {
-            MP4TrackId trackId = MP4FindTrackId(infile, i, NULL, 0);
-            const char* trackType = MP4GetTrackType(infile, trackId);
-
-            if (!strcmp(trackType, MP4_AUDIO_TRACK_TYPE))
-            {
-                return trackId;
-            }
-        }
-
-        /* can't decode this */
-        return -1;
-    }
-
-    /* file callback stuff */
-    static unsigned __int32 open_cb(const char *pName,
-        const char *mode, void *userData)
-    {
-        DBG_OUT("open_cb");
-        return 1;
-    }
-
-    static void close_cb(void *userData)
-    {
-        DBG_OUT("close_cb");
-        return;
-    }
-
-    static unsigned __int32 read_cb(void *pBuffer, unsigned int nBytesToRead,
-        void *userData)
-    {
-        DBG_OUT("read_cb");
-        reader *r = (reader*)userData;
-        return r->read(pBuffer, nBytesToRead);
-    }
-
-    static unsigned __int32 write_cb(void *pBuffer, unsigned int nBytesToWrite,
-        void *userData)
-    {
-        DBG_OUT("write_cb");
-        reader *r = (reader*)userData;
-        return r->write(pBuffer, nBytesToWrite);
-    }
-
-    static __int64 getpos_cb(void *userData)
-    {
-        DBG_OUT("getpos_cb");
-        reader *r = (reader*)userData;
-        return r->get_position();
-    }
-
-    static __int32 setpos_cb(unsigned __int32 pos, void *userData)
-    {
-        DBG_OUT("setpos_cb");
-        reader *r = (reader*)userData;
-        return !(r->seek(pos));
-    }
-
-    static __int64 filesize_cb(void *userData)
-    {
-        DBG_OUT("filesize_cb");
-        reader *r = (reader*)userData;
-        return r->get_length();
-    }
 };
+
+
 
 struct seek_list
 {
@@ -1240,266 +1094,5 @@ private:
     }
 };
 
-class contextmenu_mp4 : public menu_item_context
-{
-private:
-    int first_num;
-    string8 path;
-
-public:
-    virtual int get_num_items() { return 1; }
-
-    virtual const char *enum_item(int n)
-    {
-        if (n == 0) return "Converter (AAC <-> MP4)";
-        return 0;
-    }
-
-    virtual bool context_get_display(int n, const ptr_list_base<metadb_handle> &data, string_base &out, bool is_playlist)
-    {
-        int count = data.get_count();
-        if (count < 1) return false;
-        int type = -1;
-
-        for (int i = 0; i < count; i++)
-        {
-            metadb_handle *ptr = data.get_item(i);
-            if (!ptr) return false;
-            const char *p = ptr->handle_get_path();
-            if (!p) return false;
-            p = strrchr(p, '.');
-            if (!p) return false;
-            if (type == -1)
-            {
-                if (!stricmp(p, ".aac")) type = 0;
-                else if (!stricmp(p, ".m4a") || !stricmp(p, ".mp4")) type = 1;
-                else return false;
-            }
-            else
-            {
-                if (type == 0 && stricmp(p, ".aac")) return false;
-                if (type == 1 && (stricmp(p, ".m4a") && stricmp(p, ".mp4"))) return false;
-            }
-        }
-
-        if (type == 0)
-        {
-            out.set_string("Convert to MP4");
-        }
-        else
-        {
-            out.set_string("Extract AAC track");
-            if (count > 1) out.add_char('s');
-        }
-
-        return true;
-    }
-
-    virtual void context_command(int n, const ptr_list_base<metadb_handle> &data, bool is_playlist)
-    {
-        const int count = data.get_count();
-
-        for (int i = 0; i < count; i++) {
-            metadb_handle *ptr = data.get_item(i);
-            if (!ptr) return;
-
-            file_info_i_full src_info;
-
-            ptr->handle_lock();
-            bool error = false;
-            const file_info *info = ptr->handle_query_locked();
-            if (info)
-                src_info.copy(info);
-            else
-                error = true;
-            ptr->handle_unlock();
-
-            if (!error)
-            {
-                int type = 1;
-                string8 temp = src_info.get_file_path();
-                const char *p = strrchr((const char *)temp, '.');
-                if (p)
-                {
-                    if (!stricmp(p, ".aac")) type = 0;
-                    temp.truncate(p-(const char *)temp);
-                }
-                if (type == 0)
-                    temp.add_string(".mp4");
-                else
-                    temp.add_string(".aac");
-
-                const char *src = (const char *)src_info.get_file_path();
-                const char *dst = (const char *)temp;
-
-                if (file::g_exists(dst))
-                {
-                    console::info(string_printf("Destination file '%s' already exists", dst));
-                    console::popup();
-                }
-                else
-                {
-                    converter *conv = new converter(src, dst, &src_info);
-
-                    if (conv)
-                    {
-                        bool ret;
-
-                        if (type == 0)
-                            ret = conv->aac_to_mp4();
-                        else
-                            ret = conv->mp4_to_aac();
-
-                        if (ret)
-                            console::info(string_printf("'%s' converted to '%s'", src, dst));
-                        else
-                            console::error(string_printf("Failed to convert '%s' to '%s'", src, dst));
-
-                        delete conv;
-                    }
-                    else
-                    {
-                        console::error("Failed to create new converter");
-                    }
-                }
-            }
-            else
-            {
-                console::error("Failed to get file infos");
-            }
-        }
-    }
-};
-
-class contextmenu_mp4o : public menu_item_context
-{
-private:
-    int first_num;
-    string8 path;
-
-public:
-    virtual int get_num_items() { return 1; }
-
-    virtual const char *enum_item(int n)
-    {
-        if (n == 0) return "MP4 Layout Optimiser";
-        return 0;
-    }
-
-    virtual bool context_get_display(int n, const ptr_list_base<metadb_handle> &data, string_base &out, bool is_playlist)
-    {
-        int count = data.get_count();
-        if (count < 1) return false;
-        int type = -1;
-
-        for (int i = 0; i < count; i++)
-        {
-            metadb_handle *ptr = data.get_item(i);
-            if (!ptr) return false;
-            const char *p = ptr->handle_get_path();
-            if (!p) return false;
-            p = strrchr(p, '.');
-            if (!p) return false;
-            if (type == -1)
-            {
-                if (!stricmp(p, ".m4a") || !stricmp(p, ".mp4")) type = 1;
-                else return false;
-            }
-            else
-            {
-                if (type == 1 && (stricmp(p, ".m4a") && stricmp(p, ".mp4"))) return false;
-            }
-        }
-
-        out.set_string("Optimise MP4 Layout");
-
-        return true;
-    }
-
-    virtual void context_command(int n, const ptr_list_base<metadb_handle> &data, bool is_playlist)
-    {
-        const int count = data.get_count();
-
-        for (int i = 0; i < count; i++) {
-            metadb_handle *ptr = data.get_item(i);
-            if (!ptr) return;
-
-            file_info_i_full src_info;
-
-            ptr->handle_lock();
-            bool error = false;
-            const file_info *info = ptr->handle_query_locked();
-            if (info)
-                src_info.copy(info);
-            else
-                error = true;
-            ptr->handle_unlock();
-
-            if (!error)
-            {
-                const char *src = (const char *)src_info.get_file_path();
-                if (!src || (src && stricmp_utf8_partial(src, "file://")))
-                {
-                    console::error("Unsupported file location");
-                    return;
-                }
-
-                string8 name = src + strlen("file://");
-                string8 name_short;
-
-                if (IsUnicode())
-                {
-                    string_wide_from_utf8 tname(name);
-
-                    int len = wcslen(tname) + 1;
-                    WCHAR *wide_fn = (WCHAR *)malloc((len+1) * sizeof(WCHAR));
-                    if (!wide_fn) return;
-
-                    int ret = GetShortPathNameW(tname, wide_fn, len+1);
-                    if (ret == 0)
-                    {
-                        wcscpy(wide_fn, tname);
-                    }
-                    else if (ret > len)
-                    {
-                        len = ret;
-                        free(wide_fn);
-                        wide_fn = (WCHAR *)malloc((len+1) * sizeof (WCHAR));
-                        if (!wide_fn) return;
-                        if (GetShortPathNameW(tname, wide_fn, (len+1)) == 0)
-                            wcscpy(wide_fn, tname);
-                    }
-
-                    string8 shortname = string_ansi_from_wide(wide_fn);
-                    name = shortname;
-                    name_short = string_utf8_from_wide(wide_fn);
-                    free(wide_fn);
-                } else {
-                    string_ansi_from_utf8 ansi_fn(name);
-                    name = ansi_fn;
-                    name_short = string_utf8_from_ansi(ansi_fn);
-                }
-
-                MP4Optimize((const char*)name);
-
-                if (IsUnicode())
-                {
-                    string_wide_from_utf8 short_fn(name_short);
-                    string_wide_from_utf8 real_fn(name);
-                    MoveFileW(short_fn, real_fn);
-                }
-
-                console::info(string_printf("'%s' optimised", src));
-            }
-            else
-            {
-                console::error("Failed to get file infos");
-            }
-        }
-    }
-};
-
 static service_factory_t<input, input_mp4> foo_mp4;
 static service_factory_t<input, input_aac> foo_aac;
-static service_factory_single_t<menu_item, contextmenu_mp4> foo_mp4_context;
-static service_factory_single_t<menu_item, contextmenu_mp4o> foo_mp4o_context;
