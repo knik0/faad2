@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.16 2002/08/17 11:16:11 menno Exp $
+** $Id: in_mp4.c,v 1.17 2002/08/18 18:18:37 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -378,7 +378,7 @@ int play(char *fn)
 
     if (mp4state.filetype)
     {
-        long pos, tmp, read;
+        long pos, tmp, read, tagsize;
 
         get_AAC_format(mp4state.filename, &mp4state.aacInfo);
 
@@ -420,14 +420,26 @@ int play(char *fn)
             return -1;
         }
 
+        if (StringComp(mp4state.buffer, "ID3", 3) == 0)
+        {
+            /* high bit is not used */
+            tagsize = (mp4state.buffer[6] << 21) | (mp4state.buffer[7] << 14) |
+                (mp4state.buffer[8] <<  7) | (mp4state.buffer[9] <<  0);
+
+            tagsize += 10;
+        } else {
+            tagsize = 0;
+        }
+
         if ((mp4state.bytes_consumed = faacDecInit(mp4state.hDecoder,
-            mp4state.buffer, &mp4state.samplerate, &mp4state.channels)) < 0)
+            mp4state.buffer+tagsize, &mp4state.samplerate, &mp4state.channels)) < 0)
         {
             show_error(module.hMainWindow, "Can't initialize library.");
             faacDecClose(mp4state.hDecoder);
             fclose(mp4state.aacfile);
             return -1;
         }
+        mp4state.bytes_consumed += tagsize;
         mp4state.bytes_into_buffer -= mp4state.bytes_consumed;
 
         avg_bitrate = mp4state.aacInfo.bitrate;
