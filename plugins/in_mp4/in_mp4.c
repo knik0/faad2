@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.22 2002/12/06 10:42:55 menno Exp $
+** $Id: in_mp4.c,v 1.23 2002/12/06 11:05:15 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -868,7 +868,23 @@ DWORD WINAPI MP4PlayThread(void *b)
 
                     l = frameInfo.samples * res_table[m_resolution] / 8;
 
-                    module.outMod->Write(sample_buffer, l);
+                    if (module.dsp_isactive())
+                    {
+                        void *dsp_buffer = malloc(l*2);
+                        memcpy(dsp_buffer, sample_buffer, l);
+
+                        l = module.dsp_dosamples((short*)dsp_buffer,
+                            frameInfo.samples/frameInfo.channels,
+                            res_table[m_resolution],
+                            frameInfo.channels,
+                            mp4state.samplerate) *
+                            (frameInfo.channels*(res_table[m_resolution]/8));
+
+                        module.outMod->Write(dsp_buffer, l);
+                        if (dsp_buffer) free(dsp_buffer);
+                    } else {
+                        module.outMod->Write(sample_buffer, l);
+                    }
                 }
             }
         } else {
@@ -1019,7 +1035,23 @@ DWORD WINAPI AACPlayThread(void *b)
 
                     l = frameInfo.samples * res_table[m_resolution] / 8;
 
-                    module.outMod->Write(sample_buffer, l);
+                    if (module.dsp_isactive())
+                    {
+                        void *dsp_buffer = malloc(l*2);
+                        memcpy(dsp_buffer, sample_buffer, l);
+
+                        l = module.dsp_dosamples((short*)dsp_buffer,
+                            frameInfo.samples/frameInfo.channels,
+                            res_table[m_resolution],
+                            frameInfo.channels,
+                            mp4state.samplerate) *
+                            (frameInfo.channels*(res_table[m_resolution]/8));
+
+                        module.outMod->Write(dsp_buffer, l);
+                        if (dsp_buffer) free(dsp_buffer);
+                    } else {
+                        module.outMod->Write(sample_buffer, l);
+                    }
                 }
             }
         } else {
