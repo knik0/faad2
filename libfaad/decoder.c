@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.24 2002/08/27 18:16:12 menno Exp $
+** $Id: decoder.c,v 1.25 2002/08/30 12:10:57 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -86,7 +86,11 @@ faacDecHandle FAADAPI faacDecOpen()
     hDecoder->drc = drc_init(REAL_CONST(1.0), REAL_CONST(1.0));
 
     /* build table for inverse quantization */
-    build_tables(hDecoder->iq_table);
+#if IQ_TABLE_SIZE && POW_TABLE_SIZE
+    build_tables(hDecoder->iq_table, hDecoder->pow2_table);
+#elif !POW_TABLE_SIZE
+    build_tables(hDecoder->iq_table, NULL);
+#endif
 
     return hDecoder;
 }
@@ -445,6 +449,11 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     real_t **lt_pred_stat  =  hDecoder->lt_pred_stat;
 #endif
     real_t *iq_table       =  hDecoder->iq_table;
+#if POW_TABLE_SIZE
+    real_t *pow2_table     =  hDecoder->pow2_table;
+#else
+    real_t *pow2_table     =  NULL;
+#endif 
     uint8_t *window_shape_prev = hDecoder->window_shape_prev;
     real_t **time_out      =  hDecoder->time_out;
     fb_info *fb            =  hDecoder->fb;
@@ -628,9 +637,18 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                 ics = &(syntax_elements[i]->ics2);
         }
 
+#ifdef FIXED_POINT
         /* inverse quantization and application of scalefactors */
         iquant_and_apply_scalefactors(ics, spec_coef[ch], spec_data[ch],
             iq_table, frame_len);
+#else
+        /* inverse quantization */
+        inverse_quantization(spec_coef[ch], spec_data[ch], iq_table,
+            frame_len);
+
+        /* apply scalefactors */
+        apply_scalefactors(ics, spec_coef[ch], pow2_table, frame_len);
+#endif
 
         /* deinterleave short block grouping */
         if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)

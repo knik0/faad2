@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.c,v 1.17 2002/08/27 18:16:12 menno Exp $
+** $Id: filtbank.c,v 1.18 2002/08/30 12:10:57 menno Exp $
 **/
 
 #include "common.h"
@@ -211,7 +211,7 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
 
     case LONG_START_SEQUENCE:
         imdct(fb, freq_in, transf_buf, 2*nlong);
-        for (i = 0; i < 0; i++)
+        for (i = 0; i < nlong; i++)
             time_out[i] = time_out[nlong+i] + MUL_R_C(transf_buf[i],window_long_prev[i]);
         for (i = 0; i < nflat_ls; i++)
             time_out[nlong+i] = transf_buf[nlong+i];
