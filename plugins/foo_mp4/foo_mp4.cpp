@@ -16,13 +16,19 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.15 2003/04/02 20:07:46 menno Exp $
+** $Id: foo_mp4.cpp,v 1.16 2003/04/02 20:36:53 menno Exp $
 **/
 
 #include <mp4.h>
 #include <faad.h>
 #include "pfc/pfc.h"
 #include "foobar2000/SDK/input.h"
+#include "foobar2000/SDK/console.h"
+#include "foobar2000/SDK/componentversion.h"
+
+DECLARE_COMPONENT_VERSION ( "FAAD2 - Freeware Advanced Audio Decoder",
+                           FAAD2_VERSION,
+                           "FAAD2 - Freeware Advanced Audio Decoder\n""http://www.audiocoding.com\n""\n""Copyright (C) 2002-2003 M. Bakker" );
 
 class input_mp4 : public input
 {
@@ -44,7 +50,11 @@ public:
         m_reader = r;
 
         hDecoder = faacDecOpen();
-        if (!hDecoder) return 0;
+        if (!hDecoder)
+        {
+            console::error("Failed to open FAAD2 library.", "foo_mp4");
+            return 0;
+        }
 
         config = faacDecGetCurrentConfiguration(hDecoder);
         config->outputFormat = FAAD_FMT_DOUBLE;
@@ -52,20 +62,36 @@ public:
 
         hFile = MP4ReadCb(0, open_cb, close_cb, read_cb, write_cb,
             setpos_cb, getpos_cb, filesize_cb, (void*)m_reader);
-        if (hFile == MP4_INVALID_FILE_HANDLE) return 0;
+        if (hFile == MP4_INVALID_FILE_HANDLE)
+        {
+            console::error("Failed to open MP4 file.", "foo_mp4");
+            return 0;
+        }
 
         track = GetAACTrack(hFile);
-        if (track < 1) return 0;
+        if (track < 1)
+        {
+            console::error("No valid AAC track found.", "foo_mp4");
+            return 0;
+        }
 
         buffer = NULL;
         buffer_size = 0;
         MP4GetTrackESConfiguration(hFile, track, &buffer, &buffer_size);
-        if (!buffer) return 0;
+        if (!buffer)
+        {
+            console::error("Unable to read track specific configuration.", "foo_mp4");
+            return 0;
+        }
 
         int rc = faacDecInit2(hDecoder, (unsigned char*)buffer, buffer_size,
             (unsigned long*)&samplerate, (unsigned char*)&channels);
         if (buffer) free(buffer);
-        if (rc < 0) return 0;
+        if (rc < 0)
+        {
+            console::error("Unable to initialise FAAD2 library.", "foo_mp4");
+            return 0;
+        }
 
         numSamples = MP4GetTrackNumberOfSamples(hFile, track);
         sampleId = 1;
@@ -108,7 +134,10 @@ public:
         void *sample_buffer;
 
         if (sampleId == MP4_INVALID_SAMPLE_ID)
+        {
+            console::error("Invalid sampleId.", "foo_mp4");
             return 0;
+        }
 
         do {
             buffer = NULL;
@@ -126,7 +155,11 @@ public:
         } while ((frameInfo.error == 0) && (frameInfo.samples == 0));
 
         if (frameInfo.error || (sampleId > numSamples))
+        {
+            if (frameInfo.error)
+                console::error(faacDecGetErrorMessage(frameInfo.error), "foo_mp4");
             return 0;
+        }
 
         chunk->data = (audio_sample*)sample_buffer;
         chunk->samples = frameInfo.samples/frameInfo.channels;
@@ -145,7 +178,11 @@ public:
         if (hFile == MP4_INVALID_FILE_HANDLE) return 0;
 
         track = GetAACTrack(hFile);
-        if (track < 1) return 0;
+        if (track < 1)
+        {
+            console::error("No valid AAC track found.", "foo_mp4");
+            return 0;
+        }
 
         MP4TagDelete(hFile, track);
 
@@ -194,6 +231,11 @@ public:
             track, duration, 0);
 
         return 1;
+    }
+    
+    virtual int is_our_content_type(const char *url, const char *type)
+    {
+        return !strcmp(type, "audio/mp4") || !strcmp(type, "audio/x-mp4");
     }
 
 private:

@@ -124,6 +124,14 @@ SOURCE=.\foobar2000\SDK\component.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\foobar2000\SDK\componentversion.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\foobar2000\SDK\console.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\pfc\critsec.h
 # End Source File
 # Begin Source File
@@ -176,11 +184,19 @@ SOURCE=.\foobar2000\SDK\playlist_entry.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\pfc\profiler.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\pfc\ptr_list.h
 # End Source File
 # Begin Source File
 
 SOURCE=.\foobar2000\SDK\reader.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\foobar2000\SDK\reader_helper.h
 # End Source File
 # Begin Source File
 
