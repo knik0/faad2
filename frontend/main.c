@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.67 2003/12/11 18:32:58 menno Exp $
+** $Id: main.c,v 1.68 2003/12/17 14:43:15 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -1194,8 +1194,8 @@ int main(int argc, char *argv[])
     {
 #ifdef _WIN32
         end = GetTickCount();
-        fprintf(stderr, "Decoding %s took: %d sec.\n", aacFileName,
-            (end-begin)/1000);
+        fprintf(stderr, "Decoding %s took: %5.2f sec.\n", aacFileName,
+            (float)(end-begin)/1000.0);
         SetConsoleTitle("FAAD");
 #else
         /* clock() grabs time since the start of the app but when we decode

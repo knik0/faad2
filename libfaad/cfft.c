@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: cfft.c,v 1.20 2003/11/17 19:40:11 menno Exp $
+** $Id: cfft.c,v 1.21 2003/12/17 14:43:16 menno Exp $
 **/
 
 /*
@@ -724,7 +724,7 @@ startloop:
     ifac[1] = nf;
 
 #ifndef FIXED_POINT
-    argh = (real_t)2.0*M_PI / (real_t)n;
+    argh = (real_t)2.0*(real_t)M_PI / (real_t)n;
     i = 0;
     l1 = 1;
 
@@ -767,13 +767,13 @@ startloop:
 
 cfft_info *cffti(uint16_t n)
 {
-    cfft_info *cfft = (cfft_info*)malloc(sizeof(cfft_info));
+    cfft_info *cfft = (cfft_info*)faad_malloc(sizeof(cfft_info));
 
     cfft->n = n;
-    cfft->work = (complex_t*)malloc(n*sizeof(complex_t));
+    cfft->work = (complex_t*)faad_malloc(n*sizeof(complex_t));
 
 #ifndef FIXED_POINT
-    cfft->tab = (complex_t*)malloc(n*sizeof(complex_t));
+    cfft->tab = (complex_t*)faad_malloc(n*sizeof(complex_t));
 
     cffti1(n, cfft->tab, cfft->ifac);
 #else
@@ -802,11 +802,11 @@ cfft_info *cffti(uint16_t n)
 
 void cfftu(cfft_info *cfft)
 {
-    if (cfft->work) free(cfft->work);
+    if (cfft->work) faad_free(cfft->work);
 #ifndef FIXED_POINT
-    if (cfft->tab) free(cfft->tab);
+    if (cfft->tab) faad_free(cfft->tab);
 #endif
 
-    if (cfft) free(cfft);
+    if (cfft) faad_free(cfft);
 }
 

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.h,v 1.12 2003/11/12 20:47:58 menno Exp $
+** $Id: sbr_dec.h,v 1.13 2003/12/17 14:43:16 menno Exp $
 **/
 
 #ifndef __SBR_DEC_H__
@@ -33,13 +33,9 @@ extern "C" {
 #endif
 
 
-/* MAX_NTSRHFG: maximum of number_time_slots * rate + HFGen. DRM: 15*2+32, else 16*2+8 */
-#ifdef DRM
-# define MAX_NTSRHFG 62
-#else
-# define MAX_NTSRHFG 40
-#endif
-#define MAX_NTSR     32 /* max number_time_slots * rate, ok for DRM and not DRM mode */
+/* MAX_NTSRHFG: maximum of number_time_slots * rate + HFGen. 16*2+8 */
+#define MAX_NTSRHFG 40
+#define MAX_NTSR    32 /* max number_time_slots * rate, ok for DRM and not DRM mode */
 
 
 typedef struct {
@@ -51,6 +47,9 @@ typedef struct {
     real_t *v[2];
     uint8_t v_index;
     uint8_t channels;
+#ifdef USE_SSE
+    void (*qmf_func)(void *a, void *b, void *c, void *d);
+#endif
 } qmfs_info;
 
 typedef struct
@@ -158,8 +157,8 @@ typedef struct
     uint8_t Is_DRM_SBR;
 #endif
 
-	uint16_t numTimeSlotsRate;
-	uint16_t numTimeSlots;
+	uint8_t numTimeSlotsRate;
+	uint8_t numTimeSlots;
 	uint8_t tHFGen;
 	uint8_t tHFAdj;
 

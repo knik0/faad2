@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.38 2003/11/12 20:47:57 menno Exp $
+** $Id: common.h,v 1.39 2003/12/17 14:43:16 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -33,6 +33,11 @@ extern "C" {
 #endif
 
 #define INLINE __inline
+#ifdef _WIN32
+#define ALIGN __declspec(align(16))
+#else
+#define ALIGN
+#endif
 
 #ifndef max
 #define max(a, b) (((a) > (b)) ? (a) : (b))
@@ -64,6 +69,8 @@ extern "C" {
 #define LTP_DEC
 /* Allow decoding of LD profile AAC */
 #define LD_DEC
+/* Allow decoding of scalable profiles */
+//#define SCALABLE_DEC
 /* Allow decoding of Digital Radio Mondiale (DRM) */
 //#define DRM
 
@@ -104,6 +111,13 @@ extern "C" {
 # endif
 #endif // FIXED_POINT
 
+#if ((defined(_WIN32) && !defined(_WIN32_WCE)) || ((__GNUC__ >= 3) && defined(i386)))
+#ifndef FIXED_POINT
+/* includes <xmmintrin.h> to enable SSE intrinsics */
+#define USE_SSE
+#endif
+#endif
+
 #ifdef FIXED_POINT
 #define SBR_DIV(A, B) (((int64_t)A << REAL_BITS)/B)
 #else
@@ -122,11 +136,6 @@ extern "C" {
 
 
 /* END COMPILE TIME DEFINITIONS */
-
-#ifndef FIXED_POINT
-#define POW_TABLE_SIZE 200
-#endif
-
 
 #if defined(_WIN32)
 
@@ -226,12 +235,6 @@ char *strchr(), *strrchr();
 
 #if defined(FIXED_POINT)
 
-  #ifdef HAS_MATHF_H
-    #include <mathf.h>
-  #else
-    #include <math.h>
-  #endif
-
   #include "fixed.h"
 
 #elif defined(USE_DOUBLE_PRECISION)
@@ -259,6 +262,10 @@ char *strchr(), *strrchr();
 #else /* Normal floating point operation */
 
   typedef float real_t;
+
+#ifdef USE_SSE
+# include <xmmintrin.h>
+#endif
 
   #define MUL_R(A,B) ((A)*(B))
   #define MUL_C(A,B) ((A)*(B))
@@ -353,16 +360,31 @@ typedef real_t complex_t[2];
 
 
 /* common functions */
-int32_t int_log2(int32_t val);
+uint8_t cpu_has_sse();
 uint32_t random_int(void);
-uint8_t get_sr_index(uint32_t samplerate);
-uint8_t max_pred_sfb(uint8_t sr_index);
-uint8_t max_tns_sfb(uint8_t sr_index, uint8_t object_type, uint8_t is_short);
-uint32_t get_sample_rate(uint8_t sr_index);
-int8_t can_decode_ot(uint8_t object_type);
+uint8_t get_sr_index(const uint32_t samplerate);
+uint8_t max_pred_sfb(const uint8_t sr_index);
+uint8_t max_tns_sfb(const uint8_t sr_index, const uint8_t object_type,
+                    const uint8_t is_short);
+uint32_t get_sample_rate(const uint8_t sr_index);
+int8_t can_decode_ot(const uint8_t object_type);
+
+void *faad_malloc(int32_t size);
+void faad_free(void *b);
+
+//#define PROFILE
+#ifdef PROFILE
+static int64_t faad_get_ts()
+{
+    __asm
+    {
+        rdtsc
+    }
+}
+#endif
 
 #ifndef M_PI
-#define M_PI 3.14159265358979323846f
+#define M_PI 3.14159265358979323846
 #endif
 #ifndef M_PI_2 /* PI/2 */
 #define M_PI_2 1.57079632679489661923

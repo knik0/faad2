@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.h,v 1.42 2003/11/12 20:47:59 menno Exp $
+** $Id: syntax.h,v 1.43 2003/12/17 14:43:17 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -155,7 +155,10 @@ static void adts_variable_header(adts_header *adts, bitfile *ld);
 static void adts_error_check(adts_header *adts, bitfile *ld);
 static uint8_t dynamic_range_info(bitfile *ld, drc_info *drc);
 static uint8_t excluded_channels(bitfile *ld, drc_info *drc);
-
+#ifdef SCALABLE_DEC
+static int8_t aac_scalable_main_header(faacDecHandle hDecoder, ic_stream *ics1, ic_stream *ics2,
+                                       bitfile *ld, uint8_t this_layer_stereo);
+#endif
 
 #ifdef __cplusplus
 }

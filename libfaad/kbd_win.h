@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: kbd_win.h,v 1.11 2003/11/12 20:47:58 menno Exp $
+** $Id: kbd_win.h,v 1.12 2003/12/17 14:43:16 menno Exp $
 **/
 
 #ifndef __KBD_WIN_H__
@@ -37,7 +37,7 @@ extern "C" {
 #pragma warning(disable:4244)
 #endif
 
-real_t kbd_long_1024[] =
+ALIGN static const real_t kbd_long_1024[] =
 {
     FRAC_CONST(0.00029256153896361),
     FRAC_CONST(0.00042998567353047),
@@ -1066,7 +1066,7 @@ real_t kbd_long_1024[] =
 };
 
 #ifdef ALLOW_SMALL_FRAMELENGTH
-real_t kbd_long_960[] = {
+ALIGN static const real_t kbd_long_960[] = {
     FRAC_CONST(0.0003021562530949),
     FRAC_CONST(0.0004452267024786),
     FRAC_CONST(0.0005674947527496),
@@ -2030,7 +2030,7 @@ real_t kbd_long_960[] = {
 };
 #endif
 
-real_t kbd_short_128[] =
+ALIGN static const real_t kbd_short_128[] =
 {
     FRAC_CONST(4.3795702929468881e-005),
     FRAC_CONST(0.00011867384265436617),
@@ -2163,7 +2163,7 @@ real_t kbd_short_128[] =
 };
 
 #ifdef ALLOW_SMALL_FRAMELENGTH
-real_t kbd_short_120[] =
+ALIGN static const real_t kbd_short_120[] =
 {
     FRAC_CONST(0.0000452320086910),
     FRAC_CONST(0.0001274564692111),

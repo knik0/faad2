@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfgen.c,v 1.10 2003/11/12 20:47:58 menno Exp $
+** $Id: sbr_hfgen.c,v 1.11 2003/12/17 14:43:16 menno Exp $
 **/
 
 /* High Frequency generation */
@@ -44,25 +44,16 @@ void hf_generation(sbr_info *sbr, const qmf_t Xlow[MAX_NTSRHFG][32],
                    ,uint8_t ch)
 {
     uint8_t l, i, x;
-    uint8_t offset, first, last;
-    complex_t alpha_0[64], alpha_1[64];
+    ALIGN complex_t alpha_0[64], alpha_1[64];
 #ifdef SBR_LOW_POWER
-    real_t rxx[64];
+    ALIGN real_t rxx[64];
 #endif
 
-#ifdef DRM
-    if (sbr->Is_DRM_SBR)
-    {
-        offset = sbr->tHFGen;
-        first = 0;
-        last = sbr->numTimeSlotsRate;
-    } else
-#endif
-    {
-        offset = sbr->tHFAdj;
-        first = sbr->t_E[ch][0];
-        last = sbr->t_E[ch][sbr->L_E[ch]];
-    }
+    uint8_t offset = sbr->tHFAdj;
+    uint8_t first = sbr->t_E[ch][0];
+    uint8_t last = sbr->t_E[ch][sbr->L_E[ch]];
+
+//    printf("%d %d\n", first, last);
 
     calc_chirp_factors(sbr, ch);
 
@@ -113,7 +104,6 @@ void hf_generation(sbr_info *sbr, const qmf_t Xlow[MAX_NTSRHFG][32],
 
             bw = sbr->bwArray[ch][g];
             bw2 = MUL_C(bw, bw);
-
 
             /* do the patching */
             /* with or without filtering */
@@ -187,23 +177,14 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac,
 {
     real_t r01 = 0, r02 = 0, r11 = 0;
     int8_t j;
-    uint8_t offset;
+    uint8_t offset = sbr->tHFAdj;
     const real_t rel = 1 / (1 + 1e-6f);
-
-#ifdef DRM
-    if (sbr->Is_DRM_SBR)
-        offset = sbr->tHFGen;
-    else
-#endif
-    {
-        offset = sbr->tHFAdj;
-    }
 
     for (j = offset; j < len + offset; j++)
     {
-        RE(ac->r01) += QMF_RE(buffer[j][bd]) * QMF_RE(buffer[j-1][bd]);
-        RE(ac->r02) += QMF_RE(buffer[j][bd]) * QMF_RE(buffer[j-2][bd]);
-        RE(ac->r11) += QMF_RE(buffer[j-1][bd]) * QMF_RE(buffer[j-1][bd]);
+        r01 += QMF_RE(buffer[j][bd]) * QMF_RE(buffer[j-1][bd]);
+        r02 += QMF_RE(buffer[j][bd]) * QMF_RE(buffer[j-2][bd]);
+        r11 += QMF_RE(buffer[j-1][bd]) * QMF_RE(buffer[j-1][bd]);
     }
     RE(ac->r12) = r01 -
         QMF_RE(buffer[len+offset-1][bd]) * QMF_RE(buffer[len+offset-2][bd]) +
@@ -224,16 +205,8 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, const qmf_t buffer[M
     real_t r01r = 0, r01i = 0, r02r = 0, r02i = 0, r11r = 0;
     const real_t rel = 1 / (1 + 1e-6f);
     int8_t j;
-    uint8_t offset;
+    uint8_t offset = sbr->tHFAdj;
 
-#ifdef DRM
-    if (sbr->Is_DRM_SBR)
-        offset = sbr->tHFGen;
-    else
-#endif
-    {
-        offset = sbr->tHFAdj;
-    }
 
     for (j = offset; j < len + offset; j++)
     {
@@ -283,14 +256,7 @@ static void calc_prediction_coef(sbr_info *sbr, const qmf_t Xlow[MAX_NTSRHFG][32
 
     for (k = 1; k < sbr->f_master[0]; k++)
     {
-#ifdef DRM
-        if (sbr->Is_DRM_SBR)
-            auto_correlation(sbr, &ac, Xlow, k, 30);
-        else
-#endif
-        {
-            auto_correlation(sbr, &ac, Xlow, k, 38);
-        }
+        auto_correlation(sbr, &ac, Xlow, k, sbr->numTimeSlotsRate + 6);
 
 #ifdef SBR_LOW_POWER
         if (ac.det == 0)
@@ -316,7 +282,7 @@ static void calc_prediction_coef(sbr_info *sbr, const qmf_t Xlow[MAX_NTSRHFG][32
         }
 
         /* reflection coefficient */
-        if (RE(ac.r11) == REAL_CONST(0.0))
+        if (RE(ac.r11) == 0)
         {
             rxx[k] = REAL_CONST(0.0);
         } else {
@@ -402,6 +368,7 @@ static void calc_aliasing_degree(sbr_info *sbr, real_t *rxx, real_t *deg)
 }
 #endif
 
+/* FIXED POINT: bwArray = COEF */
 static real_t mapNewBw(uint8_t invf_mode, uint8_t invf_mode_prev)
 {
     switch (invf_mode)
@@ -426,6 +393,7 @@ static real_t mapNewBw(uint8_t invf_mode, uint8_t invf_mode_prev)
     }
 }
 
+/* FIXED POINT: bwArray = COEF */
 static void calc_chirp_factors(sbr_info *sbr, uint8_t ch)
 {
     uint8_t i;
@@ -435,9 +403,9 @@ static void calc_chirp_factors(sbr_info *sbr, uint8_t ch)
         sbr->bwArray[ch][i] = mapNewBw(sbr->bs_invf_mode[ch][i], sbr->bs_invf_mode_prev[ch][i]);
 
         if (sbr->bwArray[ch][i] < sbr->bwArray_prev[ch][i])
-            sbr->bwArray[ch][i] = MUL_C(COEF_CONST(0.75), sbr->bwArray[ch][i]) + MUL_C(COEF_CONST(0.25), sbr->bwArray_prev[ch][i]);
+            sbr->bwArray[ch][i] = MUL_F(sbr->bwArray[ch][i], FRAC_CONST(0.75)) + MUL_F(sbr->bwArray_prev[ch][i], FRAC_CONST(0.25));
         else
-            sbr->bwArray[ch][i] = MUL_C(COEF_CONST(0.90625), sbr->bwArray[ch][i]) + MUL_C(COEF_CONST(0.09375), sbr->bwArray_prev[ch][i]);
+            sbr->bwArray[ch][i] = MUL_F(sbr->bwArray[ch][i], FRAC_CONST(0.90625)) + MUL_F(sbr->bwArray_prev[ch][i], FRAC_CONST(0.09375));
 
         if (sbr->bwArray[ch][i] < COEF_CONST(0.015625))
             sbr->bwArray[ch][i] = COEF_CONST(0.0);
@@ -456,7 +424,9 @@ static void patch_construction(sbr_info *sbr)
     uint8_t odd, sb;
     uint8_t msb = sbr->k0;
     uint8_t usb = sbr->kx;
-    uint8_t goalSb = (uint8_t)(2.048e6/sbr->sample_rate + 0.5);
+    uint8_t goalSbTab[] = { 21, 23, 43, 46, 64, 85, 93, 128, 0, 0, 0 };
+    /* (uint8_t)(2.048e6/sbr->sample_rate + 0.5); */
+    uint8_t goalSb = goalSbTab[get_sr_index(sbr->sample_rate)];
 
     sbr->noPatches = 0;
 

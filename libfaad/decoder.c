@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.82 2003/11/12 20:47:57 menno Exp $
+** $Id: decoder.c,v 1.83 2003/12/17 14:43:16 menno Exp $
 **/
 
 #include "common.h"
@@ -85,7 +85,7 @@ faacDecHandle FAADAPI faacDecOpen()
     uint8_t i;
     faacDecHandle hDecoder = NULL;
 
-    if ((hDecoder = (faacDecHandle)malloc(sizeof(faacDecStruct))) == NULL)
+    if ((hDecoder = (faacDecHandle)faad_malloc(sizeof(faacDecStruct))) == NULL)
         return NULL;
 
     memset(hDecoder, 0, sizeof(faacDecStruct));
@@ -135,15 +135,13 @@ faacDecHandle FAADAPI faacDecOpen()
 
     hDecoder->drc = drc_init(REAL_CONST(1.0), REAL_CONST(1.0));
 
-#if POW_TABLE_SIZE
-    hDecoder->pow2_table = (real_t*)malloc(POW_TABLE_SIZE*sizeof(real_t));
-    if (!hDecoder->pow2_table)
+#ifdef USE_SSE
+    if (cpu_has_sse())
     {
-        free(hDecoder);
-        hDecoder = NULL;
-        return hDecoder;
+        hDecoder->apply_sf_func = apply_scalefactors_sse;
+    } else {
+        hDecoder->apply_sf_func = apply_scalefactors;
     }
-    build_tables(hDecoder->pow2_table);
 #endif
 
     return hDecoder;
@@ -407,32 +405,32 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
     hDecoder->fb = filter_bank_init(hDecoder->frameLength);
 
     /* Take care of buffers */
-    if (hDecoder->sample_buffer) free(hDecoder->sample_buffer);
+    if (hDecoder->sample_buffer) faad_free(hDecoder->sample_buffer);
     hDecoder->sample_buffer = NULL;
 
     for (i = 0; i < MAX_CHANNELS; i++)
     {
         hDecoder->window_shape_prev[i] = 0;
 
-        if (hDecoder->time_out[i]) free(hDecoder->time_out[i]);
+        if (hDecoder->time_out[i]) faad_free(hDecoder->time_out[i]);
         hDecoder->time_out[i] = NULL;
 #ifdef SBR_DEC
-        if (hDecoder->time_out2[i]) free(hDecoder->time_out2[i]);
+        if (hDecoder->time_out2[i]) faad_free(hDecoder->time_out2[i]);
         hDecoder->time_out2[i] = NULL;
 #endif
 #ifdef SSR_DEC
-        if (hDecoder->ssr_overlap[i]) free(hDecoder->ssr_overlap[i]);
+        if (hDecoder->ssr_overlap[i]) faad_free(hDecoder->ssr_overlap[i]);
         hDecoder->ssr_overlap[i] = NULL;
-        if (hDecoder->prev_fmd[i]) free(hDecoder->prev_fmd[i]);
+        if (hDecoder->prev_fmd[i]) faad_free(hDecoder->prev_fmd[i]);
         hDecoder->prev_fmd[i] = NULL;
 #endif
 #ifdef MAIN_DEC
-        if (hDecoder->pred_stat[i]) free(hDecoder->pred_stat[i]);
+        if (hDecoder->pred_stat[i]) faad_free(hDecoder->pred_stat[i]);
         hDecoder->pred_stat[i] = NULL;
 #endif
 #ifdef LTP_DEC
         hDecoder->ltp_lag[i] = 0;
-        if (hDecoder->lt_pred_stat[i]) free(hDecoder->lt_pred_stat[i]);
+        if (hDecoder->lt_pred_stat[i]) faad_free(hDecoder->lt_pred_stat[i]);
         hDecoder->lt_pred_stat[i] = NULL;
 #endif
     }
@@ -448,21 +446,29 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
     if (hDecoder == NULL)
         return;
 
+#ifdef PROFILE
+    printf("AAC decoder total:  %I64d cycles\n", hDecoder->cycles);
+    printf("requant:            %I64d cycles\n", hDecoder->requant_cycles);
+    printf("spectral_data:      %I64d cycles\n", hDecoder->spectral_cycles);
+    printf("scalefactors:       %I64d cycles\n", hDecoder->scalefac_cycles);
+    printf("output:             %I64d cycles\n", hDecoder->output_cycles);
+#endif
+
     for (i = 0; i < MAX_CHANNELS; i++)
     {
-        if (hDecoder->time_out[i]) free(hDecoder->time_out[i]);
+        if (hDecoder->time_out[i]) faad_free(hDecoder->time_out[i]);
 #ifdef SBR_DEC
-        if (hDecoder->time_out2[i]) free(hDecoder->time_out2[i]);
+        if (hDecoder->time_out2[i]) faad_free(hDecoder->time_out2[i]);
 #endif
 #ifdef SSR_DEC
-        if (hDecoder->ssr_overlap[i]) free(hDecoder->ssr_overlap[i]);
-        if (hDecoder->prev_fmd[i]) free(hDecoder->prev_fmd[i]);
+        if (hDecoder->ssr_overlap[i]) faad_free(hDecoder->ssr_overlap[i]);
+        if (hDecoder->prev_fmd[i]) faad_free(hDecoder->prev_fmd[i]);
 #endif
 #ifdef MAIN_DEC
-        if (hDecoder->pred_stat[i]) free(hDecoder->pred_stat[i]);
+        if (hDecoder->pred_stat[i]) faad_free(hDecoder->pred_stat[i]);
 #endif
 #ifdef LTP_DEC
-        if (hDecoder->lt_pred_stat[i]) free(hDecoder->lt_pred_stat[i]);
+        if (hDecoder->lt_pred_stat[i]) faad_free(hDecoder->lt_pred_stat[i]);
 #endif
     }
 
@@ -475,13 +481,7 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
 
     drc_end(hDecoder->drc);
 
-#ifndef FIXED_POINT
-#if POW_TABLE_SIZE
-    if (hDecoder->pow2_table) free(hDecoder->pow2_table);
-#endif
-#endif
-
-    if (hDecoder->sample_buffer) free(hDecoder->sample_buffer);
+    if (hDecoder->sample_buffer) faad_free(hDecoder->sample_buffer);
 
 #ifdef SBR_DEC
     for (i = 0; i < 32; i++)
@@ -491,7 +491,7 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
     }
 #endif
 
-    if (hDecoder) free(hDecoder);
+    if (hDecoder) faad_free(hDecoder);
 }
 
 void FAADAPI faacDecPostSeekReset(faacDecHandle hDecoder, int32_t frame)
@@ -745,6 +745,10 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
     void *sample_buffer;
 
+#ifdef PROFILE
+    int64_t count = faad_get_ts();
+#endif
+
     /* safety checks */
     if ((hDecoder == NULL) || (hInfo == NULL) || (buffer == NULL))
     {
@@ -782,6 +786,13 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #ifdef DRM
     if (object_type == DRM_ER_LC)
     {
+        /* We do not support stereo right now */
+        if (hDecoder->channelConfiguration == 2)
+        {
+            hInfo->error = 8; // Throw CRC error
+            goto error;
+        }
+
         faad_getbits(&ld, 8
             DEBUGVAR(1,1,"faacDecDecode(): skip CRC"));
     }
@@ -804,7 +815,16 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #endif
 
     /* decode the complete bitstream */
-    raw_data_block(hDecoder, hInfo, &ld, pce, drc);
+#ifdef SCALABLE_DEC
+    if ((hDecoder->object_type == 6) || (hDecoder->object_type == DRM_ER_LC))
+    {
+        aac_scalable_main_element(hDecoder, hInfo, &ld, pce, drc);
+    } else {
+#endif
+        raw_data_block(hDecoder, hInfo, &ld, pce, drc);
+#ifdef SCALABLE_DEC
+    }
+#endif
 
     ch_ele = hDecoder->fr_ch_ele;
     channels = hDecoder->fr_channels;
@@ -841,7 +861,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             hDecoder->sbr[0] = sbrDecodeInit(hDecoder->frameLength, 1);
 
         /* Reverse bit reading of SBR data in DRM audio frame */
-        revbuffer = (uint8_t*)malloc(buffer_size*sizeof(uint8_t));
+        revbuffer = (uint8_t*)faad_malloc(buffer_size*sizeof(uint8_t));
         prevbufstart = revbuffer;
         pbufend = &buffer[buffer_size - 1];
         for (i = 0; i < buffer_size; i++)
@@ -922,7 +942,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         if ((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1))
             stride = 2 * stride;
 #endif
-        hDecoder->sample_buffer = malloc(frame_len*channels*stride);
+        hDecoder->sample_buffer = faad_malloc(frame_len*channels*stride);
     }
 
     sample_buffer = hDecoder->sample_buffer;
@@ -949,7 +969,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             /* Allocate space for SBR output */
             if (hDecoder->time_out2[ch] == NULL)
             {
-                hDecoder->time_out2[ch] = (real_t*)malloc(hDecoder->frameLength*2*sizeof(real_t));
+                hDecoder->time_out2[ch] = (real_t*)faad_malloc(hDecoder->frameLength*2*sizeof(real_t));
                 memset(hDecoder->time_out2[ch], 0, hDecoder->frameLength*2*sizeof(real_t));
             }
 
@@ -958,7 +978,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                 /* space for 2 channels needed */
                 if (hDecoder->time_out2[ch+1] == NULL)
                 {
-                    hDecoder->time_out2[ch+1] = (real_t*)malloc(hDecoder->frameLength*2*sizeof(real_t));
+                    hDecoder->time_out2[ch+1] = (real_t*)faad_malloc(hDecoder->frameLength*2*sizeof(real_t));
                     memset(hDecoder->time_out2[ch+1], 0, hDecoder->frameLength*2*sizeof(real_t));
                 }
 
@@ -1021,6 +1041,11 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     /* cleanup */
 #ifdef ANALYSIS
     fflush(stdout);
+#endif
+
+#ifdef PROFILE
+    count = faad_get_ts() - count;
+    hDecoder->cycles += count;
 #endif
 
     return sample_buffer;

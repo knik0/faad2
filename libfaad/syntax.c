@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.61 2003/11/12 20:47:59 menno Exp $
+** $Id: syntax.c,v 1.62 2003/12/17 14:43:16 menno Exp $
 **/
 
 /*
@@ -516,12 +516,8 @@ static uint8_t single_lfe_channel_element(faacDecHandle hDecoder, bitfile *ld,
     uint8_t retval = 0;
     element sce = {0};
     ic_stream *ics = &(sce.ics1);
-    int16_t spec_data[1024] = {0};
-#ifdef DRM
-    uint8_t result;
+    ALIGN int16_t spec_data[1024] = {0};
 
-    if (hDecoder->object_type != DRM_ER_LC)
-#endif
     sce.element_instance_tag = (uint8_t)faad_getbits(ld, LEN_TAG
         DEBUGVAR(1,38,"single_lfe_channel_element(): element_instance_tag"));
 
@@ -529,39 +525,9 @@ static uint8_t single_lfe_channel_element(faacDecHandle hDecoder, bitfile *ld,
     sce.channel = channel;
     sce.paired_channel = -1;
 
-#ifdef DRM
-    if (hDecoder->object_type == DRM_ER_LC)
-    {
-        individual_channel_stream(hDecoder, &sce, ld, ics, 0, spec_data);
-
-        if (ics->tns_data_present)
-            tns_data(ics, &(ics->tns), ld);
-
-        if ((result = faad_check_CRC( ld, faad_get_processed_bits(ld) - 8 )) > 0)
-            return result;
-
-        /* error resilient spectral data decoding */
-        if ((result = reordered_spectral_data(hDecoder, ics, ld, spec_data)) > 0)
-            return result;
-
-        /* pulse coding reconstruction */
-        if (ics->pulse_data_present)
-        {
-            if (ics->window_sequence != EIGHT_SHORT_SEQUENCE)
-            {
-                if ((result = pulse_decode(ics, spec_data, hDecoder->frameLength)) > 0)
-                    return result;
-            } else {
-                return 2; /* pulse coding not allowed for short blocks */
-            }
-        }
-    } else
-#endif
-    {
-        retval = individual_channel_stream(hDecoder, &sce, ld, ics, 0, spec_data);
-        if (retval > 0)
-            return retval;
-    }
+    retval = individual_channel_stream(hDecoder, &sce, ld, ics, 0, spec_data);
+    if (retval > 0)
+        return retval;
 
     /* noiseless coding is done, spectral reconstruction is done now */
     reconstruct_single_channel(hDecoder, ics, &sce, spec_data);
@@ -573,8 +539,8 @@ static uint8_t single_lfe_channel_element(faacDecHandle hDecoder, bitfile *ld,
 static uint8_t channel_pair_element(faacDecHandle hDecoder, bitfile *ld,
                                     uint8_t channels, uint8_t *tag)
 {
-    int16_t spec_data1[1024] = {0};
-    int16_t spec_data2[1024] = {0};
+    ALIGN int16_t spec_data1[1024] = {0};
+    ALIGN int16_t spec_data2[1024] = {0};
     element cpe = {0};
     ic_stream *ics1 = &(cpe.ics1);
     ic_stream *ics2 = &(cpe.ics2);
@@ -583,9 +549,6 @@ static uint8_t channel_pair_element(faacDecHandle hDecoder, bitfile *ld,
     cpe.channel        = channels;
     cpe.paired_channel = channels+1;
 
-#ifdef DRM
-    if (hDecoder->object_type != DRM_ER_LC)
-#endif
     cpe.element_instance_tag = (uint8_t)faad_getbits(ld, LEN_TAG
         DEBUGVAR(1,39,"channel_pair_element(): element_instance_tag"));
     *tag = cpe.element_instance_tag;
@@ -651,47 +614,6 @@ static uint8_t channel_pair_element(faacDecHandle hDecoder, bitfile *ld,
     {
         return result;
     }
-
-#ifdef DRM
-    if (hDecoder->object_type == DRM_ER_LC)
-    {
-        if (ics1->tns_data_present)
-            tns_data(ics1, &(ics1->tns), ld);
-
-        if (ics1->tns_data_present)
-            tns_data(ics2, &(ics2->tns), ld);
-
-        if ((result = faad_check_CRC( ld, faad_get_processed_bits(ld) - 8 )) > 0)
-            return result;
-
-        /* error resilient spectral data decoding */
-        if ((result = reordered_spectral_data(hDecoder, ics1, ld, spec_data1)) > 0)
-            return result;
-        if ((result = reordered_spectral_data(hDecoder, ics2, ld, spec_data2)) > 0)
-            return result;
-        /* pulse coding reconstruction */
-        if (ics1->pulse_data_present)
-        {
-            if (ics1->window_sequence != EIGHT_SHORT_SEQUENCE)
-            {
-                if ((result = pulse_decode(ics1, spec_data1, hDecoder->frameLength)) > 0)
-                    return result;
-            } else {
-                return 2; /* pulse coding not allowed for short blocks */
-            }
-        }
-        if (ics2->pulse_data_present)
-        {
-            if (ics2->window_sequence != EIGHT_SHORT_SEQUENCE)
-            {
-                if ((result = pulse_decode(ics2, spec_data2, hDecoder->frameLength)) > 0)
-                    return result;
-            } else {
-                return 2; /* pulse coding not allowed for short blocks */
-            }
-        }
-    }
-#endif
 
     /* noiseless coding is done, spectral reconstruction is done now */
     reconstruct_channel_pair(hDecoder, ics1, ics2, &cpe, spec_data1, spec_data2);
@@ -929,7 +851,7 @@ static uint16_t data_stream_element(faacDecHandle hDecoder, bitfile *ld)
 
     for (i = 0; i < count; i++)
     {
-        uint8_t data = faad_getbits(ld, LEN_BYTE
+        uint8_t data = (uint8_t)faad_getbits(ld, LEN_BYTE
             DEBUGVAR(1,64,"data_stream_element(): data_stream_byte"));
     }
 
@@ -1092,6 +1014,176 @@ static void gain_control_data(bitfile *ld, ic_stream *ics)
 }
 #endif
 
+#ifdef SCALABLE_DEC
+/* Table 4.4.13 ASME */
+void aac_scalable_main_element(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
+                               bitfile *ld, program_config *pce, drc_info *drc)
+{
+    uint8_t retval = 0;
+    uint8_t channels = hDecoder->fr_channels = 0;
+    uint8_t ch;
+    uint8_t this_layer_stereo = (hDecoder->channelConfiguration > 1) ? 1 : 0;
+    element cpe = {0};
+    ic_stream *ics1 = &(cpe.ics1);
+    ic_stream *ics2 = &(cpe.ics2);
+    int16_t *spec_data;
+    ALIGN int16_t spec_data1[1024] = {0};
+    ALIGN int16_t spec_data2[1024] = {0};
+
+    hDecoder->fr_ch_ele = 0;
+
+    hInfo->error = aac_scalable_main_header(hDecoder, ics1, ics2, ld, this_layer_stereo);
+    if (hInfo->error > 0)
+        return;
+
+    cpe.common_window = 1;
+    if (this_layer_stereo)
+        cpe.ele_id = ID_CPE;
+    else
+        cpe.ele_id = ID_SCE;
+
+    for (ch = 0; ch < (this_layer_stereo ? 2 : 1); ch++)
+    {
+        ic_stream *ics;
+        if (ch == 0)
+        {
+            ics = ics1;
+            spec_data = spec_data1;
+        } else {
+            ics = ics2;
+            spec_data = spec_data2;
+        }
+
+        hDecoder->internal_channel[channels+ch] = channels+ch;
+        hDecoder->channel_element[channels+ch] = hDecoder->fr_ch_ele;
+
+        hInfo->error = individual_channel_stream(hDecoder, &cpe, ld, ics, 1, spec_data);
+        if (hInfo->error > 0)
+            return;
+    }
+
+    if (this_layer_stereo)
+    {
+        reconstruct_channel_pair(hDecoder, ics1, ics2, &cpe, spec_data1, spec_data2);
+    } else {
+        reconstruct_single_channel(hDecoder, ics1, &cpe, spec_data1);
+    }
+
+    hDecoder->element_id[hDecoder->fr_ch_ele] = cpe.ele_id;
+
+    hDecoder->fr_channels += (this_layer_stereo ? 2 : 1);
+    hDecoder->fr_ch_ele++;
+
+    return;
+}
+
+/* Table 4.4.15 */
+static int8_t aac_scalable_main_header(faacDecHandle hDecoder, ic_stream *ics1, ic_stream *ics2,
+                                       bitfile *ld, uint8_t this_layer_stereo)
+{
+    uint8_t retval = 0;
+    uint8_t ch;
+    ic_stream *ics;
+
+    /* ics1->ics_reserved_bit = */ faad_get1bit(ld
+        DEBUGVAR(1,300,"aac_scalable_main_header(): ics_reserved_bits"));
+    ics1->window_sequence = (uint8_t)faad_getbits(ld, 2
+        DEBUGVAR(1,301,"aac_scalable_main_header(): window_sequence"));
+    ics1->window_shape = faad_get1bit(ld
+        DEBUGVAR(1,302,"aac_scalable_main_header(): window_shape"));
+
+    if (ics1->window_sequence == EIGHT_SHORT_SEQUENCE)
+    {
+        ics1->max_sfb = (uint8_t)faad_getbits(ld, 4
+            DEBUGVAR(1,303,"aac_scalable_main_header(): max_sfb (short)"));
+        ics1->scale_factor_grouping = (uint8_t)faad_getbits(ld, 7
+            DEBUGVAR(1,304,"aac_scalable_main_header(): scale_factor_grouping"));
+    } else {
+        ics1->max_sfb = (uint8_t)faad_getbits(ld, 6
+            DEBUGVAR(1,305,"aac_scalable_main_header(): max_sfb (long)"));
+    }
+
+    /* get the grouping information */
+    if ((retval = window_grouping_info(hDecoder, ics1)) > 0)
+        return retval;
+
+    /* should be an error */
+    /* check the range of max_sfb */
+    if (ics1->max_sfb > ics1->num_swb)
+        return 16;
+
+    if (this_layer_stereo)
+    {
+        ics1->ms_mask_present = (uint8_t)faad_getbits(ld, 2
+            DEBUGVAR(1,306,"aac_scalable_main_header(): ms_mask_present"));
+        if (ics1->ms_mask_present == 1)
+        {
+            uint8_t g, sfb;
+            for (g = 0; g < ics1->num_window_groups; g++)
+            {
+                for (sfb = 0; sfb < ics1->max_sfb; sfb++)
+                {
+                    ics1->ms_used[g][sfb] = faad_get1bit(ld
+                        DEBUGVAR(1,307,"aac_scalable_main_header(): faad_get1bit"));
+                }
+            }
+        }
+
+        memcpy(ics2, ics1, sizeof(ic_stream));
+    } else {
+        ics1->ms_mask_present = 0;
+    }
+
+    if (0)
+    {
+        faad_get1bit(ld
+            DEBUGVAR(1,308,"aac_scalable_main_header(): tns_channel_mono_layer"));
+    }
+
+    for (ch = 0; ch < (this_layer_stereo ? 2 : 1); ch++)
+    {
+        if (ch == 0)
+            ics = ics1;
+        else
+            ics = ics2;
+
+        if ( 1 /*!tvq_layer_pesent || (tns_aac_tvq_en[ch] == 1)*/)
+        {
+            if ((ics->tns_data_present = faad_get1bit(ld
+                DEBUGVAR(1,309,"aac_scalable_main_header(): tns_data_present"))) & 1)
+            {
+#ifdef DRM
+                /* different order of data units in DRM */
+                if (hDecoder->object_type != DRM_ER_LC)
+#endif
+                {
+                    tns_data(ics, &(ics->tns), ld);
+                }
+            }
+        }
+#if 0
+        if (0 /*core_flag || tvq_layer_pesent*/)
+        {
+            if ((ch==0) || ((ch==1) && (core_stereo || tvq_stereo))
+                diff_control_data();
+            if (mono_stereo_flag)
+                diff_control_data_lr();
+        } else {
+#endif
+            if ((ics->ltp.data_present = faad_get1bit(ld
+                DEBUGVAR(1,310,"aac_scalable_main_header(): ltp.data_present"))) & 1)
+            {
+                ltp_data(hDecoder, ics, &(ics->ltp), ld);
+            }
+#if 0
+        }
+#endif
+    }
+
+    return 0;
+}
+#endif
+
 /* Table 4.4.24 */
 static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
                                          bitfile *ld, ic_stream *ics, uint8_t scal_flag,
@@ -1182,16 +1274,18 @@ static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
             return result;
     }
 
-#ifdef DRM
-    if (hDecoder->object_type == DRM_ER_LC)
-        return 0;
-#endif
-
     if (hDecoder->object_type >= ER_OBJECT_START) 
     {
         if (ics->tns_data_present)
             tns_data(ics, &(ics->tns), ld);
     }
+
+#ifdef DRM
+    /* CRC check */
+    if (hDecoder->object_type == DRM_ER_LC)
+        if ((result = faad_check_CRC(ld, faad_get_processed_bits(ld) - 8)) > 0)
+            return result;
+#endif
 
     if (hDecoder->aacSpectralDataResilienceFlag)
     {
@@ -1415,20 +1509,32 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
 /* Table 4.4.26 */
 static uint8_t scale_factor_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld)
 {
+    uint8_t ret = 0;
+#ifdef PROFILE
+    int64_t count = faad_get_ts();
+#endif
+
 #ifdef ERROR_RESILIENCE
     if (!hDecoder->aacScalefactorDataResilienceFlag)
     {
 #endif
-        return decode_scale_factors(ics, ld);
+        ret = decode_scale_factors(ics, ld);
 #ifdef ERROR_RESILIENCE
     } else {
         /* In ER AAC the parameters for RVLC are seperated from the actual
            data that holds the scale_factors.
            Strangely enough, 2 parameters for HCR are put inbetween them.
         */
-        return rvlc_scale_factor_data(ics, ld);
+        ret = rvlc_scale_factor_data(ics, ld);
     }
 #endif
+
+#ifdef PROFILE
+    count = faad_get_ts() - count;
+    hDecoder->scalefac_cycles += count;
+#endif
+
+    return ret;
 }
 
 /* Table 4.4.27 */
@@ -1492,6 +1598,8 @@ static void ltp_data(faacDecHandle hDecoder, ic_stream *ics, ltp_info *ltp, bitf
 {
     uint8_t sfb, w;
 
+    ltp->lag = 0;
+
 #ifdef LD_DEC
     if (hDecoder->object_type == LD)
     {
@@ -1510,6 +1618,11 @@ static void ltp_data(faacDecHandle hDecoder, ic_stream *ics, ltp_info *ltp, bitf
 #ifdef LD_DEC
     }
 #endif
+
+    /* Check length of lag */
+    if (ltp->lag > (hDecoder->frameLength << 1))
+        ltp->lag = 0; // FIXME: Error handling
+
     ltp->coef = (uint8_t)faad_getbits(ld, 3
         DEBUGVAR(1,82,"ltp_data(): coef"));
 
@@ -1554,6 +1667,10 @@ static uint8_t spectral_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld
     uint8_t result;
     uint16_t nshort = hDecoder->frameLength/8;
 
+#ifdef PROFILE
+    int64_t count = faad_get_ts();
+#endif
+
     sp = spectral_data;
     /*memset(sp, 0, hDecoder->frameLength*sizeof(int16_t));*/
 
@@ -1595,6 +1712,11 @@ static uint8_t spectral_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld
         groups += ics->window_group_length[g];
     }
 
+#ifdef PROFILE
+    count = faad_get_ts() - count;
+    hDecoder->spectral_cycles += count;
+#endif
+
     return 0;
 }
 
@@ -1624,7 +1746,7 @@ static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count)
         }
         return count;
     case EXT_DATA_ELEMENT:
-        data_element_version = faad_getbits(ld, 4
+        data_element_version = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,400,"extension_payload(): data_element_version"));
         switch (data_element_version)
         {
@@ -1632,7 +1754,7 @@ static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count)
             loopCounter = 0;
             dataElementLength = 0;
             do {
-                dataElementLengthPart = faad_getbits(ld, 8
+                dataElementLengthPart = (uint8_t)faad_getbits(ld, 8
                     DEBUGVAR(1,401,"extension_payload(): dataElementLengthPart"));
                 dataElementLength += dataElementLengthPart;
                 loopCounter++;

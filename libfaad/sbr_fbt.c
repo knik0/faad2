@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_fbt.c,v 1.7 2003/11/12 20:47:58 menno Exp $
+** $Id: sbr_fbt.c,v 1.8 2003/12/17 14:43:16 menno Exp $
 **/
 
 /* Calculate frequency band tables */
@@ -98,9 +98,9 @@ uint8_t qmf_start_channel(uint8_t bs_start_freq, uint8_t bs_samplerate_mode,
     }
 }
 
-static int32_t longcmp(const void *a, const void *b)
+static int longcmp(const void *a, const void *b)
 {
-    return ((int32_t)(*(int32_t*)a - *(int32_t*)b));
+    return ((int)(*(int32_t*)a - *(int32_t*)b));
 }
 
 /* calculate the stop QMF channel for the master frequency band table */
@@ -259,7 +259,7 @@ static int32_t find_bands(uint8_t warp, uint8_t bands, uint8_t a0, uint8_t a1)
 
 static real_t find_initial_power(uint8_t bands, uint8_t a0, uint8_t a1)
 {
-    return pow((real_t)a1/(real_t)a0, 1.0/(real_t)bands);
+    return (real_t)pow((real_t)a1/(real_t)a0, 1.0/(real_t)bands);
 }
 
 /*

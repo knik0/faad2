@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: bits.c,v 1.28 2003/11/12 20:47:57 menno Exp $
+** $Id: bits.c,v 1.29 2003/12/17 14:43:16 menno Exp $
 **/
 
 #include "common.h"
@@ -49,7 +49,7 @@ void faad_initbits(bitfile *ld, const void *_buffer, const uint32_t buffer_size)
         return;
     }
 
-    ld->buffer = malloc((buffer_size+12)*sizeof(uint8_t));
+    ld->buffer = faad_malloc((buffer_size+12)*sizeof(uint8_t));
     memset(ld->buffer, 0, (buffer_size+12)*sizeof(uint8_t));
     memcpy(ld->buffer, _buffer, buffer_size*sizeof(uint8_t));
 
@@ -74,7 +74,7 @@ void faad_initbits(bitfile *ld, const void *_buffer, const uint32_t buffer_size)
 void faad_endbits(bitfile *ld)
 {
     if (ld)
-        if (ld->buffer) free(ld->buffer);
+        if (ld->buffer) faad_free(ld->buffer);
 }
 
 uint32_t faad_get_processed_bits(bitfile *ld)
@@ -140,7 +140,7 @@ uint8_t *faad_getbitbuffer(bitfile *ld, uint32_t bits
     uint16_t bytes = (uint16_t)bits / 8;
     uint8_t remainder = (uint8_t)bits % 8;
 
-    uint8_t *buffer = (uint8_t*)malloc((bytes+1)*sizeof(uint8_t));
+    uint8_t *buffer = (uint8_t*)faad_malloc((bytes+1)*sizeof(uint8_t));
 
     for (i = 0; i < bytes; i++)
     {

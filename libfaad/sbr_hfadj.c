@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfadj.c,v 1.8 2003/11/12 20:47:58 menno Exp $
+** $Id: sbr_hfadj.c,v 1.9 2003/12/17 14:43:16 menno Exp $
 **/
 
 /* High Frequency adjustment */
@@ -43,7 +43,7 @@ void hf_adjustment(sbr_info *sbr, qmf_t Xsbr[MAX_NTSRHFG][64]
 #endif
                    ,uint8_t ch)
 {
-    sbr_hfadj_info adj = {0};
+    ALIGN sbr_hfadj_info adj = {0};
 
     map_noise_data(sbr, &adj, ch);
     map_sinusoids(sbr, &adj, ch);
@@ -262,21 +262,21 @@ static void estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
     }
 }
 
+
 #define EPS (1e-12)
 
 #define ONE (1)
-
 
 static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 {
     static real_t limGain[] = { 0.5, 1.0, 2.0, 1e10 };
     uint8_t m, l, k, i;
 
-    real_t Q_M_lim[64];
-    real_t G_lim[64];
-    real_t G_boost;
-    real_t S_M[64];
-    uint8_t table_map_res_to_m[64];
+    ALIGN real_t Q_M_lim[64];
+    ALIGN real_t G_lim[64];
+    ALIGN real_t G_boost;
+    ALIGN real_t S_M[64];
+    ALIGN uint8_t table_map_res_to_m[64];
 
 
     for (l = 0; l < sbr->L_E[ch]; l++)
@@ -599,10 +599,9 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
                     + MUL_F(Q_filt, IM(V[fIndexNoise]));
 #endif
 
-
-                if (adj->S_index_mapped[m][l])
+                //if (adj->S_index_mapped[m][l])
                 {
-                    int8_t rev = ((m + sbr->kx) & 1) ? -1 : 1;
+                    int8_t rev = (((m + sbr->kx) & 1) ? -1 : 1);
                     QMF_RE(psi) = MUL_R(adj->S_M_boost[l][m], phi_re[fIndexSine]);
                     QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) += QMF_RE(psi);
 
@@ -616,9 +615,12 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
                     if (m == 0)
                     {
                         QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx - 1]) -=
-                            (rev * MUL_C(MUL_R(adj->S_M_boost[l][0], phi_re[i_plus1]), COEF_CONST(0.00815)));
-                        QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
-                            (rev * MUL_C(MUL_R(adj->S_M_boost[l][1], phi_re[i_plus1]), COEF_CONST(0.00815)));
+                            (-1*rev * MUL_C(MUL_R(adj->S_M_boost[l][0], phi_re[i_plus1]), COEF_CONST(0.00815)));
+                        if(m < sbr->M - 1)
+                        {
+                            QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
+                                (rev * MUL_C(MUL_R(adj->S_M_boost[l][1], phi_re[i_plus1]), COEF_CONST(0.00815)));
+                        }
                     }
                     if ((m > 0) && (m < sbr->M - 1) && (sinusoids < 16))
                     {
@@ -627,15 +629,22 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
                         QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
                             (rev * MUL_C(MUL_R(adj->S_M_boost[l][m + 1], phi_re[i_plus1]), COEF_CONST(0.00815)));
                     }
-                    if ((m == sbr->M - 1) && (sinusoids < 16) && (m + sbr->kx + 1 < 63))
+                    if ((m == sbr->M - 1) && (sinusoids < 16))
                     {
-                        QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
-                            (rev * MUL_C(MUL_R(adj->S_M_boost[l][m - 1], phi_re[i_min1]), COEF_CONST(0.00815)));
-                        QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx + 1]) -=
-                            (rev * MUL_C(MUL_R(adj->S_M_boost[l][m + 1], phi_re[i_min1]), COEF_CONST(0.00815)));
+                        if (m > 0)
+                        {
+                            QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
+                                (rev * MUL_C(MUL_R(adj->S_M_boost[l][m - 1], phi_re[i_min1]), COEF_CONST(0.00815)));
+                        }
+                        if (m + sbr->kx < 64)
+                        {
+                            QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx + 1]) -=
+                                (-1*rev * MUL_C(MUL_R(adj->S_M_boost[l][m], phi_re[i_min1]), COEF_CONST(0.00815)));
+                        }
                     }
 
-                    sinusoids++;
+                    if (adj->S_M_boost[l][m] != 0)
+                        sinusoids++;
 #endif
                 }
             }

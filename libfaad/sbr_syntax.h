@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_syntax.h,v 1.12 2003/11/12 20:47:58 menno Exp $
+** $Id: sbr_syntax.h,v 1.13 2003/12/17 14:43:16 menno Exp $
 **/
 
 #ifndef __SBR_SYNTAX_H__
@@ -34,10 +34,6 @@ extern "C" {
 
 #include "bits.h"
 
-#ifdef DRM
-# define T_HFGEN_DRM 32
-# define T_HFADJ_DRM 0
-#endif
 #define T_HFGEN 8
 #define T_HFADJ 2
 
@@ -56,7 +52,7 @@ extern "C" {
 #define NO_TIME_SLOTS     16
 #define RATE              2
 
-#define NOISE_FLOOR_OFFSET 6.0
+#define NOISE_FLOOR_OFFSET 6
 
 
 uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr);

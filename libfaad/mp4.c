@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4.c,v 1.24 2003/11/12 20:47:58 menno Exp $
+** $Id: mp4.c,v 1.25 2003/12/17 14:43:16 menno Exp $
 **/
 
 #include "common.h"
@@ -58,7 +58,11 @@ static uint8_t ObjectTypesTable[32] = {
 #else
     0, /*  5 SBR */
 #endif
+#ifdef SCALABLE_DEC
+    1, /*  6 AAC Scalable */
+#else
     0, /*  6 AAC Scalable */
+#endif
     0, /*  7 TwinVQ */
     0, /*  8 CELP */
     0, /*  9 HVXC */
@@ -79,7 +83,11 @@ static uint8_t ObjectTypesTable[32] = {
 #else
     0, /* 19 ER AAC LTP */
 #endif
+#ifdef SCALABLE_DEC
+    1, /* 20 ER AAC scalable */
+#else
     0, /* 20 ER AAC scalable */
+#endif
     0, /* 21 ER TwinVQ */
     0, /* 22 ER BSAC */
 #ifdef LD_DEC

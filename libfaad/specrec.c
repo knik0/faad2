@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.33 2003/11/12 20:47:59 menno Exp $
+** $Id: specrec.c,v 1.34 2003/12/17 14:43:16 menno Exp $
 **/
 
 /*
@@ -36,6 +36,7 @@
 #include "structs.h"
 
 #include <string.h>
+#include <stdlib.h>
 #include "specrec.h"
 #include "syntax.h"
 #include "iq_table.h"
@@ -50,45 +51,46 @@
 #include "ssr_fb.h"
 #endif
 
+
 #ifdef LD_DEC
-static uint8_t num_swb_512_window[] =
+ALIGN static const uint8_t num_swb_512_window[] =
 {
     0, 0, 0, 36, 36, 37, 31, 31, 0, 0, 0, 0
 };
-static uint8_t num_swb_480_window[] =
+ALIGN static const uint8_t num_swb_480_window[] =
 {
     0, 0, 0, 35, 35, 37, 30, 30, 0, 0, 0, 0
 };
 #endif
 
-static uint8_t num_swb_960_window[] =
+ALIGN static const uint8_t num_swb_960_window[] =
 {
     40, 40, 45, 49, 49, 49, 46, 46, 42, 42, 42, 40
 };
 
-static uint8_t num_swb_1024_window[] =
+ALIGN static const uint8_t num_swb_1024_window[] =
 {
     41, 41, 47, 49, 49, 51, 47, 47, 43, 43, 43, 40
 };
 
-static uint8_t num_swb_128_window[] =
+ALIGN static const uint8_t num_swb_128_window[] =
 {
     12, 12, 12, 14, 14, 14, 15, 15, 15, 15, 15, 15
 };
 
-static uint16_t swb_offset_1024_96[] =
+ALIGN static const uint16_t swb_offset_1024_96[] =
 {
     0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56,
     64, 72, 80, 88, 96, 108, 120, 132, 144, 156, 172, 188, 212, 240,
     276, 320, 384, 448, 512, 576, 640, 704, 768, 832, 896, 960, 1024
 };
 
-static uint16_t swb_offset_128_96[] =
+ALIGN static const uint16_t swb_offset_128_96[] =
 {
     0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 92, 128
 };
 
-static uint16_t swb_offset_1024_64[] =
+ALIGN static const uint16_t swb_offset_1024_64[] =
 {
     0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56,
     64, 72, 80, 88, 100, 112, 124, 140, 156, 172, 192, 216, 240, 268,
@@ -96,13 +98,12 @@ static uint16_t swb_offset_1024_64[] =
     864, 904, 944, 984, 1024
 };
 
-static uint16_t swb_offset_128_64[] =
+ALIGN static const uint16_t swb_offset_128_64[] =
 {
     0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 92, 128
 };
 
-
-static uint16_t swb_offset_1024_48[] =
+ALIGN static const uint16_t swb_offset_1024_48[] =
 {
     0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72,
     80, 88, 96, 108, 120, 132, 144, 160, 176, 196, 216, 240, 264, 292,
@@ -111,14 +112,14 @@ static uint16_t swb_offset_1024_48[] =
 };
 
 #ifdef LD_DEC
-static uint16_t swb_offset_512_48[] =
+ALIGN static const uint16_t swb_offset_512_48[] =
 {
     0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 68, 76, 84,
     92, 100, 112, 124, 136, 148, 164, 184, 208, 236, 268, 300, 332, 364, 396,
     428, 460, 512
 };
 
-static uint16_t swb_offset_480_48[] =
+ALIGN static const uint16_t swb_offset_480_48[] =
 {
     0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 64, 72 ,80 ,88,
     96, 108, 120, 132, 144, 156, 172, 188, 212, 240, 272, 304, 336, 368, 400,
@@ -126,12 +127,12 @@ static uint16_t swb_offset_480_48[] =
 };
 #endif
 
-static uint16_t swb_offset_128_48[] =
+ALIGN static const uint16_t swb_offset_128_48[] =
 {
     0, 4, 8, 12, 16, 20, 28, 36, 44, 56, 68, 80, 96, 112, 128
 };
 
-static uint16_t swb_offset_1024_32[] =
+ALIGN static const uint16_t swb_offset_1024_32[] =
 {
     0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72,
     80, 88, 96, 108, 120, 132, 144, 160, 176, 196, 216, 240, 264, 292,
@@ -140,14 +141,14 @@ static uint16_t swb_offset_1024_32[] =
 };
 
 #ifdef LD_DEC
-static uint16_t swb_offset_512_32[] =
+ALIGN static const uint16_t swb_offset_512_32[] =
 {
     0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 64, 72, 80,
     88, 96, 108, 120, 132, 144, 160, 176, 192, 212, 236, 260, 288, 320, 352,
     384, 416, 448, 480, 512
 };
 
-static uint16_t swb_offset_480_32[] =
+ALIGN static const uint16_t swb_offset_480_32[] =
 {
     0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 72, 80,
     88, 96, 104, 112, 124, 136, 148, 164, 180, 200, 224, 256, 288, 320, 352,
@@ -155,7 +156,7 @@ static uint16_t swb_offset_480_32[] =
 };
 #endif
 
-static uint16_t swb_offset_1024_24[] =
+ALIGN static const uint16_t swb_offset_1024_24[] =
 {
     0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 52, 60, 68,
     76, 84, 92, 100, 108, 116, 124, 136, 148, 160, 172, 188, 204, 220,
@@ -164,50 +165,50 @@ static uint16_t swb_offset_1024_24[] =
 };
 
 #ifdef LD_DEC
-static uint16_t swb_offset_512_24[] =
+ALIGN static const uint16_t swb_offset_512_24[] =
 {
     0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 52, 60, 68,
     80, 92, 104, 120, 140, 164, 192, 224, 256, 288, 320, 352, 384, 416,
     448, 480, 512
 };
 
-static uint16_t swb_offset_480_24[] =
+ALIGN static const uint16_t swb_offset_480_24[] =
 {
     0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 52, 60, 68, 80, 92, 104, 120,
     140, 164, 192, 224, 256, 288, 320, 352, 384, 416, 448, 480
 };
 #endif
 
-static uint16_t swb_offset_128_24[] =
+ALIGN static const uint16_t swb_offset_128_24[] =
 {
     0, 4, 8, 12, 16, 20, 24, 28, 36, 44, 52, 64, 76, 92, 108, 128
 };
 
-static uint16_t swb_offset_1024_16[] =
+ALIGN static const uint16_t swb_offset_1024_16[] =
 {
     0, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 100, 112, 124,
     136, 148, 160, 172, 184, 196, 212, 228, 244, 260, 280, 300, 320, 344,
     368, 396, 424, 456, 492, 532, 572, 616, 664, 716, 772, 832, 896, 960, 1024
 };
 
-static uint16_t swb_offset_128_16[] =
+ALIGN static const uint16_t swb_offset_128_16[] =
 {
     0, 4, 8, 12, 16, 20, 24, 28, 32, 40, 48, 60, 72, 88, 108, 128
 };
 
-static uint16_t swb_offset_1024_8[] =
+ALIGN static const uint16_t swb_offset_1024_8[] =
 {
     0, 12, 24, 36, 48, 60, 72, 84, 96, 108, 120, 132, 144, 156, 172,
     188, 204, 220, 236, 252, 268, 288, 308, 328, 348, 372, 396, 420, 448,
     476, 508, 544, 580, 620, 664, 712, 764, 820, 880, 944, 1024
 };
 
-static uint16_t swb_offset_128_8[] =
+ALIGN static const uint16_t swb_offset_128_8[] =
 {
     0, 4, 8, 12, 16, 20, 24, 28, 36, 44, 52, 60, 72, 88, 108, 128
 };
 
-static uint16_t *swb_offset_1024_window[] =
+ALIGN static const uint16_t *swb_offset_1024_window[] =
 {
     swb_offset_1024_96,      /* 96000 */
     swb_offset_1024_96,      /* 88200 */
@@ -224,7 +225,7 @@ static uint16_t *swb_offset_1024_window[] =
 };
 
 #ifdef LD_DEC
-static uint16_t *swb_offset_512_window[] =
+ALIGN static const uint16_t *swb_offset_512_window[] =
 {
     0,                       /* 96000 */
     0,                       /* 88200 */
@@ -240,7 +241,7 @@ static uint16_t *swb_offset_512_window[] =
     0                        /* 8000  */
 };
 
-static uint16_t *swb_offset_480_window[] =
+ALIGN static const uint16_t *swb_offset_480_window[] =
 {
     0,                       /* 96000 */
     0,                       /* 88200 */
@@ -257,7 +258,7 @@ static uint16_t *swb_offset_480_window[] =
 };
 #endif
 
-static uint16_t *swb_offset_128_window[] =
+ALIGN static const  uint16_t *swb_offset_128_window[] =
 {
     swb_offset_128_96,       /* 96000 */
     swb_offset_128_96,       /* 88200 */
@@ -425,7 +426,7 @@ static void quant_to_spec(ic_stream *ics, real_t *spec_data, uint16_t frame_len)
     uint8_t g, sfb, win;
     uint16_t width, bin, k, gindex;
 
-    real_t tmp_spec[1024] = {0};
+    ALIGN real_t tmp_spec[1024] = {0};
 
     k = 0;
     gindex = 0;
@@ -460,20 +461,7 @@ static void quant_to_spec(ic_stream *ics, real_t *spec_data, uint16_t frame_len)
     memcpy(spec_data, tmp_spec, frame_len*sizeof(real_t));
 }
 
-#ifndef FIXED_POINT
-void build_tables(real_t *pow2_table)
-{
-    uint16_t i;
-
-    /* build pow(2, 0.25*x) table for scalefactors */
-    for(i = 0; i < POW_TABLE_SIZE; i++)
-    {
-        pow2_table[i] = REAL_CONST(pow(2.0, 0.25 * (i-100)));
-    }
-}
-#endif
-
-static INLINE real_t iquant(int16_t q, real_t *tab)
+static INLINE real_t iquant(int16_t q, const real_t *tab)
 {
 #ifdef FIXED_POINT
     static const real_t errcorr[] = {
@@ -498,25 +486,27 @@ static INLINE real_t iquant(int16_t q, real_t *tab)
     x2 = tab[(q>>3) + 1];
     return sgn * 16 * (MUL_R(errcorr[q&7],(x2-x1)) + x1);
 #else
-    real_t sgn = REAL_CONST(1.0);
-
     if (q < 0)
     {
-        q = -q;
-        sgn = REAL_CONST(-1.0);
+        if (-q > IQ_TABLE_SIZE)
+            return 0;
+
+        /* tab contains a value for all possible q [0,8192] */
+        return -tab[-q];
     }
 
-    if (q < IQ_TABLE_SIZE)
-        return sgn * tab[q];
+    if (q > IQ_TABLE_SIZE)
+        return 0;
 
-    return sgn * (real_t)pow(q, 4.0/3.0);
+    /* tab contains a value for all possible q [0,8192] */
+    return tab[q];
 #endif
 }
 
-static void inverse_quantization(real_t *x_invquant, int16_t *x_quant, uint16_t frame_len)
+static void inverse_quantization(real_t *x_invquant, const int16_t *x_quant, const uint16_t frame_len)
 {
     int16_t i;
-    real_t *tab = iq_table;
+    const real_t *tab = iq_table;
 
     for(i = 0; i < frame_len; i+=4)
     {
@@ -527,16 +517,31 @@ static void inverse_quantization(real_t *x_invquant, int16_t *x_quant, uint16_t 
     }
 }
 
-#ifndef FIXED_POINT
-static INLINE real_t get_scale_factor_gain(uint16_t scale_factor, real_t *pow2_table)
-{
-    if (scale_factor < POW_TABLE_SIZE)
-        return pow2_table[scale_factor];
-    else
-        return REAL_CONST(pow(2.0, 0.25 * (scale_factor - 100)));
-}
-#else
-static real_t pow2_table[] =
+ALIGN static const real_t pow2sf_tab[] = {
+    2.9802322387695313E-008, 5.9604644775390625E-008, 1.1920928955078125E-007,
+    2.384185791015625E-007, 4.76837158203125E-007, 9.5367431640625E-007,
+    1.9073486328125E-006, 3.814697265625E-006, 7.62939453125E-006,
+    1.52587890625E-005, 3.0517578125E-005, 6.103515625E-005,
+    0.0001220703125, 0.000244140625, 0.00048828125,
+    0.0009765625, 0.001953125, 0.00390625,
+    0.0078125, 0.015625, 0.03125,
+    0.0625, 0.125, 0.25,
+    0.5, 1, 2,
+    4, 8, 16, 32,
+    64, 128, 256,
+    512, 1024, 2048,
+    4096, 8192, 16384,
+    32768, 65536, 131072,
+    262144, 524288, 1048576,
+    2097152, 4194304, 8388608,
+    16777216, 33554432, 67108864,
+    134217728, 268435456, 536870912,
+    1073741824, 2147483648, 4294967296,
+    8589934592, 17179869184, 34359738368,
+    68719476736, 137438953472, 274877906944
+};
+
+ALIGN static real_t pow2_table[] =
 {
     COEF_CONST(0.59460355750136053335874998528024), /* 2^-0.75 */
     COEF_CONST(0.70710678118654752440084436210485), /* 2^-0.5 */
@@ -546,18 +551,13 @@ static real_t pow2_table[] =
     COEF_CONST(1.4142135623730950488016887242097), /* 2^0.5 */
     COEF_CONST(1.6817928305074290860622509524664) /* 2^0.75 */
 };
-#endif
 
-static void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics,
-                               real_t *x_invquant, uint16_t frame_len)
+void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics,
+                        real_t *x_invquant, uint16_t frame_len)
 {
     uint8_t g, sfb;
     uint16_t top;
-#ifndef FIXED_POINT
-    real_t scale;
-#else
     int32_t exp, frac;
-#endif
     uint8_t groups = 0;
     uint16_t nshort = frame_len/8;
 
@@ -573,12 +573,10 @@ static void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics,
         {
             top = ics->sect_sfb_offset[g][sfb+1];
 
-#ifndef FIXED_POINT
-            scale = get_scale_factor_gain(ics->scale_factors[g][sfb], hDecoder->pow2_table);
-#else
-            exp = (ics->scale_factors[g][sfb] - 100) / 4;
-            frac = (ics->scale_factors[g][sfb] - 100) % 4;
+            exp = (ics->scale_factors[g][sfb] - 100) >> 2;
+            frac = (ics->scale_factors[g][sfb] - 100) & 3;
 
+#ifdef FIXED_POINT
             /* IMDCT pre-scaling */
             if (hDecoder->object_type == LD)
             {
@@ -589,20 +587,12 @@ static void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics,
                 else
                     exp -= 7 /*10*/;
             }
-#if (REAL_BITS == 16)
-            exp--;
-#endif
 #endif
 
             /* minimum size of a sf band is 4 and always a multiple of 4 */
             for ( ; k < top; k += 4)
             {
-#ifndef FIXED_POINT
-                x_invquant[k+(groups*nshort)]   = x_invquant[k+(groups*nshort)]   * scale;
-                x_invquant[k+(groups*nshort)+1] = x_invquant[k+(groups*nshort)+1] * scale;
-                x_invquant[k+(groups*nshort)+2] = x_invquant[k+(groups*nshort)+2] * scale;
-                x_invquant[k+(groups*nshort)+3] = x_invquant[k+(groups*nshort)+3] * scale;
-#else
+#ifdef FIXED_POINT
                 if (exp < 0)
                 {
                     x_invquant[k+(groups*nshort)] >>= -exp;
@@ -615,31 +605,87 @@ static void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics,
                     x_invquant[k+(groups*nshort)+2] <<= exp;
                     x_invquant[k+(groups*nshort)+3] <<= exp;
                 }
-
-                if (frac)
-                {
-                    x_invquant[k+(groups*nshort)]   = MUL_C(x_invquant[k+(groups*nshort)],pow2_table[frac + 3]);
-                    x_invquant[k+(groups*nshort)+1] = MUL_C(x_invquant[k+(groups*nshort)+1],pow2_table[frac + 3]);
-                    x_invquant[k+(groups*nshort)+2] = MUL_C(x_invquant[k+(groups*nshort)+2],pow2_table[frac + 3]);
-                    x_invquant[k+(groups*nshort)+3] = MUL_C(x_invquant[k+(groups*nshort)+3],pow2_table[frac + 3]);
-                }
+#else
+                x_invquant[k+(groups*nshort)]   = x_invquant[k+(groups*nshort)]   * pow2sf_tab[exp+25];
+                x_invquant[k+(groups*nshort)+1] = x_invquant[k+(groups*nshort)+1] * pow2sf_tab[exp+25];
+                x_invquant[k+(groups*nshort)+2] = x_invquant[k+(groups*nshort)+2] * pow2sf_tab[exp+25];
+                x_invquant[k+(groups*nshort)+3] = x_invquant[k+(groups*nshort)+3] * pow2sf_tab[exp+25];
 #endif
+
+                x_invquant[k+(groups*nshort)]   = MUL_C(x_invquant[k+(groups*nshort)],pow2_table[frac + 3]);
+                x_invquant[k+(groups*nshort)+1] = MUL_C(x_invquant[k+(groups*nshort)+1],pow2_table[frac + 3]);
+                x_invquant[k+(groups*nshort)+2] = MUL_C(x_invquant[k+(groups*nshort)+2],pow2_table[frac + 3]);
+                x_invquant[k+(groups*nshort)+3] = MUL_C(x_invquant[k+(groups*nshort)+3],pow2_table[frac + 3]);
             }
         }
         groups += ics->window_group_length[g];
     }
 }
 
+#ifdef USE_SSE
+void apply_scalefactors_sse(faacDecHandle hDecoder, ic_stream *ics,
+                            real_t *x_invquant, uint16_t frame_len)
+{
+    uint8_t g, sfb;
+    uint16_t top;
+    int32_t exp, frac;
+    uint8_t groups = 0;
+    uint16_t nshort = frame_len/8;
+
+    for (g = 0; g < ics->num_window_groups; g++)
+    {
+        uint16_t k = 0;
+
+        /* using this nshort*groups doesn't hurt long blocks, because
+           long blocks only have 1 group, so that means 'groups' is
+           always 0 for long blocks
+        */
+        for (sfb = 0; sfb < ics->max_sfb; sfb++)
+        {
+            top = ics->sect_sfb_offset[g][sfb+1];
+
+            exp = (ics->scale_factors[g][sfb] - 100) >> 2;
+            frac = (ics->scale_factors[g][sfb] - 100) & 3;
+
+            /* minimum size of a sf band is 4 and always a multiple of 4 */
+            for ( ; k < top; k += 4)
+            {
+                __m128 m1 = _mm_load_ps(&x_invquant[k+(groups*nshort)]);
+                __m128 m2 = _mm_load_ps1(&pow2sf_tab[exp+25]);
+                __m128 m4 = _mm_mul_ps(m1, m2);
+                __m128 m3 = _mm_load_ps1(&pow2_table[frac + 3]);
+                __m128 m5 = _mm_mul_ps(m3, m4);
+                _mm_store_ps(&x_invquant[k+(groups*nshort)], m5);
+            }
+        }
+        groups += ics->window_group_length[g];
+    }
+}
+#endif
+
 void reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
                                 element *sce, int16_t *spec_data)
 {
-    real_t spec_coef[1024];
+    ALIGN real_t spec_coef[1024];
+
+#ifdef PROFILE
+    int64_t count = faad_get_ts();
+#endif
 
     /* inverse quantization */
     inverse_quantization(spec_coef, spec_data, hDecoder->frameLength);
 
     /* apply scalefactors */
+#ifndef USE_SSE
     apply_scalefactors(hDecoder, ics, spec_coef, hDecoder->frameLength);
+#else
+    hDecoder->apply_sf_func(hDecoder, ics, spec_coef, hDecoder->frameLength);
+#endif
+
+#ifdef PROFILE
+    count = faad_get_ts() - count;
+    hDecoder->requant_cycles += count;
+#endif
 
     /* deinterleave short block grouping */
     if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
@@ -656,7 +702,7 @@ void reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
         /* allocate the state only when needed */
         if (hDecoder->pred_stat[sce->channel] == NULL)
         {
-            hDecoder->pred_stat[sce->channel] = (pred_state*)malloc(hDecoder->frameLength * sizeof(pred_state));
+            hDecoder->pred_stat[sce->channel] = (pred_state*)faad_malloc(hDecoder->frameLength * sizeof(pred_state));
             reset_all_predictors(hDecoder->pred_stat[sce->channel], hDecoder->frameLength);
         }
 
@@ -690,7 +736,7 @@ void reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
         /* allocate the state only when needed */
         if (hDecoder->lt_pred_stat[sce->channel] == NULL)
         {
-            hDecoder->lt_pred_stat[sce->channel] = (int16_t*)malloc(hDecoder->frameLength*4 * sizeof(int16_t));
+            hDecoder->lt_pred_stat[sce->channel] = (int16_t*)faad_malloc(hDecoder->frameLength*4 * sizeof(int16_t));
             memset(hDecoder->lt_pred_stat[sce->channel], 0, hDecoder->frameLength*4 * sizeof(int16_t));
         }
 
@@ -714,7 +760,7 @@ void reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
 
     if (hDecoder->time_out[sce->channel] == NULL)
     {
-        hDecoder->time_out[sce->channel] = (real_t*)malloc(hDecoder->frameLength*2*sizeof(real_t));
+        hDecoder->time_out[sce->channel] = (real_t*)faad_malloc(hDecoder->frameLength*2*sizeof(real_t));
         memset(hDecoder->time_out[sce->channel], 0, hDecoder->frameLength*2*sizeof(real_t));
     }
 
@@ -723,20 +769,26 @@ void reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
     if (hDecoder->object_type != SSR)
     {
 #endif
+#ifdef USE_SSE
+        hDecoder->fb->if_func(hDecoder->fb, ics->window_sequence, ics->window_shape,
+            hDecoder->window_shape_prev[sce->channel], spec_coef,
+            hDecoder->time_out[sce->channel], hDecoder->object_type, hDecoder->frameLength);
+#else
         ifilter_bank(hDecoder->fb, ics->window_sequence, ics->window_shape,
             hDecoder->window_shape_prev[sce->channel], spec_coef,
             hDecoder->time_out[sce->channel], hDecoder->object_type, hDecoder->frameLength);
+#endif
 #ifdef SSR_DEC
     } else {
         if (hDecoder->ssr_overlap[sce->channel] == NULL)
         {
-            hDecoder->ssr_overlap[sce->channel] = (real_t*)malloc(2*hDecoder->frameLength*sizeof(real_t));
+            hDecoder->ssr_overlap[sce->channel] = (real_t*)faad_malloc(2*hDecoder->frameLength*sizeof(real_t));
             memset(hDecoder->ssr_overlap[sce->channel], 0, 2*hDecoder->frameLength*sizeof(real_t));
         }
         if (hDecoder->prev_fmd[sce->channel] == NULL)
         {
             uint16_t k;
-            hDecoder->prev_fmd[sce->channel] = (real_t*)malloc(2*hDecoder->frameLength*sizeof(real_t));
+            hDecoder->prev_fmd[sce->channel] = (real_t*)faad_malloc(2*hDecoder->frameLength*sizeof(real_t));
             for (k = 0; k < 2*hDecoder->frameLength; k++)
                 hDecoder->prev_fmd[sce->channel][k] = REAL_CONST(-1);
         }
@@ -763,16 +815,30 @@ void reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
 void reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_stream *ics2,
                               element *cpe, int16_t *spec_data1, int16_t *spec_data2)
 {
-    real_t spec_coef1[1024];
-    real_t spec_coef2[1024];
+    ALIGN real_t spec_coef1[1024];
+    ALIGN real_t spec_coef2[1024];
+
+#ifdef PROFILE
+    int64_t count = faad_get_ts();
+#endif
 
     /* inverse quantization */
     inverse_quantization(spec_coef1, spec_data1, hDecoder->frameLength);
     inverse_quantization(spec_coef2, spec_data2, hDecoder->frameLength);
 
     /* apply scalefactors */
+#ifndef USE_SSE
     apply_scalefactors(hDecoder, ics1, spec_coef1, hDecoder->frameLength);
     apply_scalefactors(hDecoder, ics2, spec_coef2, hDecoder->frameLength);
+#else
+    hDecoder->apply_sf_func(hDecoder, ics1, spec_coef1, hDecoder->frameLength);
+    hDecoder->apply_sf_func(hDecoder, ics2, spec_coef2, hDecoder->frameLength);
+#endif
+
+#ifdef PROFILE
+    count = faad_get_ts() - count;
+    hDecoder->requant_cycles += count;
+#endif
 
     /* deinterleave short block grouping */
     if (ics1->window_sequence == EIGHT_SHORT_SEQUENCE)
@@ -803,12 +869,12 @@ void reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_stream
         /* allocate the state only when needed */
         if (hDecoder->pred_stat[cpe->channel] == NULL)
         {
-            hDecoder->pred_stat[cpe->channel] = (pred_state*)malloc(hDecoder->frameLength * sizeof(pred_state));
+            hDecoder->pred_stat[cpe->channel] = (pred_state*)faad_malloc(hDecoder->frameLength * sizeof(pred_state));
             reset_all_predictors(hDecoder->pred_stat[cpe->channel], hDecoder->frameLength);
         }
         if (hDecoder->pred_stat[cpe->paired_channel] == NULL)
         {
-            hDecoder->pred_stat[cpe->paired_channel] = (pred_state*)malloc(hDecoder->frameLength * sizeof(pred_state));
+            hDecoder->pred_stat[cpe->paired_channel] = (pred_state*)faad_malloc(hDecoder->frameLength * sizeof(pred_state));
             reset_all_predictors(hDecoder->pred_stat[cpe->paired_channel], hDecoder->frameLength);
         }
 
@@ -853,12 +919,12 @@ void reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_stream
         /* allocate the state only when needed */
         if (hDecoder->lt_pred_stat[cpe->channel] == NULL)
         {
-            hDecoder->lt_pred_stat[cpe->channel] = (int16_t*)malloc(hDecoder->frameLength*4 * sizeof(int16_t));
+            hDecoder->lt_pred_stat[cpe->channel] = (int16_t*)faad_malloc(hDecoder->frameLength*4 * sizeof(int16_t));
             memset(hDecoder->lt_pred_stat[cpe->channel], 0, hDecoder->frameLength*4 * sizeof(int16_t));
         }
         if (hDecoder->lt_pred_stat[cpe->paired_channel] == NULL)
         {
-            hDecoder->lt_pred_stat[cpe->paired_channel] = (int16_t*)malloc(hDecoder->frameLength*4 * sizeof(int16_t));
+            hDecoder->lt_pred_stat[cpe->paired_channel] = (int16_t*)faad_malloc(hDecoder->frameLength*4 * sizeof(int16_t));
             memset(hDecoder->lt_pred_stat[cpe->paired_channel], 0, hDecoder->frameLength*4 * sizeof(int16_t));
         }
 
@@ -889,12 +955,12 @@ void reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_stream
 
     if (hDecoder->time_out[cpe->channel] == NULL)
     {
-        hDecoder->time_out[cpe->channel] = (real_t*)malloc(hDecoder->frameLength*2*sizeof(real_t));
+        hDecoder->time_out[cpe->channel] = (real_t*)faad_malloc(hDecoder->frameLength*2*sizeof(real_t));
         memset(hDecoder->time_out[cpe->channel], 0, hDecoder->frameLength*2*sizeof(real_t));
     }
     if (hDecoder->time_out[cpe->paired_channel] == NULL)
     {
-        hDecoder->time_out[cpe->paired_channel] = (real_t*)malloc(hDecoder->frameLength*2*sizeof(real_t));
+        hDecoder->time_out[cpe->paired_channel] = (real_t*)faad_malloc(hDecoder->frameLength*2*sizeof(real_t));
         memset(hDecoder->time_out[cpe->paired_channel], 0, hDecoder->frameLength*2*sizeof(real_t));
     }
 
@@ -903,35 +969,44 @@ void reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_stream
     if (hDecoder->object_type != SSR)
     {
 #endif
+#ifdef USE_SSE
+        hDecoder->fb->if_func(hDecoder->fb, ics1->window_sequence, ics1->window_shape,
+            hDecoder->window_shape_prev[cpe->channel], spec_coef1,
+            hDecoder->time_out[cpe->channel], hDecoder->object_type, hDecoder->frameLength);
+        hDecoder->fb->if_func(hDecoder->fb, ics2->window_sequence, ics2->window_shape,
+            hDecoder->window_shape_prev[cpe->paired_channel], spec_coef2,
+            hDecoder->time_out[cpe->paired_channel], hDecoder->object_type, hDecoder->frameLength);
+#else
         ifilter_bank(hDecoder->fb, ics1->window_sequence, ics1->window_shape,
             hDecoder->window_shape_prev[cpe->channel], spec_coef1,
             hDecoder->time_out[cpe->channel], hDecoder->object_type, hDecoder->frameLength);
         ifilter_bank(hDecoder->fb, ics2->window_sequence, ics2->window_shape,
             hDecoder->window_shape_prev[cpe->paired_channel], spec_coef2,
             hDecoder->time_out[cpe->paired_channel], hDecoder->object_type, hDecoder->frameLength);
+#endif
 #ifdef SSR_DEC
     } else {
         if (hDecoder->ssr_overlap[cpe->channel] == NULL)
         {
-            hDecoder->ssr_overlap[cpe->channel] = (real_t*)malloc(2*hDecoder->frameLength*sizeof(real_t));
+            hDecoder->ssr_overlap[cpe->channel] = (real_t*)faad_malloc(2*hDecoder->frameLength*sizeof(real_t));
             memset(hDecoder->ssr_overlap[cpe->channel], 0, 2*hDecoder->frameLength*sizeof(real_t));
         }
         if (hDecoder->ssr_overlap[cpe->paired_channel] == NULL)
         {
-            hDecoder->ssr_overlap[cpe->paired_channel] = (real_t*)malloc(2*hDecoder->frameLength*sizeof(real_t));
+            hDecoder->ssr_overlap[cpe->paired_channel] = (real_t*)faad_malloc(2*hDecoder->frameLength*sizeof(real_t));
             memset(hDecoder->ssr_overlap[cpe->paired_channel], 0, 2*hDecoder->frameLength*sizeof(real_t));
         }
         if (hDecoder->prev_fmd[cpe->channel] == NULL)
         {
             uint16_t k;
-            hDecoder->prev_fmd[cpe->channel] = (real_t*)malloc(2*hDecoder->frameLength*sizeof(real_t));
+            hDecoder->prev_fmd[cpe->channel] = (real_t*)faad_malloc(2*hDecoder->frameLength*sizeof(real_t));
             for (k = 0; k < 2*hDecoder->frameLength; k++)
                 hDecoder->prev_fmd[cpe->channel][k] = REAL_CONST(-1);
         }
         if (hDecoder->prev_fmd[cpe->paired_channel] == NULL)
         {
             uint16_t k;
-            hDecoder->prev_fmd[cpe->paired_channel] = (real_t*)malloc(2*hDecoder->frameLength*sizeof(real_t));
+            hDecoder->prev_fmd[cpe->paired_channel] = (real_t*)faad_malloc(2*hDecoder->frameLength*sizeof(real_t));
             for (k = 0; k < 2*hDecoder->frameLength; k++)
                 hDecoder->prev_fmd[cpe->paired_channel][k] = REAL_CONST(-1);
         }

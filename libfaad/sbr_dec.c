@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.c,v 1.17 2003/11/12 20:47:58 menno Exp $
+** $Id: sbr_dec.c,v 1.18 2003/12/17 14:43:16 menno Exp $
 **/
 
 
@@ -31,6 +31,7 @@
 
 #ifdef SBR_DEC
 
+#include <string.h>
 #include <stdlib.h>
 
 #include "syntax.h"
@@ -47,7 +48,7 @@ sbr_info *sbrDecodeInit(uint16_t framelength
 #endif
                         )
 {
-    sbr_info *sbr = malloc(sizeof(sbr_info));
+    sbr_info *sbr = faad_malloc(sizeof(sbr_info));
     memset(sbr, 0, sizeof(sbr_info));
 
     sbr->bs_freq_scale = 2;
@@ -65,22 +66,11 @@ sbr_info *sbrDecodeInit(uint16_t framelength
     sbr->header_count = 0;
 
 #ifdef DRM
-    sbr->Is_DRM_SBR = 0;
-    if (IsDRM)
-    {
-        sbr->Is_DRM_SBR = 1;
-        sbr->tHFGen = T_HFGEN_DRM;
-        sbr->tHFAdj = T_HFADJ_DRM;
-
-        /* "offset" is different in DRM */
-        sbr->bs_samplerate_mode = 0;
-    } else
+    sbr->Is_DRM_SBR = IsDRM;
 #endif
-    {
-        sbr->bs_samplerate_mode = 1;
-        sbr->tHFGen = T_HFGEN;
-        sbr->tHFAdj = T_HFADJ;
-    }
+    sbr->bs_samplerate_mode = 1;
+    sbr->tHFGen = T_HFGEN;
+    sbr->tHFAdj = T_HFADJ;
 
     /* force sbr reset */
     sbr->bs_start_freq_prev = -1;
@@ -111,20 +101,15 @@ void sbrDecodeEnd(sbr_info *sbr)
             qmfs_end(sbr->qmfs[1]);
         }
 
-        //if (sbr->Xcodec[0]) free(sbr->Xcodec[0]);
-        //if (sbr->Xsbr[0]) free(sbr->Xsbr[0]);
-        //if (sbr->Xcodec[1]) free(sbr->Xcodec[1]);
-        //if (sbr->Xsbr[1]) free(sbr->Xsbr[1]);
-
         for (j = 0; j < 5; j++)
         {
-            if (sbr->G_temp_prev[0][j]) free(sbr->G_temp_prev[0][j]);
-            if (sbr->Q_temp_prev[0][j]) free(sbr->Q_temp_prev[0][j]);
-            if (sbr->G_temp_prev[1][j]) free(sbr->G_temp_prev[1][j]);
-            if (sbr->Q_temp_prev[1][j]) free(sbr->Q_temp_prev[1][j]);
+            if (sbr->G_temp_prev[0][j]) faad_free(sbr->G_temp_prev[0][j]);
+            if (sbr->Q_temp_prev[0][j]) faad_free(sbr->Q_temp_prev[0][j]);
+            if (sbr->G_temp_prev[1][j]) faad_free(sbr->G_temp_prev[1][j]);
+            if (sbr->Q_temp_prev[1][j]) faad_free(sbr->Q_temp_prev[1][j]);
         }
 
-        free(sbr);
+        faad_free(sbr);
     }
 }
 
@@ -166,9 +151,9 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
     uint8_t ch, channels, ret;
     real_t *ch_buf;
 
-    qmf_t X[MAX_NTSR][64];
+    ALIGN qmf_t X[MAX_NTSR][64];
 #ifdef SBR_LOW_POWER
-    real_t deg[64];
+    ALIGN real_t deg[64];
 #endif
 
     bitfile *ld = NULL;
@@ -179,20 +164,31 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
     {
         ret = 1;
     } else {
-        ld = (bitfile*)malloc(sizeof(bitfile));
+        ld = (bitfile*)faad_malloc(sizeof(bitfile));
 
         /* initialise and read the bitstream */
         faad_initbits(ld, sbr->data, sbr->data_size);
 
+#ifdef DRM
+        if (sbr->Is_DRM_SBR)
+            faad_getbits(ld, 8); /* Skip 8-bit CRC */
+#endif
+
         ret = sbr_extension_data(ld, sbr);
+
+#ifdef DRM
+        /* Check CRC */
+        if (sbr->Is_DRM_SBR)
+            ld->error = faad_check_CRC(ld, faad_get_processed_bits(ld) - 8);
+#endif
 
         ret = ld->error ? ld->error : ret;
         faad_endbits(ld);
-        if (ld) free(ld);
+        if (ld) faad_free(ld);
         ld = NULL;
     }
 
-    if (sbr->data) free(sbr->data);
+    if (sbr->data) faad_free(sbr->data);
     sbr->data = NULL;
 
     if (ret || (sbr->header_count == 0))
@@ -219,11 +215,11 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
             uint8_t j;
             sbr->qmfa[ch] = qmfa_init(32);
             sbr->qmfs[ch] = qmfs_init(64);
-            
+
             for (j = 0; j < 5; j++)
             {
-                sbr->G_temp_prev[ch][j] = malloc(64*sizeof(real_t));
-                sbr->Q_temp_prev[ch][j] = malloc(64*sizeof(real_t));
+                sbr->G_temp_prev[ch][j] = faad_malloc(64*sizeof(real_t));
+                sbr->Q_temp_prev[ch][j] = faad_malloc(64*sizeof(real_t));
             }
 
             memset(sbr->Xsbr[ch], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*64 * sizeof(qmf_t));
@@ -243,6 +239,7 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
 
         if (!dont_process)
         {
+#if 1
             /* insert high frequencies here */
             /* hf generation using patching */
             hf_generation(sbr, sbr->Xcodec[ch], sbr->Xsbr[ch]
@@ -250,6 +247,7 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
                 ,deg
 #endif
                 ,ch);
+#endif
 
 #ifdef SBR_LOW_POWER
             for (l = sbr->t_E[ch][0]; l < sbr->t_E[ch][sbr->L_E[ch]]; l++)
@@ -261,12 +259,14 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
             }
 #endif
 
+#if 1
             /* hf adjustment */
             hf_adjustment(sbr, sbr->Xsbr[ch]
 #ifdef SBR_LOW_POWER
                 ,deg
 #endif
                 ,ch);
+#endif
         }
 
         if ((sbr->just_seeked != 0) || dont_process)
@@ -298,11 +298,6 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
                 else
                     xover_band = sbr->kx;
 
-#ifdef DRM
-				if (sbr->Is_DRM_SBR)
-					xover_band = sbr->kx;
-#endif
-
                 for (k = 0; k < xover_band; k++)
                 {
                     QMF_RE(X[l][k]) = QMF_RE(sbr->Xcodec[ch][l + sbr->tHFAdj][k]);
@@ -320,21 +315,15 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
 #ifdef SBR_LOW_POWER
                 QMF_RE(X[l][xover_band - 1]) += QMF_RE(sbr->Xsbr[ch][l + sbr->tHFAdj][xover_band - 1]);
 #endif
-#ifdef DRM
-                if (sbr->Is_DRM_SBR)
-                {
-                    for (k = xover_band; k < xover_band + 4; k++)
-                    {
-                        QMF_RE(X[l][k]) += QMF_RE(sbr->Xcodec[ch][l + sbr->tHFAdj][k]);
-                        QMF_IM(X[l][k]) += QMF_IM(sbr->Xcodec[ch][l + sbr->tHFAdj][k]);
-                    }
-                }
-#endif
             }
         }
 
         /* subband synthesis */
+#ifndef USE_SSE
         sbr_qmf_synthesis_64(sbr, sbr->qmfs[ch], X, ch_buf);
+#else
+        sbr->qmfs[ch]->qmf_func(sbr, sbr->qmfs[ch], X, ch_buf);
+#endif
 
         for (i = 0; i < sbr->tHFGen; i++)
         {

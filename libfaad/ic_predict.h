@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: ic_predict.h,v 1.14 2003/11/12 20:47:57 menno Exp $
+** $Id: ic_predict.h,v 1.15 2003/12/17 14:43:16 menno Exp $
 **/
 
 #ifdef MAIN_DEC
@@ -43,7 +43,7 @@ void reset_all_predictors(pred_state *state, uint16_t frame_len);
 void ic_prediction(ic_stream *ics, real_t *spec, pred_state *state,
                    uint16_t frame_len, uint8_t sf_index);
 
-static const real_t mnt_table[128] = {
+ALIGN static const real_t mnt_table[128] = {
     COEF_CONST(0.9531250000), COEF_CONST(0.9453125000),
     COEF_CONST(0.9375000000), COEF_CONST(0.9296875000),
     COEF_CONST(0.9257812500), COEF_CONST(0.9179687500),
@@ -110,7 +110,7 @@ static const real_t mnt_table[128] = {
     COEF_CONST(0.4804687500), COEF_CONST(0.4785156250)
 };
 
-static const real_t exp_table[128] = {
+ALIGN static const real_t exp_table[128] = {
     COEF_CONST(0.50000000000000000000000000000000000000000000000000),
     COEF_CONST(0.25000000000000000000000000000000000000000000000000),
     COEF_CONST(0.12500000000000000000000000000000000000000000000000),
@@ -237,7 +237,7 @@ static const real_t exp_table[128] = {
     COEF_CONST(0.00000000000000000000000000000000000004701977403289),
     COEF_CONST(0.00000000000000000000000000000000000002350988701645),
     COEF_CONST(0.00000000000000000000000000000000000001175494350822),
-    COEF_CONST(0.00000000000000000000000000000000000000587747175411),
+    COEF_CONST(0.0 /* 0000000000000000000000000000000000000587747175411 "floating point underflow" */),
     COEF_CONST(0.0)
 };
 

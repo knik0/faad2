@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: structs.h,v 1.21 2003/11/12 20:47:59 menno Exp $
+** $Id: structs.h,v 1.22 2003/12/17 14:43:16 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -55,14 +55,17 @@ typedef struct {
     uint16_t N;
     cfft_info *cfft;
     complex_t *sincos;
+#ifdef PROFILE
+    int64_t cycles;
+#endif
 } mdct_info;
 
 typedef struct
 {
-    real_t *long_window[2];
-    real_t *short_window[2];
+    const real_t *long_window[2];
+    const real_t *short_window[2];
 #ifdef LD_DEC
-    real_t *ld_window[2];
+    const real_t *ld_window[2];
 #endif
 
     mdct_info *mdct256;
@@ -70,6 +73,12 @@ typedef struct
     mdct_info *mdct1024;
 #endif
     mdct_info *mdct2048;
+#ifdef PROFILE
+    int64_t cycles;
+#endif
+#ifdef USE_SSE
+    void (*if_func)(void *a, uint8_t b, uint8_t c, uint8_t d, real_t *e, real_t *f, uint8_t g, uint16_t h);
+#endif
 } fb_info;
 
 typedef struct
@@ -411,12 +420,6 @@ typedef struct
     int16_t *lt_pred_stat[MAX_CHANNELS];
 #endif
 
-#ifndef FIXED_POINT
-#if POW_TABLE_SIZE
-    real_t *pow2_table;
-#endif
-#endif
-
     /* Program Config Element */
     uint8_t pce_set;
     program_config pce;
@@ -426,6 +429,18 @@ typedef struct
 
     /* Configuration data */
     faacDecConfiguration config;
+
+#ifdef USE_SSE
+    void (*apply_sf_func)(void *a, void *b, void *c, uint16_t d);
+#endif
+
+#ifdef PROFILE
+    int64_t cycles;
+    int64_t spectral_cycles;
+    int64_t output_cycles;
+    int64_t scalefac_cycles;
+    int64_t requant_cycles;
+#endif
 } faacDecStruct, *faacDecHandle;
 
 

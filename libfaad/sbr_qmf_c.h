@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_qmf_c.h,v 1.7 2003/11/12 20:47:58 menno Exp $
+** $Id: sbr_qmf_c.h,v 1.8 2003/12/17 14:43:16 menno Exp $
 **/
 
 #ifndef __SBR_QMF_C_H__
@@ -38,7 +38,7 @@ extern "C" {
 #pragma warning(disable:4244)
 #endif
 
-static real_t qmf_c[640] = {
+ALIGN static const real_t qmf_c[640] = {
     FRAC_CONST(0), FRAC_CONST(-0.00055252865047),
     FRAC_CONST(-0.00056176925738), FRAC_CONST(-0.00049475180896),
     FRAC_CONST(-0.00048752279712), FRAC_CONST(-0.00048937912498),

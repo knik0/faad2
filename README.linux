@@ -1,7 +1,7 @@
 To compile under Linux.
 ----------------------
 just run :
- - autoreconf -vsf
+ - autoreconf -vif
 then run configure with options you want.
 run ./configure --help for more informations.
 

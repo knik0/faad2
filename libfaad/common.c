@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.c,v 1.12 2003/11/12 20:47:57 menno Exp $
+** $Id: common.c,v 1.13 2003/12/17 14:43:16 menno Exp $
 **/
 
 /* just some common functions that could be used anywhere */
@@ -30,10 +30,50 @@
 #include "common.h"
 #include "structs.h"
 
+#include <malloc.h>
+#include <stdlib.h>
 #include "syntax.h"
 
+#ifdef USE_SSE
+uint8_t cpu_has_sse()
+{
+    uint32_t feature;
+
+    __try
+    {
+        __asm
+        {
+            xor eax, eax
+            cpuid
+        }
+    }
+    __except (1)
+    {
+        return 0;
+    }
+
+    __asm
+    {
+        mov eax, 1
+        cpuid
+        mov feature, edx
+    }
+
+    /* check for SSE */
+    if (feature & 0x02000000)
+        return 1;
+
+    return 0;
+}
+#else
+uint8_t cpu_has_sse()
+{
+    return 0;
+}
+#endif
+
 /* Returns the sample rate index based on the samplerate */
-uint8_t get_sr_index(uint32_t samplerate)
+uint8_t get_sr_index(const uint32_t samplerate)
 {
     if (92017 <= samplerate) return 0;
     if (75132 <= samplerate) return 1;
@@ -52,7 +92,7 @@ uint8_t get_sr_index(uint32_t samplerate)
 }
 
 /* Returns the sample rate based on the sample rate index */
-uint32_t get_sample_rate(uint8_t sr_index)
+uint32_t get_sample_rate(const uint8_t sr_index)
 {
     static const uint32_t sample_rates[] =
     {
@@ -66,7 +106,7 @@ uint32_t get_sample_rate(uint8_t sr_index)
     return 0;
 }
 
-uint8_t max_pred_sfb(uint8_t sr_index)
+uint8_t max_pred_sfb(const uint8_t sr_index)
 {
     static const uint8_t pred_sfb_max[] =
     {
@@ -80,7 +120,8 @@ uint8_t max_pred_sfb(uint8_t sr_index)
     return 0;
 }
 
-uint8_t max_tns_sfb(uint8_t sr_index, uint8_t object_type, uint8_t is_short)
+uint8_t max_tns_sfb(const uint8_t sr_index, const uint8_t object_type,
+                    const uint8_t is_short)
 {
     /* entry for each sampling rate	
      * 1    Main/LC long window
@@ -116,7 +157,7 @@ uint8_t max_tns_sfb(uint8_t sr_index, uint8_t object_type, uint8_t is_short)
 }
 
 /* Returns 0 if an object type is decodable, otherwise returns -1 */
-int8_t can_decode_ot(uint8_t object_type)
+int8_t can_decode_ot(const uint8_t object_type)
 {
     switch (object_type)
     {
@@ -166,6 +207,25 @@ int8_t can_decode_ot(uint8_t object_type)
     return -1;
 }
 
+/* common malloc function */
+void *faad_malloc(int32_t size)
+{
+#ifdef _WIN32
+    return _aligned_malloc(size, 16);
+#else
+    return malloc(size);
+#endif
+}
+
+/* common free function */
+void faad_free(void *b)
+{
+#ifdef _WIN32
+    _aligned_free(b);
+#else
+    free(b);
+#endif
+}
 
 static const  uint8_t    Parity [256] = {  // parity
 	0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,
@@ -220,11 +280,3 @@ uint32_t random_int(void)
 
 	return (__r1 = (t3 >> 1) | t1 ) ^ (__r2 = (t4 + t4) | t2 );
 }
-
-#define LOG2 0.30102999566398
-
-int32_t int_log2(int32_t val)
-{
-    return (int32_t)ceil(log(val)/log(2));
-}
-

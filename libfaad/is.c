@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: is.c,v 1.17 2003/11/12 20:47:58 menno Exp $
+** $Id: is.c,v 1.18 2003/12/17 14:43:16 menno Exp $
 **/
 
 #include "common.h"
@@ -76,8 +76,8 @@ void is_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec,
 #ifndef FIXED_POINT
                     scale = (real_t)pow(0.5, (0.25*icsr->scale_factors[g][sfb]));
 #else
-                    exp = icsr->scale_factors[g][sfb] / 4;
-                    frac = icsr->scale_factors[g][sfb] % 4;
+                    exp = icsr->scale_factors[g][sfb] >> 2;
+                    frac = icsr->scale_factors[g][sfb] & 3;
 #endif
 
                     /* Scale from left to right channel,

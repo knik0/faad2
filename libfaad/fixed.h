@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: fixed.h,v 1.15 2003/11/12 20:47:57 menno Exp $
+** $Id: fixed.h,v 1.16 2003/12/17 14:43:16 menno Exp $
 **/
 
 #ifndef __FIXED_H__
@@ -32,6 +32,9 @@
 extern "C" {
 #endif
 
+#ifdef _WIN32_WCE
+#include <cmnintrin.h>
+#endif
 
 #define COEF_BITS 28
 #define COEF_PRECISION (1 << COEF_BITS)
@@ -169,7 +172,6 @@ static INLINE void ComplexMult(real_t *y1, real_t *y2,
   #define MUL_F(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (FRAC_BITS-1))) >> FRAC_BITS)
 #else
   /* eVC for PocketPC has an intrinsic function that returns only the high 32 bits of a 32x32 bit multiply */
-  #include <cmnintrin.h>
   static INLINE real_t MUL_F(real_t A, real_t B)
   {
       return _MulHigh(A,B) << (32-FRAC_BITS);

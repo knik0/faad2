@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: lt_predict.c,v 1.18 2003/11/12 20:47:58 menno Exp $
+** $Id: lt_predict.c,v 1.19 2003/12/17 14:43:16 menno Exp $
 **/
 
 
@@ -48,6 +48,9 @@ uint8_t is_ltp_ot(uint8_t object_type)
 #ifdef LD_DEC
         || (object_type == LD)
 #endif
+#ifdef SCALABLE_DEC
+        || (object_type == 6) /* TODO */
+#endif
         )
     {
         return 1;
@@ -57,7 +60,7 @@ uint8_t is_ltp_ot(uint8_t object_type)
     return 0;
 }
 
-static real_t codebook[8] =
+ALIGN static const real_t codebook[8] =
 {
     REAL_CONST(0.570829),
     REAL_CONST(0.696616),
@@ -76,8 +79,8 @@ void lt_prediction(ic_stream *ics, ltp_info *ltp, real_t *spec,
 {
     uint8_t sfb;
     uint16_t bin, i, num_samples;
-    real_t x_est[2048];
-    real_t X_est[2048];
+    ALIGN real_t x_est[2048];
+    ALIGN real_t X_est[2048];
 
     if (ics->window_sequence != EIGHT_SHORT_SEQUENCE)
     {
@@ -130,12 +133,12 @@ INLINE int16_t real_to_int16(real_t sig_in)
     if (sig_in >= 0)
     {
         sig_in += (1 << (REAL_BITS-1));
-        if (sig_in > REAL_CONST(32767))
-            sig_in = 32767.0f;
+        if (sig_in >= REAL_CONST(32768))
+            return 32767;
     } else {
         sig_in += -(1 << (REAL_BITS-1));
-        if (sig_in < REAL_CONST(-32768))
-            sig_in = -32768.0f;
+        if (sig_in <= REAL_CONST(-32768))
+            return -32768;
     }
 
     return (sig_in >> REAL_BITS);
@@ -148,14 +151,14 @@ INLINE int16_t real_to_int16(real_t sig_in)
 #ifndef HAS_LRINTF
         sig_in += 0.5f;
 #endif
-        if (sig_in > REAL_CONST(32767))
-            sig_in = 32767.0f;
+        if (sig_in >= 32768.0f)
+            return 32767;
     } else {
 #ifndef HAS_LRINTF
-        sig_in -= 0.5f;
+        sig_in += -0.5f;
 #endif
-        if (sig_in < REAL_CONST(-32768))
-            sig_in = -32768.0f;
+        if (sig_in <= -32768.0f)
+            return -32768;
     }
 
     return lrintf(sig_in);
