@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: in_mp4.c,v 1.48 2003/12/17 18:41:56 ca5e Exp $
+** $Id: in_mp4.c,v 1.49 2004/01/02 16:38:48 ca5e Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -139,6 +139,7 @@ typedef struct tag
 {
     char *item;
     char *value;
+    size_t len;
 } tag;
 
 typedef struct medialib_tags
@@ -147,7 +148,7 @@ typedef struct medialib_tags
     unsigned int count;
 } medialib_tags;
 
-int tag_add_field(medialib_tags *tags, const char *item, const char *value)
+int tag_add_field(medialib_tags *tags, const char *item, const char *value, size_t v_len)
 {
     void *backup = (void *)tags->tags;
 
@@ -160,8 +161,8 @@ int tag_add_field(medialib_tags *tags, const char *item, const char *value)
     }
     else
     {
-        int i_len = strlen(item);
-        int v_len = strlen(value);
+        size_t i_len = strlen(item);
+        if (v_len == 0) v_len = strlen(value);
 
         tags->tags[tags->count].item = (char *)malloc(i_len+1);
         tags->tags[tags->count].value = (char *)malloc(v_len+1);
@@ -179,13 +180,14 @@ int tag_add_field(medialib_tags *tags, const char *item, const char *value)
         memcpy(tags->tags[tags->count].value, value, v_len);
         tags->tags[tags->count].item[i_len] = '\0';
         tags->tags[tags->count].value[v_len] = '\0';
+        tags->tags[tags->count].len = v_len;
 
         tags->count++;
         return 1;
     }
 }
 
-int tag_set_field(medialib_tags *tags, const char *item, const char *value)
+int tag_set_field(medialib_tags *tags, const char *item, const char *value, size_t v_len)
 {
     unsigned int i;
 
@@ -196,7 +198,7 @@ int tag_set_field(medialib_tags *tags, const char *item, const char *value)
         if (!stricmp(tags->tags[i].item, item))
         {
             void *backup = (void *)tags->tags[i].value;
-            int v_len = strlen(value);
+            if (v_len == 0) v_len = strlen(value);
 
             tags->tags[i].value = (char *)realloc(tags->tags[i].value, v_len+1);
             if (!tags->tags[i].value)
@@ -207,12 +209,13 @@ int tag_set_field(medialib_tags *tags, const char *item, const char *value)
 
             memcpy(tags->tags[i].value, value, v_len);
             tags->tags[i].value[v_len] = '\0';
+            tags->tags[i].len = v_len;
 
             return 1;
         }
     }
 
-    return tag_add_field(tags, item, value);
+    return tag_add_field(tags, item, value, v_len);
 }
 
 int tag_delete(medialib_tags *tags)
@@ -256,29 +259,29 @@ int ReadMP4Tag(MP4FileHandle file, medialib_tags *tags)
             {
                 if (memcmp(pName, "©nam", 4) == 0)
                 {
-                    tag_add_field(tags, "title", val);
+                    tag_add_field(tags, "title", val, valueSize);
                 } else if (memcmp(pName, "©ART", 4) == 0) {
-                    tag_add_field(tags, "artist", val);
+                    tag_add_field(tags, "artist", val, valueSize);
                 } else if (memcmp(pName, "©wrt", 4) == 0) {
-                    tag_add_field(tags, "writer", val);
+                    tag_add_field(tags, "writer", val, valueSize);
                 } else if (memcmp(pName, "©alb", 4) == 0) {
-                    tag_add_field(tags, "album", val);
+                    tag_add_field(tags, "album", val, valueSize);
                 } else if (memcmp(pName, "©day", 4) == 0) {
-                    tag_add_field(tags, "date", val);
+                    tag_add_field(tags, "date", val, valueSize);
                 } else if (memcmp(pName, "©too", 4) == 0) {
-                    tag_add_field(tags, "tool", val);
+                    tag_add_field(tags, "tool", val, valueSize);
                 } else if (memcmp(pName, "©cmt", 4) == 0) {
-                    tag_add_field(tags, "comment", val);
+                    tag_add_field(tags, "comment", val, valueSize);
                 } else if (memcmp(pName, "©gen", 4) == 0) {
-                    tag_add_field(tags, "genre", val);
+                    tag_add_field(tags, "genre", val, valueSize);
                 } else {
-                    tag_add_field(tags, pName, val);
+                    tag_add_field(tags, pName, val, valueSize);
                 }
             } else if (memcmp(pName, "gnre", 4) == 0) {
                 char *t=0;
                 if (MP4GetMetadataGenre(file, &t))
                 {
-                    tag_add_field(tags, "genre", t);
+                    tag_add_field(tags, "genre", t, 0);
                 }
             } else if (memcmp(pName, "trkn", 4) == 0) {
                 unsigned __int16 trkn = 0, tot = 0;
@@ -289,7 +292,7 @@ int ReadMP4Tag(MP4FileHandle file, medialib_tags *tags)
                         wsprintf(t, "%d/%d", trkn, tot);
                     else
                         wsprintf(t, "%d", trkn);
-                    tag_add_field(tags, "tracknumber", t);
+                    tag_add_field(tags, "tracknumber", t, 0);
                 }
             } else if (memcmp(pName, "disk", 4) == 0) {
                 unsigned __int16 disk = 0, tot = 0;
@@ -300,7 +303,7 @@ int ReadMP4Tag(MP4FileHandle file, medialib_tags *tags)
                         wsprintf(t, "%d/%d", disk, tot);
                     else
                         wsprintf(t, "%d", disk);
-                    tag_add_field(tags, "disc", t);
+                    tag_add_field(tags, "disc", t, 0);
                 }
             } else if (memcmp(pName, "cpil", 4) == 0) {
                 unsigned __int8 cpil = 0;
@@ -308,7 +311,7 @@ int ReadMP4Tag(MP4FileHandle file, medialib_tags *tags)
                 if (MP4GetMetadataCompilation(file, &cpil))
                 {
                     wsprintf(t, "%d", cpil);
-                    tag_add_field(tags, "compilation", t);
+                    tag_add_field(tags, "compilation", t, 0);
                 }
             } else if (memcmp(pName, "tmpo", 4) == 0) {
                 unsigned __int16 tempo = 0;
@@ -316,12 +319,12 @@ int ReadMP4Tag(MP4FileHandle file, medialib_tags *tags)
                 if (MP4GetMetadataTempo(file, &tempo))
                 {
                     wsprintf(t, "%d BPM", tempo);
-                    tag_add_field(tags, "tempo", t);
+                    tag_add_field(tags, "tempo", t, 0);
                 }
             } else if (memcmp(pName, "NDFL", 4) == 0) {
                 /* Removed */
             } else {
-                tag_add_field(tags, pName, val);
+                tag_add_field(tags, pName, val, valueSize);
             }
 
             free(val);
@@ -333,9 +336,9 @@ int ReadMP4Tag(MP4FileHandle file, medialib_tags *tags)
     return 1;
 }
 
-int mp4_set_metadata(MP4FileHandle file, const char *item, const char *val)
+int mp4_set_metadata(MP4FileHandle file, const char *item, const char *val, size_t v_len)
 {
-    if (!item || (item && !*item) || !val || (val && !*val)) return 0;
+    if (!item || (item && !*item) || !val) return 0;
 
     if (!stricmp(item, "track") || !stricmp(item, "tracknumber"))
     {
@@ -401,7 +404,7 @@ int mp4_set_metadata(MP4FileHandle file, const char *item, const char *val)
     }
     else
     {
-        if (MP4SetMetadataFreeForm(file, (char *)item, (u_int8_t *)val, (u_int32_t)strlen(val))) return 1;
+        if (MP4SetMetadataFreeForm(file, (char *)item, (u_int8_t *)val, (u_int32_t)v_len)) return 1;
     }
 
     return 0;
@@ -415,10 +418,11 @@ int WriteMP4Tag(MP4FileHandle file, const medialib_tags *tags)
     {
         const char *item = tags->tags[i].item;
         const char *value = tags->tags[i].value;
+        size_t len = tags->tags[i].len;
 
-        if (value && *value)
+        if (value && len > 0)
         {
-            mp4_set_metadata(file, item, value);
+            mp4_set_metadata(file, item, value, len);
         }
     }
 }
@@ -896,45 +900,45 @@ BOOL CALLBACK mp4_info_dialog_proc(HWND hwndDlg, UINT message,
             }
 
             uGetDlgItemText(hwndDlg, IDC_METANAME, dummy1, 1024);
-            tag_set_field(&tags, "title", dummy1);
+            tag_set_field(&tags, "title", dummy1, 0);
 
             uGetDlgItemText(hwndDlg, IDC_METAWRITER, dummy1, 1024);
-            tag_set_field(&tags, "writer", dummy1);
+            tag_set_field(&tags, "writer", dummy1, 0);
 
             uGetDlgItemText(hwndDlg, IDC_METAARTIST, dummy1, 1024);
-            tag_set_field(&tags, "artist", dummy1);
+            tag_set_field(&tags, "artist", dummy1, 0);
 
             uGetDlgItemText(hwndDlg, IDC_METAALBUM, dummy1, 1024);
-            tag_set_field(&tags, "album", dummy1);
+            tag_set_field(&tags, "album", dummy1, 0);
 
             uGetDlgItemText(hwndDlg, IDC_METACOMMENTS, dummy1, 1024);
-            tag_set_field(&tags, "comment", dummy1);
+            tag_set_field(&tags, "comment", dummy1, 0);
 
             uGetDlgItemText(hwndDlg, IDC_METAGENRE, dummy1, 1024);
-            tag_set_field(&tags, "genre", dummy1);
+            tag_set_field(&tags, "genre", dummy1, 0);
 
             uGetDlgItemText(hwndDlg, IDC_METAYEAR, dummy1, 1024);
-            tag_set_field(&tags, "year", dummy1);
+            tag_set_field(&tags, "year", dummy1, 0);
 
             GetDlgItemText(hwndDlg, IDC_METATRACK1, dummy1, 1024);
             dummy = atoi(dummy1);
             GetDlgItemText(hwndDlg, IDC_METATRACK2, dummy1, 1024);
             dummy2 = atoi(dummy1);
             wsprintf(temp, "%d/%d", dummy, dummy2);
-            tag_set_field(&tags, "track", temp);
+            tag_set_field(&tags, "track", temp, 0);
 
             GetDlgItemText(hwndDlg, IDC_METADISK1, dummy1, 1024);
             dummy = atoi(dummy1);
             GetDlgItemText(hwndDlg, IDC_METADISK2, dummy1, 1024);
             dummy2 = atoi(dummy1);
             wsprintf(temp, "%d/%d", dummy, dummy2);
-            tag_set_field(&tags, "disc", temp);
+            tag_set_field(&tags, "disc", temp, 0);
 
             GetDlgItemText(hwndDlg, IDC_METATEMPO, dummy1, 1024);
-            tag_set_field(&tags, "tempo", dummy1);
+            tag_set_field(&tags, "tempo", dummy1, 0);
 
             dummy3 = SendMessage(GetDlgItem(hwndDlg, IDC_METACOMPILATION), BM_GETCHECK, 0, 0);
-            tag_set_field(&tags, "compilation", (dummy3 ? "1" : "0"));
+            tag_set_field(&tags, "compilation", (dummy3 ? "1" : "0"), 0);
 
             WriteMP4Tag(file, &tags);
 
@@ -2829,7 +2833,7 @@ __declspec(dllexport) int winampSetExtendedFileInfo(const char *fn, const char *
     if (ConvertANSIToUTF8(val, temp))
     {
         ret = 1;
-        tag_set_field(&mltags, data, temp);
+        tag_set_field(&mltags, data, temp, len);
     }
 
     free(temp);
