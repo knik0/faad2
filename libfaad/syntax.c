@@ -16,14 +16,14 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.5 2002/01/22 09:11:24 menno Exp $
+** $Id: syntax.c,v 1.6 2002/02/11 11:34:18 menno Exp $
 **/
 
 /*
    Reads the AAC bitstream as defined in 14496-3 (MPEG-4 Audio)
 
    (Note that there are some differences with 13818-7 (MPEG2), these
-   are alse read correctly when the MPEG ID is known (can be found in
+   are also read correctly when the MPEG ID is known (can be found in
    an ADTS header)).
 */
 
@@ -937,9 +937,24 @@ int adts_frame(adts_header *adts, bitfile *ld)
 /* Table 1.A.6 */
 static int adts_fixed_header(adts_header *adts, bitfile *ld)
 {
-    adts->syncword = faad_getbits(ld, 12
-        DEBUGVAR(1,118,"adts_fixed_header(): syncword"));
-    if (adts->syncword != 0xFFF)
+    int i, sync_err = 1;
+
+    /* try to recover from sync errors */
+    for (i = 0; i < 768; i++)
+    {
+        adts->syncword = faad_showbits(ld, 12);
+        if (adts->syncword != 0xFFF)
+        {
+            faad_getbits(ld, 8
+                DEBUGVAR(0,0,""));
+        } else {
+            sync_err = 0;
+            faad_getbits(ld, 12
+                DEBUGVAR(1,118,"adts_fixed_header(): syncword"));
+            break;
+        }
+    }
+    if (sync_err)
         return 5;
 
     adts->id = faad_get1bit(ld

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: specrec.c,v 1.1 2002/01/14 19:15:57 menno Exp $
+** $Id: specrec.c,v 1.2 2002/02/11 11:34:18 menno Exp $
 **/
 
 /*
@@ -177,8 +177,13 @@ void quant_to_spec(ic_stream *ics, float *spec_data)
             {
                 tmp_spec_ptr = win_ptr + j;
 
-                for (bin = 0; bin < width; bin++)
+                for (bin = 0; bin < width; bin += 4)
+                {
                     *tmp_spec_ptr++ = *spec_ptr++;
+                    *tmp_spec_ptr++ = *spec_ptr++;
+                    *tmp_spec_ptr++ = *spec_ptr++;
+                    *tmp_spec_ptr++ = *spec_ptr++;
+                }
 
                 win_ptr += win_inc;
             }
@@ -296,8 +301,14 @@ void apply_scalefactors(ic_stream *ics, float *x_invquant, float *pow2_table)
 
             scale = get_scale_factor_gain(ics->scale_factors[g][sfb], pow2_table);
 
-            for ( ; k < top; k++)
+            /* minimum size of a sf band is 4 and always a multiple of 4 */
+            for ( ; k < top; k+=4)
+            {
                 *fp++ *= scale;
+                *fp++ *= scale;
+                *fp++ *= scale;
+                *fp++ *= scale;
+            }
         }
         groups += ics->window_group_length[g];
     }
