@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker (mbakker(at)nero.com), Ahead Software AG
+** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -16,10 +16,13 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** Commercial non-GPL licensing of this software is also possible.
+** Any non-GPL usage of this software or parts of this software is strictly
+** forbidden.
+**
+** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: audio.h,v 1.8 2003/07/29 08:20:11 menno Exp $
+** $Id: audio.h,v 1.9 2004/02/06 10:23:27 menno Exp $
 **/
 
 #ifndef AUDIO_H_INCLUDED
@@ -43,13 +46,15 @@ typedef struct
     unsigned int bits_per_sample;
     unsigned int channels;
     unsigned long total_samples;
+    long channelMask;
 } audio_file;
 
 audio_file *open_audio_file(char *infile, int samplerate, int channels,
-                            int outputFormat, int fileType);
-int write_audio_file(audio_file *aufile, void *sample_buffer, int samples);
+                            int outputFormat, int fileType, long channelMask);
+int write_audio_file(audio_file *aufile, void *sample_buffer, int samples, int offset);
 void close_audio_file(audio_file *aufile);
 static int write_wav_header(audio_file *aufile);
+static int write_wav_extensible_header(audio_file *aufile, long channelMask);
 static int write_audio_16bit(audio_file *aufile, void *sample_buffer,
                              unsigned int samples);
 static int write_audio_24bit(audio_file *aufile, void *sample_buffer,

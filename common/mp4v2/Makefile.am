@@ -4,7 +4,7 @@ AM_CXXFLAGS = -Wall
 
 lib_LTLIBRARIES = libmp4v2.la
 
-include_HEADERS = mp4.h mpeg4ip.h
+include_HEADERS = mp4.h mpeg4ip.h systems.h
 
 libmp4v2_la_SOURCES = \
     atom_co64.cpp \

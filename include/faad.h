@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: faad.h,v 1.38 2004/01/06 11:59:48 menno Exp $
+** $Id: faad.h,v 1.39 2004/02/06 10:23:28 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -43,7 +43,7 @@ extern "C" {
   #endif
 #endif
 
-#define FAAD2_VERSION "2.0 RC3 "
+#define FAAD2_VERSION "2.0     "
 
 /* object types for AAC */
 #define MAIN       1

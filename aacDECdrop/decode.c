@@ -16,8 +16,8 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decode.c,v 1.14 2003/07/07 21:11:17 menno Exp $
-** $Id: decode.c,v 1.14 2003/07/07 21:11:17 menno Exp $
+** $Id: decode.c,v 1.15 2004/02/06 10:23:27 menno Exp $
+** $Id: decode.c,v 1.15 2004/02/06 10:23:27 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -123,6 +123,39 @@ char *file_ext[] =
     NULL
 };
 
+/* MicroSoft channel definitions */
+#define SPEAKER_FRONT_LEFT             0x1
+#define SPEAKER_FRONT_RIGHT            0x2
+#define SPEAKER_FRONT_CENTER           0x4
+#define SPEAKER_LOW_FREQUENCY          0x8
+#define SPEAKER_BACK_LEFT              0x10
+#define SPEAKER_BACK_RIGHT             0x20
+#define SPEAKER_FRONT_LEFT_OF_CENTER   0x40
+#define SPEAKER_FRONT_RIGHT_OF_CENTER  0x80
+#define SPEAKER_BACK_CENTER            0x100
+#define SPEAKER_SIDE_LEFT              0x200
+#define SPEAKER_SIDE_RIGHT             0x400
+#define SPEAKER_TOP_CENTER             0x800
+#define SPEAKER_TOP_FRONT_LEFT         0x1000
+#define SPEAKER_TOP_FRONT_CENTER       0x2000
+#define SPEAKER_TOP_FRONT_RIGHT        0x4000
+#define SPEAKER_TOP_BACK_LEFT          0x8000
+#define SPEAKER_TOP_BACK_CENTER        0x10000
+#define SPEAKER_TOP_BACK_RIGHT         0x20000
+#define SPEAKER_RESERVED               0x80000000
+
+long aacChannelConfig2wavexChannelMask(faacDecFrameInfo *hInfo)
+{
+    if (hInfo->channels == 6 && hInfo->num_lfe_channels)
+    {
+        return SPEAKER_FRONT_LEFT + SPEAKER_FRONT_RIGHT +
+            SPEAKER_FRONT_CENTER + SPEAKER_LOW_FREQUENCY +
+            SPEAKER_BACK_LEFT + SPEAKER_BACK_RIGHT;
+    } else {
+        return 0;
+    }
+}
+
 int decodeAACfile(char *sndfile, int def_srate, aac_dec_opt *opt)
 {
     int tagsize;
@@ -219,7 +252,7 @@ int decodeAACfile(char *sndfile, int def_srate, aac_dec_opt *opt)
             else
             {
                 aufile = open_audio_file(sndfile, samplerate, frameInfo.channels,
-                    opt->output_format, opt->file_type);
+                    opt->output_format, opt->file_type, aacChannelConfig2wavexChannelMask(&frameInfo));
 
                 if (aufile == NULL)
                 {
@@ -237,7 +270,7 @@ int decodeAACfile(char *sndfile, int def_srate, aac_dec_opt *opt)
             if(opt->decode_mode == 0)
                 WIN_Play_Samples((short*)sample_buffer, frameInfo.channels*frameInfo.samples);
             else
-                write_audio_file(aufile, sample_buffer, frameInfo.samples);
+                write_audio_file(aufile, sample_buffer, frameInfo.samples, 0);
         }
 
         if (buffer_index >= fileread)
@@ -401,7 +434,7 @@ int decodeMP4file(char *sndfile, aac_dec_opt *opt)
             else
             {
                 aufile = open_audio_file(sndfile, samplerate, frameInfo.channels,
-                     opt->output_format, opt->file_type);
+                     opt->output_format, opt->file_type, aacChannelConfig2wavexChannelMask(&frameInfo));
 
                 if (aufile == NULL)
                 {
@@ -418,7 +451,7 @@ int decodeMP4file(char *sndfile, aac_dec_opt *opt)
             if(opt->decode_mode == 0)
                 WIN_Play_Samples((short*)sample_buffer, frameInfo.channels*frameInfo.samples);
             else
-                write_audio_file(aufile, sample_buffer, frameInfo.samples);
+                write_audio_file(aufile, sample_buffer, frameInfo.samples, 0);
         }
 
         if (frameInfo.error > 0)

@@ -87,9 +87,11 @@ faad2 - top level directory.
       faad - general common functions like filereading and streaming
              as well as getting info from aac files.
 
-      id3lib - id3 tag editor library.
-
       mp4v2 - MPEG-4 file reading library.
+      
+      mp4av - MPEG-4 file general function library.
+      
+      mp4ff - Small MP4 file format library (includes tagging abilities).
       
    CoreAAC - AAC DirectShow filter.
 
@@ -104,8 +106,6 @@ faad2 - top level directory.
 
    plugins - plugins for all kinds of pograms.
    
-      foo_mp4 - mp4/aac plugin for foobar2000.
-
       in_mp4 - winamp MPEG-4 AAC file input plugin.
       
       QCD - Quintessential player AAC plugin.
@@ -117,4 +117,6 @@ faad2 - top level directory.
       winamp3 - winamp3 AAC input plugin.
       
       xmms - xmms AAC plugin
+
+      mpeg4ip - plugin for the mpeg4ip player
 

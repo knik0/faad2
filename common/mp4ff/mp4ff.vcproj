@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="Windows-1252"?>
-<VisualStudioProject 
+<VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="mp4ff"
@@ -7,25 +7,25 @@
 	SccProjectName=""
 	SccLocalPath="">
 	<Platforms>
-		<Platform 
+		<Platform
 			Name="Win32"/>
 	</Platforms>
 	<Configurations>
-		<Configuration 
+		<Configuration
 			Name="Release|Win32"
 			OutputDirectory=".\Release"
 			IntermediateDirectory=".\Release"
 			ConfigurationType="4"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="FALSE">
-			<Tool 
+			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions=""
 				Optimization="1"
 				InlineFunctionExpansion="1"
 				PreprocessorDefinitions="USE_TAGGING"
 				StringPooling="TRUE"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="TRUE"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\Release/mp4ff.pch"
@@ -35,42 +35,42 @@
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				Detect64BitPortabilityProblems="TRUE"/>
-			<Tool 
+			<Tool
 				Name="VCCustomBuildTool"/>
-			<Tool 
+			<Tool
 				Name="VCLibrarianTool"
 				AdditionalOptions=""
 				OutputFile=".\Release\mp4ff.lib"
 				SuppressStartupBanner="TRUE"/>
-			<Tool 
+			<Tool
 				Name="VCMIDLTool"/>
-			<Tool 
+			<Tool
 				Name="VCPostBuildEventTool"/>
-			<Tool 
+			<Tool
 				Name="VCPreBuildEventTool"/>
-			<Tool 
+			<Tool
 				Name="VCPreLinkEventTool"/>
-			<Tool 
+			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
 				Culture="1043"/>
-			<Tool 
+			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool 
+			<Tool
 				Name="VCXMLDataGeneratorTool"/>
-			<Tool 
+			<Tool
 				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool 
+			<Tool
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
-		<Configuration 
+		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory=".\Debug"
 			IntermediateDirectory=".\Debug"
 			ConfigurationType="4"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="FALSE">
-			<Tool 
+			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions=""
 				Optimization="0"
@@ -85,54 +85,57 @@
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				DebugInformationFormat="4"/>
-			<Tool 
+			<Tool
 				Name="VCCustomBuildTool"/>
-			<Tool 
+			<Tool
 				Name="VCLibrarianTool"
 				AdditionalOptions=""
 				OutputFile=".\Debug\mp4ff.lib"
 				SuppressStartupBanner="TRUE"/>
-			<Tool 
+			<Tool
 				Name="VCMIDLTool"/>
-			<Tool 
+			<Tool
 				Name="VCPostBuildEventTool"/>
-			<Tool 
+			<Tool
 				Name="VCPreBuildEventTool"/>
-			<Tool 
+			<Tool
 				Name="VCPreLinkEventTool"/>
-			<Tool 
+			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
 				Culture="1043"/>
-			<Tool 
+			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool 
+			<Tool
 				Name="VCXMLDataGeneratorTool"/>
-			<Tool 
+			<Tool
 				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool 
+			<Tool
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 	</Configurations>
 	<References>
 	</References>
 	<Files>
-		<Filter 
+		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
-			<File 
+			<File
+				RelativePath=".\drms.c">
+			</File>
+			<File
 				RelativePath="mp4atom.c">
-				<FileConfiguration 
+				<FileConfiguration
 					Name="Release|Win32">
-					<Tool 
+					<Tool
 						Name="VCCLCompilerTool"
 						AdditionalOptions=""
 						Optimization="1"
 						PreprocessorDefinitions=""/>
 				</FileConfiguration>
-				<FileConfiguration 
+				<FileConfiguration
 					Name="Debug|Win32">
-					<Tool 
+					<Tool
 						Name="VCCLCompilerTool"
 						AdditionalOptions=""
 						Optimization="0"
@@ -140,19 +143,19 @@
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
 			</File>
-			<File 
+			<File
 				RelativePath="mp4ff.c">
-				<FileConfiguration 
+				<FileConfiguration
 					Name="Release|Win32">
-					<Tool 
+					<Tool
 						Name="VCCLCompilerTool"
 						AdditionalOptions=""
 						Optimization="1"
 						PreprocessorDefinitions=""/>
 				</FileConfiguration>
-				<FileConfiguration 
+				<FileConfiguration
 					Name="Debug|Win32">
-					<Tool 
+					<Tool
 						Name="VCCLCompilerTool"
 						AdditionalOptions=""
 						Optimization="0"
@@ -160,19 +163,19 @@
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
 			</File>
-			<File 
+			<File
 				RelativePath="mp4meta.c">
-				<FileConfiguration 
+				<FileConfiguration
 					Name="Release|Win32">
-					<Tool 
+					<Tool
 						Name="VCCLCompilerTool"
 						AdditionalOptions=""
 						Optimization="1"
 						PreprocessorDefinitions=""/>
 				</FileConfiguration>
-				<FileConfiguration 
+				<FileConfiguration
 					Name="Debug|Win32">
-					<Tool 
+					<Tool
 						Name="VCCLCompilerTool"
 						AdditionalOptions=""
 						Optimization="0"
@@ -180,19 +183,19 @@
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
 			</File>
-			<File 
+			<File
 				RelativePath="mp4sample.c">
-				<FileConfiguration 
+				<FileConfiguration
 					Name="Release|Win32">
-					<Tool 
+					<Tool
 						Name="VCCLCompilerTool"
 						AdditionalOptions=""
 						Optimization="1"
 						PreprocessorDefinitions=""/>
 				</FileConfiguration>
-				<FileConfiguration 
+				<FileConfiguration
 					Name="Debug|Win32">
-					<Tool 
+					<Tool
 						Name="VCCLCompilerTool"
 						AdditionalOptions=""
 						Optimization="0"
@@ -200,22 +203,22 @@
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
 			</File>
-			<File 
+			<File
 				RelativePath=".\mp4tagupdate.c">
 			</File>
-			<File 
+			<File
 				RelativePath="mp4util.c">
-				<FileConfiguration 
+				<FileConfiguration
 					Name="Release|Win32">
-					<Tool 
+					<Tool
 						Name="VCCLCompilerTool"
 						AdditionalOptions=""
 						Optimization="1"
 						PreprocessorDefinitions=""/>
 				</FileConfiguration>
-				<FileConfiguration 
+				<FileConfiguration
 					Name="Debug|Win32">
-					<Tool 
+					<Tool
 						Name="VCCLCompilerTool"
 						AdditionalOptions=""
 						Optimization="0"
@@ -224,10 +227,22 @@
 				</FileConfiguration>
 			</File>
 		</Filter>
-		<Filter 
+		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
-			<File 
+			<File
+				RelativePath=".\drms.h">
+			</File>
+			<File
+				RelativePath=".\drmstables.h">
+			</File>
+			<File
+				RelativePath=".\mp4ff.h">
+			</File>
+			<File
+				RelativePath=".\mp4ff_int_types.h">
+			</File>
+			<File
 				RelativePath="mp4ffint.h">
 			</File>
 		</Filter>
