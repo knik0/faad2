@@ -16,8 +16,20 @@ DirText "The installer has detected the path to Winamp. If it is not correct, pl
 
 Section "FAAD2 Winamp3 AAC plugin"
 SectionIn 1
+IfFileExists $INSTDIR\Wacs\cnv_aacpcm.wac idelete 
+Goto iskip_delete
+   idelete:
+      Delete $INSTDIR\Wacs\cnv_aacpcm.wac
+      IfFileExists $INSTDIR\Wacs\cnv_aacpcm.wac idelete_error
+      Goto iskip_delete
+	 idelete_error:
+	    MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "The file is locked and can't be deleted. Please close Winamp3 and hit 'retry'" IDRETRY idelete IDCANCEL close
+iskip_delete:
 SetOutPath $INSTDIR\Wacs
 File plugins\winamp3\Release\cnv_FAAD.wac
 SetOutPath $INSTDIR\Wacs\xml\FAAD
 File plugins\winamp3\FAAD_config.xml
+close:
 SectionEnd
+
+
