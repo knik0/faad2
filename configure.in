@@ -29,7 +29,7 @@ AC_MSG_ERROR([
   ])
 fi
 
-AC_OUTPUT_COMMANDS(,[cd common/mp4v2; aclocal -I .; autoheader; libtoolize --automake; automake --add-missing; autoconf])
+AC_OUTPUT_COMMANDS(,[cd common/mp4v2; aclocal -I .; autoheader; libtoolize --automake; automake --add-missing; autoconf; cd -])
 
 AC_CONFIG_SUBDIRS(common/mp4v2)
 
