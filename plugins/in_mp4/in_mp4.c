@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.29 2003/05/29 19:56:50 menno Exp $
+** $Id: in_mp4.c,v 1.30 2003/05/31 13:18:05 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -302,7 +302,7 @@ BOOL CALLBACK aac_info_dialog_proc(HWND hwndDlg, UINT message,
         switch (aacInfo.headertype)
         {
         case 0: /* RAW */
-            header_string = "";
+            header_string = " RAW";
             break;
         case 1: /* ADIF */
             header_string = " ADIF";
@@ -654,7 +654,7 @@ int play(char *fn)
         mp4state.m_header_type = 0;
         if ((mp4state.m_aac_buffer[0] == 0xFF) && ((mp4state.m_aac_buffer[1] & 0xF6) == 0xF0))
         {
-            if (1) //(m_reader->can_seek())
+            if (1) //(can_seek)
             {
                 adts_parse(&mp4state, &bitrate, &length);
                 fseek(mp4state.aacfile, tagsize, SEEK_SET);
@@ -687,7 +687,10 @@ int play(char *fn)
 
             mp4state.m_header_type = 2;
         } else {
-            module.is_seekable = 0;
+            length = (double)file_length(mp4state.aacfile);
+            length = ((double)length*8.)/((double)bitrate*1000.) + 0.5;
+
+            module.is_seekable = 1;
         }
 
         mp4state.m_length = (int)(length*1000.);
@@ -1011,9 +1014,12 @@ int getsonglength(char *fn)
             else
                 length = ((double)length*8.)/((double)bitrate) + 0.5;
 
-            bitrate = (__int64)((double)bitrate/1000.0 + 0.5);
-
             len_state.m_header_type = 2;
+        } else {
+            length = (double)file_length(len_state.aacfile);
+            length = ((double)length*8.)/((double)bitrate*1000.) + 0.5;
+
+            len_state.m_header_type = 0;
         }
 
         if (len_state.m_aac_buffer)
@@ -1272,7 +1278,7 @@ int aac_seek(state *st, double seconds)
     int bread;
     struct seek_list *target = st->m_head;
 
-    if (1 /*m_reader->can_seek()*/ && ((st->m_header_type == 1) || (seconds < st->cur_pos_sec)))
+    if (1 /*can_seek*/ && ((st->m_header_type == 1) || (seconds < st->cur_pos_sec)))
     {
         frames = (int)(seconds*((double)st->samplerate/1024.0) + 0.5);
 
@@ -1348,10 +1354,10 @@ DWORD WINAPI AACPlayThread(void *b)
         {
             double ms;
 
-            /* Round off to a second */
             ms = mp4state.seek_needed/1000;
             module.outMod->Flush(mp4state.decode_pos_ms);
             aac_seek(&mp4state, ms);
+            mp4state.cur_pos_sec = ms;
             mp4state.decode_pos_ms = mp4state.seek_needed;
             mp4state.seek_needed = -1;
         }
