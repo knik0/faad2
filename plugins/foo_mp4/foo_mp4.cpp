@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.9 2002/12/29 11:05:13 menno Exp $
+** $Id: foo_mp4.cpp,v 1.10 2002/12/29 11:10:18 menno Exp $
 **/
 
 #include <mp4.h>
@@ -146,7 +146,8 @@ public:
         track = GetAACTrack(hFile);
         if (track < 1) return 0;
 
-        MP4TagDelete(hFile, track);
+        if (MP4TagGetNumEntries(hFile, track) > 0)
+            MP4TagDelete(hFile, track);
 
         int numItems = info->meta_get_count();
         if (numItems > 0)
