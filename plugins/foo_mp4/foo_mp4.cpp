@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.54 2003/09/04 18:35:46 menno Exp $
+** $Id: foo_mp4.cpp,v 1.55 2003/09/06 12:14:24 ca5e Exp $
 **/
 
 #include <mp4.h>
@@ -46,7 +46,7 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "1.51",
+                           "1.54",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -261,7 +261,7 @@ public:
 
                 m_seekto = 0;
             }
-        } while (sample_pos + sample_dur < m_seekto);
+        } while (sample_pos + sample_dur <= m_seekto);
 
         return 1;
     }
