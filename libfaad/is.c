@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: is.c,v 1.4 2002/03/16 13:38:37 menno Exp $
+** $Id: is.c,v 1.5 2002/05/24 17:26:12 menno Exp $
 **/
 
 #include "common.h"
@@ -48,16 +48,16 @@ void is_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec)
                     ics->pred.prediction_used[sfb] = 0;
                     icsr->pred.prediction_used[sfb] = 0;
 
-                    scale = is_intensity(icsr, g, sfb) *
-                        invert_intensity(ics, g, sfb) *
-                        (real_t)exp(LN05 * (0.25*icsr->scale_factors[g][sfb]));
+                    scale = MUL(is_intensity(icsr, g, sfb),
+                        MUL(invert_intensity(ics, g, sfb),
+                        (real_t)exp(LN05 * (0.25*icsr->scale_factors[g][sfb]))));
 
                     /* Scale from left to right channel,
                        do not touch left channel */
                     for (i = icsr->swb_offset[sfb]; i < icsr->swb_offset[sfb+1]; i++)
                     {
                         k = (group*128)+i;
-                        r_spec[k] = l_spec[k] * scale;
+                        r_spec[k] = MUL(l_spec[k], scale);
                     }
                 }
             }

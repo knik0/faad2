@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: tns.c,v 1.9 2002/05/14 13:40:31 menno Exp $
+** $Id: tns.c,v 1.10 2002/05/24 17:26:12 menno Exp $
 **/
 
 #include "common.h"
@@ -160,7 +160,7 @@ static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_c
     for (m = 1; m <= order; m++)
     {
         for (i = 1; i < m; i++) /* loop only while i<m */
-            b[i] = a[i] + tmp2[m-1] * a[m-i];
+            b[i] = a[i] + MUL(tmp2[m-1], a[m-i]);
 
         for (i = 1; i < m; i++) /* loop only while i<m */
             a[i] = b[i];
@@ -193,7 +193,7 @@ static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
         y = *spectrum;
 
         for (j = 0; j < order; j++)
-            y -= lpc[j+1] * state[j];
+            y -= MUL(lpc[j+1], state[j]);
 
         for (j = order-1; j > 0; j--)
             state[j] = state[j-1];
@@ -228,7 +228,7 @@ static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
         y = *spectrum;
 
         for (j = 0; j < order; j++)
-            y += lpc[j+1] * state[j];
+            y += MUL(lpc[j+1], state[j]);
 
         for (j = order-1; j > 0; j--)
             state[j] = state[j-1];

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: drc.c,v 1.4 2002/03/16 13:38:37 menno Exp $
+** $Id: drc.c,v 1.5 2002/05/24 17:26:12 menno Exp $
 **/
 
 #include "common.h"
@@ -65,11 +65,12 @@ void drc_decode(drc_info *drc, real_t *spec)
            modification avoids problems with reduced DAC SNR (if signal is
            attenuated) or clipping (if signal is boosted)
          */
-        factor *= (real_t)exp(LN05 * ((DRC_REF_LEVEL - drc->prog_ref_level)/24.0));
+        factor = MUL(factor,
+            (real_t)exp(LN05 * ((DRC_REF_LEVEL - drc->prog_ref_level)/24.0)));
 
         /* Apply gain factor */
         for (i = bottom; i < top; i++)
-            spec[i] *= factor;
+            spec[i] = MUL(spec[i], factor);
 
         bottom = top;
     }

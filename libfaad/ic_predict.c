@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ic_predict.c,v 1.3 2002/03/16 13:38:37 menno Exp $
+** $Id: ic_predict.c,v 1.4 2002/05/24 17:26:12 menno Exp $
 **/
 
 #include "common.h"
@@ -70,7 +70,7 @@ static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t 
         /* only needed for the actual predicted value, k1 is always needed */
         k2 = KOR[1]/VAR[1]*B;
 
-        predictedvalue = k1*r[0] + k2*r[1];
+        predictedvalue = MUL(k1, r[0]) + MUL(k2, r[1]);
         flt_round_inf(&predictedvalue);
 
         *output = input + predictedvalue;
@@ -80,17 +80,17 @@ static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t 
 
     /* calculate new state data */
     e0 = *output;
-    e1 = e0 - k1 * r[0];
+    e1 = e0 - MUL(k1, r[0]);
 
     dr1 = k1 * e0;
 
-    VAR[0] = ALPHA * VAR[0] + (0.5f)*(r[0]*r[0] + e0*e0);
-    KOR[0] = ALPHA * KOR[0] + r[0]*e0;
-    VAR[1] = ALPHA * VAR[1] + (0.5f)*(r[1]*r[1] + e1*e1);
-    KOR[1] = ALPHA * KOR[1] + r[1]*e1;
+    VAR[0] = MUL(ALPHA, VAR[0]) + (0.5f) * (MUL(r[0], r[0]) + MUL(e0, e0));
+    KOR[0] = MUL(ALPHA, KOR[0]) + MUL(r[0], e0);
+    VAR[1] = MUL(ALPHA, VAR[1]) + (0.5f) * (MUL(r[1], r[1]) + MUL(e1, e1));
+    KOR[1] = MUL(ALPHA, KOR[1]) + MUL(r[1], e1);
 
-    r[1] = A * (r[0]-dr1);
-    r[0] = A * e0;
+    r[1] = MUL(A, (r[0]-dr1));
+    r[0] = MUL(A, e0);
 }
 
 static void reset_pred_state(pred_state *state)

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.c,v 1.9 2002/04/23 21:08:26 menno Exp $
+** $Id: mdct.c,v 1.10 2002/05/24 17:26:12 menno Exp $
 **/
 
 /*
@@ -106,8 +106,8 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
         uint16_t n = k << 1;
         real_t x0 = X_in[         n];
         real_t x1 = X_in[N2 - 1 - n];
-        Z1[k].re  = x1 * sincos[k].cos - x0 * sincos[k].sin;
-        Z1[k].im  = x0 * sincos[k].cos + x1 * sincos[k].sin;
+        Z1[k].re  = MUL(fac, MUL(x1, sincos[k].cos) - MUL(x0, sincos[k].sin));
+        Z1[k].im  = MUL(fac, MUL(x0, sincos[k].cos) + MUL(x1, sincos[k].sin));
     }
 
     /* complex IFFT */
@@ -118,8 +118,8 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     {
         real_t zr = Z2[k].re;
         real_t zi = Z2[k].im;
-        Z2[k].re  = fac * (zr * sincos[k].cos - zi * sincos[k].sin);
-        Z2[k].im  = fac * (zi * sincos[k].cos + zr * sincos[k].sin);
+        Z2[k].re  = MUL(zr, sincos[k].cos) - MUL(zi, sincos[k].sin);
+        Z2[k].im  = MUL(zi, sincos[k].cos) + MUL(zr, sincos[k].sin);
     }
 
     /* reordering */
@@ -159,14 +159,14 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
         real_t zr     =  X_in[N - N4 - 1 - n] + X_in[N - N4 +     n];
         real_t zi     =  X_in[    N4 +     n] - X_in[    N4 - 1 - n];
 
-        Z1[k     ].re = -zr * sincos[k     ].cos - zi * sincos[k     ].sin;
-        Z1[k     ].im = -zi * sincos[k     ].cos + zr * sincos[k     ].sin;
+        Z1[k     ].re = -MUL(zr, sincos[k     ].cos) - MUL(zi, sincos[k     ].sin);
+        Z1[k     ].im = -MUL(zi, sincos[k     ].cos) + MUL(zr, sincos[k     ].sin);
 
         zr            =  X_in[    N2 - 1 - n] - X_in[             n];
         zi            =  X_in[    N2 +     n] + X_in[N -      1 - n];
 
-        Z1[k + N8].re = -zr * sincos[k + N8].cos - zi * sincos[k + N8].sin;
-        Z1[k + N8].im = -zi * sincos[k + N8].cos + zr * sincos[k + N8].sin;
+        Z1[k + N8].re = -MUL(zr, sincos[k + N8].cos) - MUL(zi, sincos[k + N8].sin);
+        Z1[k + N8].im = -MUL(zi, sincos[k + N8].cos) + MUL(zr, sincos[k + N8].sin);
     }
 
     /* complex FFT */
@@ -176,8 +176,8 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     for (k = 0; k < N4; k++)
     {
         uint16_t n = k << 1;
-        real_t zr = 2.0 * (Z2[k].re * sincos[k].cos + Z2[k].im * sincos[k].sin);
-        real_t zi = 2.0 * (Z2[k].im * sincos[k].cos - Z2[k].re * sincos[k].sin);
+        real_t zr = MUL(2.0, MUL(Z2[k].re, sincos[k].cos) + MUL(Z2[k].im, sincos[k].sin));
+        real_t zi = MUL(2.0, MUL(Z2[k].im, sincos[k].cos) - MUL(Z2[k].re, sincos[k].sin));
 
         X_out[         n] = -zr;
         X_out[N2 - 1 - n] =  zi;

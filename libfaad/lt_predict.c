@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: lt_predict.c,v 1.4 2002/03/16 13:38:37 menno Exp $
+** $Id: lt_predict.c,v 1.5 2002/05/24 17:26:12 menno Exp $
 **/
 
 
@@ -59,8 +59,8 @@ void lt_prediction(ic_stream *ics, ltp_info *ltp, real_t *spec,
             {
                 /* The extra lookback M (N/2 for LD, 0 for LTP) is handled
                    in the buffer updating */
-                x_est[i] = codebook[ltp->coef] *
-                    lt_pred_stat[num_samples + i - ltp->lag];
+                x_est[i] = MUL(codebook[ltp->coef],
+                    lt_pred_stat[num_samples + i - ltp->lag]);
             }
 
             filter_bank_ltp(fb, ics->window_sequence, win_shape, win_shape_prev,

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: specrec.c,v 1.6 2002/03/16 13:38:36 menno Exp $
+** $Id: specrec.c,v 1.7 2002/05/24 17:26:12 menno Exp $
 **/
 
 /*
@@ -255,13 +255,13 @@ static INLINE real_t iquant(int16_t q, real_t *iq_table)
         if (q < IQ_TABLE_SIZE)
             return iq_table[q];
         else
-            return iq_table[q>>3]*16;
+            return MUL(iq_table[q>>3], 16);
     } else if (q < 0) {
         q = -q;
         if (q < IQ_TABLE_SIZE)
             return -iq_table[q];
         else
-          return -iq_table[q>>3]*16;
+          return -MUL(iq_table[q>>3], 16);
     } else {
         return 0.0f;
     }
@@ -321,10 +321,10 @@ void apply_scalefactors(ic_stream *ics, real_t *x_invquant, real_t *pow2_table)
             /* minimum size of a sf band is 4 and always a multiple of 4 */
             for ( ; k < top; k+=4)
             {
-                *fp++ *= scale;
-                *fp++ *= scale;
-                *fp++ *= scale;
-                *fp++ *= scale;
+                *fp = MUL(*fp, scale); fp++;
+                *fp = MUL(*fp, scale); fp++;
+                *fp = MUL(*fp, scale); fp++;
+                *fp = MUL(*fp, scale); fp++;
             }
         }
         groups += ics->window_group_length[g];

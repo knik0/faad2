@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.c,v 1.7 2002/04/07 21:26:04 menno Exp $
+** $Id: filtbank.c,v 1.8 2002/05/24 17:26:12 menno Exp $
 **/
 
 #include "common.h"
@@ -123,14 +123,14 @@ static INLINE void vmult1(real_t *src1, real_t *src2, real_t *dest, uint16_t vle
 
     for (i = vlen/16-1; i >= 0 ; --i)
     {
-        *dest++ = *src1++ * *src2++; *dest++ = *src1++ * *src2++;
-        *dest++ = *src1++ * *src2++; *dest++ = *src1++ * *src2++;
-        *dest++ = *src1++ * *src2++; *dest++ = *src1++ * *src2++;
-        *dest++ = *src1++ * *src2++; *dest++ = *src1++ * *src2++;
-        *dest++ = *src1++ * *src2++; *dest++ = *src1++ * *src2++;
-        *dest++ = *src1++ * *src2++; *dest++ = *src1++ * *src2++;
-        *dest++ = *src1++ * *src2++; *dest++ = *src1++ * *src2++;
-        *dest++ = *src1++ * *src2++; *dest++ = *src1++ * *src2++;
+        *dest++ = MUL(*src1++, *src2++); *dest++ = MUL(*src1++, *src2++);
+        *dest++ = MUL(*src1++, *src2++); *dest++ = MUL(*src1++, *src2++);
+        *dest++ = MUL(*src1++, *src2++); *dest++ = MUL(*src1++, *src2++);
+        *dest++ = MUL(*src1++, *src2++); *dest++ = MUL(*src1++, *src2++);
+        *dest++ = MUL(*src1++, *src2++); *dest++ = MUL(*src1++, *src2++);
+        *dest++ = MUL(*src1++, *src2++); *dest++ = MUL(*src1++, *src2++);
+        *dest++ = MUL(*src1++, *src2++); *dest++ = MUL(*src1++, *src2++);
+        *dest++ = MUL(*src1++, *src2++); *dest++ = MUL(*src1++, *src2++);
     }
 }
 
@@ -142,14 +142,14 @@ static INLINE void vmult2(real_t *src1, real_t *src2, real_t *dest, uint16_t vle
 
     for (i = vlen/16-1; i >= 0 ; --i)
     {
-        *dest++ = *src1++ * *src2--; *dest++ = *src1++ * *src2--;
-        *dest++ = *src1++ * *src2--; *dest++ = *src1++ * *src2--;
-        *dest++ = *src1++ * *src2--; *dest++ = *src1++ * *src2--;
-        *dest++ = *src1++ * *src2--; *dest++ = *src1++ * *src2--;
-        *dest++ = *src1++ * *src2--; *dest++ = *src1++ * *src2--;
-        *dest++ = *src1++ * *src2--; *dest++ = *src1++ * *src2--;
-        *dest++ = *src1++ * *src2--; *dest++ = *src1++ * *src2--;
-        *dest++ = *src1++ * *src2--; *dest++ = *src1++ * *src2--;
+        *dest++ = MUL(*src1++, *src2--); *dest++ = MUL(*src1++, *src2--);
+        *dest++ = MUL(*src1++, *src2--); *dest++ = MUL(*src1++, *src2--);
+        *dest++ = MUL(*src1++, *src2--); *dest++ = MUL(*src1++, *src2--);
+        *dest++ = MUL(*src1++, *src2--); *dest++ = MUL(*src1++, *src2--);
+        *dest++ = MUL(*src1++, *src2--); *dest++ = MUL(*src1++, *src2--);
+        *dest++ = MUL(*src1++, *src2--); *dest++ = MUL(*src1++, *src2--);
+        *dest++ = MUL(*src1++, *src2--); *dest++ = MUL(*src1++, *src2--);
+        *dest++ = MUL(*src1++, *src2--); *dest++ = MUL(*src1++, *src2--);
     }
 }
 
@@ -309,6 +309,8 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
         vzero(obuf_temp+2*nlong-1, 2*nlong);
 
 		fp = obuf_temp;
+        vcopy(time_buff+nflat_ls, fp, nshort);
+
         for (win = 8-1; win >= 0; --win)
         {
             /* inverse transform */
@@ -330,9 +332,7 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
             window_short_prev_ptr = window_short;
         }
 
-        vadd(o_buf + 448, obuf_temp, o_buf + 448, nlong - 448);
         vcopy(obuf_temp, o_buf + 448, nlong*2-nflat_ls);
-        
         vzero(o_buf+2*nlong-1, nflat_ls);
 
         free(obuf_temp);

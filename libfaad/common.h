@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.10 2002/05/01 19:25:19 menno Exp $
+** $Id: common.h,v 1.11 2002/05/24 17:26:11 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -117,6 +117,8 @@ typedef float float32_t;
 
   typedef float real_t;
 
+  #define MUL(A,B) ((A)*(B))
+
   #ifdef __ICL /* only Intel C compiler has fmath ??? */
 
     #include <mathf.h>
@@ -161,6 +163,8 @@ typedef float float32_t;
 
   typedef double real_t;
   #include <math.h>
+
+  #define MUL(A,B) ((A)*(B))
 
 #endif
 
