@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.h,v 1.8 2002/09/26 19:01:45 menno Exp $
+** $Id: bits.h,v 1.9 2002/09/28 14:03:07 menno Exp $
 **/
 
 #ifndef __BITS_H__
@@ -121,6 +121,73 @@ static INLINE uint8_t faad_get1bit(bitfile *ld DEBUGDEC)
 {
     return (uint8_t)faad_getbits(ld, 1 DEBUGVAR(print,var,dbg));
 }
+
+/* reversed bitreading routines */
+static INLINE uint32_t faad_showbits_rev(bitfile *ld, uint32_t bits)
+{
+    uint8_t i;
+    uint32_t B = 0;
+
+    if (bits <= ld->bits_left)
+    {
+        for (i = 0; i < bits; i++)
+        {
+            if (ld->bufa & (1 << (i + (32 - ld->bits_left))))
+                B |= (1 << (bits - i - 1));
+        }
+        return B;
+    } else {
+        for (i = 0; i < ld->bits_left; i++)
+        {
+            if (ld->bufa & (1 << (i + (32 - ld->bits_left))))
+                B |= (1 << (bits - i - 1));
+        }
+        for (i = 0; i < bits - ld->bits_left; i++)
+        {
+            if (ld->bufb & (1 << (i + (32-ld->bits_left))))
+                B |= (1 << (bits - ld->bits_left - i - 1));
+        }
+    }
+}
+
+static INLINE void faad_flushbits_rev(bitfile *ld, uint32_t bits)
+{
+    if (bits < ld->bits_left)
+    {
+        ld->bits_left -= bits;
+    } else {
+        uint32_t tmp;
+
+        ld->bufa = ld->bufb;
+        tmp = *(uint32_t*)ld->start;
+#ifdef ARCH_IS_BIG_ENDIAN
+        BSWAP(tmp);
+#endif
+        ld->bufb = tmp;
+        ld->start--;
+        ld->bits_left += (32 - bits);
+    }
+}
+
+static INLINE uint32_t faad_getbits_rev(bitfile *ld, uint32_t n
+                                        DEBUGDEC)
+{
+    uint32_t ret;
+
+    if (n == 0)
+        return 0;
+
+    ret = faad_showbits_rev(ld, n);
+    faad_flushbits_rev(ld, n);
+
+#ifdef ANALYSIS
+    if (print)
+        fprintf(stdout, "%4d %2d bits, val: %4d, variable: %d %s\n", dbg_count++, n, ret, var, dbg);
+#endif
+
+    return ret;
+}
+
 
 #ifdef __cplusplus
 }
