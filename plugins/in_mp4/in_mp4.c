@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.23 2002/12/06 11:05:15 menno Exp $
+** $Id: in_mp4.c,v 1.24 2002/12/06 11:30:01 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -753,8 +753,11 @@ void getfileinfo(char *filename, char *title, int *length_in_ms)
 
         if (title)
         {
+            char *tmp2;
             char *tmp = PathFindFileName(mp4state.filename);
             strcpy(title, tmp);
+            tmp2 = strrchr(title, '.');
+            tmp2[0] = '\0';
         }
     } else {
         if (length_in_ms)
@@ -762,8 +765,11 @@ void getfileinfo(char *filename, char *title, int *length_in_ms)
 
         if (title)
         {
+            char *tmp2;
             char *tmp = PathFindFileName(filename);
             strcpy(title, tmp);
+            tmp2 = strrchr(title, '.');
+            tmp2[0] = '\0';
         }
     }
 }
