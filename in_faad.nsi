@@ -5,16 +5,17 @@ LicenseText "You must read the following license before installing."
 LicenseData COPYING
 ComponentText "This will install the FAAD2 Winamp AAC plugin on your computer."
 InstType Normal
-DirText "Please select a location to install the FAAD2 Winamp AAC plugin (or use the default)."
 AutoCloseWindow true
 SetOverwrite on
 SetDateSave on
 
-InstallDir "$PROGRAMFILES\Winamp\Plugins\"
-InstallDirRegKey HKEY_CURRENT_USER SOFTWARE\Winamp\FAAD2 ""
+InstallDir $PROGRAMFILES\Winamp
+InstallDirRegKey HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\Winamp" "UninstallString"
+DirShow show
+DirText "The installer has detected the path to Winamp. If it is not correct, please change."
 
 Section "FAAD2 Winamp AAC plugin"
 SectionIn 1
-SetOutPath $INSTDIR
+SetOutPath $INSTDIR\Plugins
 File plugins\winamp\Release\in_faad.dll
 SectionEnd
