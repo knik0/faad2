@@ -88,7 +88,7 @@ int mp4ff_write_fixed32(mp4ff_t *file, float number)
 	return mp4ff_write_data(file, data, 4);
 }
 
-int mp4ff_write_int64(mp4ff_t *file, unsigned __int64 value)
+int mp4ff_write_int64(mp4ff_t *file, uint64_t value)
 {
 	unsigned char data[8];
 	int i;
@@ -140,16 +140,16 @@ int mp4ff_write_fixed16(mp4ff_t *file, float number)
 	return mp4ff_write_data(file, data, 2);
 }
 
-unsigned __int64 mp4ff_read_int64(mp4ff_t *file)
+uint64_t mp4ff_read_int64(mp4ff_t *file)
 {
 	unsigned char data[8];
-	unsigned __int64 result = 0;
+	uint64_t result = 0;
 	int i;
 
 	mp4ff_read_data(file, data, 8);
 
 	for (i = 0; i < 8; i++) {
-		result |= ((unsigned __int64)data[i]) << ((7 - i) * 8);
+		result |= ((uint64_t)data[i]) << ((7 - i) * 8);
 	}
 
 	return result;

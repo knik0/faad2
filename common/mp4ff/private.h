@@ -6,6 +6,22 @@
 #define HEADER_LENGTH 8
 #define MAXTRACKS 1024
 
+#ifdef _WIN32
+typedef __int64 int64_t;
+typedef unsigned __int64 uint64_t;
+#else
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#else
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+#define u_int64_t uint64_t
+#endif
+
+#endif
+
+
 typedef struct
 {
 	float values[9];
@@ -438,9 +454,9 @@ typedef struct
 {
     size_t (*read)(void *buffer, size_t length);
     size_t (*write)(void *buffer, size_t length);
-    __int64 (*get_position)();
-    __int64 (*get_length)();
-    int (*seek)(__int64 position);
+    int64_t (*get_position)();
+    int64_t (*get_length)();
+    int (*seek)(int64_t position);
 } mp4_callback_t;
 
 typedef struct

@@ -100,9 +100,9 @@ long mp4ff_atom_read_size(char *data)
 	return (long)result;
 }
 
-unsigned __int64 mp4ff_atom_read_size64(char *data)
+uint64_t mp4ff_atom_read_size64(char *data)
 {
-	unsigned __int64 result = 0;
+	uint64_t result = 0;
 	int i;
 
 	for (i = 0; i < 8; i++) {

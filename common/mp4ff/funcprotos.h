@@ -3,7 +3,7 @@
 
 /* atom handling routines */
 long mp4ff_atom_read_size(char *data);
-unsigned __int64 mp4ff_atom_read_size64(char *data);
+uint64_t mp4ff_atom_read_size64(char *data);
 int mp4ff_atom_write_header(mp4ff_t *file, mp4ff_atom_t *atom, char *text);
 int mp4ff_atom_read_header(mp4ff_t *file, mp4ff_atom_t *atom);
 int mp4ff_atom_write_footer(mp4ff_t *file, mp4ff_atom_t *atom);
@@ -82,8 +82,8 @@ float mp4ff_read_fixed32(mp4ff_t *file);
 int mp4ff_write_fixed32(mp4ff_t *file, float number);
 float mp4ff_read_fixed16(mp4ff_t *file);
 int mp4ff_write_fixed16(mp4ff_t *file, float number);
-unsigned __int64 mp4ff_read_int64(mp4ff_t *file);
-int mp4ff_write_int64(mp4ff_t *file, unsigned __int64 number);
+uint64_t mp4ff_read_int64(mp4ff_t *file);
+int mp4ff_write_int64(mp4ff_t *file, uint64_t number);
 long mp4ff_read_int32(mp4ff_t *file);
 int mp4ff_write_int32(mp4ff_t *file, long number);
 long mp4ff_read_int24(mp4ff_t *file);

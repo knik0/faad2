@@ -51,7 +51,7 @@ int mp4ff_write_vmhd(mp4ff_t *file, mp4ff_vmhd_t *vmhd)
 	mp4ff_write_char(file, vmhd->version);
 	mp4ff_write_int24(file, vmhd->flags);
 
-	mp4ff_write_int64(file, (unsigned __int64)0);
+	mp4ff_write_int64(file, (uint64_t)0);
 
 	mp4ff_atom_write_footer(file, &atom);
 }
