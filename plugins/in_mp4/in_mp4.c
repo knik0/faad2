@@ -16,8 +16,10 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.24 2002/12/06 11:30:01 menno Exp $
+** $Id: in_mp4.c,v 1.25 2002/12/22 21:36:28 menno Exp $
 **/
+
+//#define DEBUG_OUTPUT
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -104,6 +106,16 @@ HANDLE play_thread_handle = INVALID_HANDLE_VALUE; // the handle to the decode th
 DWORD WINAPI MP4PlayThread(void *b); // the decode thread procedure
 DWORD WINAPI AACPlayThread(void *b); // the decode thread procedure
 
+#ifdef DEBUG_OUTPUT
+void in_mp4_DebugOutput(char *message)
+{
+    char s[1024];
+
+    sprintf(s, "%s: %s", mp4state.filename, message);
+    MessageBox(NULL, s, "Debug Message", MB_OK);
+}
+#endif
+
 static void show_error(HWND hwnd, char *message, ...)
 {
     if (m_show_errors)
@@ -169,6 +181,10 @@ BOOL CALLBACK mp4_info_dialog_proc(HWND hwndDlg, UINT message,
 {
     MP4FileHandle file;
     int tracks, i;
+
+#ifdef DEBUG_OUTPUT
+    in_mp4_DebugOutput("mp4_info_dialog_proc");
+#endif
 
     switch (message) {
     case WM_INITDIALOG:
@@ -240,6 +256,10 @@ BOOL CALLBACK aac_info_dialog_proc(HWND hwndDlg, UINT message,
 {
     faadAACInfo aacInfo;
     char *info_text, *header_string;
+
+#ifdef DEBUG_OUTPUT
+    in_mp4_DebugOutput("aac_info_dialog_proc");
+#endif
 
     switch (message) {
     case WM_INITDIALOG:
@@ -417,6 +437,10 @@ int play(char *fn)
     unsigned char *buffer;
     int buffer_size;
     faacDecConfigurationPtr config;
+
+#ifdef DEBUG_OUTPUT
+    in_mp4_DebugOutput("play");
+#endif
 
     mp4state.channels = 0;
     mp4state.samplerate = 0;
@@ -597,7 +621,7 @@ int play(char *fn)
 
     if (mp4state.filetype)
     {
-        if((play_thread_handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AACPlayThread,
+        if ((play_thread_handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AACPlayThread,
             (void *)&killPlayThread, 0, &thread_id)) == NULL)
         {
             show_error(module.hMainWindow, "Cannot create playback thread");
@@ -606,7 +630,7 @@ int play(char *fn)
             return -1;
         }
     } else {
-        if((play_thread_handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)MP4PlayThread,
+        if ((play_thread_handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)MP4PlayThread,
             (void *)&killPlayThread, 0, &thread_id)) == NULL)
         {
             show_error(module.hMainWindow, "Cannot create playback thread");
@@ -616,6 +640,8 @@ int play(char *fn)
         }
     }
 
+    SetThreadAffinityMask(play_thread_handle, 1);
+
     if (m_priority != 3)
         SetThreadPriority(play_thread_handle, priority_table[m_priority]);
 
@@ -624,33 +650,57 @@ int play(char *fn)
 
 void pause()
 {
+#ifdef DEBUG_OUTPUT
+    in_mp4_DebugOutput("pause");
+#endif
+
     mp4state.paused = 1;
     module.outMod->Pause(1);
 }
 
 void unpause()
 {
+#ifdef DEBUG_OUTPUT
+    in_mp4_DebugOutput("unpause");
+#endif
+
     mp4state.paused = 0;
     module.outMod->Pause(0);
 }
 
 int ispaused()
 {
+#ifdef DEBUG_OUTPUT
+    in_mp4_DebugOutput("ispaused");
+#endif
+
     return mp4state.paused;
 }
 
 void setvolume(int volume)
 {
+#ifdef DEBUG_OUTPUT
+    in_mp4_DebugOutput("setvolume");
+#endif
+
     module.outMod->SetVolume(volume);
 }
 
 void setpan(int pan)
 {
+#ifdef DEBUG_OUTPUT
+    in_mp4_DebugOutput("setpan");
+#endif
+
     module.outMod->SetPan(pan);
 }
 
 void stop()
 {
+#ifdef DEBUG_OUTPUT
+    in_mp4_DebugOutput("stop");
+#endif
+
     killPlayThread = 1;
 
     if (play_thread_handle != INVALID_HANDLE_VALUE)
@@ -741,6 +791,10 @@ int getoutputtime()
 
 void setoutputtime(int time_in_ms)
 {
+#ifdef DEBUG_OUTPUT
+    in_mp4_DebugOutput("setoutputtime");
+#endif
+
     mp4state.seek_needed = time_in_ms;
 }
 
@@ -787,6 +841,10 @@ DWORD WINAPI MP4PlayThread(void *b)
     unsigned char *buffer;
     int buffer_size, ms;
     faacDecFrameInfo frameInfo;
+
+#ifdef DEBUG_OUTPUT
+    in_mp4_DebugOutput("MP4PlayThread");
+#endif
 
 	PlayThreadAlive = 1;
     mp4state.last_frame = 0;
@@ -903,25 +961,6 @@ DWORD WINAPI MP4PlayThread(void *b)
     return 0;
 }
 
-#if 0
-int aac_seek(int pos_ms)
-{
-    int read;
-    int offset_sec = (int)((float)pos_ms / 1000.0 + 0.5);
-
-    fseek(mp4state.aacfile, mp4state.seek_table[offset_sec], SEEK_SET);
-
-    mp4state.bytes_read = mp4state.seek_table[offset_sec];
-    mp4state.bytes_consumed = 0;
-
-    read = fread(mp4state.buffer, 1, 768*48, mp4state.aacfile);
-    mp4state.bytes_read += read;
-    mp4state.bytes_into_buffer = read;
-
-    return 0;
-}
-#endif
-
 DWORD WINAPI AACPlayThread(void *b)
 {
     int done = 0;
@@ -929,6 +968,10 @@ DWORD WINAPI AACPlayThread(void *b)
 
     void *sample_buffer;
     faacDecFrameInfo frameInfo;
+
+#ifdef DEBUG_OUTPUT
+    in_mp4_DebugOutput("AACPlayThread");
+#endif
 
     PlayThreadAlive = 1;
     mp4state.last_frame = 0;
