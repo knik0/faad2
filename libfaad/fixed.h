@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: fixed.h,v 1.3 2002/09/08 18:14:37 menno Exp $
+** $Id: fixed.h,v 1.4 2002/11/07 18:24:53 menno Exp $
 **/
 
 #ifndef __FIXED_H__
@@ -39,7 +39,7 @@ typedef int32_t real_t;
 #define REAL_CONST(A) ((real_t)(A*(REAL_PRECISION)))
 #define COEF_CONST(A) ((real_t)(A*(COEF_PRECISION)))
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(_WIN32_WCE)
 
 /* multiply real with real */
 static INLINE MUL(real_t A, real_t B)

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.c,v 1.21 2002/09/26 19:01:45 menno Exp $
+** $Id: mdct.c,v 1.22 2002/11/07 18:24:53 menno Exp $
 **/
 
 /*
@@ -38,7 +38,11 @@
 #include "common.h"
 
 #include <stdlib.h>
+#ifdef _WIN32_WCE
+#define assert(x)
+#else
 #include <assert.h>
+#endif
 
 #include "cfft.h"
 #include "mdct.h"

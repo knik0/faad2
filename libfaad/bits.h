@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.h,v 1.11 2002/11/01 11:19:35 menno Exp $
+** $Id: bits.h,v 1.12 2002/11/07 18:24:53 menno Exp $
 **/
 
 #ifndef __BITS_H__
@@ -46,7 +46,7 @@ typedef struct _bitfile
 } bitfile;
 
 
-#if defined (_WIN32)
+#if defined (_WIN32) && !defined(_WIN32_WCE)
 #define BSWAP(a) __asm mov eax,a __asm bswap eax __asm mov a, eax
 #elif defined(LINUX) || defined(DJGPP)
 #define BSWAP(a) __asm__ ( "bswapl %0\n" : "=r" (a) : "0" (a) )

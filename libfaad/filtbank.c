@@ -16,14 +16,19 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.c,v 1.20 2002/09/27 08:37:22 menno Exp $
+** $Id: filtbank.c,v 1.21 2002/11/07 18:24:53 menno Exp $
 **/
 
 #include "common.h"
 
 #include <stdlib.h>
 #include <memory.h>
+#ifdef _WIN32_WCE
+#define assert(x)
+#else
 #include <assert.h>
+#endif
+
 #include "filtbank.h"
 #include "decoder.h"
 #include "syntax.h"

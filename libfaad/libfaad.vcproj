@@ -253,6 +253,9 @@
 				RelativePath=".\filtbank.h">
 			</File>
 			<File
+				RelativePath="fixed.h">
+			</File>
+			<File
 				RelativePath=".\codebook\hcb.h">
 			</File>
 			<File
