@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.7 2002/01/16 08:18:30 menno Exp $
+** $Id: main.c,v 1.8 2002/01/19 09:39:00 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -169,6 +169,7 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
 
     int first_time = 1;
 
+
     /* declare variables for buffering */
     DEC_BUFF_VARS
 
@@ -210,9 +211,7 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
         fclose(infile);
         return 1;
     }
-
-    /* update buffer */
-    UPDATE_BUFF_READ
+    buffer_index += bytesconsumed;
 
     do
     {
@@ -268,7 +267,7 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
             write_audio_file(aufile, sample_buffer, frameInfo.samples);
         }
 
-        if (IS_FILE_END)
+        if (buffer_index >= fileread)
             sample_buffer = NULL; /* to make sure it stops now */
 
     } while (sample_buffer != NULL);
@@ -284,8 +283,6 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
 
     return frameInfo.error;
 }
-
-int use_ltp;
 
 int GetAACTrack(MP4FileHandle *infile)
 {
@@ -305,16 +302,9 @@ int GetAACTrack(MP4FileHandle *infile)
             switch (type)
             {
             case MP4_MPEG4_AUDIO_TYPE:
-                /* could be LTP */
-                use_ltp = 1;
-
-                return trackId;
             case MP4_MPEG2_AAC_MAIN_AUDIO_TYPE:
             case MP4_MPEG2_AAC_LC_AUDIO_TYPE:
             case MP4_MPEG2_AAC_SSR_AUDIO_TYPE:
-                /* MPEG2: no LTP */
-                use_ltp = 0;
-
                 return trackId;
             }
         }
@@ -333,7 +323,7 @@ unsigned long srates[] =
 int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
                   int outputFormat, int fileType)
 {
-    int track, srate;
+    int track;
     unsigned long samplerate, channels;
     void *sample_buffer;
 
@@ -354,6 +344,8 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
 
     int first_time = 1;
 
+    hDecoder = faacDecOpen();
+
 	infile = MP4Read(mp4file, 0);
 	if (!infile)
     {
@@ -362,31 +354,19 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
         return 1;
 	}
 
-    use_ltp = 0;
-
     if ((track = GetAACTrack(infile)) < 0)
     {
         fprintf(stderr, "Unable to find correct AAC sound track in the MP4 file.\n");
         MP4Close(infile);
         return 1;
     }
-    srate = MP4GetTrackTimeScale(infile, track);
 
-    hDecoder = faacDecOpen();
+    buffer = NULL;
+    buffer_size = 0;
+    MP4GetTrackESConfiguration(infile, track, &buffer, &buffer_size);
 
-    /* Set the default object type and samplerate */
-    /* This is useful for RAW AAC files */
-    config = faacDecGetCurrentConfiguration(hDecoder);
-    config->defSampleRate = (srate > 10)?srate:srates[srate];
-    if (use_ltp)
-        config->defObjectType = LTP;
-    config->outputFormat = outputFormat;
-
-    faacDecSetConfiguration(hDecoder, config);
-
-
-    if(faacDecInit(hDecoder, NULL, &samplerate,
-        &channels) < 0)
+    if(faacDecInit2(hDecoder, buffer, buffer_size,
+                    &samplerate, &channels) < 0)
     {
         /* If some error initializing occured, skip the file */
         fprintf(stderr, "Error initializing decoder library.\n");
@@ -394,6 +374,7 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
         MP4Close(infile);
         return 1;
     }
+    if (buffer) free(buffer);
 
     numSamples = MP4GetTrackNumberOfSamples(infile, track);
 
@@ -435,11 +416,11 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
         {
             if(!to_stdout)
             {
-                aufile = open_audio_file(sndfile, (srate > 10)?srate:srates[srate], frameInfo.channels,
+                aufile = open_audio_file(sndfile, samplerate, frameInfo.channels,
                     outputFormat, fileType);
             } else {
                 setmode(fileno(stdout), O_BINARY);
-                aufile = open_audio_file("-", (srate > 10)?srate:srates[srate], frameInfo.channels,
+                aufile = open_audio_file("-", samplerate, frameInfo.channels,
                     outputFormat, fileType);
             }
             if (aufile == NULL)

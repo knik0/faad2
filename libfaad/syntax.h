@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.1 2002/01/14 19:15:57 menno Exp $
+** $Id: syntax.h,v 1.2 2002/01/19 09:39:41 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -64,6 +64,17 @@ extern "C" {
 #define LONG_START_SEQUENCE  0x1
 #define EIGHT_SHORT_SEQUENCE 0x2
 #define LONG_STOP_SEQUENCE   0x3
+
+#define ZERO_HCB       0
+#define FIRST_PAIR_HCB 5
+#define ESC_HCB        11
+#define QUAD_LEN       4
+#define PAIR_LEN       2
+#define NSPECBOOKS     ESC_HCB + 1
+#define BOOKSCL        NSPECBOOKS
+#define NOISE_HCB      13
+#define INTENSITY_HCB2 14
+#define INTENSITY_HCB  15
 
 
 typedef struct

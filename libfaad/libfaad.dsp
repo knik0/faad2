@@ -169,6 +169,10 @@ SOURCE=.\data.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\debug.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\decoder.h
 # End Source File
 # Begin Source File

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.h,v 1.1 2002/01/14 19:15:55 menno Exp $
+** $Id: bits.h,v 1.2 2002/01/19 09:39:41 menno Exp $
 **/
 
 #ifndef __BITS_H__
@@ -24,6 +24,11 @@
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#include "debug.h"
+#ifdef ANALYSIS
+#include <stdio.h>
 #endif
 
 #define BYTE_NUMBIT 8
@@ -109,17 +114,22 @@ static bits_inline void faad_flushbits(bitfile *ld, int n)
 }
 
 /* return next n bits (right adjusted) */
-static bits_inline unsigned int faad_getbits(bitfile *ld, int n)
+static bits_inline unsigned int faad_getbits(bitfile *ld, int n DEBUGDEC)
 {
     long l;
 
     l = faad_showbits(ld, n);
     faad_flushbits(ld, n);
 
+#ifdef ANALYSIS
+    if (print)
+        fprintf(stdout, "%4d %2d bits, val: %4d, variable: %d %s\n", dbg_count++, n, l, var, dbg);
+#endif
+
     return l;
 }
 
-static bits_inline unsigned int faad_get1bit(bitfile *ld)
+static bits_inline unsigned int faad_get1bit(bitfile *ld DEBUGDEC)
 {
     unsigned char l;
 
@@ -129,6 +139,11 @@ static bits_inline unsigned int faad_get1bit(bitfile *ld)
     ld->framebits++;
     ld->rdptr += (ld->bitcnt>>3);
     ld->bitcnt &= 7;
+
+#ifdef ANALYSIS
+    if (print)
+        fprintf(stdout, "%4d  1 bits, val: %4d, variable: %d %s\n", dbg_count++, l>>7, var, dbg);
+#endif
 
     return l>>7;
 }

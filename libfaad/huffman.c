@@ -16,9 +16,10 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: huffman.c,v 1.1 2002/01/14 19:15:56 menno Exp $
+** $Id: huffman.c,v 1.2 2002/01/19 09:39:41 menno Exp $
 **/
 
+#include "syntax.h"
 #include "huffman.h"
 
 extern codebook book1[] = {

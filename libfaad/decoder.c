@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.2 2002/01/15 12:58:56 menno Exp $
+** $Id: decoder.c,v 1.3 2002/01/19 09:39:41 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -35,6 +35,9 @@
 #include "error.h"
 #include "output.h"
 
+#ifdef ANALYSIS
+int dbg_count;
+#endif
 
 char* FAADAPI faacDecGetErrorMessage(int errcode)
 {
@@ -171,6 +174,85 @@ int FAADAPI faacDecInit(faacDecHandle hDecoder, unsigned char *buffer,
     return 0;
 }
 
+
+static unsigned long ObjectTypesTable[32] = {0, 1, 1, 1, 1, };
+
+int parse_audio_decoder_specific_info(faacDecHandle hDecoder,
+                                      unsigned char *pBuffer,
+                                      unsigned long *samplerate,
+                                      unsigned long *channels)
+{
+    bitfile ld;
+    unsigned long ObjectTypeIndex, SamplingFrequencyIndex,
+        ChannelsConfiguration;
+
+    faad_initbits(&ld, pBuffer);
+    faad_byte_align(&ld);
+
+    ObjectTypeIndex = faad_getbits(&ld, 5
+        DEBUGVAR(1,0,"parse_audio_decoder_specific_info(): ObjectTypeIndex"));
+
+    SamplingFrequencyIndex = faad_getbits(&ld, 4
+        DEBUGVAR(1,0,"parse_audio_decoder_specific_info(): SamplingFrequencyIndex"));
+
+    ChannelsConfiguration = faad_getbits(&ld, 4
+        DEBUGVAR(1,0,"parse_audio_decoder_specific_info(): ChannelsConfiguration"));
+
+    if (ObjectTypesTable[ObjectTypeIndex] != 1)
+    {
+        return -1;
+    }
+
+    *samplerate = sample_rates[SamplingFrequencyIndex];
+    if (*samplerate == 0)
+    {
+        return -2;
+    }
+
+    *channels = ChannelsConfiguration;
+
+    hDecoder->sf_index = SamplingFrequencyIndex;
+    hDecoder->object_type = ObjectTypeIndex - 1;
+
+    if(ChannelsConfiguration > 7)
+    {
+        return -3;
+    }
+
+    /* get GASpecificConfig */
+
+    return 0;
+}
+
+/* Init the library using a DecoderSpecificInfo */
+int FAADAPI faacDecInit2(faacDecHandle hDecoder, unsigned char *pBuffer,
+                         unsigned long SizeOfDecoderSpecificInfo,
+                         unsigned long *samplerate, unsigned long *channels)
+{
+    int rc;
+
+    hDecoder->adif_header_present = 0;
+    hDecoder->adts_header_present = 0;
+
+    if((hDecoder == NULL)
+        || (pBuffer == NULL)
+        || (SizeOfDecoderSpecificInfo < 2)
+        || (samplerate == NULL)
+        || (channels == NULL))
+    {
+        return -1;
+    }
+
+    rc = parse_audio_decoder_specific_info(hDecoder, pBuffer,
+        samplerate, channels);
+    if (rc != 0)
+    {
+        return rc;
+    }
+
+    return 0;
+}
+
 void FAADAPI faacDecClose(faacDecHandle hDecoder)
 {
     int i;
@@ -248,8 +330,13 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     channels = 0;
     ch_ele = 0;
 
+#ifdef ANALYSIS
+    dbg_count = 0;
+#endif
+
     /* Table 4.4.3: raw_data_block() */
-    while ((id_syn_ele = faad_getbits(ld, LEN_SE_ID)) != ID_END)
+    while ((id_syn_ele = faad_getbits(ld, LEN_SE_ID
+        DEBUGVAR(1,0,"faacDecDecode(): id_syn_ele"))) != ID_END)
     {
         switch (id_syn_ele) {
         case ID_SCE:
@@ -487,6 +574,10 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     {
         free(syntax_elements[i]);
     }
+
+#ifdef ANALYSIS
+    fflush(stdout);
+#endif
 
     return sample_buffer;
 }

@@ -16,39 +16,25 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: is.h,v 1.2 2002/01/19 09:39:41 menno Exp $
+** $Id: debug.h,v 1.1 2002/01/19 09:39:41 menno Exp $
 **/
 
-#ifndef __IS_H__
-#define __IS_H__
+#ifndef __DEBUG_H__
+#define __DEBUG_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "syntax.h"
 
-void is_decode(ic_stream *ics, ic_stream *icsr, float *l_spec, float *r_spec);
-
-static __inline int is_intensity(ic_stream *ics, int group, int sfb)
-{
-    switch (ics->sfb_cb[group][sfb])
-    {
-    case INTENSITY_HCB:
-        return 1;
-    case INTENSITY_HCB2:
-        return -1;
-    default:
-        return 0;
-    }
-}
-
-static __inline int invert_intensity(ic_stream *ics, int group, int sfb)
-{
-    if (ics->ms_mask_present == 1)
-        return (1-2*ics->ms_used[group][sfb]);
-    return 1;
-}
+#ifdef ANALYSIS
+#define DEBUGDEC        ,int print,int var,char *dbg
+#define DEBUGVAR(A,B,C) ,A,B,C
+extern int dbg_count;
+#else
+#define DEBUGDEC
+#define DEBUGVAR(A,B,C)
+#endif
 
 
 #ifdef __cplusplus

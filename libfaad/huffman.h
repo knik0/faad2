@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: huffman.h,v 1.1 2002/01/14 19:15:56 menno Exp $
+** $Id: huffman.h,v 1.2 2002/01/19 09:39:41 menno Exp $
 **/
 
 #ifndef __HUFFMAN_H__
@@ -26,18 +26,12 @@
 extern "C" {
 #endif
 
+#include <stdlib.h>
+#ifdef ANALYSIS
+#include <stdio.h>
+#endif
 #include "bits.h"
 
-#define ZERO_HCB       0
-#define FIRST_PAIR_HCB 5
-#define ESC_HCB        11
-#define QUAD_LEN       4
-#define PAIR_LEN       2
-#define NSPECBOOKS     ESC_HCB + 1
-#define BOOKSCL        NSPECBOOKS
-#define NOISE_HCB      13
-#define INTENSITY_HCB2 14
-#define INTENSITY_HCB  15
 
 typedef struct
 {
@@ -109,17 +103,25 @@ static huff_inline int huffman_scale_factor(bitfile *ld)
         }
     }
 
+#ifdef ANALYSIS
+    fprintf(stdout, "%4d %2d bits, huffman_scale_factor(): huffman codeword (scalefactor)\n",
+        dbg_count++, h->len);
+#endif
+
     return h->scl;
 }
+
+static int codebookN[] = { 0, 7, 7, 9 };
 
 static huff_inline void huffman_spectral_data(int cb, bitfile *ld, short *sp)
 {
     int i, j;
     unsigned long cw;
-    codebook *h = book_table[cb];
+    codebook *h;
 
+    h = book_table[cb];
     i = h->len;
-    cw = faad_getbits(ld, i);
+    cw = faad_getbits(ld, i DEBUGVAR(0,0,""));
 
     while (cw != h->cw)
     {
@@ -128,9 +130,14 @@ static huff_inline void huffman_spectral_data(int cb, bitfile *ld, short *sp)
         i = h->len;
         if (j!=0) {
             while (j--)
-                cw = (cw<<1) | faad_get1bit(ld);
+                cw = (cw<<1) | faad_get1bit(ld DEBUGVAR(0,0,""));
         }
     }
+
+#ifdef ANALYSIS
+    fprintf(stdout, "%4d %2d bits, huffman_spectral_data(): huffman codeword\n",
+        dbg_count++, h->len);
+#endif
 
     if(cb < FIRST_PAIR_HCB)
     {
@@ -149,9 +156,16 @@ static huff_inline void huffman_sign_bits(bitfile *ld, short *sp, int len)
     int i;
 
     for(i = 0; i < len; i++)
+    {
         if(sp[i])
-            if(faad_get1bit(ld) & 1)
+        {
+            if(faad_get1bit(ld
+                DEBUGVAR(1,0,"huffman_sign_bits(): sign bit")) & 1)
+            {
                 sp[i] = -sp[i];
+            }
+        }
+    }
 }
 
 static huff_inline short huffman_getescape(bitfile *ld, short sp)
@@ -169,15 +183,18 @@ static huff_inline short huffman_getescape(bitfile *ld, short sp)
     }
 
     for (i = 4; ; i++){
-        if (faad_get1bit(ld) == 0)
+        if (faad_get1bit(ld DEBUGVAR(1,0,"huffman_getescape(): escape size")) == 0)
             break;
     }
 
     if (i > 16) {
-        off = faad_getbits(ld, i-16) << 16;
-        off |= faad_getbits(ld, 16);
+        off = faad_getbits(ld, i-16
+            DEBUGVAR(1,0,"huffman_getescape(): escape, first part")) << 16;
+        off |= faad_getbits(ld, 16
+            DEBUGVAR(1,0,"huffman_getescape(): escape, second part"));
     } else {
-        off = faad_getbits(ld, i);
+        off = faad_getbits(ld, i
+            DEBUGVAR(1,0,"huffman_getescape(): escape"));
     }
 
     i = off + (1<<i);

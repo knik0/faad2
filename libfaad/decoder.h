@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.h,v 1.1 2002/01/14 19:15:55 menno Exp $
+** $Id: decoder.h,v 1.2 2002/01/19 09:39:41 menno Exp $
 **/
 
 #ifndef __DECODER_H__
@@ -109,8 +109,16 @@ faacDecConfigurationPtr FAADAPI faacDecGetCurrentConfiguration(faacDecHandle hDe
 int FAADAPI faacDecSetConfiguration(faacDecHandle hDecoder,
                                     faacDecConfigurationPtr config);
 
-int FAADAPI faacDecInit(faacDecHandle hDecoder, unsigned char *buffer,
-                        unsigned long *samplerate, unsigned long *channels);
+/* Init the library based on info from the AAC file (ADTS/ADIF) */
+int FAADAPI faacDecInit(faacDecHandle hDecoder,
+                        unsigned char *buffer,
+                        unsigned long *samplerate,
+                        unsigned long *channels);
+
+/* Init the library using a DecoderSpecificInfo */
+int FAADAPI faacDecInit2(faacDecHandle hDecoder, unsigned char *pBuffer,
+                         unsigned long SizeOfDecoderSpecificInfo,
+                         unsigned long *samplerate, unsigned long *channels);
 
 void FAADAPI faacDecClose(faacDecHandle hDecoder);
 
