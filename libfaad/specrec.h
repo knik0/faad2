@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.h,v 1.24 2004/02/26 09:29:28 menno Exp $
+** $Id: specrec.h,v 1.25 2004/03/02 20:09:58 menno Exp $
 **/
 
 #ifndef __SPECREC_H__
@@ -34,16 +34,16 @@ extern "C" {
 
 #include "syntax.h"
 
-uint8_t window_grouping_info(faacDecHandle hDecoder, ic_stream *ics);
-void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics, real_t *x_invquant,
+uint8_t window_grouping_info(NeAACDecHandle hDecoder, ic_stream *ics);
+void apply_scalefactors(NeAACDecHandle hDecoder, ic_stream *ics, real_t *x_invquant,
                         uint16_t frame_len);
 #ifdef USE_SSE
-void apply_scalefactors_sse(faacDecHandle hDecoder, ic_stream *ics, real_t *x_invquant,
+void apply_scalefactors_sse(NeAACDecHandle hDecoder, ic_stream *ics, real_t *x_invquant,
                             uint16_t frame_len);
 #endif
-uint8_t reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_stream *ics2,
+uint8_t reconstruct_channel_pair(NeAACDecHandle hDecoder, ic_stream *ics1, ic_stream *ics2,
                                  element *cpe, int16_t *spec_data1, int16_t *spec_data2);
-uint8_t reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics, element *sce,
+uint8_t reconstruct_single_channel(NeAACDecHandle hDecoder, ic_stream *ics, element *sce,
                                 int16_t *spec_data);
 
 #ifdef __cplusplus

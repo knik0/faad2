@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4.c,v 1.27 2004/02/26 09:29:27 menno Exp $
+** $Id: mp4.c,v 1.28 2004/03/02 20:09:58 menno Exp $
 **/
 
 #include "common.h"
@@ -119,17 +119,17 @@ static uint8_t ObjectTypesTable[32] = {
 };
 
 /* Table 1.6.1 */
-int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
-                                   uint32_t buffer_size,
-                                   mp4AudioSpecificConfig *mp4ASC)
+int8_t NEAACDECAPI NeAACDecAudioSpecificConfig(uint8_t *pBuffer,
+                                               uint32_t buffer_size,
+                                               mp4AudioSpecificConfig *mp4ASC)
 {
     return AudioSpecificConfig2(pBuffer, buffer_size, mp4ASC, NULL);
 }
 
-int8_t FAADAPI AudioSpecificConfig2(uint8_t *pBuffer,
-                                    uint32_t buffer_size,
-                                    mp4AudioSpecificConfig *mp4ASC,
-                                    program_config *pce)
+int8_t AudioSpecificConfig2(uint8_t *pBuffer,
+                            uint32_t buffer_size,
+                            mp4AudioSpecificConfig *mp4ASC,
+                            program_config *pce)
 {
     bitfile ld;
     int8_t result = 0;

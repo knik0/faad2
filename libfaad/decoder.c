@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.96 2004/03/02 19:37:26 menno Exp $
+** $Id: decoder.c,v 1.97 2004/03/02 20:09:58 menno Exp $
 **/
 
 #include "common.h"
@@ -50,14 +50,14 @@
 uint16_t dbg_count;
 #endif
 
-int8_t* FAADAPI faacDecGetErrorMessage(uint8_t errcode)
+int8_t* NEAACDECAPI NeAACDecGetErrorMessage(uint8_t errcode)
 {
     if (errcode >= NUM_ERROR_MESSAGES)
         return NULL;
     return err_msg[errcode];
 }
 
-uint32_t FAADAPI faacDecGetCapabilities(void)
+uint32_t NEAACDECAPI NeAACDecGetCapabilities(void)
 {
     uint32_t cap = 0;
 
@@ -83,15 +83,15 @@ uint32_t FAADAPI faacDecGetCapabilities(void)
     return cap;
 }
 
-faacDecHandle FAADAPI faacDecOpen(void)
+NeAACDecHandle NEAACDECAPI NeAACDecOpen(void)
 {
     uint8_t i;
-    faacDecHandle hDecoder = NULL;
+    NeAACDecHandle hDecoder = NULL;
 
-    if ((hDecoder = (faacDecHandle)faad_malloc(sizeof(faacDecStruct))) == NULL)
+    if ((hDecoder = (NeAACDecHandle)faad_malloc(sizeof(NeAACDecStruct))) == NULL)
         return NULL;
 
-    memset(hDecoder, 0, sizeof(faacDecStruct));
+    memset(hDecoder, 0, sizeof(NeAACDecStruct));
 
     hDecoder->config.outputFormat  = FAAD_FMT_16BIT;
     hDecoder->config.defObjectType = MAIN;
@@ -148,11 +148,11 @@ faacDecHandle FAADAPI faacDecOpen(void)
     return hDecoder;
 }
 
-faacDecConfigurationPtr FAADAPI faacDecGetCurrentConfiguration(faacDecHandle hDecoder)
+NeAACDecConfigurationPtr NEAACDECAPI NeAACDecGetCurrentConfiguration(NeAACDecHandle hDecoder)
 {
     if (hDecoder)
     {
-        faacDecConfigurationPtr config = &(hDecoder->config);
+        NeAACDecConfigurationPtr config = &(hDecoder->config);
 
         return config;
     }
@@ -160,8 +160,8 @@ faacDecConfigurationPtr FAADAPI faacDecGetCurrentConfiguration(faacDecHandle hDe
     return NULL;
 }
 
-uint8_t FAADAPI faacDecSetConfiguration(faacDecHandle hDecoder,
-                                    faacDecConfigurationPtr config)
+uint8_t NEAACDECAPI NeAACDecSetConfiguration(NeAACDecHandle hDecoder,
+                                             NeAACDecConfigurationPtr config)
 {
     if (hDecoder && config)
     {
@@ -190,9 +190,9 @@ uint8_t FAADAPI faacDecSetConfiguration(faacDecHandle hDecoder,
     return 0;
 }
 
-int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
-                            uint32_t buffer_size,
-                            uint32_t *samplerate, uint8_t *channels)
+int32_t NEAACDECAPI NeAACDecInit(NeAACDecHandle hDecoder, uint8_t *buffer,
+                                 uint32_t buffer_size,
+                                 uint32_t *samplerate, uint8_t *channels)
 {
     uint32_t bits = 0;
     bitfile ld;
@@ -286,9 +286,9 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
 }
 
 /* Init the library using a DecoderSpecificInfo */
-int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
-                            uint32_t SizeOfDecoderSpecificInfo,
-                            uint32_t *samplerate, uint8_t *channels)
+int8_t NEAACDECAPI NeAACDecInit2(NeAACDecHandle hDecoder, uint8_t *pBuffer,
+                                 uint32_t SizeOfDecoderSpecificInfo,
+                                 uint32_t *samplerate, uint8_t *channels)
 {
     int8_t rc;
     mp4AudioSpecificConfig mp4ASC;
@@ -369,8 +369,8 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
 }
 
 #ifdef DRM
-int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
-                              uint8_t channels)
+int8_t NEAACDECAPI NeAACDecInitDRM(NeAACDecHandle hDecoder, uint32_t samplerate,
+                                   uint8_t channels)
 {
     uint8_t i;
 
@@ -457,7 +457,7 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
 }
 #endif
 
-void FAADAPI faacDecClose(faacDecHandle hDecoder)
+void NEAACDECAPI NeAACDecClose(NeAACDecHandle hDecoder)
 {
     uint8_t i;
 
@@ -510,7 +510,7 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
     if (hDecoder) faad_free(hDecoder);
 }
 
-void FAADAPI faacDecPostSeekReset(faacDecHandle hDecoder, int32_t frame)
+void NEAACDECAPI NeAACDecPostSeekReset(NeAACDecHandle hDecoder, int32_t frame)
 {
     if (hDecoder)
     {
@@ -521,7 +521,7 @@ void FAADAPI faacDecPostSeekReset(faacDecHandle hDecoder, int32_t frame)
     }
 }
 
-static void create_channel_config(faacDecHandle hDecoder, faacDecFrameInfo *hInfo)
+static void create_channel_config(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo)
 {
     hInfo->num_front_channels = 0;
     hInfo->num_side_channels = 0;
@@ -726,9 +726,9 @@ static void create_channel_config(faacDecHandle hDecoder, faacDecFrameInfo *hInf
     }
 }
 
-void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
-                            faacDecFrameInfo *hInfo,
-                            uint8_t *buffer, uint32_t buffer_size)
+void* NEAACDECAPI NeAACDecDecode(NeAACDecHandle hDecoder,
+                                 NeAACDecFrameInfo *hInfo,
+                                 uint8_t *buffer, uint32_t buffer_size)
 {
     uint8_t channels = 0;
     uint8_t output_channels = 0;
@@ -750,7 +750,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     frame_len = hDecoder->frameLength;
 
 
-    memset(hInfo, 0, sizeof(faacDecFrameInfo));
+    memset(hInfo, 0, sizeof(NeAACDecFrameInfo));
     memset(hDecoder->internal_channel, 0, MAX_CHANNELS*sizeof(hDecoder->internal_channel[0]));
 
     /* initialize the bitstream */
@@ -767,7 +767,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         }
 
         faad_getbits(&ld, 8
-            DEBUGVAR(1,1,"faacDecDecode(): skip CRC"));
+            DEBUGVAR(1,1,"NeAACDecDecode(): skip CRC"));
     }
 #endif
 

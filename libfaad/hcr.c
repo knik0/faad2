@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: hcr.c,v 1.14 2004/02/26 09:29:27 menno Exp $
+** $Id: hcr.c,v 1.15 2004/03/02 20:09:58 menno Exp $
 **/
 
 #include "common.h"
@@ -142,7 +142,7 @@ typedef struct
 
 #define segmentWidth( codebook )	min( maxCwLen[codebook], ics->length_of_longest_codeword )
      
-uint8_t reordered_spectral_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,
+uint8_t reordered_spectral_data(NeAACDecHandle hDecoder, ic_stream *ics, bitfile *ld,
                                 int16_t *spectral_data)
 {
     uint16_t sp_offset[8];

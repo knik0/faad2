@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: structs.h,v 1.33 2004/03/02 19:37:26 menno Exp $
+** $Id: structs.h,v 1.34 2004/03/02 20:09:58 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -327,7 +327,7 @@ typedef struct mp4AudioSpecificConfig
     int8_t downSampledSBR;
 } mp4AudioSpecificConfig;
 
-typedef struct faacDecConfiguration
+typedef struct NeAACDecConfiguration
 {
     uint8_t defObjectType;
     uint32_t defSampleRate;
@@ -335,9 +335,9 @@ typedef struct faacDecConfiguration
     uint8_t downMatrix;
     uint8_t useOldADTSFormat;
     uint8_t dontUpSampleImplicitSBR;
-} faacDecConfiguration, *faacDecConfigurationPtr;
+} NeAACDecConfiguration, *NeAACDecConfigurationPtr;
 
-typedef struct faacDecFrameInfo
+typedef struct NeAACDecFrameInfo
 {
     uint32_t bytesconsumed;
     uint32_t samples;
@@ -360,7 +360,7 @@ typedef struct faacDecFrameInfo
     uint8_t num_back_channels;
     uint8_t num_lfe_channels;
     uint8_t channel_position[MAX_CHANNELS];
-} faacDecFrameInfo;
+} NeAACDecFrameInfo;
 
 typedef struct
 {
@@ -446,7 +446,7 @@ typedef struct
     uint8_t internal_channel[MAX_CHANNELS];
 
     /* Configuration data */
-    faacDecConfiguration config;
+    NeAACDecConfiguration config;
 
 #ifdef USE_SSE
     void (*apply_sf_func)(void *a, void *b, void *c, uint16_t d);
@@ -459,7 +459,7 @@ typedef struct
     int64_t scalefac_cycles;
     int64_t requant_cycles;
 #endif
-} faacDecStruct, *faacDecHandle;
+} NeAACDecStruct, *NeAACDecHandle;
 
 
 

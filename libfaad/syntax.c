@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.73 2004/03/02 19:37:26 menno Exp $
+** $Id: syntax.c,v 1.74 2004/03/02 20:09:58 menno Exp $
 **/
 
 /*
@@ -52,47 +52,47 @@
 
 
 /* static function declarations */
-static void decode_sce_lfe(faacDecHandle hDecoder, faacDecFrameInfo *hInfo, bitfile *ld,
+static void decode_sce_lfe(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo, bitfile *ld,
                            uint8_t id_syn_ele);
-static void decode_cpe(faacDecHandle hDecoder, faacDecFrameInfo *hInfo, bitfile *ld,
+static void decode_cpe(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo, bitfile *ld,
                        uint8_t id_syn_ele);
-static uint8_t single_lfe_channel_element(faacDecHandle hDecoder, bitfile *ld,
+static uint8_t single_lfe_channel_element(NeAACDecHandle hDecoder, bitfile *ld,
                                           uint8_t channel, uint8_t *tag);
-static uint8_t channel_pair_element(faacDecHandle hDecoder, bitfile *ld,
+static uint8_t channel_pair_element(NeAACDecHandle hDecoder, bitfile *ld,
                                     uint8_t channel, uint8_t *tag);
 #ifdef COUPLING_DEC
-static uint8_t coupling_channel_element(faacDecHandle hDecoder, bitfile *ld);
+static uint8_t coupling_channel_element(NeAACDecHandle hDecoder, bitfile *ld);
 #endif
-static uint16_t data_stream_element(faacDecHandle hDecoder, bitfile *ld);
+static uint16_t data_stream_element(NeAACDecHandle hDecoder, bitfile *ld);
 static uint8_t program_config_element(program_config *pce, bitfile *ld);
-static uint8_t fill_element(faacDecHandle hDecoder, bitfile *ld, drc_info *drc
+static uint8_t fill_element(NeAACDecHandle hDecoder, bitfile *ld, drc_info *drc
 #ifdef SBR_DEC
                             ,uint8_t sbr_ele
 #endif
                             );
-static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
+static uint8_t individual_channel_stream(NeAACDecHandle hDecoder, element *ele,
                                          bitfile *ld, ic_stream *ics, uint8_t scal_flag,
                                          int16_t *spec_data);
-static uint8_t ics_info(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,
+static uint8_t ics_info(NeAACDecHandle hDecoder, ic_stream *ics, bitfile *ld,
                         uint8_t common_window);
-static uint8_t section_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld);
-static uint8_t scale_factor_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld);
+static uint8_t section_data(NeAACDecHandle hDecoder, ic_stream *ics, bitfile *ld);
+static uint8_t scale_factor_data(NeAACDecHandle hDecoder, ic_stream *ics, bitfile *ld);
 #ifdef SSR_DEC
 static void gain_control_data(bitfile *ld, ic_stream *ics);
 #endif
-static uint8_t spectral_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,
+static uint8_t spectral_data(NeAACDecHandle hDecoder, ic_stream *ics, bitfile *ld,
                              int16_t *spectral_data);
 static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count);
 static uint8_t pulse_data(ic_stream *ics, pulse_info *pul, bitfile *ld);
 static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld);
-static uint8_t ltp_data(faacDecHandle hDecoder, ic_stream *ics, ltp_info *ltp, bitfile *ld);
+static uint8_t ltp_data(NeAACDecHandle hDecoder, ic_stream *ics, ltp_info *ltp, bitfile *ld);
 static uint8_t adts_fixed_header(adts_header *adts, bitfile *ld);
 static void adts_variable_header(adts_header *adts, bitfile *ld);
 static void adts_error_check(adts_header *adts, bitfile *ld);
 static uint8_t dynamic_range_info(bitfile *ld, drc_info *drc);
 static uint8_t excluded_channels(bitfile *ld, drc_info *drc);
 #ifdef SCALABLE_DEC
-static int8_t aac_scalable_main_header(faacDecHandle hDecoder, ic_stream *ics1, ic_stream *ics2,
+static int8_t aac_scalable_main_header(NeAACDecHandle hDecoder, ic_stream *ics1, ic_stream *ics2,
                                        bitfile *ld, uint8_t this_layer_stereo);
 #endif
 
@@ -314,8 +314,8 @@ static uint8_t program_config_element(program_config *pce, bitfile *ld)
     return 0;
 }
 
-static void decode_sce_lfe(faacDecHandle hDecoder,
-                           faacDecFrameInfo *hInfo, bitfile *ld,
+static void decode_sce_lfe(NeAACDecHandle hDecoder,
+                           NeAACDecFrameInfo *hInfo, bitfile *ld,
                            uint8_t id_syn_ele)
 {
     uint8_t channels = hDecoder->fr_channels;
@@ -359,7 +359,7 @@ static void decode_sce_lfe(faacDecHandle hDecoder,
     hDecoder->fr_ch_ele++;
 }
 
-static void decode_cpe(faacDecHandle hDecoder, faacDecFrameInfo *hInfo, bitfile *ld,
+static void decode_cpe(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo, bitfile *ld,
                        uint8_t id_syn_ele)
 {
     uint8_t channels = hDecoder->fr_channels;
@@ -407,7 +407,7 @@ static void decode_cpe(faacDecHandle hDecoder, faacDecFrameInfo *hInfo, bitfile 
     hDecoder->fr_ch_ele++;
 }
 
-void raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
+void raw_data_block(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
                     bitfile *ld, program_config *pce, drc_info *drc)
 {
     uint8_t id_syn_ele;
@@ -423,7 +423,7 @@ void raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
 #endif
         /* Table 4.4.3: raw_data_block() */
         while ((id_syn_ele = (uint8_t)faad_getbits(ld, LEN_SE_ID
-            DEBUGVAR(1,4,"faacDecDecode(): id_syn_ele"))) != ID_END)
+            DEBUGVAR(1,4,"NeAACDecDecode(): id_syn_ele"))) != ID_END)
         {
             switch (id_syn_ele) {
             case ID_SCE:
@@ -556,7 +556,7 @@ void raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
 
 /* Table 4.4.4 and */
 /* Table 4.4.9 */
-static uint8_t single_lfe_channel_element(faacDecHandle hDecoder, bitfile *ld,
+static uint8_t single_lfe_channel_element(NeAACDecHandle hDecoder, bitfile *ld,
                                           uint8_t channel, uint8_t *tag)
 {
     uint8_t retval = 0;
@@ -599,7 +599,7 @@ static uint8_t single_lfe_channel_element(faacDecHandle hDecoder, bitfile *ld,
 }
 
 /* Table 4.4.5 */
-static uint8_t channel_pair_element(faacDecHandle hDecoder, bitfile *ld,
+static uint8_t channel_pair_element(NeAACDecHandle hDecoder, bitfile *ld,
                                     uint8_t channels, uint8_t *tag)
 {
     ALIGN int16_t spec_data1[1024] = {0};
@@ -710,7 +710,7 @@ static uint8_t channel_pair_element(faacDecHandle hDecoder, bitfile *ld,
 }
 
 /* Table 4.4.6 */
-static uint8_t ics_info(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,
+static uint8_t ics_info(NeAACDecHandle hDecoder, ic_stream *ics, bitfile *ld,
                         uint8_t common_window)
 {
     uint8_t retval = 0;
@@ -835,7 +835,7 @@ static uint8_t pulse_data(ic_stream *ics, pulse_info *pul, bitfile *ld)
 
 #ifdef COUPLING_DEC
 /* Table 4.4.8: Currently just for skipping the bits... */
-static uint8_t coupling_channel_element(faacDecHandle hDecoder, bitfile *ld)
+static uint8_t coupling_channel_element(NeAACDecHandle hDecoder, bitfile *ld)
 {
     uint8_t c, result = 0;
     uint8_t ind_sw_cce_flag = 0;
@@ -924,7 +924,7 @@ static uint8_t coupling_channel_element(faacDecHandle hDecoder, bitfile *ld)
 #endif
 
 /* Table 4.4.10 */
-static uint16_t data_stream_element(faacDecHandle hDecoder, bitfile *ld)
+static uint16_t data_stream_element(NeAACDecHandle hDecoder, bitfile *ld)
 {
     uint8_t byte_aligned;
     uint16_t i, count;
@@ -953,7 +953,7 @@ static uint16_t data_stream_element(faacDecHandle hDecoder, bitfile *ld)
 }
 
 /* Table 4.4.11 */
-static uint8_t fill_element(faacDecHandle hDecoder, bitfile *ld, drc_info *drc
+static uint8_t fill_element(NeAACDecHandle hDecoder, bitfile *ld, drc_info *drc
 #ifdef SBR_DEC
                             ,uint8_t sbr_ele
 #endif
@@ -1002,7 +1002,7 @@ static uint8_t fill_element(faacDecHandle hDecoder, bitfile *ld, drc_info *drc
 #if 0
             if (hDecoder->sbr[sbr_ele]->ret > 0)
             {
-                printf("%s\n", faacDecGetErrorMessage(hDecoder->sbr[sbr_ele]->ret));
+                printf("%s\n", NeAACDecGetErrorMessage(hDecoder->sbr[sbr_ele]->ret));
             }
 #endif
 
@@ -1124,7 +1124,7 @@ static void gain_control_data(bitfile *ld, ic_stream *ics)
 
 #ifdef SCALABLE_DEC
 /* Table 4.4.13 ASME */
-void aac_scalable_main_element(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
+void aac_scalable_main_element(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
                                bitfile *ld, program_config *pce, drc_info *drc)
 {
     uint8_t retval = 0;
@@ -1268,7 +1268,7 @@ void aac_scalable_main_element(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
 }
 
 /* Table 4.4.15 */
-static int8_t aac_scalable_main_header(faacDecHandle hDecoder, ic_stream *ics1, ic_stream *ics2,
+static int8_t aac_scalable_main_header(NeAACDecHandle hDecoder, ic_stream *ics1, ic_stream *ics2,
                                        bitfile *ld, uint8_t this_layer_stereo)
 {
     uint8_t retval = 0;
@@ -1378,7 +1378,7 @@ static int8_t aac_scalable_main_header(faacDecHandle hDecoder, ic_stream *ics1, 
 #endif
 
 /* Table 4.4.24 */
-static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
+static uint8_t individual_channel_stream(NeAACDecHandle hDecoder, element *ele,
                                          bitfile *ld, ic_stream *ics, uint8_t scal_flag,
                                          int16_t *spec_data)
 {
@@ -1514,7 +1514,7 @@ static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
 }
 
 /* Table 4.4.25 */
-static uint8_t section_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld)
+static uint8_t section_data(NeAACDecHandle hDecoder, ic_stream *ics, bitfile *ld)
 {
     uint8_t g;
     uint8_t sect_esc_val, sect_bits;
@@ -1698,7 +1698,7 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
 }
 
 /* Table 4.4.26 */
-static uint8_t scale_factor_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld)
+static uint8_t scale_factor_data(NeAACDecHandle hDecoder, ic_stream *ics, bitfile *ld)
 {
     uint8_t ret = 0;
 #ifdef PROFILE
@@ -1785,7 +1785,7 @@ static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld)
 
 #ifdef LTP_DEC
 /* Table 4.4.28 */
-static uint8_t ltp_data(faacDecHandle hDecoder, ic_stream *ics, ltp_info *ltp, bitfile *ld)
+static uint8_t ltp_data(NeAACDecHandle hDecoder, ic_stream *ics, ltp_info *ltp, bitfile *ld)
 {
     uint8_t sfb, w;
 
@@ -1848,7 +1848,7 @@ static uint8_t ltp_data(faacDecHandle hDecoder, ic_stream *ics, ltp_info *ltp, b
 #endif
 
 /* Table 4.4.29 */
-static uint8_t spectral_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,
+static uint8_t spectral_data(NeAACDecHandle hDecoder, ic_stream *ics, bitfile *ld,
                              int16_t *spectral_data)
 {
     int8_t i;

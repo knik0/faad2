@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.45 2004/03/02 19:37:26 menno Exp $
+** $Id: specrec.c,v 1.46 2004/03/02 20:09:58 menno Exp $
 **/
 
 /*
@@ -295,7 +295,7 @@ ALIGN static const  uint16_t *swb_offset_128_window[] =
     in section named section. This offset depends on window_sequence and
     scale_factor_grouping and is needed to decode the spectral_data().
 */
-uint8_t window_grouping_info(faacDecHandle hDecoder, ic_stream *ics)
+uint8_t window_grouping_info(NeAACDecHandle hDecoder, ic_stream *ics)
 {
     uint8_t i, g;
 
@@ -557,7 +557,7 @@ ALIGN static const real_t pow2sf_tab[] = {
 };
 #endif
 
-void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics,
+void apply_scalefactors(NeAACDecHandle hDecoder, ic_stream *ics,
                         real_t *x_invquant, uint16_t frame_len)
 {
     ALIGN static const real_t pow2_table[] =
@@ -646,7 +646,7 @@ void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics,
 }
 
 #ifdef USE_SSE
-void apply_scalefactors_sse(faacDecHandle hDecoder, ic_stream *ics,
+void apply_scalefactors_sse(NeAACDecHandle hDecoder, ic_stream *ics,
                             real_t *x_invquant, uint16_t frame_len)
 {
     uint8_t g, sfb;
@@ -686,7 +686,7 @@ void apply_scalefactors_sse(faacDecHandle hDecoder, ic_stream *ics,
 }
 #endif
 
-static uint8_t allocate_single_channel(faacDecHandle hDecoder, uint8_t channel,
+static uint8_t allocate_single_channel(NeAACDecHandle hDecoder, uint8_t channel,
                                        uint8_t output_channels)
 {
     uint8_t mul = 1;
@@ -769,7 +769,7 @@ static uint8_t allocate_single_channel(faacDecHandle hDecoder, uint8_t channel,
     return 0;
 }
 
-static uint8_t allocate_channel_pair(faacDecHandle hDecoder,
+static uint8_t allocate_channel_pair(NeAACDecHandle hDecoder,
                                      uint8_t channel, uint8_t paired_channel)
 {
     uint8_t mul = 1;
@@ -874,7 +874,7 @@ static uint8_t allocate_channel_pair(faacDecHandle hDecoder,
     return 0;
 }
 
-uint8_t reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
+uint8_t reconstruct_single_channel(NeAACDecHandle hDecoder, ic_stream *ics,
                                    element *sce, int16_t *spec_data)
 {
     uint8_t retval, output_channels;
@@ -1065,7 +1065,7 @@ uint8_t reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
     return 0;
 }
 
-uint8_t reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_stream *ics2,
+uint8_t reconstruct_channel_pair(NeAACDecHandle hDecoder, ic_stream *ics1, ic_stream *ics2,
                                  element *cpe, int16_t *spec_data1, int16_t *spec_data2)
 {
     uint8_t retval;

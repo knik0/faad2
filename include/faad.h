@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: faad.h,v 1.42 2004/03/02 19:37:26 menno Exp $
+** $Id: faad.h,v 1.43 2004/03/02 20:09:58 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -32,14 +32,35 @@
 extern "C" {
 #endif /* __cplusplus */
 
+
+#if 1
+/* MACROS FOR BACKWARDS COMPATIBILITY */
+/* structs */
+#define faacDecHandle           NeAACDecHandle
+#define faacDecConfiguration    NeAACDecConfiguration
+#define faacDecConfigurationPtr NeAACDecConfigurationPtr
+#define faacDecFrameInfo        NeAACDecFrameInfo
+/* functions */
+#define faacDecGetErrorMessage  NeAACDecGetErrorMessage
+#define faacDecSetConfiguration NeAACDecSetConfiguration
+#define faacDecInit             NeAACDecInit
+#define faacDecInit2            NeAACDecInit2
+#define faacDecInitDRM          NeAACDecInitDRM
+#define faacDecPostSeekReset    NeAACDecPostSeekReset
+#define faacDecClose            NeAACDecClose
+#define faacDecDecode           NeAACDecDecode
+#define AudioSpecificConfig     NeAACDecAudioSpecificConfig
+#endif
+
+
 #ifdef _WIN32
   #pragma pack(push, 8)
-  #ifndef FAADAPI
-    #define FAADAPI __cdecl
+  #ifndef NEAACDECAPI
+    #define NEAACDECAPI __cdecl
   #endif
 #else
-  #ifndef FAADAPI
-    #define FAADAPI
+  #ifndef NEAACDECAPI
+    #define NEAACDECAPI
   #endif
 #endif
 
@@ -107,7 +128,7 @@ extern "C" {
 #define FAAD_MIN_STREAMSIZE 768 /* 6144 bits/channel */
 
 
-typedef void *faacDecHandle;
+typedef void *NeAACDecHandle;
 
 typedef struct mp4AudioSpecificConfig
 {
@@ -132,7 +153,7 @@ typedef struct mp4AudioSpecificConfig
     char downSampledSBR;
 } mp4AudioSpecificConfig;
 
-typedef struct faacDecConfiguration
+typedef struct NeAACDecConfiguration
 {
     unsigned char defObjectType;
     unsigned long defSampleRate;
@@ -140,9 +161,9 @@ typedef struct faacDecConfiguration
     unsigned char downMatrix;
     unsigned char useOldADTSFormat;
     unsigned char dontUpSampleImplicitSBR;
-} faacDecConfiguration, *faacDecConfigurationPtr;
+} NeAACDecConfiguration, *NeAACDecConfigurationPtr;
 
-typedef struct faacDecFrameInfo
+typedef struct NeAACDecFrameInfo
 {
     unsigned long bytesconsumed;
     unsigned long samples;
@@ -165,47 +186,47 @@ typedef struct faacDecFrameInfo
     unsigned char num_back_channels;
     unsigned char num_lfe_channels;
     unsigned char channel_position[64];
-} faacDecFrameInfo;
+} NeAACDecFrameInfo;
 
-char* FAADAPI faacDecGetErrorMessage(unsigned char errcode);
+char* NEAACDECAPI NeAACDecGetErrorMessage(unsigned char errcode);
 
-unsigned long FAADAPI faacDecGetCapabilities(void);
+unsigned long NEAACDECAPI NeAACDecGetCapabilities(void);
 
-faacDecHandle FAADAPI faacDecOpen(void);
+NeAACDecHandle NEAACDECAPI NeAACDecOpen(void);
 
-faacDecConfigurationPtr FAADAPI faacDecGetCurrentConfiguration(faacDecHandle hDecoder);
+NeAACDecConfigurationPtr NEAACDECAPI NeAACDecGetCurrentConfiguration(NeAACDecHandle hDecoder);
 
-unsigned char FAADAPI faacDecSetConfiguration(faacDecHandle hDecoder,
-                                    faacDecConfigurationPtr config);
+unsigned char NEAACDECAPI NeAACDecSetConfiguration(NeAACDecHandle hDecoder,
+                                                   NeAACDecConfigurationPtr config);
 
 /* Init the library based on info from the AAC file (ADTS/ADIF) */
-long FAADAPI faacDecInit(faacDecHandle hDecoder,
-                        unsigned char *buffer,
-                        unsigned long buffer_size,
-                        unsigned long *samplerate,
-                        unsigned char *channels);
+long NEAACDECAPI NeAACDecInit(NeAACDecHandle hDecoder,
+                              unsigned char *buffer,
+                              unsigned long buffer_size,
+                              unsigned long *samplerate,
+                              unsigned char *channels);
 
 /* Init the library using a DecoderSpecificInfo */
-char FAADAPI faacDecInit2(faacDecHandle hDecoder, unsigned char *pBuffer,
-                         unsigned long SizeOfDecoderSpecificInfo,
-                         unsigned long *samplerate, unsigned char *channels);
+char NEAACDECAPI NeAACDecInit2(NeAACDecHandle hDecoder, unsigned char *pBuffer,
+                               unsigned long SizeOfDecoderSpecificInfo,
+                               unsigned long *samplerate, unsigned char *channels);
 
 /* Init the library for DRM */
-char FAADAPI faacDecInitDRM(faacDecHandle hDecoder, unsigned long samplerate,
-                            unsigned char channels);
+char NEAACDECAPI NeAACDecInitDRM(NeAACDecHandle hDecoder, unsigned long samplerate,
+                                 unsigned char channels);
 
-void FAADAPI faacDecPostSeekReset(faacDecHandle hDecoder, long frame);
+void NEAACDECAPI NeAACDecPostSeekReset(NeAACDecHandle hDecoder, long frame);
 
-void FAADAPI faacDecClose(faacDecHandle hDecoder);
+void NEAACDECAPI NeAACDecClose(NeAACDecHandle hDecoder);
 
-void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
-                            faacDecFrameInfo *hInfo,
-                            unsigned char *buffer,
-                            unsigned long buffer_size);
+void* NEAACDECAPI NeAACDecDecode(NeAACDecHandle hDecoder,
+                                 NeAACDecFrameInfo *hInfo,
+                                 unsigned char *buffer,
+                                 unsigned long buffer_size);
 
-char FAADAPI AudioSpecificConfig(unsigned char *pBuffer,
-                                 unsigned long buffer_size,
-                                 mp4AudioSpecificConfig *mp4ASC);
+char NEAACDECAPI NeAACDecAudioSpecificConfig(unsigned char *pBuffer,
+                                             unsigned long buffer_size,
+                                             mp4AudioSpecificConfig *mp4ASC);
 
 #ifdef _WIN32
   #pragma pack(pop)
