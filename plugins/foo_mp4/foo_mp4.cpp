@@ -1,6 +1,6 @@
 /*
 ** FAAD - Freeware Advanced Audio Decoder
-** Copyright (C) 2002 M. Bakker
+** Copyright (C) 2002-2003 M. Bakker
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.16 2003/04/02 20:36:53 menno Exp $
+** $Id: foo_mp4.cpp,v 1.17 2003/04/02 21:11:56 menno Exp $
 **/
 
 #include <mp4.h>
@@ -26,9 +26,16 @@
 #include "foobar2000/SDK/console.h"
 #include "foobar2000/SDK/componentversion.h"
 
-DECLARE_COMPONENT_VERSION ( "FAAD2 - Freeware Advanced Audio Decoder",
-                           FAAD2_VERSION,
-                           "FAAD2 - Freeware Advanced Audio Decoder\n""http://www.audiocoding.com\n""\n""Copyright (C) 2002-2003 M. Bakker" );
+char *STRIP_REVISION(const char *str)
+{
+    char *tmp = strchr(str, ' ');
+    tmp[strlen(tmp)-2] = '\0';
+    return tmp;
+}
+
+DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
+                           STRIP_REVISION("$Revision: 1.17 $"),
+                           "Based on FAAD2 v" FAAD2_VERSION "\nhttp://www.audiocoding.com\n""\n""Copyright (C) 2002-2003 M. Bakker" );
 
 class input_mp4 : public input
 {
