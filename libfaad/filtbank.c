@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.c,v 1.9 2002/06/13 11:03:27 menno Exp $
+** $Id: filtbank.c,v 1.10 2002/06/17 18:14:35 menno Exp $
 **/
 
 #include "common.h"
@@ -93,13 +93,10 @@ static INLINE void vcopy(real_t *src, real_t *dest, uint16_t vlen)
 {
     int16_t i;
 
-    assert(vlen % 16 == 0);
+    assert(vlen % 4 == 0);
 
-    for (i = vlen/16-1; i >= 0; --i)
+    for (i = vlen/4-1; i >= 0; --i)
     {
-        *dest++ = *src++; *dest++ = *src++; *dest++ = *src++; *dest++ = *src++;
-        *dest++ = *src++; *dest++ = *src++; *dest++ = *src++; *dest++ = *src++;
-        *dest++ = *src++; *dest++ = *src++; *dest++ = *src++; *dest++ = *src++;
         *dest++ = *src++; *dest++ = *src++; *dest++ = *src++; *dest++ = *src++;
     }
 }
@@ -108,13 +105,10 @@ static INLINE void vzero(real_t *dest, uint16_t vlen)
 {
     int16_t i;
 
-    assert(vlen % 16 == 0);
+    assert(vlen % 4 == 0);
 
-    for (i = vlen/16-1; i >= 0; --i)
+    for (i = vlen/4-1; i >= 0; --i)
     {
-        *dest-- = 0; *dest-- = 0; *dest-- = 0; *dest-- = 0;
-        *dest-- = 0; *dest-- = 0; *dest-- = 0; *dest-- = 0;
-        *dest-- = 0; *dest-- = 0; *dest-- = 0; *dest-- = 0;
         *dest-- = 0; *dest-- = 0; *dest-- = 0; *dest-- = 0;
     }
 }
@@ -123,16 +117,10 @@ static INLINE void vmult1(real_t *src1, real_t *src2, real_t *dest, uint16_t vle
 {
     int16_t i;
 
-    assert(vlen % 16 == 0);
+    assert(vlen % 4 == 0);
 
-    for (i = vlen/16-1; i >= 0 ; --i)
+    for (i = vlen/4-1; i >= 0 ; --i)
     {
-        *dest++ = MUL(*src1++, *src2++); *dest++ = MUL(*src1++, *src2++);
-        *dest++ = MUL(*src1++, *src2++); *dest++ = MUL(*src1++, *src2++);
-        *dest++ = MUL(*src1++, *src2++); *dest++ = MUL(*src1++, *src2++);
-        *dest++ = MUL(*src1++, *src2++); *dest++ = MUL(*src1++, *src2++);
-        *dest++ = MUL(*src1++, *src2++); *dest++ = MUL(*src1++, *src2++);
-        *dest++ = MUL(*src1++, *src2++); *dest++ = MUL(*src1++, *src2++);
         *dest++ = MUL(*src1++, *src2++); *dest++ = MUL(*src1++, *src2++);
         *dest++ = MUL(*src1++, *src2++); *dest++ = MUL(*src1++, *src2++);
     }
@@ -142,16 +130,10 @@ static INLINE void vmult2(real_t *src1, real_t *src2, real_t *dest, uint16_t vle
 {
     int16_t i;
 
-    assert(vlen % 16 == 0);
+    assert(vlen % 4 == 0);
 
-    for (i = vlen/16-1; i >= 0 ; --i)
+    for (i = vlen/4-1; i >= 0 ; --i)
     {
-        *dest++ = MUL(*src1++, *src2--); *dest++ = MUL(*src1++, *src2--);
-        *dest++ = MUL(*src1++, *src2--); *dest++ = MUL(*src1++, *src2--);
-        *dest++ = MUL(*src1++, *src2--); *dest++ = MUL(*src1++, *src2--);
-        *dest++ = MUL(*src1++, *src2--); *dest++ = MUL(*src1++, *src2--);
-        *dest++ = MUL(*src1++, *src2--); *dest++ = MUL(*src1++, *src2--);
-        *dest++ = MUL(*src1++, *src2--); *dest++ = MUL(*src1++, *src2--);
         *dest++ = MUL(*src1++, *src2--); *dest++ = MUL(*src1++, *src2--);
         *dest++ = MUL(*src1++, *src2--); *dest++ = MUL(*src1++, *src2--);
     }
@@ -161,18 +143,20 @@ static INLINE void vadd(real_t *src1, real_t *src2, real_t *dest, uint16_t vlen)
 {
     int16_t i;
 
-    assert(vlen % 16 == 0);
+    assert(vlen % 4 == 0);
 
-    for (i = vlen/16-1; i >= 0; --i)
+    for (i = vlen/4-1; i >= 0; --i)
     {
         *dest++ = *src1++ + *src2++; *dest++ = *src1++ + *src2++;
         *dest++ = *src1++ + *src2++; *dest++ = *src1++ + *src2++;
+/*
         *dest++ = *src1++ + *src2++; *dest++ = *src1++ + *src2++;
         *dest++ = *src1++ + *src2++; *dest++ = *src1++ + *src2++;
         *dest++ = *src1++ + *src2++; *dest++ = *src1++ + *src2++;
         *dest++ = *src1++ + *src2++; *dest++ = *src1++ + *src2++;
         *dest++ = *src1++ + *src2++; *dest++ = *src1++ + *src2++;
         *dest++ = *src1++ + *src2++; *dest++ = *src1++ + *src2++;
+*/
     }
 }
 
