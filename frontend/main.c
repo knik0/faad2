@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.33 2003/06/23 15:21:19 menno Exp $
+** $Id: main.c,v 1.34 2003/06/24 20:41:41 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -268,6 +268,7 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
 
         tagsize += 10;
         advance_buffer(&b, tagsize);
+        fill_buffer(&b);
     }
 
     hDecoder = faacDecOpen();
@@ -330,6 +331,7 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
         return 1;
     }
     advance_buffer(&b, bread);
+    fill_buffer(&b);
 
     /* print AAC file info */
     fprintf(stderr, "AAC file info:\n");
@@ -350,9 +352,6 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
 
     do
     {
-        /* fill buffer */
-        fill_buffer(&b);
-
         sample_buffer = faacDecDecode(hDecoder, &frameInfo,
             b.buffer, b.bytes_into_buffer);
 
@@ -402,6 +401,9 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
         {
             write_audio_file(aufile, sample_buffer, frameInfo.samples);
         }
+
+        /* fill buffer */
+        fill_buffer(&b);
 
         if (b.bytes_into_buffer == 0)
             sample_buffer = NULL; /* to make sure it stops now */
