@@ -1,3 +1,7 @@
+1 December 2003:
+	* remove aac plug and merge the aac part with the mp4 part
+	  so now 2 plugins in one :)
+
 4 juillet 2003:
 	* package the plugin for faad2
 	* upgrade code to libfaad2-2.0 API

@@ -1,5 +1,5 @@
 AC_INIT
-AM_INIT_AUTOMAKE(faad2, 2.0.rc3)
+AM_INIT_AUTOMAKE(faad2, 2.0)
 
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
@@ -86,25 +86,23 @@ else
 fi
 
 if test x$WITHXMMS = xyes; then
-  AC_CHECK_PROGS(XMMS_CONFIG, xmms-config,"not_found")
-  if test "$XMMS_CONFIG" = "not_found"; then
-    AC_MSG_ERROR("*** xmms-config not found - xmms plugin can't be build")
-  fi
-  AC_CHECK_HEADER(pthread.h,,
-           AC_MSG_ERROR(*** pthread headers support not installed or not found))
-  AC_CHECK_HEADER(id3.h,,
-       AC_MSG_ERROR(*** id3lib headers support not installed or not found))
-  AC_CHECK_PROGS(GTK_CONFIG, gtk-config, "not_found")
-  
-  if test x$GTK_CONFIG = xnot_found; then
-    AC_MSG_ERROR("*** gtk-config not found - xmms plugin can't be build")
-  fi
-  
-  AM_CONDITIONAL(HAVE_XMMS, true)  
-  AC_MSG_NOTICE("xmms plugin requires libmp4v2 to be build")
+AC_MSG_NOTICE(
+***
+*** the xmms plugin must be build after faad
+*** you need to have libfaad and libmp4v2 installed on your system
+*** and also xmms installed correctly
+*** before the creation of the xmms plugin
+
+*** xmms plugin requires libmp4v2 to be build
+*** so libmp4v2 will be build and install
+
+*** after this build install the package and go into plugins/xmms
+*** and run configure in this directory
+***)
   AM_CONDITIONAL(WITH_MP4V2, true)
 else
- AM_CONDITIONAL(HAVE_XMMS, false)
+ AC_MSG_NOTICE(no xmms build configured)
+# AM_CONDITIONAL(HAVE_XMMS, false)
 fi
 
 if test x$WITHDRM = xyes; then
@@ -114,8 +112,6 @@ fi
 AC_CONFIG_FILES(libfaad/Makefile frontend/Makefile common/Makefile plugins/Makefile Makefile )
 
 AC_CONFIG_FILES(plugins/mpeg4ip/Makefile)
-AC_CONFIG_FILES(plugins/xmms/Makefile plugins/xmms/src/Makefile)
-AC_CONFIG_FILES(plugins/xmmsmp4/Makefile plugins/xmmsmp4/src/Makefile)
 
 AC_CONFIG_FILES(common/mp4ff/Makefile common/mp4v2/Makefile)
 AC_OUTPUT

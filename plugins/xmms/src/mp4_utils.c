@@ -3,8 +3,6 @@
 */
 #include <mp4.h>
 #include <faad.h>
-#include "libmp4_utils.h"
-
 
 const char *mp4AudioNames[]=
   {
@@ -121,7 +119,7 @@ void getMP4info(char* file)
     return;
   //MP4Dump(mp4file, 0, 0);
   numTracks = MP4GetNumberOfTracks(mp4file, NULL, 0);
-  printf("there is %d track(s)\n", numTracks);
+  g_print("there are %d track(s)\n", numTracks);
   for(i=0;i<numTracks;i++){
     MP4TrackId trackID = MP4FindTrackId(mp4file, i, NULL, 0);
     const char *trackType = MP4GetTrackType(mp4file, trackID);
@@ -133,12 +131,12 @@ void getMP4info(char* file)
 	if(mp4AudioTypes[j] == audiotype){
 	  if(mp4AudioTypes[j] == MP4_MPEG4_AUDIO_TYPE){
 	    audiotype = MP4GetTrackAudioMpeg4Type(mp4file, trackID);
-	    printf(" %s", mpeg4AudioNames[audiotype]);
+	    g_print(" %s", mpeg4AudioNames[audiotype]);
 	  }
 	  else{
 	    printf(" %s", mp4AudioNames[j]);
 	  }
-	  printf(" duration :%d",
+	  g_print(" duration :%d",
 		 MP4ConvertFromTrackDuration(mp4file, trackID,
 					     MP4GetTrackDuration(mp4file,
 								 trackID),

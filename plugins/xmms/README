@@ -1,18 +1,16 @@
-       this is an AAC InputPlugin source written from scratch for Xmms 1.2.7
-                            by ciberfred from France
-                    version 0.5 (build of 4 july 2003)
-
+                             xmms-mp4 plugin v0.4
+                              (dynamic version)
+                       "a mp4/aac audio player for xmms"
+                       coded by ciberfred from france  
 				-------------
 
-Hey, nice to see that i could realise a plugin for xmms .. :), so what about
-this plugin. This is a plugin to play AAC files (.aac) encoded with FAAC or
-the M$ windows program psytel aacenc.exe
+This source code allow to xmms to read .mp4/.m4a/.aac files
 
-The plugin read aac files with and without ID3tag(version 2.x), AAC files
-are MPEG2 or MPEG4 files that could be found in MPEG4 audio files (.mp4).
-MPEG4 files with aac inside could be read by RealPlayer or Quicktime and with
-my mp4 audio only xmms plugin. Also you could check the lamip project on
-sourceforge.
+About.
+ This plugin is a merge between aac and mp4 plugin. so now you could read
+all new and old files encoded with different encoder and different format
+(for the aac part). This is possible since the libfaad2 allow to read
+old aac ADTS format.
 
 For any informations about this plugin contact me at :
 
@@ -29,22 +27,12 @@ encoder (maybe a 1.x).
 This error is comming from faad2
 To remove this error use psystrip.exe windows program on the file. This maybe
 resolve this problem.
+        -------------------------------------------------------------
 
-this plugin was tested with the psytel encoder 2.15 (MPEG4 version for all
-profile)
+This plugin was tested with the psytel encoder v2.15 and a nero encoder
 
-I don't test it for more than 2 channels file, i don't have such files...
-if you wana test and give feedback could be great :)
-
-Also note that if you have old aac files encoded with psytel 2.15 you should
-use the 0.4 version of this plugin. (see my home page). This version
-handle the new AAC files with new ADTS header size.
 	-------------------------------------------------------------
 
-To build this plugin just run and install the faad2 package
-also check that you have :
-id3lib-3.8.x (http://www.id3.org), the lastiest version is better
-xmms-1.2.7 (http://www.xmms.org)
 
 -- 
-Frédéric Fondriest from France
+Frédéric Fondriest

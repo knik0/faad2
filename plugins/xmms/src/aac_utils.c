@@ -1,11 +1,16 @@
 /*
-** utils for AAC informations
+ *
+ * utils for AAC informations
 */
 #include <glib.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "aac_utils.h"
 
+
+#define ADTS_HEADER_SIZE        8
+#define SEEK_TABLE_CHUNK        60
+#define MPEG4_TYPE              0
+#define MPEG2_TYPE              1
 
 // Read ADTS header, the file descriptor must be at
 // the begining of the aac frame not at the id3tag
@@ -72,11 +77,12 @@ void	checkADTSForSeeking(FILE *fd,
       }
       (*seekTableLength) = SEEK_TABLE_CHUNK;
     }
-    if(id==0){//MPEG-4
-      frameLength = ((unsigned int)header[4]<<5)|((unsigned int)header[5]>>3);
-    }else{//MPEG-2
+
+    //if(id==0){//MPEG-4
+    //frameLength = ((unsigned int)header[4]<<5)|((unsigned int)header[5]>>3);
+    //}else{//MPEG-2
       frameLength = (((unsigned int)header[3]&0x3)<<11)|((unsigned int)header[4]<<3)|(header[5]>>5);
-    }
+      //}
     if(frameInsec==43){//???
       frameInsec=0;
     }

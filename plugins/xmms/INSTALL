@@ -1,1 +1,4 @@
-see README file
+ton install the mp4/aac plugin run :
+ - autoreconf -vfs && configure
+and install as root with :
+ - make install-strip

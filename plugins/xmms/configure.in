@@ -1,25 +1,23 @@
-dnl configure.in for faad2-2.0 package
+dnl configure.in for xmms faad2-2.0 package
 
-AC_INIT(src/libaac.c)
-AM_INIT_AUTOMAKE(libaac, 0.5)
+AC_INIT(src/libmp4.c)
+AM_INIT_AUTOMAKE(libmp4, 0.4)
 
 dnl save CFLAGS since AC_PROG_CC insert "-g -O2" if CFLAGS is empty
 cflags_save="$CFLAGS"
 
-AC_DISABLE_STATIC
 AM_DISABLE_STATIC
 
 AC_PROG_CC
-AC_PROG_CXX
 AC_PROG_LIBTOOL
+AC_PROG_INSTALL
 
+AC_CHECK_PROGS(XMMS_CONFIG, xmms-config,
+	[AC_MSG_ERROR("*** xmms-config not found check PATH or install xmms")])
 
-AC_CHECK_PROGS(XMMS_CONFIG, xmms-config,"no_found")
-if test "$XMMS_CONFIG" = "no_found"; then
- AC_MSG_ERROR("*** xmms-config not found check PATH or install xmms")
-fi
+AC_CHECK_LIB(mp4v2, MP4Create, ,AC_MSG_ERROR(*** libmp4v2 not installed), -lstdc++)
 
-CFLAGS="$cflags_save `xmms-config --cflags` -Wall"
+CFLAGS="$cflags_save `xmms-config --cflags`"
 CPPFLAGS="$CPPFLAGS $CFLAGS"
 AC_SUBST(CFLAGS)
 
@@ -27,20 +25,14 @@ AC_CHECK_HEADER(pthread.h,,
 	AC_MSG_ERROR(*** pthread headers support not installed or not found))
 AC_CHECK_HEADER(id3.h,,
 	AC_MSG_ERROR(*** id3lib headers support not installed or not found))
-
-dnl *** check for presence of libfaad2 in the system
-dnl *** it's maybe a new version than provided here (faad2-1.1)
-dnl ***
-dnl ***
-have_libfaad2=yes
 AC_CHECK_HEADER(faad.h,,
-	[echo "*** use libfaad2-2.0 in static mode"
-	have_libfaad2=no])
-AM_CONDITIONAL(USE_STATIC_FAAD2, test $have_libfaad2 = no)
+	AC_MSG_ERROR(*** faad header not installed check your CFLAGS))
 
 AC_OUTPUT(Makefile src/Makefile )
-echo "***"
-echo "*** configuration xmms-aac plugin done (version 0.5)"
-echo "***"
-echo "*** note that if you can't decode aac files you need"
-echo "*** the old libfaad2-1.1, typicaly for files encoded with psytel-2.15"
+
+echo ""
+echo "-------==========MP4 & MPEG2/4-AAC decoder configured===========------"
+echo "CFLAGS:   $CFLAGS"
+echo "CXXFLAGS: $CXXFLAGS"
+echo "install-dir = `xmms-config --input-plugin-dir`"
+echo ""
