@@ -1,15 +1,16 @@
-Summary:	C library and frontend for decoding MPEG2/4 AAC
-Name:		faad2
-Version:	2.0.031105
-Release:	1
-License:	GPL
-Group:		Applications/Multimedia
-Source0:	http://download.sourceforge.net/faad/%{name}-%{version}.tar.gz
+Summary:    C library and frontend for decoding MPEG2/4 AAC
+Name:       faad2
+Version:    2.0.031106
+Release:    1
+License:    GPL
+Group:      Applications/Multimedia
+Source0:    http://download.sourceforge.net/faad/%{name}-%{version}.tar.gz
+#Patch:                faad2-%{version}.patch
 BuildRequires: autoconf, automake, libtool, gcc-c++
 BuildRequires: xmms-devel, id3lib-devel, gtk+-devel
-URL:		http://www.audiocoding.com/
-BuildRoot: 	%{_tmppath}/%{name}-%{version}-%{release}-root
-Packager:	a.kurpiers@nt.tu-darmstadt.de
+URL:        http://www.audiocoding.com/
+BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-root
+Packager:   a.kurpiers@nt.tu-darmstadt.de
 
 %description
 FAAD 2 is a LC, MAIN and LTP profile, MPEG2 and MPEG-4 AAC decoder, completely
@@ -18,7 +19,7 @@ written from scratch. FAAD 2 is licensed under the GPL.
 %package devel
 Summary: Development libraries the FAAD 2 AAC decoder.
 Group: Development/Libraries
-Requires: %{name} = %{version}-%{release}
+Requires: %{name}
 
 %description devel
 Header files and development documentation for libfaad.
@@ -26,7 +27,7 @@ Header files and development documentation for libfaad.
 %package xmms
 Group: Applications/Multimedia
 Summary: AAC and MP4 input plugin for xmms
-Requires: %{name} = %{version}-%{release}, %{version}-%{release}-libmp4ff, xmms, id3lib
+Requires: %{name}, %{name}-libmp4ff, xmms, id3lib
 
 
 %description xmms
@@ -54,8 +55,8 @@ This is a Quicktime library for UNIX in a freely redistributable,
 statically linkable library.
 
 %prep
-%setup -n faad2
-%patch -p0
+%setup -n %{name}
+#%patch -p0
 
 %build
 sh bootstrap
@@ -64,7 +65,8 @@ make
 
 %install
 rm -rf %{buildroot}
-make install DESTDIR=%{buildroot}
+# Hack to work around a problem with DESTDIR in libtool 1.4.x
+LIBRARY_PATH="%{buildroot}/usr/lib:${LIBRARY_PATH}" make install DESTDIR=%{buildroot}
 
 %post -p /sbin/ldconfig
 
