@@ -25,7 +25,7 @@ CFG=mp4ff - Win32 Debug
 # PROP AllowPerConfigDependencies 0
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
-CPP=xicl6.exe
+CPP=cl.exe
 RSC=rc.exe
 
 !IF  "$(CFG)" == "mp4ff - Win32 Release"
@@ -105,12 +105,24 @@ SOURCE=.\mp4sample.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mp4tagupdate.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mp4util.c
 # End Source File
 # End Group
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=.\mp4ff.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\mp4ff_int_types.h
+# End Source File
 # Begin Source File
 
 SOURCE=.\mp4ffint.h

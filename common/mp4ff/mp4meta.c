@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4meta.c,v 1.3 2003/12/04 21:29:52 menno Exp $
+** $Id: mp4meta.c,v 1.4 2003/12/11 18:32:39 menno Exp $
 **/
 
 #ifdef USE_TAGGING
@@ -44,11 +44,8 @@ static int32_t mp4ff_tag_add_field(mp4ff_metadata_t *tags, const char *item, con
         if (backup) free(backup);
         return 0;
     } else {
-        int i_len = strlen(item);
-        int v_len = strlen(value);
-
-        tags->tags[tags->count].item = (char *)malloc(i_len+1);
-        tags->tags[tags->count].value = (char *)malloc(v_len+1);
+        tags->tags[tags->count].item = strdup(item);
+        tags->tags[tags->count].value = strdup(value);
 
         if (!tags->tags[tags->count].item || !tags->tags[tags->count].value)
         {
@@ -58,11 +55,6 @@ static int32_t mp4ff_tag_add_field(mp4ff_metadata_t *tags, const char *item, con
             tags->tags[tags->count].value = NULL;
             return 0;
         }
-
-        memcpy(tags->tags[tags->count].item, item, i_len);
-        memcpy(tags->tags[tags->count].value, value, v_len);
-        tags->tags[tags->count].item[i_len] = '\0';
-        tags->tags[tags->count].value[v_len] = '\0';
 
         tags->count++;
         return 1;
@@ -146,52 +138,34 @@ static const char* ID3v1GenreList[] = {
     "SynthPop",
 };
 
-static int32_t GenreToString(char** GenreStr, const uint16_t genre)
+uint32_t mp4ff_meta_genre_to_index(const char * genrestr)
 {
-    if (genre > 0 && genre <= sizeof(ID3v1GenreList)/sizeof(*ID3v1GenreList))
-    {
-        *GenreStr = (char*)malloc((strlen(ID3v1GenreList[genre-1])+1)*sizeof(char));
-        memset(*GenreStr, 0, (strlen(ID3v1GenreList[genre-1])+1)*sizeof(char));
-        strcpy(*GenreStr, ID3v1GenreList[genre-1]);
-        return 0;
-    }
-
-    *GenreStr = NULL;
-    return 1;
+	unsigned n;
+	for(n=0;n<sizeof(ID3v1GenreList)/sizeof(ID3v1GenreList[0]);n++)
+	{
+		if (!stricmp(genrestr,ID3v1GenreList[n])) return n+1;
+	}
+	return 0;
 }
 
-static int32_t StringToGenre(const char* GenreStr)
+const char * mp4ff_meta_index_to_genre(uint32_t idx)
 {
-    int32_t i;
-
-    for (i = 0; i < sizeof(ID3v1GenreList)/sizeof(*ID3v1GenreList); i++)
-    {
-        if (stricmp(GenreStr, ID3v1GenreList[i]) == 0)
-            return i+1;
-    }
-    return 0;
+	if (idx>0 && idx<=sizeof(ID3v1GenreList)/sizeof(ID3v1GenreList[0]))
+	{
+		return ID3v1GenreList[idx-1];
+	}
+	else
+	{
+		return 0;
+	}
 }
+
 
 static int32_t TrackToString(char** str, const uint16_t track, const uint16_t totalTracks)
 {
-    *str = malloc(12);
-    sprintf(*str, "%.5u of %.5u", track, totalTracks);
-
-    return 0;
-}
-
-static int32_t StringToTrack(const char *str, uint16_t *track, uint16_t *totalTracks)
-{
-    sscanf(str, "%.5u of %.5u", &track, &totalTracks);
-
-    return 0;
-}
-
-static int32_t TempoToString(char** str, const uint16_t tempo)
-{
-    *str = malloc(12);
-    sprintf(*str, "%.5u BPM", tempo);
-
+	char temp[32];
+    sprintf(temp, "%.5u of %.5u", track, totalTracks);
+	*str = strdup(temp);
     return 0;
 }
 
@@ -203,7 +177,6 @@ static int32_t mp4ff_set_metadata_name(mp4ff_t *f, const uint8_t atom_type, char
         "disc", "compilation", "genre", "tempo"
     };
     uint8_t tag_idx = 0;
-    uint16_t size;
 
     switch (atom_type)
     {
@@ -223,10 +196,7 @@ static int32_t mp4ff_set_metadata_name(mp4ff_t *f, const uint8_t atom_type, char
     default: tag_idx = 0; break;
     }
 
-    size = strlen(tag_names[tag_idx])+1;
-    *name = malloc(size+1);
-    memset(*name, 0, size+1);
-    memcpy(*name, tag_names[tag_idx], size);
+	*name = strdup(tag_names[tag_idx]);
 
     return 0;
 }
@@ -236,77 +206,97 @@ static int32_t mp4ff_parse_tag(mp4ff_t *f, const uint8_t parent_atom_type, const
     uint8_t atom_type;
     uint8_t header_size = 0;
     uint64_t subsize, sumsize = 0;
-    char *name = NULL;
-    char *data = NULL;
+    char * name = NULL;
+	char * data = NULL;
+	uint32_t done = 0;
+
 
     while (sumsize < size)
     {
+		uint64_t destpos;
         subsize = mp4ff_atom_read_header(f, &atom_type, &header_size);
-        if (atom_type == ATOM_DATA)
-        {
-            mp4ff_read_char(f); /* version */
-            mp4ff_read_int24(f); /* flags */
-            mp4ff_read_int32(f); /* reserved */
-            data = malloc(subsize-(header_size+8)+1);
-            mp4ff_read_data(f, data, subsize-(header_size+8));
-            data[subsize-(header_size+8)] = '\0';
+		destpos = mp4ff_position(f)+subsize-header_size;
+		if (!done)
+		{
+			if (atom_type == ATOM_DATA)
+			{
+				mp4ff_read_char(f); /* version */
+				mp4ff_read_int24(f); /* flags */
+				mp4ff_read_int32(f); /* reserved */
 
-            /* some need special attention */
-            if (parent_atom_type == ATOM_GENRE2 || parent_atom_type == ATOM_TEMPO)
-            {
-                uint16_t val = 0;
-                char *tmp;
-                tmp = data;
+				/* some need special attention */
+				if (parent_atom_type == ATOM_GENRE2 || parent_atom_type == ATOM_TEMPO)
+				{
+					if (subsize - header_size >= 8 + 2)
+					{
+						uint16_t val = mp4ff_read_int16(f);
 
-                val = (uint16_t)(tmp[1]);
-                val += (uint16_t)(tmp[0]<<8);
+						if (parent_atom_type == ATOM_TEMPO)
+						{
+							char temp[16];
+							sprintf(temp, "%.5u BPM", val);
+							mp4ff_tag_add_field(&(f->tags), "tempo", temp);
+						}
+						else
+						{
+							const char * temp = mp4ff_meta_index_to_genre(val);
+							if (temp)
+							{
+								mp4ff_tag_add_field(&(f->tags), "genre", temp);
+							}
+						}
+						done = 1;
+					}
+				} else if (parent_atom_type == ATOM_TRACK || parent_atom_type == ATOM_DISC) {
+					if (!done && subsize - header_size >= 8 + 8)
+					{
+						uint16_t index,total;
+						char temp[32];
+						mp4ff_read_int16(f);
+						index = mp4ff_read_int16(f);
+						total = mp4ff_read_int16(f);
+						mp4ff_read_int16(f);
 
-                if (data)
-                {
-                    free(data);
-                    data = NULL;
-                }
-                if (parent_atom_type == ATOM_TEMPO)
-                    TempoToString(&data, val);
-                else
-                    GenreToString(&data, val);
-            } else if (parent_atom_type == ATOM_TRACK || parent_atom_type == ATOM_DISC) {
-                uint16_t val1 = 0, val2 = 0;
-                char *tmp;
-                tmp = data;
-
-                val1 = (uint16_t)(tmp[3]);
-                val1 += (uint16_t)(tmp[2]<<8);
-                val2 = (uint16_t)(tmp[5]);
-                val2 += (uint16_t)(tmp[4]<<8);
-
-                if (data)
-                {
-                    free(data);
-                    data = NULL;
-                }
-                TrackToString(&data, val1, val2);
-            }
-        } else if (atom_type == ATOM_NAME) {
-            mp4ff_read_char(f); /* version */
-            mp4ff_read_int24(f); /* flags */
-            name = malloc(subsize-(header_size+4)+1);
-            mp4ff_read_data(f, name, subsize-(header_size+4));
-            name[subsize-12] = '\0';
-        } else {
-            mp4ff_set_position(f, mp4ff_position(f)+subsize-header_size);
-        }
-        sumsize += subsize;
+						itoa(index,temp,10);
+						mp4ff_tag_add_field(&(f->tags), parent_atom_type == ATOM_TRACK ? "track" : "disc", temp);
+						if (total>0)
+						{
+							itoa(total,temp,10);
+							mp4ff_tag_add_field(&(f->tags), parent_atom_type == ATOM_TRACK ? "totaltracks" : "totaldiscs", temp);
+						}
+						done = 1;
+					}
+				} else
+				{
+					if (data) {free(data);data = NULL;}
+					data = mp4ff_read_string(f,(uint32_t)(subsize-(header_size+8)));
+				}
+			} else if (atom_type == ATOM_NAME) {
+				if (!done)
+				{
+					mp4ff_read_char(f); /* version */
+					mp4ff_read_int24(f); /* flags */
+					if (name) free(name);
+					name = mp4ff_read_string(f,(uint32_t)(subsize-(header_size+4)));
+				}
+			}
+			mp4ff_set_position(f, destpos);
+			sumsize += subsize;
+		}
     }
 
-    if (name == NULL)
-    {
-        mp4ff_set_metadata_name(f, parent_atom_type, &name);
-    }
+	if (data)
+	{
+		if (!done)
+		{
+			if (name == NULL) mp4ff_set_metadata_name(f, parent_atom_type, &name);
+			if (name) mp4ff_tag_add_field(&(f->tags), name, data);
+		}
 
-    mp4ff_tag_set_field(&(f->tags), (const char*)name, (const char*)data);
-
-    return 0;
+		free(data);
+	}
+	if (name) free(name);
+    return 1;
 }
 
 int32_t mp4ff_parse_metadata(mp4ff_t *f, const int32_t size)
@@ -318,7 +308,7 @@ int32_t mp4ff_parse_metadata(mp4ff_t *f, const int32_t size)
     while (sumsize < size)
     {
         subsize = mp4ff_atom_read_header(f, &atom_type, &header_size);
-        mp4ff_parse_tag(f, atom_type, subsize-header_size);
+        mp4ff_parse_tag(f, atom_type, (uint32_t)(subsize-header_size));
         sumsize += subsize;
     }
 
@@ -335,20 +325,15 @@ static int32_t mp4ff_meta_find_by_name(const mp4ff_t *f, const char *item, char 
     {
         if (!stricmp(f->tags.tags[i].item, item))
         {
-            int v_len = strlen(f->tags.tags[i].value);
-
-            *value = (char*)malloc(v_len + 1);
-            memcpy(*value, f->tags.tags[i].value, v_len);
-            (*value)[v_len] = '\0';
-
-            return 0;
+			*value = strdup(f->tags.tags[i].value);
+            return 1;
         }
     }
 
     *value = NULL;
 
     /* not found */
-    return 1;
+    return 0;
 }
 
 int32_t mp4ff_meta_get_num_items(const mp4ff_t *f)
@@ -363,20 +348,12 @@ int32_t mp4ff_meta_get_by_index(const mp4ff_t *f, uint32_t index,
     {
         *item = NULL;
         *value = NULL;
-        return 1;
+        return 0;
     } else {
-        int i_len = strlen(f->tags.tags[index].item);
-        int v_len = strlen(f->tags.tags[index].value);
-
-        *item = (char*)malloc(i_len + 1);
-        memcpy(*item, f->tags.tags[index].item, i_len);
-        (*item)[i_len] = '\0';
-        *value = (char*)malloc(v_len + 1);
-        memcpy(*value, f->tags.tags[index].value, v_len);
-        (*value)[v_len] = '\0';
+		*item = strdup(f->tags.tags[index].item);
+		*value = strdup(f->tags.tags[index].value);
+		return 1;
     }
-
-    return 0;
 }
 
 int32_t mp4ff_meta_get_title(const mp4ff_t *f, char **value)

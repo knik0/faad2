@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4atom.c,v 1.6 2003/12/04 21:29:52 menno Exp $
+** $Id: mp4atom.c,v 1.7 2003/12/11 18:32:39 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -213,7 +213,7 @@ static int32_t mp4ff_read_stsz(mp4ff_t *f)
 static int32_t mp4ff_read_esds(mp4ff_t *f)
 {
     uint8_t tag;
-
+	
     mp4ff_read_char(f); /* version */
     mp4ff_read_int24(f); /* flags */
 
@@ -246,11 +246,11 @@ static int32_t mp4ff_read_esds(mp4ff_t *f)
     }
 
     /* skip 13 bytes */
+	mp4ff_read_char(f);
     mp4ff_read_int32(f);
-    mp4ff_read_int32(f);
-    mp4ff_read_int32(f);
-    mp4ff_read_char(f);
-
+    f->track[f->total_tracks - 1]->maxBitrate = mp4ff_read_int32(f);
+    f->track[f->total_tracks - 1]->avgBitrate = mp4ff_read_int32(f);
+    
     /* get and verify DecSpecificInfoTag */
     if (mp4ff_read_char(f) != 0x05)
     {
@@ -440,6 +440,75 @@ static int32_t mp4ff_read_mvhd(mp4ff_t *f)
     return 0;
 }
 
+#if 0
+static int32_t mp4ff_read_tkhd(mp4ff_t *f)
+{
+	uint8_t version;
+	uint32_t flags;
+    version = mp4ff_read_char(f); /* version */
+    flags = mp4ff_read_int24(f); /* flags */
+	if (version==1)
+	{
+		mp4ff_read_int64(f);//creation-time
+		mp4ff_read_int64(f);//modification-time
+		mp4ff_read_int32(f);//track-id
+		mp4ff_read_int32(f);//reserved
+		f->track[f->total_tracks - 1]->duration = mp4ff_read_int64(f);//duration
+	}
+	else //version == 0
+	{
+		mp4ff_read_int32(f);//creation-time
+		mp4ff_read_int32(f);//modification-time
+		mp4ff_read_int32(f);//track-id
+		mp4ff_read_int32(f);//reserved
+		f->track[f->total_tracks - 1]->duration = mp4ff_read_int32(f);//duration
+		if (f->track[f->total_tracks - 1]->duration == 0xFFFFFFFF)
+			f->track[f->total_tracks - 1]->duration = 0xFFFFFFFFFFFFFFFF;
+
+	}
+	mp4ff_read_int32(f);//reserved
+	mp4ff_read_int32(f);//reserved
+	mp4ff_read_int16(f);//layer
+	mp4ff_read_int16(f);//pre-defined
+	mp4ff_read_int16(f);//volume
+	mp4ff_read_int16(f);//reserved
+	
+	//matrix
+	mp4ff_read_int32(f); mp4ff_read_int32(f); mp4ff_read_int32(f);
+	mp4ff_read_int32(f); mp4ff_read_int32(f); mp4ff_read_int32(f);
+	mp4ff_read_int32(f); mp4ff_read_int32(f); mp4ff_read_int32(f);
+	mp4ff_read_int32(f);//width
+	mp4ff_read_int32(f);//height
+	return 1;
+}
+#endif
+
+static int32_t mp4ff_read_mdhd(mp4ff_t *f)
+{
+	uint32_t version;
+
+	version = mp4ff_read_int32(f);
+	if (version==1)
+	{
+		mp4ff_read_int64(f);//creation-time
+		mp4ff_read_int64(f);//modification-time
+		f->track[f->total_tracks - 1]->timeScale = mp4ff_read_int32(f);//timescale
+		f->track[f->total_tracks - 1]->duration = mp4ff_read_int64(f);//duration
+	}
+	else //version == 0
+	{
+		uint32_t temp;
+
+		mp4ff_read_int32(f);//creation-time
+		mp4ff_read_int32(f);//modification-time
+		f->track[f->total_tracks - 1]->timeScale = mp4ff_read_int32(f);//timescale
+		temp = mp4ff_read_int32(f);
+		f->track[f->total_tracks - 1]->duration = (temp == (uint32_t)(-1)) ? (uint64_t)(-1) : (uint64_t)(temp);
+	}
+	mp4ff_read_int16(f);
+	mp4ff_read_int16(f);
+	return 1;
+}
 #ifdef USE_TAGGING
 static int32_t mp4ff_read_meta(mp4ff_t *f, const uint64_t size)
 {
@@ -455,7 +524,7 @@ static int32_t mp4ff_read_meta(mp4ff_t *f, const uint64_t size)
         subsize = mp4ff_atom_read_header(f, &atom_type, &header_size);
         if (atom_type == ATOM_ILST)
         {
-            mp4ff_parse_metadata(f, subsize-(header_size+4));
+            mp4ff_parse_metadata(f, (uint32_t)(subsize-(header_size+4)));
         } else {
             mp4ff_set_position(f, mp4ff_position(f)+subsize-header_size);
         }
@@ -468,6 +537,7 @@ static int32_t mp4ff_read_meta(mp4ff_t *f, const uint64_t size)
 
 int32_t mp4ff_atom_read(mp4ff_t *f, const int32_t size, const uint8_t atom_type)
 {
+	uint64_t dest_position = mp4ff_position(f)+size-8;
     if (atom_type == ATOM_STSZ)
     {
         /* sample size box */
@@ -487,6 +557,9 @@ int32_t mp4ff_atom_read(mp4ff_t *f, const int32_t size, const uint8_t atom_type)
     } else if (atom_type == ATOM_MVHD) {
         /* movie header box */
         mp4ff_read_mvhd(f);
+    } else if (atom_type == ATOM_MDHD) {
+        /* track header */
+        mp4ff_read_mdhd(f);
 #ifdef USE_TAGGING
     } else if (atom_type == ATOM_META) {
         /* iTunes Metadata box */
@@ -494,7 +567,7 @@ int32_t mp4ff_atom_read(mp4ff_t *f, const int32_t size, const uint8_t atom_type)
 #endif
     } else {
         /* skip this atom: not needed for reading */
-        mp4ff_set_position(f, mp4ff_position(f)+size-8);
+        mp4ff_set_position(f, dest_position);
     }
 
     return 0;

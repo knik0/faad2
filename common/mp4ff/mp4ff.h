@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ff.h,v 1.9 2003/12/04 21:29:52 menno Exp $
+** $Id: mp4ff.h,v 1.10 2003/12/11 18:32:39 menno Exp $
 **/
 
 #ifndef MP4FF_H
@@ -32,34 +32,41 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#include "mp4ff_int_types.h"
+
 /* file callback structure */
 typedef struct
 {
-    int (*read)(void *user_data, void *buffer, int length);
-    int (*write)(void *udata, void *buffer, int length);
-    int (*seek)(void *user_data, int position);
+    uint32_t (*read)(void *user_data, void *buffer, uint32_t length);
+    uint32_t (*write)(void *udata, void *buffer, uint32_t length);
+    uint32_t (*seek)(void *user_data, uint64_t position);
+	uint32_t (*truncate)(void *user_data);
     void *user_data;
 } mp4ff_callback_t;
 
 /* mp4 main file structure */
-typedef void *mp4ff_t;
+typedef void* mp4ff_t;
 
 
 /* API */
 
 mp4ff_t *mp4ff_open_read(mp4ff_callback_t *f);
-#ifdef USE_TAGGING
-mp4ff_t *mp4ff_open_edit(mp4ff_callback_t *f);
-#endif
 void mp4ff_close(mp4ff_t *f);
-int mp4ff_get_sample_duration(const mp4ff_t *f, const int track, const int sample);
-int mp4ff_read_sample(mp4ff_t *f, const int track, const int sample,
+int32_t mp4ff_get_sample_duration(const mp4ff_t *f, const int32_t track, const int32_t sample);
+int64_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int32_t sample);
+int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip);
+int32_t mp4ff_read_sample(mp4ff_t *f, const int track, const int sample,
                           unsigned char **audio_buffer,  unsigned int *bytes);
-int mp4ff_get_decoder_config(const mp4ff_t *f, const int track,
+int32_t mp4ff_get_decoder_config(const mp4ff_t *f, const int track,
                              unsigned char** ppBuf, unsigned int* pBufSize);
-int mp4ff_total_tracks(const mp4ff_t *f);
-int mp4ff_time_scale(const mp4ff_t *f, const int track);
-int mp4ff_num_samples(const mp4ff_t *f, const int track);
+int32_t mp4ff_total_tracks(const mp4ff_t *f);
+int32_t mp4ff_num_samples(const mp4ff_t *f, const int track);
+int32_t mp4ff_time_scale(const mp4ff_t *f, const int track);
+
+uint32_t mp4ff_get_avg_bitrate(const mp4ff_t *f, const int32_t track);
+uint32_t mp4ff_get_max_bitrate(const mp4ff_t *f, const int32_t track);
+uint64_t mp4ff_get_track_duration(const mp4ff_t *f, const int32_t track); //returns (uint64_t)(-1) if unknown
+
 
 /* metadata */
 int mp4ff_meta_get_num_items(const mp4ff_t *f);
@@ -77,6 +84,27 @@ int mp4ff_meta_get_track(const mp4ff_t *f, char **value);
 int mp4ff_meta_get_disc(const mp4ff_t *f, char **value);
 int mp4ff_meta_get_compilation(const mp4ff_t *f, char **value);
 int mp4ff_meta_get_tempo(const mp4ff_t *f, char **value);
+
+#ifdef USE_TAGGING
+
+/* metadata tag structure */
+typedef struct
+{
+    char *item;
+    char *value;
+} mp4ff_tag_t;
+
+/* metadata list structure */
+typedef struct
+{
+    mp4ff_tag_t *tags;
+    uint32_t count;
+} mp4ff_metadata_t;
+
+int32_t mp4ff_meta_update(mp4ff_callback_t *f,const mp4ff_metadata_t * data);
+
+#endif
+
 
 #ifdef __cplusplus
 }

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ffint.h,v 1.3 2003/12/04 21:29:52 menno Exp $
+** $Id: mp4ffint.h,v 1.4 2003/12/11 18:32:39 menno Exp $
 **/
 
 #ifndef MP4FF_INTERNAL_H
@@ -31,6 +31,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
+
+#include "mp4ff_int_types.h"
 
 
 #define MAX_TRACKS 1024
@@ -93,44 +95,20 @@ extern "C" {
 #define ATOM_GENRE2 20
 #define ATOM_TEMPO 21
 
-
-#ifdef _WIN32
-typedef __int8 int8_t;
-typedef unsigned __int8 uint8_t;
-typedef __int16 int16_t;
-typedef unsigned __int16 uint16_t;
-typedef __int32 int32_t;
-typedef unsigned __int32 uint32_t;
-typedef __int64 int64_t;
-typedef unsigned __int64 uint64_t;
-#else
-
-#define stricmp strcasecmp
-
 #ifdef HAVE_CONFIG_H
 #include "../../config.h"
 #endif
-#ifdef HAVE_INTTYPES_H
-#include <inttypes.h>
-#else
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#define u_int8_t uint8_t
-#define u_int16_t uint16_t
-#define u_int32_t uint32_t
-#define u_int64_t uint64_t
-#else
-typedef unsigned long long uint64_t;
-typedef unsigned long uint32_t;
-typedef unsigned short uint16_t;
-typedef unsigned char uint8_t;
-typedef long long int64_t;
-typedef long int32_t;
-typedef short int16_t;
-typedef char int8_t;
-#endif
-#endif
-#endif
+
+/* file callback structure */
+typedef struct
+{
+    uint32_t (*read)(void *user_data, void *buffer, uint32_t length);
+    uint32_t (*write)(void *udata, void *buffer, uint32_t length);
+    uint32_t (*seek)(void *user_data, uint64_t position);
+	uint32_t (*truncate)(void *user_data);
+    void *user_data;
+} mp4ff_callback_t;
+
 
 /* metadata tag structure */
 typedef struct
@@ -146,15 +124,6 @@ typedef struct
     uint32_t count;
 } mp4ff_metadata_t;
 
-
-/* file callback structure */
-typedef struct
-{
-    int32_t (*read)(void *udata, void *buffer, int32_t length);
-    int32_t (*write)(void *udata, void *buffer, int32_t length);
-    int32_t (*seek)(void *udata, int32_t position);
-    void *user_data;
-} mp4ff_callback_t;
 
 typedef struct
 {
@@ -190,6 +159,12 @@ typedef struct
     uint8_t *decoderConfig;
     int32_t decoderConfigLen;
 
+	uint32_t maxBitrate;
+	uint32_t avgBitrate;
+	
+	uint32_t timeScale;
+	uint64_t duration;
+
 } mp4ff_track_t;
 
 /* mp4 main file structure */
@@ -197,7 +172,7 @@ typedef struct
 {
     /* stream to read from */
 	mp4ff_callback_t *stream;
-    int32_t current_position;
+    int64_t current_position;
 
     int32_t moov_read;
     uint64_t moov_offset;
@@ -223,16 +198,19 @@ typedef struct
 
 
 /* mp4util.c */
-int32_t mp4ff_read_data(mp4ff_t *f, int8_t *data, const int32_t size);
-int32_t mp4ff_write_data(mp4ff_t *f, int8_t *data, const int32_t size);
+int32_t mp4ff_read_data(mp4ff_t *f, int8_t *data, uint32_t size);
+int32_t mp4ff_write_data(mp4ff_t *f, int8_t *data, uint32_t size);
 uint64_t mp4ff_read_int64(mp4ff_t *f);
 uint32_t mp4ff_read_int32(mp4ff_t *f);
 uint32_t mp4ff_read_int24(mp4ff_t *f);
 uint16_t mp4ff_read_int16(mp4ff_t *f);
 uint8_t mp4ff_read_char(mp4ff_t *f);
+int32_t mp4ff_write_int32(mp4ff_t *f,const uint32_t data);
 uint32_t mp4ff_read_mp4_descr_length(mp4ff_t *f);
-int32_t mp4ff_position(const mp4ff_t *f);
-int32_t mp4ff_set_position(mp4ff_t *f, const int32_t position);
+int64_t mp4ff_position(const mp4ff_t *f);
+int32_t mp4ff_set_position(mp4ff_t *f, const int64_t position);
+int32_t mp4ff_truncate(mp4ff_t * f);
+char * mp4ff_read_string(mp4ff_t * f,uint32_t length);
 
 /* mp4atom.c */
 static int32_t mp4ff_atom_get_size(const int8_t *data);
@@ -266,11 +244,6 @@ int32_t mp4ff_set_sample_position(mp4ff_t *f, const int32_t track, const int32_t
 /* mp4meta.c */
 static int32_t mp4ff_tag_add_field(mp4ff_metadata_t *tags, const char *item, const char *value);
 static int32_t mp4ff_tag_set_field(mp4ff_metadata_t *tags, const char *item, const char *value);
-static int32_t GenreToString(char** GenreStr, const uint16_t genre);
-static int32_t StringToGenre(const char* GenreStr);
-static int32_t TrackToString(char** str, const uint16_t track, const uint16_t totalTracks);
-static int32_t StringToTrack(const char *str, uint16_t *track, uint16_t *totalTracks);
-static int32_t TempoToString(char** str, const uint16_t tempo);
 static int32_t mp4ff_set_metadata_name(mp4ff_t *f, const uint8_t atom_type, char **name);
 static int32_t mp4ff_parse_tag(mp4ff_t *f, const uint8_t parent_atom_type, const int32_t size);
 static int32_t mp4ff_meta_find_by_name(const mp4ff_t *f, const char *item, char **value);
@@ -299,10 +272,14 @@ mp4ff_t *mp4ff_open_read(mp4ff_callback_t *f);
 mp4ff_t *mp4ff_open_edit(mp4ff_callback_t *f);
 #endif
 void mp4ff_close(mp4ff_t *ff);
-static void mp4ff_track_add(mp4ff_t *f);
-static int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size);
-static int32_t parse_atoms(mp4ff_t *f);
+void mp4ff_track_add(mp4ff_t *f);
+int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size);
+int32_t parse_atoms(mp4ff_t *f);
+
 int32_t mp4ff_get_sample_duration(const mp4ff_t *f, const int32_t track, const int32_t sample);
+int64_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int32_t sample);
+int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip);
+
 int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,
                           uint8_t **audio_buffer,  uint32_t *bytes);
 int32_t mp4ff_get_decoder_config(const mp4ff_t *f, const int32_t track,
@@ -311,6 +288,8 @@ int32_t mp4ff_total_tracks(const mp4ff_t *f);
 int32_t mp4ff_time_scale(const mp4ff_t *f, const int32_t track);
 int32_t mp4ff_num_samples(const mp4ff_t *f, const int32_t track);
 
+uint32_t mp4ff_meta_genre_to_index(const char * genrestr);//returns 1-based index, 0 if not found
+const char * mp4ff_meta_index_to_genre(uint32_t idx);//returns pointer to static string
 
 #ifdef __cplusplus
 }
