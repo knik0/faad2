@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ic_predict.h,v 1.4 2002/06/13 11:03:27 menno Exp $
+** $Id: ic_predict.h,v 1.5 2002/08/17 12:27:33 menno Exp $
 **/
 
 #ifdef MAIN_DEC
@@ -28,9 +28,9 @@
 extern "C" {
 #endif
 
-#define ALPHA      0.90625f
-#define A          0.953125f
-#define B          0.953125f
+#define ALPHA      REAL_CONST(0.90625)
+#define A          REAL_CONST(0.953125)
+#define B          REAL_CONST(0.953125)
 
 
 /* used to save the state */

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: lt_predict.c,v 1.6 2002/06/13 11:03:27 menno Exp $
+** $Id: lt_predict.c,v 1.7 2002/08/17 12:27:33 menno Exp $
 **/
 
 
@@ -32,8 +32,14 @@
 
 static real_t codebook[8] =
 {
-    0.570829f, 0.696616f, 0.813004f, 0.911304f, 0.984900f, 1.067894f,
-    1.194601f, 1.369533f
+    REAL_CONST(0.570829),
+    REAL_CONST(0.696616),
+    REAL_CONST(0.813004),
+    REAL_CONST(0.911304),
+    REAL_CONST(0.984900),
+    REAL_CONST(1.067894),
+    REAL_CONST(1.194601),
+    REAL_CONST(1.369533)
 };
 
 void lt_prediction(ic_stream *ics, ltp_info *ltp, real_t *spec,

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: cfft.c,v 1.3 2002/08/17 11:46:48 menno Exp $
+** $Id: cfft.c,v 1.4 2002/08/17 12:27:33 menno Exp $
 **/
 
 /*
@@ -76,8 +76,8 @@ static void passf2(uint16_t ido, uint16_t l1, real_t *cc, real_t *ch,
 static void passf3(uint16_t ido, uint16_t l1, real_t *cc, real_t *ch,
                    real_t *wa1, real_t *wa2, int8_t isign)
 {
-    static real_t taur = -0.5;
-    static real_t taui = 0.866025403784439;
+    static real_t taur = REAL_CONST(-0.5);
+    static real_t taui = REAL_CONST(0.866025403784439);
     uint16_t i, k, ac, ah;
     real_t ci2, ci3, di2, di3, cr2, cr3, dr2, dr3, ti2, tr2;
 
@@ -200,10 +200,10 @@ static void passf5(uint16_t ido, uint16_t l1, real_t *cc, real_t *ch,
                    real_t *wa1, real_t *wa2, real_t *wa3, real_t *wa4,
                    int8_t isign)
 {
-    static real_t tr11 = 0.309016994374947;
-    static real_t ti11 = 0.951056516295154;
-    static real_t tr12 = -0.809016994374947;
-    static real_t ti12 = 0.587785252292473;
+    static real_t tr11 = REAL_CONST(0.309016994374947);
+    static real_t ti11 = REAL_CONST(0.951056516295154);
+    static real_t tr12 = REAL_CONST(-0.809016994374947);
+    static real_t ti12 = REAL_CONST(0.587785252292473);
     uint16_t i, k, ac, ah;
     real_t ci2, ci3, ci4, ci5, di3, di4, di5, di2, cr2, cr3, cr5, cr4,
         ti2, ti3, ti4, ti5, dr3, dr4, dr5, dr2, tr2, tr3, tr4, tr5;
@@ -610,7 +610,7 @@ startloop:
 
     ifac[0] = n;
     ifac[1] = nf;
-    argh = 2*M_PI / (real_t)n;
+    argh = REAL_CONST(2*M_PI / (real_t)n); /* <-- TODO */
     i = 1;
     l1 = 1;
 
@@ -637,8 +637,8 @@ startloop:
                 i += 2;
                 fi += 1;
                 arg = MUL(fi,argld);
-                wa[i-1] = cos(arg);
-                wa[i] = sin(arg);
+                wa[i-1] = REAL_CONST(cos(arg));
+                wa[i] = REAL_CONST(sin(arg));
             }
 
             if (ip > 5)

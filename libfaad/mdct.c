@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.c,v 1.14 2002/08/17 11:15:31 menno Exp $
+** $Id: mdct.c,v 1.15 2002/08/17 12:27:33 menno Exp $
 **/
 
 /*
@@ -73,8 +73,8 @@ mdct_info *faad_mdct_init(uint16_t N)
     for (k = 0; k < N/4; k++)
     {
         real_t angle = 2.0 * M_PI * ((real_t)k + 1.0/8.0)/(real_t)N;
-        mdct->sincos[k].sin = -sin(angle);
-        mdct->sincos[k].cos = -cos(angle);
+        mdct->sincos[k].sin = REAL_CONST(-sin(angle));
+        mdct->sincos[k].cos = REAL_CONST(-cos(angle));
     }
 
 #ifdef USE_FFTW
@@ -126,7 +126,7 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     uint16_t N4 = N >> 2;
     uint16_t N8 = N >> 3;
 
-    real_t fac = 2.0/(real_t)N;
+    real_t fac = REAL_CONST(2.0/(real_t)N);
 
     /* pre-IFFT complex multiplication */
     for (k = 0; k < N4; k++)
@@ -238,11 +238,11 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     {
         uint16_t n = k << 1;
 #ifdef USE_FFTW
-        real_t zr = MUL(2.0, MUL(Z2[k].re, sincos[k].cos) + MUL(Z2[k].im, sincos[k].sin));
-        real_t zi = MUL(2.0, MUL(Z2[k].im, sincos[k].cos) - MUL(Z2[k].re, sincos[k].sin));
+        real_t zr = 2 * MUL(Z2[k].re, sincos[k].cos) + MUL(Z2[k].im, sincos[k].sin);
+        real_t zi = 2 * MUL(Z2[k].im, sincos[k].cos) - MUL(Z2[k].re, sincos[k].sin);
 #else
-        real_t zr = MUL(2.0, MUL(Z1[n], sincos[k].cos) + MUL(Z1[n+1], sincos[k].sin));
-        real_t zi = MUL(2.0, MUL(Z1[n+1], sincos[k].cos) - MUL(Z1[n], sincos[k].sin));
+        real_t zr = 2 * MUL(Z1[n], sincos[k].cos) + MUL(Z1[n+1], sincos[k].sin);
+        real_t zi = 2 * MUL(Z1[n+1], sincos[k].cos) - MUL(Z1[n], sincos[k].sin);
 #endif
 
         X_out[         n] = -zr;

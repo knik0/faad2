@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ic_predict.c,v 1.7 2002/08/17 11:15:31 menno Exp $
+** $Id: ic_predict.c,v 1.8 2002/08/17 12:27:33 menno Exp $
 **/
 
 #include "common.h"
@@ -63,16 +63,16 @@ static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t 
     KOR = state->KOR; /* correlations */
     VAR = state->VAR; /* variances */
 
-    if (VAR[0] == 0.0)
-        k1 = 0.0;
+    if (VAR[0] == REAL_CONST(0.0))
+        k1 = REAL_CONST(0.0);
     else
         k1 = KOR[0]/VAR[0]*B;
 
     if (pred)
     {
         /* only needed for the actual predicted value, k1 is always needed */
-        if (VAR[1] == 0.0)
-            k2 = 0.0;
+        if (VAR[1] == REAL_CONST(0.0))
+            k2 = REAL_CONST(0.0);
         else
             k2 = KOR[1]/VAR[1]*B;
 
@@ -88,11 +88,11 @@ static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t 
     e0 = *output;
     e1 = e0 - MUL(k1, r[0]);
 
-    dr1 = k1 * e0;
+    dr1 = MUL(k1, e0);
 
-    VAR[0] = MUL(ALPHA, VAR[0]) + (0.5f) * (MUL(r[0], r[0]) + MUL(e0, e0));
+    VAR[0] = MUL(ALPHA, VAR[0]) + MUL(REAL_CONST(0.5), (MUL(r[0], r[0]) + MUL(e0, e0)));
     KOR[0] = MUL(ALPHA, KOR[0]) + MUL(r[0], e0);
-    VAR[1] = MUL(ALPHA, VAR[1]) + (0.5f) * (MUL(r[1], r[1]) + MUL(e1, e1));
+    VAR[1] = MUL(ALPHA, VAR[1]) + MUL(REAL_CONST(0.5), (MUL(r[1], r[1]) + MUL(e1, e1)));
     KOR[1] = MUL(ALPHA, KOR[1]) + MUL(r[1], e1);
 
     r[1] = MUL(A, (r[0]-dr1));
@@ -101,12 +101,12 @@ static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t 
 
 static void reset_pred_state(pred_state *state)
 {
-    state->r[0]   = 0.0f;
-    state->r[1]   = 0.0f;
-    state->KOR[0] = 0.0f;
-    state->KOR[1] = 0.0f;
-    state->VAR[0] = 1.0f;
-    state->VAR[1] = 1.0f;
+    state->r[0]   = REAL_CONST(0.0);
+    state->r[1]   = REAL_CONST(0.0);
+    state->KOR[0] = REAL_CONST(0.0);
+    state->KOR[1] = REAL_CONST(0.0);
+    state->VAR[0] = REAL_CONST(1.0);
+    state->VAR[1] = REAL_CONST(1.0);
 }
 
 void pns_reset_pred_state(ic_stream *ics, pred_state *state)

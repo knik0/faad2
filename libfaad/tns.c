@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: tns.c,v 1.12 2002/06/13 11:03:28 menno Exp $
+** $Id: tns.c,v 1.13 2002/08/17 12:27:33 menno Exp $
 **/
 
 #include "common.h"
@@ -150,11 +150,15 @@ static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_c
 
         /* Inverse quantization */
         if (tmp >= 0)
-            iqfac = ((1 << (coef_res_bits-1)) - 0.5f) / M_PI_2;
-        else
-            iqfac = ((1 << (coef_res_bits-1)) + 0.5f) / M_PI_2;
+        {
+            iqfac = REAL_CONST((1 << (coef_res_bits-1)) -
+                REAL_CONST(0.5)) / REAL_CONST(M_PI_2); /* <-- TODO */
+        } else {
+            iqfac = REAL_CONST((1 << (coef_res_bits-1)) +
+                REAL_CONST(0.5)) / REAL_CONST(M_PI_2); /* <-- TODO */
+        }
 
-        tmp2[i] = (real_t)sin(tmp / iqfac);
+        tmp2[i] = REAL_CONST(sin(tmp / iqfac));
     }
 
     /* Conversion to LPC coefficients */

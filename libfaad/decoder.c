@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.19 2002/08/17 10:03:12 menno Exp $
+** $Id: decoder.c,v 1.20 2002/08/17 12:27:33 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -83,7 +83,7 @@ faacDecHandle FAADAPI faacDecOpen()
 #endif
     }
 
-    hDecoder->drc = drc_init(1.0f, 1.0f);
+    hDecoder->drc = drc_init(REAL_CONST(1.0), REAL_CONST(1.0));
 #if IQ_TABLE_SIZE && POW_TABLE_SIZE
     build_tables(hDecoder->iq_table, hDecoder->pow2_table);
 #elif !POW_TABLE_SIZE

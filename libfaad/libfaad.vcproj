@@ -246,9 +246,6 @@
 				RelativePath=".\common.h">
 			</File>
 			<File
-				RelativePath=".\fftw\config.h">
-			</File>
-			<File
 				RelativePath=".\data.h">
 			</File>
 			<File
@@ -262,9 +259,6 @@
 			</File>
 			<File
 				RelativePath=".\error.h">
-			</File>
-			<File
-				RelativePath=".\fftw\f77_func.h">
 			</File>
 			<File
 				RelativePath=".\filtbank.h">

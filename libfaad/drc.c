@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: drc.c,v 1.6 2002/08/17 10:03:12 menno Exp $
+** $Id: drc.c,v 1.7 2002/08/17 12:27:33 menno Exp $
 **/
 
 #include "common.h"
@@ -61,9 +61,9 @@ void drc_decode(drc_info *drc, real_t *spec)
 
         /* Decode DRC gain factor */
         if (drc->dyn_rng_sgn[bd])  /* compress */
-            factor = (real_t)exp(LN2 * (-drc->ctrl1 * drc->dyn_rng_ctl[bd]/24.0));
+            factor = REAL_CONST(exp(LN2 * (-drc->ctrl1 * drc->dyn_rng_ctl[bd]/24.0)));
         else /* boost */
-            factor = (real_t)exp(LN2 * (drc->ctrl2 * drc->dyn_rng_ctl[bd]/24.0));
+            factor = REAL_CONST(exp(LN2 * (drc->ctrl2 * drc->dyn_rng_ctl[bd]/24.0)));
 
         /* Level alignment between different programs (if desired) */
         /* If program reference normalization is done in the digital domain,
@@ -74,7 +74,7 @@ void drc_decode(drc_info *drc, real_t *spec)
            attenuated) or clipping (if signal is boosted)
          */
         factor = MUL(factor,
-            (real_t)exp(LN05 * ((DRC_REF_LEVEL - drc->prog_ref_level)/24.0)));
+            REAL_CONST(exp(LN05 * ((DRC_REF_LEVEL - drc->prog_ref_level)/24.0))));
 
         /* Apply gain factor */
         for (i = bottom; i < top; i++)
