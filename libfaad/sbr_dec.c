@@ -1,19 +1,19 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
-**
+**  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**
+** 
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
+** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
@@ -22,39 +22,9 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.c,v 1.6 2003/09/03 17:31:43 menno Exp $
+** $Id: sbr_dec.c,v 1.7 2003/09/09 18:09:52 menno Exp $
 **/
 
-/*
-   SBR Decoder overview:
-
-   To achieve a synchronized output signal, the following steps have to be
-   acknowledged in the decoder:
-    - The bitstream parser divides the bitstream into two parts; the AAC
-      core coder part and the SBR part.
-    - The SBR bitstream part is fed to the bitstream de-multiplexer followed
-      by de-quantization The raw data is Huffman decoded.
-    - The AAC bitstream part is fed to the AAC core decoder, where the
-      bitstream data of the current frame is decoded, yielding a time domain
-      audio signal block of 1024 samples. The block length could easily be
-      adapted to other sizes e.g. 960.
-    - The core coder audio block is fed to the analysis QMF bank using a
-      delay of 1312 samples.
-    - The analysis QMF bank performs the filtering of the delayed core coder
-      audio signal. The output from the filtering is stored in the matrix
-      Xlow. The output from the analysis QMF bank is delayed tHFGen subband
-      samples, before being fed to the synthesis QMF bank. To achieve
-      synchronization tHFGen = 32, i.e. the value must equal the number of
-      subband samples corresponding to one frame.
-    - The HF generator calculates XHigh given the matrix XLow. The process
-      is guided by the SBR data contained in the current frame.
-    - The envelope adjuster calculates the matrix Y given the matrix XHigh
-      and the SBR envelope data, extracted from the SBR bitstream. To
-      achieve synchronization, tHFAdj has to be set to tHFAdj = 0, i.e. the
-      envelope adjuster operates on data delayed tHFGen subband samples.
-    - The synthesis QMF bank operates on the delayed output from the analysis
-      QMF bank and the output from the envelope adjuster.
- */
 
 #include "common.h"
 #include "structs.h"
@@ -71,7 +41,11 @@
 #include "sbr_hfadj.h"
 
 
-sbr_info *sbrDecodeInit()
+sbr_info *sbrDecodeInit(uint16_t framelength
+#ifdef DRM
+						, uint8_t IsDRM
+#endif
+                        )
 {
     sbr_info *sbr = malloc(sizeof(sbr_info));
     memset(sbr, 0, sizeof(sbr_info));
@@ -89,6 +63,36 @@ sbr_info *sbrDecodeInit()
     sbr->prevEnvIsShort[0] = -1;
     sbr->prevEnvIsShort[1] = -1;
     sbr->header_count = 0;
+
+#ifdef DRM
+    sbr->Is_DRM_SBR = 0;
+    if (IsDRM)
+    {
+        sbr->Is_DRM_SBR = 1;
+        sbr->tHFGen = T_HFGEN_DRM;
+        sbr->tHFAdj = T_HFADJ_DRM;
+
+        /* "offset" is different in DRM */
+        sbr->bs_samplerate_mode = 0;
+    } else
+#endif
+    {
+        sbr->bs_samplerate_mode = 1;
+        sbr->tHFGen = T_HFGEN;
+        sbr->tHFAdj = T_HFADJ;
+    }
+
+    /* force sbr reset */
+    sbr->bs_start_freq_prev = -1;
+
+    if (framelength == 960)
+    {
+        sbr->numTimeSlotsRate = RATE * NO_TIME_SLOTS_960;
+        sbr->numTimeSlots = NO_TIME_SLOTS_960;
+    } else {
+        sbr->numTimeSlotsRate = RATE * NO_TIME_SLOTS;
+        sbr->numTimeSlots = NO_TIME_SLOTS;
+    }
 
     return sbr;
 }
@@ -152,7 +156,6 @@ void sbr_save_prev_data(sbr_info *sbr, uint8_t ch)
         sbr->prevEnvIsShort[ch] = -1;
 }
 
-
 void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
                     real_t *right_channel, uint8_t id_aac,
                     uint8_t just_seeked)
@@ -201,9 +204,11 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
     }
 
     if (just_seeked)
+    {
         sbr->just_seeked = 1;
-    else
+    } else {
         sbr->just_seeked = 0;
+    }
 
     for (ch = 0; ch < channels; ch++)
     {
@@ -212,18 +217,18 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
             uint8_t j;
             sbr->qmfa[ch] = qmfa_init(32);
             sbr->qmfs[ch] = qmfs_init(64);
-
+            
             for (j = 0; j < 5; j++)
             {
                 sbr->G_temp_prev[ch][j] = malloc(64*sizeof(real_t));
                 sbr->Q_temp_prev[ch][j] = malloc(64*sizeof(real_t));
             }
 
-            sbr->Xsbr[ch] = malloc((32+tHFGen)*64 * sizeof(qmf_t));
-            sbr->Xcodec[ch] = malloc((32+tHFGen)*32 * sizeof(qmf_t));
+            sbr->Xsbr[ch] = malloc((sbr->numTimeSlotsRate+sbr->tHFGen)*64 * sizeof(qmf_t));
+            sbr->Xcodec[ch] = malloc((sbr->numTimeSlotsRate+sbr->tHFGen)*32 * sizeof(qmf_t));
 
-            memset(sbr->Xsbr[ch], 0, (32+tHFGen)*64 * sizeof(qmf_t));
-            memset(sbr->Xcodec[ch], 0, (32+tHFGen)*32 * sizeof(qmf_t));
+            memset(sbr->Xsbr[ch], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*64 * sizeof(qmf_t));
+            memset(sbr->Xcodec[ch], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*32 * sizeof(qmf_t));
         }
 
         if (ch == 0)
@@ -231,7 +236,7 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
         else
             ch_buf = right_channel;
 
-        for (i = 0; i < tHFAdj; i++)
+        for (i = 0; i < sbr->tHFAdj; i++)
         {
             int8_t j;
             for (j = sbr->kx_prev; j < sbr->kx; j++)
@@ -244,7 +249,7 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
         }
 
         /* subband analysis */
-        sbr_qmf_analysis_32(sbr->qmfa[ch], ch_buf, sbr->Xcodec[ch], tHFGen);
+        sbr_qmf_analysis_32(sbr, sbr->qmfa[ch], ch_buf, sbr->Xcodec[ch], sbr->tHFGen);
 
         if (!dont_process)
         {
@@ -261,28 +266,30 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
             {
                 for (k = 0; k < sbr->kx; k++)
                 {
-                    QMF_RE(sbr->Xsbr[ch][(tHFAdj + l)*64 + k]) = 0;
+                    QMF_RE(sbr->Xsbr[ch][(sbr->tHFAdj + l)*64 + k]) = 0;
                 }
             }
 #endif
 
+#if 1
             /* hf adjustment */
             hf_adjustment(sbr, sbr->Xsbr[ch]
 #ifdef SBR_LOW_POWER
                 ,deg
 #endif
                 ,ch);
+#endif
         }
 
         if ((sbr->just_seeked != 0) || dont_process)
         {
-            for (l = 0; l < 32; l++)
+            for (l = 0; l < sbr->numTimeSlotsRate; l++)
             {
                 for (k = 0; k < 32; k++)
                 {
-                    QMF_RE(X[l * 64 + k]) = QMF_RE(sbr->Xcodec[ch][(l + tHFAdj)*32 + k]);
+                    QMF_RE(X[l * 64 + k]) = QMF_RE(sbr->Xcodec[ch][(l + sbr->tHFAdj)*32 + k]);
 #ifndef SBR_LOW_POWER
-                    QMF_IM(X[l * 64 + k]) = QMF_IM(sbr->Xcodec[ch][(l + tHFAdj)*32 + k]);
+                    QMF_IM(X[l * 64 + k]) = QMF_IM(sbr->Xcodec[ch][(l + sbr->tHFAdj)*32 + k]);
 #endif
                 }
                 for (k = 32; k < 64; k++)
@@ -294,7 +301,7 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
                 }
             }
         } else {
-            for (l = 0; l < 32; l++)
+            for (l = 0; l < sbr->numTimeSlotsRate; l++)
             {
                 uint8_t xover_band;
 
@@ -303,48 +310,63 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
                 else
                     xover_band = sbr->kx;
 
+#ifdef DRM
+				if (sbr->Is_DRM_SBR)
+					xover_band = sbr->kx;
+#endif
+
                 for (k = 0; k < xover_band; k++)
                 {
-                    QMF_RE(X[l * 64 + k]) = QMF_RE(sbr->Xcodec[ch][(l + tHFAdj)*32 + k]);
+                    QMF_RE(X[l * 64 + k]) = QMF_RE(sbr->Xcodec[ch][(l + sbr->tHFAdj)*32 + k]);
 #ifndef SBR_LOW_POWER
-                    QMF_IM(X[l * 64 + k]) = QMF_IM(sbr->Xcodec[ch][(l + tHFAdj)*32 + k]);
+                    QMF_IM(X[l * 64 + k]) = QMF_IM(sbr->Xcodec[ch][(l + sbr->tHFAdj)*32 + k]);
 #endif
                 }
                 for (k = xover_band; k < 64; k++)
                 {
-                    QMF_RE(X[l * 64 + k]) = QMF_RE(sbr->Xsbr[ch][(l + tHFAdj)*64 + k]);
+                    QMF_RE(X[l * 64 + k]) = QMF_RE(sbr->Xsbr[ch][(l + sbr->tHFAdj)*64 + k]);
 #ifndef SBR_LOW_POWER
-                    QMF_IM(X[l * 64 + k]) = QMF_IM(sbr->Xsbr[ch][(l + tHFAdj)*64 + k]);
+                    QMF_IM(X[l * 64 + k]) = QMF_IM(sbr->Xsbr[ch][(l + sbr->tHFAdj)*64 + k]);
 #endif
                 }
 #ifdef SBR_LOW_POWER
-                QMF_RE(X[l * 64 + xover_band - 1]) += QMF_RE(sbr->Xsbr[ch][(l + tHFAdj)*64 + xover_band - 1]);
+                QMF_RE(X[l * 64 + xover_band - 1]) += QMF_RE(sbr->Xsbr[ch][(l + sbr->tHFAdj)*64 + xover_band - 1]);
+#endif
+#ifdef DRM
+                if (sbr->Is_DRM_SBR)
+                {
+                    for (k = xover_band; k < xover_band + 4; k++)
+                    {
+                        QMF_RE(X[l * 64 + k]) += QMF_RE(sbr->Xcodec[ch][(l + sbr->tHFAdj)*32 + k]);
+                        QMF_IM(X[l * 64 + k]) += QMF_IM(sbr->Xcodec[ch][(l + sbr->tHFAdj)*32 + k]);
+                    }
+                }
 #endif
             }
         }
 
         /* subband synthesis */
-        sbr_qmf_synthesis_64(sbr->qmfs[ch], (const complex_t*)X, ch_buf);
+        sbr_qmf_synthesis_64(sbr, sbr->qmfs[ch], (const complex_t*)X, ch_buf);
 
         for (i = 0; i < 32; i++)
         {
             int8_t j;
-            for (j = 0; j < tHFGen; j++)
+            for (j = 0; j < sbr->tHFGen; j++)
             {
-                QMF_RE(sbr->Xcodec[ch][j*32 + i]) = QMF_RE(sbr->Xcodec[ch][(j+32)*32 + i]);
+                QMF_RE(sbr->Xcodec[ch][j*32 + i]) = QMF_RE(sbr->Xcodec[ch][(j+sbr->numTimeSlotsRate)*32 + i]);
 #ifndef SBR_LOW_POWER
-                QMF_IM(sbr->Xcodec[ch][j*32 + i]) = QMF_IM(sbr->Xcodec[ch][(j+32)*32 + i]);
+                QMF_IM(sbr->Xcodec[ch][j*32 + i]) = QMF_IM(sbr->Xcodec[ch][(j+sbr->numTimeSlotsRate)*32 + i]);
 #endif
             }
         }
         for (i = 0; i < 64; i++)
         {
             int8_t j;
-            for (j = 0; j < tHFGen; j++)
+            for (j = 0; j < sbr->tHFGen; j++)
             {
-                QMF_RE(sbr->Xsbr[ch][j*64 + i]) = QMF_RE(sbr->Xsbr[ch][(j+32)*64 + i]);
+                QMF_RE(sbr->Xsbr[ch][j*64 + i]) = QMF_RE(sbr->Xsbr[ch][(j+sbr->numTimeSlotsRate)*64 + i]);
 #ifndef SBR_LOW_POWER
-                QMF_IM(sbr->Xsbr[ch][j*64 + i]) = QMF_IM(sbr->Xsbr[ch][(j+32)*64 + i]);
+                QMF_IM(sbr->Xsbr[ch][j*64 + i]) = QMF_IM(sbr->Xsbr[ch][(j+sbr->numTimeSlotsRate)*64 + i]);
 #endif
             }
         }

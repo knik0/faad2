@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_noise.h,v 1.1 2003/07/29 08:20:13 menno Exp $
+** $Id: sbr_noise.h,v 1.6 2003/11/04 21:43:30 menno Exp $
 **/
 
 #ifndef __SBR_NOISE_H__

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: structs.h,v 1.10 2003/07/29 08:20:14 menno Exp $
+** $Id: structs.h,v 1.11 2003/09/09 18:09:52 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -357,7 +357,6 @@ typedef struct
     uint8_t aacSpectralDataResilienceFlag;
 #endif
     uint16_t frameLength;
-    uint16_t samplesLeft;
     uint8_t postSeekResetFlag;
 
     uint32_t frame;

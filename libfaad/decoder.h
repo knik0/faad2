@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.h,v 1.26 2003/07/29 08:20:12 menno Exp $
+** $Id: decoder.h,v 1.27 2003/09/09 18:09:51 menno Exp $
 **/
 
 #ifndef __DECODER_H__
@@ -110,6 +110,8 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
                               uint8_t channels);
 
 void FAADAPI faacDecClose(faacDecHandle hDecoder);
+
+void FAADAPI faacDecPostSeekReset(faacDecHandle hDecoder, int32_t frame);
 
 void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                             faacDecFrameInfo *hInfo,

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_e_nf.c,v 1.2 2003/08/02 18:07:39 menno Exp $
+** $Id: sbr_e_nf.c,v 1.3 2003/09/09 18:09:52 menno Exp $
 **/
 
 #include "common.h"
@@ -38,13 +38,6 @@
 void extract_envelope_data(sbr_info *sbr, uint8_t ch)
 {
     uint8_t l, k;
-
-#if 0
-    if (sbr->frame == 19)
-    {
-        sbr->frame = 19;
-    }
-#endif
 
     for (l = 0; l < sbr->L_E[ch]; l++)
     {
@@ -113,23 +106,6 @@ void extract_envelope_data(sbr_info *sbr, uint8_t ch)
             }
         }
     }
-
-#if 0
-    if (sbr->frame == 23)
-    {
-        int l, k;
-
-        for (l = 0; l < sbr->L_E[ch]; l++)
-        {
-            for (k = 0; k < sbr->n[sbr->f[ch][l]]; k++)
-            {
-                //printf("l:%d k:%d E:%d\n",l,k, sbr->E[ch][k][l]);
-                printf("%d\n", sbr->E[ch][k][l]);
-            }
-        }
-        printf("\n");
-    }
-#endif
 }
 
 void extract_noise_floor_data(sbr_info *sbr, uint8_t ch)
@@ -159,23 +135,6 @@ void extract_noise_floor_data(sbr_info *sbr, uint8_t ch)
             }
         }
     }
-
-#if 0
-    if (sbr->frame == 23)
-    {
-        int l, k;
-
-        for (l = 0; l < sbr->L_Q[ch]; l++)
-        {
-            for (k = 0; k < sbr->N_Q; k++)
-            {
-                //printf("l:%d k:%d E:%d\n",l,k, sbr->E[ch][k][l]);
-                printf("%d\n", sbr->Q[ch][k][l]);
-            }
-        }
-        printf("\n");
-    }
-#endif
 }
 
 /* FIXME: pow() not needed */
@@ -184,14 +143,14 @@ void envelope_noise_dequantisation(sbr_info *sbr, uint8_t ch)
     if (sbr->bs_coupling == 0)
     {
         uint8_t l, k;
-        real_t amp = (sbr->amp_res[ch]) ? 1.0 : 0.5;
+        real_t amp = (sbr->amp_res[ch]) ? 1.0f : 0.5f;
 
         for (l = 0; l < sbr->L_E[ch]; l++)
         {
             for (k = 0; k < sbr->n[sbr->f[ch][l]]; k++)
             {
                 /* +6 for the *64 */
-                sbr->E_orig[ch][k][l] = pow(2, sbr->E[ch][k][l]*amp + 6);
+                sbr->E_orig[ch][k][l] = (real_t)pow(2, sbr->E[ch][k][l]*amp + 6);
             }
         }
 
@@ -202,7 +161,7 @@ void envelope_noise_dequantisation(sbr_info *sbr, uint8_t ch)
                 if (sbr->Q[ch][k][l] < 0 || sbr->Q[ch][k][l] > 30)
                     sbr->Q_orig[ch][k][l] = 0;
                 else {
-                    sbr->Q_orig[ch][k][l] = pow(2, NOISE_FLOOR_OFFSET - sbr->Q[ch][k][l]);
+                    sbr->Q_orig[ch][k][l] = (real_t)pow(2, NOISE_FLOOR_OFFSET - sbr->Q[ch][k][l]);
                 }
             }
         }
@@ -212,8 +171,8 @@ void envelope_noise_dequantisation(sbr_info *sbr, uint8_t ch)
 void unmap_envelope_noise(sbr_info *sbr)
 {
     uint8_t l, k;
-    real_t amp0 = (sbr->amp_res[0]) ? 1.0 : 0.5;
-    real_t amp1 = (sbr->amp_res[1]) ? 1.0 : 0.5;
+    uint8_t amp0 = (sbr->amp_res[0]) ? 0 : 1;
+    uint8_t amp1 = (sbr->amp_res[1]) ? 0 : 1;
 
     for (l = 0; l < sbr->L_E[0]; l++)
     {
@@ -222,11 +181,11 @@ void unmap_envelope_noise(sbr_info *sbr)
             real_t l_temp, r_temp;
 
             /* +6: * 64 ; +1: * 2 */
-            l_temp = pow(2, sbr->E[0][k][l]*amp0 + 7);
+            l_temp = (real_t)pow(2, sbr->E[0][k][l]*amp0 + 7);
             /* UN_MAP removed: (x / 4096) same as (x >> 12) */
-            r_temp = pow(2, sbr->E[1][k][l]*amp1 - 12);
+            r_temp = (real_t)pow(2, sbr->E[1][k][l]*amp1 - 12);
 
-            sbr->E_orig[1][k][l] = l_temp / (1.0 + r_temp);
+            sbr->E_orig[1][k][l] = l_temp / ((real_t)1.0 + r_temp);
             sbr->E_orig[0][k][l] = MUL(r_temp, sbr->E_orig[1][k][l]);
         }
     }
@@ -242,10 +201,10 @@ void unmap_envelope_noise(sbr_info *sbr)
             } else {
                 real_t l_temp, r_temp;
 
-                l_temp = pow(2.0, NOISE_FLOOR_OFFSET - sbr->Q[0][k][l] + 1);
-                r_temp = pow(2.0, sbr->Q[1][k][l] - 12);
+                l_temp = (real_t)pow(2.0, NOISE_FLOOR_OFFSET - sbr->Q[0][k][l] + 1);
+                r_temp = (real_t)pow(2.0, sbr->Q[1][k][l] - 12);
 
-                sbr->Q_orig[1][k][l] = l_temp / (1.0 + r_temp);
+                sbr->Q_orig[1][k][l] = l_temp / ((real_t)1.0 + r_temp);
                 sbr->Q_orig[0][k][l] = MUL(r_temp, sbr->Q_orig[1][k][l]);
             }
         }

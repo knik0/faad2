@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_qmf.c,v 1.5 2003/07/29 08:20:13 menno Exp $
+** $Id: sbr_qmf.c,v 1.6 2003/09/09 18:09:52 menno Exp $
 **/
 
 #include "common.h"
@@ -40,39 +40,12 @@
 
 qmfa_info *qmfa_init(uint8_t channels)
 {
-#if 0
-    int16_t n;
-#endif
-    int size = 0;
     qmfa_info *qmfa = (qmfa_info*)malloc(sizeof(qmfa_info));
     qmfa->x = (real_t*)malloc(channels * 10 * sizeof(real_t));
     memset(qmfa->x, 0, channels * 10 * sizeof(real_t));
+    qmfa->x_index = 0;
 
     qmfa->channels = channels;
-
-    if (channels == 32)
-    {
-#if 0
-        for (n = 0; n < 32; n++)
-        {
-            qmfa->post_exp_re[n] = cos((M_PI/32.)*(0.75*n + 0.375));
-            qmfa->post_exp_im[n] = sin((M_PI/32.)*(0.75*n + 0.375));
-        }
-#endif
-    } else if (channels == 64) {
-#if 0
-        for (n = 0; n < 2*channels; n++)
-        {
-            qmfa->pre_exp_re[n] = cos(M_PI*n/(2.*channels));
-            qmfa->pre_exp_im[n] = sin(M_PI*n/(2.*channels));
-        }
-        for (n = 0; n < 64; n++)
-        {
-            qmfa->post_exp_re[n] = cos(M_PI*(2*n+1)/(2.*128.));
-            qmfa->post_exp_im[n] = sin(M_PI*(2*n+1)/(2.*128.));
-        }
-#endif
-    }
 
     return qmfa;
 }
@@ -86,7 +59,7 @@ void qmfa_end(qmfa_info *qmfa)
     }
 }
 
-void sbr_qmf_analysis_32(qmfa_info *qmfa, const real_t *input,
+void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const real_t *input,
                          qmf_t *X, uint8_t offset)
 {
     uint8_t l;
@@ -99,32 +72,34 @@ void sbr_qmf_analysis_32(qmfa_info *qmfa, const real_t *input,
     const real_t *inptr = input;
 
     /* qmf subsample l */
-    for (l = 0; l < 32; l++)
+    for (l = 0; l < sbr->numTimeSlotsRate; l++)
     {
         int16_t n;
 
         /* shift input buffer x */
-        memmove(qmfa->x + 32, qmfa->x, (320-32)*sizeof(real_t));
+        /* replaced by using qmfa->x_index */
 
         /* add new samples to input buffer x */
         for (n = 32 - 1; n >= 0; n--)
         {
 #ifdef FIXED_POINT
-            qmfa->x[n] = (*inptr++) >> 5;
+            qmfa->x[(n + qmfa->x_index) & 319] = (*inptr++) >> 5; //5;
 #else
-            qmfa->x[n] = *inptr++;
+            qmfa->x[(n + qmfa->x_index) & 319] = *inptr++;
 #endif
         }
 
         /* window and summation to create array u */
         for (n = 0; n < 64; n++)
         {
-            u[n] = MUL_R_C(qmfa->x[n], qmf_c_2[n]) +
-                MUL_R_C(qmfa->x[n + 64], qmf_c_2[n + 64]) +
-                MUL_R_C(qmfa->x[n + 128], qmf_c_2[n + 128]) +
-                MUL_R_C(qmfa->x[n + 192], qmf_c_2[n + 192]) +
-                MUL_R_C(qmfa->x[n + 256], qmf_c_2[n + 256]);
+            u[n] = MUL_R_C(qmfa->x[(n + qmfa->x_index) & 319], qmf_c_2[n]) +
+                MUL_R_C(qmfa->x[(n + 64 + qmfa->x_index) & 319], qmf_c_2[n + 64]) +
+                MUL_R_C(qmfa->x[(n + 128 + qmfa->x_index) & 319], qmf_c_2[n + 128]) +
+                MUL_R_C(qmfa->x[(n + 192 + qmfa->x_index) & 319], qmf_c_2[n + 192]) +
+                MUL_R_C(qmfa->x[(n + 256 + qmfa->x_index) & 319], qmf_c_2[n + 256]);
         }
+
+        qmfa->x_index = (qmfa->x_index + 32) & 319;
 
         /* calculate 32 subband samples by introducing X */
 #ifdef SBR_LOW_POWER
@@ -142,13 +117,6 @@ void sbr_qmf_analysis_32(qmfa_info *qmfa, const real_t *input,
             QMF_RE(X[((l + offset)<<5) + n]) = u[n] << 1;
 #else
             QMF_RE(X[((l + offset)<<5) + n]) = 2. * u[n];
-#endif
-
-#if 0
-            if (fabs(QMF_RE(X[((l + offset)<<5) + n])) > pow(2,20))
-            {
-                printf("%f\n", QMF_RE(X[((l + offset)<<5) + n]));
-            }
 #endif
         }
 #else
@@ -171,17 +139,6 @@ void sbr_qmf_analysis_32(qmfa_info *qmfa, const real_t *input,
             QMF_RE(X[((l + offset)<<5) + n]) = 2. * y[n];
             QMF_IM(X[((l + offset)<<5) + n]) = -2. * y[63-n];
 #endif
-
-#if 0
-            if (fabs(QMF_RE(X[((l + offset)<<5) + n])) > pow(2,20))
-            {
-                printf("%f\n", QMF_RE(X[((l + offset)<<5) + n]));
-            }
-            if (fabs(QMF_IM(X[((l + offset)<<5) + n])) > pow(2,20))
-            {
-                printf("%f\n", QMF_IM(X[((l + offset)<<5) + n]));
-            }
-#endif
         }
 #endif
     }
@@ -193,6 +150,7 @@ qmfs_info *qmfs_init(uint8_t channels)
     qmfs_info *qmfs = (qmfs_info*)malloc(sizeof(qmfs_info));
     qmfs->v = (real_t*)malloc(channels * 20 * sizeof(real_t));
     memset(qmfs->v, 0, channels * 20 * sizeof(real_t));
+    qmfs->v_index = 0;
 
     qmfs->channels = channels;
 
@@ -208,109 +166,36 @@ void qmfs_end(qmfs_info *qmfs)
     }
 }
 
-#if 0
-void sbr_qmf_synthesis_32(qmfs_info *qmfs, const complex_t *X,
-                          real_t *output)
-{
-    uint8_t l;
-    int16_t n, k;
-    real_t w[320];
-    complex_t x[128];
-    real_t *outptr = output;
-
-    /* qmf subsample l */
-    for (l = 0; l < 32; l++)
-    {
-        /* shift buffer */
-        for (n = 640 - 1; n >= 64; n--)
-        {
-            qmfs->v[n] = qmfs->v[n - 64];
-        }
-
-        /* calculate 64 samples */
-        memset(x, 0, 2*64*sizeof(real_t));
-
-        for (k = 0; k < 32; k++)
-        {
-            real_t er, ei, Xr, Xi;
-            er = qmfs->pre_exp_re[k];
-            ei = qmfs->pre_exp_im[k];
-
-            Xr = RE(X[l * 32 + k]);
-            Xi = IM(X[l * 32 + k]);
-            RE(x[k]) = Xr * er - Xi * ei;
-            IM(x[k]) = Xi * er + Xr * ei;
-        }
-
-        cfftb(qmfs->cffts, x);
-
-        for (n = 0; n < 64; n++)
-        {
-            real_t er, ei;
-            er = qmfs->post_exp_re[n];
-            ei = qmfs->post_exp_im[n];
-
-            qmfs->v[n] = RE(x[n]) * er - IM(x[n]) * ei;
-        }
-
-        for (n = 0; n < 5; n++)
-        {
-            for (k = 0; k < 32; k++)
-            {
-                w[64 * n +      k] = qmfs->v[128 * n +      k];
-                w[64 * n + 32 + k] = qmfs->v[128 * n + 96 + k];
-            }
-        }
-
-        /* window */
-        for (n = 0; n < 320; n++)
-        {
-            w[n] *= qmf_c_2[n];
-        }
-
-        /* calculate 32 output samples */
-        for (k = 0; k < 32; k++)
-        {
-            real_t sample = 0.0;
-
-            for (n = 0; n < 10; n++)
-            {
-                sample += w[32 * n + k];
-            }
-
-            *outptr++ = sample;
-        }
-    }
-}
-#endif
-
-void sbr_qmf_synthesis_64(qmfs_info *qmfs, const qmf_t *X,
-                          real_t *output)
-{
-    uint8_t l;
-    int16_t n, k;
 #ifdef SBR_LOW_POWER
+void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t *X,
+                          real_t *output)
+{
+    uint8_t l;
+    int16_t n, k;
     real_t x[64];
-#else
-    real_t x1[64], x2[64];
-#endif
     real_t *outptr = output;
+#ifndef FIXED_POINT
+    real_t scale = 1./32.;
+#endif
 
 
     /* qmf subsample l */
-    for (l = 0; l < 32; l++)
+    for (l = 0; l < sbr->numTimeSlotsRate; l++)
     {
+        int16_t l64 = l<<6;
+
         /* shift buffer */
-        memmove(qmfs->v + 128, qmfs->v, (1280-128)*sizeof(real_t));
+        /* replaced by using qmfs->v_index */
 
         /* calculate 128 samples */
-#ifdef SBR_LOW_POWER
         for (k = 0; k < 64; k++)
         {
 #ifdef FIXED_POINT
-            x[k] = QMF_RE(X[(l<<6) + k]);
+            /* for fixed point the scaling is already done in the
+             * analysis filterbank */
+            x[k] = QMF_RE(X[l64 + k]);
 #else
-            x[k] = QMF_RE(X[(l<<6) + k]) / 32.;
+            x[k] = scale * QMF_RE(X[l64 + k]);
 #endif
         }
 
@@ -318,19 +203,57 @@ void sbr_qmf_synthesis_64(qmfs_info *qmfs, const qmf_t *X,
 
         for (n = 0; n < 64; n++)
         {
-            qmfs->v[n+32] = x[n];
+            qmfs->v[(n + 32 + qmfs->v_index) & 1279] = x[n];
         }
         qmfs->v[0] = qmfs->v[64];
         for (n = 1; n < 32; n++)
         {
-            qmfs->v[32 - n] = qmfs->v[n + 32];
-            qmfs->v[n + 96] = -qmfs->v[96 - n];
+            qmfs->v[(32 - n + qmfs->v_index) & 1279] = qmfs->v[(n + 32 + qmfs->v_index) & 1279];
+            qmfs->v[(n + 96 + qmfs->v_index) & 1279] = -qmfs->v[(96 - n + qmfs->v_index) & 1279];
         }
-#else
+
+        /* calculate 64 output samples and window */
         for (k = 0; k < 64; k++)
         {
-            x1[k] = QMF_RE(X[(l<<6) + k])/64.;
-            x2[k] = QMF_IM(X[(l<<6) + k])/64.;
+            *outptr++ = MUL_R_C(qmfs->v[(k + qmfs->v_index) & 1279], qmf_c[k]) +
+                MUL_R_C(qmfs->v[(192 + k + qmfs->v_index) & 1279], qmf_c[64 + k]) +
+                MUL_R_C(qmfs->v[(256 + k + qmfs->v_index) & 1279], qmf_c[128 + k]) +
+                MUL_R_C(qmfs->v[(256 + 192 + k + qmfs->v_index) & 1279], qmf_c[128 + 64 + k]) +
+                MUL_R_C(qmfs->v[(512 + k + qmfs->v_index) & 1279], qmf_c[256 + k]) +
+                MUL_R_C(qmfs->v[(512 + 192 + k + qmfs->v_index) & 1279], qmf_c[256 + 64 + k]) +
+                MUL_R_C(qmfs->v[(768 + k + qmfs->v_index) & 1279], qmf_c[384 + k]) +
+                MUL_R_C(qmfs->v[(768 + 192 + k + qmfs->v_index) & 1279], qmf_c[384 + 64 + k]) +
+                MUL_R_C(qmfs->v[(1024 + k + qmfs->v_index) & 1279], qmf_c[512 + k]) +
+                MUL_R_C(qmfs->v[(1024 + 192 + k + qmfs->v_index) & 1279], qmf_c[512 + 64 + k]);
+        }
+
+        qmfs->v_index = (qmfs->v_index + 128) & 1279;
+    }
+}
+#else
+void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t *X,
+                          real_t *output)
+{
+    uint8_t l;
+    int16_t n, k;
+    real_t x1[64], x2[64];
+    real_t *outptr = output;
+    real_t scale = 1./64.;
+
+
+    /* qmf subsample l */
+    for (l = 0; l < sbr->numTimeSlotsRate; l++)
+    {
+        int16_t l64 = l << 6;
+
+        /* shift buffer */
+        /* replaced by using qmfs->v_index */
+
+        /* calculate 128 samples */
+        for (k = 0; k < 64; k++)
+        {
+            x1[k] = scale * QMF_RE(X[l64 + k]);
+            x2[k] = scale * QMF_IM(X[l64 + k]);
         }
 
         DCT4_64(x1, x1);
@@ -338,26 +261,29 @@ void sbr_qmf_synthesis_64(qmfs_info *qmfs, const qmf_t *X,
 
         for (n = 0; n < 64; n++)
         {
-            qmfs->v[n] = x2[n] - x1[n];
-            qmfs->v[127-n] = x2[n] + x1[n];
+            qmfs->v[(n + qmfs->v_index) & 1279] = x2[n] - x1[n];
+            qmfs->v[(127 - n + qmfs->v_index) & 1279] = x2[n] + x1[n];
         }
-#endif
 
         /* calculate 64 output samples and window */
         for (k = 0; k < 64; k++)
         {
-            *outptr++ = MUL_R_C(qmfs->v[k], qmf_c[k]) +
-                MUL_R_C(qmfs->v[192 + k], qmf_c[64 + k]) +
-                MUL_R_C(qmfs->v[256 + k], qmf_c[128 + k]) +
-                MUL_R_C(qmfs->v[256 + 192 + k], qmf_c[128 + 64 + k]) +
-                MUL_R_C(qmfs->v[512 + k], qmf_c[256 + k]) +
-                MUL_R_C(qmfs->v[512 + 192 + k], qmf_c[256 + 64 + k]) +
-                MUL_R_C(qmfs->v[768 + k], qmf_c[384 + k]) +
-                MUL_R_C(qmfs->v[768 + 192 + k], qmf_c[384 + 64 + k]) +
-                MUL_R_C(qmfs->v[1024 + k], qmf_c[512 + k]) +
-                MUL_R_C(qmfs->v[1024 + 192 + k], qmf_c[512 + 64 + k]);
+            *outptr++ =
+                MUL_R_C(qmfs->v[(k + qmfs->v_index) & 1279], qmf_c[k]) +
+                MUL_R_C(qmfs->v[(192 + k + qmfs->v_index) & 1279], qmf_c[64 + k]) +
+                MUL_R_C(qmfs->v[(256 + k + qmfs->v_index) & 1279], qmf_c[128 + k]) +
+                MUL_R_C(qmfs->v[(256 + 192 + k + qmfs->v_index) & 1279], qmf_c[128 + 64 + k]) +
+                MUL_R_C(qmfs->v[(512 + k + qmfs->v_index) & 1279], qmf_c[256 + k]) +
+                MUL_R_C(qmfs->v[(512 + 192 + k + qmfs->v_index) & 1279], qmf_c[256 + 64 + k]) +
+                MUL_R_C(qmfs->v[(768 + k + qmfs->v_index) & 1279], qmf_c[384 + k]) +
+                MUL_R_C(qmfs->v[(768 + 192 + k + qmfs->v_index) & 1279], qmf_c[384 + 64 + k]) +
+                MUL_R_C(qmfs->v[(1024 + k + qmfs->v_index) & 1279], qmf_c[512 + k]) +
+                MUL_R_C(qmfs->v[(1024 + 192 + k + qmfs->v_index) & 1279], qmf_c[512 + 64 + k]);
         }
+
+        qmfs->v_index = (qmfs->v_index + 128) & 1279;
     }
 }
+#endif
 
 #endif

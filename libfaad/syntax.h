@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.h,v 1.32 2003/07/29 08:20:14 menno Exp $
+** $Id: syntax.h,v 1.33 2003/09/09 18:09:52 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -44,6 +44,13 @@ extern "C" {
 #define ER_LC     17
 #define ER_LTP    19
 #define DRM_ER_LC 27 /* special object type for DRM */
+
+/* DRM channel definitions */
+#define DRMCH_MONO          1
+#define DRMCH_STEREO        2
+#define DRMCH_SBR_MONO      3
+#define DRMCH_SBR_LC_STEREO 4
+#define DRMCH_SBR_STEREO    5
 
 
 /* First object type that has ER */
@@ -84,12 +91,6 @@ extern "C" {
 #define NOISE_HCB      13
 #define INTENSITY_HCB2 14
 #define INTENSITY_HCB  15
-
-static uint32_t sample_rates[] =
-{
-    96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000,
-    12000, 11025, 8000
-};
 
 int8_t GASpecificConfig(bitfile *ld, mp4AudioSpecificConfig *mp4ASC,
                         program_config *pce);

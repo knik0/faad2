@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: filtbank.h,v 1.11 2003/07/29 08:20:12 menno Exp $
+** $Id: filtbank.h,v 1.17 2003/11/12 20:47:57 menno Exp $
 **/
 
 #ifndef __FILTBANK_H__
@@ -32,7 +32,6 @@
 extern "C" {
 #endif
 
-#include "mdct.h"
 
 fb_info *filter_bank_init(uint16_t frame_len);
 void filter_bank_end(fb_info *fb);

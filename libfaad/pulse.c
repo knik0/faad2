@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: pulse.c,v 1.6 2003/07/29 08:20:13 menno Exp $
+** $Id: pulse.c,v 1.13 2003/12/17 14:43:16 menno Exp $
 **/
 
 #include "common.h"

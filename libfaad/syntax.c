@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.51 2003/07/29 08:20:14 menno Exp $
+** $Id: syntax.c,v 1.52 2003/09/09 18:09:52 menno Exp $
 **/
 
 /*
@@ -428,7 +428,7 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
                 if (hDecoder->sbr_used[ch_ele-1])
                 {
                     hDecoder->sbr_present_flag = 1;
-                    hDecoder->sbr[ch_ele-1]->sample_rate = sample_rates[hDecoder->sf_index];
+                    hDecoder->sbr[ch_ele-1]->sample_rate = get_sample_rate(hDecoder->sf_index);
                     hDecoder->sbr[ch_ele-1]->sample_rate *= 2;
                 }
 #endif
@@ -526,35 +526,6 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
     return elements;
 }
 
-#ifdef DRM
-static uint8_t faad_check_CRC(bitfile *ld)
-{
-    uint16_t len = faad_get_processed_bits(ld) - 8;
-    uint8_t CRC;
-    uint16_t r=255;  /* Initialize to all ones */
-
-    /* CRC polynome used x^8 + x^4 + x^3 + x^2 +1 */
-#define GPOLY 0435
-
-    faad_rewindbits(ld);
-
-    CRC = ~faad_getbits(ld, 8
-        DEBUGVAR(1,999,"faad_check_CRC(): CRC"));          /* CRC is stored inverted */
-
-    for (; len>0; len--)
-    {
-        r = ( (r << 1) ^ (( ( faad_get1bit(ld
-            DEBUGVAR(1,998,""))  & 1) ^ ((r >> 7) & 1)) * GPOLY )) & 0xFF;
-    }
-    if (r != CRC)
-    {
-        return 8;
-    } else {
-        return 0;
-    }
-}
-#endif
-
 /* Table 4.4.4 and */
 /* Table 4.4.9 */
 static uint8_t single_lfe_channel_element(faacDecHandle hDecoder,
@@ -578,7 +549,7 @@ static uint8_t single_lfe_channel_element(faacDecHandle hDecoder,
         if (ics->tns_data_present)
             tns_data(ics, &(ics->tns), ld);
 
-        if ((result = faad_check_CRC( ld )) > 0)
+        if ((result = faad_check_CRC( ld, faad_get_processed_bits(ld) - 8 )) > 0)
             return result;
 
         /* error resilient spectral data decoding */
@@ -689,10 +660,9 @@ static uint8_t channel_pair_element(faacDecHandle hDecoder, element *cpe,
         if (ics1->tns_data_present)
             tns_data(ics2, &(ics2->tns), ld);
 
-        if ((result = faad_check_CRC( ld )) > 0)
-        {
+        if ((result = faad_check_CRC( ld, faad_get_processed_bits(ld) - 8 )) > 0)
             return result;
-        }
+
         /* error resilient spectral data decoding */
         if ((result = reordered_spectral_data(hDecoder, ics1, ld, spec_data1)) > 0)
             return result;
@@ -975,29 +945,6 @@ static uint16_t data_stream_element(faacDecHandle hDecoder, bitfile *ld)
     {
         uint8_t data = faad_getbits(ld, LEN_BYTE
             DEBUGVAR(1,64,"data_stream_element(): data_stream_byte"));
-
-        if (count == 6 && data == 'N')
-        {
-            data = faad_getbits(ld, LEN_BYTE
-                DEBUGVAR(1,64,"data_stream_element(): data_stream_byte"));
-            i++;
-            if (data == 'D')
-            {
-                uint16_t samplesLeft;
-                uint8_t data2 = faad_getbits(ld, LEN_BYTE
-                    DEBUGVAR(1,64,"data_stream_element(): data_stream_byte"));
-                data = faad_getbits(ld, LEN_BYTE
-                    DEBUGVAR(1,64,"data_stream_element(): data_stream_byte"));
-                samplesLeft = faad_getbits(ld, LEN_BYTE
-                    DEBUGVAR(1,64,"data_stream_element(): data_stream_byte"));
-                samplesLeft += (faad_getbits(ld, LEN_BYTE
-                    DEBUGVAR(1,64,"data_stream_element(): data_stream_byte")) << 8);
-                i += 4;
-
-                if (data == 'L' && data2 == 'F')
-                    hDecoder->samplesLeft = samplesLeft;
-            }
-        }
     }
 
     return count;
@@ -1035,12 +982,15 @@ static uint8_t fill_element(faacDecHandle hDecoder, bitfile *ld, drc_info *drc
             hDecoder->sbr_used[sbr_ele] = 1;
 
             if (!hDecoder->sbr[sbr_ele])
-                hDecoder->sbr[sbr_ele] = sbrDecodeInit();
+            {
+                hDecoder->sbr[sbr_ele] = sbrDecodeInit(hDecoder->frameLength
+#ifdef DRM
+                    , 0
+#endif
+                    );
+            }
 
-            /* read in all the SBR data for processing later on
-               this is needed because the SBR bitstream reader needs to know
-               what element type comes _after_ the (this) SBR FIL element
-            */
+            /* read in all the SBR data for processing later on */
             hDecoder->sbr[sbr_ele]->data = (uint8_t*)faad_getbitbuffer(ld, count*8);
             hDecoder->sbr[sbr_ele]->data_size = count;
         } else {

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: rvlc.c,v 1.5 2003/07/29 08:20:13 menno Exp $
+** $Id: rvlc.c,v 1.9 2003/11/02 20:24:04 menno Exp $
 **/
 
 /* RVLC scalefactor decoding

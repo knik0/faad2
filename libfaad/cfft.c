@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: cfft.c,v 1.11 2003/07/29 08:20:12 menno Exp $
+** $Id: cfft.c,v 1.12 2003/09/09 18:09:51 menno Exp $
 **/
 
 /*
@@ -474,7 +474,7 @@ startloop:
     ifac[1] = nf;
 
 #ifndef FIXED_POINT
-    argh = 2.0*M_PI / (real_t)n;
+    argh = (real_t)2.0*M_PI / (real_t)n;
     i = 0;
     l1 = 1;
 
@@ -500,8 +500,8 @@ startloop:
                 i++;
                 fi++;
                 arg = fi * argld;
-                RE(wa[i]) = cos(arg);
-                IM(wa[i]) = sin(arg);
+                RE(wa[i]) = (real_t)cos(arg);
+                IM(wa[i]) = (real_t)sin(arg);
             }
 
             if (ip > 5)
