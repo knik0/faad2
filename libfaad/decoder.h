@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.h,v 1.13 2002/08/30 12:10:57 menno Exp $
+** $Id: decoder.h,v 1.14 2002/08/30 19:03:48 menno Exp $
 **/
 
 #ifndef __DECODER_H__
@@ -103,9 +103,9 @@ typedef struct
     real_t exp_table[256];
     real_t mnt_table[128];
 
-    real_t iq_table[IQ_TABLE_SIZE];
-#if POW_TABLE_SIZE   
-    real_t pow2_table[POW_TABLE_SIZE];
+    real_t *iq_table;
+#if POW_TABLE_SIZE
+    real_t *pow2_table;
 #endif 
 
     /* Configuration data */

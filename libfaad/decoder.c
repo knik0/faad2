@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.27 2002/08/30 18:14:25 menno Exp $
+** $Id: decoder.c,v 1.28 2002/08/30 19:03:48 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -85,8 +85,11 @@ faacDecHandle FAADAPI faacDecOpen()
 
     hDecoder->drc = drc_init(REAL_CONST(1.0), REAL_CONST(1.0));
 
+    hDecoder->iq_table = (real_t*)malloc(IQ_TABLE_SIZE*sizeof(real_t));
+
     /* build table for inverse quantization */
 #if IQ_TABLE_SIZE && POW_TABLE_SIZE
+    hDecoder->pow2_table = (real_t*)malloc(POW_TABLE_SIZE*sizeof(real_t));
     build_tables(hDecoder->iq_table, hDecoder->pow2_table);
 #elif !POW_TABLE_SIZE
     build_tables(hDecoder->iq_table, NULL);
@@ -324,6 +327,11 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
     filter_bank_end(hDecoder->fb);
 
     drc_end(hDecoder->drc);
+
+    if (hDecoder->iq_table) free(hDecoder->iq_table);
+#if POW_TABLE_SIZE
+    if (hDecoder->pow2_table) free(hDecoder->pow2_table);
+#endif
 
     if (hDecoder->sample_buffer) free(hDecoder->sample_buffer);
 
@@ -682,18 +690,16 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             }
         }
 
-        /* pns decoding */
-        if ((!right_channel) && (pch != -1) && (ics->ms_mask_present))
-            pns_decode(ics, icsr, spec_coef[ch], spec_coef[pch], frame_len, 1);
-        else if (pch == -1)
-            pns_decode(ics, NULL, spec_coef[ch], NULL, frame_len, 0);
-
-        printf("\n\n%d\n\n",pch);
-
         if (!right_channel)
         {
             /* mid/side decoding */
             ms_decode(ics, icsr, spec_coef[ch], spec_coef[pch], frame_len);
+
+            /* pns decoding */
+            if ((pch != -1) && (ics->ms_mask_present))
+                pns_decode(ics, icsr, spec_coef[ch], spec_coef[pch], frame_len, 1);
+            else if (pch == -1)
+                pns_decode(ics, NULL, spec_coef[ch], NULL, frame_len, 0);
 
             /* intensity stereo decoding */
             is_decode(ics, icsr, spec_coef[ch], spec_coef[pch], frame_len);
