@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.35 2003/11/02 20:24:03 menno Exp $
+** $Id: common.h,v 1.36 2003/11/04 21:43:30 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -97,11 +97,15 @@ extern "C" {
 #define SBR_DEC
 //#define SBR_LOW_POWER
 
+/* FIXED POINT: No MAIN decoding, forced SBR Low Power decoder */
 #ifdef FIXED_POINT
-#ifndef SBR_LOW_POWER
-#define SBR_LOW_POWER
-#endif
-#endif
+# ifdef MAIN_DEC
+#  undef MAIN_DEC
+# endif
+# ifndef SBR_LOW_POWER
+#  define SBR_LOW_POWER
+# endif
+#endif // FIXED_POINT
 
 #ifdef FIXED_POINT
 #define SBR_DIV(A, B) (((int64_t)A << REAL_BITS)/B)
@@ -308,6 +312,7 @@ typedef real_t complex_t[2];
 int32_t int_log2(int32_t val);
 uint32_t random_int(void);
 uint8_t get_sr_index(uint32_t samplerate);
+uint8_t max_pred_sfb(uint8_t sr_index);
 uint32_t get_sample_rate(uint8_t sr_index);
 int8_t can_decode_ot(uint8_t object_type);
 

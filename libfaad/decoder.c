@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.78 2003/11/02 20:24:03 menno Exp $
+** $Id: decoder.c,v 1.79 2003/11/04 21:43:30 menno Exp $
 **/
 
 #include "common.h"
@@ -711,7 +711,6 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                             faacDecFrameInfo *hInfo,
                             uint8_t *buffer, uint32_t buffer_size)
 {
-    int32_t i;
     adts_header adts;
     uint8_t channels = 0, ch_ele = 0;
     uint8_t output_channels = 0;
@@ -729,9 +728,6 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     uint16_t frame_len;
 #ifdef MAIN_DEC
     pred_state **pred_stat;
-#endif
-#ifdef LTP_DEC
-    real_t **lt_pred_stat;
 #endif
     real_t **time_out;
 #ifdef SBR_DEC
@@ -757,9 +753,6 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     channelConfiguration = hDecoder->channelConfiguration;
 #ifdef MAIN_DEC
     pred_stat = hDecoder->pred_stat;
-#endif
-#ifdef LTP_DEC
-    lt_pred_stat = hDecoder->lt_pred_stat;
 #endif
     window_shape_prev = hDecoder->window_shape_prev;
     time_out = hDecoder->time_out;
@@ -932,7 +925,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #ifdef SBR_DEC
     if ((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1))
     {
-        uint8_t ch = 0;
+        uint8_t i, ch = 0;
         for (i = 0; i < ch_ele; i++)
         {
             /* following case can happen when forceUpSampling == 1 */

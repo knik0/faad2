@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: output.c,v 1.24 2003/11/02 20:24:04 menno Exp $
+** $Id: output.c,v 1.25 2003/11/04 21:43:30 menno Exp $
 **/
 
 #include "common.h"
@@ -151,18 +151,51 @@ void* output_to_PCM(faacDecHandle hDecoder,
     uint8_t ch;
     uint16_t i;
     int16_t *short_sample_buffer = (int16_t*)sample_buffer;
+    int32_t *int_sample_buffer = (int32_t*)sample_buffer;
 
     /* Copy output to a standard PCM buffer */
     for (ch = 0; ch < channels; ch++)
     {
-        for(i = 0; i < frame_len; i++)
+        switch (format)
         {
-            int32_t tmp = input[ch][i];
-            tmp += (1 << (REAL_BITS-1));
-            tmp >>= REAL_BITS;
-            if (tmp > 0x7fff)       tmp = 0x7fff;
-            else if (tmp <= -32768) tmp = -32768;
-            short_sample_buffer[(i*channels)+ch] = (int16_t)tmp;
+        case FAAD_FMT_16BIT:
+            for(i = 0; i < frame_len; i++)
+            {
+                int32_t tmp = input[ch][i];
+                if (tmp > REAL_CONST(32767)) tmp = REAL_CONST(32767);
+                else if (tmp <= REAL_CONST(-32768)) tmp = REAL_CONST(-32768);
+                tmp += (1 << (REAL_BITS-1));
+                tmp >>= REAL_BITS;
+                short_sample_buffer[(i*channels)+ch] = (int16_t)tmp;
+            }
+            break;
+        case FAAD_FMT_24BIT:
+            for(i = 0; i < frame_len; i++)
+            {
+                int32_t tmp = input[ch][i];
+                if (tmp > REAL_CONST(32767)) tmp = REAL_CONST(32767);
+                else if (tmp <= REAL_CONST(-32768)) tmp = REAL_CONST(-32768);
+                tmp += (1 << (REAL_BITS-9));
+                tmp >>= (REAL_BITS-8);
+                int_sample_buffer[(i*channels)+ch] = (int32_t)tmp;
+            }
+            break;
+        case FAAD_FMT_32BIT:
+            for(i = 0; i < frame_len; i++)
+            {
+                int32_t tmp = input[ch][i];
+                if (tmp > REAL_CONST(32767)) tmp = REAL_CONST(32767);
+                else if (tmp <= REAL_CONST(-32768)) tmp = REAL_CONST(-32768);
+#if ((REAL_BITS - 16) < 0)
+                tmp += (1 >> -(REAL_BITS-16));
+                tmp <<= -(REAL_BITS-16);
+#else
+                tmp += (1 << (REAL_BITS-16));
+                tmp >>= (REAL_BITS-16);
+#endif
+                int_sample_buffer[(i*channels)+ch] = (int32_t)tmp;
+            }
+            break;
         }
     }
 

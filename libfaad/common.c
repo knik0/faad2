@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.c,v 1.10 2003/11/02 20:24:03 menno Exp $
+** $Id: common.c,v 1.11 2003/11/04 21:43:30 menno Exp $
 **/
 
 /* just some common functions that could be used anywhere */
@@ -62,6 +62,20 @@ uint32_t get_sample_rate(uint8_t sr_index)
 
     if (sr_index < 12)
         return sample_rates[sr_index];
+
+    return 0;
+}
+
+uint8_t max_pred_sfb(uint8_t sr_index)
+{
+    static const uint8_t pred_sfb_max[] =
+    {
+        33, 33, 38, 40, 40, 40, 41, 41, 37, 37, 37, 34
+    };
+
+
+    if (sr_index < 12)
+        return pred_sfb_max[sr_index];
 
     return 0;
 }

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.30 2003/11/02 20:24:05 menno Exp $
+** $Id: specrec.c,v 1.31 2003/11/04 21:43:30 menno Exp $
 **/
 
 /*
@@ -527,16 +527,7 @@ static INLINE real_t iquant(int16_t q, real_t *tab)
     if (q < IQ_TABLE_SIZE)
         return sgn * tab[q];
 
-    /* linear interpolation */
-#ifndef SMALL_IQ_TAB
-    x1 = tab[q>>3];
-    x2 = tab[(q>>3) + 1];
-    return sgn * 16.0 * (errcorr[q&7] * (x2-x1) + x1);
-#else
-    x1 = tab[q/27];
-    x2 = tab[(q/27) + 1];
-    return sgn * 81.0 * (errcorr[q%27] * (x2-x1) + x1);
-#endif
+    return sgn * (real_t)pow(q, 4.0/3.0);
 #endif
 }
 
@@ -688,7 +679,8 @@ void reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
         }
 
         /* intra channel prediction */
-        ic_prediction(ics, spec_coef, hDecoder->pred_stat[sce->channel], hDecoder->frameLength);
+        ic_prediction(ics, spec_coef, hDecoder->pred_stat[sce->channel], hDecoder->frameLength,
+            hDecoder->sf_index);
 
         /* In addition, for scalefactor bands coded by perceptual
            noise substitution the predictors belonging to the
@@ -716,8 +708,8 @@ void reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
         /* allocate the state only when needed */
         if (hDecoder->lt_pred_stat[sce->channel] == NULL)
         {
-            hDecoder->lt_pred_stat[sce->channel] = (real_t*)malloc(hDecoder->frameLength*4 * sizeof(real_t));
-            memset(hDecoder->lt_pred_stat[sce->channel], 0, hDecoder->frameLength*4 * sizeof(real_t));
+            hDecoder->lt_pred_stat[sce->channel] = (int16_t*)malloc(hDecoder->frameLength*4 * sizeof(int16_t));
+            memset(hDecoder->lt_pred_stat[sce->channel], 0, hDecoder->frameLength*4 * sizeof(int16_t));
         }
 
         /* long term prediction */
@@ -839,8 +831,10 @@ void reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_stream
         }
 
         /* intra channel prediction */
-        ic_prediction(ics1, spec_coef1, hDecoder->pred_stat[cpe->channel], hDecoder->frameLength);
-        ic_prediction(ics2, spec_coef2, hDecoder->pred_stat[cpe->paired_channel], hDecoder->frameLength);
+        ic_prediction(ics1, spec_coef1, hDecoder->pred_stat[cpe->channel], hDecoder->frameLength,
+            hDecoder->sf_index);
+        ic_prediction(ics2, spec_coef2, hDecoder->pred_stat[cpe->paired_channel], hDecoder->frameLength,
+            hDecoder->sf_index);
 
         /* In addition, for scalefactor bands coded by perceptual
            noise substitution the predictors belonging to the
@@ -877,13 +871,13 @@ void reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_stream
         /* allocate the state only when needed */
         if (hDecoder->lt_pred_stat[cpe->channel] == NULL)
         {
-            hDecoder->lt_pred_stat[cpe->channel] = (real_t*)malloc(hDecoder->frameLength*4 * sizeof(real_t));
-            memset(hDecoder->lt_pred_stat[cpe->channel], 0, hDecoder->frameLength*4 * sizeof(real_t));
+            hDecoder->lt_pred_stat[cpe->channel] = (int16_t*)malloc(hDecoder->frameLength*4 * sizeof(int16_t));
+            memset(hDecoder->lt_pred_stat[cpe->channel], 0, hDecoder->frameLength*4 * sizeof(int16_t));
         }
         if (hDecoder->lt_pred_stat[cpe->paired_channel] == NULL)
         {
-            hDecoder->lt_pred_stat[cpe->paired_channel] = (real_t*)malloc(hDecoder->frameLength*4 * sizeof(real_t));
-            memset(hDecoder->lt_pred_stat[cpe->paired_channel], 0, hDecoder->frameLength*4 * sizeof(real_t));
+            hDecoder->lt_pred_stat[cpe->paired_channel] = (int16_t*)malloc(hDecoder->frameLength*4 * sizeof(int16_t));
+            memset(hDecoder->lt_pred_stat[cpe->paired_channel], 0, hDecoder->frameLength*4 * sizeof(int16_t));
         }
 
         /* long term prediction */

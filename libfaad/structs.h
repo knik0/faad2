@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: structs.h,v 1.19 2003/11/02 20:24:05 menno Exp $
+** $Id: structs.h,v 1.20 2003/11/04 21:43:30 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -46,9 +46,9 @@ extern "C" {
 
 /* used to save the prediction state */
 typedef struct {
-    real_t r[2];
-    real_t KOR[2];
-    real_t VAR[2];
+    int16_t r[2];
+    int16_t COR[2];
+    int16_t VAR[2];
 } pred_state;
 
 typedef struct {
@@ -244,7 +244,7 @@ typedef struct
     uint8_t num_sec[8]; /* number of sections in a group */
 
     uint8_t global_gain;
-    int16_t scale_factors[8][51];
+    int16_t scale_factors[8][51]; /* [0..255] */
 
     uint8_t ms_mask_present;
     uint8_t ms_used[MAX_WINDOW_GROUPS][MAX_SFB];
@@ -408,7 +408,7 @@ typedef struct
     pred_state *pred_stat[MAX_CHANNELS];
 #endif
 #ifdef LTP_DEC
-    real_t *lt_pred_stat[MAX_CHANNELS];
+    int16_t *lt_pred_stat[MAX_CHANNELS];
 #endif
 
 #ifndef FIXED_POINT

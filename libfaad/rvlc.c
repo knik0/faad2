@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: rvlc.c,v 1.9 2003/11/02 20:24:04 menno Exp $
+** $Id: rvlc.c,v 1.10 2003/11/04 21:43:30 menno Exp $
 **/
 
 /* RVLC scalefactor decoding
@@ -283,9 +283,8 @@ static uint8_t rvlc_decode_sf_reverse(ic_stream *ics, bitfile *ld_sf, bitfile *l
                         t = rvlc_huffman_sf(ld_sf, ld_esc, -1);
                         is_position -= t;
 
-                        ics->scale_factors[g][sfb] = is_position;
+                        ics->scale_factors[g][sfb] = (uint8_t)is_position;
                     }
-
                     break;
                 case NOISE_HCB: /* noise books */
 
@@ -299,8 +298,7 @@ static uint8_t rvlc_decode_sf_reverse(ic_stream *ics, bitfile *ld_sf, bitfile *l
                         noise_energy -= t;
                     }
 
-                    ics->scale_factors[g][sfb] = noise_energy;
-
+                    ics->scale_factors[g][sfb] = (uint8_t)noise_energy;
                     break;
                 default: /* spectral books */
 
@@ -315,11 +313,10 @@ static uint8_t rvlc_decode_sf_reverse(ic_stream *ics, bitfile *ld_sf, bitfile *l
                         scale_factor -= t;
                     }
 
-                    ics->scale_factors[g][sfb] = scale_factor;
-
                     if (scale_factor < 0)
                         return 4;
 
+                    ics->scale_factors[g][sfb] = (uint8_t)scale_factor;
                     break;
                 }
 #ifdef PRINT_RVLC

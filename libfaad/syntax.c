@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.59 2003/11/02 20:24:05 menno Exp $
+** $Id: syntax.c,v 1.60 2003/11/04 21:43:30 menno Exp $
 **/
 
 /*
@@ -695,22 +695,6 @@ static uint8_t channel_pair_element(faacDecHandle hDecoder, bitfile *ld,
     return 0;
 }
 
-static uint8_t pred_sfb_max[] =
-{
-    33,     /* 96000 */
-    33,     /* 88200 */
-    38,     /* 64000 */
-    40,     /* 48000 */
-    40,     /* 44100 */
-    40,     /* 32000 */
-    41,     /* 24000 */
-    41,     /* 22050 */
-    37,     /* 16000 */
-    37,     /* 12000 */
-    37,     /* 11025 */
-    34      /* 8000  */
-};
-
 /* Table 4.4.6 */
 static uint8_t ics_info(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,
                         uint8_t common_window)
@@ -753,7 +737,7 @@ static uint8_t ics_info(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,
             {
                 uint8_t sfb;
 
-                ics->pred.limit = min(ics->max_sfb, pred_sfb_max[hDecoder->sf_index]);
+                ics->pred.limit = min(ics->max_sfb, max_pred_sfb(hDecoder->sf_index));
 
                 if ((ics->pred.predictor_reset = faad_get1bit(ld
                     DEBUGVAR(1,53,"ics_info(): pred.predictor_reset"))) & 1)
@@ -1410,7 +1394,7 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
                 if (t < 0)
                     return 9;
                 scale_factor += (t - 60);
-                if (scale_factor < 0)
+                if (scale_factor < 0 || scale_factor > 255)
                     return 4;
                 ics->scale_factors[g][sfb] = scale_factor;
 

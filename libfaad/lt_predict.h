@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: lt_predict.h,v 1.9 2003/11/02 20:24:04 menno Exp $
+** $Id: lt_predict.h,v 1.10 2003/11/04 21:43:30 menno Exp $
 **/
 
 #ifdef LTP_DEC
@@ -41,7 +41,7 @@ uint8_t is_ltp_ot(uint8_t object_type);
 void lt_prediction(ic_stream *ics,
                    ltp_info *ltp,
                    real_t *spec,
-                   real_t *lt_pred_stat,
+                   int16_t *lt_pred_stat,
                    fb_info *fb,
                    uint8_t win_shape,
                    uint8_t win_shape_prev,
@@ -49,11 +49,14 @@ void lt_prediction(ic_stream *ics,
                    uint8_t object_type,
                    uint16_t frame_len);
 
-void lt_update_state(real_t *lt_pred_stat,
+void lt_update_state(int16_t *lt_pred_stat,
                      real_t *time,
                      real_t *overlap,
                      uint16_t frame_len,
                      uint8_t object_type);
+
+
+static int16_t real_to_int16(real_t sig_in);
 
 #ifdef __cplusplus
 }
