@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: rvlc_scale_factors.h,v 1.2 2002/08/07 08:14:31 menno Exp $
+** $Id: rvlc_scale_factors.h,v 1.3 2002/09/29 10:34:00 menno Exp $
 **/
 
 #ifndef __RVLC_SCF_H__
@@ -42,10 +42,15 @@ uint8_t rvlc_decode_scale_factors(ic_stream *ics, bitfile *ld);
 
 static uint8_t rvlc_decode_sf_forward(ic_stream *ics,
                                       bitfile *ld_sf,
-                                      bitfile *ld_esc);
-static int8_t rvlc_huffman_sf(bitfile *ld_sf,
-                              bitfile *ld_esc);
-static int8_t rvlc_huffman_esc(bitfile *ld_esc);
+                                      bitfile *ld_esc,
+                                      uint8_t *is_used);
+static uint8_t rvlc_decode_sf_reverse(ic_stream *ics,
+                                      bitfile *ld_sf,
+                                      bitfile *ld_esc,
+                                      uint8_t is_used);
+static int8_t rvlc_huffman_sf(bitfile *ld_sf, bitfile *ld_esc,
+                              int8_t direction);
+static int8_t rvlc_huffman_esc(bitfile *ld_esc, int8_t direction);
 
 
 #ifdef __cplusplus

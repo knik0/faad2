@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.c,v 1.11 2002/09/28 21:57:37 menno Exp $
+** $Id: bits.c,v 1.12 2002/09/29 10:34:00 menno Exp $
 **/
 
 #include "common.h"
@@ -94,10 +94,10 @@ uint8_t *faad_getbitbuffer(bitfile *ld, uint32_t bits
 void faad_initbits_rev(bitfile *ld, void *buffer,
                        uint32_t bits_in_buffer)
 {
-    uint32_t tmp, index;
+    uint32_t tmp;
+    int32_t index;
 
-    index = (bits_in_buffer+31)/32;
-    index--;
+    index = (bits_in_buffer+31)/32 - 1;
 
     ld->start = (uint32_t*)buffer + index - 2;
 
