@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: sbr_qmf.h,v 1.1 2002/04/20 14:45:13 menno Exp $
+** $Id: sbr_qmf.h,v 1.2 2002/04/21 09:00:40 menno Exp $
 **/
 
 #ifdef SBR
@@ -30,6 +30,8 @@ extern "C" {
 
 static real_t qmf_c[];
 
+void sbr_qmf_analysis(real_t *input, complex_t **Xlow);
+void sbr_qmf_synthesis(complex_t **Xlow, real_t *output);
 
 #ifdef __cplusplus
 }

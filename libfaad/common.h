@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.8 2002/04/20 22:20:15 menno Exp $
+** $Id: common.h,v 1.9 2002/04/21 09:00:40 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -170,6 +170,11 @@ typedef float float32_t;
   #include <math.h>
 
 #endif
+
+typedef struct {
+    real_t re;
+    real_t im;
+} complex_t;
 
 
 /* common functions */

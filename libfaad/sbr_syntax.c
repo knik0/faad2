@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: sbr_syntax.c,v 1.2 2002/04/20 22:20:15 menno Exp $
+** $Id: sbr_syntax.c,v 1.3 2002/04/21 09:00:40 menno Exp $
 **/
 
 /*
@@ -521,7 +521,7 @@ static void sbr_envelope(bitfile *ld, sbr_info *sbr, uint8_t ch)
                     sbr->bs_data_env[ch][env][0] = faad_getbits(ld, 7
                         DEBUGVAR(1,275,"sbr_envelope(): bs_data_env"));
                 }
-                for (band = 1; band < num_env_bands[bs_freq_res[ch][env]]; band++)
+                for (band = 1; band < sbr->num_env_bands[bs_freq_res[ch][env]]; band++)
                 {
                     sbr->bs_data_env[ch][env][band] = huff_dec(ld, f_huff, bs_codeword);
                 }

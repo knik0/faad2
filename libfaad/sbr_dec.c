@@ -16,12 +16,14 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: sbr_dec.c,v 1.1 2002/04/20 22:20:15 menno Exp $
+** $Id: sbr_dec.c,v 1.2 2002/04/21 09:00:40 menno Exp $
 **/
 
 #include "common.h"
 
 #ifdef SBR
 
+#include "sbr_syntax.h"
+#include "sbr_qmf.h"
 
 #endif

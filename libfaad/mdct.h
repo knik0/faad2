@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.h,v 1.6 2002/04/07 21:26:04 menno Exp $
+** $Id: mdct.h,v 1.7 2002/04/21 09:00:40 menno Exp $
 **/
 
 #ifndef __MDCT_H__
@@ -29,18 +29,13 @@ extern "C" {
 #include <fftw.h>
 
 typedef struct {
-    real_t re;
-    real_t im;
-} faad_complex;
-
-typedef struct {
     real_t sin;
     real_t cos;
 } faad_sincos;
 
 typedef struct {
-    fftw_complex *Z1;
-    fftw_complex *Z2;
+    complex_t *Z1;
+    complex_t *Z2;
     faad_sincos *sincos;
     fftw_plan plan_backward;
 #ifdef LTP_DEC

@@ -16,16 +16,22 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: sbr_qmf.c,v 1.1 2002/04/20 14:45:13 menno Exp $
+** $Id: sbr_qmf.c,v 1.2 2002/04/21 09:00:40 menno Exp $
 **/
 
 #include "common.h"
 
 #ifdef SBR
 
-void sbr_qmf_analysis()
+#include "sbr_qmf.h"
+
+void sbr_qmf_analysis(real_t *input, complex_t **Xlow)
 {
     uint8_t l;
+    real_t x[320], z[320], u[64];
+    real_t *inptr = input;
+
+    memset(x, 0, 320*sizeof(real_t));
 
     /* qmf subsample l */
     for (l = 0; l < 32; l++)
@@ -34,15 +40,15 @@ void sbr_qmf_analysis()
         uint16_t n;
 
         /* shift input buffer x */
-        for (n = 320 - 1; n <= 0; n++)
+        for (n = 320 - 1; n <= 0; n--)
         {
             x[n] = x[n - 32];
         }
 
         /* add new samples to input buffer x */
-        for (n = 32 - 1; n <= 0; n++)
+        for (n = 32 - 1; n <= 0; n--)
         {
-            x[n] = input_sample;
+            x[n] = *inptr++;
         }
 
         /* window by 320 coefficients to produce array z */
@@ -66,17 +72,87 @@ void sbr_qmf_analysis()
         /* calculate 32 subband samples by introducing Xlow */
         for (k = 0; k < 32; k++)
         {
-            Xlow[k][l] = 0.0;
+            Xlow[k][l].re = 0.0;
+            Xlow[k][l].im = 0.0;
+
             for (n = 0; n < 64; n++)
             {
-                Xlow[k][l] += u[n] * 2 * exp(i*M_PI/64 * (k + 0.5) * (2*n - 0.5));
+                /* complex exponential
+                Xlow[k][l] += 2.0 * u[n] * exp(i*M_PI/64.0 * (k + 0.5) * (2.0*n - 0.5));
+                */
+                Xlow[k][l].re += 2.0 * u[n] * cos(M_PI/64.0 * (k + 0.5) * (2.0*n - 0.5));
+                Xlow[k][l].im += 2.0 * u[n] * sin(M_PI/64.0 * (k + 0.5) * (2.0*n - 0.5));
             }
         }
     }
 }
 
-void sbr_qmf_analysis()
+void sbr_qmf_synthesis(complex_t **Xlow, real_t *output)
 {
+    uint8_t l, k;
+    uint16_t n;
+    real_t v[640], w[640];
+    real_t *outptr = output;
+
+    memset(v, 0, 640 * sizeof(real_t));
+
+    /* qmf subsample l */
+    for (l = 0; l < 32; l++)
+    {
+        /* shift buffer */
+        for (n = 1280-1; n <= 128; n--)
+        {
+            v[n] = v[n - 128];
+        }
+
+        /* calculate 128 samples */
+        for (n = 0; n < 128; n++)
+        {
+            v[n] = 0;
+
+            for (k = 0; k < 64; k++)
+            {
+                complex_t vc;
+
+                /* complex exponential
+                vc = 64.0 * sin(i*M_PI/128.0 * (k + 0.5) * (2.0*n - 255.0));
+                */
+                vc.re = 64.0 * cos(M_PI/128.0 * (k + 0.5) * (2.0*n - 255.0));
+                vc.im = 64.0 * sin(M_PI/128.0 * (k + 0.5) * (2.0*n - 255.0));
+
+                /* take the real part only */
+                v[n] += Xlow[k][l].re * vc.re - Xlow[k][l].im * vc.im;
+            }
+        }
+
+        for (n = 0; n < 4; n++)
+        {
+            for (k = 0; k < 64; k++)
+            {
+                w[128 * n +      k] = v[256 * n +       k];
+                w[128 * n + 64 + k] = v[256 * n + 192 + k];
+            }
+        }
+
+        /* window */
+        for (n = 0; n < 640; n++)
+        {
+            w[n] *= qmf_c[n];
+        }
+
+        /* calculate 64 output samples */
+        for (k = 0; k < 64; k++)
+        {
+            real_t sample = 0.0;
+
+            for (n = 0; n < 9; n++)
+            {
+                sample += w[64 * n + k];
+            }
+
+            *outptr++ = sample;
+        }
+    }
 }
 
 static real_t qmf_c[] = {
