@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: structs.h,v 1.13 2003/09/18 13:38:38 menno Exp $
+** $Id: structs.h,v 1.14 2003/09/22 18:22:19 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -336,6 +336,12 @@ typedef struct faacDecFrameInfo
     uint8_t channels;
     uint8_t error;
     uint32_t samplerate;
+
+    /* SBR: 0: off, 1: on; normal, 2: on; downsampled */
+    uint8_t sbr;
+
+    /* MPEG-4 ObjectType */
+    uint8_t object_type;
 
     /* multichannel configuration */
     uint8_t num_front_channels;

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: faad.h,v 1.29 2003/09/18 13:38:38 menno Exp $
+** $Id: faad.h,v 1.30 2003/09/22 18:22:19 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -46,10 +46,10 @@ extern "C" {
 #define FAAD2_VERSION "2.0 RC1 "
 
 /* object types for AAC */
-#define MAIN       0
-#define LC         1
-#define SSR        2
-#define LTP        3
+#define MAIN       1
+#define LC         2
+#define SSR        3
+#define LTP        4
 #define ER_LC     17
 #define ER_LTP    19
 #define LD        23
@@ -59,6 +59,12 @@ extern "C" {
 #define RAW        0
 #define ADIF       1
 #define ADTS       2
+
+/* SBR signalling */
+#define NO_SBR           0
+#define SBR_UPSAMPLED    1
+#define SBR_DOWNSAMPLED  2
+#define NO_SBR_UPSAMPLED 3
 
 /* library output formats */
 #define FAAD_FMT_16BIT  1
@@ -143,6 +149,12 @@ typedef struct faacDecFrameInfo
     unsigned char channels;
     unsigned char error;
     unsigned long samplerate;
+
+    /* SBR: 0: off, 1: on; upsample, 2: on; downsampled, 3: off; upsampled */
+    unsigned char sbr;
+
+    /* MPEG-4 ObjectType */
+    unsigned char object_type;
 
     /* multichannel configuration */
     unsigned char num_front_channels;

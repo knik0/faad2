@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.67 2003/09/18 13:42:04 menno Exp $
+** $Id: decoder.c,v 1.68 2003/09/22 18:22:19 menno Exp $
 **/
 
 #include "common.h"
@@ -231,7 +231,7 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
             faad_byte_align(&ld);
 
             hDecoder->sf_index = adif.pce[0].sf_index;
-            hDecoder->object_type = adif.pce[0].object_type;
+            hDecoder->object_type = adif.pce[0].object_type + 1;
 
             *samplerate = get_sample_rate(hDecoder->sf_index);
             *channels = adif.pce[0].channels;
@@ -248,7 +248,7 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
             adts_frame(&adts, &ld);
 
             hDecoder->sf_index = adts.sf_index;
-            hDecoder->object_type = adts.profile;
+            hDecoder->object_type = adts.profile + 1;
 
             *samplerate = get_sample_rate(hDecoder->sf_index);
             *channels = (adts.channel_configuration > 6) ?
@@ -348,8 +348,6 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
     }
 #endif
 
-    if (hDecoder->object_type < 5)
-        hDecoder->object_type--; /* For AAC differs from MPEG-4 */
     if (rc != 0)
     {
         return rc;
@@ -912,6 +910,10 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     hInfo->channels = output_channels;
     /* samplerate */
     hInfo->samplerate = get_sample_rate(hDecoder->sf_index);
+    /* object type */
+    hInfo->object_type = hDecoder->object_type;
+    /* sbr */
+    hInfo->sbr = NO_SBR;
 
     /* check if frame has channel elements */
     if (channels == 0)
@@ -1177,6 +1179,11 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         frame_len *= 2;
         hInfo->samples *= 2;
         hInfo->samplerate *= 2;
+        /* sbr */
+        if (hDecoder->sbr_present_flag == 1)
+            hInfo->sbr = SBR_UPSAMPLED;
+        else
+            hInfo->sbr = NO_SBR_UPSAMPLED;
 
         sample_buffer = output_to_PCM(hDecoder, time_out2, sample_buffer,
             output_channels, frame_len, outputFormat);

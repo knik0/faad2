@@ -1,19 +1,19 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.45 2003/09/03 20:19:29 menno Exp $
+** $Id: main.c,v 1.46 2003/09/22 18:22:19 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -284,8 +284,8 @@ void usage(void)
     fprintf(stdout, "        9:  16 bit PCM data (dithered with HEAVY noise shaping).\n");
     fprintf(stdout, " -s X  Force the samplerate to X (for RAW files).\n");
     fprintf(stdout, " -l X  Set object type. Supported object types:\n");
-    fprintf(stdout, "        0:  Main object type.\n");
-    fprintf(stdout, "        1:  LC (Low Complexity) object type.\n");
+    fprintf(stdout, "        1:  Main object type.\n");
+    fprintf(stdout, "        2:  LC (Low Complexity) object type.\n");
     fprintf(stdout, "        3:  LTP (Long Term Prediction) object type.\n");
     fprintf(stdout, "        23: LD (Low Delay) object type.\n");
     fprintf(stdout, " -d    Down matrix 5.1 to 2 channels\n");
