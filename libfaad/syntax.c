@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.43 2003/04/13 18:27:09 menno Exp $
+** $Id: syntax.c,v 1.44 2003/04/15 19:53:42 menno Exp $
 **/
 
 /*
@@ -1119,6 +1119,11 @@ static uint8_t section_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld)
 
             ics->sect_start[g][i] = k;
             ics->sect_end[g][i] = k + sect_len;
+
+            if (k + sect_len >= 8*15)
+                return 15;
+            if (i >= 8*15)
+                return 15;
 
             for (sfb = k; sfb < k + sect_len; sfb++)
                 ics->sfb_cb[g][sfb] = ics->sect_cb[g][i];
