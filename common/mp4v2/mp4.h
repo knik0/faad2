@@ -967,6 +967,18 @@ typedef int32_t (*MP4SetposCallback)(u_int32_t pos, void *userData);
 typedef int64_t (*MP4GetposCallback)(void *userData);
 typedef int64_t (*MP4FilesizeCallback)(void *userData);
 
+MP4FileHandle MP4CreateCb(u_int32_t verbosity,
+	                      bool use64bits,
+	                      bool useExtensibleFormat,
+                          MP4OpenCallback MP4fopen,
+                          MP4CloseCallback MP4fclose,
+                          MP4ReadCallback MP4fread,
+                          MP4WriteCallback MP4fwrite,
+                          MP4SetposCallback MP4fsetpos,
+                          MP4GetposCallback MP4fgetpos,
+                          MP4FilesizeCallback MP4filesize,
+                          void *userData);
+
 MP4FileHandle MP4ReadCb(u_int32_t verbosity,
                         MP4OpenCallback MP4fopen,
                         MP4CloseCallback MP4fclose,
