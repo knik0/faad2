@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.c,v 1.14 2002/11/01 11:19:35 menno Exp $
+** $Id: bits.c,v 1.15 2002/11/08 13:00:34 menno Exp $
 **/
 
 #include "common.h"
@@ -31,13 +31,13 @@ void faad_initbits(bitfile *ld, void *buffer, uint32_t buffer_size)
 
     ld->buffer_size = buffer_size;
 
-    tmp = *(uint32_t*)buffer;
+    tmp = getdword((uint32_t*)buffer);
 #ifndef ARCH_IS_BIG_ENDIAN
     BSWAP(tmp);
 #endif
     ld->bufa = tmp;
 
-    tmp = *((uint32_t*)buffer + 1);
+    tmp = getdword((uint32_t*)buffer + 1);
 #ifndef ARCH_IS_BIG_ENDIAN
     BSWAP(tmp);
 #endif
@@ -104,13 +104,13 @@ void faad_initbits_rev(bitfile *ld, void *buffer,
 
     ld->start = (uint32_t*)buffer + index - 2;
 
-    tmp = *((uint32_t*)buffer + index);
+    tmp = getdword((uint32_t*)buffer + index);
 #ifndef ARCH_IS_BIG_ENDIAN
     BSWAP(tmp);
 #endif
     ld->bufa = tmp;
 
-    tmp = *((uint32_t*)buffer + index - 1);
+    tmp = getdword((uint32_t*)buffer + index - 1);
 #ifndef ARCH_IS_BIG_ENDIAN
     BSWAP(tmp);
 #endif

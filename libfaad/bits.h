@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.h,v 1.12 2002/11/07 18:24:53 menno Exp $
+** $Id: bits.h,v 1.13 2002/11/08 13:00:35 menno Exp $
 **/
 
 #ifndef __BITS_H__
@@ -71,6 +71,22 @@ uint32_t faad_get_processed_bits(bitfile *ld);
 uint8_t *faad_getbitbuffer(bitfile *ld, uint32_t bits
                        DEBUGDEC);
 
+/* circumvent memory alignment errors on ARM */
+static INLINE uint32_t getdword(void *mem)
+{
+#ifdef ARM
+    uint32_t tmp;
+    ((uint8_t*)&tmp)[0] = ((uint8_t*)mem)[0];
+    ((uint8_t*)&tmp)[1] = ((uint8_t*)mem)[1];
+    ((uint8_t*)&tmp)[2] = ((uint8_t*)mem)[2];
+    ((uint8_t*)&tmp)[3] = ((uint8_t*)mem)[3];
+
+    return tmp;
+#else
+    return *(uint32_t*)mem;
+#endif
+}
+
 static INLINE uint32_t faad_showbits(bitfile *ld, uint32_t bits)
 {
     if (bits <= ld->bits_left)
@@ -91,7 +107,7 @@ static INLINE void faad_flushbits(bitfile *ld, uint32_t bits)
         uint32_t tmp;
 
         ld->bufa = ld->bufb;
-        tmp = *(uint32_t*)ld->tail;
+        tmp = getdword(ld->tail);
 #ifndef ARCH_IS_BIG_ENDIAN
         BSWAP(tmp);
 #endif
@@ -163,7 +179,7 @@ static INLINE void faad_flushbits_rev(bitfile *ld, uint32_t bits)
         uint32_t tmp;
 
         ld->bufa = ld->bufb;
-        tmp = *(uint32_t*)ld->start;
+        tmp = getdword(ld->start);
 #ifndef ARCH_IS_BIG_ENDIAN
         BSWAP(tmp);
 #endif
