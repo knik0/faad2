@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.9 2002/05/30 18:31:51 menno Exp $
+** $Id: syntax.h,v 1.10 2002/05/31 17:18:34 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -330,6 +330,7 @@ static uint8_t scale_factor_data(ic_stream *ics, bitfile *ld
                                  ,uint8_t aacScalefactorDataResilienceFlag
 #endif
                                  );
+static void gain_control_data(bitfile *ld, ic_stream *ics);
 static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data,
                              uint16_t frame_len);
 static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count);

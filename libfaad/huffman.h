@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: huffman.h,v 1.5 2002/02/18 10:01:05 menno Exp $
+** $Id: huffman.h,v 1.6 2002/05/31 17:18:34 menno Exp $
 **/
 
 #ifndef __HUFFMAN_H__
@@ -102,7 +102,15 @@ static INLINE void huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
     case 8:
     case 10:
     case 11:
+#ifdef ERROR_RESILIENCE
+    /* VCB11 uses codebook 11 */
+    case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
+    case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
 
+        /* TODO: If ER is used, some extra error checking should be done */
+        if (cb >= 16)
+            cb = 11;
+#endif
         cw = faad_showbits(ld, hcbN[cb]);
         offset = hcb_table[cb][cw].offset;
         extra_bits = hcb_table[cb][cw].extra_bits;

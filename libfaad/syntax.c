@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.14 2002/05/30 18:31:51 menno Exp $
+** $Id: syntax.c,v 1.15 2002/05/31 17:18:34 menno Exp $
 **/
 
 /*
@@ -498,6 +498,102 @@ uint8_t fill_element(bitfile *ld, drc_info *drc
     return 0;
 }
 
+/* Table 4.4.12 */
+static void gain_control_data(bitfile *ld, ic_stream *ics)
+{
+    uint8_t bd, wd, ad;
+    uint8_t adjust_num[4][8];
+    uint8_t alevcode[4][8][8];
+    uint8_t aloccode[4][8][8];
+
+    uint8_t max_band = (uint8_t)faad_getbits(ld, 2
+        DEBUGVAR(1,1000,"gain_control_data(): max_band"));
+
+    if (ics->window_sequence == ONLY_LONG_SEQUENCE)
+    {
+        for (bd = 1; bd <= max_band; bd++)
+        {
+            for (wd=0; wd<1; wd++)
+            {
+                adjust_num[bd][wd] = (uint8_t)faad_getbits(ld, 3
+                    DEBUGVAR(1,1001,"gain_control_data(): adjust_num"));
+
+                for (ad = 0; ad < adjust_num[bd][wd]; ad++)
+                {
+                    alevcode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
+                        DEBUGVAR(1,1002,"gain_control_data(): alevcode"));
+                    aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 5
+                        DEBUGVAR(1,1003,"gain_control_data(): aloccode"));
+                }
+            }
+        }
+    } else if (ics->window_sequence == LONG_START_SEQUENCE) {
+        for (bd = 1; bd <= max_band; bd++)
+        {
+            for (wd = 0; wd < 2; wd++)
+            {
+                adjust_num[bd][wd] = (uint8_t)faad_getbits(ld, 3
+                    DEBUGVAR(1,1001,"gain_control_data(): adjust_num"));
+
+                for (ad = 0; ad < adjust_num[bd][wd]; ad++)
+                {
+                    alevcode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
+                        DEBUGVAR(1,1002,"gain_control_data(): alevcode"));
+                    if (wd == 0)
+                    {
+                        aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
+                            DEBUGVAR(1,1003,"gain_control_data(): aloccode"));
+                    } else {
+                        aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 2
+                            DEBUGVAR(1,1003,"gain_control_data(): aloccode"));
+                    }
+                }
+            }
+        }
+    } else if (ics->window_sequence == EIGHT_SHORT_SEQUENCE) {
+        for (bd = 1; bd <= max_band; bd++)
+        {
+            for(wd=0; wd<8; wd++)
+            {
+                adjust_num[bd][wd] = (uint8_t)faad_getbits(ld, 3
+                    DEBUGVAR(1,1001,"gain_control_data(): adjust_num"));
+
+                for (ad = 0; ad < adjust_num[bd][wd]; ad++)
+                {
+                    alevcode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
+                        DEBUGVAR(1,1002,"gain_control_data(): alevcode"));
+                    aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 2
+                        DEBUGVAR(1,1003,"gain_control_data(): aloccode"));
+                }
+            }
+        }
+    } else if (ics->window_sequence == LONG_STOP_SEQUENCE) {
+        for (bd = 1; bd <= max_band; bd++)
+        {
+            for (wd = 0; wd < 2; wd++)
+            {
+                adjust_num[bd][wd] = (uint8_t)faad_getbits(ld, 3
+                    DEBUGVAR(1,1001,"gain_control_data(): adjust_num"));
+
+                for (ad = 0; ad < adjust_num[bd][wd]; ad++)
+                {
+                    alevcode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
+                        DEBUGVAR(1,1002,"gain_control_data(): alevcode"));
+
+                    if (wd == 0)
+                    {
+                        aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
+                            DEBUGVAR(1,1003,"gain_control_data(): aloccode"));
+                    } else {
+                        aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 5
+                            DEBUGVAR(1,1003,"gain_control_data(): aloccode"));
+                    }
+                }
+            }
+        }
+    }
+}
+
 /* Table 4.4.24 */
 static uint8_t individual_channel_stream(element *ele, bitfile *ld,
                                      ic_stream *ics, uint8_t scal_flag,
@@ -563,7 +659,11 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
         if ((ics->gain_control_data_present = faad_get1bit(ld
             DEBUGVAR(1,70,"individual_channel_stream(): gain_control_data_present"))) & 1)
         {
+#if 0
             return 1;
+#else
+            gain_control_data(ld, ics);
+#endif
         }
     }
 
