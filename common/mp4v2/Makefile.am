@@ -28,6 +28,7 @@ libmp4v2_la_SOURCES = \
     atom_mdat.cpp \
     atom_mdhd.cpp \
     atom_mdia.cpp \
+    atom_meta.cpp \
     atom_mfhd.cpp \
     atom_minf.cpp \
     atom_moof.cpp \
@@ -92,6 +93,8 @@ libmp4v2_la_SOURCES = \
     mp4file.h \
     mp4file_io.cpp \
     mp4info.cpp \
+    mp4meta.h \
+    mp4meta.cpp \
     mp4property.cpp \
     mp4property.h \
     mp4track.cpp \
