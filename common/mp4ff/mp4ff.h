@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ff.h,v 1.20 2004/03/27 11:14:49 menno Exp $
+** $Id: mp4ff.h,v 1.21 2004/09/03 19:38:58 menno Exp $
 **/
 
 #ifndef MP4FF_H
@@ -98,6 +98,8 @@ int mp4ff_meta_get_comment(const mp4ff_t *f, char **value);
 int mp4ff_meta_get_genre(const mp4ff_t *f, char **value);
 int mp4ff_meta_get_track(const mp4ff_t *f, char **value);
 int mp4ff_meta_get_disc(const mp4ff_t *f, char **value);
+int mp4ff_meta_get_totaltracks(const mp4ff_t *f, char **value);
+int mp4ff_meta_get_totaldiscs(const mp4ff_t *f, char **value);
 int mp4ff_meta_get_compilation(const mp4ff_t *f, char **value);
 int mp4ff_meta_get_tempo(const mp4ff_t *f, char **value);
 int32_t mp4ff_meta_get_coverart(const mp4ff_t *f, char **value);
