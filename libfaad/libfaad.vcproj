@@ -224,6 +224,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\drm_dec.c">
+			</File>
+			<File
 				RelativePath="error.c">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -462,6 +465,12 @@
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ps_dec.c">
+			</File>
+			<File
+				RelativePath=".\ps_syntax.c">
 			</File>
 			<File
 				RelativePath="pulse.c">
@@ -849,6 +858,9 @@
 				RelativePath="drc.h">
 			</File>
 			<File
+				RelativePath=".\drm_dec.h">
+			</File>
+			<File
 				RelativePath="error.h">
 			</File>
 			<File
@@ -892,6 +904,12 @@
 			</File>
 			<File
 				RelativePath="pns.h">
+			</File>
+			<File
+				RelativePath=".\ps_dec.h">
+			</File>
+			<File
+				RelativePath=".\ps_tables.h">
 			</File>
 			<File
 				RelativePath="pulse.h">
