@@ -1,11 +1,9 @@
 
-Extended format (v2) support
+Add ability to create samples referenced in multiple tracks
 
-Means to dump all possible atoms/properties with types
+Add ability to create atoms/properties via set or add operations
 
-Wrap printf's for verbosity - see example is player/lib/http/http_util.c
+Exploit extended format (ISO v2)
 
-Distinguish cases of no ES Config and error parsing esds
-
-Improve error recovery when length of atom/descriptor is larger than parent/file, resync on parent.
+List all possible atoms/properties with types
 

@@ -1,3 +1,42 @@
+Changes in xxxx
+---------------
+Change to MP4Create and MP4Modify to allow flags to be set for 64 bit
+to allow Quicktime compatibility
+Change to MP4CloneTrack and MP4CopyTrack for when you copy a hint
+track - you must now specify the track ID in the new file for the
+reference track.
+
+Changes in 0.9.9
+---------------------------
+Added support for ISMA's Ismacrypt specification:
+  MP4GetTrackEsdsObjectTypeId replaces MP4GetTrackAudioType 
+  and MP4GetTrackVideoType.
+  MP4EncAndCloneTrack is used instead of MP4CloneTrack to encrypt a track
+  while cloning it.
+  MP4EncAndCopyTrack is used instead of MP4CopyTrack to encrypt a track 
+  while copying it.
+  MP4AddEncAudioTrack adds an encrypted audio track.
+  MP4AddEncVideoTrack adds an encrypted video track. 
+  
+
+Changes in 0.9.8
+---------------------------
+  MP4WriteSample - changed "uint8_t * data" to "const uint8_t *data"
+
+Changes from 0.9.6
+---------------------------
+Modified
+  MP4SetHintTrackRtpPayload
+    payload parameter to get a dynamic payload is MP4_SET_DYNAMIC_PAYLOAD
+    (value 0xff) instead of 0.
+
+Changes from 0.9.5 to 0.9.6
+---------------------------
+Modified
+    MP4GetHintTrackRtpPayload
+    MP4SetHintTrackRtpPayload
+       get/set the encoding params (a=rtpmap <payloadname>/<timescale>[/<encoding params>])
+
 Changes from 0.9.4 to 0.9.5
 ---------------------------
 Added

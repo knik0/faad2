@@ -74,7 +74,7 @@ void MP4TkhdAtom::AddProperties(u_int8_t version)
 
 void MP4TkhdAtom::Generate() 
 {
-	u_int8_t version = m_pFile->Use64Bits() ? 1 : 0;
+	u_int8_t version = m_pFile->Use64Bits(GetType()) ? 1 : 0;
 	SetVersion(version);
 	AddProperties(version);
 

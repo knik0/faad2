@@ -16,7 +16,7 @@
  * Copyright (C) Cisco Systems Inc. 2001.  All Rights Reserved.
  * 
  * Contributor(s): 
- *		Dave Mackie		dmackie@cisco.com
+ *		Dave Mackie			dmackie@cisco.com
  */
 
 #ifndef __MP4_COMMON_INCLUDED__
@@ -46,5 +46,8 @@
 #include "odcommands.h"
 
 #include "rtphint.h"
+#ifdef ISMACRYP
+#include <ismacryplib.h>
+#endif
 
 #endif /* __MP4_COMMON_INCLUDED__ */

@@ -131,50 +131,49 @@ extern "C" bool MP4AV_AacGetConfiguration(
 	return true;
 }
 
-
 extern "C" bool MP4AV_AacGetConfiguration_SBR(
-	u_int8_t** ppConfig,
-	u_int32_t* pConfigLength,
-	u_int8_t profile,
-	u_int32_t samplingRate,
-	u_int8_t channels)
+					      u_int8_t** ppConfig,
+					      u_int32_t* pConfigLength,
+					      u_int8_t profile,
+					      u_int32_t samplingRate,
+					      u_int8_t channels)
 {
-	/* create the appropriate decoder config */
+  /* create the appropriate decoder config */
 
-	u_int8_t* pConfig = (u_int8_t*)malloc(5);
-    pConfig[0] = 0;
-    pConfig[1] = 0;
-    pConfig[2] = 0;
-    pConfig[3] = 0;
-    pConfig[4] = 0;
+  u_int8_t* pConfig = (u_int8_t*)malloc(5);
+  pConfig[0] = 0;
+  pConfig[1] = 0;
+  pConfig[2] = 0;
+  pConfig[3] = 0;
+  pConfig[4] = 0;
 
-	if (pConfig == NULL) {
-		return false;
-	}
+  if (pConfig == NULL) {
+    return false;
+  }
 
-	u_int8_t samplingRateIndex = 
-		MP4AV_AdtsFindSamplingRateIndex(samplingRate);
+  u_int8_t samplingRateIndex = 
+    MP4AV_AdtsFindSamplingRateIndex(samplingRate);
 
-	pConfig[0] =
-		((profile + 1) << 3) | ((samplingRateIndex & 0xe) >> 1);
-	pConfig[1] =
-		((samplingRateIndex & 0x1) << 7) | (channels << 3);
+  pConfig[0] =
+    ((profile + 1) << 3) | ((samplingRateIndex & 0xe) >> 1);
+  pConfig[1] =
+    ((samplingRateIndex & 0x1) << 7) | (channels << 3);
 
-    /* pConfig[0] & pConfig[1] now contain the backward compatible
-       AudioSpecificConfig
-    */
+  /* pConfig[0] & pConfig[1] now contain the backward compatible
+     AudioSpecificConfig
+  */
 
-    /* SBR stuff */
-    const u_int16_t syncExtensionType = 0x2B7;
-	u_int8_t extensionSamplingRateIndex = 
-		MP4AV_AdtsFindSamplingRateIndex(2*samplingRate);
+  /* SBR stuff */
+  const u_int16_t syncExtensionType = 0x2B7;
+  u_int8_t extensionSamplingRateIndex = 
+    MP4AV_AdtsFindSamplingRateIndex(2*samplingRate);
 
-    pConfig[2] = (syncExtensionType >> 3) & 0xFF;
-    pConfig[3] = ((syncExtensionType & 0x7) << 5) | 5 /* ext ot id */;
-    pConfig[4] = ((1 & 0x1) << 7) | (extensionSamplingRateIndex << 3);
+  pConfig[2] = (syncExtensionType >> 3) & 0xFF;
+  pConfig[3] = ((syncExtensionType & 0x7) << 5) | 5 /* ext ot id */;
+  pConfig[4] = ((1 & 0x1) << 7) | (extensionSamplingRateIndex << 3);
 
-	*ppConfig = pConfig;
-	*pConfigLength = 5;
+  *ppConfig = pConfig;
+  *pConfigLength = 5;
 
-	return true;
+  return true;
 }

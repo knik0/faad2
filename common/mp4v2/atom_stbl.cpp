@@ -43,7 +43,7 @@ void MP4StblAtom::Generate()
 
 	// but we also need one of the chunk offset atoms
 	MP4Atom* pChunkOffsetAtom;
-	if (m_pFile->Use64Bits()) {
+	if (m_pFile->Use64Bits(GetType())) {
 		pChunkOffsetAtom = CreateAtom("co64");
 	} else {
 		pChunkOffsetAtom = CreateAtom("stco");

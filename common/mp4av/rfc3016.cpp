@@ -27,23 +27,14 @@
 #include <mp4av_common.h>
 #include <mp4av_mpeg4.h>
 
-extern "C" bool MP4AV_Rfc3016Hinter(
-	MP4FileHandle mp4File, 
-	MP4TrackId mediaTrackId, 
-	u_int16_t maxPayloadSize)
+extern "C" MP4TrackId MP4AV_Rfc3016_HintTrackCreate (MP4FileHandle mp4File,
+						     MP4TrackId mediaTrackId)
 {
-	u_int32_t numSamples = MP4GetTrackNumberOfSamples(mp4File, mediaTrackId);
-	u_int32_t maxSampleSize = MP4GetTrackMaxSampleSize(mp4File, mediaTrackId);
-	
-	if (numSamples == 0 || maxSampleSize == 0) {
-		return false;
-	}
-
 	MP4TrackId hintTrackId =
 		MP4AddHintTrack(mp4File, mediaTrackId);
 
 	if (hintTrackId == MP4_INVALID_TRACK_ID) {
-		return false;
+		return MP4_INVALID_TRACK_ID;
 	}
 
 	u_int8_t payloadNumber = MP4_SET_DYNAMIC_PAYLOAD;
@@ -64,8 +55,7 @@ extern "C" bool MP4AV_Rfc3016Hinter(
 			0x00, 0x00, 0x01, MP4AV_MPEG4_VOSH_START 
 		};
 		if (configSize >= 5 && !memcmp(pConfig, voshStartCode, 4)) {
-			systemsProfileLevel = 
-				MP4AV_Mpeg4VideoToSystemsProfileLevel(pConfig[4]);
+			systemsProfileLevel = pConfig[4];
 		} 
 		if (systemsProfileLevel == 0xFE) {
 			u_int8_t iodProfileLevel = MP4GetVideoProfileLevel(mp4File);
@@ -80,7 +70,8 @@ extern "C" bool MP4AV_Rfc3016Hinter(
 		char* sConfig = MP4BinaryToBase16(pConfig, configSize);
 		if (sConfig == NULL) {
 			MP4DeleteTrack(mp4File, hintTrackId);
-			return false;
+			free(pConfig);
+			return MP4_INVALID_TRACK_ID;
 		}
 
 		/* create the appropriate SDP attribute */
@@ -97,10 +88,80 @@ extern "C" bool MP4AV_Rfc3016Hinter(
 
 		free(sConfig);
 		free(sdpBuf);
+		free(pConfig);
+	}
+	return hintTrackId;
+}
+						
+extern "C" void MP4AV_Rfc3016_HintAddSample (
+					     MP4FileHandle mp4File,
+					     MP4TrackId hintTrackId,
+					     MP4SampleId sampleId,
+					     uint8_t *pSampleBuffer,
+					     uint32_t sampleSize,
+					     MP4Duration duration,
+					     MP4Duration renderingOffset,
+					     bool isSyncSample,
+					     uint16_t maxPayloadSize)
+{
+  bool isBFrame = 
+    (MP4AV_Mpeg4GetVopType(pSampleBuffer, sampleSize) == 'B');
 
+  MP4AddRtpVideoHint(mp4File, hintTrackId, isBFrame, renderingOffset);
+
+  if (sampleId == 1) {
+    MP4AddRtpESConfigurationPacket(mp4File, hintTrackId);
+  }
+
+  u_int32_t offset = 0;
+  u_int32_t remaining = sampleSize;
+
+  // TBD should scan for resync markers (if enabled in ES config)
+  // and packetize on those boundaries
+
+  while (remaining) {
+    bool isLastPacket = false;
+    u_int32_t length;
+
+    if (remaining <= maxPayloadSize) {
+      length = remaining;
+      isLastPacket = true;
+    } else {
+      length = maxPayloadSize;
+    }
+
+    MP4AddRtpPacket(mp4File, hintTrackId, isLastPacket);
+			
+    MP4AddRtpSampleData(mp4File, hintTrackId, sampleId, 
+			offset, length);
+
+    offset += length;
+    remaining -= length;
+  }
+
+  MP4WriteRtpHint(mp4File, hintTrackId, duration, isSyncSample);
+}
+
+extern "C" bool MP4AV_Rfc3016Hinter(
+	MP4FileHandle mp4File, 
+	MP4TrackId mediaTrackId, 
+	u_int16_t maxPayloadSize)
+{
+	u_int32_t numSamples = MP4GetTrackNumberOfSamples(mp4File, mediaTrackId);
+	u_int32_t maxSampleSize = MP4GetTrackMaxSampleSize(mp4File, mediaTrackId);
+	
+	if (numSamples == 0 || maxSampleSize == 0) {
+		return false;
 	}
 
-	u_int8_t* pSampleBuffer = (u_int8_t*)malloc(maxSampleSize);
+	MP4TrackId hintTrackId = 
+	  MP4AV_Rfc3016_HintTrackCreate(mp4File, mediaTrackId);
+
+	if (hintTrackId == MP4_INVALID_TRACK_ID) {
+	  return false;
+	}
+
+ 	u_int8_t* pSampleBuffer = (u_int8_t*)malloc(maxSampleSize);
 	if (pSampleBuffer == NULL) {
 		MP4DeleteTrack(mp4File, hintTrackId);
 		return false;
@@ -121,46 +182,21 @@ extern "C" bool MP4AV_Rfc3016Hinter(
 
 		if (!rc) {
 			MP4DeleteTrack(mp4File, hintTrackId);
+			CHECK_AND_FREE(pSampleBuffer);
 			return false;
 		}
 
-		bool isBFrame = 
-			(MP4AV_Mpeg4GetVopType(pSampleBuffer, sampleSize) == 'B');
-
-		MP4AddRtpVideoHint(mp4File, hintTrackId, isBFrame, renderingOffset);
-
-		if (sampleId == 1) {
-			MP4AddRtpESConfigurationPacket(mp4File, hintTrackId);
-		}
-
-		u_int32_t offset = 0;
-		u_int32_t remaining = sampleSize;
-
-		// TBD should scan for resync markers (if enabled in ES config)
-		// and packetize on those boundaries
-
-		while (remaining) {
-			bool isLastPacket = false;
-			u_int32_t length;
-
-			if (remaining <= maxPayloadSize) {
-				length = remaining;
-				isLastPacket = true;
-			} else {
-				length = maxPayloadSize;
-			}
-
-			MP4AddRtpPacket(mp4File, hintTrackId, isLastPacket);
-			
-			MP4AddRtpSampleData(mp4File, hintTrackId, sampleId, 
-				offset, length);
-
-			offset += length;
-			remaining -= length;
-		}
-
-		MP4WriteRtpHint(mp4File, hintTrackId, duration, isSyncSample);
+		MP4AV_Rfc3016_HintAddSample(mp4File,
+					    hintTrackId,
+					    sampleId,
+					    pSampleBuffer,
+					    sampleSize,
+					    duration,
+					    renderingOffset,
+					    isSyncSample,
+					    maxPayloadSize);
 	}
+	CHECK_AND_FREE(pSampleBuffer);
 
 	return true;
 }

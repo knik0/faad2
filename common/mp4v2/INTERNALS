@@ -3,7 +3,7 @@ January 7, 2002
 MP4V2 LIBRARY INTERNALS
 =======================
 
-This document provides an overview of the interals of the mp4v2 library 
+This document provides an overview of the internals of the mp4v2 library 
 to aid those who wish to modify and extend it. Before reading this document,
 I recommend familiarizing yourself with the MP4 (or Quicktime) file format 
 standard and the mp4v2 library API. The API is described in a set of man pages

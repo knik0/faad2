@@ -23,11 +23,14 @@
 #define __MP4AV_MPEG4_INCLUDED__
 
 #define MP4AV_MPEG4_SYNC		0x000001
-#define MP4AV_MPEG4_VOSH_START	0xB0
 #define MP4AV_MPEG4_VOL_START	0x20
+#define MP4AV_MPEG4_VOSH_START	0xB0
+#define MP4AV_MPEG4_VOSH_END    0xB1
+#define MP4AV_MPEG4_USER_DATA_START 0xB2
 #define MP4AV_MPEG4_GOV_START	0xB3
 #define MP4AV_MPEG4_VO_START	0xB5
 #define MP4AV_MPEG4_VOP_START	0xB6
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,8 +61,10 @@ bool MP4AV_Mpeg4ParseVol(
 	u_int16_t* pTimeTicks, 
 	u_int16_t* pFrameDuration, 
 	u_int16_t* pFrameWidth, 
-	u_int16_t* pFrameHeight);
-
+	u_int16_t* pFrameHeight,
+	u_int8_t * aspectRatioDefine DEFAULT_PARM(NULL),
+	u_int8_t * aspectRatioWidth DEFAULT_PARM(NULL),
+	u_int8_t * aspectRatioHeight DEFAULT_PARM(NULL));
 bool MP4AV_Mpeg4CreateVol(
 	u_int8_t** ppBytes,
 	u_int32_t* pNumBytes,
@@ -79,6 +84,7 @@ bool MP4AV_Mpeg4ParseGov(
 	u_int8_t* pMinutes, 
 	u_int8_t* pSeconds);
 
+  uint8_t *MP4AV_Mpeg4FindVop(uint8_t *pBuf, uint32_t buflen);
 bool MP4AV_Mpeg4ParseVop(
 	u_int8_t* pVopBuf, 
 	u_int32_t vopSize,
@@ -87,13 +93,11 @@ bool MP4AV_Mpeg4ParseVop(
 	u_int16_t timeTicks, 
 	u_int32_t* pVopTimeIncrement);
 
-u_int8_t MP4AV_Mpeg4VideoToSystemsProfileLevel(
-	u_int8_t videoProfileLevel);
-
 u_char MP4AV_Mpeg4GetVopType(
 	u_int8_t* pVopBuf, 
 	u_int32_t vopSize);
 
+  const char *MP4AV_Mpeg4VisualProfileName (uint8_t profile);
 #ifdef __cplusplus
 }
 #endif

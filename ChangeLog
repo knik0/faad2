@@ -1,5 +1,6 @@
 
+- 30 mar 2004: Updated mpeg4ip libraries to version 1.0
+- xx mar 2004: First PS (Parametric Stereo) checkin
 
 - 26 feb 2004: Added downsampled SBR support
 - 26 feb 2004: Optimised Low Power QMF filterbank
-

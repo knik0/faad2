@@ -34,25 +34,16 @@
 u_int64_t MP4File::GetPosition(FILE* pFile)
 {
 	if (m_memoryBuffer == NULL) {
-#ifndef USE_FILE_CALLBACKS
-		fpos_t fpos;
 		if (pFile == NULL) {
 			ASSERT(m_pFile);
 			pFile = m_pFile;
 		}
 
+		fpos_t fpos;
 		if (fgetpos(pFile, &fpos) < 0) {
 			throw new MP4Error(errno, "MP4GetPosition");
 		}
 		return FPOS_TO_UINT64(fpos);
-#else
-
-        u_int64_t pos;
-		if ((pos = m_MP4fgetpos(m_userData)) < 0) {
-			throw new MP4Error(errno, "MP4GetPosition");
-		}
-		return (u_int64_t)pos;
-#endif
 	} else {
 		return m_memoryBufferPosition;
 	}
@@ -61,7 +52,6 @@ u_int64_t MP4File::GetPosition(FILE* pFile)
 void MP4File::SetPosition(u_int64_t pos, FILE* pFile)
 {
 	if (m_memoryBuffer == NULL) {
-#ifndef USE_FILE_CALLBACKS
 		if (pFile == NULL) {
 			ASSERT(m_pFile);
 			pFile = m_pFile;
@@ -72,11 +62,6 @@ void MP4File::SetPosition(u_int64_t pos, FILE* pFile)
 		if (fsetpos(pFile, &fpos) < 0) {
 			throw new MP4Error(errno, "MP4SetPosition");
 		}
-#else
-		if (m_MP4fsetpos(pos, m_userData) < 0) {
-			throw new MP4Error(errno, "MP4SetPosition");
-		}
-#endif
 	} else {
 		if (pos >= m_memoryBufferSize) {
 		  //		  abort();
@@ -109,25 +94,18 @@ u_int32_t MP4File::ReadBytes(u_int8_t* pBytes, u_int32_t numBytes, FILE* pFile)
 	ASSERT(pBytes);
 	WARNING(m_numReadBits > 0);
 
-#ifndef USE_FILE_CALLBACKS
 	if (pFile == NULL) {
 		pFile = m_pFile;
 	}
 	ASSERT(pFile);
-#endif
 
 	if (m_memoryBuffer == NULL) {
-#ifndef USE_FILE_CALLBACKS
 		if (fread(pBytes, 1, numBytes, pFile) != numBytes) {
 			if (feof(pFile)) {
 				throw new MP4Error(
 					"not enough bytes, reached end-of-file",
 					"MP4ReadBytes");
 			} else {
-#else
-		if (m_MP4fread(pBytes, numBytes, m_userData) != numBytes) {
-            {
-#endif
 				throw new MP4Error(errno, "MP4ReadBytes");
 			}
 		}
@@ -194,16 +172,12 @@ void MP4File::WriteBytes(u_int8_t* pBytes, u_int32_t numBytes, FILE* pFile)
 	}
 
 	if (m_memoryBuffer == NULL) {
-#ifndef USE_FILE_CALLBACKS
 		if (pFile == NULL) {
 			ASSERT(m_pFile);
 			pFile = m_pFile;
 		}
 
 		u_int32_t rc = fwrite(pBytes, 1, numBytes, pFile);
-#else
-		u_int32_t rc = m_MP4fwrite(pBytes, numBytes, m_userData);
-#endif
 		if (rc != numBytes) {
 			throw new MP4Error(errno, "MP4WriteBytes");
 		}
@@ -587,69 +561,3 @@ void MP4File::WriteMpegLength(u_int32_t value, bool compact)
 	} while (i > 0);
 }
 
-#ifdef USE_FILE_CALLBACKS
-u_int32_t MP4File::MP4fopen_cb(const char *pName,
-                               const char *mode, void *userData)
-{
-    MP4File *myFile = (MP4File*)userData;
-
-    myFile->m_pFile = fopen(pName, mode);
-    if (myFile->m_pFile == NULL)
-        return 0;
-
-    return 1;
-}
-
-void MP4File::MP4fclose_cb(void *userData)
-{
-    MP4File *myFile = (MP4File*)userData;
-
-    fclose(myFile->m_pFile);
-    myFile->m_pFile = NULL;
-}
-
-u_int32_t MP4File::MP4fread_cb(void *pBuffer, unsigned int nBytesToRead,
-                               void *userData)
-{
-    MP4File *myFile = (MP4File*)userData;
-
-    return fread(pBuffer, 1, nBytesToRead, myFile->m_pFile);
-}
-
-u_int32_t MP4File::MP4fwrite_cb(void *pBuffer, unsigned int nBytesToWrite,
-                                void *userData)
-{
-    MP4File *myFile = (MP4File*)userData;
-
-    return fwrite(pBuffer, 1, nBytesToWrite, myFile->m_pFile);
-}
-
-int64_t MP4File::MP4fgetpos_cb(void *userData)
-{
-    fpos_t fpos;
-    MP4File *myFile = (MP4File*)userData;
-
-    if (fgetpos(myFile->m_pFile, &fpos) < 0)
-        return -1;
-    return FPOS_TO_UINT64(fpos);
-}
-
-int32_t MP4File::MP4fsetpos_cb(u_int32_t pos, void *userData)
-{
-    fpos_t fpos;
-    MP4File *myFile = (MP4File*)userData;
-
-    VAR_TO_FPOS(fpos, pos);
-    return fsetpos(myFile->m_pFile, &fpos);
-}
-
-int64_t MP4File::MP4filesize_cb(void *userData)
-{
-    struct stat s;
-    MP4File *myFile = (MP4File*)userData;
-
-    if (fstat(fileno(myFile->m_pFile), &s) < 0)
-        return -1;
-    return s.st_size;
-}
-#endif

@@ -38,7 +38,7 @@ void MP4RootAtom::BeginWrite(bool use64)
 	// only call under MP4Create() control
 	WriteAtomType("ftyp", OnlyOne);
 
-	m_pChildAtoms[GetLastMdatIndex()]->BeginWrite(m_pFile->Use64Bits());
+	m_pChildAtoms[GetLastMdatIndex()]->BeginWrite(m_pFile->Use64Bits("mdat"));
 }
 
 void MP4RootAtom::Write()
@@ -50,7 +50,7 @@ void MP4RootAtom::FinishWrite(bool use64)
 {
 	// finish writing last mdat atom
 	u_int32_t mdatIndex = GetLastMdatIndex();
-	m_pChildAtoms[mdatIndex]->FinishWrite(m_pFile->Use64Bits());
+	m_pChildAtoms[mdatIndex]->FinishWrite(m_pFile->Use64Bits("mdat"));
 
 	// write all atoms after last mdat
 	u_int32_t size = m_pChildAtoms.Size();
@@ -65,13 +65,13 @@ void MP4RootAtom::BeginOptimalWrite()
 	WriteAtomType("moov", OnlyOne);
 	WriteAtomType("udta", Many);
 
-	m_pChildAtoms[GetLastMdatIndex()]->BeginWrite(m_pFile->Use64Bits());
+	m_pChildAtoms[GetLastMdatIndex()]->BeginWrite(m_pFile->Use64Bits("mdat"));
 }
 
 void MP4RootAtom::FinishOptimalWrite() 
 {
 	// finish writing mdat
-	m_pChildAtoms[GetLastMdatIndex()]->FinishWrite(m_pFile->Use64Bits());
+	m_pChildAtoms[GetLastMdatIndex()]->FinishWrite(m_pFile->Use64Bits("mdat"));
 
 	// find moov atom
 	u_int32_t size = m_pChildAtoms.Size();

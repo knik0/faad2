@@ -540,11 +540,6 @@ public:
 	MP4AlbAtom();
 };
 
-class MP4GenAtom : public MP4Atom {
-public:
-	MP4GenAtom();
-};
-
 class MP4TrknAtom : public MP4Atom {
 public:
 	MP4TrknAtom();
@@ -553,6 +548,11 @@ public:
 class MP4DayAtom : public MP4Atom {
 public:
 	MP4DayAtom();
+};
+
+class MP4GenAtom : public MP4Atom {
+public:
+	MP4GenAtom();
 };
 
 class MP4TooAtom : public MP4Atom {
@@ -573,11 +573,6 @@ public:
 class MP4TmpoAtom : public MP4Atom {
 public:
 	MP4TmpoAtom();
-};
-
-class MP4CovrAtom : public MP4Atom {
-public:
-	MP4CovrAtom();
 };
 
 class MP4CmtAtom : public MP4Atom {

@@ -102,7 +102,7 @@ bool MP4File::CreateMetadataAtom(const char* name)
         return false;
 
     /* some fields need special flags set */
-    if (name[0] == '©')
+    if ((uint8_t)name[0] == 0251)
     {
         pMetaAtom->SetFlags(0x1);
     } else if ((memcmp(name, "cpil", 4) == 0) || (memcmp(name, "tmpo", 4) == 0)) {
@@ -574,7 +574,8 @@ static const char* ID3v1GenreList[] = {
 
 int GenreToString(char** GenreStr, const int genre)
 {
-    if (genre > 0 && genre <= sizeof(ID3v1GenreList)/sizeof(*ID3v1GenreList))
+  if (genre > 0 && 
+      genre <= (int)(sizeof(ID3v1GenreList)/sizeof(*ID3v1GenreList)))
     {
         *GenreStr = (char*)malloc((strlen(ID3v1GenreList[genre-1])+1)*sizeof(char));
         memset(*GenreStr, 0, (strlen(ID3v1GenreList[genre-1])+1)*sizeof(char));
@@ -589,7 +590,7 @@ int GenreToString(char** GenreStr, const int genre)
 
 int StringToGenre(const char* GenreStr)
 {
-    int i;
+    unsigned int i;
 
     for (i = 0; i < sizeof(ID3v1GenreList)/sizeof(*ID3v1GenreList); i++)
     {
@@ -830,7 +831,6 @@ bool MP4File::SetMetadataFreeForm(char *name, u_int8_t* pValue, u_int32_t valueS
     MP4BytesProperty *pMetadataProperty = NULL;
     char s[256];
     int i = 0;
-    bool nameExists = false;
 
     while (1)
     {

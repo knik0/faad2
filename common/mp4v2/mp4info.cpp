@@ -27,6 +27,7 @@ static char* PrintAudioInfo(
 	MP4TrackId trackId)
 {
 	static const char* mpeg4AudioNames[] = {
+#if 0
 		"MPEG-4 Main @ L1",
 		"MPEG-4 Main @ L2",
 		"MPEG-4 Main @ L3",
@@ -40,9 +41,39 @@ static char* PrintAudioInfo(
 		"MPEG-4 Synthesis @ L1",
 		"MPEG-4 Synthesis @ L2",
 		"MPEG-4 Synthesis @ L3",
+#else
+		"MPEG-4 AAC main",
+		"MPEG-4 AAC LC", 
+		"MPEG-4 AAC SSR",
+		"MPEG-4 AAC LTP",
+		NULL,
+		"MPEG-4 AAC Scalable",
+		"MPEG-4 TwinVQ",
+		"MPEG-4 CELP",
+		"MPEG-4 HVXC",
+		NULL, NULL,
+		"MPEG-4 TTSI",
+		"MPEG-4 Main Synthetic",
+		"MPEG-4 Wavetable Syn",
+		"MPEG-4 General MIDI",
+		"MPEG-4 Algo Syn and Audio FX",
+		"MPEG-4 ER AAC LC",
+		NULL,
+		"MPEG-4 ER AAC LTP",
+		"MPEG-4 ER AAC Scalable",
+		"MPEG-4 ER TwinVQ",
+		"MPEG-4 ER BSAC",
+		"MPEG-4 ER ACC LD",
+		"MPEG-4 ER CELP",
+		"MPEG-4 ER HVXC",
+		"MPEG-4 ER HILN",
+		"MPEG-4 ER Parametric",
+#endif
 	};
+#if 0
 	static u_int8_t numMpeg4AudioTypes = 
 		sizeof(mpeg4AudioNames) / sizeof(char*);
+#endif
 
 	static u_int8_t mpegAudioTypes[] = {
 		MP4_MPEG2_AAC_MAIN_AUDIO_TYPE,	// 0x66
@@ -78,12 +109,31 @@ static char* PrintAudioInfo(
 	const char* typeName = "Unknown";
 
 	if (type == MP4_MPEG4_AUDIO_TYPE) {
+	  u_int8_t* pAacConfig = NULL;
+	  u_int32_t aacConfigLength;
+
+	  MP4GetTrackESConfiguration(mp4File, 
+				     trackId,
+				     &pAacConfig,
+				     &aacConfigLength);
+
+	  if (pAacConfig != NULL && aacConfigLength >= 2) {
+	    type = (pAacConfig[0] >> 3) & 0x1f;
+	    if (type == 0 || type == 5 || type == 10 || type == 11 ||
+		type == 18 || type >= 28) {
+	      typeName = "MPEG-4";
+	    } else {
+	      typeName = mpeg4AudioNames[type - 1];
+	    }
+	    free(pAacConfig);
+#if 0
 		type = MP4GetAudioProfileLevel(mp4File);
-		if (type > 0 && type <= numMpeg4AudioTypes) {
+		if (type > 0 && type <= numMpeg4AudioTypes) 
 			typeName = mpeg4AudioNames[type - 1];
-		} else {
-			typeName = "MPEG-4";
-		}
+#endif
+	  } else {
+	    typeName = "MPEG-4";
+	  }
 	} else {
 		for (u_int8_t i = 0; i < numMpegAudioTypes; i++) {
 			if (type == mpegAudioTypes[i]) {
@@ -112,37 +162,92 @@ static char* PrintAudioInfo(
 	sprintf(sInfo,	
 		"%u\taudio\t%s, %.3f secs, %u kbps, %u Hz\n", 
 		trackId, 
-		typeName,
+		typeName, 
 		msDuration / 1000.0, 
 		(avgBitRate + 500) / 1000, 
 		timeScale);
 
 	return sInfo;
 }
+static struct {
+  uint8_t profile;
+  const char *name;
+} VisualProfileToName[] = {
+  { MPEG4_SP_L1, "MPEG-4 Simple @ L1"},
+  { MPEG4_SP_L2, "MPEG-4 Simple @ L2" },
+  { MPEG4_SP_L3, "MPEG-4 Simple @ L3" },
+  { MPEG4_SP_L0, "MPEG-4 Simple @ L0" },
+  { MPEG4_SSP_L1, "MPEG-4 Simple Scalable @ L1"},
+  { MPEG4_SSP_L2, "MPEG-4 Simple Scalable @ L2" },
+  { MPEG4_CP_L1, "MPEG-4 Core @ L1"},
+  { MPEG4_CP_L2, "MPEG-4 Core @ L2"},
+  { MPEG4_MP_L2, "MPEG-4 Main @ L2"},
+  { MPEG4_MP_L3, "MPEG-4 Main @ L3"},
+  { MPEG4_MP_L4, "MPEG-4 Main @ L4"},
+  { MPEG4_NBP_L2, "MPEG-4 N-bit @ L2"},
+  { MPEG4_STP_L1, "MPEG-4  Scalable Texture @ L1"},
+  { MPEG4_SFAP_L1, "MPEG-4 Simple Face Anim @ L1"},
+  { MPEG4_SFAP_L2, "MPEG-4  Simple Face Anim @ L2"},
+  { MPEG4_SFBAP_L1, "MPEG-4  Simple FBA @ L1"},
+  { MPEG4_SFBAP_L2, "MPEG-4 Simple FBA @ L2"},
+  { MPEG4_BATP_L1, "MPEG-4 Basic Anim Text @ L1"},
+  { MPEG4_BATP_L2, "MPEG-4 Basic Anim Text @ L2"},
+  { MPEG4_HP_L1, "MPEG-4 Hybrid @ L1"},
+  { MPEG4_HP_L2, "MPEG-4 Hybrid @ L2"},
+  { MPEG4_ARTSP_L1, "MPEG-4 Adv RT Simple @ L1"},
+  { MPEG4_ARTSP_L2, "MPEG-4 Adv RT Simple @ L2"},
+  { MPEG4_ARTSP_L3, "MPEG-4 Adv RT Simple @ L3"},
+  { MPEG4_ARTSP_L4, "MPEG-4 Adv RT Simple @ L4"},
+  { MPEG4_CSP_L1, "MPEG-4 Core Scalable @ L1"},
+  { MPEG4_CSP_L2, "MPEG-4 Core Scalable @ L2"},
+  { MPEG4_CSP_L3, "MPEG-4 Core Scalable @ L3"},
+  { MPEG4_ACEP_L1, "MPEG-4 Adv Coding Efficieny @ L1"},
+  { MPEG4_ACEP_L2, "MPEG-4 Adv Coding Efficieny @ L2"},
+  { MPEG4_ACEP_L3, "MPEG-4 Adv Coding Efficieny @ L3"},
+  { MPEG4_ACEP_L4, "MPEG-4 Adv Coding Efficieny @ L4"},
+  { MPEG4_ACP_L1, "MPEG-4 Adv Core Profile @ L1"},
+  { MPEG4_ACP_L2, "MPEG-4 Adv Core Profile @ L2"},
+  { MPEG4_AST_L1, "MPEG-4 Adv Scalable Texture @ L1"},
+  { MPEG4_AST_L2, "MPEG-4 Adv Scalable Texture @ L2"},
+  { MPEG4_AST_L3, "MPEG-4 Adv Scalable Texture @ L3"},
+  { MPEG4_S_STUDIO_P_L1, "MPEG-4 Simple Studio @ L1"},
+  { MPEG4_S_STUDIO_P_L2, "MPEG-4 Simple Studio @ L2"},
+  { MPEG4_S_STUDIO_P_L3, "MPEG-4 Simple Studio @ L3"},
+  { MPEG4_S_STUDIO_P_L4, "MPEG-4 Simple Studio @ L4"},
+  { MPEG4_C_STUDIO_P_L1, "MPEG-4 Core Studio @ L1"},
+  { MPEG4_C_STUDIO_P_L2, "MPEG-4 Core Studio @ L2"},
+  { MPEG4_C_STUDIO_P_L3, "MPEG-4 Core Studio @ L3"},
+  { MPEG4_C_STUDIO_P_L4, "MPEG-4 Core Studio @ L4"},
+  { MPEG4_ASP_L0, "MPEG-4 Adv Simple@L0"},
+  { MPEG4_ASP_L1, "MPEG-4 Adv Simple@L1"},
+  { MPEG4_ASP_L2, "MPEG-4 Adv Simple@L2"},
+  { MPEG4_ASP_L3, "MPEG-4 Adv Simple@L3"},
+  { MPEG4_ASP_L4, "MPEG-4 Adv Simple@L4"},
+  { MPEG4_ASP_L5, "MPEG-4 Adv Simple@L5"},
+  { MPEG4_ASP_L3B, "MPEG-4 Adv Simple@L3b"},
+  { MPEG4_FGSP_L0, "MPEG-4 FGS @ L0" },
+  { MPEG4_FGSP_L1, "MPEG-4 FGS @ L1" },
+  { MPEG4_FGSP_L2, "MPEG-4 FGS @ L2" },
+  { MPEG4_FGSP_L3, "MPEG-4 FGS @ L3" },
+  { MPEG4_FGSP_L4, "MPEG-4 FGS @ L4" },
+  { MPEG4_FGSP_L5, "MPEG-4 FGS @ L5" }
+};
 
+static const char *Mpeg4VisualProfileName (uint8_t visual_profile)
+{
+  size_t size = sizeof(VisualProfileToName) / sizeof(*VisualProfileToName);
+
+  for (size_t ix = 0; ix < size; ix++) {
+    if (visual_profile == VisualProfileToName[ix].profile) {
+      return (VisualProfileToName[ix].name);
+    }
+  }
+  return ("MPEG-4");
+}
 static char* PrintVideoInfo(
 	MP4FileHandle mp4File, 
 	MP4TrackId trackId)
 {
-	static const char* mpeg4VideoNames[] = {
-		"MPEG-4 Simple @ L3",
-		"MPEG-4 Simple @ L2",
-		"MPEG-4 Simple @ L1",
-		"MPEG-4 Simple Scalable @ L2",
-		"MPEG-4 Simple Scalable @ L1",
-		"MPEG-4 Core @ L2",
-		"MPEG-4 Core @ L1",
-		"MPEG-4 Main @ L4",
-		"MPEG-4 Main @ L3",
-		"MPEG-4 Main @ L2",
-		"MPEG-4 Main @ L1",
-		"MPEG-4 N-Bit @ L2",
-		"MPEG-4 Hybrid @ L2",
-		"MPEG-4 Hybrid @ L1",
-		"MPEG-4 Hybrid @ L1",
-	};
-	static u_int8_t numMpeg4VideoTypes = 
-		sizeof(mpeg4VideoNames) / sizeof(char*);
 
 	static u_int8_t mpegVideoTypes[] = {
 		MP4_MPEG2_SIMPLE_VIDEO_TYPE,	// 0x60
@@ -181,11 +286,7 @@ static char* PrintVideoInfo(
 
 	if (type == MP4_MPEG4_VIDEO_TYPE) {
 		type = MP4GetVideoProfileLevel(mp4File);
-		if (type > 0 && type <= numMpeg4VideoTypes) {
-			typeName = mpeg4VideoNames[type - 1];
-		} else {
-			typeName = "MPEG-4";
-		}
+		typeName = Mpeg4VisualProfileName(type);
 	} else {
 		for (u_int8_t i = 0; i < numMpegVideoTypes; i++) {
 			if (type == mpegVideoTypes[i]) {

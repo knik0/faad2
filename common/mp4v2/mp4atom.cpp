@@ -65,7 +65,7 @@ MP4Atom* MP4Atom::CreateAtom(const char* type)
   if (type == NULL) {
     pAtom = new MP4RootAtom();
   } else {
-    switch(type[0]) {
+    switch((uint8_t)type[0]) {
     case 'c':
       if (ATOMID(type) == ATOMID("ctts")) {
 	pAtom = new MP4CttsAtom();
@@ -75,8 +75,6 @@ MP4Atom* MP4Atom::CreateAtom(const char* type)
 	pAtom = new MP4CprtAtom();
       } else if (ATOMID(type) == ATOMID("cpil")) { /* Apple iTunes */
 	pAtom = new MP4CpilAtom();
-      } else if (ATOMID(type) == ATOMID("covr")) { /* Apple iTunes */
-	pAtom = new MP4CovrAtom();
       }
       break;
     case 'd':
@@ -123,7 +121,7 @@ MP4Atom* MP4Atom::CreateAtom(const char* type)
       }
       break;
     case 'g':
-      if (ATOMID(type) == ATOMID("gnre")) { /* Apple iTunes */
+      if (ATOMID(type) == ATOMID("gnre")) { // Apple iTunes 
 	pAtom = new MP4GnreAtom();
       }
       break;
@@ -149,7 +147,7 @@ MP4Atom* MP4Atom::CreateAtom(const char* type)
 	pAtom = new MP4IodsAtom();
       } else if (ATOMID(type) == ATOMID("ipir")) {
 	pAtom = new MP4TrefTypeAtom(type);
-      } else if (ATOMID(type) == ATOMID("ilst")) { /* Apple iTunes */
+      } else if (ATOMID(type) == ATOMID("ilst")) {
 	pAtom = new MP4IlstAtom();
       }
       break;
@@ -182,9 +180,9 @@ MP4Atom* MP4Atom::CreateAtom(const char* type)
 	pAtom = new MP4MvexAtom();
       } else if (ATOMID(type) == ATOMID("maxr")) {
 	pAtom = new MP4MaxrAtom();
-      } else if (ATOMID(type) == ATOMID("meta")) { /* Apple iTunes */
+      } else if (ATOMID(type) == ATOMID("meta")) { // iTunes
 	pAtom = new MP4MetaAtom();
-      } else if (ATOMID(type) == ATOMID("mean")) { /* Apple iTunes */
+      } else if (ATOMID(type) == ATOMID("mean")) { // iTunes
 	pAtom = new MP4MeanAtom();
       }
       break;
@@ -193,7 +191,7 @@ MP4Atom* MP4Atom::CreateAtom(const char* type)
 	pAtom = new MP4NmhdAtom();
       } else if (ATOMID(type) == ATOMID("nump")) {
 	pAtom = new MP4NumpAtom();
-      } else if (ATOMID(type) == ATOMID("name")) {
+      } else if (ATOMID(type) == ATOMID("name")) { // iTunes
 	pAtom = new MP4NameAtom();
       }
       break;
@@ -274,9 +272,9 @@ MP4Atom* MP4Atom::CreateAtom(const char* type)
 	pAtom = new MP4TimsAtom();
       } else if (ATOMID(type) == ATOMID("tsro")) {
 	pAtom = new MP4TsroAtom();
-      } else if (ATOMID(type) == ATOMID("trkn")) { /* Apple iTunes */
+      } else if (ATOMID(type) == ATOMID("trkn")) { // iTunes
 	pAtom = new MP4TrknAtom();
-      } else if (ATOMID(type) == ATOMID("tmpo")) { /* Apple iTunes */
+      } else if (ATOMID(type) == ATOMID("tmpo")) { // iTunes
 	pAtom = new MP4TmpoAtom();
       }
       break;
@@ -294,28 +292,34 @@ MP4Atom* MP4Atom::CreateAtom(const char* type)
 	pAtom = new MP4VmhdAtom();
       }
       break;
-    case '©':
-      if (ATOMID(type) == ATOMID("©nam")) {
-	pAtom = new MP4NamAtom();
-      } else if (ATOMID(type) == ATOMID("©ART")) { /* Apple iTunes */
-	pAtom = new MP4ArtAtom();
-      } else if (ATOMID(type) == ATOMID("©wrt")) { /* Apple iTunes */
-	pAtom = new MP4WrtAtom();
-      } else if (ATOMID(type) == ATOMID("©alb")) { /* Apple iTunes */
-	pAtom = new MP4AlbAtom();
-      } else if (ATOMID(type) == ATOMID("©day")) { /* Apple iTunes */
-	pAtom = new MP4DayAtom();
-      } else if (ATOMID(type) == ATOMID("©too")) { /* Apple iTunes */
-	pAtom = new MP4TooAtom();
-      } else if (ATOMID(type) == ATOMID("©cmt")) { /* Apple iTunes */
-	pAtom = new MP4CmtAtom();
-      } else if (ATOMID(type) == ATOMID("©gen")) { /* Apple iTunes */
-	pAtom = new MP4GenAtom();
+    case 0251: { // copyright symbol 
+static const char name[5]={0251,'n', 'a', 'm', '\0'};
+static const char art[5]={0251,'A', 'R', 'T', '\0'};
+static const char wrt[5]={0251,'w', 'r', 't', '\0'};
+static const char alb[5]={0251,'a', 'l', 'b', '\0'};
+static const char day[5]={0251,'d', 'a', 'y', '\0'};
+static const char too[5]={0251,'t', 'o', 'o', '\0'};
+static const char cmt[5]={0251,'c', 'm', 't', '\0'};
+      if (ATOMID(type) == ATOMID(name)) {
+ 	pAtom = new MP4NamAtom();
+      } else if (ATOMID(type) == ATOMID(art)) { /* Apple iTunes */
+ 	pAtom = new MP4ArtAtom();
+      } else if (ATOMID(type) == ATOMID(wrt)) { /* Apple iTunes */
+ 	pAtom = new MP4WrtAtom();
+      } else if (ATOMID(type) == ATOMID(alb)) { /* Apple iTunes */
+ 	pAtom = new MP4AlbAtom();
+      } else if (ATOMID(type) == ATOMID(day)) { /* Apple iTunes */
+ 	pAtom = new MP4DayAtom();
+      } else if (ATOMID(type) == ATOMID(too)) { /* Apple iTunes */
+ 	pAtom = new MP4TooAtom();
+      } else if (ATOMID(type) == ATOMID(cmt)) { /* Apple iTunes */
+ 	pAtom = new MP4CmtAtom();
       }
       break;
+    }
     case '-':
       if (ATOMID(type) == ATOMID("----")) { /* Apple iTunes */
-	pAtom = new MP4DashAtom();
+ 	pAtom = new MP4DashAtom();
       }
     }
   }
@@ -366,7 +370,7 @@ MP4Atom* MP4Atom::ReadAtom(MP4File* pFile, MP4Atom* pParentAtom)
 	u_int64_t pos = pFile->GetPosition();
 
 	VERBOSE_READ(pFile->GetVerbosity(), 
-		printf("ReadAtom: pos = 0x"LLX"\n", pos));
+		printf("ReadAtom: pos = 0x"X64"\n", pos));
 
 	u_int64_t dataSize = pFile->ReadUInt32();
 
@@ -394,7 +398,7 @@ MP4Atom* MP4Atom::ReadAtom(MP4File* pFile, MP4Atom* pParentAtom)
 	dataSize -= hdrSize;
 
 	VERBOSE_READ(pFile->GetVerbosity(), 
-		printf("ReadAtom: type = %s data-size = "LLU" (0x"LLX")\n", 
+		printf("ReadAtom: type = %s data-size = "U64" (0x"X64")\n", 
 			type, dataSize, dataSize));
 
 	if (pos + hdrSize + dataSize > pParentAtom->GetEnd()) {
@@ -455,7 +459,7 @@ void MP4Atom::Read()
 
 	if (ATOMID(m_type) != 0 && m_size > 1000000) {
 		VERBOSE_READ(GetVerbosity(), 
-			printf("Warning: %s atom size "LLU" is suspect\n",
+			printf("Warning: %s atom size "U64" is suspect\n",
 				m_type, m_size));
 	}
 
@@ -473,7 +477,7 @@ void MP4Atom::Skip()
 {
 	if (m_pFile->GetPosition() != m_end) {
 		VERBOSE_READ(m_pFile->GetVerbosity(),
-			printf("Skip: "LLU" bytes\n", m_end - m_pFile->GetPosition()));
+			printf("Skip: "U64" bytes\n", m_end - m_pFile->GetPosition()));
 	}
 	m_pFile->SetPosition(m_end);
 }
@@ -609,7 +613,7 @@ void MP4Atom::ReadProperties(u_int32_t startIndex, u_int32_t count)
 
 		if (m_pFile->GetPosition() > m_end) {
 			VERBOSE_READ(GetVerbosity(), 
-				printf("ReadProperties: insufficient data for property: %s pos 0x"LLX" atom end 0x"LLX"\n",
+				printf("ReadProperties: insufficient data for property: %s pos 0x"X64" atom end 0x"X64"\n",
 					m_pProperties[i]->GetName(), 
 					m_pFile->GetPosition(), m_end)); 
 

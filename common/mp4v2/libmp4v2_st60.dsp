@@ -25,7 +25,7 @@ CFG=libmp4v2_st - Win32 Debug
 # PROP AllowPerConfigDependencies 0
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
-CPP=xicl6.exe
+CPP=cl.exe
 RSC=rc.exe
 
 !IF  "$(CFG)" == "libmp4v2_st - Win32 Release"
@@ -35,15 +35,16 @@ RSC=rc.exe
 # PROP BASE Output_Dir "Release"
 # PROP BASE Intermediate_Dir "Release"
 # PROP BASE Target_Dir ""
-# PROP Use_MFC 0
+# PROP Use_MFC 1
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "ST_Release"
 # PROP Intermediate_Dir "ST_Release"
 # PROP Target_Dir ""
-MTL=midl.exe
 F90=df.exe
+MTL=midl.exe
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O1 /I ".\\" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O1 /I ".\\" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WIN32" /YX /FD /c
+# SUBTRACT CPP /Fr
 # ADD BASE RSC /l 0x409
 # ADD RSC /l 0x409
 BSC32=bscmake.exe
@@ -60,17 +61,17 @@ LIB32=link.exe -lib
 # PROP BASE Output_Dir "Debug"
 # PROP BASE Intermediate_Dir "Debug"
 # PROP BASE Target_Dir ""
-# PROP Use_MFC 0
+# PROP Use_MFC 2
 # PROP Use_Debug_Libraries 1
 # PROP Output_Dir "ST_Debug"
 # PROP Intermediate_Dir "ST_Debug"
 # PROP Target_Dir ""
-MTL=midl.exe
 F90=df.exe
+MTL=midl.exe
 # ADD BASE CPP /nologo /W3 /GX /Z7 /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MDd /W3 /GX /Z7 /Od /I ".\\" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
+# ADD CPP /nologo /MDd /W3 /GX /Z7 /Od /I ".\\" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /YX /FD /c
 # ADD BASE RSC /l 0x409
-# ADD RSC /l 0x409
+# ADD RSC /l 0x409 /d "_AFXDLL"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -517,10 +518,6 @@ SOURCE=.\mp4util.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\mpeg4ip.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\ocidescriptors.h
 # End Source File
 # Begin Source File
@@ -534,14 +531,6 @@ SOURCE=.\qosqualifiers.h
 # Begin Source File
 
 SOURCE=.\rtphint.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\systems.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\win32_ver.h
 # End Source File
 # End Group
 # Begin Source File

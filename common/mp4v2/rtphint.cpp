@@ -313,6 +313,9 @@ void MP4RtpHintTrack::GetPayload(
 	u_int16_t* pMaxPayloadSize,
 	char **ppEncodingParams)
 {
+  const char* pRtpMap;
+  char* pSlash;
+  u_int32_t length;
 	InitPayload();
 
 	if (ppPayloadName || ppEncodingParams) {
@@ -321,10 +324,9 @@ void MP4RtpHintTrack::GetPayload(
 	  if (ppEncodingParams)
 	    *ppEncodingParams = NULL;
 		if (m_pRtpMapProperty) {
-			const char* pRtpMap = m_pRtpMapProperty->GetValue();
-			char* pSlash = strchr(pRtpMap, '/');
+			pRtpMap = m_pRtpMapProperty->GetValue();
+			pSlash = strchr(pRtpMap, '/');
 
-			u_int32_t length;
 			if (pSlash) {
 				length = pSlash - pRtpMap;
 			} else {
@@ -336,6 +338,7 @@ void MP4RtpHintTrack::GetPayload(
 			  strncpy(*ppPayloadName, pRtpMap, length); 
 			}
 			if (pSlash && ppEncodingParams) {
+			  pSlash++;
 			  pSlash = strchr(pSlash, '/');
 			  if (pSlash != NULL) {
 			    pSlash++;
@@ -1183,6 +1186,7 @@ void MP4RtpSampleData::SetEmbeddedImmediate(MP4SampleId sampleId,
 	((MP4Integer16Property*)m_pProperties[2])->SetValue(dataLength);
 	((MP4Integer32Property*)m_pProperties[3])->SetValue(sampleId);
 	((MP4Integer32Property*)m_pProperties[4])->SetValue(0); 
+	CHECK_AND_FREE(m_pRefData);
 	m_pRefData = pData;
 }
 

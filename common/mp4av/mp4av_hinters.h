@@ -50,6 +50,18 @@ bool MP4AV_RfcIsmaHinter(
 
 
 // Video Hinters
+MP4TrackId MP4AV_Rfc3016_HintTrackCreate(MP4FileHandle mp4File,
+ 				         MP4TrackId mediaTrackId);
+void MP4AV_Rfc3016_HintAddSample (
+				  MP4FileHandle mp4File,
+				  MP4TrackId hintTrackId,
+				  MP4SampleId sampleId,
+				  uint8_t *pSampleBuffer,
+				  uint32_t sampleSize,
+				  MP4Duration duration,
+				  MP4Duration renderingOffset,
+				  bool isSyncSample,
+				  uint16_t maxPayloadSize);
 
 bool MP4AV_Rfc3016Hinter(
 	MP4FileHandle mp4File, 

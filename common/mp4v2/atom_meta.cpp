@@ -100,7 +100,6 @@ MP4IlstAtom::MP4IlstAtom()
     ExpectChildAtom("gnre", Optional, OnlyOne); /* genre (ID3v1 index + 1) */
     ExpectChildAtom("cpil", Optional, OnlyOne); /* compilation */
     ExpectChildAtom("tmpo", Optional, OnlyOne); /* BPM */
-    ExpectChildAtom("covr", Optional, OnlyOne); /* cover art */
     ExpectChildAtom("----", Optional, Many); /* ---- free form */
 }
 
@@ -186,12 +185,6 @@ MP4CpilAtom::MP4CpilAtom()
 
 MP4TmpoAtom::MP4TmpoAtom()
     : MP4Atom("tmpo")
-{
-    ExpectChildAtom("data", Required, OnlyOne);
-}
-
-MP4CovrAtom::MP4CovrAtom()
-    : MP4Atom("covr")
 {
     ExpectChildAtom("data", Required, OnlyOne);
 }

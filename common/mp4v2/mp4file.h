@@ -32,18 +32,6 @@ class MP4BytesProperty;
 class MP4Descriptor;
 class MP4DescriptorProperty;
 
-
-#ifdef USE_FILE_CALLBACKS
-typedef u_int32_t (*MP4OpenCallback)(const char *pName, const char *mode, void *userData);
-typedef void (*MP4CloseCallback)(void *userData);
-typedef u_int32_t (*MP4ReadCallback)(void *pBuffer, unsigned int nBytesToRead, void *userData);
-typedef u_int32_t (*MP4WriteCallback)(void *pBuffer, unsigned int nBytesToWrite, void *userData);
-typedef int32_t (*MP4SetposCallback)(u_int32_t pos, void *userData);
-typedef int64_t (*MP4GetposCallback)(void *userData);
-typedef int64_t (*MP4FilesizeCallback)(void *userData);
-#endif
-
-
 class MP4File {
 public: /* equivalent to MP4 library API */
 	MP4File(u_int32_t verbosity = 0);
@@ -51,7 +39,7 @@ public: /* equivalent to MP4 library API */
 
 	/* file operations */
 	void Read(const char* fileName);
-	void Create(const char* fileName, bool use64bits);
+	void Create(const char* fileName, u_int32_t flags);
 	void Modify(const char* fileName);
 	void Optimize(const char* orgFileName, 
 		const char* newFileName = NULL);
@@ -67,9 +55,7 @@ public: /* equivalent to MP4 library API */
 		m_verbosity = verbosity;
 	}
 
-	bool Use64Bits() {
-		return m_use64bits;
-	}
+	bool Use64Bits(const char *atomName);
 
 	/* file properties */
 
@@ -206,10 +192,13 @@ public: /* equivalent to MP4 library API */
 		MP4Duration sampleDuration,
 		u_int8_t audioType);
 
+#ifdef ISMACRYP
 	MP4TrackId AddEncAudioTrack( // ismacrypt
 		u_int32_t timeScale, 
 		MP4Duration sampleDuration,
-		u_int8_t audioType);
+		u_int8_t audioType,
+		ismacryp_session_id_t ismaCryptSId);
+#endif
 
 	MP4TrackId AddVideoTrack(
 		u_int32_t timeScale, 
@@ -217,13 +206,16 @@ public: /* equivalent to MP4 library API */
 		u_int16_t width, 
 		u_int16_t height, 
 		u_int8_t videoType);
-	
+
+#ifdef ISMACRYP	
 	MP4TrackId AddEncVideoTrack( // ismacrypt
 		u_int32_t timeScale, 
 		MP4Duration sampleDuration,
 		u_int16_t width, 
 		u_int16_t height, 
+		ismacryp_session_id_t ismaCryptSId,
 		u_int8_t videoType);
+#endif
 
 	MP4TrackId AddHintTrack(MP4TrackId refTrackId);
 
@@ -441,46 +433,49 @@ public: /* equivalent to MP4 library API */
 		MP4Timestamp* pStartTime = NULL,
 		MP4Duration* pDuration = NULL);
 
-    /* iTunes metadata handling */
-    bool CreateMetadataAtom(const char* name);
-    bool MetadataDelete();
-
-    /* set metadata */
-    bool SetMetadataName(const char* value);
-    bool SetMetadataWriter(const char* value);
-    bool SetMetadataAlbum(const char* value);
-    bool SetMetadataArtist(const char* value);
-    bool SetMetadataTool(const char* value);
-    bool SetMetadataComment(const char* value);
-    bool SetMetadataYear(const char* value);
-    bool SetMetadataTrack(u_int16_t track, u_int16_t totalTracks);
-    bool SetMetadataDisk(u_int16_t disk, u_int16_t totalDisks);
-    bool SetMetadataGenre(const char* genreIndex);
-    bool SetMetadataTempo(u_int16_t tempo);
-    bool SetMetadataCompilation(u_int8_t compilation);
-    bool SetMetadataCoverArt(u_int8_t *coverArt, u_int32_t size);
-    bool SetMetadataFreeForm(char *name, u_int8_t* pValue, u_int32_t valueSize);
-
-    /* get metadata */
-    bool GetMetadataByIndex(u_int32_t index,
-        const char** ppName,
-        u_int8_t** ppValue, u_int32_t* pValueSize);
-    bool GetMetadataName(char** value);
-    bool GetMetadataWriter(char** value);
-    bool GetMetadataAlbum(char** value);
-    bool GetMetadataArtist(char** value);
-    bool GetMetadataTool(char** value);
-    bool GetMetadataComment(char** value);
-    bool GetMetadataYear(char** value);
-    bool GetMetadataTrack(u_int16_t* track, u_int16_t* totalTracks);
-    bool GetMetadataDisk(u_int16_t* disk, u_int16_t* totalDisks);
-    bool GetMetadataGenre(char** genre);
-    bool GetMetadataTempo(u_int16_t* tempo);
-    bool GetMetadataCompilation(u_int8_t* compilation);
-    bool GetMetadataCoverArt(u_int8_t **coverArt, u_int32_t* size);
-    bool GetMetadataFreeForm(char *name, u_int8_t** pValue, u_int32_t* valueSize);
-
-
+	/* iTunes metadata handling */
+	bool CreateMetadataAtom(const char* name);
+	bool MetadataDelete(void);
+	
+	/* set metadata */
+	bool SetMetadataName(const char* value);
+	bool SetMetadataWriter(const char* value);
+	bool SetMetadataAlbum(const char* value);
+	bool SetMetadataArtist(const char* value);
+	bool SetMetadataTool(const char* value);
+	bool SetMetadataComment(const char* value);
+	bool SetMetadataYear(const char* value);
+	bool SetMetadataTrack(u_int16_t track, u_int16_t totalTracks);
+	bool SetMetadataDisk(u_int16_t disk, u_int16_t totalDisks);
+	bool SetMetadataGenre(const char *value);
+	bool SetMetadataTempo(u_int16_t tempo);
+	bool SetMetadataCompilation(u_int8_t compilation);
+	bool SetMetadataCoverArt(u_int8_t *coverArt, u_int32_t size);
+	bool SetMetadataFreeForm(char *name, 
+				 u_int8_t* pValue, 
+				 u_int32_t valueSize);
+ 
+	/* get metadata */
+	bool GetMetadataByIndex(u_int32_t index,
+				const char** ppName,
+				u_int8_t** ppValue, 
+				u_int32_t* pValueSize);
+	bool GetMetadataName(char** value);
+	bool GetMetadataWriter(char** value);
+	bool GetMetadataAlbum(char** value);
+	bool GetMetadataArtist(char** value);
+	bool GetMetadataTool(char** value);
+	bool GetMetadataComment(char** value);
+	bool GetMetadataYear(char** value);
+	bool GetMetadataTrack(u_int16_t* track, u_int16_t* totalTracks);
+	bool GetMetadataDisk(u_int16_t* disk, u_int16_t* totalDisks);
+	bool GetMetadataGenre(char **value);
+	bool GetMetadataTempo(u_int16_t* tempo);
+	bool GetMetadataCompilation(u_int8_t* compilation);
+	bool GetMetadataCoverArt(u_int8_t **coverArt, u_int32_t* size);
+	bool GetMetadataFreeForm(char *name, 
+				 u_int8_t** pValue, 
+				 u_int32_t* valueSize);
 	/* end of MP4 API */
 
 	/* "protected" interface to be used only by friends in library */
@@ -569,18 +564,6 @@ public: /* equivalent to MP4 library API */
 	MP4Atom* AddDescendantAtoms(
 		MP4Atom* pAncestorAtom,
 		const char* childName);
-
-#ifdef USE_FILE_CALLBACKS
-    MP4OpenCallback m_MP4fopen;
-    MP4CloseCallback m_MP4fclose;
-    MP4ReadCallback m_MP4fread;
-    MP4WriteCallback m_MP4fwrite;
-    MP4SetposCallback m_MP4fsetpos;
-    MP4GetposCallback m_MP4fgetpos;
-    MP4FilesizeCallback m_MP4filesize;
-
-    void *m_userData;
-#endif
 
 protected:
 	void Open(const char* fmode);
@@ -686,7 +669,7 @@ protected:
 	MP4TrackId		m_odTrackId;
 	u_int32_t		m_verbosity;
 	char			m_mode;
-	bool			m_use64bits;
+	u_int32_t               m_createFlags;
 	bool			m_useIsma;
 
 	// cached properties
@@ -704,16 +687,6 @@ protected:
 	u_int8_t	m_bufReadBits;
 	u_int8_t	m_numWriteBits;
 	u_int8_t	m_bufWriteBits;
-
-#ifdef USE_FILE_CALLBACKS
-    static u_int32_t MP4fopen_cb(const char *pName, const char *mode, void *userData);
-    static void MP4fclose_cb(void *userData);
-    static u_int32_t MP4fread_cb(void *pBuffer, unsigned int nBytesToRead, void *userData);
-    static u_int32_t MP4fwrite_cb(void *pBuffer, unsigned int nBytesToWrite, void *userData);
-    static int32_t MP4fsetpos_cb(u_int32_t pos, void *userData);
-    static int64_t MP4fgetpos_cb(void *userData);
-    static int64_t MP4filesize_cb(void *userData);
-#endif
 };
 
 #endif /* __MP4_FILE_INCLUDED__ */

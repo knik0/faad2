@@ -341,11 +341,11 @@ extern "C" bool Mpeg12Hinter (MP4FileHandle mp4file,
     rfc2250[0] = (*pstart >> 6) & 0x3;
     rfc2250[1] = (pstart[0] << 2) | ((pstart[1] >> 6) & 0x3); // temporal ref
     rfc2250[2] = type;
+    rfc2250_2 = rfc2250[2];
     if (have_seq != 0) {
       rfc2250[2] |= 0x20;
       have_seq = 0;
     }
-    rfc2250_2 = rfc2250[2];
 
     rfc2250[3] = 0;
     if (type == 2 || type == 3) {

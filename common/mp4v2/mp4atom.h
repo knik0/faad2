@@ -88,7 +88,7 @@ public:
 		return m_type;
 	};
 	void SetType(const char* type) {
-		if (type) {
+		if (type && *type != '\0') {
 			ASSERT(strlen(type) == 4);
 			memcpy(m_type, type, 4);
 			m_type[4] = '\0';

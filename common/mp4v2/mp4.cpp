@@ -51,122 +51,15 @@ extern "C" MP4FileHandle MP4Read(const char* fileName, u_int32_t verbosity)
 	}
 }
 
-#ifdef USE_FILE_CALLBACKS
-extern "C" MP4FileHandle MP4CreateCb(u_int32_t verbosity,
-                                     bool use64bits,
-                                     bool useExtensibleFormat,
-                                     MP4OpenCallback MP4fopen,
-                                     MP4CloseCallback MP4fclose,
-                                     MP4ReadCallback MP4fread,
-                                     MP4WriteCallback MP4fwrite,
-                                     MP4SetposCallback MP4fsetpos,
-                                     MP4GetposCallback MP4fgetpos,
-                                     MP4FilesizeCallback MP4filesize,
-                                     void *userData)
-{
-	MP4File* pFile = NULL;
-	try {
-		pFile = new MP4File(verbosity);
-		// LATER useExtensibleFormat, moov first, then mvex's
-
-        // Set user data and callbacks
-        pFile->m_userData = userData;
-        pFile->m_MP4fopen = MP4fopen;
-        pFile->m_MP4fclose = MP4fclose;
-        pFile->m_MP4fread = MP4fread;
-        pFile->m_MP4fwrite = MP4fwrite;
-        pFile->m_MP4fsetpos = MP4fsetpos;
-        pFile->m_MP4fgetpos = MP4fgetpos;
-        pFile->m_MP4filesize = MP4filesize;
-		pFile->Create("", use64bits);
-		return (MP4FileHandle)pFile;
-	}
-	catch (MP4Error* e) {
-		VERBOSE_ERROR(verbosity, e->Print());
-		delete e;
-		delete pFile;
-		return MP4_INVALID_FILE_HANDLE;
-	}
-}
-
-extern "C" MP4FileHandle MP4ReadCb(u_int32_t verbosity,
-                                   MP4OpenCallback MP4fopen,
-                                   MP4CloseCallback MP4fclose,
-                                   MP4ReadCallback MP4fread,
-                                   MP4WriteCallback MP4fwrite,
-                                   MP4SetposCallback MP4fsetpos,
-                                   MP4GetposCallback MP4fgetpos,
-                                   MP4FilesizeCallback MP4filesize,
-                                   void *userData
-                                   )
-{
-	MP4File* pFile = NULL;
-	try {
-		pFile = new MP4File(verbosity);
-
-        // Set user data and callbacks
-        pFile->m_userData = userData;
-        pFile->m_MP4fopen = MP4fopen;
-        pFile->m_MP4fclose = MP4fclose;
-        pFile->m_MP4fread = MP4fread;
-        pFile->m_MP4fwrite = MP4fwrite;
-        pFile->m_MP4fsetpos = MP4fsetpos;
-        pFile->m_MP4fgetpos = MP4fgetpos;
-        pFile->m_MP4filesize = MP4filesize;
-
-		pFile->Read("");
-		return (MP4FileHandle)pFile;
-	}
-	catch (MP4Error* e) {
-		VERBOSE_ERROR(verbosity, e->Print());
-		delete e;
-		delete pFile;
-		return MP4_INVALID_FILE_HANDLE;
-	}
-}
-
-extern "C" MP4FileHandle MP4ModifyCb(int32_t verbosity,
-    bool useExtensibleFormat,
-    MP4OpenCallback MP4fopen, MP4CloseCallback MP4fclose,
-    MP4ReadCallback MP4fread, MP4WriteCallback MP4fwrite,
-    MP4SetposCallback MP4fsetpos, MP4GetposCallback MP4fgetpos,
-    MP4FilesizeCallback MP4filesize, void *userData)
-{
-	MP4File* pFile = NULL;
-	try {
-		pFile = new MP4File(verbosity);
-
-        // Set user data and callbacks
-        pFile->m_userData = userData;
-        pFile->m_MP4fopen = MP4fopen;
-        pFile->m_MP4fclose = MP4fclose;
-        pFile->m_MP4fread = MP4fread;
-        pFile->m_MP4fwrite = MP4fwrite;
-        pFile->m_MP4fsetpos = MP4fsetpos;
-        pFile->m_MP4fgetpos = MP4fgetpos;
-        pFile->m_MP4filesize = MP4filesize;
-
-		// LATER useExtensibleFormat, moov first, then mvex's
-		pFile->Modify("");
-		return (MP4FileHandle)pFile;
-	}
-	catch (MP4Error* e) {
-		VERBOSE_ERROR(verbosity, e->Print());
-		delete e;
-		delete pFile;
-		return MP4_INVALID_FILE_HANDLE;
-	}
-}
-#endif
-
 extern "C" MP4FileHandle MP4Create(const char* fileName, 
-	u_int32_t verbosity, bool use64bits, bool useExtensibleFormat)
+				   u_int32_t verbosity, 
+				   u_int32_t flags)
 {
 	MP4File* pFile = NULL;
 	try {
 		pFile = new MP4File(verbosity);
 		// LATER useExtensibleFormat, moov first, then mvex's
-		pFile->Create(fileName, use64bits);
+		pFile->Create(fileName, flags);
 		return (MP4FileHandle)pFile;
 	}
 	catch (MP4Error* e) {
@@ -178,7 +71,7 @@ extern "C" MP4FileHandle MP4Create(const char* fileName,
 }
 
 extern "C" MP4FileHandle MP4Modify(const char* fileName, 
-	u_int32_t verbosity, bool useExtensibleFormat)
+	u_int32_t verbosity, u_int32_t flags)
 {
 	MP4File* pFile = NULL;
 	try {
@@ -676,15 +569,17 @@ extern "C" MP4TrackId MP4AddAudioTrack(
 	return MP4_INVALID_TRACK_ID;
 }
 
+#ifdef ISMACRYP
 extern "C" MP4TrackId MP4AddEncAudioTrack(MP4FileHandle hFile, 
 					  u_int32_t timeScale, 
-					  MP4Duration sampleDuration, 
+					  MP4Duration sampleDuration,
+					  ismacryp_session_id_t ismaCryptSId,
 					  u_int8_t audioType)
 {
   if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
     try {
       return ((MP4File*)hFile)->
-	AddEncAudioTrack(timeScale, sampleDuration, audioType);
+	AddEncAudioTrack(timeScale, sampleDuration, audioType, ismaCryptSId);
     }
     catch (MP4Error* e) {
       PRINT_ERROR(e);
@@ -693,6 +588,7 @@ extern "C" MP4TrackId MP4AddEncAudioTrack(MP4FileHandle hFile,
   }
   return MP4_INVALID_TRACK_ID;
 }
+#endif
 
 extern "C" MP4TrackId MP4AddVideoTrack(
 	MP4FileHandle hFile, 
@@ -715,17 +611,20 @@ extern "C" MP4TrackId MP4AddVideoTrack(
 	return MP4_INVALID_TRACK_ID;
 }
 
+#ifdef ISMACRYP
 extern "C" MP4TrackId MP4AddEncVideoTrack(MP4FileHandle hFile, 
 					  u_int32_t timeScale, 
 					  MP4Duration sampleDuration,
 					  u_int16_t width, 
 					  u_int16_t height, 
+					  ismacryp_session_id_t ismaCryptSId, 
 					  u_int8_t videoType)
 {
   if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
     try {
       return ((MP4File*)hFile)->AddEncVideoTrack(timeScale, sampleDuration, 
-						 width, height, videoType);
+						 width, height, videoType,
+						 ismaCryptSId);
     }
     catch (MP4Error* e) {
       PRINT_ERROR(e);
@@ -734,6 +633,7 @@ extern "C" MP4TrackId MP4AddEncVideoTrack(MP4FileHandle hFile,
   }
   return MP4_INVALID_TRACK_ID;
 }
+#endif
 
 extern "C" MP4TrackId MP4AddHintTrack(
 	MP4FileHandle hFile, MP4TrackId refTrackId)
@@ -753,7 +653,8 @@ extern "C" MP4TrackId MP4AddHintTrack(
 extern "C" MP4TrackId MP4CloneTrack(
 	MP4FileHandle srcFile, 
 	MP4TrackId srcTrackId,
-	MP4FileHandle dstFile)
+	MP4FileHandle dstFile,
+	MP4TrackId dstHintTrackReferenceTrack)
 {
 	MP4TrackId dstTrackId = MP4_INVALID_TRACK_ID;
 
@@ -795,9 +696,13 @@ extern "C" MP4TrackId MP4CloneTrack(
 		dstTrackId = MP4AddSceneTrack(dstFile);
 
 	} else if (MP4_IS_HINT_TRACK_TYPE(trackType)) {
+	  if (dstHintTrackReferenceTrack == MP4_INVALID_TRACK_ID) {
+	    dstTrackId = MP4_INVALID_TRACK_ID;
+	  } else {
 		dstTrackId = MP4AddHintTrack(
 			dstFile,
-			MP4GetHintTrackReferenceTrackId(srcFile, srcTrackId));
+			dstHintTrackReferenceTrack);
+	  }
 
 	} else if (MP4_IS_SYSTEMS_TRACK_TYPE(trackType)) {
 		dstTrackId = MP4AddSystemsTrack(dstFile, trackType);
@@ -860,16 +765,18 @@ extern "C" MP4TrackId MP4CloneTrack(
 			&payloadNumber,
 			maxPayloadSize,
 			encodingParms);
-
+#if 0
 		MP4SetHintTrackSdp(
 			dstFile,
 			dstTrackId,
 			MP4GetHintTrackSdp(srcFile, srcTrackId));
+#endif
 	}
 
 	return dstTrackId;
 }
 
+#ifdef ISMACRYP
 // Given a track, make an encrypted clone of it in the dest. file
 extern "C" MP4TrackId MP4EncAndCloneTrack(MP4FileHandle srcFile, 
 					  MP4TrackId srcTrackId,
@@ -953,16 +860,18 @@ extern "C" MP4TrackId MP4EncAndCloneTrack(MP4FileHandle srcFile,
 
   return dstTrackId;
 }
+#endif
 
 extern "C" MP4TrackId MP4CopyTrack(MP4FileHandle srcFile, 
 				   MP4TrackId srcTrackId,
 				   MP4FileHandle dstFile, 
-				   bool applyEdits)
+				   bool applyEdits,
+				   MP4TrackId dstHintTrackReferenceTrack)
 {
   bool copySamples = true;	// LATER allow false => reference samples
 
   MP4TrackId dstTrackId =
-    MP4CloneTrack(srcFile, srcTrackId, dstFile);
+    MP4CloneTrack(srcFile, srcTrackId, dstFile, dstHintTrackReferenceTrack);
 
   if (dstTrackId == MP4_INVALID_TRACK_ID) {
     return dstTrackId;
@@ -1039,11 +948,13 @@ extern "C" MP4TrackId MP4CopyTrack(MP4FileHandle srcFile,
 }
 
 
+#ifdef ISMACRYP
 // Given a source track in a source file, make an encrypted copy of 
 // the track in the destination file, including sample encryption
 extern "C" MP4TrackId MP4EncAndCopyTrack(MP4FileHandle srcFile, 
 				      MP4TrackId srcTrackId,
-				      MP4FileHandle dstFile, 
+				      ismacryp_session_id_t ismaCryptSId,
+				      MP4FileHandle dstFile,
 				      bool applyEdits)
 {
   bool copySamples = true;	// LATER allow false => reference samples
@@ -1097,15 +1008,17 @@ extern "C" MP4TrackId MP4EncAndCopyTrack(MP4FileHandle srcFile,
     bool rc = false;
 
     if (copySamples) {
-      // will need to encrypt the sample here
-      rc = MP4CopySample(srcFile,
+      // encrypt and copy
+      rc = MP4EncAndCopySample(srcFile,
 			 srcTrackId,
 			 sampleId,
+			 ismaCryptSId,
 			 dstFile,
 			 dstTrackId,
 			 sampleDuration);
 
     } else {
+      // not sure what these are - encrypt?
       rc = MP4ReferenceSample(srcFile,
 			      srcTrackId,
 			      sampleId,
@@ -1122,6 +1035,7 @@ extern "C" MP4TrackId MP4EncAndCopyTrack(MP4FileHandle srcFile,
 
   return dstTrackId;
 }
+#endif
 
 extern "C" bool MP4DeleteTrack(
 	MP4FileHandle hFile, 
@@ -1758,6 +1672,74 @@ extern "C" bool MP4CopySample(
 
 	return rc;
 }
+
+#ifdef ISMACRYP
+extern "C" bool MP4EncAndCopySample(
+	MP4FileHandle srcFile,
+	MP4TrackId srcTrackId, 
+	MP4SampleId srcSampleId,
+	ismacryp_session_id_t ismaCryptSId,
+	MP4FileHandle dstFile,
+	MP4TrackId dstTrackId,
+	MP4Duration dstSampleDuration)
+{
+	bool rc;
+	u_int8_t* pBytes = NULL; 
+	u_int32_t numBytes = 0;
+	MP4Duration sampleDuration;
+	MP4Duration renderingOffset;
+	bool isSyncSample;
+
+	// Note: we leave it up to the caller to ensure that the
+	// source and destination tracks are compatible.
+	// i.e. copying audio samples into a video track 
+	// is unlikely to do anything useful
+
+	rc = MP4ReadSample(
+		srcFile,
+		srcTrackId,
+		srcSampleId,
+		&pBytes,
+		&numBytes,
+		NULL,
+		&sampleDuration,
+		&renderingOffset,
+		&isSyncSample);
+
+	if (!rc) {
+		return false;
+	}
+
+	if (dstFile == MP4_INVALID_FILE_HANDLE) {
+		dstFile = srcFile;
+	}
+	if (dstTrackId == MP4_INVALID_TRACK_ID) {
+		dstTrackId = srcTrackId;
+	}
+	if (dstSampleDuration != MP4_INVALID_DURATION) {
+		sampleDuration = dstSampleDuration;
+	}
+
+	if (ismacrypEncryptSample(ismaCryptSId, numBytes, 
+				  pBytes) != 0) {
+	  fprintf(stderr,	
+		  "Can't encrypt the sample %u\n", srcSampleId);
+	}
+
+	rc = MP4WriteSample(
+		dstFile,
+		dstTrackId,
+		pBytes,
+		numBytes,
+		sampleDuration,
+		renderingOffset,		
+		isSyncSample);
+
+	free(pBytes);
+
+	return rc;
+}
+#endif
 
 extern "C" bool MP4ReferenceSample(
 	MP4FileHandle srcFile,
@@ -2795,449 +2777,448 @@ extern "C" char* MP4BinaryToBase64(
 	return NULL;
 }
 
-
 /* iTunes meta data handling */
 extern "C" bool MP4GetMetadataByIndex(MP4FileHandle hFile, u_int32_t index,
-                                       const char** ppName,
-                                       u_int8_t** ppValue, u_int32_t* pValueSize)
+				      const char** ppName,
+				      u_int8_t** ppValue, u_int32_t* pValueSize)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->GetMetadataByIndex(
-                index, ppName, ppValue, pValueSize);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->GetMetadataByIndex(
+						   index, ppName, ppValue, pValueSize);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4MetadataDelete(MP4FileHandle hFile)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->MetadataDelete();
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->MetadataDelete();
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4SetMetadataName(MP4FileHandle hFile,
-                                  const char* value)
+                                   const char* value)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->SetMetadataName(value);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->SetMetadataName(value);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4GetMetadataName(MP4FileHandle hFile,
-                                   char** value)
+				   char** value)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->GetMetadataName(value);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->GetMetadataName(value);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4SetMetadataWriter(MP4FileHandle hFile,
-                                     const char* value)
+				     const char* value)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->SetMetadataWriter(value);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->SetMetadataWriter(value);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4GetMetadataWriter(MP4FileHandle hFile,
-                                   char** value)
+				     char** value)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->GetMetadataWriter(value);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->GetMetadataWriter(value);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4SetMetadataAlbum(MP4FileHandle hFile,
-                                    const char* value)
+				    const char* value)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->SetMetadataAlbum(value);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->SetMetadataAlbum(value);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4GetMetadataAlbum(MP4FileHandle hFile,
-                                    char** value)
+				    char** value)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->GetMetadataAlbum(value);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->GetMetadataAlbum(value);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4SetMetadataArtist(MP4FileHandle hFile,
-                                     const char* value)
+				     const char* value)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->SetMetadataArtist(value);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->SetMetadataArtist(value);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4GetMetadataArtist(MP4FileHandle hFile,
-                                     char** value)
+				     char** value)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->GetMetadataArtist(value);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->GetMetadataArtist(value);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4SetMetadataTool(MP4FileHandle hFile,
-                                   const char* value)
+				   const char* value)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->SetMetadataTool(value);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->SetMetadataTool(value);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4GetMetadataTool(MP4FileHandle hFile,
-                                   char** value)
+				   char** value)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->GetMetadataTool(value);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->GetMetadataTool(value);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4SetMetadataComment(MP4FileHandle hFile,
-                                      const char* value)
+				      const char* value)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->SetMetadataComment(value);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->SetMetadataComment(value);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4GetMetadataComment(MP4FileHandle hFile,
-                                      char** value)
+				      char** value)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->GetMetadataComment(value);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->GetMetadataComment(value);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4SetMetadataYear(MP4FileHandle hFile,
-                                   const char* value)
+				   const char* value)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->SetMetadataYear(value);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->SetMetadataYear(value);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4GetMetadataYear(MP4FileHandle hFile,
-                                   char** value)
+				   char** value)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->GetMetadataYear(value);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->GetMetadataYear(value);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4SetMetadataTrack(MP4FileHandle hFile,
-                                    u_int16_t track, u_int16_t totalTracks)
+				    u_int16_t track, u_int16_t totalTracks)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->SetMetadataTrack(track, totalTracks);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->SetMetadataTrack(track, totalTracks);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4GetMetadataTrack(MP4FileHandle hFile,
-                                    u_int16_t* track, u_int16_t* totalTracks)
+				    u_int16_t* track, u_int16_t* totalTracks)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->GetMetadataTrack(track, totalTracks);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->GetMetadataTrack(track, totalTracks);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4SetMetadataDisk(MP4FileHandle hFile,
-                                   u_int16_t disk, u_int16_t totalDisks)
+				   u_int16_t disk, u_int16_t totalDisks)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->SetMetadataDisk(disk, totalDisks);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->SetMetadataDisk(disk, totalDisks);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4GetMetadataDisk(MP4FileHandle hFile,
-                                   u_int16_t* disk, u_int16_t* totalDisks)
+				   u_int16_t* disk, u_int16_t* totalDisks)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->GetMetadataDisk(disk, totalDisks);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->GetMetadataDisk(disk, totalDisks);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
-extern "C" bool MP4SetMetadataGenre(MP4FileHandle hFile, const char* genre)
+ 
+extern "C" bool MP4SetMetadataGenre(MP4FileHandle hFile, const char *genre)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->SetMetadataGenre(genre);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->SetMetadataGenre(genre);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
-extern "C" bool MP4GetMetadataGenre(MP4FileHandle hFile, char** genre)
+ 
+extern "C" bool MP4GetMetadataGenre(MP4FileHandle hFile, char **genre)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->GetMetadataGenre(genre);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->GetMetadataGenre(genre);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4SetMetadataTempo(MP4FileHandle hFile, u_int16_t tempo)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->SetMetadataTempo(tempo);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->SetMetadataTempo(tempo);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4GetMetadataTempo(MP4FileHandle hFile, u_int16_t* tempo)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->GetMetadataTempo(tempo);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->GetMetadataTempo(tempo);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4SetMetadataCompilation(MP4FileHandle hFile, u_int8_t cpl)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->SetMetadataCompilation(cpl);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->SetMetadataCompilation(cpl);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4GetMetadataCompilation(MP4FileHandle hFile, u_int8_t* cpl)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->GetMetadataCompilation(cpl);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->GetMetadataCompilation(cpl);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4SetMetadataCoverArt(MP4FileHandle hFile,
-                                       u_int8_t *coverArt, u_int32_t size)
+				       u_int8_t *coverArt, u_int32_t size)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->SetMetadataCoverArt(coverArt, size);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->SetMetadataCoverArt(coverArt, size);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4GetMetadataCoverArt(MP4FileHandle hFile,
-                                       u_int8_t **coverArt, u_int32_t* size)
+				       u_int8_t **coverArt, u_int32_t* size)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->GetMetadataCoverArt(coverArt, size);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->GetMetadataCoverArt(coverArt, size);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4SetMetadataFreeForm(MP4FileHandle hFile, char *name,
-                                       u_int8_t* pValue, u_int32_t valueSize)
+				       u_int8_t* pValue, u_int32_t valueSize)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->SetMetadataFreeForm(name, pValue, valueSize);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->SetMetadataFreeForm(name, pValue, valueSize);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }
-
+ 
 extern "C" bool MP4GetMetadataFreeForm(MP4FileHandle hFile, char *name,
-                                       u_int8_t** pValue, u_int32_t* valueSize)
+				       u_int8_t** pValue, u_int32_t* valueSize)
 {
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			return ((MP4File*)hFile)->GetMetadataFreeForm(name, pValue, valueSize);
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-    return false;
+  if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
+    try {
+      return ((MP4File*)hFile)->GetMetadataFreeForm(name, pValue, valueSize);
+    }
+    catch (MP4Error* e) {
+      PRINT_ERROR(e);
+      delete e;
+    }
+  }
+  return false;
 }

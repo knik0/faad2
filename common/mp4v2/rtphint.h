@@ -78,6 +78,10 @@ class MP4RtpSampleData : public MP4RtpData {
 public:
 	MP4RtpSampleData(MP4RtpPacket* pPacket);
 
+	~MP4RtpSampleData(void) {
+	  CHECK_AND_FREE(m_pRefData);
+	};
+
 	void SetEmbeddedImmediate(
 		MP4SampleId sampleId, 
 		u_int8_t* pData, u_int16_t dataLength);

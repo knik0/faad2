@@ -139,6 +139,20 @@ extern "C" uint8_t *MP4AV_Mpeg4FindVol (uint8_t *pBuf, uint32_t buflen)
   }
   return NULL;
 }
+extern "C" uint8_t *MP4AV_Mpeg4FindVop (uint8_t *pBuf, uint32_t buflen)
+{
+  while (buflen > 4) {
+    if (pBuf[0] == 0x0 &&
+	pBuf[1] == 0x0 &&
+	pBuf[2] == 0x1 &&
+	pBuf[3] == MP4AV_MPEG4_VOP_START) {
+      return pBuf;
+    }
+    pBuf++;
+    buflen--;
+  }
+  return NULL;
+}
 
 extern "C" bool MP4AV_Mpeg4ParseVol(
 	u_int8_t* pVolBuf, 
@@ -147,9 +161,14 @@ extern "C" bool MP4AV_Mpeg4ParseVol(
 	u_int16_t* pTimeTicks, 
 	u_int16_t* pFrameDuration, 
 	u_int16_t* pFrameWidth, 
-	u_int16_t* pFrameHeight)
+	u_int16_t* pFrameHeight,
+	u_int8_t * aspectRatioDefine,
+	u_int8_t * aspectRatioWidth,
+	u_int8_t * aspectRatioHeight)
+
 {
 	CMemoryBitstream vol;
+	uint8_t aspect;
 
 	vol.SetBytes(pVolBuf, volSize);
 
@@ -163,9 +182,18 @@ extern "C" bool MP4AV_Mpeg4ParseVol(
 			verid = vol.GetBits(4);			// object layer verid
 			vol.SkipBits(3);				// object layer priority
 		}
-		if (vol.GetBits(4) == 0xF) { 	// aspect ratio info
-			vol.SkipBits(8);				// par width
-			vol.SkipBits(8);				// par height
+		aspect = vol.GetBits(4);
+		if (aspectRatioDefine != NULL)
+		  *aspectRatioDefine = aspect;
+		if (aspect == 0xF) { 	// aspect ratio info
+		  if (aspectRatioWidth != NULL) 
+		    *aspectRatioWidth = vol.GetBits(8);
+		  else
+		    vol.SkipBits(8);				// par width
+		  if (aspectRatioHeight != NULL) 
+		    *aspectRatioHeight = vol.GetBits(8);
+		  else
+		    vol.SkipBits(8);				// par height
 		}
 		if (vol.GetBits(1)) {			// vol control parameters
 			vol.SkipBits(2);				// chroma format
@@ -479,113 +507,6 @@ extern "C" bool MP4AV_Mpeg4ParseVop(
 	return true;
 }
 
-// Map from ISO IEC 14496-2:2000 Appendix G 
-// to ISO IEC 14496-1:2001 8.6.4.2 Table 6
-extern "C" u_int8_t 
-MP4AV_Mpeg4VideoToSystemsProfileLevel(u_int8_t videoProfileLevel)
-{
-	switch (videoProfileLevel) {
-	// Simple Profile
-	case 0x01: // L1
-		return 0x03;
-	case 0x02: // L2
-		return 0x02;
-	case 0x03: // L3
-		return 0x01;
-	// Simple Scalable Profile
-	case 0x11: // L1
-		return 0x05;
-	case 0x12: // L2
-		return 0x04;
-	// Core Profile
-	case 0x21: // L1
-		return 0x07;
-	case 0x22: // L2
-		return 0x06;
-	// Main Profile
-	case 0x32: // L2
-		return 0x0A;
-	case 0x33: // L3
-		return 0x09;
-	case 0x34: // L4
-		return 0x08;
-	// N-bit Profile
-	case 0x42: // L2
-		return 0x0B;
-	// Scalable Texture
-	case 0x51: // L1
-		return 0x12;
-	case 0x52: // L2
-		return 0x11;
-	case 0x53: // L3
-		return 0x10;
-	// Simple Face Animation Profile
-	case 0x61: // L1
-		return 0x14;
-	case 0x62: // L2
-		return 0x13;
-	// Simple FBA Profile
-	case 0x63: // L1
-	case 0x64: // L2
-		return 0xFE;
-	// Basic Animated Texture Profile
-	case 0x71: // L1
-		return 0x0F;
-	case 0x72: // L2
-		return 0x0E;
-	// Hybrid Profile
-	case 0x81: // L1
-		return 0x0D;
-	case 0x82: // L2
-		return 0x0C;
-	// Advanced Real Time Simple Profile
-	case 0x91: // L1
-	case 0x92: // L2
-	case 0x93: // L3
-	case 0x94: // L4
-	// Core Scalable Profile
-	case 0xA1: // L1
-	case 0xA2: // L2
-	case 0xA3: // L3
-	// Advanced Coding Efficiency Profle
-	case 0xB1: // L1
-	case 0xB2: // L2
-	case 0xB3: // L3
-	case 0xB4: // L4
-	// Advanced Core Profile
-	case 0xC1: // L1
-	case 0xC2: // L2
-	// Advanced Scalable Texture Profile
-	case 0xD1: // L1
-	case 0xD2: // L2
-	case 0xD3: // L3
-	// from draft amendments
-	// Simple Studio
-	case 0xE1: // L1
-	case 0xE2: // L2
-	case 0xE3: // L3
-	case 0xE4: // L4
-	// Core Studio Profile
-	case 0xE5: // L1
-	case 0xE6: // L2
-	case 0xE7: // L3
-	case 0xE8: // L4
-	// Advanced Simple Profile
-	case 0xF1: // L0
-	case 0xF2: // L1
-	case 0xF3: // L2
-	case 0xF4: // L3
-	case 0xF5: // L4
-	// Fine Granularity Scalable Profile
-	case 0xF6: // L0
-	case 0xF7: // L1
-	case 0xF8: // L2
-	case 0xF9: // L3
-	case 0xFA: // L4
-	default:
-		return 0xFE;
-	}
-}
 
 extern "C" u_char MP4AV_Mpeg4GetVopType(u_int8_t* pVopBuf, u_int32_t vopSize)
 {
