@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.65 2003/09/10 12:25:54 menno Exp $
+** $Id: decoder.c,v 1.66 2003/09/18 13:38:38 menno Exp $
 **/
 
 #include "common.h"
@@ -264,6 +264,15 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
     }
     hDecoder->channelConfiguration = *channels;
 
+#ifdef SBR_DEC
+    /* implicit signalling */
+    if (*samplerate <= 24000)
+    {
+        *samplerate *= 2;
+        hDecoder->forceUpSampling = 1;
+    }
+#endif
+
     /* must be done before frameLength is divided by 2 for LD */
 #ifdef SSR_DEC
     if (hDecoder->object_type == SSR)
@@ -330,9 +339,10 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
 #endif
 #ifdef SBR_DEC
     hDecoder->sbr_present_flag = mp4ASC.sbr_present_flag;
+    hDecoder->forceUpSampling = mp4ASC.forceUpSampling;
 
     /* AAC core decoder samplerate is 2 times as low */
-    if (hDecoder->sbr_present_flag == 1)
+    if (hDecoder->sbr_present_flag == 1 || hDecoder->forceUpSampling == 1)
     {
         hDecoder->sf_index = get_sr_index(mp4ASC.samplingFrequency / 2);
     }
@@ -907,7 +917,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     if (hDecoder->sample_buffer == NULL)
     {
 #ifdef SBR_DEC
-        if (hDecoder->sbr_present_flag == 1)
+        if ((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1))
         {
             if (hDecoder->config.outputFormat == FAAD_FMT_DOUBLE)
                 hDecoder->sample_buffer = malloc(2*frame_len*channels*sizeof(double));
@@ -1123,10 +1133,22 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     }
 
 #ifdef SBR_DEC
-    if (hDecoder->sbr_present_flag == 1)
+    if ((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1))
     {
         for (i = 0; i < ch_ele; i++)
         {
+            /* following case can happen when forceUpSampling == 1 */
+            if (hDecoder->sbr[i] == NULL)
+            {
+                hDecoder->sbr[i] = sbrDecodeInit(hDecoder->frameLength
+#ifdef DRM
+                    , 0
+#endif
+                    );
+                hDecoder->sbr[i]->data = NULL;
+                hDecoder->sbr[i]->data_size = 0;
+            }
+
             if (syntax_elements[i]->paired_channel != -1)
             {
                 memcpy(time_out2[syntax_elements[i]->channel],
@@ -1136,14 +1158,14 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                 sbrDecodeFrame(hDecoder->sbr[i],
                     time_out2[syntax_elements[i]->channel],
                     time_out2[syntax_elements[i]->paired_channel], ID_CPE,
-                    hDecoder->postSeekResetFlag);
+                    hDecoder->postSeekResetFlag, hDecoder->forceUpSampling);
             } else {
                 memcpy(time_out2[syntax_elements[i]->channel],
                     time_out[syntax_elements[i]->channel], frame_len*sizeof(real_t));
                 sbrDecodeFrame(hDecoder->sbr[i],
                     time_out2[syntax_elements[i]->channel],
                     NULL, ID_SCE,
-                    hDecoder->postSeekResetFlag);
+                    hDecoder->postSeekResetFlag, hDecoder->forceUpSampling);
             }
         }
         frame_len *= 2;

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.c,v 1.9 2003/09/10 12:25:54 menno Exp $
+** $Id: sbr_dec.c,v 1.10 2003/09/18 13:38:38 menno Exp $
 **/
 
 
@@ -158,7 +158,7 @@ void sbr_save_prev_data(sbr_info *sbr, uint8_t ch)
 
 void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
                     real_t *right_channel, uint8_t id_aac,
-                    uint8_t just_seeked)
+                    uint8_t just_seeked, uint8_t upsample_only)
 {
     int16_t i, k, l;
 
@@ -172,7 +172,6 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
 #endif
 
     bitfile *ld = NULL;
-
 
     sbr->id_aac = id_aac;
     channels = (id_aac == ID_SCE) ? 1 : 2;

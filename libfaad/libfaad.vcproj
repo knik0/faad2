@@ -3,6 +3,7 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="libfaad"
+	ProjectGUID="{5EFCFACB-1835-422C-ACDA-E3B3A2F51387}"
 	SccProjectName=""
 	SccLocalPath="">
 	<Platforms>
@@ -34,27 +35,15 @@
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				Detect64BitPortabilityProblems="TRUE">
-				<IntelOptions
-					Optimization="2"
-					InlineFunctionExpansion="1"
-					OmitFramePointers="1"
-					OptimizeForProcessor="2"
-					StringPooling="1"
-					RuntimeLibrary="0"
-					BufferSecurityCheck="1"
-					EnableFunctionLevelLinking="1"
-					AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TP"/>
-			</Tool>
+				Detect64BitPortabilityProblems="TRUE"
+				AdditionalOptions=""/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile=".\Release\libfaad.lib"
-				SuppressStartupBanner="TRUE">
-				<IntelOptions
-					AllOptions="/OUT:&quot;.\Release\libfaad.lib&quot; /NOLOGO"/>
-			</Tool>
+				SuppressStartupBanner="TRUE"
+				AdditionalOptions=""/>
 			<Tool
 				Name="VCMIDLTool"/>
 			<Tool
@@ -75,8 +64,6 @@
 				Name="VCManagedWrapperGeneratorTool"/>
 			<Tool
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
-			<IntelOptions
-				CompilerName="1"/>
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
@@ -99,23 +86,15 @@
 				ProgramDataBaseFileName=".\Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="4">
-				<IntelOptions
-					Optimization="0"
-					MinimalRebuild="1"
-					BasicRuntimeChecks="3"
-					RuntimeLibrary="1"
-					AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TP"/>
-			</Tool>
+				DebugInformationFormat="4"
+				AdditionalOptions=""/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile=".\Debug\libfaad.lib"
-				SuppressStartupBanner="TRUE">
-				<IntelOptions
-					AllOptions="/OUT:&quot;.\Debug\libfaad.lib&quot; /NOLOGO"/>
-			</Tool>
+				SuppressStartupBanner="TRUE"
+				AdditionalOptions=""/>
 			<Tool
 				Name="VCMIDLTool"/>
 			<Tool
@@ -136,8 +115,6 @@
 				Name="VCManagedWrapperGeneratorTool"/>
 			<Tool
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
-			<IntelOptions
-				CompilerName="1"/>
 		</Configuration>
 	</Configurations>
 	<References/>
@@ -152,11 +129,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -164,12 +138,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -179,11 +149,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -191,12 +158,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -206,11 +169,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -218,12 +178,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -233,11 +189,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -245,12 +198,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -260,11 +209,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -272,12 +218,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -287,11 +229,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -299,12 +238,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -314,11 +249,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -326,12 +258,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -341,11 +269,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -353,12 +278,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -368,11 +289,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -380,12 +298,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -395,11 +309,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -407,12 +318,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -422,11 +329,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -434,12 +338,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -449,11 +349,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -461,12 +358,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -476,11 +369,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -488,12 +378,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -503,11 +389,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -515,12 +398,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -530,11 +409,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -542,12 +418,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -557,11 +429,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -569,12 +438,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -584,11 +449,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -596,12 +458,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -611,11 +469,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -623,12 +478,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -638,11 +489,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -650,12 +498,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -665,11 +509,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -677,12 +518,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -692,11 +529,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -704,12 +538,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -719,11 +549,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -731,12 +558,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -746,11 +569,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -758,12 +578,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -773,11 +589,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -785,12 +598,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -800,11 +609,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -812,12 +618,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -827,11 +629,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -839,12 +638,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -854,11 +649,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -866,12 +658,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -881,11 +669,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -893,12 +678,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -908,11 +689,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -920,12 +698,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -935,11 +709,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -947,12 +718,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -962,11 +729,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -974,12 +738,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -989,11 +749,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -1001,12 +758,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1016,11 +769,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -1028,12 +778,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1043,11 +789,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -1055,12 +798,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1070,11 +809,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -1082,12 +818,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1097,11 +829,8 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="">
-						<IntelOptions
-							Optimization="2"
-							AllOptions="/c  /nologo /W3 /Wp64 /O2 /Ob1 /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /TC"/>
-					</Tool>
+						PreprocessorDefinitions=""
+						AdditionalOptions=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -1109,12 +838,8 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3">
-						<IntelOptions
-							Optimization="0"
-							BasicRuntimeChecks="3"
-							AllOptions="/c  /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd /TC"/>
-					</Tool>
+						BasicRuntimeChecks="3"
+						AdditionalOptions=""/>
 				</FileConfiguration>
 			</File>
 		</Filter>

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4.c,v 1.18 2003/09/09 18:09:52 menno Exp $
+** $Id: mp4.c,v 1.19 2003/09/18 13:38:38 menno Exp $
 **/
 
 #include "common.h"
@@ -246,6 +246,17 @@ int8_t FAADAPI AudioSpecificConfig2(uint8_t *pBuffer,
                     }
                 }
             }
+        }
+    }
+
+    /* no SBR signalled, this could mean either implicit signalling or no SBR in this file */
+    /* MPEG specification states: assume SBR on files with samplerate <= 24000 Hz */
+    if (mp4ASC->sbr_present_flag == -1)
+    {
+        if (mp4ASC->samplingFrequency <= 24000)
+        {
+            mp4ASC->samplingFrequency *= 2;
+            mp4ASC->forceUpSampling = 1;
         }
     }
 #endif

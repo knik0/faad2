@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: structs.h,v 1.12 2003/09/10 12:25:54 menno Exp $
+** $Id: structs.h,v 1.13 2003/09/18 13:38:38 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -318,6 +318,7 @@ typedef struct mp4AudioSpecificConfig
     uint8_t epConfig;
 
     int8_t sbr_present_flag;
+    int8_t forceUpSampling;
 } mp4AudioSpecificConfig;
 
 typedef struct faacDecConfiguration
@@ -381,6 +382,7 @@ typedef struct
 
 #ifdef SBR_DEC
     int8_t sbr_present_flag;
+    int8_t forceUpSampling;
 
     real_t *time_out2[MAX_CHANNELS];
 
