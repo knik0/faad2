@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: in_mp4.c,v 1.40 2003/09/04 17:43:40 menno Exp $
+** $Id: in_mp4.c,v 1.41 2003/10/10 13:29:38 ca5e Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -239,6 +239,221 @@ void quit()
 {
 }
 
+/* Convert UNICODE to UTF-8
+   Return number of bytes written */
+int unicodeToUtf8 ( const WCHAR* lpWideCharStr, char* lpMultiByteStr, int cwcChars )
+{
+    const unsigned short*   pwc = (unsigned short *)lpWideCharStr;
+    unsigned char*          pmb = (unsigned char  *)lpMultiByteStr;
+    const unsigned short*   pwce;
+    size_t  cBytes = 0;
+
+    if ( cwcChars >= 0 ) {
+        pwce = pwc + cwcChars;
+    } else {
+        pwce = (unsigned short *)((size_t)-1);
+    }
+
+    while ( pwc < pwce ) {
+        unsigned short  wc = *pwc++;
+
+        if ( wc < 0x00000080 ) {
+            *pmb++ = (char)wc;
+            cBytes++;
+        } else
+        if ( wc < 0x00000800 ) {
+            *pmb++ = (char)(0xC0 | ((wc >>  6) & 0x1F));
+            cBytes++;
+            *pmb++ = (char)(0x80 |  (wc        & 0x3F));
+            cBytes++;
+        } else
+        if ( wc < 0x00010000 ) {
+            *pmb++ = (char)(0xE0 | ((wc >> 12) & 0x0F));
+            cBytes++;
+            *pmb++ = (char)(0x80 | ((wc >>  6) & 0x3F));
+            cBytes++;
+            *pmb++ = (char)(0x80 |  (wc        & 0x3F));
+            cBytes++;
+        }
+        if ( wc == L'\0' )
+            return cBytes;
+    }
+
+    return cBytes;
+}
+
+/* Convert UTF-8 coded string to UNICODE
+   Return number of characters converted */
+int utf8ToUnicode ( const char* lpMultiByteStr, WCHAR* lpWideCharStr, int cmbChars )
+{
+    const unsigned char*    pmb = (unsigned char  *)lpMultiByteStr;
+    unsigned short*         pwc = (unsigned short *)lpWideCharStr;
+    const unsigned char*    pmbe;
+    size_t  cwChars = 0;
+
+    if ( cmbChars >= 0 ) {
+        pmbe = pmb + cmbChars;
+    } else {
+        pmbe = (unsigned char *)((size_t)-1);
+    }
+
+    while ( pmb < pmbe ) {
+        char            mb = *pmb++;
+        unsigned int    cc = 0;
+        unsigned int    wc;
+
+        while ( (cc < 7) && (mb & (1 << (7 - cc)))) {
+            cc++;
+        }
+
+        if ( cc == 1 || cc > 6 )                    // illegal character combination for UTF-8
+            continue;
+
+        if ( cc == 0 ) {
+            wc = mb;
+        } else {
+            wc = (mb & ((1 << (7 - cc)) - 1)) << ((cc - 1) * 6);
+            while ( --cc > 0 ) {
+                if ( pmb == pmbe )                  // reached end of the buffer
+                    return cwChars;
+                mb = *pmb++;
+                if ( ((mb >> 6) & 0x03) != 2 )      // not part of multibyte character
+                    return cwChars;
+                wc |= (mb & 0x3F) << ((cc - 1) * 6);
+            }
+        }
+
+        if ( wc & 0xFFFF0000 )
+            wc = L'?';
+        *pwc++ = wc;
+        cwChars++;
+        if ( wc == L'\0' )
+            return cwChars;
+    }
+
+    return cwChars;
+}
+
+/* convert Windows ANSI to UTF-8 */
+int ConvertANSIToUTF8 ( const char* ansi, char* utf8 )
+{
+    WCHAR*  wszValue;          // Unicode value
+    size_t  ansi_len;
+    size_t  len;
+
+    *utf8 = '\0';
+    if ( ansi == NULL )
+        return 0;
+
+    ansi_len = strlen ( ansi );
+
+    if ( (wszValue = (WCHAR *)malloc ( (ansi_len + 1) * 2 )) == NULL )
+        return 0;
+
+    /* Convert ANSI value to Unicode */
+    if ( (len = MultiByteToWideChar ( CP_ACP, 0, ansi, ansi_len + 1, wszValue, (ansi_len + 1) * 2 )) == 0 ) {
+        free ( wszValue );
+        return 0;
+    }
+
+    /* Convert Unicode value to UTF-8 */
+    if ( (len = unicodeToUtf8 ( wszValue, utf8, -1 )) == 0 ) {
+        free ( wszValue );
+        return 0;
+    }
+
+    free ( wszValue );
+
+    return len-1;
+}
+
+/* convert UTF-8 to Windows ANSI */
+int ConvertUTF8ToANSI ( const char* utf8, char* ansi )
+{
+    WCHAR*  wszValue;          // Unicode value
+    size_t  utf8_len;
+    size_t  len;
+
+    *ansi = '\0';
+    if ( utf8 == NULL )
+        return 0;
+
+    utf8_len = strlen ( utf8 );
+
+    if ( (wszValue = (WCHAR *)malloc ( (utf8_len + 1) * 2 )) == NULL )
+        return 0;
+
+    /* Convert UTF-8 value to Unicode */
+    if ( (len = utf8ToUnicode ( utf8, wszValue, utf8_len + 1 )) == 0 ) {
+        free ( wszValue );
+        return 0;
+    }
+
+    /* Convert Unicode value to ANSI */
+    if ( (len = WideCharToMultiByte ( CP_ACP, 0, wszValue, -1, ansi, (utf8_len + 1) * 2, NULL, NULL )) == 0 ) {
+        free ( wszValue );
+        return 0;
+    }
+
+    free ( wszValue );
+
+    return len-1;
+}
+
+BOOL uSetDlgItemText(HWND hwnd, int id, const char *str)
+{
+    char *temp;
+    size_t len;
+    int r;
+
+    if (!str) return FALSE;
+    len = strlen(str);
+    temp = malloc(len+1);
+    if (!temp) return FALSE;
+    r = ConvertUTF8ToANSI(str, temp);
+    if (r > 0)
+        SetDlgItemText(hwnd, id, temp);
+    free(temp);
+
+    return r>0 ? TRUE : FALSE;
+}
+
+UINT uGetDlgItemText(HWND hwnd, int id, char *str, int max)
+{
+    char *temp, *utf8;
+    int len;
+    HWND w;
+
+    if (!str) return 0;
+    w = GetDlgItem(hwnd, id);
+    len = GetWindowTextLength(w);
+    temp = malloc(len+1);
+    if (!temp) return 0;
+    utf8 = malloc((len+1)*4);
+    if (!utf8)
+    {
+        free(temp);
+        return 0;
+    }
+
+    len = GetWindowText(w, temp, len+1);
+    if (len > 0)
+    {
+        len = ConvertANSIToUTF8(temp, utf8);
+        if (len > max-1)
+        {
+            len = max-1;
+            utf8[max] = '\0';
+        }
+        memcpy(str, utf8, len+1);
+    }
+
+    free(temp);
+    free(utf8);
+
+    return len;
+}
+
 BOOL CALLBACK mp4_info_dialog_proc(HWND hwndDlg, UINT message,
                                    WPARAM wParam, LPARAM lParam)
 {
@@ -274,27 +489,27 @@ BOOL CALLBACK mp4_info_dialog_proc(HWND hwndDlg, UINT message,
 
         pVal = NULL;
         MP4GetMetadataName(file, &pVal);
-        SetDlgItemText(hwndDlg,IDC_METANAME, pVal);
+        uSetDlgItemText(hwndDlg,IDC_METANAME, pVal);
 
         pVal = NULL;
         MP4GetMetadataArtist(file, &pVal);
-        SetDlgItemText(hwndDlg,IDC_METAARTIST, pVal);
+        uSetDlgItemText(hwndDlg,IDC_METAARTIST, pVal);
 
         pVal = NULL;
         MP4GetMetadataWriter(file, &pVal);
-        SetDlgItemText(hwndDlg,IDC_METAWRITER, pVal);
+        uSetDlgItemText(hwndDlg,IDC_METAWRITER, pVal);
 
         pVal = NULL;
         MP4GetMetadataComment(file, &pVal);
-        SetDlgItemText(hwndDlg,IDC_METACOMMENTS, pVal);
+        uSetDlgItemText(hwndDlg,IDC_METACOMMENTS, pVal);
 
         pVal = NULL;
         MP4GetMetadataAlbum(file, &pVal);
-        SetDlgItemText(hwndDlg,IDC_METAALBUM, pVal);
+        uSetDlgItemText(hwndDlg,IDC_METAALBUM, pVal);
 
         pVal = NULL;
         MP4GetMetadataGenre(file, &pVal);
-        SetDlgItemText(hwndDlg,IDC_METAGENRE, pVal);
+        uSetDlgItemText(hwndDlg,IDC_METAGENRE, pVal);
 
         dummy = 0;
         MP4GetMetadataTempo(file, &dummy);
@@ -317,7 +532,7 @@ BOOL CALLBACK mp4_info_dialog_proc(HWND hwndDlg, UINT message,
 
         pVal = NULL;
         MP4GetMetadataYear(file, &pVal);
-        SetDlgItemText(hwndDlg,IDC_METAYEAR, pVal);
+        uSetDlgItemText(hwndDlg,IDC_METAYEAR, pVal);
 
         dummy3 = 0;
         MP4GetMetadataCompilation(file, &dummy3);
@@ -346,25 +561,25 @@ BOOL CALLBACK mp4_info_dialog_proc(HWND hwndDlg, UINT message,
                 return FALSE;
             }
 
-            GetDlgItemText(hwndDlg, IDC_METANAME, dummy1, 1024);
+            uGetDlgItemText(hwndDlg, IDC_METANAME, dummy1, 1024);
             MP4SetMetadataName(file, dummy1);
 
-            GetDlgItemText(hwndDlg, IDC_METAWRITER, dummy1, 1024);
+            uGetDlgItemText(hwndDlg, IDC_METAWRITER, dummy1, 1024);
             MP4SetMetadataWriter(file, dummy1);
 
-            GetDlgItemText(hwndDlg, IDC_METAARTIST, dummy1, 1024);
+            uGetDlgItemText(hwndDlg, IDC_METAARTIST, dummy1, 1024);
             MP4SetMetadataArtist(file, dummy1);
 
-            GetDlgItemText(hwndDlg, IDC_METAALBUM, dummy1, 1024);
+            uGetDlgItemText(hwndDlg, IDC_METAALBUM, dummy1, 1024);
             MP4SetMetadataAlbum(file, dummy1);
 
-            GetDlgItemText(hwndDlg, IDC_METACOMMENTS, dummy1, 1024);
+            uGetDlgItemText(hwndDlg, IDC_METACOMMENTS, dummy1, 1024);
             MP4SetMetadataComment(file, dummy1);
 
-            GetDlgItemText(hwndDlg, IDC_METAGENRE, dummy1, 1024);
+            uGetDlgItemText(hwndDlg, IDC_METAGENRE, dummy1, 1024);
             MP4SetMetadataGenre(file, dummy1);
 
-            GetDlgItemText(hwndDlg, IDC_METAYEAR, dummy1, 1024);
+            uGetDlgItemText(hwndDlg, IDC_METAYEAR, dummy1, 1024);
             MP4SetMetadataYear(file, dummy1);
 
             GetDlgItemText(hwndDlg, IDC_METATRACK1, dummy1, 1024);
@@ -547,13 +762,15 @@ int infoDlg(char *fn, HWND hwndParent)
 
     return 0;
 }
+
 /* Get the title from the file */
 void ConstructTitle(MP4FileHandle file, char *filename, char *title, char *format)
 {
+    char temp[4096];
     int some_info = 0;
     char *in = format;
-    char *out = title;
-    char *bound = out + (MAX_PATH - 10 - 1);
+    char *out = temp;//title;
+    char *bound = out + sizeof(temp) - 256; //out + (MAX_PATH - 10 - 1);
     char *pVal, dummy1[1024];
     short dummy, dummy2;
 
@@ -578,7 +795,7 @@ void ConstructTitle(MP4FileHandle file, char *filename, char *title, char *forma
             dummy = 0; dummy2 = 0;
             if (MP4GetMetadataTrack(file, &dummy, &dummy2))
             {
-                out += wsprintf("%d", (int)dummy);
+                out += wsprintf(out, "%d", (int)dummy);
                 some_info = 1;
             }
             break;
@@ -587,7 +804,7 @@ void ConstructTitle(MP4FileHandle file, char *filename, char *title, char *forma
             pVal = NULL;
             if (MP4GetMetadataArtist(file, &pVal))
             {
-                out += wsprintf("%s", pVal);
+                out += wsprintf(out, "%s", pVal);
                 some_info = 1;
             }
             break;
@@ -596,7 +813,7 @@ void ConstructTitle(MP4FileHandle file, char *filename, char *title, char *forma
             pVal = NULL;
             if (MP4GetMetadataName(file, &pVal))
             {
-                out += wsprintf("%s", pVal);
+                out += wsprintf(out, "%s", pVal);
                 some_info = 1;
             }
             break;
@@ -605,7 +822,7 @@ void ConstructTitle(MP4FileHandle file, char *filename, char *title, char *forma
             pVal = NULL;
             if (MP4GetMetadataAlbum(file, &pVal))
             {
-                out += wsprintf("%s", pVal);
+                out += wsprintf(out, "%s", pVal);
                 some_info = 1;
             }
             break;
@@ -614,7 +831,7 @@ void ConstructTitle(MP4FileHandle file, char *filename, char *title, char *forma
             pVal = NULL;
             if (MP4GetMetadataYear(file, &pVal))
             {
-                out += wsprintf("%s", pVal);
+                out += wsprintf(out, "%s", pVal);
                 some_info = 1;
             }
             break;
@@ -623,7 +840,7 @@ void ConstructTitle(MP4FileHandle file, char *filename, char *title, char *forma
             pVal = NULL;
             if (MP4GetMetadataComment(file, &pVal))
             {
-                out += wsprintf("%s", pVal);
+                out += wsprintf(out, "%s", pVal);
                 some_info = 1;
             }
             break;
@@ -632,20 +849,22 @@ void ConstructTitle(MP4FileHandle file, char *filename, char *title, char *forma
             pVal = NULL;
             if (MP4GetMetadataGenre(file, &pVal))
             {
-                out += wsprintf("%s", pVal);
+                out += wsprintf(out, "%s", pVal);
                 some_info = 1;
             }
             break;
 
         case '7':
             {
-                char *p=filename+lstrlen(filename);
-                int len = 0;
-                while (*p != '\\' && p >= filename) { p--; len++; }
-                lstrcpy(out, ++p); out += len;
+                const char *p=strrchr(filename,'\\');
+                if (!p) p=filename;
+                out += ConvertANSIToUTF8(p, out);
                 some_info = 1;
                 break;
             }
+
+        default:
+            break;
         }
     }
 
@@ -656,6 +875,13 @@ void ConstructTitle(MP4FileHandle file, char *filename, char *title, char *forma
         char *p=filename+lstrlen(filename);
         while (*p != '\\' && p >= filename) p--;
         lstrcpy(title,++p);
+    }
+    else
+    {
+        int len = ConvertUTF8ToANSI(temp, dummy1);
+        if (len > (MAX_PATH - 10 - 1)) len = (MAX_PATH - 10 - 1);
+        memcpy(title, dummy1, len);
+        title[len] = '\0';
     }
 }
 
@@ -859,6 +1085,358 @@ int adts_parse(state *st, __int64 *bitrate, double *length)
     return 1;
 }
 
+int skip_id3v2_tag()
+{
+    unsigned char buf[10];
+    int bread, tagsize = 0;
+
+    bread = fread(buf, 1, 10, mp4state.aacfile);
+    if (bread != 10) return -1;
+
+    if (!memcmp(buf, "ID3", 3))
+    {
+        /* high bit is not used */
+        tagsize = (buf[6] << 21) | (buf[7] << 14) | (buf[8] << 7) | (buf[9] << 0);
+
+        tagsize += 10;
+        fseek(mp4state.aacfile, tagsize, SEEK_SET);
+    } else {
+        fseek(mp4state.aacfile, 0, SEEK_SET);
+    }
+
+    return tagsize;
+}
+
+int play(char *fn)
+{
+    int maxlatency;
+    int thread_id;
+    int avg_bitrate, br, sr;
+    unsigned char *buffer;
+    int buffer_size;
+    faacDecConfigurationPtr config;
+
+#ifdef DEBUG_OUTPUT
+    in_mp4_DebugOutput("play");
+#endif
+
+    memset(&mp4state, 0, sizeof(state));
+
+    lstrcpy(mp4state.filename, fn);
+
+    if (!(mp4state.mp4file = MP4Read(mp4state.filename, 0)))
+    {
+        mp4state.filetype = 1;
+    } else {
+        MP4Close(mp4state.mp4file);
+        mp4state.filetype = 0;
+    }
+
+    if (mp4state.filetype)
+    {
+        int tagsize = 0, tmp = 0, init;
+        int bread = 0;
+        double length = 0.;
+        __int64 bitrate = 128;
+        faacDecFrameInfo frameInfo;
+
+        module.is_seekable = 1;
+
+        if (!(mp4state.aacfile = fopen(mp4state.filename, "rb")))
+        {
+            // error
+            return -1;
+        }
+
+        tagsize = skip_id3v2_tag();
+        if (tagsize<0) return 0;
+
+        if (!(mp4state.m_aac_buffer = (unsigned char*)malloc(768*6)))
+        {
+            show_error(module.hMainWindow, "Memory allocation error.");
+            return -1;
+        }
+
+        for (init=0; init<2; init++)
+        {
+            mp4state.hDecoder = faacDecOpen();
+            if (!mp4state.hDecoder)
+            {
+                show_error(module.hMainWindow, "Unable to open decoder library.");
+                return -1;
+            }
+
+            config = faacDecGetCurrentConfiguration(mp4state.hDecoder);
+            config->outputFormat = m_resolution + 1;
+            config->downMatrix = m_downmix;
+            faacDecSetConfiguration(mp4state.hDecoder, config);
+
+            memset(mp4state.m_aac_buffer, 0, 768*6);
+            bread = fread(mp4state.m_aac_buffer, 1, 768*6, mp4state.aacfile);
+            mp4state.m_aac_bytes_into_buffer = bread;
+            mp4state.m_aac_bytes_consumed = 0;
+            mp4state.m_file_offset = 0;
+            mp4state.m_at_eof = (bread != 768*6) ? 1 : 0;
+
+            if (init==0)
+            {
+                faacDecFrameInfo frameInfo;
+
+                fill_buffer(&mp4state);
+
+                if ((mp4state.m_aac_bytes_consumed = faacDecInit(mp4state.hDecoder,
+                    mp4state.m_aac_buffer, mp4state.m_aac_bytes_into_buffer,
+                    &mp4state.samplerate, &mp4state.channels)) < 0)
+                {
+                    show_error(module.hMainWindow, "Can't initialize decoder library.");
+                    return -1;
+                }
+                advance_buffer(&mp4state, mp4state.m_aac_bytes_consumed);
+
+                do {
+                    memset(&frameInfo, 0, sizeof(faacDecFrameInfo));
+                    fill_buffer(&mp4state);
+                    faacDecDecode(mp4state.hDecoder, &frameInfo, mp4state.m_aac_buffer, mp4state.m_aac_bytes_into_buffer);
+                } while (!frameInfo.samples && !frameInfo.error);
+
+                if (frameInfo.error)
+                {
+                    show_error(module.hMainWindow, faacDecGetErrorMessage(frameInfo.error));
+                    return -1;
+                }
+
+                mp4state.channels = frameInfo.channels;
+                mp4state.samplerate = frameInfo.samplerate;
+                mp4state.framesize = (frameInfo.channels != 0) ? frameInfo.samples/frameInfo.channels : 0;
+                /*
+                sbr = frameInfo.sbr;
+                profile = frameInfo.object_type;
+                header_type = frameInfo.header_type;
+                */
+
+                faacDecClose(mp4state.hDecoder);
+                fseek(mp4state.aacfile, tagsize, SEEK_SET);
+            }
+        }
+
+        mp4state.m_head = (struct seek_list*)malloc(sizeof(struct seek_list));
+        mp4state.m_tail = mp4state.m_head;
+        mp4state.m_tail->next = NULL;
+
+        mp4state.m_header_type = 0;
+        if ((mp4state.m_aac_buffer[0] == 0xFF) && ((mp4state.m_aac_buffer[1] & 0xF6) == 0xF0))
+        {
+            if (1) //(can_seek)
+            {
+                adts_parse(&mp4state, &bitrate, &length);
+                fseek(mp4state.aacfile, tagsize, SEEK_SET);
+
+                bread = fread(mp4state.m_aac_buffer, 1, 768*6, mp4state.aacfile);
+                if (bread != 768*6)
+                    mp4state.m_at_eof = 1;
+                else
+                    mp4state.m_at_eof = 0;
+                mp4state.m_aac_bytes_into_buffer = bread;
+                mp4state.m_aac_bytes_consumed = 0;
+
+                mp4state.m_header_type = 1;
+            }
+        } else if (memcmp(mp4state.m_aac_buffer, "ADIF", 4) == 0) {
+            int skip_size = (mp4state.m_aac_buffer[4] & 0x80) ? 9 : 0;
+            bitrate = ((unsigned int)(mp4state.m_aac_buffer[4 + skip_size] & 0x0F)<<19) |
+                ((unsigned int)mp4state.m_aac_buffer[5 + skip_size]<<11) |
+                ((unsigned int)mp4state.m_aac_buffer[6 + skip_size]<<3) |
+                ((unsigned int)mp4state.m_aac_buffer[7 + skip_size] & 0xE0);
+
+            length = (double)file_length(mp4state.aacfile);
+            if (length == -1)
+            {
+                module.is_seekable = 0;
+                length = 0;
+            } else {
+                length = ((double)length*8.)/((double)bitrate) + 0.5;
+            }
+
+            mp4state.m_header_type = 2;
+        } else {
+            length = (double)file_length(mp4state.aacfile);
+            length = ((double)length*8.)/((double)bitrate*1000.) + 0.5;
+
+            module.is_seekable = 1;
+        }
+
+        mp4state.m_length = (int)(length*1000.);
+
+        fill_buffer(&mp4state);
+        if ((mp4state.m_aac_bytes_consumed = faacDecInit(mp4state.hDecoder,
+            mp4state.m_aac_buffer, mp4state.m_aac_bytes_into_buffer,
+            &mp4state.samplerate, &mp4state.channels)) < 0)
+        {
+            show_error(module.hMainWindow, "Can't initialize decoder library.");
+            return -1;
+        }
+        advance_buffer(&mp4state, mp4state.m_aac_bytes_consumed);
+
+        if (mp4state.m_header_type == 2)
+            avg_bitrate = bitrate;
+        else
+            avg_bitrate = bitrate*1000;
+    } else {
+        mp4state.hDecoder = faacDecOpen();
+        if (!mp4state.hDecoder)
+        {
+            show_error(module.hMainWindow, "Unable to open decoder library.");
+            return -1;
+        }
+
+        config = faacDecGetCurrentConfiguration(mp4state.hDecoder);
+        config->outputFormat = m_resolution + 1;
+        config->downMatrix = m_downmix;
+        faacDecSetConfiguration(mp4state.hDecoder, config);
+
+        mp4state.mp4file = MP4Read(mp4state.filename, 0);
+        if (!mp4state.mp4file)
+        {
+            show_error(module.hMainWindow, "Unable to open file.");
+            faacDecClose(mp4state.hDecoder);
+            return -1;
+        }
+
+        if ((mp4state.mp4track = GetAACTrack(mp4state.mp4file)) < 0)
+        {
+            show_error(module.hMainWindow, "Unsupported Audio track type.");
+            faacDecClose(mp4state.hDecoder);
+            MP4Close(mp4state.mp4file);
+            return -1;
+        }
+
+        buffer = NULL;
+        buffer_size = 0;
+        MP4GetTrackESConfiguration(mp4state.mp4file, mp4state.mp4track,
+            &buffer, &buffer_size);
+        if (!buffer)
+        {
+            faacDecClose(mp4state.hDecoder);
+            MP4Close(mp4state.mp4file);
+            return -1;
+        }
+
+        if(faacDecInit2(mp4state.hDecoder, buffer, buffer_size,
+            &mp4state.samplerate, &mp4state.channels) < 0)
+        {
+            /* If some error initializing occured, skip the file */
+            faacDecClose(mp4state.hDecoder);
+            MP4Close(mp4state.mp4file);
+            if (buffer) free (buffer);
+            return -1;
+        }
+
+        /* for gapless decoding */
+        {
+            mp4AudioSpecificConfig mp4ASC;
+
+            mp4state.timescale = MP4GetTrackTimeScale(mp4state.mp4file, mp4state.mp4track);
+            mp4state.framesize = 1024;
+            mp4state.useAacLength = 0;
+
+            if (buffer)
+            {
+                if (AudioSpecificConfig(buffer, buffer_size, &mp4ASC) >= 0)
+                {
+                    if (mp4ASC.frameLengthFlag == 1) mp4state.framesize = 960;
+                    if (mp4ASC.sbr_present_flag == 1) mp4state.framesize *= 2;
+                }
+            }
+        }
+
+        free(buffer);
+
+        avg_bitrate = MP4GetTrackIntegerProperty(mp4state.mp4file, mp4state.mp4track,
+            "mdia.minf.stbl.stsd.mp4a.esds.decConfigDescr.avgBitrate");
+
+        mp4state.numSamples = MP4GetTrackNumberOfSamples(mp4state.mp4file, mp4state.mp4track);
+        mp4state.sampleId = 1;
+
+        module.is_seekable = 1;
+    }
+
+    if (mp4state.channels == 0)
+    {
+        show_error(module.hMainWindow, "Number of channels not supported for playback.");
+        faacDecClose(mp4state.hDecoder);
+        if (mp4state.filetype)
+            fclose(mp4state.aacfile);
+        else
+            MP4Close(mp4state.mp4file);
+        return -1;
+    }
+
+    if (m_downmix && (mp4state.channels == 5 || mp4state.channels == 6))
+        mp4state.channels = 2;
+
+    maxlatency = module.outMod->Open(mp4state.samplerate, (int)mp4state.channels,
+        res_table[m_resolution], -1, -1);
+
+    if (maxlatency < 0) // error opening device
+    {
+        faacDecClose(mp4state.hDecoder);
+        if (mp4state.filetype)
+            fclose(mp4state.aacfile);
+        else
+            MP4Close(mp4state.mp4file);
+        return -1;
+    }
+
+    mp4state.paused        =  0;
+    mp4state.decode_pos_ms =  0;
+    mp4state.seek_needed   = -1;
+
+    // initialize vis stuff
+    module.SAVSAInit(maxlatency, mp4state.samplerate);
+    module.VSASetInfo((int)mp4state.channels, mp4state.samplerate);
+
+    br = (int)floor(((float)avg_bitrate + 500.0)/1000.0 + 0.5);
+    sr = (int)floor((float)mp4state.samplerate/1000.0 + 0.5);
+    module.SetInfo(br, sr, (int)mp4state.channels, 1);
+
+    module.outMod->SetVolume(-666); // set the output plug-ins default volume
+
+    killPlayThread = 0;
+
+    if (mp4state.filetype)
+    {
+        if ((play_thread_handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AACPlayThread,
+            (void *)&killPlayThread, 0, &thread_id)) == NULL)
+        {
+            show_error(module.hMainWindow, "Cannot create playback thread");
+            faacDecClose(mp4state.hDecoder);
+            fclose(mp4state.aacfile);
+            return -1;
+        }
+    } else {
+        if ((play_thread_handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)MP4PlayThread,
+            (void *)&killPlayThread, 0, &thread_id)) == NULL)
+        {
+            show_error(module.hMainWindow, "Cannot create playback thread");
+            faacDecClose(mp4state.hDecoder);
+            MP4Close(mp4state.mp4file);
+            return -1;
+        }
+    }
+
+    SetThreadAffinityMask(play_thread_handle, 1);
+
+    SetThreadPriority(play_thread_handle, priority_table[m_priority]);
+
+    return 0;
+}
+
+
+
+
+
+
+#if 0
 int play(char *fn)
 {
     int maxlatency;
@@ -1142,6 +1720,14 @@ int play(char *fn)
 
     return 0;
 }
+#endif
+
+
+
+
+
+
+
 
 void pause()
 {
@@ -1538,14 +2124,15 @@ DWORD WINAPI MP4PlayThread(void *b)
                 } else {
                     sample_count = (unsigned int)(dur * frameInfo.channels);
 
-                    if (!mp4state.useAacLength && !mp4state.initial && (mp4state.sampleId < mp4state.numSamples/2) && (sample_count != frameInfo.samples))
+                    if (!mp4state.useAacLength && !mp4state.initial && (mp4state.sampleId < mp4state.numSamples/2) && (dur*frameInfo.channels != frameInfo.samples))
                     {
                         //fprintf(stderr, "MP4 seems to have incorrect frame duration, using values from AAC data.\n");
                         mp4state.useAacLength = 1;
+                        sample_count = frameInfo.samples;
                     }
                 }
 
-                if (mp4state.initial && (sample_count < mp4state.framesize*frameInfo.channels))
+                if (mp4state.initial && (sample_count < mp4state.framesize*mp4state.channels) && (frameInfo.samples > sample_count))
                 {
                     delay = frameInfo.samples - sample_count;
                 }
@@ -1673,17 +2260,17 @@ int aac_seek(state *st, double seconds)
 
     if (1 /*can_seek*/ && ((st->m_header_type == 1) || (seconds < st->cur_pos_sec)))
     {
-        frames = (int)(seconds*((double)st->samplerate/1024.0) + 0.5);
+        frames = (int)(seconds*((double)st->samplerate/(double)st->framesize) + 0.5);
 
         for (i = 0; i < frames; i++)
         {
             if (target->next)
                 target = target->next;
             else
-                return 1;
+                return 0;
         }
         if (target->offset == 0 && frames > 0)
-            return 1;
+            return 0;
         fseek(st->aacfile, target->offset, SEEK_SET);
 
         bread = fread(st->m_aac_buffer, 1, 768*6, st->aacfile);
@@ -1699,24 +2286,24 @@ int aac_seek(state *st, double seconds)
         if (seconds > st->cur_pos_sec)
         {
             faacDecFrameInfo frameInfo;
-            memset(&frameInfo, 0, sizeof(faacDecFrameInfo));
 
-            frames = (int)((seconds - st->cur_pos_sec)*((double)st->samplerate/1024.0) + 0.5);
+            frames = (int)((seconds - st->cur_pos_sec)*((double)st->samplerate/(double)st->framesize));
 
             if (frames > 0)
             {
                 for (i = 0; i < frames; i++)
                 {
+                    memset(&frameInfo, 0, sizeof(faacDecFrameInfo));
                     decode_aac_frame(st, &frameInfo);
 
-                    if (frameInfo.error || (mp4state.m_aac_bytes_into_buffer == 0))
+                    if (frameInfo.error || (st->m_aac_bytes_into_buffer == 0))
                     {
                         if (frameInfo.error)
                         {
                             if (faacDecGetErrorMessage(frameInfo.error) != NULL)
                                 show_error(module.hMainWindow, faacDecGetErrorMessage(frameInfo.error));
                         }
-                        return 1;
+                        return 0;
                     }
                 }
             }
@@ -1750,10 +2337,12 @@ DWORD WINAPI AACPlayThread(void *b)
             double ms;
 
             ms = mp4state.seek_needed/1000;
-            module.outMod->Flush(mp4state.decode_pos_ms);
-            aac_seek(&mp4state, ms);
-            mp4state.cur_pos_sec = ms;
-            mp4state.decode_pos_ms = mp4state.seek_needed;
+            if (aac_seek(&mp4state, ms)!=0)
+            {
+                module.outMod->Flush(mp4state.decode_pos_ms);
+                mp4state.cur_pos_sec = ms;
+                mp4state.decode_pos_ms = mp4state.seek_needed;
+            }
             mp4state.seek_needed = -1;
         }
 
@@ -1841,9 +2430,8 @@ DWORD WINAPI AACPlayThread(void *b)
                 }
             }
 
-            mp4state.samplerate = frameInfo.samplerate;
-
-            mp4state.cur_pos_sec += ((double)(frameInfo.samples/frameInfo.channels)*1024.0)/(double)mp4state.samplerate;
+            if (frameInfo.channels > 0 && mp4state.samplerate > 0)
+                mp4state.cur_pos_sec += ((double)(frameInfo.samples/frameInfo.channels))/(double)mp4state.samplerate;
         } else {
             Sleep(10);
         }
