@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: faad.h,v 1.43 2004/03/02 20:09:58 menno Exp $
+** $Id: faad.h,v 1.44 2004/03/02 20:53:56 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -47,6 +47,7 @@ extern "C" {
 #define faacDecInit2            NeAACDecInit2
 #define faacDecInitDRM          NeAACDecInitDRM
 #define faacDecPostSeekReset    NeAACDecPostSeekReset
+#define faacDecOpen             NeAACDecOpen
 #define faacDecClose            NeAACDecClose
 #define faacDecDecode           NeAACDecDecode
 #define AudioSpecificConfig     NeAACDecAudioSpecificConfig
