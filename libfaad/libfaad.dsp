@@ -43,13 +43,13 @@ RSC=rc.exe
 MTL=midl.exe
 F90=df.exe
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /G6 /MD /W3 /GX /O2 /D "NDEBUG" /D "WIN32" /D "_MBCS" /D "_LIB" /YX /FD /c
+# ADD CPP /nologo /G6 /MT /W3 /GX /O2 /D "NDEBUG" /D "WIN32" /D "_MBCS" /D "_LIB" /YX /FD /c
 # ADD BASE RSC /l 0x413 /d "NDEBUG"
 # ADD RSC /l 0x413 /d "NDEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
-LIB32=xilink6.exe -lib
+LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
 
@@ -68,13 +68,13 @@ LIB32=xilink6.exe -lib
 MTL=midl.exe
 F90=df.exe
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /ZI /Od /D "_DEBUG" /D "WIN32" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /ZI /Od /D "_DEBUG" /D "WIN32" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
 # ADD BASE RSC /l 0x413 /d "_DEBUG"
 # ADD RSC /l 0x413 /d "_DEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
-LIB32=xilink6.exe -lib
+LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
 
@@ -106,6 +106,10 @@ SOURCE=.\decoder.c
 # Begin Source File
 
 SOURCE=.\drc.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\drm_dec.c
 # End Source File
 # Begin Source File
 
@@ -317,11 +321,11 @@ SOURCE=.\decoder.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\dither.h
+SOURCE=.\drc.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\drc.h
+SOURCE=.\drm_dec.h
 # End Source File
 # Begin Source File
 
@@ -366,6 +370,10 @@ SOURCE=.\lt_predict.h
 # Begin Source File
 
 SOURCE=.\mdct.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\mdct_tab.h
 # End Source File
 # Begin Source File
 

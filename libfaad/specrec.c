@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.51 2004/06/30 12:45:57 menno Exp $
+** $Id: specrec.c,v 1.52 2004/07/31 15:48:57 menno Exp $
 **/
 
 /*
@@ -627,14 +627,14 @@ static uint8_t quant_to_spec(NeAACDecHandle hDecoder,
 
 //#define SCFS_PRINT
 #ifdef SCFS_PRINT
-                    //printf("%d\n", spec_data[gindex+(win*win_inc)+j+bin+0]);
-                    //printf("%d\n", spec_data[gindex+(win*win_inc)+j+bin+1]);
-                    //printf("%d\n", spec_data[gindex+(win*win_inc)+j+bin+2]);
-                    //printf("%d\n", spec_data[gindex+(win*win_inc)+j+bin+3]);
-                    printf("0x%.8X\n", spec_data[gindex+(win*win_inc)+j+bin+0]);
-                    printf("0x%.8X\n", spec_data[gindex+(win*win_inc)+j+bin+1]);
-                    printf("0x%.8X\n", spec_data[gindex+(win*win_inc)+j+bin+2]);
-                    printf("0x%.8X\n", spec_data[gindex+(win*win_inc)+j+bin+3]);
+                    printf("%d\n", spec_data[gindex+(win*win_inc)+j+bin+0]);
+                    printf("%d\n", spec_data[gindex+(win*win_inc)+j+bin+1]);
+                    printf("%d\n", spec_data[gindex+(win*win_inc)+j+bin+2]);
+                    printf("%d\n", spec_data[gindex+(win*win_inc)+j+bin+3]);
+                    //printf("0x%.8X\n", spec_data[gindex+(win*win_inc)+j+bin+0]);
+                    //printf("0x%.8X\n", spec_data[gindex+(win*win_inc)+j+bin+1]);
+                    //printf("0x%.8X\n", spec_data[gindex+(win*win_inc)+j+bin+2]);
+                    //printf("0x%.8X\n", spec_data[gindex+(win*win_inc)+j+bin+3]);
 #endif
 #endif
 
@@ -1087,8 +1087,40 @@ uint8_t reconstruct_channel_pair(NeAACDecHandle hDecoder, ic_stream *ics1, ic_st
     /* mid/side decoding */
     ms_decode(ics1, ics2, spec_coef1, spec_coef2, hDecoder->frameLength);
 
+#if 0
+    {
+        int i;
+        for (i = 0; i < 1024; i++)
+        {
+            //printf("%d\n", spec_coef1[i]);
+            printf("0x%.8X\n", spec_coef1[i]);
+        }
+        for (i = 0; i < 1024; i++)
+        {
+            //printf("%d\n", spec_coef2[i]);
+            printf("0x%.8X\n", spec_coef2[i]);
+        }
+    }
+#endif
+
     /* intensity stereo decoding */
     is_decode(ics1, ics2, spec_coef1, spec_coef2, hDecoder->frameLength);
+
+#if 0
+    {
+        int i;
+        for (i = 0; i < 1024; i++)
+        {
+            printf("%d\n", spec_coef1[i]);
+            //printf("0x%.8X\n", spec_coef1[i]);
+        }
+        for (i = 0; i < 1024; i++)
+        {
+            printf("%d\n", spec_coef2[i]);
+            //printf("0x%.8X\n", spec_coef2[i]);
+        }
+    }
+#endif
 
 #ifdef MAIN_DEC
     /* MAIN object type prediction */

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.80 2004/06/30 12:45:57 menno Exp $
+** $Id: syntax.c,v 1.81 2004/07/31 15:48:57 menno Exp $
 **/
 
 /*
@@ -1259,8 +1259,14 @@ void aac_scalable_main_element(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo
 
         /* check CRC */
         /* no need to check it if there was already an error */
-//        if (hDecoder->sbr[0]->ret == 0)
-//            hDecoder->sbr[0]->ret = (uint8_t)faad_check_CRC(&ld_sbr, (uint16_t)faad_get_processed_bits(&ld_sbr) - 8);
+        if (hDecoder->sbr[0]->ret == 0)
+            hDecoder->sbr[0]->ret = (uint8_t)faad_check_CRC(&ld_sbr, (uint16_t)faad_get_processed_bits(&ld_sbr) - 8);
+
+        /* SBR data was corrupted, disable it until the next header */
+        if (hDecoder->sbr[0]->ret != 0)
+        {
+            hDecoder->sbr[0]->header_count = 0;  
+        }
 
         faad_endbits(&ld_sbr);
 

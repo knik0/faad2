@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_syntax.c,v 1.31 2004/05/17 10:18:03 menno Exp $
+** $Id: sbr_syntax.c,v 1.32 2004/07/31 15:48:57 menno Exp $
 **/
 
 #include "common.h"
@@ -73,16 +73,6 @@ static void sbr_reset(sbr_info *sbr)
 #endif
 
     /* if these are different from the previous frame: Reset = 1 */
-    if ((sbr->bs_start_freq != sbr->bs_start_freq_prev) ||
-        (sbr->bs_stop_freq != sbr->bs_stop_freq_prev) ||
-        (sbr->bs_freq_scale != sbr->bs_freq_scale_prev) ||
-        (sbr->bs_alter_scale != sbr->bs_alter_scale_prev))
-    {
-        sbr->Reset = 1;
-    } else {
-        sbr->Reset = 0;
-    }
-
     if ((sbr->bs_start_freq != sbr->bs_start_freq_prev) ||
         (sbr->bs_stop_freq != sbr->bs_stop_freq_prev) ||
         (sbr->bs_freq_scale != sbr->bs_freq_scale_prev) ||

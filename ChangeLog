@@ -1,38 +1,63 @@
-22 june 2004     mbakker(at)nero.com
+31 july 2004    gpascutto(at)nero.com
+    - hcr.c: Rewritten and optimized
+
+30 july 2004    mbakker(at)nero.com
+    - /mp4ff/: conversion to c++, cleanup
+
+29 july 2004    mbakker(at)nero.com
+    - /mp4ff/mp4ff.c,mp4atoms.c: support video decoding better
+
+28 july 2004    gpascutto(at)nero.com
+    - drm_dec.*, sbr_dec.c, syntax.c: improved error concealment
+
+27 july 2004    gpascutto(at)nero.com
+    - sbr_dec.c, sbr_syntax.c: duplicate code removal
+
+25 july 2004    gpascutto(at)nero.com
+    - syntax.c: re-enable SBR CRC checking for DRM
+
+22 july 2004    gpascutto(at)nero.com
+    - drm_dec.*: changed delay filter to 2 samples plus fractional delay, as in normal PS AAC
+                (DRM standard is wrong here)
+                
+2 july 2004     mbakker(at)nero.com
+    - huffman.c: Implemented VCB11 error concealment
+
+22 june 2004    mbakker(at)nero.com
     - ps_dec.c: Removed samplerate dependancy in PS, likely to be updated in corrigendum
 
-15 june 2004     mbakker(at)nero.com
+15 june 2004    mbakker(at)nero.com
     - sbr_dct.c,h: Removed huge ugly DCT_4_64...
     - sbr_qmf.c: replaced DCT_IV in qmf synthesis
 
-13 june 2004     mbakker(at)nero.com
+13 june 2004    mbakker(at)nero.com
     - ps_dec.c: Fixed fixed point code, no more cos() and sin() used
 
-7 june 2004      mbakker(at)nero.com
+7 june 2004     mbakker(at)nero.com
     - sbr_*.c,h: Overall speedups and improvements in SBR code.
 
-4 june 2004      gpascutto(at)nero.com
+4 june 2004     gpascutto(at)nero.com
     - drm_dec.c: Fixed a bug in the standard (PAN mixing)
 
-3 june 2004      mbakker(at)nero.com
+3 june 2004     mbakker(at)nero.com
     - ps_syntax.c: fixed a bug in one of the huffman tables
  
-2 june 2004      gpascutto(at)nero.com
+2 june 2004     gpascutto(at)nero.com
     - drm_dec.c: Fully working fixed point support
  
-27 may 2004      mbakker(at)nero.com
+27 may 2004     mbakker(at)nero.com
     - sbr_qmf.c, sbr_dec.h: Fixed fixed point problems with downsampled QMF
 
-17 may 2004      mbakker(at)nero.com
+17 may 2004     mbakker(at)nero.com
     - syntax.c, decoder.c: Added some logging output
 
-17 may 2004      mbakker(at)nero.com
+17 may 2004     mbakker(at)nero.com
     - mp4atom.c: Fixed an issue with broken MP4 files
 
-16 may 2004      mbakker(at)nero.com
+16 may 2004     mbakker(at)nero.com
     - ps_dec.c: fixed point: forgot to convert a few multiplies
 
-14 may 2004      mbakker(at)nero.com
+14 may 2004     mbakker(at)nero.com
     - sbr_*.c: reduced memory usage
 
 6 may 2004      mbakker(at)nero.com
