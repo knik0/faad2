@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: pulse.c,v 1.4 2003/04/02 18:31:07 menno Exp $
+** $Id: pulse.c,v 1.5 2003/04/13 18:27:09 menno Exp $
 **/
 
 #include "common.h"
@@ -25,7 +25,7 @@
 #include "syntax.h"
 #include "pulse.h"
 
-void pulse_decode(ic_stream *ics, int16_t *spec_data, uint16_t framelen)
+uint8_t pulse_decode(ic_stream *ics, int16_t *spec_data, uint16_t framelen)
 {
     uint8_t i;
     uint16_t k;
@@ -37,11 +37,13 @@ void pulse_decode(ic_stream *ics, int16_t *spec_data, uint16_t framelen)
         k += pul->pulse_offset[i];
 
         if (k >= framelen)
-            return; /* should not be possible */
+            return 15; /* should not be possible */
 
         if (spec_data[k] > 0)
             spec_data[k] += pul->pulse_amp[i];
         else
             spec_data[k] -= pul->pulse_amp[i];
     }
+
+    return 0;
 }

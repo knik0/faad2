@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: error.c,v 1.8 2003/02/16 18:17:11 menno Exp $
+** $Id: error.c,v 1.9 2003/04/13 18:27:09 menno Exp $
 **/
 
 #include "common.h"
@@ -37,5 +37,7 @@ extern int8_t *err_msg[] = {
     "Non existent huffman codebook number found",
     "Maximum number of channels exceeded",
     "Maximum number of bitstream elements exceeded",
-    "Input data buffer too small"
+    "Input data buffer too small",
+    "Array index out of range",
+    "Maximum number of scalefactor bands exceeded"
 };

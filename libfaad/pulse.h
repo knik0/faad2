@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: pulse.h,v 1.3 2003/04/02 18:31:07 menno Exp $
+** $Id: pulse.h,v 1.4 2003/04/13 18:27:09 menno Exp $
 **/
 
 #ifndef __PULSE_H__
@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 
-void pulse_decode(ic_stream *ics, int16_t *spec_coef, uint16_t framelen);
+uint8_t pulse_decode(ic_stream *ics, int16_t *spec_coef, uint16_t framelen);
 
 #ifdef __cplusplus
 }

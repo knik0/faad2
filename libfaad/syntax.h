@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.26 2003/04/01 16:34:35 menno Exp $
+** $Id: syntax.h,v 1.27 2003/04/13 18:27:10 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -102,7 +102,7 @@ static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
                                          int16_t *spec_data);
 static uint8_t ics_info(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,
                         uint8_t common_window);
-static void section_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld);
+static uint8_t section_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld);
 static uint8_t scale_factor_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld);
 static void gain_control_data(bitfile *ld, ic_stream *ics);
 static uint8_t spectral_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,
@@ -112,7 +112,7 @@ static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count);
 uint8_t reordered_spectral_data(faacDecHandle hDecoder, ic_stream *ics,
                                 bitfile *ld, int16_t *spectral_data);
 #endif
-static void pulse_data(ic_stream *ics, pulse_info *pul, bitfile *ld);
+static uint8_t pulse_data(ic_stream *ics, pulse_info *pul, bitfile *ld);
 static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld);
 static void ltp_data(faacDecHandle hDecoder, ic_stream *ics, ltp_info *ltp, bitfile *ld);
 static uint8_t adts_fixed_header(adts_header *adts, bitfile *ld);

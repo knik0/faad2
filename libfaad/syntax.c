@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.42 2003/04/02 19:09:49 menno Exp $
+** $Id: syntax.c,v 1.43 2003/04/13 18:27:09 menno Exp $
 **/
 
 /*
@@ -505,9 +505,12 @@ static uint8_t single_lfe_channel_element(faacDecHandle hDecoder,
         if (ics->pulse_data_present)
         {
             if (ics->window_sequence != EIGHT_SHORT_SEQUENCE)
-                pulse_decode(ics, spec_data, hDecoder->frameLength);
-            else
+            {
+                if ((result = pulse_decode(ics, spec_data, hDecoder->frameLength)) > 0)
+                    return result;
+            } else {
                 return 2; /* pulse coding not allowed for short blocks */
+            }
         }
         return 0;
     } else
@@ -615,16 +618,22 @@ static uint8_t channel_pair_element(faacDecHandle hDecoder, element *cpe,
         if (ics1->pulse_data_present)
         {
             if (ics1->window_sequence != EIGHT_SHORT_SEQUENCE)
-                pulse_decode(ics1, spec_data1, hDecoder->frameLength);
-            else
+            {
+                if ((result = pulse_decode(ics1, spec_data1, hDecoder->frameLength)) > 0)
+                    return result;
+            } else {
                 return 2; /* pulse coding not allowed for short blocks */
+            }
         }
         if (ics2->pulse_data_present)
         {
             if (ics2->window_sequence != EIGHT_SHORT_SEQUENCE)
-                pulse_decode(ics2, spec_data2, hDecoder->frameLength);
-            else
+            {
+                if ((result = pulse_decode(ics2, spec_data2, hDecoder->frameLength)) > 0)
+                    return result;
+            } else {
                 return 2; /* pulse coding not allowed for short blocks */
+            }
         }
         return 0;
     } else
@@ -658,12 +667,13 @@ static uint8_t ics_info(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,
     }
 
     /* get the grouping information */
-    retval = window_grouping_info(hDecoder, ics);
+    if ((retval = window_grouping_info(hDecoder, ics)) > 0)
+        return retval;
 
     /* should be an error */
     /* check the range of max_sfb */
     if (ics->max_sfb > ics->num_swb)
-        ics->max_sfb = ics->num_swb;
+        return 16;
 
     if (ics->window_sequence != EIGHT_SHORT_SEQUENCE)
     {
@@ -726,7 +736,7 @@ static uint8_t ics_info(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,
 }
 
 /* Table 4.4.7 */
-static void pulse_data(ic_stream *ics, pulse_info *pul, bitfile *ld)
+static uint8_t pulse_data(ic_stream *ics, pulse_info *pul, bitfile *ld)
 {
     uint8_t i;
 
@@ -737,7 +747,7 @@ static void pulse_data(ic_stream *ics, pulse_info *pul, bitfile *ld)
 
     /* check the range of pulse_start_sfb */
     if (pul->pulse_start_sfb > ics->num_swb)
-        pul->pulse_start_sfb = ics->num_swb;
+        return 16;
 
     for (i = 0; i < pul->number_pulse+1; i++)
     {
@@ -746,6 +756,8 @@ static void pulse_data(ic_stream *ics, pulse_info *pul, bitfile *ld)
         pul->pulse_amp[i] = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,59,"pulse_data(): pulse_amp"));
     }
+
+    return 0;
 }
 
 /* Table 4.4.10 */
@@ -909,7 +921,10 @@ static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
         if ((result = ics_info(hDecoder, ics, ld, ele->common_window)) > 0)
             return result;
     }
-    section_data(hDecoder, ics, ld);
+
+    if ((result = section_data(hDecoder, ics, ld)) > 0)
+        return result;
+
     if ((result = scale_factor_data(hDecoder, ics, ld)) > 0)
         return result;
 
@@ -924,7 +939,8 @@ static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
         if ((ics->pulse_data_present = faad_get1bit(ld
             DEBUGVAR(1,68,"individual_channel_stream(): pulse_data_present"))) & 1)
         {
-            pulse_data(ics, &(ics->pul), ld);
+            if ((result = pulse_data(ics, &(ics->pul), ld)) > 0)
+                return result;
         }
 
         /* get tns data */
@@ -1013,16 +1029,19 @@ static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
     if (ics->pulse_data_present)
     {
         if (ics->window_sequence != EIGHT_SHORT_SEQUENCE)
-            pulse_decode(ics, spec_data, hDecoder->frameLength);
-        else
+        {
+            if ((result = pulse_decode(ics, spec_data, hDecoder->frameLength)) > 0)
+                return result;
+        } else {
             return 2; /* pulse coding not allowed for short blocks */
+        }
     }
 
     return 0;
 }
 
 /* Table 4.4.25 */
-static void section_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld)
+static uint8_t section_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld)
 {
     uint8_t g;
     uint8_t sect_esc_val, sect_bits;
@@ -1052,6 +1071,11 @@ static void section_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld)
             uint8_t sect_len_incr;
             uint16_t sect_len = 0;
             uint8_t sect_cb_bits = 4;
+
+            /* if "faad_getbits" detects error and returns "0", "k" is never
+               incremented and we cannot leave the while loop */
+            if ((ld->error != 0) || (ld->no_more_reading))
+                return 14;
 
 #ifdef ERROR_RESILIENCE
             if (hDecoder->aacSectionDataResilienceFlag)
@@ -1115,6 +1139,8 @@ static void section_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld)
 #if 0
     printf("\n");
 #endif
+
+    return 0;
 }
 
 /*
