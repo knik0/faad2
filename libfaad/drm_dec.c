@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: drm_dec.c,v 1.3 2004/07/31 15:48:57 menno Exp $
+** $Id: drm_dec.c,v 1.5 2004/09/04 14:56:28 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -936,6 +936,7 @@ uint8_t drm_ps_decode(drm_ps_info *ps, uint8_t guess, uint32_t samplerate, qmf_t
 
     if (!ps->drm_ps_data_available && !guess) 
     {
+        memcpy(X_right, X_left, sizeof(qmf_t)*30*64);
         memset(ps->g_prev_sa_index, 0, sizeof(ps->g_prev_sa_index));
         memset(ps->g_prev_pan_index, 0, sizeof(ps->g_prev_pan_index));
         return 0;
