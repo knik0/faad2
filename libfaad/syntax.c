@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.49 2003/07/09 12:33:08 menno Exp $
+** $Id: syntax.c,v 1.50 2003/07/09 13:55:59 menno Exp $
 **/
 
 /*
@@ -284,6 +284,8 @@ element *decode_sce_lfe(faacDecHandle hDecoder,
 
     if (hDecoder->pce_set)
         hDecoder->internal_channel[hDecoder->pce.sce_channel[ele->element_instance_tag]] = channels;
+    else
+        hDecoder->internal_channel[channels] = channels;
 
     if (id_syn_ele == ID_SCE)
         hDecoder->channel_element[channels] = hDecoder->fr_ch_ele;
@@ -333,6 +335,9 @@ element *decode_cpe(faacDecHandle hDecoder,
     {
         hDecoder->internal_channel[hDecoder->pce.cpe_channel[ele->element_instance_tag]] = channels;
         hDecoder->internal_channel[hDecoder->pce.cpe_channel[ele->element_instance_tag]+1] = channels+1;
+    } else {
+        hDecoder->internal_channel[channels] = channels;
+        hDecoder->internal_channel[channels+1] = channels+1;
     }
 
     hDecoder->channel_element[channels] = hDecoder->fr_ch_ele;

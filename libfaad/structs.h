@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: structs.h,v 1.8 2003/07/09 11:53:07 menno Exp $
+** $Id: structs.h,v 1.9 2003/07/09 13:55:59 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -314,6 +314,7 @@ typedef struct faacDecConfiguration
     uint8_t defObjectType;
     uint32_t defSampleRate;
     uint8_t outputFormat;
+    uint8_t downMatrix;
 } faacDecConfiguration, *faacDecConfigurationPtr;
 
 typedef struct faacDecFrameInfo
@@ -348,6 +349,7 @@ typedef struct
 
     uint32_t frame;
 
+    uint8_t downMatrix;
     uint8_t first_syn_ele;
     uint8_t last_syn_ele;
     uint8_t has_lfe;

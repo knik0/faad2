@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: faad.h,v 1.24 2003/07/09 11:53:07 menno Exp $
+** $Id: faad.h,v 1.25 2003/07/09 13:55:59 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -118,6 +118,7 @@ typedef struct faacDecConfiguration
     unsigned char defObjectType;
     unsigned long defSampleRate;
     unsigned char outputFormat;
+    unsigned char downMatrix;
 } faacDecConfiguration, *faacDecConfigurationPtr;
 
 typedef struct faacDecFrameInfo

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.39 2003/07/09 11:53:07 menno Exp $
+** $Id: main.c,v 1.40 2003/07/09 13:55:59 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -239,6 +239,7 @@ void usage(void)
     fprintf(stdout, "        1:  LC (Low Complexity) object type.\n");
     fprintf(stdout, "        3:  LTP (Long Term Prediction) object type.\n");
     fprintf(stdout, "        23: LD (Low Delay) object type.\n");
+    fprintf(stdout, " -d    Down matrix 5.1 to 2 channels\n");
     fprintf(stdout, " -w    Write output to stdio instead of a file.\n");
     fprintf(stdout, "Example:\n");
     fprintf(stdout, "       faad infile.aac\n");
@@ -250,7 +251,7 @@ void usage(void)
 
 int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
                   int def_srate, int object_type, int outputFormat, int fileType,
-                  int infoOnly)
+                  int downMatrix, int infoOnly)
 {
     int tagsize;
     unsigned long samplerate;
@@ -324,7 +325,7 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
         config->defSampleRate = def_srate;
     config->defObjectType = object_type;
     config->outputFormat = outputFormat;
-
+    config->downMatrix = downMatrix;
     faacDecSetConfiguration(hDecoder, config);
 
     /* get AAC infos for printing */
@@ -523,7 +524,7 @@ unsigned long srates[] =
 };
 
 int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
-                  int outputFormat, int fileType, int infoOnly)
+                  int outputFormat, int fileType, int downMatrix, int infoOnly)
 {
     int track;
     unsigned int tracks;
@@ -553,6 +554,7 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
     /* Set configuration */
     config = faacDecGetCurrentConfiguration(hDecoder);
     config->outputFormat = outputFormat;
+    config->downMatrix = downMatrix;
     faacDecSetConfiguration(hDecoder, config);
 
     infile = MP4Read(mp4file, 0);
@@ -705,6 +707,7 @@ int main(int argc, char *argv[])
     int writeToStdio = 0;
     int object_type = LC;
     int def_srate = 0;
+    int downMatrix = 0;
     int format = 1;
     int outputFormat = FAAD_FMT_16BIT;
     int outfile_set = 0;
@@ -747,12 +750,13 @@ int main(int argc, char *argv[])
             { "bits",       0, 0, 'b' },
             { "samplerate", 0, 0, 's' },
             { "objecttype", 0, 0, 'l' },
+            { "downmix",    0, 0, 'd' },
             { "info",       0, 0, 'i' },
             { "stdio",      0, 0, 'w' },
             { "help",       0, 0, 'h' }
         };
 
-        c = getopt_long(argc, argv, "o:s:f:b:l:whi",
+        c = getopt_long(argc, argv, "o:s:f:b:l:wdhi",
             long_options, &option_index);
 
         if (c == -1)
@@ -816,6 +820,9 @@ int main(int argc, char *argv[])
                 }
             }
             break;
+        case 'd':
+            downMatrix = 1;
+            break;
         case 'w':
             writeToStdio = 1;
             break;
@@ -871,10 +878,10 @@ int main(int argc, char *argv[])
     if (mp4file)
     {
         result = decodeMP4file(aacFileName, audioFileName, writeToStdio,
-            outputFormat, format, infoOnly);
+            outputFormat, format, downMatrix, infoOnly);
     } else {
         result = decodeAACfile(aacFileName, audioFileName, writeToStdio,
-            def_srate, object_type, outputFormat, format, infoOnly);
+            def_srate, object_type, outputFormat, format, downMatrix, infoOnly);
     }
 
 

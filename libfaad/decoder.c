@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.60 2003/07/09 11:53:07 menno Exp $
+** $Id: decoder.c,v 1.61 2003/07/09 13:55:59 menno Exp $
 **/
 
 #include "common.h"
@@ -146,6 +146,7 @@ uint8_t FAADAPI faacDecSetConfiguration(faacDecHandle hDecoder,
     hDecoder->config.defObjectType = config->defObjectType;
     hDecoder->config.defSampleRate = config->defSampleRate;
     hDecoder->config.outputFormat  = config->outputFormat;
+    hDecoder->config.downMatrix    = config->downMatrix;
 
     /* OK */
     return 1;
@@ -382,6 +383,14 @@ void create_channel_config(faacDecHandle hDecoder, faacDecFrameInfo *hInfo)
     hInfo->num_lfe_channels = 0;
     memset(hInfo->channel_position, 0, MAX_CHANNELS*sizeof(uint8_t));
 
+    if (hDecoder->downMatrix)
+    {
+        hInfo->num_front_channels = 2;
+        hInfo->channel_position[0] = FRONT_CHANNEL_LEFT;
+        hInfo->channel_position[1] = FRONT_CHANNEL_RIGHT;
+        return;
+    }
+
     /* check if there is a PCE */
     if (hDecoder->pce_set)
     {
@@ -499,7 +508,6 @@ void create_channel_config(faacDecHandle hDecoder, faacDecFrameInfo *hInfo)
                 if (ch & 1) /* there's either a center front or a center back channel */
                 {
                     uint8_t ch1 = (ch-1)/2;
-                    _assert(!(ch1&1));
                     if (hDecoder->first_syn_ele == ID_SCE)
                     {
                         hInfo->num_front_channels = ch1 + 1;
@@ -580,6 +588,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     uint8_t ch;
     adts_header adts;
     uint8_t channels = 0, ch_ele = 0;
+    uint8_t output_channels = 0;
     bitfile *ld = (bitfile*)malloc(sizeof(bitfile));
 
     /* local copys of globals */
@@ -611,8 +620,8 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #ifdef LTP_DEC
     uint16_t *ltp_lag      =  hDecoder->ltp_lag;
 #endif
+    program_config *pce    = &hDecoder->pce;
 
-    program_config pce;
     element *syntax_elements[MAX_SYNTAX_ELEMENTS];
     element **elements;
     int16_t *spec_data[MAX_CHANNELS];
@@ -655,7 +664,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
     /* decode the complete bitstream */
     elements = raw_data_block(hDecoder, hInfo, ld, syntax_elements,
-        spec_data, spec_coef, &pce, drc);
+        spec_data, spec_coef, pce, drc);
 
     ch_ele = hDecoder->fr_ch_ele;
     channels = hDecoder->fr_channels;
@@ -686,13 +695,21 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             hDecoder->channelConfiguration = 0;
     }
 
+    if ((channels == 5 || channels == 6) && hDecoder->config.downMatrix)
+    {
+        hDecoder->downMatrix = 1;
+        output_channels = 2;
+    } else {
+        output_channels = channels;
+    }
+
     /* Make a channel configuration based on either a PCE or a channelConfiguration */
     create_channel_config(hDecoder, hInfo);
 
     /* number of samples in this frame */
-    hInfo->samples = frame_len*channels;
+    hInfo->samples = frame_len*output_channels;
     /* number of channels in this frame */
-    hInfo->channels = channels;
+    hInfo->channels = output_channels;
     /* samplerate */
     hInfo->samplerate = sample_rates[hDecoder->sf_index];
 
@@ -706,9 +723,9 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     if (hDecoder->sample_buffer == NULL)
     {
         if (hDecoder->config.outputFormat == FAAD_FMT_DOUBLE)
-            hDecoder->sample_buffer = malloc(frame_len*channels*sizeof(double));
+            hDecoder->sample_buffer = malloc(frame_len*output_channels*sizeof(double));
         else
-            hDecoder->sample_buffer = malloc(frame_len*channels*sizeof(real_t));
+            hDecoder->sample_buffer = malloc(frame_len*output_channels*sizeof(real_t));
     }
 
     sample_buffer = hDecoder->sample_buffer;
@@ -903,7 +920,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     }
 
     sample_buffer = output_to_PCM(hDecoder, time_out, sample_buffer,
-        channels, frame_len, outputFormat);
+        output_channels, frame_len, outputFormat);
 
     hDecoder->frame++;
 #ifdef LD_DEC
