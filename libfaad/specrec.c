@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.52 2004/07/31 15:48:57 menno Exp $
+** $Id: specrec.c,v 1.54 2004/09/04 14:56:28 menno Exp $
 **/
 
 /*
@@ -849,18 +849,9 @@ uint8_t reconstruct_single_channel(NeAACDecHandle hDecoder, ic_stream *ics,
 #endif
 
 
-    /* determine whether some mono->stereo tool is used */
-#if (defined(PS_DEC) || defined(DRM_PS))
-    output_channels = hDecoder->ps_used[hDecoder->fr_ch_ele] ? 2 : 1;
-#else
-    output_channels = 1;
-#endif
-#ifdef DRM_PS
-    /* for DRM error recovery is crucial */
-    /* simply always allocate 2 channels, you never know when PS will pop up */
-    if (hDecoder->object_type == DRM_ER_LC)
-        output_channels = 2;
-#endif
+    /* always allocate 2 channels, PS can always "suddenly" turn up */
+    output_channels = 2;
+
     if (hDecoder->element_output_channels[hDecoder->fr_ch_ele] == 0)
     {
         /* element_output_channels not set yet */
@@ -1025,10 +1016,8 @@ uint8_t reconstruct_single_channel(NeAACDecHandle hDecoder, ic_stream *ics,
     }
 #endif
 
-#ifdef DRM_PS
-    /* copy L to R for DRM when no PS is used */
-    if ((hDecoder->object_type == DRM_ER_LC) &&
-        (hDecoder->ps_used[hDecoder->fr_ch_ele] == 0))
+    /* copy L to R when no PS is used */
+    if ((hDecoder->ps_used[hDecoder->fr_ch_ele] == 0))
     {
         uint8_t ele = hDecoder->fr_ch_ele;
         uint8_t ch = sce->channel;
@@ -1037,7 +1026,6 @@ uint8_t reconstruct_single_channel(NeAACDecHandle hDecoder, ic_stream *ics,
 
         memcpy(hDecoder->time_out[ch+1], hDecoder->time_out[ch], frame_size);
     }
-#endif
 
     return 0;
 }
