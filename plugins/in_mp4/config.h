@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: config.h,v 1.4 2003/08/02 22:34:46 menno Exp $
+** $Id: config.h,v 1.5 2003/08/03 18:00:15 menno Exp $
 **/
 
 char app_name[];
@@ -32,6 +32,7 @@ int m_resolution;
 int m_show_errors;
 int m_use_for_aac;
 int m_downmix;
+int m_vbr_display;
 
 #define RS(x) (_r_s(#x,x,sizeof(x)))
 #define WS(x) (WritePrivateProfileString(app_name,#x,x,INI_FILE))

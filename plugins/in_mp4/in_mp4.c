@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: in_mp4.c,v 1.37 2003/08/03 08:57:32 knik Exp $
+** $Id: in_mp4.c,v 1.38 2003/08/03 18:00:15 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -123,8 +123,10 @@ static int PlayThreadAlive = 0; // 1=play thread still running
 HANDLE play_thread_handle = INVALID_HANDLE_VALUE; // the handle to the decode thread
 
 /* Function definitions */
+void *decode_aac_frame(state *st, faacDecFrameInfo *frameInfo);
 DWORD WINAPI MP4PlayThread(void *b); // the decode thread procedure
 DWORD WINAPI AACPlayThread(void *b); // the decode thread procedure
+
 
 #ifdef DEBUG_OUTPUT
 void in_mp4_DebugOutput(char *message)
@@ -169,6 +171,7 @@ void config_read()
     char show_errors[10];
     char use_for_aac[10];
     char downmix[10];
+    char vbr_display[10];
 
     config_init();
 
@@ -177,18 +180,21 @@ void config_read()
     strcpy(resolution, "0");
     strcpy(use_for_aac, "1");
     strcpy(downmix, "0");
+    strcpy(vbr_display, "1");
 
     RS(priority);
     RS(resolution);
     RS(show_errors);
     RS(use_for_aac);
     RS(downmix);
+    RS(vbr_display);
 
     m_priority = atoi(priority);
     m_resolution = atoi(resolution);
     m_show_errors = atoi(show_errors);
     m_use_for_aac = atoi(use_for_aac);
     m_downmix = atoi(downmix);
+    m_vbr_display = atoi(vbr_display);
 }
 
 void config_write()
@@ -198,18 +204,21 @@ void config_write()
     char show_errors[10];
     char use_for_aac[10];
     char downmix[10];
+    char vbr_display[10];
 
     itoa(m_priority, priority, 10);
     itoa(m_resolution, resolution, 10);
     itoa(m_show_errors, show_errors, 10);
     itoa(m_use_for_aac, use_for_aac, 10);
     itoa(m_downmix, downmix, 10);
+    itoa(m_vbr_display, vbr_display, 10);
 
     WS(priority);
     WS(resolution);
     WS(show_errors);
     WS(use_for_aac);
     WS(downmix);
+    WS(vbr_display);
 }
 
 void init()
@@ -546,6 +555,8 @@ BOOL CALLBACK config_dialog_proc(HWND hwndDlg, UINT message,
             SendMessage(GetDlgItem(hwndDlg, IDC_USEFORAAC), BM_SETCHECK, BST_CHECKED, 0);
         if (m_downmix)
             SendMessage(GetDlgItem(hwndDlg, IDC_DOWNMIX), BM_SETCHECK, BST_CHECKED, 0);
+        if (m_vbr_display)
+            SendMessage(GetDlgItem(hwndDlg, IDC_VBR), BM_SETCHECK, BST_CHECKED, 0);
         return TRUE;
 
     case WM_COMMAND:
@@ -557,6 +568,8 @@ BOOL CALLBACK config_dialog_proc(HWND hwndDlg, UINT message,
             m_show_errors = SendMessage(GetDlgItem(hwndDlg, IDC_ERROR), BM_GETCHECK, 0, 0);
             m_use_for_aac = SendMessage(GetDlgItem(hwndDlg, IDC_USEFORAAC), BM_GETCHECK, 0, 0);
             m_downmix = SendMessage(GetDlgItem(hwndDlg, IDC_DOWNMIX), BM_GETCHECK, 0, 0);
+            m_vbr_display = SendMessage(GetDlgItem(hwndDlg, IDC_VBR), BM_GETCHECK, 0, 0);
+
             m_priority = SendMessage(GetDlgItem(hwndDlg, IDC_PRIORITY), TBM_GETPOS, 0, 0);
             for (i = 0; i < 6; i++)
             {
@@ -767,6 +780,7 @@ int play(char *fn)
         int bread = 0;
         double length = 0.;
         __int64 bitrate = 128;
+        faacDecFrameInfo frameInfo;
 
         module.is_seekable = 1;
 
@@ -865,6 +879,11 @@ int play(char *fn)
             avg_bitrate = bitrate;
         else
             avg_bitrate = bitrate*1000;
+
+        decode_aac_frame(&mp4state, &frameInfo);
+        mp4state.channels = frameInfo.channels;
+        mp4state.samplerate = frameInfo.samplerate;
+
     } else {
         mp4state.mp4file = MP4Read(mp4state.filename, 0);
         if (!mp4state.mp4file)
@@ -928,6 +947,7 @@ int play(char *fn)
 
     maxlatency = module.outMod->Open(mp4state.samplerate, (int)mp4state.channels,
         res_table[m_resolution], -1, -1);
+
     if (maxlatency < 0) // error opening device
     {
         faacDecClose(mp4state.hDecoder);
@@ -946,8 +966,8 @@ int play(char *fn)
     module.SAVSAInit(maxlatency, mp4state.samplerate);
     module.VSASetInfo((int)mp4state.channels, mp4state.samplerate);
 
-    br = (int)floor(((float)avg_bitrate + 500.0)/1000.0);
-    sr = (int)floor((float)mp4state.samplerate/1000.0);
+    br = (int)floor(((float)avg_bitrate + 500.0)/1000.0 + 0.5);
+    sr = (int)floor((float)mp4state.samplerate/1000.0 + 0.5);
     module.SetInfo(br, sr, (int)mp4state.channels, 1);
 
     module.outMod->SetVolume(-666); // set the output plug-ins default volume
@@ -1275,6 +1295,8 @@ DWORD WINAPI MP4PlayThread(void *b)
 {
     int done = 0;
     int l;
+    int seq_frames = 0;
+    int seq_bytes = 0;
 
     void *sample_buffer;
     unsigned char *buffer;
@@ -1317,7 +1339,7 @@ DWORD WINAPI MP4PlayThread(void *b)
             }
 
             Sleep(10);
-        } else if (module.outMod->CanWrite() >= (1024*mp4state.channels*sizeof(short))) {
+        } else if (module.outMod->CanWrite() >= (2048*mp4state.channels*sizeof(short))) {
 
             if (mp4state.last_frame)
             {
@@ -1365,8 +1387,8 @@ DWORD WINAPI MP4PlayThread(void *b)
                         mp4state.decode_pos_ms);
                     module.VSAAddPCMData(sample_buffer, (int)mp4state.channels, res_table[m_resolution],
                         mp4state.decode_pos_ms);
-		    mp4state.decode_pos_ms += (double)frameInfo.samples * 1000.0 /
-		      ((double)mp4state.samplerate * (double)frameInfo.channels);
+                    mp4state.decode_pos_ms += (double)frameInfo.samples * 1000.0 /
+                        ((double)frameInfo.samplerate * (double)frameInfo.channels);
 
                     l = frameInfo.samples * res_table[m_resolution] / 8;
 
@@ -1379,13 +1401,29 @@ DWORD WINAPI MP4PlayThread(void *b)
                             frameInfo.samples/frameInfo.channels,
                             res_table[m_resolution],
                             frameInfo.channels,
-                            mp4state.samplerate) *
+                            frameInfo.samplerate) *
                             (frameInfo.channels*(res_table[m_resolution]/8));
 
                         module.outMod->Write(dsp_buffer, l);
                         if (dsp_buffer) free(dsp_buffer);
                     } else {
                         module.outMod->Write(sample_buffer, l);
+                    }
+
+                    /* VBR bitrate display */
+                    if (m_vbr_display)
+                    {
+                        seq_frames++;
+                        seq_bytes += frameInfo.bytesconsumed;
+                        if (seq_frames == (int)(floor((float)frameInfo.samplerate/(float)(frameInfo.samples/frameInfo.channels) + 0.5)))
+                        {
+                            module.SetInfo((int)floor(((float)seq_bytes*8.)/1000. + 0.5),
+                                (int)floor(frameInfo.samplerate/1000. + 0.5),
+                                mp4state.channels, 1);
+
+                            seq_frames = 0;
+                            seq_bytes = 0;
+                        }
                     }
                 }
             }
@@ -1497,6 +1535,8 @@ DWORD WINAPI AACPlayThread(void *b)
 {
     int done = 0;
     int l;
+    int seq_frames = 0;
+    int seq_bytes = 0;
 
 #ifdef DEBUG_OUTPUT
     in_mp4_DebugOutput("AACPlayThread");
@@ -1532,7 +1572,7 @@ DWORD WINAPI AACPlayThread(void *b)
             }
 
             Sleep(10);
-        } else if (module.outMod->CanWrite() >= (1024*mp4state.channels*sizeof(short))) {
+        } else if (module.outMod->CanWrite() >= (2048*mp4state.channels*sizeof(short))) {
             faacDecFrameInfo frameInfo;
             void *sample_buffer;
 
@@ -1564,8 +1604,8 @@ DWORD WINAPI AACPlayThread(void *b)
                     mp4state.decode_pos_ms);
                 module.VSAAddPCMData(sample_buffer, (int)mp4state.channels, res_table[m_resolution],
                     mp4state.decode_pos_ms);
-		mp4state.decode_pos_ms += (double)frameInfo.samples * 1000.0 /
-		  ((double)mp4state.samplerate* (double)frameInfo.channels);
+                mp4state.decode_pos_ms += (double)frameInfo.samples * 1000.0 /
+                    ((double)frameInfo.samplerate* (double)frameInfo.channels);
 
                 l = frameInfo.samples * res_table[m_resolution] / 8;
 
@@ -1578,7 +1618,7 @@ DWORD WINAPI AACPlayThread(void *b)
                         frameInfo.samples/frameInfo.channels,
                         res_table[m_resolution],
                         frameInfo.channels,
-                        mp4state.samplerate) *
+                        frameInfo.samplerate) *
                         (frameInfo.channels*(res_table[m_resolution]/8));
 
                     module.outMod->Write(dsp_buffer, l);
@@ -1586,11 +1626,27 @@ DWORD WINAPI AACPlayThread(void *b)
                 } else {
                     module.outMod->Write(sample_buffer, l);
                 }
+
+                /* VBR bitrate display */
+                if (m_vbr_display)
+                {
+                    seq_frames++;
+                    seq_bytes += frameInfo.bytesconsumed;
+                    if (seq_frames == (int)(floor((float)frameInfo.samplerate/(float)(frameInfo.samples/frameInfo.channels) + 0.5)))
+                    {
+                        module.SetInfo((int)floor(((float)seq_bytes*8.)/1000. + 0.5),
+                            (int)floor(frameInfo.samplerate/1000. + 0.5),
+                            mp4state.channels, 1);
+
+                        seq_frames = 0;
+                        seq_bytes = 0;
+                    }
+                }
             }
 
             mp4state.samplerate = frameInfo.samplerate;
 
-            mp4state.cur_pos_sec += 1024.0/(double)mp4state.samplerate;
+            mp4state.cur_pos_sec += ((double)(frameInfo.samples/frameInfo.channels)*1024.0)/(double)mp4state.samplerate;
         } else {
             Sleep(10);
         }
