@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.33 2003/10/19 18:11:19 menno Exp $
+** $Id: common.h,v 1.35 2003/11/02 20:24:03 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -80,6 +80,19 @@ extern "C" {
 // Define SMALL_IQ_TAB for smaller lookup table (also bigger error)
 //#define SMALL_IQ_TAB
 
+#define ALLOW_SMALL_FRAMELENGTH
+
+
+// Define LC_ONLY_DECODER if you want a pure AAC LC decoder (independant of SBR_DEC)
+//#define LC_ONLY_DECODER
+#ifdef LC_ONLY_DECODER
+  #undef LTP_DEC
+  #undef MAIN_DEC
+  #undef SSR_DEC
+  #undef DRM
+  #undef ALLOW_SMALL_FRAMELENGTH
+  #undef ERROR_RESILIENCE
+#endif
 
 #define SBR_DEC
 //#define SBR_LOW_POWER

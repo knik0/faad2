@@ -1,19 +1,19 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.75 2003/10/19 18:11:19 menno Exp $
+** $Id: decoder.c,v 1.76 2003/10/20 14:46:55 menno Exp $
 **/
 
 #include "common.h"
@@ -367,9 +367,12 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
     return 0;
 }
 
+#ifdef DRM
 int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
                               uint8_t channels)
 {
+    uint8_t i;
+
     /* Special object type defined for DRM */
     hDecoder->config.defObjectType = DRM_ER_LC;
 
@@ -389,7 +392,6 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
         hDecoder->channelConfiguration = 1;
 
 #ifdef SBR_DEC
-#ifdef DRM
     if (channels == DRMCH_SBR_LC_STEREO)
         hDecoder->lcstereo_flag = 1;
     else
@@ -404,7 +406,6 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
     sbrDecodeEnd(hDecoder->sbr[0]);
     hDecoder->sbr[0] = NULL;
 #endif
-#endif
 
     /* must be done before frameLength is divided by 2 for LD */
     hDecoder->fb = filter_bank_init(hDecoder->frameLength);
@@ -414,8 +415,39 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
         Init_Dither(16, (uint8_t)(hDecoder->config.outputFormat - FAAD_FMT_DITHER_LOWEST));
 #endif
 
+    /* Take care of buffers */
+    if (hDecoder->sample_buffer) free(hDecoder->sample_buffer);
+    hDecoder->sample_buffer = NULL;
+
+    for (i = 0; i < MAX_CHANNELS; i++)
+    {
+        hDecoder->window_shape_prev[i] = 0;
+
+        if (hDecoder->time_out[i]) free(hDecoder->time_out[i]);
+        hDecoder->time_out[i] = NULL;
+#ifdef SBR_DEC
+        if (hDecoder->time_out2[i]) free(hDecoder->time_out2[i]);
+        hDecoder->time_out2[i] = NULL;
+#endif
+#ifdef SSR_DEC
+        if (hDecoder->ssr_overlap[i]) free(hDecoder->ssr_overlap[i]);
+        hDecoder->ssr_overlap[i] = NULL;
+        if (hDecoder->prev_fmd[i]) free(hDecoder->prev_fmd[i]);
+        hDecoder->prev_fmd[i] = NULL;
+#endif
+#ifdef MAIN_DEC
+        if (hDecoder->pred_stat[i]) free(hDecoder->pred_stat[i]);
+        hDecoder->pred_stat[i] = NULL;
+#endif
+#ifdef LTP_DEC
+        hDecoder->ltp_lag[i] = 0;
+        if (hDecoder->lt_pred_stat[i]) free(hDecoder->lt_pred_stat[i]);
+        hDecoder->lt_pred_stat[i] = NULL; #endif
+    }
+
     return 0;
 }
+#endif
 
 void FAADAPI faacDecClose(faacDecHandle hDecoder)
 {
@@ -698,8 +730,8 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     uint32_t bitsconsumed;
 #ifdef DRM
     uint8_t *revbuffer;
-    uint8_t *prevbufstart;   
-    uint8_t *pbufend;   
+    uint8_t *prevbufstart;
+    uint8_t *pbufend;
 #endif
 
     /* local copy of globals */
