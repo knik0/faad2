@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.25 2002/10/26 11:43:12 menno Exp $
+** $Id: common.h,v 1.26 2002/11/28 18:48:29 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -25,7 +25,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 #ifdef LINUX
 #define INLINE inline
@@ -57,6 +56,8 @@ extern "C" {
 
 /* Allow decoding of MAIN profile AAC */
 #define MAIN_DEC
+/* Allow decoding of SSR profile AAC */
+#define SSR_DEC
 /* Allow decoding of LTP profile AAC */
 #define LTP_DEC
 /* Allow decoding of LD profile AAC */
@@ -74,6 +75,10 @@ extern "C" {
 
 
 /* END COMPILE TIME DEFINITIONS */
+
+#ifndef FIXED_POINT
+#define POW_TABLE_SIZE 200
+#endif
 
 
 #if defined(_WIN32)
@@ -118,9 +123,10 @@ typedef float float32_t;
 
 #endif
 
-/* FIXED_POINT doesn't work with FFTW */
+/* FIXED_POINT doesn't work with MAIN and SSR yet */
 #ifdef FIXED_POINT
   #undef MAIN_DEC
+  #undef SSR_DEC
 #endif
 
 
@@ -212,6 +218,7 @@ uint32_t random_int(void);
 #ifndef M_PI_2 /* PI/2 */
 #define M_PI_2 1.57079632679489661923
 #endif
+
 
 #ifdef __cplusplus
 }

@@ -25,7 +25,7 @@ CFG=libfaad - Win32 Debug
 # PROP AllowPerConfigDependencies 0
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
-CPP=cl.exe
+CPP=xicl6.exe
 RSC=rc.exe
 
 !IF  "$(CFG)" == "libfaad - Win32 Release"
@@ -47,7 +47,7 @@ RSC=rc.exe
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
-LIB32=link.exe -lib
+LIB32=xilink6.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
 
@@ -70,7 +70,7 @@ LIB32=link.exe -lib
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
-LIB32=link.exe -lib
+LIB32=xilink6.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
 
@@ -173,6 +173,10 @@ SOURCE=.\filtbank.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\hcr.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\ic_predict.c
 # End Source File
 # Begin Source File
@@ -209,15 +213,23 @@ SOURCE=.\pulse.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\reordered_spectral_data.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\rvlc_scale_factors.c
+SOURCE=.\rvlc.c
 # End Source File
 # Begin Source File
 
 SOURCE=.\specrec.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\ssr.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\ssr_fb.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\ssr_ipqf.c
 # End Source File
 # Begin Source File
 
@@ -273,10 +285,6 @@ SOURCE=.\error.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\fftw\f77_func.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\filtbank.h
 # End Source File
 # Begin Source File
@@ -329,11 +337,15 @@ SOURCE=.\pulse.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\rvlc_scale_factors.h
+SOURCE=.\rvlc.h
 # End Source File
 # Begin Source File
 
 SOURCE=.\specrec.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\ssr.h
 # End Source File
 # Begin Source File
 

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.c,v 1.22 2002/11/07 18:24:53 menno Exp $
+** $Id: mdct.c,v 1.23 2002/11/28 18:48:30 menno Exp $
 **/
 
 /*
@@ -36,6 +36,7 @@
  */
 
 #include "common.h"
+#include "structs.h"
 
 #include <stdlib.h>
 #ifdef _WIN32_WCE
@@ -63,6 +64,10 @@ real_t const_tab[][5] =
     { 0xBAF4BA, 0xFFFE990, 0x1ACEDD, 0xFFFFFA0, 0x359DD }, /* 960 */
     { 0x16A09E6, 0xFFEC430, 0x648558, 0xFFFFB10, 0xC90FC }, /* 256 */
     { 0x175E974, 0xFFE98B0, 0x6B3885, 0xFFFFA60, 0xD6773 }  /* 240 */
+#ifdef SSR_DEC
+   ,{ 0, 0, 0, 0, 0 }, /* 512 */
+    { 0, 0, 0, 0, 0 }  /* 64 */
+#endif
 };
 #else
 #ifdef _MSC_VER
@@ -77,6 +82,10 @@ real_t const_tab[][5] =
     { 0.0456435465, 0.9999786019, 0.0065449383, 0.9999996424, 0.0008181230 }, /* 960 */
     { 0.0883883476, 0.9996988177, 0.0245412290, 0.9999952912, 0.0030679568 }, /* 256 */
     { 0.0912870929, 0.9996573329, 0.0261769500, 0.9999946356, 0.0032724866 }  /* 240 */
+#ifdef SSR_DEC
+   ,{ 0.062500000, 0.999924702, 0.012271538, 0.999998823, 0.00153398 }, /* 512 */
+    { 0.176776695, 0.995184727, 0.09801714, 0.999924702, 0.012271538 }  /* 64 */
+#endif
 };
 #endif
 
@@ -90,6 +99,10 @@ uint8_t map_N_to_idx(uint16_t N)
     case 960:  return 3;
     case 256:  return 4;
     case 240:  return 5;
+#ifdef SSR_DEC
+    case 512:  return 6;
+    case 64:   return 7;
+#endif
     }
     return 0;
 }

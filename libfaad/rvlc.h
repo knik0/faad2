@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: rvlc_scale_factors.h,v 1.3 2002/09/29 10:34:00 menno Exp $
+** $Id: rvlc.h,v 1.1 2002/11/28 18:48:30 menno Exp $
 **/
 
 #ifndef __RVLC_SCF_H__

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.h,v 1.13 2002/11/08 13:00:35 menno Exp $
+** $Id: bits.h,v 1.14 2002/11/28 18:48:29 menno Exp $
 **/
 
 #ifndef __BITS_H__
@@ -43,6 +43,7 @@ typedef struct _bitfile
     uint32_t buffer_size; /* size of the buffer in bytes */
     uint32_t *tail;
     uint32_t *start;
+    void *buffer;
 } bitfile;
 
 
@@ -64,6 +65,7 @@ static uint32_t bitmask[] = {
 };
 
 void faad_initbits(bitfile *ld, void *buffer, uint32_t buffer_size);
+void faad_endbits(bitfile *ld);
 void faad_initbits_rev(bitfile *ld, void *buffer,
                        uint32_t bits_in_buffer);
 uint8_t faad_byte_align(bitfile *ld);
@@ -108,11 +110,11 @@ static INLINE void faad_flushbits(bitfile *ld, uint32_t bits)
 
         ld->bufa = ld->bufb;
         tmp = getdword(ld->tail);
+        ld->tail++;
 #ifndef ARCH_IS_BIG_ENDIAN
         BSWAP(tmp);
 #endif
         ld->bufb = tmp;
-        ld->tail++;
         ld->bits_left += (32 - bits);
     }
 }

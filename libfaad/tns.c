@@ -16,10 +16,11 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: tns.c,v 1.17 2002/09/15 22:02:30 menno Exp $
+** $Id: tns.c,v 1.18 2002/11/28 18:48:30 menno Exp $
 **/
 
 #include "common.h"
+#include "structs.h"
 
 #include "syntax.h"
 #include "tns.h"
@@ -252,7 +253,7 @@ static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
     real_t y, state[TNS_MAX_ORDER];
 
     for (i = 0; i < order; i++)
-        state[i] = REAL_CONST(0.0);
+        state[i] = 0;
 
     for (i = 0; i < size; i++)
     {

@@ -16,12 +16,13 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.c,v 1.4 2002/10/01 21:55:49 menno Exp $
+** $Id: common.c,v 1.5 2002/11/28 18:48:29 menno Exp $
 **/
 
 /* just some common functions that could be used anywhere */
 
 #include "common.h"
+#include "structs.h"
 
 #include "syntax.h"
 
@@ -57,7 +58,11 @@ int8_t can_decode_ot(uint8_t object_type)
         return -1;
 #endif
     case SSR:
+#ifdef SSR_DEC
+        return 0;
+#else
         return -1;
+#endif
     case LTP:
 #ifdef LTP_DEC
         return 0;

@@ -16,12 +16,15 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.39 2002/11/08 13:12:32 menno Exp $
+** $Id: decoder.c,v 1.40 2002/11/28 18:48:29 menno Exp $
 **/
+
+#include "common.h"
+#include "structs.h"
 
 #include <stdlib.h>
 #include <string.h>
-#include "common.h"
+
 #include "decoder.h"
 #include "mp4.h"
 #include "syntax.h"
@@ -37,6 +40,8 @@
 #include "error.h"
 #include "output.h"
 #include "dither.h"
+#include "ssr.h"
+#include "ssr_fb.h"
 
 #ifdef ANALYSIS
 uint16_t dbg_count;
@@ -124,7 +129,7 @@ uint8_t FAADAPI faacDecSetConfiguration(faacDecHandle hDecoder,
 
 int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
                             uint32_t buffer_size,
-                        uint32_t *samplerate, uint8_t *channels)
+                            uint32_t *samplerate, uint8_t *channels)
 {
     uint32_t bits = 0;
     bitfile ld;
@@ -172,11 +177,16 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
             *channels = (adts.channel_configuration > 6) ?
                 2 : adts.channel_configuration;
         }
+
+        faad_endbits(&ld);
     }
     hDecoder->channelConfiguration = *channels;
 
     /* must be done before frameLength is divided by 2 for LD */
-    hDecoder->fb = filter_bank_init(hDecoder->frameLength);
+    if (hDecoder->object_type == SSR)
+        hDecoder->fb = ssr_filter_bank_init(hDecoder->frameLength/SSR_BANDS);
+    else
+        hDecoder->fb = filter_bank_init(hDecoder->frameLength);
 
 #ifdef LD_DEC
     if (hDecoder->object_type == LD)
@@ -187,7 +197,7 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
         return -1;
 
 #ifndef FIXED_POINT
-    if (hDecoder->config.outputFormat > 5)
+    if (hDecoder->config.outputFormat >= 5)
         Init_Dither(16, hDecoder->config.outputFormat - 5);
 #endif
 
@@ -236,7 +246,10 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
         hDecoder->frameLength = 960;
 
     /* must be done before frameLength is divided by 2 for LD */
-    hDecoder->fb = filter_bank_init(hDecoder->frameLength);
+    if (hDecoder->object_type == SSR)
+        hDecoder->fb = ssr_filter_bank_init(hDecoder->frameLength/SSR_BANDS);
+    else
+        hDecoder->fb = filter_bank_init(hDecoder->frameLength);
 
 #ifdef LD_DEC
     if (hDecoder->object_type == LD)
@@ -244,7 +257,7 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
 #endif
 
 #ifndef FIXED_POINT
-    if (hDecoder->config.outputFormat > 5)
+    if (hDecoder->config.outputFormat >= 5)
         Init_Dither(16, hDecoder->config.outputFormat - 5);
 #endif
 
@@ -266,7 +279,10 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
 #endif
     }
 
-    filter_bank_end(hDecoder->fb);
+    if (hDecoder->object_type == SSR)
+        ssr_filter_bank_end(hDecoder->fb);
+    else
+        filter_bank_end(hDecoder->fb);
 
     drc_end(hDecoder->drc);
 
@@ -316,11 +332,6 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #ifdef LTP_DEC
     uint16_t *ltp_lag      =  hDecoder->ltp_lag;
 #endif
-#ifdef ERROR_RESILIENCE
-    uint8_t aacSectionDataResilienceFlag     = hDecoder->aacSectionDataResilienceFlag;
-    uint8_t aacScalefactorDataResilienceFlag = hDecoder->aacScalefactorDataResilienceFlag;
-    uint8_t aacSpectralDataResilienceFlag    = hDecoder->aacSpectralDataResilienceFlag;
-#endif
 
     program_config pce;
     element *syntax_elements[MAX_SYNTAX_ELEMENTS];
@@ -368,6 +379,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     /* no more bit reading after this */
     faad_byte_align(ld);
     hInfo->bytesconsumed = bit2byte(faad_get_processed_bits(ld));
+    faad_endbits(ld);
     if (ld) free(ld);
     ld = NULL;
 
@@ -525,16 +537,25 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
         if (time_out[ch] == NULL)
         {
-            uint16_t r;
             time_out[ch] = (real_t*)malloc(frame_len*2*sizeof(real_t));
-			for (r = 0; r < frame_len*2; r++)
-				time_out[ch][r] = 0;
+            memset(time_out[ch], 0, frame_len*2*sizeof(real_t));
         }
 
         /* filter bank */
-        ifilter_bank(fb, ics->window_sequence, ics->window_shape,
-            window_shape_prev[ch], spec_coef[ch],
-            time_out[ch], object_type, frame_len);
+#ifdef SSR_DEC
+        if (object_type != SSR)
+        {
+#endif
+            ifilter_bank(fb, ics->window_sequence, ics->window_shape,
+                window_shape_prev[ch], spec_coef[ch],
+                time_out[ch], object_type, frame_len);
+#ifdef SSR_DEC
+        } else {
+            ssr_decode(&(ics->ssr), fb, ics->window_sequence, ics->window_shape,
+                window_shape_prev[ch], spec_coef[ch],
+                time_out[ch], frame_len);
+        }
+#endif
         /* save window shape for next frame */
         window_shape_prev[ch] = ics->window_shape;
 
@@ -592,6 +613,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
 error:
     /* free all memory that could have been allocated */
+    faad_endbits(ld);
     if (ld) free(ld);
 
     /* cleanup */

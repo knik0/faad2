@@ -16,37 +16,50 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.c,v 1.16 2002/11/08 13:12:32 menno Exp $
+** $Id: bits.c,v 1.17 2002/11/28 18:48:29 menno Exp $
 **/
 
 #include "common.h"
+#include "structs.h"
+
 #include <stdlib.h>
+#include <string.h>
 #include "bits.h"
 
 /* initialize buffer, call once before first getbits or showbits */
-void faad_initbits(bitfile *ld, void *buffer, uint32_t buffer_size)
+void faad_initbits(bitfile *ld, void *_buffer, uint32_t buffer_size)
 {
     uint32_t tmp;
 
+    ld->buffer = malloc((buffer_size+12)*sizeof(uint8_t));
+    memset(ld->buffer, 0, (buffer_size+12)*sizeof(uint8_t));
+    memcpy(ld->buffer, _buffer, buffer_size*sizeof(uint8_t));
+
     ld->buffer_size = buffer_size;
 
-    tmp = getdword((uint32_t*)buffer);
+    tmp = getdword((uint32_t*)ld->buffer);
 #ifndef ARCH_IS_BIG_ENDIAN
     BSWAP(tmp);
 #endif
     ld->bufa = tmp;
 
-    tmp = getdword((uint32_t*)buffer + 1);
+    tmp = getdword((uint32_t*)ld->buffer + 1);
 #ifndef ARCH_IS_BIG_ENDIAN
     BSWAP(tmp);
 #endif
     ld->bufb = tmp;
 
-    ld->start = (uint32_t*)buffer;
-    ld->tail = ((uint32_t*)buffer + 2);
+    ld->start = (uint32_t*)ld->buffer;
+    ld->tail = ((uint32_t*)ld->buffer + 2);
 
     ld->bits_left = 32;
 }
+
+void faad_endbits(bitfile *ld)
+{
+    if (ld->buffer) free(ld->buffer);
+}
+
 
 uint32_t faad_get_processed_bits(bitfile *ld)
 {

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.h,v 1.17 2002/11/01 11:19:35 menno Exp $
+** $Id: decoder.h,v 1.18 2002/11/28 18:48:30 menno Exp $
 **/
 
 #ifndef __DECODER_H__
@@ -39,6 +39,7 @@ extern "C" {
 
 #include "bits.h"
 #include "syntax.h"
+#include "drc.h"
 #include "specrec.h"
 #include "filtbank.h"
 #include "ic_predict.h"
@@ -52,65 +53,6 @@ extern "C" {
 #define FAAD_FMT_16BIT_L_SHAPE 6
 #define FAAD_FMT_16BIT_M_SHAPE 7
 #define FAAD_FMT_16BIT_H_SHAPE 8
-
-typedef struct faacDecConfiguration
-{
-    uint8_t defObjectType;
-    uint32_t defSampleRate;
-    uint8_t outputFormat;
-} faacDecConfiguration, *faacDecConfigurationPtr;
-
-typedef struct faacDecFrameInfo
-{
-    uint32_t bytesconsumed;
-    uint32_t samples;
-    uint8_t channels;
-    uint8_t error;
-} faacDecFrameInfo;
-
-typedef struct
-{
-    uint8_t adts_header_present;
-    uint8_t adif_header_present;
-    uint8_t sf_index;
-    uint8_t object_type;
-    uint8_t channelConfiguration;
-#ifdef ERROR_RESILIENCE
-    uint8_t aacSectionDataResilienceFlag;
-    uint8_t aacScalefactorDataResilienceFlag;
-    uint8_t aacSpectralDataResilienceFlag;
-#endif
-    uint16_t frameLength;
-
-    uint32_t frame;
-
-    void *sample_buffer;
-
-    uint8_t window_shape_prev[MAX_CHANNELS];
-#ifdef LTP_DEC
-    uint16_t ltp_lag[MAX_CHANNELS];
-#endif
-    fb_info *fb;
-    drc_info *drc;
-
-    real_t *time_out[MAX_CHANNELS];
-
-#ifdef MAIN_DEC
-    pred_state *pred_stat[MAX_CHANNELS];
-#endif
-#ifdef LTP_DEC
-    real_t *lt_pred_stat[MAX_CHANNELS];
-#endif
-
-#ifndef FIXED_POINT
-#if POW_TABLE_SIZE
-    real_t *pow2_table;
-#endif
-#endif
-
-    /* Configuration data */
-    faacDecConfiguration config;
-} faacDecStruct, *faacDecHandle;
 
 
 int8_t* FAADAPI faacDecGetErrorMessage(uint8_t errcode);
@@ -141,7 +83,6 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                             uint8_t *buffer,
                             uint32_t buffer_size);
 
-/* these functions are in syntax.c */
 element *decode_sce_lfe(faacDecHandle hDecoder,
                         faacDecFrameInfo *hInfo, bitfile *ld,
                         int16_t **spec_data, real_t **spec_coef,

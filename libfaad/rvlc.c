@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: rvlc_scale_factors.c,v 1.6 2002/11/01 11:19:36 menno Exp $
+** $Id: rvlc.c,v 1.1 2002/11/28 18:48:30 menno Exp $
 **/
 
 /* RVLC scalefactor decoding
@@ -33,10 +33,13 @@
  */
 
 #include "common.h"
+#include "structs.h"
+
 #include <stdlib.h>
+
 #include "syntax.h"
 #include "bits.h"
-#include "rvlc_scale_factors.h"
+#include "rvlc.h"
 
 
 #ifdef ERROR_RESILIENCE
@@ -129,6 +132,9 @@ uint8_t rvlc_decode_scale_factors(ic_stream *ics, bitfile *ld)
 
     if (rvlc_esc_buffer) free(rvlc_esc_buffer);
     if (rvlc_sf_buffer) free(rvlc_sf_buffer);
+
+    faad_endbits(&ld_rvlc_sf);
+    faad_endbits(&ld_rvlc_esc);
 
     return result;
 }

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: cfft.c,v 1.9 2002/11/07 18:24:53 menno Exp $
+** $Id: cfft.c,v 1.10 2002/11/28 18:48:29 menno Exp $
 **/
 
 /*
@@ -29,6 +29,7 @@
 /* isign is +1 for backward and -1 for forward transforms */
 
 #include "common.h"
+#include "structs.h"
 
 #include <stdlib.h>
 #ifdef _WIN32_WCE

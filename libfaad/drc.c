@@ -16,10 +16,11 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: drc.c,v 1.11 2002/11/08 13:12:33 menno Exp $
+** $Id: drc.c,v 1.12 2002/11/28 18:48:30 menno Exp $
 **/
 
 #include "common.h"
+#include "structs.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -123,11 +124,11 @@ void drc_decode(drc_info *drc, real_t *spec)
             exp = -drc->ctrl1 * (drc->dyn_rng_ctl[bd] - (DRC_REF_LEVEL - drc->prog_ref_level))/24.0;
         else /* boost */
             exp = drc->ctrl2 * (drc->dyn_rng_ctl[bd] - (DRC_REF_LEVEL - drc->prog_ref_level))/24.0;
-        factor = REAL_CONST(pow(2.0, exp));
+        factor = (real_t)pow(2.0, exp);
 
         /* Apply gain factor */
         for (i = bottom; i < top; i++)
-            spec[i] = MUL(spec[i], factor);
+            spec[i] *= factor;
 #else
         /* Decode DRC gain factor */
         if (drc->dyn_rng_sgn[bd])  /* compress */

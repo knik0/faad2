@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.31 2002/11/08 13:12:33 menno Exp $
+** $Id: syntax.c,v 1.32 2002/11/28 18:48:30 menno Exp $
 **/
 
 /*
@@ -27,9 +27,12 @@
    an ADTS header)).
 */
 
+#include "common.h"
+#include "structs.h"
+
 #include <stdlib.h>
 #include <string.h>
-#include "common.h"
+
 #include "decoder.h"
 #include "syntax.h"
 #include "specrec.h"
@@ -38,8 +41,9 @@
 #include "data.h"
 #include "pulse.h"
 #include "analysis.h"
+#include "drc.h"
 #ifdef ERROR_RESILIENCE
-#include "rvlc_scale_factors.h"
+#include "rvlc.h"
 #endif
 
 
@@ -251,15 +255,8 @@ element *decode_sce_lfe(faacDecHandle hDecoder,
     ele->channel = channels;
     ele->paired_channel = -1;
 
-    hInfo->error = single_lfe_channel_element(ele,
-        ld, spec_data[channels], hDecoder->sf_index,
-        hDecoder->object_type, hDecoder->frameLength
-#ifdef ERROR_RESILIENCE
-        ,hDecoder->aacSectionDataResilienceFlag,
-        hDecoder->aacScalefactorDataResilienceFlag,
-        hDecoder->aacSpectralDataResilienceFlag
-#endif
-        );
+    hInfo->error = single_lfe_channel_element(hDecoder, ele,
+        ld, spec_data[channels]);
 
     return ele;
 }
@@ -282,16 +279,8 @@ element *decode_cpe(faacDecHandle hDecoder,
     ele->channel        = channels;
     ele->paired_channel = channels+1;
 
-    hInfo->error = channel_pair_element(ele,
-        ld, spec_data[channels], spec_data[channels+1],
-        hDecoder->sf_index, hDecoder->object_type,
-        hDecoder->frameLength
-#ifdef ERROR_RESILIENCE
-        ,hDecoder->aacSectionDataResilienceFlag,
-        hDecoder->aacScalefactorDataResilienceFlag,
-        hDecoder->aacSpectralDataResilienceFlag
-#endif
-        );
+    hInfo->error = channel_pair_element(hDecoder, ele,
+        ld, spec_data[channels], spec_data[channels+1]);
 
     return ele;
 }
@@ -504,16 +493,9 @@ return_on_error:
 
 /* Table 4.4.4 and */
 /* Table 4.4.9 */
-static uint8_t single_lfe_channel_element(element *sce, bitfile *ld,
-                                          int16_t *spec_data,
-                                          uint8_t sf_index, uint8_t object_type,
-                                          uint16_t frame_len
-#ifdef ERROR_RESILIENCE
-                                          ,uint8_t aacSectionDataResilienceFlag,
-                                          uint8_t aacScalefactorDataResilienceFlag,
-                                          uint8_t aacSpectralDataResilienceFlag
-#endif
-                                          )
+static uint8_t single_lfe_channel_element(faacDecHandle hDecoder,
+                                          element *sce, bitfile *ld,
+                                          int16_t *spec_data)
 {
     ic_stream *ics = &(sce->ics1);
 
@@ -523,26 +505,13 @@ static uint8_t single_lfe_channel_element(element *sce, bitfile *ld,
     sce->element_instance_tag = (uint8_t)faad_getbits(ld, LEN_TAG
         DEBUGVAR(1,38,"single_lfe_channel_element(): element_instance_tag"));
 
-    return individual_channel_stream(sce, ld, ics, 0, spec_data, sf_index,
-        object_type, frame_len
-#ifdef ERROR_RESILIENCE
-        ,aacSectionDataResilienceFlag,
-        aacScalefactorDataResilienceFlag,
-        aacSpectralDataResilienceFlag
-#endif
-        );
+    return individual_channel_stream(hDecoder, sce, ld, ics, 0, spec_data);
 }
 
 /* Table 4.4.5 */
-static uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
-                                    int16_t *spec_data2, uint8_t sf_index, uint8_t object_type,
-                                    uint16_t frame_len
-#ifdef ERROR_RESILIENCE
-                                    ,uint8_t aacSectionDataResilienceFlag,
-                                    uint8_t aacScalefactorDataResilienceFlag,
-                                    uint8_t aacSpectralDataResilienceFlag
-#endif
-                                    )
+static uint8_t channel_pair_element(faacDecHandle hDecoder, element *cpe,
+                                    bitfile *ld, int16_t *spec_data1,
+                                    int16_t *spec_data2)
 {
     uint8_t result;
     ic_stream *ics1 = &(cpe->ics1);
@@ -558,8 +527,7 @@ static uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_dat
         DEBUGVAR(1,40,"channel_pair_element(): common_window"))) & 1)
     {
         /* both channels have common ics information */
-        if ((result = ics_info(ics1, ld, cpe->common_window, sf_index,
-            object_type, frame_len)) > 0)
+        if ((result = ics_info(hDecoder, ics1, ld, cpe->common_window)) > 0)
             return result;
 
         ics1->ms_mask_present = (uint8_t)faad_getbits(ld, 2
@@ -578,12 +546,12 @@ static uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_dat
         }
 
 #ifdef ERROR_RESILIENCE
-        if ((object_type >= ER_OBJECT_START) && (ics1->predictor_data_present))
+        if ((hDecoder->object_type >= ER_OBJECT_START) && (ics1->predictor_data_present))
         {
             if ((ics1->ltp.data_present = faad_get1bit(ld
                 DEBUGVAR(1,50,"channel_pair_element(): ltp.data_present"))) & 1)
             {
-                ltp_data(ics1, &(ics1->ltp), ld, object_type);
+                ltp_data(hDecoder, ics1, &(ics1->ltp), ld);
             }
         }
 #endif
@@ -593,44 +561,36 @@ static uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_dat
         ics1->ms_mask_present = 0;
     }
 
-    if ((result = individual_channel_stream(cpe, ld, ics1, 0, spec_data1,
-        sf_index, object_type, frame_len
-#ifdef ERROR_RESILIENCE
-        ,aacSectionDataResilienceFlag,
-        aacScalefactorDataResilienceFlag,
-        aacSpectralDataResilienceFlag
-#endif
-        )) > 0)
+    if ((result = individual_channel_stream(hDecoder, cpe, ld, ics1,
+        0, spec_data1)) > 0)
+    {
         return result;
+    }
 
 #ifdef ERROR_RESILIENCE
-    if (cpe->common_window && (object_type >= ER_OBJECT_START) &&
+    if (cpe->common_window && (hDecoder->object_type >= ER_OBJECT_START) &&
         (ics1->predictor_data_present))
     {
         if ((ics1->ltp2.data_present = faad_get1bit(ld
             DEBUGVAR(1,50,"channel_pair_element(): ltp.data_present"))) & 1)
         {
-            ltp_data(ics1, &(ics1->ltp2), ld, object_type);
+            ltp_data(hDecoder, ics1, &(ics1->ltp2), ld);
         }
     }
 #endif
 
-    if ((result = individual_channel_stream(cpe, ld, ics2, 0, spec_data2,
-        sf_index, object_type, frame_len
-#ifdef ERROR_RESILIENCE
-        ,aacSectionDataResilienceFlag,
-        aacScalefactorDataResilienceFlag,
-        aacSpectralDataResilienceFlag
-#endif
-        )) > 0)
+    if ((result = individual_channel_stream(hDecoder, cpe, ld, ics2,
+        0, spec_data2)) > 0)
+    {
         return result;
+    }
 
     return 0;
 }
 
 /* Table 4.4.6 */
-static uint8_t ics_info(ic_stream *ics, bitfile *ld, uint8_t common_window,
-                    uint8_t sf_index, uint8_t object_type, uint16_t frame_len)
+static uint8_t ics_info(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,
+                        uint8_t common_window)
 {
     /* ics->ics_reserved_bit = */ faad_get1bit(ld
         DEBUGVAR(1,43,"ics_info(): ics_reserved_bit"));
@@ -652,11 +612,11 @@ static uint8_t ics_info(ic_stream *ics, bitfile *ld, uint8_t common_window,
         if ((ics->predictor_data_present = faad_get1bit(ld
             DEBUGVAR(1,49,"ics_info(): predictor_data_present"))) & 1)
         {
-            if (object_type == MAIN) /* MPEG2 style AAC predictor */
+            if (hDecoder->object_type == MAIN) /* MPEG2 style AAC predictor */
             {
                 uint8_t sfb;
 
-                ics->pred.limit = min(ics->max_sfb, pred_sfb_max[sf_index]);
+                ics->pred.limit = min(ics->max_sfb, pred_sfb_max[hDecoder->sf_index]);
 
                 if ((ics->pred.predictor_reset = faad_get1bit(ld
                     DEBUGVAR(1,53,"ics_info(): pred.predictor_reset"))) & 1)
@@ -673,29 +633,29 @@ static uint8_t ics_info(ic_stream *ics, bitfile *ld, uint8_t common_window,
             }
 #ifdef LTP_DEC
             else { /* Long Term Prediction */
-                if (object_type < ER_OBJECT_START)
+                if (hDecoder->object_type < ER_OBJECT_START)
                 {
                     if ((ics->ltp.data_present = faad_get1bit(ld
                         DEBUGVAR(1,50,"ics_info(): ltp.data_present"))) & 1)
                     {
-                        ltp_data(ics, &(ics->ltp), ld, object_type);
+                        ltp_data(hDecoder, ics, &(ics->ltp), ld);
                     }
                     if (common_window)
                     {
                         if ((ics->ltp2.data_present = faad_get1bit(ld
                             DEBUGVAR(1,51,"ics_info(): ltp2.data_present"))) & 1)
                         {
-                            ltp_data(ics, &(ics->ltp2), ld, object_type);
+                            ltp_data(hDecoder, ics, &(ics->ltp2), ld);
                         }
                     }
                 }
 #ifdef ERROR_RESILIENCE
-                if (!common_window && (object_type >= ER_OBJECT_START))
+                if (!common_window && (hDecoder->object_type >= ER_OBJECT_START))
                 {
                     if ((ics->ltp.data_present = faad_get1bit(ld
                         DEBUGVAR(1,50,"ics_info(): ltp.data_present"))) & 1)
                     {
-                        ltp_data(ics, &(ics->ltp), ld, object_type);
+                        ltp_data(hDecoder, ics, &(ics->ltp), ld);
                     }
                 }
 #endif
@@ -705,7 +665,7 @@ static uint8_t ics_info(ic_stream *ics, bitfile *ld, uint8_t common_window,
     }
 
     /* get the grouping information */
-    return window_grouping_info(ics, sf_index, object_type, frame_len);
+    return window_grouping_info(hDecoder, ics);
 }
 
 /* Table 4.4.7 */
@@ -778,93 +738,92 @@ static uint8_t fill_element(bitfile *ld, drc_info *drc)
 }
 
 /* Table 4.4.12 */
+#ifdef SSR_DEC
 static void gain_control_data(bitfile *ld, ic_stream *ics)
 {
     uint8_t bd, wd, ad;
-    uint8_t adjust_num[4][8];
-    uint8_t alevcode[4][8][8];
-    uint8_t aloccode[4][8][8];
+    ssr_info *ssr = &(ics->ssr);
 
-    uint8_t max_band = (uint8_t)faad_getbits(ld, 2
+    ssr->max_band = (uint8_t)faad_getbits(ld, 2
         DEBUGVAR(1,1000,"gain_control_data(): max_band"));
 
     if (ics->window_sequence == ONLY_LONG_SEQUENCE)
     {
-        for (bd = 1; bd <= max_band; bd++)
+        for (bd = 1; bd <= ssr->max_band; bd++)
         {
-            for (wd=0; wd<1; wd++)
+            for (wd = 0; wd < 1; wd++)
             {
-                adjust_num[bd][wd] = (uint8_t)faad_getbits(ld, 3
+                ssr->adjust_num[bd][wd] = (uint8_t)faad_getbits(ld, 3
                     DEBUGVAR(1,1001,"gain_control_data(): adjust_num"));
 
-                for (ad = 0; ad < adjust_num[bd][wd]; ad++)
+                for (ad = 0; ad < ssr->adjust_num[bd][wd]; ad++)
                 {
-                    alevcode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
+                    ssr->alevcode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
                         DEBUGVAR(1,1002,"gain_control_data(): alevcode"));
-                    aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 5
+                    ssr->aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 5
                         DEBUGVAR(1,1003,"gain_control_data(): aloccode"));
                 }
             }
         }
     } else if (ics->window_sequence == LONG_START_SEQUENCE) {
-        for (bd = 1; bd <= max_band; bd++)
+        for (bd = 1; bd <= ssr->max_band; bd++)
         {
             for (wd = 0; wd < 2; wd++)
             {
-                adjust_num[bd][wd] = (uint8_t)faad_getbits(ld, 3
+                ssr->adjust_num[bd][wd] = (uint8_t)faad_getbits(ld, 3
                     DEBUGVAR(1,1001,"gain_control_data(): adjust_num"));
 
-                for (ad = 0; ad < adjust_num[bd][wd]; ad++)
+                for (ad = 0; ad < ssr->adjust_num[bd][wd]; ad++)
                 {
-                    alevcode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
+                    ssr->alevcode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
                         DEBUGVAR(1,1002,"gain_control_data(): alevcode"));
                     if (wd == 0)
                     {
-                        aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
+                        ssr->aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
                             DEBUGVAR(1,1003,"gain_control_data(): aloccode"));
                     } else {
-                        aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 2
+                        ssr->aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 2
                             DEBUGVAR(1,1003,"gain_control_data(): aloccode"));
                     }
                 }
             }
         }
     } else if (ics->window_sequence == EIGHT_SHORT_SEQUENCE) {
-        for (bd = 1; bd <= max_band; bd++)
+        for (bd = 1; bd <= ssr->max_band; bd++)
         {
-            for(wd=0; wd<8; wd++)
+            for (wd = 0; wd < 8; wd++)
             {
-                adjust_num[bd][wd] = (uint8_t)faad_getbits(ld, 3
+                ssr->adjust_num[bd][wd] = (uint8_t)faad_getbits(ld, 3
                     DEBUGVAR(1,1001,"gain_control_data(): adjust_num"));
 
-                for (ad = 0; ad < adjust_num[bd][wd]; ad++)
+                for (ad = 0; ad < ssr->adjust_num[bd][wd]; ad++)
                 {
-                    alevcode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
+                    ssr->alevcode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
                         DEBUGVAR(1,1002,"gain_control_data(): alevcode"));
-                    aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 2
+                    ssr->aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 2
                         DEBUGVAR(1,1003,"gain_control_data(): aloccode"));
                 }
             }
         }
     } else if (ics->window_sequence == LONG_STOP_SEQUENCE) {
-        for (bd = 1; bd <= max_band; bd++)
+        for (bd = 1; bd <= ssr->max_band; bd++)
         {
             for (wd = 0; wd < 2; wd++)
             {
-                adjust_num[bd][wd] = (uint8_t)faad_getbits(ld, 3
+                ssr->adjust_num[bd][wd] = (uint8_t)faad_getbits(ld, 3
                     DEBUGVAR(1,1001,"gain_control_data(): adjust_num"));
 
-                for (ad = 0; ad < adjust_num[bd][wd]; ad++)
+                for (ad = 0; ad < ssr->adjust_num[bd][wd]; ad++)
                 {
-                    alevcode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
+                    ssr->alevcode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
                         DEBUGVAR(1,1002,"gain_control_data(): alevcode"));
 
                     if (wd == 0)
                     {
-                        aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
+                        ssr->aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
                             DEBUGVAR(1,1003,"gain_control_data(): aloccode"));
                     } else {
-                        aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 5
+                        ssr->aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 5
                             DEBUGVAR(1,1003,"gain_control_data(): aloccode"));
                     }
                 }
@@ -872,18 +831,12 @@ static void gain_control_data(bitfile *ld, ic_stream *ics)
         }
     }
 }
+#endif
 
 /* Table 4.4.24 */
-static uint8_t individual_channel_stream(element *ele, bitfile *ld,
-                                     ic_stream *ics, uint8_t scal_flag,
-                                     int16_t *spec_data, uint8_t sf_index,
-                                     uint8_t object_type, uint16_t frame_len
-#ifdef ERROR_RESILIENCE
-                                     ,uint8_t aacSectionDataResilienceFlag,
-                                     uint8_t aacScalefactorDataResilienceFlag,
-                                     uint8_t aacSpectralDataResilienceFlag
-#endif
-                                     )
+static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
+                                         bitfile *ld, ic_stream *ics, uint8_t scal_flag,
+                                         int16_t *spec_data)
 {
     uint8_t result;
 
@@ -892,20 +845,11 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
 
     if (!ele->common_window && !scal_flag)
     {
-        if ((result = ics_info(ics, ld, ele->common_window, sf_index,
-            object_type, frame_len)) > 0)
+        if ((result = ics_info(hDecoder, ics, ld, ele->common_window)) > 0)
             return result;
     }
-    section_data(ics, ld
-#ifdef ERROR_RESILIENCE
-        ,aacSectionDataResilienceFlag
-#endif
-        );
-    if ((result = scale_factor_data(ics, ld
-#ifdef ERROR_RESILIENCE
-        ,aacScalefactorDataResilienceFlag
-#endif
-        )) > 0)
+    section_data(hDecoder, ics, ld);
+    if ((result = scale_factor_data(hDecoder, ics, ld)) > 0)
         return result;
 
     if (!scal_flag)
@@ -927,7 +871,7 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
             DEBUGVAR(1,69,"individual_channel_stream(): tns_data_present"))) & 1)
         {
 #ifdef ERROR_RESILIENCE
-            if (object_type < ER_OBJECT_START)
+            if (hDecoder->object_type < ER_OBJECT_START)
 #endif
                 tns_data(ics, &(ics->tns), ld);
         }
@@ -936,16 +880,16 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
         if ((ics->gain_control_data_present = faad_get1bit(ld
             DEBUGVAR(1,70,"individual_channel_stream(): gain_control_data_present"))) & 1)
         {
-#if 1
-            return 1;
-#else
+#ifdef SSR_DEC
             gain_control_data(ld, ics);
+#else
+            return 1;
 #endif
         }
     }
 
 #ifdef ERROR_RESILIENCE
-    if (aacSpectralDataResilienceFlag)
+    if (hDecoder->aacSpectralDataResilienceFlag)
     {
         ics->length_of_reordered_spectral_data = (uint16_t)faad_getbits(ld, 14
             DEBUGVAR(1,147,"individual_channel_stream(): length_of_reordered_spectral_data"));
@@ -957,30 +901,29 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
     }
 
     /* RVLC spectral data is put here */
-    if (aacScalefactorDataResilienceFlag)
+    if (hDecoder->aacScalefactorDataResilienceFlag)
     {
         if ((result = rvlc_decode_scale_factors(ics, ld)) > 0)
             return result;
     }
 
-    if (object_type >= ER_OBJECT_START) 
+    if (hDecoder->object_type >= ER_OBJECT_START) 
     {
         if (ics->tns_data_present)
             tns_data(ics, &(ics->tns), ld);
     }
 
-    if (aacSpectralDataResilienceFlag)
+    if (hDecoder->aacSpectralDataResilienceFlag)
     {
         /* error resilient spectral data decoding */
-        if ((result = reordered_spectral_data(ics, ld, spec_data, frame_len,
-            aacSectionDataResilienceFlag)) > 0)
+        if ((result = reordered_spectral_data(hDecoder, ics, ld, spec_data)) > 0)
         {
             return result;
         }
     } else {
 #endif
         /* decode the spectral data */
-        if ((result = spectral_data(ics, ld, spec_data, frame_len)) > 0)
+        if ((result = spectral_data(hDecoder, ics, ld, spec_data)) > 0)
         {
             return result;
         }
@@ -1001,11 +944,7 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
 }
 
 /* Table 4.4.25 */
-static void section_data(ic_stream *ics, bitfile *ld
-#ifdef ERROR_RESILIENCE
-                         ,uint8_t aacSectionDataResilienceFlag
-#endif
-                         )
+static void section_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld)
 {
     uint8_t g;
     uint8_t sect_esc_val, sect_bits;
@@ -1037,7 +976,7 @@ static void section_data(ic_stream *ics, bitfile *ld
             uint8_t sect_cb_bits = 4;
 
 #ifdef ERROR_RESILIENCE
-            if (aacSectionDataResilienceFlag)
+            if (hDecoder->aacSectionDataResilienceFlag)
                 sect_cb_bits = 5;
 #endif
 
@@ -1048,7 +987,7 @@ static void section_data(ic_stream *ics, bitfile *ld
                 ics->noise_used = 1;
 
 #ifdef ERROR_RESILIENCE
-            if (aacSectionDataResilienceFlag)
+            if (hDecoder->aacSectionDataResilienceFlag)
             {
                 if ((ics->sect_cb[g][i] == 11) ||
                     ((ics->sect_cb[g][i] >= 16) && (ics->sect_cb[g][i] <= 32)))
@@ -1181,14 +1120,10 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
 }
 
 /* Table 4.4.26 */
-static uint8_t scale_factor_data(ic_stream *ics, bitfile *ld
-#ifdef ERROR_RESILIENCE
-                                 ,uint8_t aacScalefactorDataResilienceFlag
-#endif
-                                 )
+static uint8_t scale_factor_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld)
 {
 #ifdef ERROR_RESILIENCE
-    if (!aacScalefactorDataResilienceFlag)
+    if (!hDecoder->aacScalefactorDataResilienceFlag)
     {
 #endif
         return decode_scale_factors(ics, ld);
@@ -1264,13 +1199,12 @@ static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld)
    The limit MAX_LTP_SFB is not defined in 14496-3, this is a bug in the document
    and will be corrected in one of the corrigenda.
 */
-static void ltp_data(ic_stream *ics, ltp_info *ltp, bitfile *ld,
-                     uint8_t object_type)
+static void ltp_data(faacDecHandle hDecoder, ic_stream *ics, ltp_info *ltp, bitfile *ld)
 {
     uint8_t sfb, w;
 
 #ifdef LD_DEC
-    if (object_type == LD)
+    if (hDecoder->object_type == LD)
     {
         ltp->lag_update = (uint8_t)faad_getbits(ld, 1
             DEBUGVAR(1,142,"ltp_data(): lag_update"));
@@ -1319,8 +1253,8 @@ static void ltp_data(ic_stream *ics, ltp_info *ltp, bitfile *ld,
 #endif
 
 /* Table 4.4.29 */
-static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data,
-                             uint16_t frame_len)
+static uint8_t spectral_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,
+                             int16_t *spectral_data)
 {
     int8_t i;
     uint8_t g;
@@ -1329,16 +1263,10 @@ static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data
     uint8_t groups = 0;
     uint8_t sect_cb;
     uint8_t result;
-    uint16_t nshort = frame_len/8;
+    uint16_t nshort = hDecoder->frameLength/8;
 
     sp = spectral_data;
-    for (i = frame_len/16-1; i >= 0; --i)
-    {
-        *sp++ = 0; *sp++ = 0; *sp++ = 0; *sp++ = 0;
-        *sp++ = 0; *sp++ = 0; *sp++ = 0; *sp++ = 0;
-        *sp++ = 0; *sp++ = 0; *sp++ = 0; *sp++ = 0;
-        *sp++ = 0; *sp++ = 0; *sp++ = 0; *sp++ = 0;
-    }
+    memset(sp, 0, hDecoder->frameLength*sizeof(int16_t));
 
     for(g = 0; g < ics->num_window_groups; g++)
     {

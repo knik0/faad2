@@ -16,32 +16,29 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ic_predict.h,v 1.6 2002/11/28 18:48:30 menno Exp $
+** $Id: ssr_fb.h,v 1.1 2002/11/28 18:48:30 menno Exp $
 **/
 
-#ifdef MAIN_DEC
-
-#ifndef __IC_PREDICT_H__
-#define __IC_PREDICT_H__
+#ifndef __SSR_FB_H__
+#define __SSR_FB_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define ALPHA      REAL_CONST(0.90625)
-#define A          REAL_CONST(0.953125)
-#define B          REAL_CONST(0.953125)
+fb_info *ssr_filter_bank_init(uint16_t frame_len);
+void ssr_filter_bank_end(fb_info *fb);
 
-
-void pns_reset_pred_state(ic_stream *ics, pred_state *state);
-void reset_all_predictors(pred_state *state, uint16_t frame_len);
-void ic_prediction(ic_stream *ics, real_t *spec, pred_state *state,
-                   uint16_t frame_len);
-
+/*non overlapping inverse filterbank */
+void ssr_ifilter_bank(fb_info *fb,
+                      uint8_t window_sequence,
+                      uint8_t window_shape,
+                      uint8_t window_shape_prev,
+                      real_t *freq_in,
+                      real_t *time_out,
+                      uint16_t frame_len);
 
 #ifdef __cplusplus
 }
 #endif
-#endif
-
 #endif

@@ -33,13 +33,27 @@
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				DebugInformationFormat="4"
-				CompileAs="0"/>
+				CompileAs="0"
+				AdditionalOptions="">
+				<IntelOptions
+					Optimization="0"
+					MinimalRebuild="1"
+					BasicRuntimeChecks="3"
+					RuntimeLibrary="1"
+					AllOptions="/c  /I &quot;fftw&quot; /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;FFTW_ENABLE_FLOAT&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd"
+					MSOriginalAdditionalOptions=""/>
+			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile=".\Debug\libfaad.lib"
-				SuppressStartupBanner="TRUE"/>
+				SuppressStartupBanner="TRUE"
+				AdditionalOptions="">
+				<IntelOptions
+					AllOptions="/OUT:&quot;.\Debug\libfaad.lib&quot; /NOLOGO"
+					MSOriginalAdditionalOptions=""/>
+			</Tool>
 			<Tool
 				Name="VCMIDLTool"/>
 			<Tool
@@ -54,6 +68,8 @@
 				Culture="1043"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
+			<IntelOptions
+				CompilerName="0"/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
@@ -65,9 +81,12 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
+				GlobalOptimizations="FALSE"
 				InlineFunctionExpansion="1"
+				EnableIntrinsicFunctions="TRUE"
+				FavorSizeOrSpeed="1"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="fftw"
+				AdditionalIncludeDirectories=""
 				PreprocessorDefinitions="NDEBUG,WIN32,_LIB,FFTW_ENABLE_FLOAT"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
@@ -79,13 +98,38 @@
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				CompileAs="0"/>
+				Detect64BitPortabilityProblems="FALSE"
+				CompileAs="0"
+				AdditionalOptions="">
+				<IntelOptions
+					Optimization="2"
+					GlobalOptimizations="0"
+					InlineFuncExpansion="1"
+					IntrinsicFuncs="1"
+					FavorSizeSpeed="1"
+					OmitFramePtrs="1"
+					OptimProc="2"
+					UseProcExt="0"
+					RequireProcExt="0"
+					Parallelization="0"
+					StringPooling="1"
+					RuntimeLibrary="0"
+					BufferSecurityCheck="1"
+					FunctionLevelLinking="1"
+					AllOptions="/c  /nologo /W3 /O2 /Ob1 /Oi /Ot /Oy /G6 /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;FFTW_ENABLE_FLOAT&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd"
+					MSOriginalAdditionalOptions=""/>
+			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile=".\Release\libfaad.lib"
-				SuppressStartupBanner="TRUE"/>
+				SuppressStartupBanner="TRUE"
+				AdditionalOptions="">
+				<IntelOptions
+					AllOptions="/OUT:&quot;.\Release\libfaad.lib&quot; /NOLOGO"
+					MSOriginalAdditionalOptions=""/>
+			</Tool>
 			<Tool
 				Name="VCMIDLTool"/>
 			<Tool
@@ -100,6 +144,8 @@
 				Culture="1043"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
+			<IntelOptions
+				CompilerName="0"/>
 		</Configuration>
 	</Configurations>
 	<Files>
@@ -107,204 +153,158 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath=".\bits.c">
-			</File>
+				RelativePath=".\bits.c"/>
 			<File
-				RelativePath=".\cfft.c">
-			</File>
+				RelativePath=".\cfft.c"/>
 			<File
-				RelativePath=".\common.c">
-			</File>
+				RelativePath=".\common.c"/>
 			<File
-				RelativePath=".\data.c">
-			</File>
+				RelativePath=".\data.c"/>
 			<File
-				RelativePath=".\decoder.c">
-			</File>
+				RelativePath=".\decoder.c"/>
 			<File
-				RelativePath=".\dither.c">
-			</File>
+				RelativePath=".\dither.c"/>
 			<File
-				RelativePath=".\drc.c">
-			</File>
+				RelativePath=".\drc.c"/>
 			<File
-				RelativePath=".\error.c">
-			</File>
+				RelativePath=".\error.c"/>
 			<File
-				RelativePath=".\filtbank.c">
-			</File>
+				RelativePath=".\filtbank.c"/>
 			<File
-				RelativePath=".\ic_predict.c">
-			</File>
+				RelativePath="hcr.c"/>
 			<File
-				RelativePath=".\is.c">
-			</File>
+				RelativePath=".\ic_predict.c"/>
 			<File
-				RelativePath=".\lt_predict.c">
-			</File>
+				RelativePath=".\is.c"/>
 			<File
-				RelativePath=".\mdct.c">
-			</File>
+				RelativePath=".\lt_predict.c"/>
 			<File
-				RelativePath=".\mp4.c">
-			</File>
+				RelativePath=".\mdct.c"/>
 			<File
-				RelativePath=".\ms.c">
-			</File>
+				RelativePath=".\mp4.c"/>
 			<File
-				RelativePath=".\output.c">
-			</File>
+				RelativePath=".\ms.c"/>
 			<File
-				RelativePath=".\pns.c">
-			</File>
+				RelativePath=".\output.c"/>
 			<File
-				RelativePath=".\pulse.c">
-			</File>
+				RelativePath=".\pns.c"/>
 			<File
-				RelativePath=".\reordered_spectral_data.c">
-			</File>
+				RelativePath=".\pulse.c"/>
 			<File
-				RelativePath=".\rvlc_scale_factors.c">
-			</File>
+				RelativePath="rvlc.c"/>
 			<File
-				RelativePath=".\specrec.c">
-			</File>
+				RelativePath=".\specrec.c"/>
 			<File
-				RelativePath=".\syntax.c">
-			</File>
+				RelativePath="ssr.c"/>
 			<File
-				RelativePath=".\tns.c">
-			</File>
+				RelativePath="ssr_fb.c"/>
+			<File
+				RelativePath="ssr_ipqf.c"/>
+			<File
+				RelativePath=".\syntax.c"/>
+			<File
+				RelativePath=".\tns.c"/>
 			<Filter
 				Name="codebook"
 				Filter="">
 				<File
-					RelativePath=".\codebook\hcb_1.c">
-				</File>
+					RelativePath=".\codebook\hcb_1.c"/>
 				<File
-					RelativePath=".\codebook\hcb_10.c">
-				</File>
+					RelativePath=".\codebook\hcb_10.c"/>
 				<File
-					RelativePath=".\codebook\hcb_11.c">
-				</File>
+					RelativePath=".\codebook\hcb_11.c"/>
 				<File
-					RelativePath=".\codebook\hcb_2.c">
-				</File>
+					RelativePath=".\codebook\hcb_2.c"/>
 				<File
-					RelativePath=".\codebook\hcb_3.c">
-				</File>
+					RelativePath=".\codebook\hcb_3.c"/>
 				<File
-					RelativePath=".\codebook\hcb_4.c">
-				</File>
+					RelativePath=".\codebook\hcb_4.c"/>
 				<File
-					RelativePath=".\codebook\hcb_5.c">
-				</File>
+					RelativePath=".\codebook\hcb_5.c"/>
 				<File
-					RelativePath=".\codebook\hcb_6.c">
-				</File>
+					RelativePath=".\codebook\hcb_6.c"/>
 				<File
-					RelativePath=".\codebook\hcb_7.c">
-				</File>
+					RelativePath=".\codebook\hcb_7.c"/>
 				<File
-					RelativePath=".\codebook\hcb_8.c">
-				</File>
+					RelativePath=".\codebook\hcb_8.c"/>
 				<File
-					RelativePath=".\codebook\hcb_9.c">
-				</File>
+					RelativePath=".\codebook\hcb_9.c"/>
 				<File
-					RelativePath=".\codebook\hcb_sf.c">
-				</File>
+					RelativePath=".\codebook\hcb_sf.c"/>
 			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
 			<File
-				RelativePath=".\analysis.h">
-			</File>
+				RelativePath=".\analysis.h"/>
 			<File
-				RelativePath=".\bits.h">
-			</File>
+				RelativePath=".\bits.h"/>
 			<File
-				RelativePath=".\cfft.h">
-			</File>
+				RelativePath=".\cfft.h"/>
 			<File
-				RelativePath=".\common.h">
-			</File>
+				RelativePath=".\common.h"/>
 			<File
-				RelativePath=".\fftw\config.h">
-			</File>
+				RelativePath=".\fftw\config.h"/>
 			<File
-				RelativePath=".\data.h">
-			</File>
+				RelativePath=".\data.h"/>
 			<File
-				RelativePath=".\decoder.h">
-			</File>
+				RelativePath=".\decoder.h"/>
 			<File
-				RelativePath=".\dither.h">
-			</File>
+				RelativePath=".\dither.h"/>
 			<File
-				RelativePath=".\drc.h">
-			</File>
+				RelativePath=".\drc.h"/>
 			<File
-				RelativePath=".\error.h">
-			</File>
+				RelativePath=".\error.h"/>
 			<File
-				RelativePath=".\filtbank.h">
-			</File>
+				RelativePath=".\filtbank.h"/>
 			<File
-				RelativePath="fixed.h">
-			</File>
+				RelativePath="fixed.h"/>
 			<File
-				RelativePath=".\codebook\hcb.h">
-			</File>
+				RelativePath=".\codebook\hcb.h"/>
 			<File
-				RelativePath=".\huffman.h">
-			</File>
+				RelativePath=".\huffman.h"/>
 			<File
-				RelativePath=".\ic_predict.h">
-			</File>
+				RelativePath=".\ic_predict.h"/>
 			<File
-				RelativePath=".\is.h">
-			</File>
+				RelativePath=".\is.h"/>
 			<File
-				RelativePath=".\kbd_win.h">
-			</File>
+				RelativePath=".\kbd_win.h"/>
 			<File
-				RelativePath=".\lt_predict.h">
-			</File>
+				RelativePath=".\lt_predict.h"/>
 			<File
-				RelativePath=".\mdct.h">
-			</File>
+				RelativePath=".\mdct.h"/>
 			<File
-				RelativePath=".\mp4.h">
-			</File>
+				RelativePath=".\mp4.h"/>
 			<File
-				RelativePath=".\ms.h">
-			</File>
+				RelativePath=".\ms.h"/>
 			<File
-				RelativePath=".\output.h">
-			</File>
+				RelativePath=".\output.h"/>
 			<File
-				RelativePath=".\pns.h">
-			</File>
+				RelativePath=".\pns.h"/>
 			<File
-				RelativePath=".\pulse.h">
-			</File>
+				RelativePath=".\pulse.h"/>
 			<File
-				RelativePath=".\rvlc_scale_factors.h">
-			</File>
+				RelativePath="rvlc.h"/>
 			<File
-				RelativePath=".\specrec.h">
-			</File>
+				RelativePath="sine_win.h"/>
 			<File
-				RelativePath=".\syntax.h">
-			</File>
+				RelativePath=".\specrec.h"/>
 			<File
-				RelativePath=".\tns.h">
-			</File>
+				RelativePath="ssr.h"/>
+			<File
+				RelativePath="ssr_fb.h"/>
+			<File
+				RelativePath="ssr_ipqf.h"/>
+			<File
+				RelativePath="ssr_win.h"/>
+			<File
+				RelativePath="structs.h"/>
+			<File
+				RelativePath=".\syntax.h"/>
+			<File
+				RelativePath=".\tns.h"/>
 		</Filter>
 	</Files>
-	<Globals>
-	</Globals>
+	<Globals/>
 </VisualStudioProject>

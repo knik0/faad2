@@ -1,6 +1,30 @@
+/*
+** FAAD - Freeware Advanced Audio Decoder
+** Copyright (C) 2002 A. Kurpiers
+**  
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License as published by
+** the Free Software Foundation; either version 2 of the License, or
+** (at your option) any later version.
+** 
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+** 
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software 
+** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+**
+** $Id: hcr.c,v 1.1 2002/11/28 18:48:30 menno Exp $
+**/
+
+#include "common.h"
+#include "structs.h"
+
 #include <stdlib.h>
 #include <string.h>
-#include "common.h"
+
 #include "syntax.h"
 #include "specrec.h"
 #include "bits.h"
@@ -353,8 +377,8 @@ typedef struct
 
 #define segmentWidth( codebook )	min( maxCwLen[codebook], ics->length_of_longest_codeword )
      
-uint8_t reordered_spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data,
-                                uint16_t frame_len, uint8_t aacSectionDataResilienceFlag)
+uint8_t reordered_spectral_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,
+                                int16_t *spectral_data)
 {
     uint16_t sp_offset[8];
     uint16_t g,i, presort;
@@ -365,10 +389,10 @@ uint8_t reordered_spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_d
 
     uint8_t PCW_decoded=0;
     uint16_t segment_index=0, codeword_index=0;
-    uint16_t nshort = frame_len/8;
+    uint16_t nshort = hDecoder->frameLength/8;
 
 
-    memset (spectral_data, 0, frame_len*sizeof(uint16_t));
+    memset (spectral_data, 0, hDecoder->frameLength*sizeof(uint16_t));
 
     if (ics->length_of_reordered_spectral_data == 0)
         return 0; /* nothing to do */
@@ -390,12 +414,12 @@ uint8_t reordered_spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_d
     }
 
     /* All data is sorted according to the codebook used */        
-    for (presort = 0; presort < (aacSectionDataResilienceFlag ? 22 : 6); presort++)
+    for (presort = 0; presort < (hDecoder->aacSectionDataResilienceFlag ? 22 : 6); presort++)
     {
         uint8_t sfb;
 
         /* next codebook that has to be processed according to presorting */
-        uint8_t nextCB = aacSectionDataResilienceFlag ? PresortedCodebook_VCB11[ presort ] : PresortedCodebook[ presort ];
+        uint8_t nextCB = hDecoder->aacSectionDataResilienceFlag ? PresortedCodebook_VCB11[ presort ] : PresortedCodebook[ presort ];
 
         /* Data belonging to the same spectral unit and having the same codebook comes in consecutive codewords.
            This is done by scanning all sfbs for possible codewords. For sfbs with more than 4 elements this has to be

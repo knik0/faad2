@@ -16,10 +16,11 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.c,v 1.22 2002/11/08 13:12:33 menno Exp $
+** $Id: filtbank.c,v 1.23 2002/11/28 18:48:30 menno Exp $
 **/
 
 #include "common.h"
+#include "structs.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -197,7 +198,7 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
         for (i = 0; i < nshort; i++)
             time_out[nlong+nflat_ls+i] = MUL_R_C(transf_buf[nlong+nflat_ls+i],window_short[nshort-i-1]);
         for (i = 0; i < nflat_ls; i++)
-            time_out[nlong+nflat_ls+nshort+i] = REAL_CONST(0.0);
+            time_out[nlong+nflat_ls+nshort+i] = 0;
         break;
 
     case EIGHT_SHORT_SEQUENCE:
@@ -227,7 +228,7 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
             time_out[nflat_ls+8*nshort+i] = MUL_R_C(transf_buf[nshort*15+i],window_short[nshort-1-i]);
         }
         for (i = 0; i < nflat_ls; i++)
-            time_out[nlong+nflat_ls+nshort+i] = REAL_CONST(0.0);
+            time_out[nlong+nflat_ls+nshort+i] = 0;
         break;
 
     case LONG_STOP_SEQUENCE:

@@ -16,10 +16,12 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: ms.c,v 1.3 2002/06/13 11:03:27 menno Exp $
+** $Id: ms.c,v 1.4 2002/11/28 18:48:30 menno Exp $
 **/
 
 #include "common.h"
+#include "structs.h"
+
 #include "syntax.h"
 #include "ms.h"
 #include "is.h"
