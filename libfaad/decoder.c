@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.32 2002/09/08 18:14:37 menno Exp $
+** $Id: decoder.c,v 1.33 2002/09/13 13:08:45 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -248,8 +248,10 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
     if (can_decode_ot(hDecoder->object_type) < 0)
         return -1;
 
+#ifndef FIXED_POINT
     if (hDecoder->config.outputFormat > 5)
         Init_Dither(16, hDecoder->config.outputFormat - 5);
+#endif
 
     return bits;
 }
@@ -298,8 +300,10 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
         hDecoder->frameLength >>= 1;
 #endif
 
+#ifndef FIXED_POINT
     if (hDecoder->config.outputFormat > 5)
         Init_Dither(16, hDecoder->config.outputFormat - 5);
+#endif
 
     return 0;
 }
@@ -624,7 +628,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     hInfo->channels = channels;
 
     if (hDecoder->sample_buffer == NULL)
-        hDecoder->sample_buffer = malloc(frame_len*channels*sizeof(float32_t));
+        hDecoder->sample_buffer = malloc(frame_len*channels*sizeof(real_t));
 
     sample_buffer = hDecoder->sample_buffer;
 

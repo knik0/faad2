@@ -5,9 +5,13 @@
  * mostly lifted from work by Frank Klemm
  * random functions for dithering.
  *
- * last modified: $ID:$
+ * last modified:
+ * $Id: dither.c,v 1.4 2002/09/13 13:08:45 menno Exp $
  */
 #include "common.h"
+
+#ifndef FIXED_POINT
+
 #include <memory.h>
 #include "dither.h"
 
@@ -181,5 +185,4 @@ Init_Dither ( unsigned char bits, unsigned char shapingtype )
 	Dither.Dither = 0.01*default_dither[index] / (((int64_t)1) << bits);
 }
 
-
-
+#endif

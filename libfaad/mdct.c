@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.c,v 1.19 2002/09/08 18:14:37 menno Exp $
+** $Id: mdct.c,v 1.20 2002/09/13 13:08:45 menno Exp $
 **/
 
 /*
@@ -43,12 +43,58 @@
 #include "cfft.h"
 #include "mdct.h"
 
+/* const_tab[]:
+    0: sqrt(2 / N)
+    1: cos(2 * PI / N)
+    2: sin(2 * PI / N)
+    3: cos(2 * PI * (1/8) / N)
+    4: sin(2 * PI * (1/8) / N)
+ */
+#ifdef FIXED_POINT
+real_t const_tab[][5] =
+{
+    { 0x800000, 0xFFFFB10, 0xC90FC, 0xFFFFFF0, 0x1921F }, /* 2048 */
+    { 0x8432A5, 0xFFFFA60, 0xD6773, 0xFFFFFF0, 0x1ACEE }, /* 1920 */
+    { 0xB504F3, 0xFFFEC40, 0x1921F1, 0xFFFFFB0, 0x3243F }, /* 1024 */
+    { 0xBAF4BA, 0xFFFE990, 0x1ACEDD, 0xFFFFFA0, 0x359DD }, /* 960 */
+    { 0x16A09E6, 0xFFEC430, 0x648558, 0xFFFFB10, 0xC90FC }, /* 256 */
+    { 0x175E974, 0xFFE98B0, 0x6B3885, 0xFFFFA60, 0xD6773 }  /* 240 */
+};
+#else
+#ifdef _MSC_VER
+#pragma warning(disable:4305)
+#pragma warning(disable:4244)
+#endif
+real_t const_tab[][5] =
+{
+    { 0.0312500000, 0.9999952938, 0.0030679568, 0.9999999265, 0.0003834952 }, /* 2048 */
+    { 0.0322748612, 0.9999946356, 0.0032724866, 0.9999999404, 0.0004090615 }, /* 1920 */
+    { 0.0441941738, 0.9999811649, 0.0061358847, 0.9999997020, 0.0007669903 }, /* 1024 */
+    { 0.0456435465, 0.9999786019, 0.0065449383, 0.9999996424, 0.0008181230 }, /* 960 */
+    { 0.0883883476, 0.9996988177, 0.0245412290, 0.9999952912, 0.0030679568 }, /* 256 */
+    { 0.0912870929, 0.9996573329, 0.0261769500, 0.9999946356, 0.0032724866 }  /* 240 */
+};
+#endif
+
+uint8_t map_N_to_idx(uint16_t N)
+{
+    switch(N)
+    {
+    case 2048: return 0;
+    case 1920: return 1;
+    case 1024: return 2;
+    case 960:  return 3;
+    case 256:  return 4;
+    case 240:  return 5;
+    }
+    return 0;
+}
 
 mdct_info *faad_mdct_init(uint16_t N)
 {
-    uint16_t k;
+    uint16_t k, N_idx;
     real_t cangle, sangle, c, s, cold;
-	real_t scale = COEF_CONST(sqrt(2.0/(float32_t)N));
+	real_t scale;
 
     mdct_info *mdct = (mdct_info*)malloc(sizeof(mdct_info));
 
@@ -59,10 +105,13 @@ mdct_info *faad_mdct_init(uint16_t N)
     mdct->Z1 = (real_t*)malloc(N/2*sizeof(real_t));
     mdct->Z2 = (complex_t*)malloc(N/4*sizeof(complex_t));
 
-    cangle = COEF_CONST(cos(2.0 * M_PI / (float32_t)N));
-    sangle = COEF_CONST(sin(2.0 * M_PI / (float32_t)N));
-    c = COEF_CONST(cos(2.0 * M_PI * 0.125 / (float32_t)N));
-    s = COEF_CONST(sin(2.0 * M_PI * 0.125 / (float32_t)N));
+    N_idx = map_N_to_idx(N);
+
+    scale = const_tab[N_idx][0];
+    cangle = const_tab[N_idx][1];
+    sangle = const_tab[N_idx][2];
+    c = const_tab[N_idx][3];
+    s = const_tab[N_idx][4];
 
     for (k = 0; k < N/4; k++)
     {

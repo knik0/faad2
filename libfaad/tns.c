@@ -16,13 +16,77 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: tns.c,v 1.15 2002/08/27 10:24:57 menno Exp $
+** $Id: tns.c,v 1.16 2002/09/13 13:08:45 menno Exp $
 **/
 
 #include "common.h"
 
 #include "syntax.h"
 #include "tns.h"
+
+#ifdef FIXED_POINT
+static real_t tns_coef_0_3[] =
+{
+    0x0, 0x6F13013, 0xC8261BA, 0xF994E02,
+    0xF03E3A3A, 0xF224C28C, 0xF5B72457, 0xFA8715E3,
+    0xF90ECFED, 0xF37D9E46, 0xF066B1FE, 0xF066B1FE,
+    0xF03E3A3A, 0xF224C28C, 0xF5B72457, 0xFA8715E3
+};
+static real_t tns_coef_0_4[] =
+{
+    0x0, 0x3539B35, 0x681FE48, 0x9679182,
+    0xBE3EBD4, 0xDDB3D74, 0xF378709, 0xFE98FCA,
+    0xF011790B, 0xF09C5CB7, 0xF1AD6942, 0xF33B524A,
+    0xF5388AEB, 0xF793BBDF, 0xFA385AA9, 0xFD0F5CAB
+};
+static real_t tns_coef_1_3[] =
+{
+    0x0, 0x6F13013, 0xF5B72457, 0xFA8715E3,
+    0xF994E02, 0xC8261BA, 0xF5B72457, 0xFA8715E3,
+    0xF90ECFED, 0xF37D9E46, 0xF5B72457, 0xFA8715E3,
+    0xF37D9E46, 0xF90ECFED, 0xF5B72457, 0xFA8715E3
+};
+static real_t tns_coef_1_4[] =
+{
+    0x0, 0x3539B35, 0x681FE48, 0x9679182,
+    0xF5388AEB, 0xF793BBDF, 0xFA385AA9, 0xFD0F5CAB,
+    0xFE98FCA, 0xF378709, 0xDDB3D74, 0xBE3EBD4,
+    0xF5388AEB, 0xF793BBDF, 0xFA385AA9, 0xFD0F5CAB
+};
+#else
+#ifdef _MSC_VER
+#pragma warning(disable:4305)
+#pragma warning(disable:4244)
+#endif
+static real_t tns_coef_0_3[] =
+{
+    0.0, 0.4338837391, 0.7818314825, 0.9749279122,
+    -0.9848077530, -0.8660254038, -0.6427876097, -0.3420201433,
+    -0.4338837391, -0.7818314825, -0.9749279122, -0.9749279122,
+    -0.9848077530, -0.8660254038, -0.6427876097, -0.3420201433
+};
+static real_t tns_coef_0_4[] =
+{
+    0.0, 0.2079116908, 0.4067366431, 0.5877852523,
+    0.7431448255, 0.8660254038, 0.9510565163, 0.9945218954,
+    -0.9957341763, -0.9618256432, -0.8951632914, -0.7980172273,
+    -0.6736956436, -0.5264321629, -0.3612416662, -0.1837495178
+};
+static real_t tns_coef_1_3[] =
+{
+    0.0, 0.4338837391, -0.6427876097, -0.3420201433,
+    0.9749279122, 0.7818314825, -0.6427876097, -0.3420201433,
+    -0.4338837391, -0.7818314825, -0.6427876097, -0.3420201433,
+    -0.7818314825, -0.4338837391, -0.6427876097, -0.3420201433
+};
+static real_t tns_coef_1_4[] =
+{
+    0.0, 0.2079116908, 0.4067366431, 0.5877852523,
+    -0.6736956436, -0.5264321629, -0.3612416662, -0.1837495178,
+    0.9945218954, 0.9510565163, 0.8660254038, 0.7431448255,
+    -0.6736956436, -0.5264321629, -0.3612416662, -0.1837495178
+};
+#endif
 
 
 /* TNS decoding for one channel and frame */
@@ -130,33 +194,27 @@ static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_c
                             uint8_t *coef, real_t *a)
 {
     uint8_t i, m;
-    uint8_t coef_res2, s_mask, n_mask;
     real_t tmp2[TNS_MAX_ORDER+1], b[TNS_MAX_ORDER+1];
-    float32_t iqfac;
-
-    /* Some internal tables */
-    static uint8_t sgn_mask[] = { 0x2, 0x4, 0x8 };
-    static uint8_t neg_mask[] = { ~0x3, ~0x7, ~0xf };
-
-    /* size used for transmission */
-    coef_res2 = coef_res_bits - coef_compress;
-    s_mask = sgn_mask[coef_res2 - 2]; /* mask for sign bit */
-    n_mask = neg_mask[coef_res2 - 2]; /* mask for padding neg. values */
 
     /* Conversion to signed integer */
     for (i = 0; i < order; i++)
     {
-        int8_t tmp = (coef[i] & s_mask) ? (coef[i] | n_mask) : coef[i];
-
-        /* Inverse quantization */
-        if (tmp >= 0)
+        if (coef_compress == 0)
         {
-            iqfac = ((1 << (coef_res_bits-1)) - 0.5) / M_PI_2;
+            if (coef_res_bits == 3)
+            {
+                tmp2[i] = tns_coef_0_3[coef[i]];
+            } else {
+                tmp2[i] = tns_coef_0_4[coef[i]];
+            }
         } else {
-            iqfac = ((1 << (coef_res_bits-1)) + 0.5) / M_PI_2;
+            if (coef_res_bits == 3)
+            {
+                tmp2[i] = tns_coef_1_3[coef[i]];
+            } else {
+                tmp2[i] = tns_coef_1_4[coef[i]];
+            }
         }
-
-        tmp2[i] = COEF_CONST(sin(tmp / iqfac));
     }
 
     /* Conversion to LPC coefficients */

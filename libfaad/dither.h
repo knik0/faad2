@@ -17,6 +17,8 @@
 extern "C" {
 #endif 
 
+#ifndef FIXED_POINT
+
 typedef struct {
     const float32_t*  FilterCoeff;
     uint64_t          Mask;
@@ -35,6 +37,8 @@ extern double              scalar16 ( const float32_t* x, const float32_t* y );
 extern double              Random_Equi ( double mult );
 extern double              Random_Triangular ( double mult );
 void                       Init_Dither ( unsigned char bits, unsigned char shapingtype );
+
+#endif
 
 #ifdef __cplusplus
 }

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: pns.c,v 1.16 2002/09/08 18:14:37 menno Exp $
+** $Id: pns.c,v 1.17 2002/09/13 13:08:45 menno Exp $
 **/
 
 #include "common.h"
@@ -63,6 +63,7 @@ static INLINE int32_t random2()
         root = root >> 1;                             \
     }
 
+/* fixed point square root approximation */
 real_t fp_sqrt(real_t value)
 {
     real_t root = 0;
@@ -102,9 +103,8 @@ static INLINE void gen_rand_vector(real_t *spec, int16_t scale_factor, uint16_t 
 #ifndef FIXED_POINT
     uint16_t i;
     real_t energy = 0.0;
-    int32_t exp, frac;
 
-    real_t scale = 1.0/(float32_t)size * ISQRT_MEAN_NRG;
+    real_t scale = 1.0/(real_t)size * ISQRT_MEAN_NRG;
 
     for (i = 0; i < size; i++)
     {
@@ -127,7 +127,7 @@ static INLINE void gen_rand_vector(real_t *spec, int16_t scale_factor, uint16_t 
     for (i = 0; i < size; i++)
     {
         real_t tmp = ISQRT_MEAN_NRG * random2();
-        tmp = MUL_C_C(COEF_CONST(1.0)/size, tmp);
+        tmp = MUL_C_C(COEF_CONST(1)/size, tmp);
 
         energy += MUL_C_C(tmp,tmp);
 

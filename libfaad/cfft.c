@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: cfft.c,v 1.6 2002/08/27 10:24:54 menno Exp $
+** $Id: cfft.c,v 1.7 2002/09/13 13:08:45 menno Exp $
 **/
 
 /*
@@ -31,6 +31,7 @@
 #include <stdlib.h>
 
 #include "cfft.h"
+#include "cfft_tab.h"
 
 
 /*----------------------------------------------------------------------
@@ -567,11 +568,15 @@ void cfftb(cfft_info *cfft, real_t *c)
 static void cffti1(uint16_t n, real_t *wa, uint16_t *ifac)
 {
     static uint16_t ntryh[4] = {3, 4, 2, 5};
-    float32_t arg, argh, argld, fi;
-    uint16_t idot, ntry, i, j;
-    uint16_t i1, k1, l1, l2, ib;
-    uint16_t ld, ii, nf, ip, nl, nq, nr;
-    uint16_t ido, ipm;
+#ifndef FIXED_POINT
+    real_t arg, argh, argld, fi;
+    uint16_t idot, ido, ipm;
+    uint16_t i1, k1, l1, l2;
+    uint16_t ld, ii, ip;
+#endif
+    uint16_t ntry, i, j;
+    uint16_t ib;
+    uint16_t nf, nl, nq, nr;
 
     nl = n;
     nf = 0;
@@ -610,7 +615,9 @@ startloop:
 
     ifac[0] = n;
     ifac[1] = nf;
-    argh = 2.0*M_PI / (float32_t)n; /* <-- TODO */
+
+#ifndef FIXED_POINT
+    argh = 2.0*M_PI / (real_t)n;
     i = 1;
     l1 = 1;
 
@@ -626,8 +633,8 @@ startloop:
         for (j = 1; j <= ipm; j++)
         {
             i1 = i;
-            wa[i-1] = COEF_CONST(1.0);
-            wa[i] = COEF_CONST(0.0);
+            wa[i-1] = 1.0;
+            wa[i] = 0.0;
             ld += l1;
             fi = 0;
             argld = ld*argh;
@@ -637,8 +644,8 @@ startloop:
                 i += 2;
                 fi += 1;
                 arg = fi * argld;
-                wa[i-1] = COEF_CONST(cos(arg));
-                wa[i] = COEF_CONST(sin(arg));
+                wa[i-1] = cos(arg);
+                wa[i] = sin(arg);
             }
 
             if (ip > 5)
@@ -649,6 +656,7 @@ startloop:
         }
         l1 = l2;
     }
+#endif
 }
 
 cfft_info *cffti(uint16_t n)
@@ -657,9 +665,26 @@ cfft_info *cffti(uint16_t n)
 
     cfft->n = n;
     cfft->work = (real_t*)malloc(2*n*sizeof(real_t));
+
+#ifndef FIXED_POINT
     cfft->tab = (real_t*)malloc(2*n*sizeof(real_t));
 
     cffti1(n, cfft->tab, cfft->ifac);
+#else
+    cffti1(n, NULL, cfft->ifac);
+
+    switch (n)
+    {
+    case 60: cfft->tab = cfft_tab_60; break;
+    case 64: cfft->tab = cfft_tab_64; break;
+    case 480: cfft->tab = cfft_tab_480; break;
+    case 512: cfft->tab = cfft_tab_512; break;
+#ifdef LD_DEC
+    case 240: cfft->tab = cfft_tab_240; break;
+    case 256: cfft->tab = cfft_tab_256; break;
+#endif
+    }
+#endif
 
     return cfft;
 }
@@ -667,7 +692,9 @@ cfft_info *cffti(uint16_t n)
 void cfftu(cfft_info *cfft)
 {
     if (cfft->work) free(cfft->work);
+#ifndef FIXED_POINT
     if (cfft->tab) free(cfft->tab);
+#endif
 
     if (cfft) free(cfft);
 }

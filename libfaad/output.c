@@ -16,13 +16,16 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: output.c,v 1.12 2002/08/26 19:08:39 menno Exp $
+** $Id: output.c,v 1.13 2002/09/13 13:08:45 menno Exp $
 **/
 
 #include "common.h"
 
 #include "output.h"
 #include "decoder.h"
+
+#ifndef FIXED_POINT
+
 #include "dither.h"
 
 
@@ -40,8 +43,6 @@
 dither_t Dither;
 double doubletmp;
 
-
-#ifndef FIXED_POINT
 void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
                     uint16_t frame_len, uint8_t format)
 {
@@ -149,31 +150,7 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
 
     return sample_buffer;
 }
-#else
-void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
-                    uint16_t frame_len, uint8_t format)
-{
-    uint8_t ch;
-    uint16_t i;
-    int16_t *short_sample_buffer = (int16_t*)sample_buffer;
 
-    /* Copy output to a standard PCM buffer */
-    for (ch = 0; ch < channels; ch++)
-    {
-        for(i = 0; i < frame_len; i++)
-        {
-            int32_t tmp = input[ch][i];
-            tmp += (1 << (REAL_BITS-1));
-            tmp >>= REAL_BITS;
-            if (tmp > 0x7fff)       tmp = 0x7fff;
-            else if (tmp <= -32768) tmp = -32768;
-            short_sample_buffer[(i*channels)+ch] = (int16_t)tmp;
-        }
-    }
-
-    return sample_buffer;
-}
-#endif
 
 /* Dither output */
 static int64_t dither_output(uint8_t dithering, uint8_t shapingtype, uint16_t i, double Sum, uint8_t k)
@@ -201,3 +178,31 @@ static int64_t dither_output(uint8_t dithering, uint8_t shapingtype, uint16_t i,
     else
         return ROUND64 (Sum);
 }
+
+#else
+
+void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
+                    uint16_t frame_len, uint8_t format)
+{
+    uint8_t ch;
+    uint16_t i;
+    int16_t *short_sample_buffer = (int16_t*)sample_buffer;
+
+    /* Copy output to a standard PCM buffer */
+    for (ch = 0; ch < channels; ch++)
+    {
+        for(i = 0; i < frame_len; i++)
+        {
+            int32_t tmp = input[ch][i];
+            tmp += (1 << (REAL_BITS-1));
+            tmp >>= REAL_BITS;
+            if (tmp > 0x7fff)       tmp = 0x7fff;
+            else if (tmp <= -32768) tmp = -32768;
+            short_sample_buffer[(i*channels)+ch] = (int16_t)tmp;
+        }
+    }
+
+    return sample_buffer;
+}
+
+#endif

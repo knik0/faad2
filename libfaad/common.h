@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.20 2002/09/08 18:14:37 menno Exp $
+** $Id: common.h,v 1.21 2002/09/13 13:08:45 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -88,7 +88,9 @@ typedef __int64 int64_t;
 typedef __int32 int32_t;
 typedef __int16 int16_t;
 typedef __int8  int8_t;
+#ifndef FIXED_POINT
 typedef float float32_t;
+#endif
 
 
 #elif defined(LINUX) || defined(DJGPP)
@@ -105,7 +107,9 @@ typedef long long int64_t;
 typedef long int32_t;
 typedef short int16_t;
 typedef char int8_t;
+#ifndef FIXED_POINT
 typedef float float32_t;
+#endif
 #endif
 
 
@@ -175,8 +179,8 @@ typedef float float32_t;
 #ifdef HAVE_LOGF
 #  define log logf
 #endif
-#ifdef HAVE_EXPF
-#  define exp expf
+#ifdef HAVE_POWF
+#  define pow powf
 #endif
 #ifdef HAVE_FLOORF
 #  define floor floorf
