@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2005 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -19,10 +19,15 @@
 ** Any non-GPL usage of this software or parts of this software is strictly
 ** forbidden.
 **
+** Software using this code must display the following message visibly in the
+** software:
+** "FAAD2 AAC/HE-AAC/HE-AACv2/DRM decoder (c) Ahead Software, www.nero.com"
+** in, for example, the about-box or help/startup screen.
+**
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_syntax.c,v 1.34 2004/09/04 14:56:28 menno Exp $
+** $Id: sbr_syntax.c,v 1.35 2005/02/01 13:15:59 menno Exp $
 **/
 
 #include "common.h"
@@ -206,26 +211,28 @@ uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint16_t cnt)
             {
                 calc_sbr_tables(sbr, saved_start_freq, saved_stop_freq,
                     saved_samplerate_mode, saved_freq_scale,
-                    saved_alter_scale, saved_xover_band);
+                    saved_alter_scale, saved_xover_band);          
             }
 
-            /* we should be able to safely set result to 0 now */
-            result = 0;
+            /* we should be able to safely set result to 0 now, */
+            /* but practise indicates this doesn't work well */
         }
     } else {
         result = 1;
+    }     
+           
+     
+    num_sbr_bits = (uint16_t)faad_get_processed_bits(ld) - num_sbr_bits;
+
+    /* check if we read more bits then were available for sbr */
+    if (8*cnt < num_sbr_bits) {
+            return 1;
     }
 
 #ifdef DRM
     if (!sbr->Is_DRM_SBR)
 #endif
-    {
-        num_sbr_bits = (uint16_t)faad_get_processed_bits(ld) - num_sbr_bits;
-
-        /* check if we read more bits then were available for sbr */
-        if (8*cnt < num_sbr_bits)
-            return 1;
-
+    {       
         /* -4 does not apply, bs_extension_type is re-read in this function */
         num_align_bits = 8*cnt /*- 4*/ - num_sbr_bits;
 
@@ -364,11 +371,14 @@ static uint8_t sbr_single_channel_element(bitfile *ld, sbr_info *sbr)
 #ifdef DRM
     /* bs_coupling, from sbr_channel_pair_base_element(bs_amp_res) */
     if (sbr->Is_DRM_SBR)
+    {
         faad_get1bit(ld);
+    }
 #endif
 
     if ((result = sbr_grid(ld, sbr, 0)) > 0)
         return result;
+
     sbr_dtdf(ld, sbr, 0);
     invf_mode(ld, sbr, 0);
     sbr_envelope(ld, sbr, 0);
@@ -431,7 +441,11 @@ static uint8_t sbr_single_channel_element(bitfile *ld, sbr_info *sbr)
                 } else {
                     /* to be safe make it 3, will switch to "default"
                      * in sbr_extension() */
+#ifdef DRM
+                    return 1;
+#else
                     sbr->bs_extension_id = 3;
+#endif
                 }
             }
 #endif

@@ -1,28 +1,33 @@
 /*
-** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR and PS decoding
-** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
-**
+** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
+** Copyright (C) 2003-2005 M. Bakker, Ahead Software AG, http://www.nero.com
+**  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**
+** 
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
+** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
 ** forbidden.
 **
+** Software using this code must display the following message visibly in the
+** software:
+** "FAAD2 AAC/HE-AAC/HE-AACv2/DRM decoder (c) Ahead Software, www.nero.com"
+** in, for example, the about-box or help/startup screen.
+**
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: drm_dec.c,v 1.5 2004/09/04 14:56:28 menno Exp $
+** $Id: drm_dec.c,v 1.6 2005/02/01 13:15:57 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -243,17 +248,9 @@ static const real_t sa_sqrt_1_minus[8][2] = {
     { FRAC_CONST(0.929071574),  FRAC_CONST(0)           }
 };
 
-static const uint8_t sa_freq_scale[9][2] = 
+static const uint8_t sa_freq_scale[9] = 
 {
-    { 0, 0},  
-    { 1, 1},  
-    { 2, 2},  
-    { 3, 3},  
-    { 5, 5},  
-    { 7, 7},  
-    {10,10},  
-    {13,13},  
-    {46,23}
+    0, 1, 2, 3, 5, 7, 10, 13, 23
 };
 
 static const uint8_t pan_freq_scale[21] = 
@@ -290,9 +287,9 @@ static const real_t filter_coeff[] =
     FRAC_CONST(0.48954165955695)
 };
 
-static const uint8_t delay_length[][2] = 
+static const uint8_t delay_length[3] = 
 {
-    { 1, 3 }, { 2, 4 }, { 3, 5 }
+    3, 4, 5
 };
 
 static const real_t delay_fraction[] = 
@@ -300,15 +297,9 @@ static const real_t delay_fraction[] =
     FRAC_CONST(0.43), FRAC_CONST(0.75), FRAC_CONST(0.347)
 };
 
-static const real_t peak_decay[2] = 
-{
-    FRAC_CONST(0.58664621951003), FRAC_CONST(0.76592833836465)
-};
+static const real_t peak_decay = FRAC_CONST(0.76592833836465);
 
-static const real_t smooth_coeff[2] = 
-{
-    FRAC_CONST(0.6), FRAC_CONST(0.25)
-};
+static const real_t smooth_coeff = FRAC_CONST(0.25);
 
 /* Please note that these are the same tables as in plain PS */
 static const complex_t Q_Fract_allpass_Qmf[][3] = {
@@ -566,25 +557,22 @@ static void drm_ps_delta_decode(drm_ps_info *ps)
     {    
         if (ps->bs_sa_dt_flag && !ps->g_last_had_sa) 
         {        
-            for (band = 0; band < DRM_NUM_SA_BANDS; band++)
-            {   
-                ps->g_prev_sa_index[band] = 0;
-            }           
-        }       
-        if (ps->bs_sa_dt_flag)
-        {
+            /* wait until we get a DT frame */
+            ps->bs_enable_sa = 0;
+        } else if (ps->bs_sa_dt_flag) {
+            /* DT frame, we have a last frame, so we can decode */
             ps->g_sa_index[0] = sa_delta_clip(ps, ps->g_prev_sa_index[0]+ps->bs_sa_data[0]);            
-
         } else {
+            /* DF always decodable */
             ps->g_sa_index[0] = sa_delta_clip(ps,ps->bs_sa_data[0]);          
         }
         
         for (band = 1; band < DRM_NUM_SA_BANDS; band++)
         {   
-            if (ps->bs_sa_dt_flag)
+            if (ps->bs_sa_dt_flag && ps->g_last_had_sa)
             {
                 ps->g_sa_index[band] = sa_delta_clip(ps, ps->g_prev_sa_index[band] + ps->bs_sa_data[band]);
-            } else {
+            } else if (!ps->bs_sa_dt_flag) {
                 ps->g_sa_index[band] = sa_delta_clip(ps, ps->g_sa_index[band-1] + ps->bs_sa_data[band]);                
             }
         }
@@ -618,28 +606,19 @@ static void drm_ps_delta_decode(drm_ps_info *ps)
     {
         if (ps->bs_pan_dt_flag && !ps->g_last_had_pan) 
         {
-/* The DRM PS spec doesn't say anything about this case. (deltacoded in time without a previous frame)
-   AAC PS spec you must tread previous frame as 0, so that's what we try. 
-*/
-            for (band = 0; band < DRM_NUM_PAN_BANDS; band++)
-            {   
-                ps->g_prev_pan_index[band] = 0;
-            }
-        } 
-
-        if (ps->bs_pan_dt_flag)
-        {   
-             ps->g_pan_index[0] = pan_delta_clip(ps,  ps->g_prev_pan_index[0]+ps->bs_pan_data[0]);
+            ps->bs_enable_pan = 0;
+        }  else if (ps->bs_pan_dt_flag) {   
+            ps->g_pan_index[0] = pan_delta_clip(ps,  ps->g_prev_pan_index[0]+ps->bs_pan_data[0]);
         } else {
-             ps->g_pan_index[0] = pan_delta_clip(ps, ps->bs_pan_data[0]);
+            ps->g_pan_index[0] = pan_delta_clip(ps, ps->bs_pan_data[0]);
         }
     
         for (band = 1; band < DRM_NUM_PAN_BANDS; band++)
         {   
-            if (ps->bs_pan_dt_flag)
+            if (ps->bs_pan_dt_flag && ps->g_last_had_pan)
             {
                 ps->g_pan_index[band] = pan_delta_clip(ps, ps->g_prev_pan_index[band] + ps->bs_pan_data[band]);
-            } else {
+            } else if (!ps->bs_pan_dt_flag) {
                 ps->g_pan_index[band] = pan_delta_clip(ps, ps->g_pan_index[band-1] + ps->bs_pan_data[band]);
             }
         }
@@ -658,7 +637,7 @@ static void drm_ps_delta_decode(drm_ps_info *ps)
     }
 }
 
-static void drm_calc_sa_side_signal(drm_ps_info *ps, qmf_t X[38][64], uint8_t rateselect) 
+static void drm_calc_sa_side_signal(drm_ps_info *ps, qmf_t X[38][64]) 
 {      
     uint8_t s, b, k;
     complex_t qfrac, tmp0, tmp, in, R0;
@@ -673,7 +652,7 @@ static void drm_calc_sa_side_signal(drm_ps_info *ps, qmf_t X[38][64], uint8_t ra
     uint32_t in_re, in_im;
 #endif
 
-    for (b = 0; b < sa_freq_scale[DRM_NUM_SA_BANDS][rateselect]; b++)
+    for (b = 0; b < sa_freq_scale[DRM_NUM_SA_BANDS]; b++)
     {
         /* set delay indices */    
         for (k = 0; k < NUM_OF_LINKS; k++)
@@ -701,16 +680,16 @@ static void drm_calc_sa_side_signal(drm_ps_info *ps, qmf_t X[38][64], uint8_t ra
             power = MUL_R(RE(in),RE(in)) + MUL_R(IM(in),IM(in));
 #endif
 
-            ps->peakdecay_fast[b] = MUL_F(ps->peakdecay_fast[b], peak_decay[rateselect]);
+            ps->peakdecay_fast[b] = MUL_F(ps->peakdecay_fast[b], peak_decay);
             if (ps->peakdecay_fast[b] < power)
                 ps->peakdecay_fast[b] = power;
 
             peakdiff = ps->prev_peakdiff[b];
-            peakdiff += MUL_F((ps->peakdecay_fast[b] - power - ps->prev_peakdiff[b]), smooth_coeff[rateselect]);
+            peakdiff += MUL_F((ps->peakdecay_fast[b] - power - ps->prev_peakdiff[b]), smooth_coeff);
             ps->prev_peakdiff[b] = peakdiff;
 
             nrg = ps->prev_nrg[b];
-            nrg += MUL_F((power - ps->prev_nrg[b]), smooth_coeff[rateselect]);
+            nrg += MUL_F((power - ps->prev_nrg[b]), smooth_coeff);
             ps->prev_nrg[b] = nrg;
 
             if (MUL_R(peakdiff, gamma) <= nrg) {
@@ -763,7 +742,7 @@ static void drm_calc_sa_side_signal(drm_ps_info *ps, qmf_t X[38][64], uint8_t ra
 
             for (k = 0; k < NUM_OF_LINKS; k++)
             {
-                if (++temp_delay_ser[k] >= delay_length[k][rateselect])
+                if (++temp_delay_ser[k] >= delay_length[k])
                     temp_delay_ser[k] = 0;
             }
         }       
@@ -773,7 +752,7 @@ static void drm_calc_sa_side_signal(drm_ps_info *ps, qmf_t X[38][64], uint8_t ra
         ps->delay_buf_index_ser[k] = temp_delay_ser[k];
 }
 
-static void drm_add_ambiance(drm_ps_info *ps, uint8_t rateselect, qmf_t X_left[38][64], qmf_t X_right[38][64]) 
+static void drm_add_ambiance(drm_ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64]) 
 {
     uint8_t s, b, ifreq, qclass;    
     real_t sa_map[MAX_SA_BAND], sa_dir_map[MAX_SA_BAND], k_sa_map[MAX_SA_BAND], k_sa_dir_map[MAX_SA_BAND];
@@ -783,7 +762,7 @@ static void drm_add_ambiance(drm_ps_info *ps, uint8_t rateselect, qmf_t X_left[3
     {
         /* Instead of dequantization and mapping, we use an inverse mapping
            to look up all the values we need */
-        for (b = 0; b < sa_freq_scale[DRM_NUM_SA_BANDS][rateselect]; b++)
+        for (b = 0; b < sa_freq_scale[DRM_NUM_SA_BANDS]; b++)
         {
             const real_t inv_f_num_of_subsamples = FRAC_CONST(0.03333333333);
 
@@ -804,7 +783,7 @@ static void drm_add_ambiance(drm_ps_info *ps, uint8_t rateselect, qmf_t X_left[3
 
         for (s = 0; s < NUM_OF_SUBSAMPLES; s++)
         {
-            for (b = 0; b < sa_freq_scale[DRM_NUM_SA_BANDS][rateselect]; b++)
+            for (b = 0; b < sa_freq_scale[DRM_NUM_SA_BANDS]; b++)
             {                
                 QMF_RE(X_right[s][b]) = MUL_F(QMF_RE(X_left[s][b]), sa_dir_map[b]) - MUL_F(QMF_RE(ps->SA[s][b]), sa_map[b]);
                 QMF_IM(X_right[s][b]) = MUL_F(QMF_IM(X_left[s][b]), sa_dir_map[b]) - MUL_F(QMF_IM(ps->SA[s][b]), sa_map[b]);
@@ -814,7 +793,7 @@ static void drm_add_ambiance(drm_ps_info *ps, uint8_t rateselect, qmf_t X_left[3
                 sa_map[b]     += k_sa_map[b];
                 sa_dir_map[b] += k_sa_dir_map[b];
             }
-            for (b = sa_freq_scale[DRM_NUM_SA_BANDS][rateselect]; b < NUM_OF_QMF_CHANNELS; b++)
+            for (b = sa_freq_scale[DRM_NUM_SA_BANDS]; b < NUM_OF_QMF_CHANNELS; b++)
             {                
                 QMF_RE(X_right[s][b]) = QMF_RE(X_left[s][b]);
                 QMF_IM(X_right[s][b]) = QMF_IM(X_left[s][b]);
@@ -833,7 +812,7 @@ static void drm_add_ambiance(drm_ps_info *ps, uint8_t rateselect, qmf_t X_left[3
     }
 }
 
-static void drm_add_pan(drm_ps_info *ps, uint8_t rateselect, qmf_t X_left[38][64], qmf_t X_right[38][64]) 
+static void drm_add_pan(drm_ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64]) 
 {
     uint8_t s, b, qclass, ifreq;
     real_t tmp, coeff1, coeff2;
@@ -924,10 +903,8 @@ void drm_ps_free(drm_ps_info *ps)
 }
 
 /* main DRM PS decoding function */
-uint8_t drm_ps_decode(drm_ps_info *ps, uint8_t guess, uint32_t samplerate, qmf_t X_left[38][64], qmf_t X_right[38][64])
-{
-    uint8_t rateselect = (samplerate >= 24000);
-    
+uint8_t drm_ps_decode(drm_ps_info *ps, uint8_t guess, qmf_t X_left[38][64], qmf_t X_right[38][64])
+{       
     if (ps == NULL) 
     {
         memcpy(X_right, X_left, sizeof(qmf_t)*30*64);
@@ -958,8 +935,8 @@ uint8_t drm_ps_decode(drm_ps_info *ps, uint8_t guess, uint32_t samplerate, qmf_t
   
     ps->drm_ps_data_available = 0;
 
-    drm_calc_sa_side_signal(ps, X_left, rateselect);
-    drm_add_ambiance(ps, rateselect, X_left, X_right);
+    drm_calc_sa_side_signal(ps, X_left);
+    drm_add_ambiance(ps, X_left, X_right);
 
     if (ps->bs_enable_sa)
     {
@@ -973,7 +950,7 @@ uint8_t drm_ps_decode(drm_ps_info *ps, uint8_t guess, uint32_t samplerate, qmf_t
     
     if (ps->bs_enable_pan)
     {
-        drm_add_pan(ps, rateselect, X_left, X_right);
+        drm_add_pan(ps, X_left, X_right);
     
         ps->g_last_had_pan = 1;        
 

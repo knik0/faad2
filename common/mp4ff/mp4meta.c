@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4meta.c,v 1.15 2004/09/03 19:38:58 menno Exp $
+** $Id: mp4meta.c,v 1.16 2005/02/01 13:15:55 menno Exp $
 **/
 
 #ifdef USE_TAGGING
@@ -300,6 +300,8 @@ int32_t mp4ff_parse_metadata(mp4ff_t *f, const int32_t size)
     while (sumsize < size)
     {
         subsize = mp4ff_atom_read_header(f, &atom_type, &header_size);
+        if (subsize == 0)
+            break;
         mp4ff_parse_tag(f, atom_type, (uint32_t)(subsize-header_size));
         sumsize += subsize;
     }

@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2005 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -19,10 +19,15 @@
 ** Any non-GPL usage of this software or parts of this software is strictly
 ** forbidden.
 **
+** Software using this code must display the following message visibly in the
+** software:
+** "FAAD2 AAC/HE-AAC/HE-AACv2/DRM decoder (c) Ahead Software, www.nero.com"
+** in, for example, the about-box or help/startup screen.
+**
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: drm_dec.h,v 1.4 2004/09/04 14:56:28 menno Exp $
+** $Id: drm_dec.h,v 1.5 2005/02/01 13:15:57 menno Exp $
 **/
 
 #ifndef __DRM_DEC_H__
@@ -88,7 +93,7 @@ uint16_t drm_ps_data(drm_ps_info *ps, bitfile *ld);
 drm_ps_info *drm_ps_init(void);
 void drm_ps_free(drm_ps_info *ps);
 
-uint8_t drm_ps_decode(drm_ps_info *ps, uint8_t guess, uint32_t samplerate, qmf_t X_left[38][64], qmf_t X_right[38][64]);
+uint8_t drm_ps_decode(drm_ps_info *ps, uint8_t guess, qmf_t X_left[38][64], qmf_t X_right[38][64]);
 
 #ifdef __cplusplus
 }

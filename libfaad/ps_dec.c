@@ -1,28 +1,33 @@
 /*
-** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR and PS decoding
-** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
-**
+** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
+** Copyright (C) 2003-2005 M. Bakker, Ahead Software AG, http://www.nero.com
+**  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**
+** 
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
+** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
 ** forbidden.
 **
+** Software using this code must display the following message visibly in the
+** software:
+** "FAAD2 AAC/HE-AAC/HE-AACv2/DRM decoder (c) Ahead Software, www.nero.com"
+** in, for example, the about-box or help/startup screen.
+**
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: ps_dec.c,v 1.10 2004/09/04 14:56:28 menno Exp $
+** $Id: ps_dec.c,v 1.11 2005/02/01 13:15:58 menno Exp $
 **/
 
 #include "common.h"
@@ -175,7 +180,7 @@ static void delta_decode(uint8_t enable, int8_t *index, int8_t *index_prev,
                          int8_t min_index, int8_t max_index);
 static void delta_modulo_decode(uint8_t enable, int8_t *index, int8_t *index_prev,
                                 uint8_t dt_flag, uint8_t nr_par, uint8_t stride,
-                                int8_t log2modulo);
+                                int8_t and_modulo);
 static void map20indexto34(int8_t *index, uint8_t bins);
 #ifdef PS_LOW_POWER
 static void map34indexto20(int8_t *index, uint8_t bins);
@@ -674,7 +679,7 @@ static void delta_decode(uint8_t enable, int8_t *index, int8_t *index_prev,
 /* in: log2 value of the modulo value to allow using AND instead of MOD */
 static void delta_modulo_decode(uint8_t enable, int8_t *index, int8_t *index_prev,
                                 uint8_t dt_flag, uint8_t nr_par, uint8_t stride,
-                                int8_t log2modulo)
+                                int8_t and_modulo)
 {
     int8_t i;
 
@@ -684,19 +689,19 @@ static void delta_modulo_decode(uint8_t enable, int8_t *index, int8_t *index_pre
         {
             /* delta coded in frequency direction */
             index[0] = 0 + index[0];
-            index[0] &= log2modulo;
+            index[0] &= and_modulo;
 
             for (i = 1; i < nr_par; i++)
             {
                 index[i] = index[i-1] + index[i];
-                index[i] &= log2modulo;
+                index[i] &= and_modulo;
             }
         } else {
             /* delta coded in time direction */
             for (i = 0; i < nr_par; i++)
             {
                 index[i] = index_prev[i*stride] + index[i];
-                index[i] &= log2modulo;
+                index[i] &= and_modulo;
             }
         }
     } else {
@@ -841,11 +846,11 @@ static void ps_data_decode(ps_info *ps)
 
         /* delta modulo decode ipd parameters */
         delta_modulo_decode(ps->enable_ipdopd, ps->ipd_index[env], ipd_index_prev,
-            ps->ipd_dt[env], ps->nr_ipdopd_par, 1, /*log2(8)*/ 3);
+            ps->ipd_dt[env], ps->nr_ipdopd_par, 1, 7);
 
         /* delta modulo decode opd parameters */
         delta_modulo_decode(ps->enable_ipdopd, ps->opd_index[env], opd_index_prev,
-            ps->opd_dt[env], ps->nr_ipdopd_par, 1, /*log2(8)*/ 3);
+            ps->opd_dt[env], ps->nr_ipdopd_par, 1, 7);
     }
 
     /* handle error case */
@@ -1418,6 +1423,26 @@ static const real_t ipdopd_sin_tab[] = {
     FRAC_CONST(-0.000000000000000)
 };
 
+static real_t magnitude_c(complex_t c)
+{
+#ifdef FIXED_POINT
+#define ps_abs(A) (((A) > 0) ? (A) : (-(A)))
+#define ALPHA FRAC_CONST(0.948059448969)
+#define BETA  FRAC_CONST(0.392699081699)
+
+    real_t abs_inphase = ps_abs(RE(c));
+    real_t abs_quadrature = ps_abs(IM(c));
+
+    if (abs_inphase > abs_quadrature) {
+        return MUL_F(abs_inphase, ALPHA) + MUL_F(abs_quadrature, BETA);
+    } else {
+        return MUL_F(abs_quadrature, ALPHA) + MUL_F(abs_inphase, BETA);
+    }
+#else
+    return sqrt(RE(c)*RE(c) + IM(c)*IM(c));
+#endif
+}
+
 static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64],
                          qmf_t X_hybrid_left[32][32], qmf_t X_hybrid_right[32][32])
 {
@@ -1588,8 +1613,7 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
             if ((ps->enable_ipdopd) && (bk < nr_ipdopd_par))
             {
                 int8_t i;
-                real_t xxyy, ppqq;
-                real_t yq, xp, xq, py, tmp;
+                real_t xy, pq, xypq;
 
                 /* ringbuffer index */
                 i = ps->phase_hist;
@@ -1622,7 +1646,7 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
 
                 /* ringbuffer index */
                 if (i == 0)
-                { 
+                {
                     i = 2;
                 }
                 i--;
@@ -1652,53 +1676,54 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
                 RE(phaseRight) = (float)cos(opd);
                 IM(phaseRight) = (float)sin(opd);
 #else
+
                 // x = IM(tempLeft)
                 // y = RE(tempLeft)
                 // p = IM(tempRight)
                 // q = RE(tempRight)
-                // cos(atan2(x,y)) = 1/sqrt(1 + (x*x)/(y*y))
-                // sin(atan2(x,y)) = x/(y*sqrt(1 + (x*x)/(y*y)))
-                // cos(atan2(x,y)-atan2(p,q)) = (y*q+x*p)/(y*q * sqrt(1 + (x*x)/(y*y)) * sqrt(1 + (p*p)/(q*q)));
-                // sin(atan2(x,y)-atan2(p,q)) = (x*q-p*y)/(y*q * sqrt(1 + (x*x)/(y*y)) * sqrt(1 + (p*p)/(q*q)));
+                // cos(atan2(x,y)) = y/sqrt((x*x) + (y*y))
+                // sin(atan2(x,y)) = x/sqrt((x*x) + (y*y))
+                // cos(atan2(x,y)-atan2(p,q)) = (y*q + x*p) / ( sqrt((x*x) + (y*y)) * sqrt((p*p) + (q*q)) );
+                // sin(atan2(x,y)-atan2(p,q)) = (x*q - y*p) / ( sqrt((x*x) + (y*y)) * sqrt((p*p) + (q*q)) );
 
-                /* (x*x)/(y*y)  (REAL > 0) */
-                xxyy = DIV_R(MUL_C(IM(tempLeft),IM(tempLeft)), MUL_C(RE(tempLeft),RE(tempLeft)));
-                ppqq = DIV_R(MUL_C(IM(tempRight),IM(tempRight)), MUL_C(RE(tempRight),RE(tempRight)));
+                xy = magnitude_c(tempRight);
+                pq = magnitude_c(tempLeft);
 
-                /* 1 + (x*x)/(y*y)  (REAL > 1) */
-                xxyy += REAL_CONST(1);
-                ppqq += REAL_CONST(1);
+                if (xy != 0)
+                {
+                    RE(phaseLeft) = DIV_R(RE(tempRight), xy);
+                    IM(phaseLeft) = DIV_R(IM(tempRight), xy);
+                } else {
+                    RE(phaseLeft) = 0;
+                    IM(phaseLeft) = 0;
+                }
 
-                /* 1 / sqrt(1 + (x*x)/(y*y))  (FRAC <= 1) */
-                xxyy = DIV_R(FRAC_CONST(1), ps_sqrt(xxyy));
-                ppqq = DIV_R(FRAC_CONST(1), ps_sqrt(ppqq));
+                xypq = MUL_R(xy, pq);
 
-                /* COEF */
-                yq = MUL_C(RE(tempLeft), RE(tempRight));
-                xp = MUL_C(IM(tempLeft), IM(tempRight));
-                xq = MUL_C(IM(tempLeft), RE(tempRight));
-                py = MUL_C(RE(tempLeft), IM(tempRight));
+                if (xypq != 0)
+                {
+                    real_t tmp1 = MUL_R(RE(tempRight), RE(tempLeft)) + MUL_R(IM(tempRight), IM(tempLeft));
+                    real_t tmp2 = MUL_R(IM(tempRight), RE(tempLeft)) - MUL_R(RE(tempRight), IM(tempLeft));
 
-                RE(phaseLeft) = xxyy;
-                IM(phaseLeft) = MUL_R(xxyy, (DIV_R(IM(tempLeft), RE(tempLeft))));
+                    RE(phaseRight) = DIV_R(tmp1, xypq);
+                    IM(phaseRight) = DIV_R(tmp2, xypq);
+                } else {
+                    RE(phaseRight) = 0;
+                    IM(phaseRight) = 0;
+                }
 
-                tmp = DIV_C(MUL_F(xxyy, ppqq), yq);
-
-                /* MUL_C(FRAC,COEF) = FRAC */
-                RE(phaseRight) = MUL_C(tmp, (yq+xp));
-                IM(phaseRight) = MUL_C(tmp, (xq-py));
 #endif
 
-                /* MUL_F(COEF, FRAC) = COEF */
-                IM(h11) = MUL_F(RE(h11), IM(phaseLeft));
-                IM(h12) = MUL_F(RE(h12), IM(phaseRight));
-                IM(h21) = MUL_F(RE(h21), IM(phaseLeft));
-                IM(h22) = MUL_F(RE(h22), IM(phaseRight));
+                /* MUL_F(COEF, REAL) = COEF */
+                IM(h11) = MUL_R(RE(h11), IM(phaseLeft));
+                IM(h12) = MUL_R(RE(h12), IM(phaseRight));
+                IM(h21) = MUL_R(RE(h21), IM(phaseLeft));
+                IM(h22) = MUL_R(RE(h22), IM(phaseRight));
 
-                RE(h11) = MUL_F(RE(h11), RE(phaseLeft));
-                RE(h12) = MUL_F(RE(h12), RE(phaseRight));
-                RE(h21) = MUL_F(RE(h21), RE(phaseLeft));
-                RE(h22) = MUL_F(RE(h22), RE(phaseRight));
+                RE(h11) = MUL_R(RE(h11), RE(phaseLeft));
+                RE(h12) = MUL_R(RE(h12), RE(phaseRight));
+                RE(h21) = MUL_R(RE(h21), RE(phaseLeft));
+                RE(h22) = MUL_R(RE(h22), RE(phaseRight));
             }
 
             /* length of the envelope n_e+1 - n_e (in time samples) */

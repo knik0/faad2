@@ -14,7 +14,7 @@ For FAAD2 the following license applies:
 
 ******************************************************************************
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003 M. Bakker (mbakker(at)nero.com), Ahead Software AG
+** Copyright (C) 2003-2005 M. Bakker, Ahead Software AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -30,7 +30,15 @@ For FAAD2 the following license applies:
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** Commercial non-GPL licensing of this software is also possible.
+** Any non-GPL usage of this software or parts of this software is strictly
+** forbidden.
+**
+** Software using this code must display the following message visibly in the
+** software:
+** "FAAD2 AAC/HE-AAC/HE-AACv2/DRM decoder (c) Ahead Software, www.nero.com"
+** in, for example, the about-box or help/startup screen.
+**
+** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 ******************************************************************************
 
@@ -54,27 +62,6 @@ VERSION HISTORY
 
 Sorry, try building a ChangeLog from CVS.
 
-__________________________________
-REDISTRIBUTED OPEN SOURCE PACKAGES
-
-This is the list of redistributed open source packages that are included 
-in FAAD2:
-
-Name:       mp4v2
-Version:    0.9.8.6
-Origin:     http://www.mpeg4ip.net
-Author:     David Mackie
-Directory:  common/mp4v2
-License:    MPL, Mozilla Public License, version 1.1
-
-Name:       mp4av
-Version:    0.9.8.6
-Origin:     http://www.mpeg4ip.net
-Author:     David Mackie
-Directory:  common/mp4av
-License:    MPL, Mozilla Public License, version 1.1
-
-
 ___________________
 DIRECTORY STRUCTURE
 
@@ -87,14 +74,8 @@ faad2 - top level directory.
       faad - general common functions like filereading and streaming
              as well as getting info from aac files.
 
-      mp4v2 - MPEG-4 file reading library.
-      
-      mp4av - MPEG-4 file general function library.
-      
       mp4ff - Small MP4 file format library (includes tagging abilities).
       
-   CoreAAC - AAC DirectShow filter.
-
    frontend - command line frontend to the FAAD2 library, also supports
               MPEG-4 file decoding.
 
@@ -112,10 +93,6 @@ faad2 - top level directory.
 
       QCDMp4 - Quintessential player MP4 plugin.
 
-      winamp - winamp2 AAC input plugin.
-
-      winamp3 - winamp3 AAC input plugin.
-      
       xmms - xmms AAC plugin
 
       mpeg4ip - plugin for the mpeg4ip player

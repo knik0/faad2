@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ffint.h,v 1.18 2004/04/12 18:17:42 menno Exp $
+** $Id: mp4ffint.h,v 1.19 2005/02/01 13:15:55 menno Exp $
 **/
 
 #ifndef MP4FF_INTERNAL_H
@@ -33,7 +33,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include "mp4ff_int_types.h"
-
+#include <stdlib.h>
 
 #if defined(_WIN32) && !defined(_WIN32_WCE)
 #define ITUNES_DRM
@@ -81,7 +81,6 @@ static __inline uint64_t U64_AT( void const * _p )
 #define FOURCC_priv VLC_FOURCC( 'p', 'r', 'i', 'v' )
 
 #endif
-
 #define MAX_TRACKS 1024
 #define TRACK_UNKNOWN 0
 #define TRACK_AUDIO   1
@@ -153,11 +152,14 @@ static __inline uint64_t U64_AT( void const * _p )
 #define ATOM_SCHI 25
 
 #ifdef HAVE_CONFIG_H
-#include "../../config.h"
+#include "../../config.h"   
 #endif
 
 #if !(defined(_WIN32) || defined(_WIN32_WCE))
 #define stricmp strcasecmp
+#else
+#define stricmp _stricmp
+#define strdup _strdup
 #endif
 
 /* file callback structure */

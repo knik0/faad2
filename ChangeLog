@@ -1,3 +1,40 @@
+21 january 2005  gpascutto(at)nero.com
+    - hcr.c, drm_dec.c: updates for DRM PS standard, error resilience changes
+    - reverted above error resilience changes
+
+8 december 2004  mbakker(at)nero.com
+    - ps_dec.c, ps_syntax.c: PS fixes (OPD huffman table and modulo decoding)
+
+6 december 2004  gpascutto(at)nero.com
+    - drm_dec.c, drm_dec.h, sbr_dec.c: DRM PS Standards update
+
+5 december 2004  gpascutto(at)nero.com
+    - syntax.c, hcr.c, decoder.c, sbr_syntax.c, specrec.c:
+        Improved (DRM) error resilience
+
+18 october 2004  mbakker(at)nero.com
+    - sbr_dec.c, sbr_hfadj.c, common.h: fixed Low Power SBR decoding
+
+18 october 2004  mbakker(at)nero.com
+    - main.c: added "quiet" option to frontend
+
+5 october 2004  mbakker(at)nero.com
+    - decoder.c: skip ID3 tags in library
+
+24 september 2004  mbakker(at)nero.com
+    - syntax.c,h, lt_predict.c, mp4.c, decoder.c:
+         Added stereo DRM support, removed fake scalable support
+
+21 september 2004  mbakker(at)nero.com
+    - specrec.c, bits.h, common.h, error.h, sbr_hfadj.h, structs.h,
+      decoder.c, error.c, hcr.c, sbr_dec.c, sbr_hfadj.c, sbr_syntax.c, syntax.c:
+         Improved error detection and handling.
+
+16 september 2004  mbakker(at)nero.com
+    - specrec.c, bits.h, common.h, error.h, sbr_hfadj.h, structs.h,
+      decoder.c, error.c, hcr.c, sbr_dec.c, sbr_hfadj.c, sbr_syntax.c, syntax.c:
+         Improved error detection and handling.
+
 8 september 2004  mbakker(at)nero.com
     - specrec.c: fixed compilation without PS
 

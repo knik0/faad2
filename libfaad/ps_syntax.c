@@ -1,28 +1,33 @@
 /*
-** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR and PS decoding
-** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
-**
+** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
+** Copyright (C) 2003-2005 M. Bakker, Ahead Software AG, http://www.nero.com
+**  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**
+** 
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
+** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
 ** forbidden.
 **
+** Software using this code must display the following message visibly in the
+** software:
+** "FAAD2 AAC/HE-AAC/HE-AACv2/DRM decoder (c) Ahead Software, www.nero.com"
+** in, for example, the about-box or help/startup screen.
+**
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: ps_syntax.c,v 1.6 2004/09/04 14:56:28 menno Exp $
+** $Id: ps_syntax.c,v 1.7 2005/02/01 13:15:58 menno Exp $
 **/
 
 #include "common.h"
@@ -308,9 +313,9 @@ static const int8_t t_huff_opd[][2] = {
     { 2, 3 },                 /* index 1: 2 bits: 0x */
     { 4, 5 },                 /* index 2: 3 bits: 00x */
     { /*1*/ -30, /*7*/ -24 }, /* index 3: 3 bits: 01x */
-    { /*5*/ -26, 6 },         /* index 4: 4 bits: 000x */
-    { /*2*/ -29, /*6*/ -25 }, /* index 5: 4 bits: 001x */
-    { /*4*/ -27, /*3*/ -28 }  /* index 6: 5 bits: 0001x */
+    { /*5*/ -26, /*2*/ -29 }, /* index 4: 4 bits: 000x */
+    { /*6*/ -25, 6 },         /* index 5: 4 bits: 001x */
+    { /*4*/ -27, /*3*/ -28 }  /* index 6: 5 bits: 0011x */
 };
 
 /* static function declarations */
