@@ -512,7 +512,7 @@ void MP4File::FinishWrite()
         MP4Atom* pFreeAtom = MP4Atom::CreateAtom("free");
         ASSERT(pFreeAtom);
         pFreeAtom->SetFile(this);
-        pFreeAtom->SetSize(MAX(m_orgFileSize - (m_fileSize + 8), 0));
+        pFreeAtom->SetSize((u_int64_t)MAX((int64_t)m_orgFileSize - ((int64_t)m_fileSize + 8), 0));
         pFreeAtom->Write();
         delete pFreeAtom;
     }
