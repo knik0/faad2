@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: id3v2tag.c,v 1.2 2002/01/21 17:04:27 menno Exp $
+** $Id: id3v2tag.c,v 1.3 2002/02/11 11:33:44 menno Exp $
 **/
 
 #define WIN32_LEAN_AND_MEAN
@@ -1104,6 +1104,7 @@ void GetID3FileTitle(char *filename, char *title, char *format)
             }
         }
 
+        *out = '\0';
         ID3Tag_Delete(tag);
     }
 
