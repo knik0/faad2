@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.40 2003/04/01 16:34:34 menno Exp $
+** $Id: syntax.c,v 1.41 2003/04/02 18:31:08 menno Exp $
 **/
 
 /*
@@ -505,7 +505,7 @@ static uint8_t single_lfe_channel_element(faacDecHandle hDecoder,
         if (ics->pulse_data_present)
         {
             if (ics->window_sequence != EIGHT_SHORT_SEQUENCE)
-                pulse_decode(ics, spec_data);
+                pulse_decode(ics, spec_data, hDecoder->frameLength);
             else
                 return 2; /* pulse coding not allowed for short blocks */
         }
@@ -615,14 +615,14 @@ static uint8_t channel_pair_element(faacDecHandle hDecoder, element *cpe,
         if (ics1->pulse_data_present)
         {
             if (ics1->window_sequence != EIGHT_SHORT_SEQUENCE)
-                pulse_decode(ics1, spec_data1);
+                pulse_decode(ics1, spec_data1, hDecoder->frameLength);
             else
                 return 2; /* pulse coding not allowed for short blocks */
         }
         if (ics2->pulse_data_present)
         {
             if (ics2->window_sequence != EIGHT_SHORT_SEQUENCE)
-                pulse_decode(ics2, spec_data2);
+                pulse_decode(ics2, spec_data2, hDecoder->frameLength);
             else
                 return 2; /* pulse coding not allowed for short blocks */
         }
@@ -955,7 +955,6 @@ static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
 #ifdef ERROR_RESILIENCE
     if (hDecoder->aacSpectralDataResilienceFlag)
     {
-#if 0
         if (hDecoder->channelConfiguration == 2)
         {
             if (ics->length_of_reordered_spectral_data > 6144)
@@ -964,7 +963,7 @@ static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
             if (ics->length_of_reordered_spectral_data > 12288)
                 ics->length_of_reordered_spectral_data = 12288;
         }
-#endif
+
         ics->length_of_reordered_spectral_data = (uint16_t)faad_getbits(ld, 14
             DEBUGVAR(1,147,"individual_channel_stream(): length_of_reordered_spectral_data"));
         /* TODO: test for >6144/12288, see page 143 */
@@ -1014,7 +1013,7 @@ static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
     if (ics->pulse_data_present)
     {
         if (ics->window_sequence != EIGHT_SHORT_SEQUENCE)
-            pulse_decode(ics, spec_data);
+            pulse_decode(ics, spec_data, hDecoder->frameLength);
         else
             return 2; /* pulse coding not allowed for short blocks */
     }
