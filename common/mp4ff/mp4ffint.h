@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ffint.h,v 1.2 2003/11/25 13:16:09 menno Exp $
+** $Id: mp4ffint.h,v 1.3 2003/12/04 21:29:52 menno Exp $
 **/
 
 #ifndef MP4FF_INTERNAL_H
@@ -200,10 +200,10 @@ typedef struct
     int32_t current_position;
 
     int32_t moov_read;
-    int32_t moov_offset;
-    int32_t moov_size;
+    uint64_t moov_offset;
+    uint64_t moov_size;
     uint8_t last_atom;
-    int32_t file_size;
+    uint64_t file_size;
 
     /* mvhd */
     int32_t time_scale;
@@ -225,6 +225,7 @@ typedef struct
 /* mp4util.c */
 int32_t mp4ff_read_data(mp4ff_t *f, int8_t *data, const int32_t size);
 int32_t mp4ff_write_data(mp4ff_t *f, int8_t *data, const int32_t size);
+uint64_t mp4ff_read_int64(mp4ff_t *f);
 uint32_t mp4ff_read_int32(mp4ff_t *f);
 uint32_t mp4ff_read_int24(mp4ff_t *f);
 uint16_t mp4ff_read_int16(mp4ff_t *f);
@@ -238,7 +239,7 @@ static int32_t mp4ff_atom_get_size(const int8_t *data);
 static int32_t mp4ff_atom_compare(const int8_t a1, const int8_t b1, const int8_t c1, const int8_t d1,
                                   const int8_t a2, const int8_t b2, const int8_t c2, const int8_t d2);
 static uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b, const int8_t c, const int8_t d);
-int32_t mp4ff_atom_read_header(mp4ff_t *f, uint8_t *atom_type);
+uint64_t mp4ff_atom_read_header(mp4ff_t *f, uint8_t *atom_type, uint8_t *header_size);
 static int32_t mp4ff_read_stsz(mp4ff_t *f);
 static int32_t mp4ff_read_esds(mp4ff_t *f);
 static int32_t mp4ff_read_mp4a(mp4ff_t *f);
@@ -247,7 +248,7 @@ static int32_t mp4ff_read_stsc(mp4ff_t *f);
 static int32_t mp4ff_read_stco(mp4ff_t *f);
 static int32_t mp4ff_read_stts(mp4ff_t *f);
 #ifdef USE_TAGGING
-static int32_t mp4ff_read_meta(mp4ff_t *f, const int32_t size);
+static int32_t mp4ff_read_meta(mp4ff_t *f, const uint64_t size);
 #endif
 int32_t mp4ff_atom_read(mp4ff_t *f, const int32_t size, const uint8_t atom_type);
 
@@ -299,7 +300,7 @@ mp4ff_t *mp4ff_open_edit(mp4ff_callback_t *f);
 #endif
 void mp4ff_close(mp4ff_t *ff);
 static void mp4ff_track_add(mp4ff_t *f);
-static int32_t parse_sub_atoms(mp4ff_t *f, const int32_t total_size);
+static int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size);
 static int32_t parse_atoms(mp4ff_t *f);
 int32_t mp4ff_get_sample_duration(const mp4ff_t *f, const int32_t track, const int32_t sample);
 int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,

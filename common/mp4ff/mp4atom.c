@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4atom.c,v 1.5 2003/11/25 13:16:09 menno Exp $
+** $Id: mp4atom.c,v 1.6 2003/12/04 21:29:52 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -41,7 +41,7 @@ static int32_t mp4ff_atom_get_size(const int8_t *data)
     d = (uint8_t)data[3];
 
     result = (a<<24) | (b<<16) | (c<<8) | d;
-    if (result > 0 && result < 8) result = 8;
+    //if (result > 0 && result < 8) result = 8;
 
     return (int32_t)result;
 }
@@ -161,9 +161,9 @@ static uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b,
 }
 
 /* read atom header, return atom size, atom size is with header included */
-int32_t mp4ff_atom_read_header(mp4ff_t *f, uint8_t *atom_type)
+uint64_t mp4ff_atom_read_header(mp4ff_t *f, uint8_t *atom_type, uint8_t *header_size)
 {
-    int32_t size;
+    uint64_t size;
     int32_t ret;
     int8_t atom_header[8];
 
@@ -172,6 +172,14 @@ int32_t mp4ff_atom_read_header(mp4ff_t *f, uint8_t *atom_type)
         return 0;
 
     size = mp4ff_atom_get_size(atom_header);
+    *header_size = 8;
+
+    /* check for 64 bit atom size */
+    if (size == 1)
+    {
+        *header_size = 16;
+        size = mp4ff_read_int64(f);
+    }
 
     //printf("%c%c%c%c\n", atom_header[4], atom_header[5], atom_header[6], atom_header[7]);
 
@@ -268,8 +276,10 @@ static int32_t mp4ff_read_esds(mp4ff_t *f)
 
 static int32_t mp4ff_read_mp4a(mp4ff_t *f)
 {
-    int32_t i, size;
+    uint64_t size;
+    int32_t i;
     uint8_t atom_type = 0;
+    uint8_t header_size = 0;
 
     for (i = 0; i < 6; i++)
     {
@@ -290,7 +300,7 @@ static int32_t mp4ff_read_mp4a(mp4ff_t *f)
 
     mp4ff_read_int16(f);
 
-    size = mp4ff_atom_read_header(f, &atom_type);
+    size = mp4ff_atom_read_header(f, &atom_type, &header_size);
     if (atom_type == ATOM_ESDS)
     {
         mp4ff_read_esds(f);
@@ -302,6 +312,7 @@ static int32_t mp4ff_read_mp4a(mp4ff_t *f)
 static int32_t mp4ff_read_stsd(mp4ff_t *f)
 {
     int32_t i;
+    uint8_t header_size = 0;
 
     mp4ff_read_char(f); /* version */
     mp4ff_read_int24(f); /* flags */
@@ -310,10 +321,10 @@ static int32_t mp4ff_read_stsd(mp4ff_t *f)
 
     for (i = 0; i < f->track[f->total_tracks - 1]->stsd_entry_count; i++)
     {
-        int32_t skip = mp4ff_position(f);
-        int32_t size;
+        uint64_t skip = mp4ff_position(f);
+        uint64_t size;
         uint8_t atom_type = 0;
-        size = mp4ff_atom_read_header(f, &atom_type);
+        size = mp4ff_atom_read_header(f, &atom_type, &header_size);
         skip += size;
 
         if (atom_type == ATOM_MP4A)
@@ -430,22 +441,23 @@ static int32_t mp4ff_read_mvhd(mp4ff_t *f)
 }
 
 #ifdef USE_TAGGING
-static int32_t mp4ff_read_meta(mp4ff_t *f, const int32_t size)
+static int32_t mp4ff_read_meta(mp4ff_t *f, const uint64_t size)
 {
-    int32_t subsize, sumsize = 0;
+    uint64_t subsize, sumsize = 0;
     uint8_t atom_type;
+    uint8_t header_size = 0;
 
     mp4ff_read_char(f); /* version */
     mp4ff_read_int24(f); /* flags */
 
     while (sumsize < (size-12))
     {
-        subsize = mp4ff_atom_read_header(f, &atom_type);
+        subsize = mp4ff_atom_read_header(f, &atom_type, &header_size);
         if (atom_type == ATOM_ILST)
         {
-            mp4ff_parse_metadata(f, subsize);
+            mp4ff_parse_metadata(f, subsize-(header_size+4));
         } else {
-            mp4ff_set_position(f, mp4ff_position(f)+subsize-8);
+            mp4ff_set_position(f, mp4ff_position(f)+subsize-header_size);
         }
         sumsize += subsize;
     }

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4meta.c,v 1.2 2003/11/25 13:16:09 menno Exp $
+** $Id: mp4meta.c,v 1.3 2003/12/04 21:29:52 menno Exp $
 **/
 
 #ifdef USE_TAGGING
@@ -234,21 +234,22 @@ static int32_t mp4ff_set_metadata_name(mp4ff_t *f, const uint8_t atom_type, char
 static int32_t mp4ff_parse_tag(mp4ff_t *f, const uint8_t parent_atom_type, const int32_t size)
 {
     uint8_t atom_type;
-    int32_t subsize, sumsize = 0;
+    uint8_t header_size = 0;
+    uint64_t subsize, sumsize = 0;
     char *name = NULL;
     char *data = NULL;
 
-    while (sumsize < (size-8))
+    while (sumsize < size)
     {
-        subsize = mp4ff_atom_read_header(f, &atom_type);
+        subsize = mp4ff_atom_read_header(f, &atom_type, &header_size);
         if (atom_type == ATOM_DATA)
         {
             mp4ff_read_char(f); /* version */
             mp4ff_read_int24(f); /* flags */
             mp4ff_read_int32(f); /* reserved */
-            data = malloc(subsize-16+1);
-            mp4ff_read_data(f, data, subsize-16);
-            data[subsize-16] = '\0';
+            data = malloc(subsize-(header_size+8)+1);
+            mp4ff_read_data(f, data, subsize-(header_size+8));
+            data[subsize-(header_size+8)] = '\0';
 
             /* some need special attention */
             if (parent_atom_type == ATOM_GENRE2 || parent_atom_type == ATOM_TEMPO)
@@ -289,11 +290,11 @@ static int32_t mp4ff_parse_tag(mp4ff_t *f, const uint8_t parent_atom_type, const
         } else if (atom_type == ATOM_NAME) {
             mp4ff_read_char(f); /* version */
             mp4ff_read_int24(f); /* flags */
-            name = malloc(subsize-12+1);
-            mp4ff_read_data(f, name, subsize-12);
+            name = malloc(subsize-(header_size+4)+1);
+            mp4ff_read_data(f, name, subsize-(header_size+4));
             name[subsize-12] = '\0';
         } else {
-            mp4ff_set_position(f, mp4ff_position(f)+subsize-8);
+            mp4ff_set_position(f, mp4ff_position(f)+subsize-header_size);
         }
         sumsize += subsize;
     }
@@ -310,13 +311,14 @@ static int32_t mp4ff_parse_tag(mp4ff_t *f, const uint8_t parent_atom_type, const
 
 int32_t mp4ff_parse_metadata(mp4ff_t *f, const int32_t size)
 {
-    int32_t subsize, sumsize = 0;
+    uint64_t subsize, sumsize = 0;
     uint8_t atom_type;
+    uint8_t header_size = 0;
 
-    while (sumsize < (size-12))
+    while (sumsize < size)
     {
-        subsize = mp4ff_atom_read_header(f, &atom_type);
-        mp4ff_parse_tag(f, atom_type, subsize);
+        subsize = mp4ff_atom_read_header(f, &atom_type, &header_size);
+        mp4ff_parse_tag(f, atom_type, subsize-header_size);
         sumsize += subsize;
     }
 

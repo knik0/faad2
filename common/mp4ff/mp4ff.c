@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ff.c,v 1.5 2003/11/25 13:16:09 menno Exp $
+** $Id: mp4ff.c,v 1.6 2003/12/04 21:29:52 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -125,15 +125,16 @@ static void mp4ff_track_add(mp4ff_t *f)
 }
 
 /* parse atoms that are sub atoms of other atoms */
-static int32_t parse_sub_atoms(mp4ff_t *f, const int32_t total_size)
+static int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size)
 {
-    int32_t size;
+    uint64_t size;
     uint8_t atom_type = 0;
-    int32_t counted_size = 0;
+    uint64_t counted_size = 0;
+    uint8_t header_size = 0;
 
     while (counted_size < total_size)
     {
-        size = mp4ff_atom_read_header(f, &atom_type);
+        size = mp4ff_atom_read_header(f, &atom_type, &header_size);
         counted_size += size;
 
         /* check for end of file */
@@ -151,7 +152,7 @@ static int32_t parse_sub_atoms(mp4ff_t *f, const int32_t total_size)
         /* parse subatoms */
         if (atom_type < SUBATOMIC)
         {
-            parse_sub_atoms(f, size-8);
+            parse_sub_atoms(f, size-header_size);
         } else {
             mp4ff_atom_read(f, size, atom_type);
         }
@@ -163,12 +164,13 @@ static int32_t parse_sub_atoms(mp4ff_t *f, const int32_t total_size)
 /* parse root atoms */
 static int32_t parse_atoms(mp4ff_t *f)
 {
-    int32_t size;
+    uint64_t size;
     uint8_t atom_type = 0;
+    uint8_t header_size = 0;
 
     f->file_size = 0;
 
-    while ((size = mp4ff_atom_read_header(f, &atom_type)) != 0)
+    while ((size = mp4ff_atom_read_header(f, &atom_type, &header_size)) != 0)
     {
         f->file_size += size;
         f->last_atom = atom_type;
@@ -180,20 +182,20 @@ static int32_t parse_atoms(mp4ff_t *f)
 //            break;
         }
 
-        if (atom_type == ATOM_MOOV && size > 8)
+        if (atom_type == ATOM_MOOV && size > header_size)
         {
             f->moov_read = 1;
-            f->moov_offset = mp4ff_position(f)-8;
+            f->moov_offset = mp4ff_position(f)-header_size;
             f->moov_size = size;
         }
 
         /* parse subatoms */
         if (atom_type < SUBATOMIC)
         {
-            parse_sub_atoms(f, size-8);
+            parse_sub_atoms(f, size-header_size);
         } else {
             /* skip this atom */
-            mp4ff_set_position(f, mp4ff_position(f)+size-8);
+            mp4ff_set_position(f, mp4ff_position(f)+size-header_size);
         }
     }
 

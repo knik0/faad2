@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ff.h,v 1.8 2003/11/25 13:16:09 menno Exp $
+** $Id: mp4ff.h,v 1.9 2003/12/04 21:29:52 menno Exp $
 **/
 
 #ifndef MP4FF_H
@@ -52,9 +52,6 @@ mp4ff_t *mp4ff_open_read(mp4ff_callback_t *f);
 mp4ff_t *mp4ff_open_edit(mp4ff_callback_t *f);
 #endif
 void mp4ff_close(mp4ff_t *f);
-static void mp4ff_track_add(mp4ff_t *f);
-static int parse_sub_atoms(mp4ff_t *f, const int total_size);
-static int parse_atoms(mp4ff_t *f);
 int mp4ff_get_sample_duration(const mp4ff_t *f, const int track, const int sample);
 int mp4ff_read_sample(mp4ff_t *f, const int track, const int sample,
                           unsigned char **audio_buffer,  unsigned int *bytes);
@@ -64,7 +61,6 @@ int mp4ff_total_tracks(const mp4ff_t *f);
 int mp4ff_time_scale(const mp4ff_t *f, const int track);
 int mp4ff_num_samples(const mp4ff_t *f, const int track);
 
-#ifdef USE_TAGGING
 /* metadata */
 int mp4ff_meta_get_num_items(const mp4ff_t *f);
 int mp4ff_meta_get_by_index(const mp4ff_t *f, unsigned int index,
@@ -81,7 +77,6 @@ int mp4ff_meta_get_track(const mp4ff_t *f, char **value);
 int mp4ff_meta_get_disc(const mp4ff_t *f, char **value);
 int mp4ff_meta_get_compilation(const mp4ff_t *f, char **value);
 int mp4ff_meta_get_tempo(const mp4ff_t *f, char **value);
-#endif
 
 #ifdef __cplusplus
 }
