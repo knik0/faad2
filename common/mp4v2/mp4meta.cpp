@@ -106,7 +106,7 @@ bool MP4File::CreateMetadataAtom(const char* name)
     {
         pMetaAtom->SetFlags(0x1);
     } else if ((memcmp(name, "cpil", 4) == 0) || (memcmp(name, "tmpo", 4) == 0)) {
-        pMetaAtom->SetFlags(0xF);
+        pMetaAtom->SetFlags(0x15);
     }
 
     MP4Atom *pHdlrAtom = m_pRootAtom->FindAtom("moov.udta.meta.hdlr");
@@ -140,7 +140,7 @@ bool MP4File::SetMetadataName(const char* value)
     const char *s = "moov.udta.meta.ilst.©nam.data";
     MP4BytesProperty *pMetadataProperty = NULL;
     MP4Atom *pMetaAtom = NULL;
-    
+
     pMetaAtom = m_pRootAtom->FindAtom(s);
 
     if (!pMetaAtom)
@@ -183,7 +183,7 @@ bool MP4File::SetMetadataWriter(const char* value)
     const char *s = "moov.udta.meta.ilst.©wrt.data";
     MP4BytesProperty *pMetadataProperty = NULL;
     MP4Atom *pMetaAtom = NULL;
-    
+
     pMetaAtom = m_pRootAtom->FindAtom(s);
 
     if (!pMetaAtom)
@@ -226,7 +226,7 @@ bool MP4File::SetMetadataAlbum(const char* value)
     const char *s = "moov.udta.meta.ilst.©alb.data";
     MP4BytesProperty *pMetadataProperty = NULL;
     MP4Atom *pMetaAtom = NULL;
-    
+
     pMetaAtom = m_pRootAtom->FindAtom(s);
 
     if (!pMetaAtom)
@@ -269,7 +269,7 @@ bool MP4File::SetMetadataArtist(const char* value)
     const char *s = "moov.udta.meta.ilst.©ART.data";
     MP4BytesProperty *pMetadataProperty = NULL;
     MP4Atom *pMetaAtom = NULL;
-    
+
     pMetaAtom = m_pRootAtom->FindAtom(s);
 
     if (!pMetaAtom)
@@ -312,7 +312,7 @@ bool MP4File::SetMetadataTool(const char* value)
     const char *s = "moov.udta.meta.ilst.©too.data";
     MP4BytesProperty *pMetadataProperty = NULL;
     MP4Atom *pMetaAtom = NULL;
-    
+
     pMetaAtom = m_pRootAtom->FindAtom(s);
 
     if (!pMetaAtom)
@@ -355,7 +355,7 @@ bool MP4File::SetMetadataComment(const char* value)
     const char *s = "moov.udta.meta.ilst.©cmt.data";
     MP4BytesProperty *pMetadataProperty = NULL;
     MP4Atom *pMetaAtom = NULL;
-    
+
     pMetaAtom = m_pRootAtom->FindAtom(s);
 
     if (!pMetaAtom)
@@ -398,7 +398,7 @@ bool MP4File::SetMetadataYear(const char* value)
     const char *s = "moov.udta.meta.ilst.©day.data";
     MP4BytesProperty *pMetadataProperty = NULL;
     MP4Atom *pMetaAtom = NULL;
-    
+
     pMetaAtom = m_pRootAtom->FindAtom(s);
 
     if (!pMetaAtom)
@@ -445,7 +445,7 @@ bool MP4File::SetMetadataTrack(u_int16_t track, u_int16_t totalTracks)
     const char *s = "moov.udta.meta.ilst.trkn.data";
     MP4BytesProperty *pMetadataProperty = NULL;
     MP4Atom *pMetaAtom = NULL;
-    
+
     pMetaAtom = m_pRootAtom->FindAtom(s);
 
     if (!pMetaAtom)
@@ -497,7 +497,7 @@ bool MP4File::SetMetadataDisk(u_int16_t disk, u_int16_t totalDisks)
     const char *s = "moov.udta.meta.ilst.disk.data";
     MP4BytesProperty *pMetadataProperty = NULL;
     MP4Atom *pMetaAtom = NULL;
-    
+
     pMetaAtom = m_pRootAtom->FindAtom(s);
 
     if (!pMetaAtom)
@@ -574,7 +574,7 @@ static const char* ID3v1GenreList[] = {
 
 int GenreToString(char** GenreStr, const int genre)
 {
-  if (genre > 0 && 
+  if (genre > 0 &&
       genre <= (int)(sizeof(ID3v1GenreList)/sizeof(*ID3v1GenreList)))
     {
         *GenreStr = (char*)malloc((strlen(ID3v1GenreList[genre-1])+1)*sizeof(char));
@@ -707,7 +707,7 @@ bool MP4File::SetMetadataTempo(u_int16_t tempo)
     const char *s = "moov.udta.meta.ilst.tmpo.data";
     MP4BytesProperty *pMetadataProperty = NULL;
     MP4Atom *pMetaAtom = NULL;
-    
+
     pMetaAtom = m_pRootAtom->FindAtom(s);
 
     if (!pMetaAtom)
@@ -753,7 +753,7 @@ bool MP4File::SetMetadataCompilation(u_int8_t compilation)
     const char *s = "moov.udta.meta.ilst.cpil.data";
     MP4BytesProperty *pMetadataProperty = NULL;
     MP4Atom *pMetaAtom = NULL;
-    
+
     pMetaAtom = m_pRootAtom->FindAtom(s);
 
     if (!pMetaAtom)
@@ -795,7 +795,7 @@ bool MP4File::SetMetadataCoverArt(u_int8_t *coverArt, u_int32_t size)
     const char *s = "moov.udta.meta.ilst.covr.data";
     MP4BytesProperty *pMetadataProperty = NULL;
     MP4Atom *pMetaAtom = NULL;
-    
+
     pMetaAtom = m_pRootAtom->FindAtom(s);
 
     if (!pMetaAtom)
