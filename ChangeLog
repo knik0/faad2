@@ -1,406 +1,1189 @@
+2002-08-07  menno
+	* libfaad/bits.c 1.7:
+	* libfaad/bits.h 1.7:
+	* libfaad/rvlc_scale_factors.c 1.2:
+	* libfaad/rvlc_scale_factors.h 1.2:
+	* plugins/in_mp4/in_mp4.c 1.12:
+		RVLC ER tool finished
+
+	* AUTHORS 1.2:
+	* NEWS 1.2:
+	* README 1.3:
+	* aacDECdrop/aacDECdrop/aacDECdrop.dsp 1.3:
+	* aacDECdrop/decode.c 1.5:
+	* frontend/main.c 1.18:
+	* include/faad.h 1.9:
+	* libfaad/Makefile.am 1.7:
+	* libfaad/libfaad2_dll.dsp 1.7:
+		Updates for release
+
+2002-08-05  menno
+	* common/libsndfile/Win32/libsndfile.dsp 1.3:
+	* frontend/main.c 1.17:
+	* libfaad/bits.c 1.6:
+	* libfaad/bits.h 1.6:
+	* libfaad/decoder.c 1.18:
+	* libfaad/filtbank.c 1.11:
+	* libfaad/libfaad.dsp 1.13:
+	* libfaad/mp4.c 1.9:
+	* libfaad/rvlc_scale_factors.c 1.1:
+	* libfaad/rvlc_scale_factors.h 1.1:
+	* libfaad/syntax.c 1.21:
+	* libfaad/syntax.h 1.16:
+		RVLC bitstream reading working, what's left now is the decoding.
+
+2002-07-25  menno
+	* common/libsndfile/AUTHORS 1.2:
+	* common/libsndfile/ChangeLog 1.2:
+	* common/libsndfile/MacOS/MacOS-readme.txt 1.2:
+	* common/libsndfile/MacOS/Makefile.am 1.2:
+	* common/libsndfile/MacOS/Makefile.in 1.2:
+	* common/libsndfile/MacOS/config.h 1.2:
+	* common/libsndfile/Makefile.am 1.2:
+	* common/libsndfile/Makefile.in 1.2:
+	* common/libsndfile/NEWS 1.2:
+	* common/libsndfile/README 1.2:
+	* common/libsndfile/TODO 1.2:
+	* common/libsndfile/Win32/Makefile.am 1.2:
+	* common/libsndfile/Win32/Makefile.in 1.2:
+	* common/libsndfile/Win32/Makefile.msvc 1.1:
+	* common/libsndfile/Win32/README-Win32.txt.old 1.2:
+	* common/libsndfile/Win32/config.h 1.2:
+	* common/libsndfile/Win32/libsndfile.def 1.1:
+	* common/libsndfile/Win32/libsndfile.dsp 1.2:
+	* common/libsndfile/Win32/unistd.h 1.2:
+	* common/libsndfile/acconfig.h 1.2:
+	* common/libsndfile/acinclude.m4 1.1:
+	* common/libsndfile/aclocal.m4 1.2:
+	* common/libsndfile/check_libsndfile.py 1.2:
+	* common/libsndfile/config.guess 1.2:
+	* common/libsndfile/config.sub 1.2:
+	* common/libsndfile/configure 1.2:
+	* common/libsndfile/configure.in 1.2:
+	* common/libsndfile/libsndfile.spec 1.2:
+	* common/libsndfile/libsndfile_version_convert.py 1.1:
+	* common/libsndfile/ltconfig 1.2:
+	* common/libsndfile/ltmain.sh 1.2:
+	* common/libsndfile/mkinstalldirs 1.2:
+	* common/libsndfile/reconf 1.2:
+	* common/libsndfile/sndfile.pc.in 1.1:
+	* common/libsndfile/src/G72x/Makefile.am 1.2:
+	* common/libsndfile/src/G72x/Makefile.in 1.2:
+	* common/libsndfile/src/G72x/g72x.c 1.2:
+	* common/libsndfile/src/G72x/g72x.h 1.2:
+	* common/libsndfile/src/G72x/g72x_test.c 1.1:
+	* common/libsndfile/src/G72x/private.h 1.2:
+	* common/libsndfile/src/GSM610/ChangeLog 1.2:
+	* common/libsndfile/src/GSM610/Makefile.am 1.2:
+	* common/libsndfile/src/GSM610/Makefile.in 1.2:
+	* common/libsndfile/src/GSM610/add.c 1.2:
+	* common/libsndfile/src/GSM610/code.c 1.2:
+	* common/libsndfile/src/GSM610/config.h 1.2:
+	* common/libsndfile/src/GSM610/decode.c 1.2:
+	* common/libsndfile/src/GSM610/gsm.h 1.2:
+	* common/libsndfile/src/GSM610/gsm_create.c 1.2:
+	* common/libsndfile/src/GSM610/gsm_decode.c 1.2:
+	* common/libsndfile/src/GSM610/gsm_destroy.c 1.2:
+	* common/libsndfile/src/GSM610/gsm_encode.c 1.2:
+	* common/libsndfile/src/GSM610/gsm_option.c 1.2:
+	* common/libsndfile/src/GSM610/long_term.c 1.2:
+	* common/libsndfile/src/GSM610/lpc.c 1.2:
+	* common/libsndfile/src/GSM610/preprocess.c 1.2:
+	* common/libsndfile/src/GSM610/private.h 1.2:
+	* common/libsndfile/src/GSM610/proto.h 1.2:
+	* common/libsndfile/src/GSM610/rpe.c 1.2:
+	* common/libsndfile/src/GSM610/short_term.c 1.2:
+	* common/libsndfile/src/GSM610/table.c 1.2:
+	* common/libsndfile/src/GSM610/unproto.h 1.2:
+	* common/libsndfile/src/Makefile.am 1.2:
+	* common/libsndfile/src/Makefile.in 1.2:
+	* common/libsndfile/src/aiff.c 1.2:
+	* common/libsndfile/src/alaw.c 1.2:
+	* common/libsndfile/src/au.c 1.2:
+	* common/libsndfile/src/au.h 1.2:
+	* common/libsndfile/src/au_g72x.c 1.2:
+	* common/libsndfile/src/command.c 1.1:
+	* common/libsndfile/src/common.c 1.2:
+	* common/libsndfile/src/common.h 1.2:
+	* common/libsndfile/src/config.h.in 1.2:
+	* common/libsndfile/src/double64.c 1.1:
+	* common/libsndfile/src/dwvw.c 1.1:
+	* common/libsndfile/src/file_io.c 1.1:
+	* common/libsndfile/src/float32.c 1.2:
+	* common/libsndfile/src/float_cast.h 1.1:
+	* common/libsndfile/src/floatcast.h 1.2:
+	* common/libsndfile/src/gsm610.c 1.1:
+	* common/libsndfile/src/ima_adpcm.c 1.1:
+	* common/libsndfile/src/ircam.c 1.2:
+	* common/libsndfile/src/ms_adpcm.c 1.1:
+	* common/libsndfile/src/nist.c 1.2:
+	* common/libsndfile/src/paf.c 1.2:
+	* common/libsndfile/src/pcm.c 1.2:
+	* common/libsndfile/src/raw.c 1.2:
+	* common/libsndfile/src/rx2.c 1.1:
+	* common/libsndfile/src/samplitude.c 1.2:
+	* common/libsndfile/src/sd2.c 1.1:
+	* common/libsndfile/src/sf_command.h 1.1:
+	* common/libsndfile/src/sfendian.h 1.2:
+	* common/libsndfile/src/sndfile.c 1.2:
+	* common/libsndfile/src/sndfile.h 1.2:
+	* common/libsndfile/src/svx.c 1.2:
+	* common/libsndfile/src/txw.c 1.1:
+	* common/libsndfile/src/ulaw.c 1.2:
+	* common/libsndfile/src/voc.c 1.2:
+	* common/libsndfile/src/w64.c 1.1:
+	* common/libsndfile/src/wav.c 1.2:
+	* common/libsndfile/src/wav.h 1.2:
+	* common/libsndfile/src/wav_gsm610.c 1.2:
+	* common/libsndfile/src/wav_ima_adpcm.c 1.2:
+	* common/libsndfile/src/wav_ms_adpcm.c 1.2:
+	* common/libsndfile/src/wav_w64.c 1.1:
+	* common/libsndfile/src/wav_w64.h 1.1:
+	* frontend/audio.c 1.3:
+		Update to newest version of libsndfile library
+		(Somebody please check linux compilation)
+
+	* common/mp4v2/API_CHANGES 1.1:
+	* common/mp4v2/Makefile.am 1.5:
+	* common/mp4v2/TODO 1.2:
+	* common/mp4v2/atom_mvhd.cpp 1.2:
+	* common/mp4v2/descriptors.cpp 1.2:
+	* common/mp4v2/descriptors.h 1.2:
+	* common/mp4v2/isma.cpp 1.3:
+	* common/mp4v2/libmp4v2.dsp 1.3:
+	* common/mp4v2/libmp4v260.dsp 1.3:
+	* common/mp4v2/libmp4v2_st.dsp 1.3:
+	* common/mp4v2/libmp4v2_st60.dsp 1.3:
+	* common/mp4v2/mp4.cpp 1.3:
+	* common/mp4v2/mp4.h 1.3:
+	* common/mp4v2/mp4descriptor.cpp 1.2:
+	* common/mp4v2/mp4file.cpp 1.3:
+	* common/mp4v2/mp4file.h 1.3:
+	* common/mp4v2/mp4file_io.cpp 1.2:
+	* common/mp4v2/mp4info.cpp 1.1:
+	* common/mp4v2/mp4property.cpp 1.2:
+	* common/mp4v2/mp4property.h 1.3:
+	* common/mp4v2/mp4track.cpp 1.2:
+	* common/mp4v2/mp4track.h 1.2:
+	* common/mp4v2/mp4util.cpp 1.2:
+	* common/mp4v2/mp4util.h 1.2:
+	* common/mp4v2/rtphint.cpp 1.2:
+	* common/mp4v2/systems.h 1.6:
+	* common/mp4v2/win32_ver.h 1.3:
+		Update to newest version of mp4v2 library
+		(Somebody please check linux compilation)
+
+	* aacDECdrop/audio.c 1.3:
+	* aacDECdrop/decode.c 1.4:
+		made aacDECdrop compilable again
+
+	* plugins/in_mp4/in_mp4.c 1.11:
+		winamp mp4 plugin updated
+
+	* common/mp4v2/Makefile.am 1.6:
+	* configure.in 1.4:
+	* libfaad/Makefile.am 1.6:
+		Fixed linux compilation
+
+	* configure.in 1.5:
+	* frontend/Makefile.am 1.3:
+		Linux compilation fixed
+
+2002-07-24  menno
+	* libfaad/libfaad2_dll.dsp 1.6:
+	* libfaad/syntax.h 1.15:
+		Fixed bug with array size
+		Updated DLL project files
+
+2002-07-14  menno
+	* libfaad/Makefile.am 1.5:
+	* libfaad/cfft.c 1.1:
+	* libfaad/cfft.h 1.1:
+	* libfaad/common.h 1.14:
+	* libfaad/libfaad.dsp 1.12:
+	* libfaad/mdct.c 1.11:
+	* libfaad/mdct.h 1.9:
+		Changed fft; use of the FFTW library is not needed anymore, but
+		stays as an option
+
+2002-07-09  menno
+	* libfaad/reordered_spectral_data.c 1.4:
+		Fixes in reordered spectral decoding
+
+	* configure.in 1.3:
+		Configure fix
+
+2002-06-19  menno
+	* libfaad/Makefile.am 1.4:
+		Fixes for Linux compilation
+
+2002-06-17  menno
+	* libfaad/filtbank.c 1.10:
+		Fixes for 960 sample transform
+
+2002-06-15  menno
+	* libfaad/error.c 1.5:
+	* libfaad/huffman.h 1.9:
+	* libfaad/syntax.c 1.20:
+		Better bitstream error handling
+
+	* include/faad.h 1.8:
+	* libfaad/Makefile.am 1.3:
+	* libfaad/decoder.c 1.17:
+	* libfaad/huffman.h 1.8:
+	* libfaad/reordered_spectral_data.c 1.3:
+	* libfaad/syntax.c 1.19:
+	* libfaad/syntax.h 1.14:
+		Changes for DRM
+
+2002-06-13  menno
+	* libfaad/libfaad.dsp 1.11:
+	* libfaad/reordered_spectral_data.c 1.1:
+	* libfaad/syntax.c 1.17:
+	* libfaad/syntax.h 1.12:
+		added HCR Error Resilience tool
+		(great thanks to Alexander Kurpiers)
+
+	* libfaad/libfaad2_dll.dsp 1.5:
+		Updated DLL project files
+
+	* frontend/main.c 1.16:
+	* include/faad.h 1.7:
+	* libfaad/decoder.c 1.16:
+	* libfaad/decoder.h 1.7:
+	* libfaad/filtbank.c 1.9:
+	* libfaad/filtbank.h 1.7:
+	* libfaad/ic_predict.c 1.6:
+	* libfaad/ic_predict.h 1.4:
+	* libfaad/is.c 1.6:
+	* libfaad/is.h 1.4:
+	* libfaad/lt_predict.c 1.6:
+	* libfaad/mp4.c 1.8:
+	* libfaad/mp4.h 1.5:
+	* libfaad/ms.c 1.3:
+	* libfaad/ms.h 1.3:
+	* libfaad/pns.c 1.7:
+	* libfaad/pns.h 1.5:
+	* libfaad/reordered_spectral_data.c 1.2:
+	* libfaad/specrec.c 1.8:
+	* libfaad/specrec.h 1.5:
+	* libfaad/syntax.c 1.18:
+	* libfaad/syntax.h 1.13:
+	* libfaad/tns.c 1.12:
+	* libfaad/tns.h 1.4:
+		Included decoding capability of 960 sample frame sizes
+
+	* common/mp4v2/acconfig.h 1.1:
+	* common/mp4v2/configure.in 1.3:
+	* common/mp4v2/systems.h 1.5:
+		mp4v2 compilation fix
+
+2002-06-03  menno
+	* libfaad/ic_predict.c 1.5:
+		Bugfix in predictor state resetting when PNS is used
+
+2002-05-31  menno
+	* libfaad/codebook/hcb.h 1.3:
+	* libfaad/huffman.h 1.7:
+	* libfaad/syntax.c 1.16:
+	* libfaad/syntax.h 1.11:
+		VCB11 fix
+
+	* libfaad/huffman.h 1.6:
+	* libfaad/syntax.c 1.15:
+	* libfaad/syntax.h 1.10:
+		More ER updates
+		- VCB11 now working
+		- temporarily added gain_control_data() so that the conformance files can be decoded
+
+2002-05-30  menno
+	* aacDECdrop/decode.c 1.3:
+	* plugins/in_mp4/in_mp4.c 1.10:
+		Small update after latest changes in libfaad2
+
+	* frontend/main.c 1.15:
+	* include/faad.h 1.6:
+	* libfaad/common.h 1.12:
+	* libfaad/decoder.c 1.14:
+	* libfaad/decoder.h 1.6:
+	* libfaad/mp4.c 1.6:
+	* libfaad/mp4.h 1.4:
+	* libfaad/syntax.c 1.13:
+	* libfaad/syntax.h 1.8:
+		More ER stuff
+		Still not working at all, but it is compilable now
+
+	* libfaad/libfaad2_dll.dsp 1.4:
+		DLL project file updated
+
+	* libfaad/common.h 1.13:
+	* libfaad/decoder.c 1.15:
+	* libfaad/mp4.c 1.7:
+	* libfaad/syntax.c 1.14:
+	* libfaad/syntax.h 1.9:
+	* libfaad/tns.c 1.11:
+		More updates for ER
+
+2002-05-24  menno
+	* libfaad/common.h 1.11:
+	* libfaad/drc.c 1.5:
+	* libfaad/filtbank.c 1.8:
+	* libfaad/ic_predict.c 1.4:
+	* libfaad/is.c 1.5:
+	* libfaad/lt_predict.c 1.5:
+	* libfaad/mdct.c 1.10:
+	* libfaad/pns.c 1.6:
+	* libfaad/specrec.c 1.7:
+	* libfaad/tns.c 1.10:
+		My latest changes
+		- bugfix in filtbank.c
+		- start work for fixed point operation
+
+2002-05-14  menno
+	* libfaad/tns.c 1.9:
+		Fixed a nasty bug in tns decoding
+
+2002-05-02  menno
+	* common/Makefile.am 1.1:
+		linux compilation fixed
+
+2002-05-01  menno
+	* Makefile.am 1.2:
+	* README.linux 1.1:
+	* common/mp4v2/Makefile.am 1.4:
+	* common/mp4v2/configure.in 1.2:
+	* common/mp4v2/systems.h 1.4:
+	* configure.in 1.2:
+	* frontend/Makefile.am 1.2:
+	* libfaad/Makefile.am 1.2:
+	* libfaad/common.h 1.10:
+	* libfaad/output.h 1.4:
+		Fixes for compilation under linux
+
+2002-04-23  menno
+	* libfaad/mdct.c 1.9:
+	* libfaad/mdct.h 1.8:
+	* libfaad/sbr_dec.c 1.3:
+	* libfaad/sbr_huff.c 1.3:
+	* libfaad/sbr_huff.h 1.2:
+	* libfaad/sbr_syntax.c 1.4:
+	* libfaad/sbr_syntax.h 1.3:
+		More updates for SBR
+
+2002-04-21  menno
+	* libfaad/common.h 1.9:
+	* libfaad/mdct.c 1.8:
+	* libfaad/mdct.h 1.7:
+	* libfaad/sbr_dec.c 1.2:
+	* libfaad/sbr_huff.c 1.2:
+	* libfaad/sbr_qmf.c 1.2:
+	* libfaad/sbr_qmf.h 1.2:
+	* libfaad/sbr_syntax.c 1.3:
+		Finished QMF filterbanks for SBR
+
+2002-04-20  menno
+	* libfaad/common.c 1.1:
+	* libfaad/common.h 1.7:
+	* libfaad/libfaad.dsp 1.9:
+	* libfaad/sbr_huff.c 1.1:
+	* libfaad/sbr_huff.h 1.1:
+	* libfaad/sbr_qmf.c 1.1:
+	* libfaad/sbr_qmf.h 1.1:
+	* libfaad/sbr_syntax.c 1.1:
+	* libfaad/sbr_syntax.h 1.1:
+	* libfaad/syntax.c 1.12:
+	* libfaad/syntax.h 1.7:
+		Added beginning of SBR decoding
+		(definately not compilable yet :)
+
+	* libfaad/common.h 1.8:
+	* libfaad/libfaad.dsp 1.10:
+	* libfaad/sbr_dec.c 1.1:
+	* libfaad/sbr_dec.h 1.1:
+	* libfaad/sbr_syntax.c 1.2:
+	* libfaad/sbr_syntax.h 1.2:
+		update in SBR
+		bitstream reading is finished now except for the huffman decoding
+
+2002-04-18  menno
+	* libfaad/error.c 1.4:
+	* libfaad/syntax.c 1.11:
+		Some more ER stuff
+
+2002-04-14  menno
+	* aacDECdrop/Script.rc 1.2:
+	* aacDECdrop/audio.c 1.2:
+	* aacDECdrop/audio.h 1.2:
+	* aacDECdrop/decode.c 1.2:
+	* aacDECdrop/decthread.c 1.2:
+	* aacDECdrop/main.c 1.2:
+	* aacDECdrop/misc.c 1.2:
+	* aacDECdrop/misc.h 1.2:
+	* aacDECdrop/resource.h 1.2:
+		code update
+
+2002-04-08  menno
+	* aacDECdrop/aacDECdrop/aacDECdrop.dsp 1.2:
+		Updated project file for aacDECdrop
+
+2002-04-07  menno
+	* libfaad/common.h 1.6:
+	* libfaad/filtbank.c 1.7:
+	* libfaad/filtbank.h 1.6:
+	* libfaad/libfaad.dsp 1.8:
+	* libfaad/mdct.c 1.7:
+	* libfaad/mdct.h 1.6:
+	* libfaad/mp4.c 1.5:
+	* libfaad/syntax.c 1.10:
+		Complete new (I)MDCT
+		and some work on error resilience, but not nearly finished yet
+
+2002-03-28  menno
+	* common/id3lib/zlib/include/deflate.h 1.2:
+	* common/id3lib/zlib/include/infblock.h 1.2:
+	* common/id3lib/zlib/include/infcodes.h 1.2:
+	* common/id3lib/zlib/include/inffast.h 1.2:
+	* common/id3lib/zlib/include/inftrees.h 1.2:
+	* common/id3lib/zlib/include/infutil.h 1.2:
+	* common/id3lib/zlib/include/zconf.h 1.2:
+	* common/id3lib/zlib/include/zlib.h 1.2:
+	* common/id3lib/zlib/include/zutil.h 1.2:
+	* common/id3lib/zlib/src/adler32.c 1.2:
+	* common/id3lib/zlib/src/compress.c 1.2:
+	* common/id3lib/zlib/src/crc32.c 1.2:
+	* common/id3lib/zlib/src/deflate.c 1.2:
+	* common/id3lib/zlib/src/gzio.c 1.2:
+	* common/id3lib/zlib/src/infblock.c 1.2:
+	* common/id3lib/zlib/src/infcodes.c 1.2:
+	* common/id3lib/zlib/src/inffast.c 1.2:
+	* common/id3lib/zlib/src/inflate.c 1.2:
+	* common/id3lib/zlib/src/inftrees.c 1.2:
+	* common/id3lib/zlib/src/infutil.c 1.2:
+	* common/id3lib/zlib/src/trees.c 1.2:
+	* common/id3lib/zlib/src/uncompr.c 1.2:
+	* common/id3lib/zlib/src/zutil.c 1.2:
+		Updated ZLib version to avoid possible security bug
+
+2002-03-27  menno
+	* libfaad/common.h 1.5:
+	* libfaad/filtbank.c 1.6:
+	* libfaad/mdct.c 1.6:
+	* libfaad/tns.c 1.8:
+		Bugfix for non-meaningful window transitions
+
+2002-03-16  menno
+	* libfaad/common.h 1.3:
+	* libfaad/data.c 1.4:
+	* libfaad/data.h 1.4:
+	* libfaad/decoder.c 1.12:
+	* libfaad/decoder.h 1.5:
+	* libfaad/drc.c 1.4:
+	* libfaad/filtbank.c 1.5:
+	* libfaad/filtbank.h 1.5:
+	* libfaad/ic_predict.c 1.3:
+	* libfaad/ic_predict.h 1.3:
+	* libfaad/is.c 1.4:
+	* libfaad/lt_predict.c 1.4:
+	* libfaad/lt_predict.h 1.4:
+	* libfaad/mdct.c 1.5:
+	* libfaad/mdct.h 1.5:
+	* libfaad/mp4.c 1.4:
+	* libfaad/output.c 1.6:
+	* libfaad/pns.c 1.5:
+	* libfaad/specrec.c 1.6:
+	* libfaad/specrec.h 1.4:
+	* libfaad/syntax.c 1.9:
+	* libfaad/tns.c 1.6:
+		Delay fixed in LD decoding
+		Small performance updates
+		More compile options - can now be compiled as LC only decoder for example
+
+	* aacDECdrop/Script.rc 1.1:
+	* aacDECdrop/aacDECdrop/aacDECdrop.dsp 1.1:
+	* aacDECdrop/aacDECdrop/aacDECdrop.dsw 1.1:
+	* aacDECdrop/audio.c 1.1:
+	* aacDECdrop/audio.h 1.1:
+	* aacDECdrop/decode.c 1.1:
+	* aacDECdrop/decode.h 1.1:
+	* aacDECdrop/decthread.c 1.1:
+	* aacDECdrop/decthread.h 1.1:
+	* aacDECdrop/main.c 1.1:
+	* aacDECdrop/misc.c 1.1:
+	* aacDECdrop/misc.h 1.1:
+	* aacDECdrop/resource.h 1.1:
+	* aacDECdrop/resource/AAC01.bmp 1.1:
+	* aacDECdrop/resource/AAC01.ico 1.1:
+	* aacDECdrop/resource/AAC02.bmp 1.1:
+	* aacDECdrop/resource/AAC03.bmp 1.1:
+	* aacDECdrop/resource/AAC04.bmp 1.1:
+	* aacDECdrop/resource/AAC05.bmp 1.1:
+	* aacDECdrop/resource/AAC06.bmp 1.1:
+	* aacDECdrop/resource/AAC07.bmp 1.1:
+	* aacDECdrop/resource/AAC08.bmp 1.1:
+	* aacDECdrop/wave_out.c 1.1:
+	* aacDECdrop/wave_out.h 1.1:
+	* libfaad/decoder.c 1.13:
+	* libfaad/tns.c 1.7:
+		Added aacDECdrop made by John33
+		Thanks a lot!
+
+	* libfaad/common.h 1.4:
+	* libfaad/output.c 1.7:
+		fix in 32 bit output
+
+	* libfaad/output.c 1.8:
+	* libfaad/output.c 1.9:
+		fix in output
+
+2002-03-16  vividos
+	* frontend/faad.dsp 1.4:
+	* frontend/faad.dsw 1.3:
+	* libfaad/libfaad.dsp 1.7:
+	* libfaad/libfaad.dsw 1.2:
+	* libfaad/libfaad2_dll.dsp 1.2:
+	* libfaad/libfaad2_dll.dsw 1.2:
+	* plugins/in_mp4/in_mp4.dsp 1.2:
+	* plugins/in_mp4/in_mp4.dsw 1.2:
+	* plugins/winamp/in_faad.dsp 1.2:
+	* plugins/winamp/in_faad.dsw 1.2:
+	* plugins/winamp3/cnv_aacpcm.dsp 1.4:
+	* plugins/winamp3/cnv_aacpcm.dsw 1.2:
+		converted to cr-lf line endings to get them to work
+
+	* libfaad/libfaad2_dll.dsp 1.3:
+		intermediate build files are now placed in the correct folders
+
+2002-02-27  menno
+	* libfaad/tns.c 1.5:
+		Fixed serious bug for LD
+
+2002-02-25  menno
+	* libfaad/libfaad2.def 1.1:
+	* libfaad/libfaad2_dll.dsp 1.1:
+	* libfaad/libfaad2_dll.dsw 1.1:
+		Added DLL project files
+		thanks to Michael Fink
+
+	* libfaad/decoder.c 1.11:
+		Making it possible to read RAW AAC LD files
+		There is no use for this except debugging an encoder
+
+	* common/mp4v2/Makefile.am 1.3:
+	* common/mp4v2/isma.cpp 1.2:
+	* common/mp4v2/libmp4v2.dsp 1.2:
+	* common/mp4v2/libmp4v260.dsp 1.2:
+	* common/mp4v2/libmp4v2_st.dsp 1.2:
+	* common/mp4v2/libmp4v2_st60.dsp 1.2:
+	* common/mp4v2/mp4.cpp 1.2:
+	* common/mp4v2/mp4.h 1.2:
+	* common/mp4v2/mp4file.cpp 1.2:
+	* common/mp4v2/mp4file.h 1.2:
+	* common/mp4v2/mp4property.h 1.2:
+	* common/mp4v2/mpeg4ip.h 1.2:
+	* common/mp4v2/systems.h 1.3:
+	* common/mp4v2/win32_ver.h 1.2:
+	* frontend/main.c 1.14:
+	* include/faad.h 1.5:
+	* libfaad/data.c 1.3:
+	* libfaad/data.h 1.3:
+	* libfaad/decoder.c 1.10:
+	* libfaad/decoder.h 1.4:
+	* libfaad/error.c 1.3:
+	* libfaad/filtbank.c 1.4:
+	* libfaad/filtbank.h 1.4:
+	* libfaad/lt_predict.c 1.3:
+	* libfaad/lt_predict.h 1.3:
+	* libfaad/mdct.c 1.4:
+	* libfaad/mdct.h 1.4:
+	* libfaad/mp4.c 1.3:
+	* libfaad/mp4.h 1.3:
+	* libfaad/output.c 1.5:
+	* libfaad/output.h 1.3:
+	* libfaad/specrec.c 1.5:
+	* libfaad/specrec.h 1.3:
+	* libfaad/syntax.c 1.8:
+	* libfaad/syntax.h 1.6:
+	* libfaad/tns.c 1.4:
+	* libfaad/tns.h 1.3:
+	* plugins/in_mp4/in_mp4.c 1.9:
+		Added support for LD object type (Low Delay), only files
+		without Error Resilience turned on can be decoded right now.
+
+2002-02-20  menno
+	* libfaad/common.h 1.2:
+	* libfaad/decoder.c 1.9:
+	* libfaad/drc.c 1.3:
+	* libfaad/filtbank.c 1.3:
+	* libfaad/filtbank.h 1.3:
+	* libfaad/is.c 1.3:
+	* libfaad/mdct.c 1.3:
+	* libfaad/mdct.h 1.3:
+	* libfaad/output.c 1.4:
+	* libfaad/pns.c 1.4:
+	* libfaad/specrec.c 1.4:
+	* libfaad/tns.c 1.3:
+		- Nicer defines in common.h
+		- 1% speedup in MDCT
+
+	* cnv_aacpcm.nsi 1.2:
+	* in_faad.nsi 1.2:
+	* in_mp4.nsi 1.2:
+		updated install scripts
+
+2002-02-19  menno
+	* plugins/winamp3/aacpcm.cpp 1.2:
+		Little fixes for MSVC
+
+2002-02-18  menno
+	* TODO 1.3:
+	* frontend/faad.dsp 1.3:
+	* frontend/main.c 1.13:
+	* include/faad.h 1.4:
+	* libfaad/analysis.h 1.2:
+	* libfaad/bits.c 1.5:
+	* libfaad/bits.h 1.5:
+	* libfaad/codebook/hcb.h 1.2:
+	* libfaad/codebook/hcb_1.c 1.2:
+	* libfaad/codebook/hcb_10.c 1.2:
+	* libfaad/codebook/hcb_11.c 1.2:
+	* libfaad/codebook/hcb_2.c 1.2:
+	* libfaad/codebook/hcb_3.c 1.2:
+	* libfaad/codebook/hcb_4.c 1.2:
+	* libfaad/codebook/hcb_5.c 1.2:
+	* libfaad/codebook/hcb_6.c 1.2:
+	* libfaad/codebook/hcb_7.c 1.2:
+	* libfaad/codebook/hcb_8.c 1.2:
+	* libfaad/codebook/hcb_9.c 1.2:
+	* libfaad/codebook/hcb_sf.c 1.2:
+	* libfaad/common.h 1.1:
+	* libfaad/data.c 1.2:
+	* libfaad/data.h 1.2:
+	* libfaad/decoder.c 1.8:
+	* libfaad/decoder.h 1.3:
+	* libfaad/drc.c 1.2:
+	* libfaad/drc.h 1.2:
+	* libfaad/error.c 1.2:
+	* libfaad/error.h 1.2:
+	* libfaad/filtbank.c 1.2:
+	* libfaad/filtbank.h 1.2:
+	* libfaad/huffman.h 1.5:
+	* libfaad/ic_predict.c 1.2:
+	* libfaad/ic_predict.h 1.2:
+	* libfaad/is.c 1.2:
+	* libfaad/is.h 1.3:
+	* libfaad/kbd_win.h 1.2:
+	* libfaad/libfaad.dsp 1.6:
+	* libfaad/lt_predict.c 1.2:
+	* libfaad/lt_predict.h 1.2:
+	* libfaad/mdct.c 1.2:
+	* libfaad/mdct.h 1.2:
+	* libfaad/mp4.c 1.2:
+	* libfaad/mp4.h 1.2:
+	* libfaad/ms.c 1.2:
+	* libfaad/ms.h 1.2:
+	* libfaad/output.c 1.3:
+	* libfaad/output.h 1.2:
+	* libfaad/pns.c 1.3:
+	* libfaad/pns.h 1.4:
+	* libfaad/pulse.c 1.2:
+	* libfaad/pulse.h 1.2:
+	* libfaad/specrec.c 1.3:
+	* libfaad/specrec.h 1.2:
+	* libfaad/syntax.c 1.7:
+	* libfaad/syntax.h 1.5:
+	* libfaad/tns.c 1.2:
+	* libfaad/tns.h 1.2:
+	* plugins/in_mp4/in_mp4.c 1.8:
+	* plugins/winamp/in_faad.c 1.3:
+	* plugins/winamp3/cnv_aacpcm.dsp 1.3:
+		some restructuring -> better cache performance and lower memory usage
+		library interface changed a bit so programs using this should change a bit
+
+2002-02-17  menno
+	* plugins/winamp3/cnv_aacpcm.cpp 1.2:
+	* plugins/winamp3/cnv_aacpcm.dsp 1.2:
+	* plugins/winamp3/cnv_aacpcm.h 1.2:
+		Winamp3 plugin updated for Winamp3 beta 3
+
+	* cnv_aacpcm.nsi 1.1:
+		Winamp3 plugin install script
+
+2002-02-15  menno
+	* libfaad/bits.c 1.4:
+	* libfaad/bits.h 1.4:
+	* libfaad/codebook/hcb.h 1.1:
+	* libfaad/codebook/hcb_1.c 1.1:
+	* libfaad/codebook/hcb_10.c 1.1:
+	* libfaad/codebook/hcb_11.c 1.1:
+	* libfaad/codebook/hcb_2.c 1.1:
+	* libfaad/codebook/hcb_3.c 1.1:
+	* libfaad/codebook/hcb_4.c 1.1:
+	* libfaad/codebook/hcb_5.c 1.1:
+	* libfaad/codebook/hcb_6.c 1.1:
+	* libfaad/codebook/hcb_7.c 1.1:
+	* libfaad/codebook/hcb_8.c 1.1:
+	* libfaad/codebook/hcb_9.c 1.1:
+	* libfaad/codebook/hcb_sf.c 1.1:
+	* libfaad/huffman.c 1.3:
+	* libfaad/huffman.h 1.4:
+	* libfaad/libfaad.dsp 1.5:
+		- complete new huffman decoding routines
+		- complete new bitstream reading routines
+
+2002-02-11  menno
+	* common/faad/id3v2tag.c 1.3:
+		Fixed ID3 title bug
+
+	* libfaad/specrec.c 1.2:
+	* libfaad/syntax.c 1.6:
+		Added recovery from synchronisation errors
+
+2002-02-08  menno
+	* plugins/xmms/COPYING 1.1:
+	* plugins/xmms/Makefile 1.1:
+	* plugins/xmms/README 1.1:
+	* plugins/xmms/aac-XMMS.c 1.1:
+		added XMMS plugin to CVS
+
+2002-02-04  menno
+	* frontend/main.c 1.12:
+		Output file option bug fixed
+
+2002-01-27  menno
+	* libfaad/decoder.c 1.7:
+		bugfix: variables not initialized before possible usage
+
+2002-01-26  menno
+	* in_faad.nsi 1.1:
+	* in_mp4.nsi 1.1:
+		Install scripts for winamp plugins
+
+2002-01-25  menno
+	* Makefile.am 1.1:
+	* bootstrap 1.1:
+	* configure.in 1.1:
+	* frontend/Makefile.am 1.1:
+	* libfaad/Makefile.am 1.1:
+	* libfaad/syntax.h 1.4:
+		Linux MAKE stuff and Linux fix
+
+	* plugins/in_mp4/in_mp4.c 1.7:
+		long long changed to long
+
+	* libfaad/output.c 1.2:
+	* libfaad/pns.c 1.2:
+	* libfaad/pns.h 1.3:
+	* plugins/in_mp4/in_mp4.rc 1.2:
+		Small PNS cleanup
+		faster 32 bit rounding
+
 2002-01-24  menno
-	* common/faad/aacinfo.c:
+	* common/faad/aacinfo.c 1.2:
 		Always calculate filelength
 
-	* plugins/in_mp4/in_mp4.c:
+	* plugins/in_mp4/in_mp4.c 1.6:
 		time calculation fixed
 
+	* README 1.2:
+	* TODO 1.2:
+		Small updates
+
 2002-01-23  menno
-	* plugins/in_mp4/in_mp4.c:
+	* plugins/in_mp4/in_mp4.c 1.4:
 		mp4v2 doesn't seem to be reentrant
 		mp4 plugin looks stable now, although songlength is only known when playing the file
 
-	* frontend/main.c:
-	* plugins/in_mp4/in_mp4.c:
+	* frontend/main.c 1.11:
+	* plugins/in_mp4/in_mp4.c 1.5:
 		bugfix
 
 2002-01-22  menno
-	* libfaad/analysis.h:
-	* libfaad/bits.h:
-	* libfaad/debug.h:
-	* libfaad/libfaad.dsp:
-	* libfaad/syntax.c:
+	* libfaad/analysis.h 1.1:
+	* libfaad/bits.h 1.3:
+	* libfaad/debug.h 1.2:
+	* libfaad/libfaad.dsp 1.4:
+	* libfaad/syntax.c 1.5:
 		File renamed
 
-	* plugins/in_mp4/in_mp4.c:
+	* plugins/in_mp4/in_mp4.c 1.3:
 		strange value for thread priority
 
 2002-01-21  menno
-	* plugins/winamp3/aacpcm.cpp:
-	* plugins/winamp3/aacpcm.h:
-	* plugins/winamp3/cnv_aacpcm.cpp:
-	* plugins/winamp3/cnv_aacpcm.dsp:
-	* plugins/winamp3/cnv_aacpcm.dsw:
-	* plugins/winamp3/cnv_aacpcm.h:
+	* plugins/winamp3/aacpcm.cpp 1.1:
+	* plugins/winamp3/aacpcm.h 1.1:
+	* plugins/winamp3/cnv_aacpcm.cpp 1.1:
+	* plugins/winamp3/cnv_aacpcm.dsp 1.1:
+	* plugins/winamp3/cnv_aacpcm.dsw 1.1:
+	* plugins/winamp3/cnv_aacpcm.h 1.1:
 		Winamp3 plugin added
 
-	* plugins/in_mp4/in_mp4.c:
-	* plugins/winamp/in_faad.c:
+	* plugins/in_mp4/in_mp4.c 1.2:
+	* plugins/winamp/in_faad.c 1.2:
 		Bugfix for config reading
 
-	* frontend/main.c:
+	* frontend/main.c 1.10:
 		Better mp4 file configuration handling
 
-	* common/mp4v2/Makefile.am:
-	* common/mp4v2/bootstrap:
-	* common/mp4v2/configure.in:
-	* common/mp4v2/systems.h:
-	* frontend/audio.c:
-	* frontend/main.c:
+	* common/mp4v2/Makefile.am 1.2:
+	* common/mp4v2/bootstrap 1.1:
+	* common/mp4v2/configure.in 1.1:
+	* common/mp4v2/systems.h 1.2:
+	* frontend/audio.c 1.2:
+	* frontend/main.c 1.9:
 		Small changes for linux
 
-	* common/id3lib/.cvsignore:
-	* common/id3lib/AUTHORS:
-	* common/id3lib/COPYING:
-	* common/id3lib/ChangeLog:
-	* common/id3lib/HISTORY:
-	* common/id3lib/INSTALL:
-	* common/id3lib/Makefile.am:
-	* common/id3lib/Makefile.in:
-	* common/id3lib/NEWS:
-	* common/id3lib/README:
-	* common/id3lib/THANKS:
-	* common/id3lib/TODO:
-	* common/id3lib/acconfig:
-	* common/id3lib/acconfig.h:
-	* common/id3lib/aclocal.m4:
-	* common/id3lib/config.guess:
-	* common/id3lib/config.h.in:
-	* common/id3lib/config.h.win32.in:
-	* common/id3lib/config.sub:
-	* common/id3lib/config.win32:
-	* common/id3lib/configure:
-	* common/id3lib/configure.in:
-	* common/id3lib/id3lib.spec.in:
-	* common/id3lib/include/.cvsignore:
-	* common/id3lib/include/Makefile.am:
-	* common/id3lib/include/Makefile.in:
-	* common/id3lib/include/id3.h:
-	* common/id3lib/include/id3/.cvsignore:
-	* common/id3lib/include/id3/Makefile.am:
-	* common/id3lib/include/id3/Makefile.in:
-	* common/id3lib/include/id3/error.h:
-	* common/id3lib/include/id3/field.h:
-	* common/id3lib/include/id3/flags.h:
-	* common/id3lib/include/id3/frame.h:
-	* common/id3lib/include/id3/globals.h:
-	* common/id3lib/include/id3/header.h:
-	* common/id3lib/include/id3/header_frame.h:
-	* common/id3lib/include/id3/header_tag.h:
-	* common/id3lib/include/id3/int28.h:
-	* common/id3lib/include/id3/misc_support.h:
-	* common/id3lib/include/id3/sized_types.h:
-	* common/id3lib/include/id3/spec.h:
-	* common/id3lib/include/id3/tag.h:
-	* common/id3lib/include/id3/uint28.h:
-	* common/id3lib/include/id3/utils.h:
-	* common/id3lib/install-sh:
-	* common/id3lib/libprj/.cvsignore:
-	* common/id3lib/libprj/Makefile.am:
-	* common/id3lib/libprj/id3lib.dsp:
-	* common/id3lib/libprj/id3lib.dsw:
-	* common/id3lib/libtool:
-	* common/id3lib/ltconfig:
-	* common/id3lib/ltmain.sh:
-	* common/id3lib/m4/.cvsignore:
-	* common/id3lib/m4/Makefile.am:
-	* common/id3lib/m4/Makefile.in:
-	* common/id3lib/m4/lf_bash.m4:
-	* common/id3lib/m4/lf_cc.m4:
-	* common/id3lib/m4/lf_cxx.m4:
-	* common/id3lib/m4/lf_cxx_convenience.m4:
-	* common/id3lib/m4/lf_fortran.m4:
-	* common/id3lib/m4/lf_host_type.m4:
-	* common/id3lib/m4/lf_lisp.m4:
-	* common/id3lib/m4/lf_local.m4:
-	* common/id3lib/m4/lf_nm.m4:
-	* common/id3lib/m4/lf_texidoc.m4:
-	* common/id3lib/m4/lf_txtc.m4:
-	* common/id3lib/m4/lf_warnings.m4:
-	* common/id3lib/m4/lf_x11.m4:
-	* common/id3lib/missing:
-	* common/id3lib/mkinstalldirs:
-	* common/id3lib/reconf:
-	* common/id3lib/rename.pl:
-	* common/id3lib/src/.cvsignore:
-	* common/id3lib/src/Makefile.am:
-	* common/id3lib/src/Makefile.in:
-	* common/id3lib/src/c_wrapper.cpp:
-	* common/id3lib/src/error.cpp:
-	* common/id3lib/src/field.cpp:
-	* common/id3lib/src/field_binary.cpp:
-	* common/id3lib/src/field_integer.cpp:
-	* common/id3lib/src/field_string_ascii.cpp:
-	* common/id3lib/src/field_string_unicode.cpp:
-	* common/id3lib/src/frame.cpp:
-	* common/id3lib/src/frame_parse.cpp:
-	* common/id3lib/src/frame_render.cpp:
-	* common/id3lib/src/globals.cpp:
-	* common/id3lib/src/header.cpp:
-	* common/id3lib/src/header_frame.cpp:
-	* common/id3lib/src/header_tag.cpp:
-	* common/id3lib/src/int28.cpp:
-	* common/id3lib/src/misc_support.cpp:
-	* common/id3lib/src/spec.cpp:
-	* common/id3lib/src/tag.cpp:
-	* common/id3lib/src/tag_file.cpp:
-	* common/id3lib/src/tag_find.cpp:
-	* common/id3lib/src/tag_parse.cpp:
-	* common/id3lib/src/tag_parse_lyrics3.cpp:
-	* common/id3lib/src/tag_parse_v1.cpp:
-	* common/id3lib/src/tag_render.cpp:
-	* common/id3lib/src/tag_sync.cpp:
-	* common/id3lib/src/uint28.cpp:
-	* common/id3lib/src/utils.cpp:
-	* common/id3lib/stamp-h.in:
-	* common/id3lib/win32/config.h:
-	* common/id3lib/zlib/.cvsignore:
-	* common/id3lib/zlib/Makefile.am:
-	* common/id3lib/zlib/Makefile.in:
-	* common/id3lib/zlib/include/.cvsignore:
-	* common/id3lib/zlib/include/Makefile.am:
-	* common/id3lib/zlib/include/Makefile.in:
-	* common/id3lib/zlib/include/deflate.h:
-	* common/id3lib/zlib/include/infblock.h:
-	* common/id3lib/zlib/include/infcodes.h:
-	* common/id3lib/zlib/include/inffast.h:
-	* common/id3lib/zlib/include/inffixed.h:
-	* common/id3lib/zlib/include/inftrees.h:
-	* common/id3lib/zlib/include/infutil.h:
-	* common/id3lib/zlib/include/trees.h:
-	* common/id3lib/zlib/include/zconf.h:
-	* common/id3lib/zlib/include/zlib.h:
-	* common/id3lib/zlib/include/zutil.h:
-	* common/id3lib/zlib/lib/.cvsignore:
-	* common/id3lib/zlib/lib/Makefile.am:
-	* common/id3lib/zlib/lib/Makefile.in:
-	* common/id3lib/zlib/prj/.cvsignore:
-	* common/id3lib/zlib/prj/Makefile.am:
-	* common/id3lib/zlib/prj/Makefile.in:
-	* common/id3lib/zlib/prj/zlib.dsp:
-	* common/id3lib/zlib/prj/zlib.dsw:
-	* common/id3lib/zlib/prj/zlib.mak:
-	* common/id3lib/zlib/src/.cvsignore:
-	* common/id3lib/zlib/src/Makefile.am:
-	* common/id3lib/zlib/src/Makefile.in:
-	* common/id3lib/zlib/src/adler32.c:
-	* common/id3lib/zlib/src/compress.c:
-	* common/id3lib/zlib/src/crc32.c:
-	* common/id3lib/zlib/src/deflate.c:
-	* common/id3lib/zlib/src/gzio.c:
-	* common/id3lib/zlib/src/infblock.c:
-	* common/id3lib/zlib/src/infcodes.c:
-	* common/id3lib/zlib/src/inffast.c:
-	* common/id3lib/zlib/src/inflate.c:
-	* common/id3lib/zlib/src/inftrees.c:
-	* common/id3lib/zlib/src/infutil.c:
-	* common/id3lib/zlib/src/trees.c:
-	* common/id3lib/zlib/src/uncompr.c:
-	* common/id3lib/zlib/src/zutil.c:
+	* common/id3lib/.cvsignore 1.1:
+	* common/id3lib/AUTHORS 1.1:
+	* common/id3lib/COPYING 1.1:
+	* common/id3lib/ChangeLog 1.1:
+	* common/id3lib/HISTORY 1.1:
+	* common/id3lib/INSTALL 1.1:
+	* common/id3lib/Makefile.am 1.1:
+	* common/id3lib/Makefile.in 1.1:
+	* common/id3lib/NEWS 1.1:
+	* common/id3lib/README 1.1:
+	* common/id3lib/THANKS 1.1:
+	* common/id3lib/TODO 1.1:
+	* common/id3lib/acconfig 1.1:
+	* common/id3lib/acconfig.h 1.1:
+	* common/id3lib/aclocal.m4 1.1:
+	* common/id3lib/config.guess 1.1:
+	* common/id3lib/config.h.in 1.1:
+	* common/id3lib/config.h.win32.in 1.1:
+	* common/id3lib/config.sub 1.1:
+	* common/id3lib/config.win32 1.1:
+	* common/id3lib/configure 1.1:
+	* common/id3lib/configure.in 1.1:
+	* common/id3lib/id3lib.spec.in 1.1:
+	* common/id3lib/include/.cvsignore 1.1:
+	* common/id3lib/include/Makefile.am 1.1:
+	* common/id3lib/include/Makefile.in 1.1:
+	* common/id3lib/include/id3.h 1.1:
+	* common/id3lib/include/id3/.cvsignore 1.1:
+	* common/id3lib/include/id3/Makefile.am 1.1:
+	* common/id3lib/include/id3/Makefile.in 1.1:
+	* common/id3lib/include/id3/error.h 1.1:
+	* common/id3lib/include/id3/field.h 1.1:
+	* common/id3lib/include/id3/flags.h 1.1:
+	* common/id3lib/include/id3/frame.h 1.1:
+	* common/id3lib/include/id3/globals.h 1.1:
+	* common/id3lib/include/id3/header.h 1.1:
+	* common/id3lib/include/id3/header_frame.h 1.1:
+	* common/id3lib/include/id3/header_tag.h 1.1:
+	* common/id3lib/include/id3/int28.h 1.1:
+	* common/id3lib/include/id3/misc_support.h 1.1:
+	* common/id3lib/include/id3/sized_types.h 1.1:
+	* common/id3lib/include/id3/spec.h 1.1:
+	* common/id3lib/include/id3/tag.h 1.1:
+	* common/id3lib/include/id3/uint28.h 1.1:
+	* common/id3lib/include/id3/utils.h 1.1:
+	* common/id3lib/install-sh 1.1:
+	* common/id3lib/libprj/.cvsignore 1.1:
+	* common/id3lib/libprj/Makefile.am 1.1:
+	* common/id3lib/libprj/id3lib.dsp 1.1:
+	* common/id3lib/libprj/id3lib.dsw 1.1:
+	* common/id3lib/libtool 1.1:
+	* common/id3lib/ltconfig 1.1:
+	* common/id3lib/ltmain.sh 1.1:
+	* common/id3lib/m4/.cvsignore 1.1:
+	* common/id3lib/m4/Makefile.am 1.1:
+	* common/id3lib/m4/Makefile.in 1.1:
+	* common/id3lib/m4/lf_bash.m4 1.1:
+	* common/id3lib/m4/lf_cc.m4 1.1:
+	* common/id3lib/m4/lf_cxx.m4 1.1:
+	* common/id3lib/m4/lf_cxx_convenience.m4 1.1:
+	* common/id3lib/m4/lf_fortran.m4 1.1:
+	* common/id3lib/m4/lf_host_type.m4 1.1:
+	* common/id3lib/m4/lf_lisp.m4 1.1:
+	* common/id3lib/m4/lf_local.m4 1.1:
+	* common/id3lib/m4/lf_nm.m4 1.1:
+	* common/id3lib/m4/lf_texidoc.m4 1.1:
+	* common/id3lib/m4/lf_txtc.m4 1.1:
+	* common/id3lib/m4/lf_warnings.m4 1.1:
+	* common/id3lib/m4/lf_x11.m4 1.1:
+	* common/id3lib/missing 1.1:
+	* common/id3lib/mkinstalldirs 1.1:
+	* common/id3lib/reconf 1.1:
+	* common/id3lib/rename.pl 1.1:
+	* common/id3lib/src/.cvsignore 1.1:
+	* common/id3lib/src/Makefile.am 1.1:
+	* common/id3lib/src/Makefile.in 1.1:
+	* common/id3lib/src/c_wrapper.cpp 1.1:
+	* common/id3lib/src/error.cpp 1.1:
+	* common/id3lib/src/field.cpp 1.1:
+	* common/id3lib/src/field_binary.cpp 1.1:
+	* common/id3lib/src/field_integer.cpp 1.1:
+	* common/id3lib/src/field_string_ascii.cpp 1.1:
+	* common/id3lib/src/field_string_unicode.cpp 1.1:
+	* common/id3lib/src/frame.cpp 1.1:
+	* common/id3lib/src/frame_parse.cpp 1.1:
+	* common/id3lib/src/frame_render.cpp 1.1:
+	* common/id3lib/src/globals.cpp 1.1:
+	* common/id3lib/src/header.cpp 1.1:
+	* common/id3lib/src/header_frame.cpp 1.1:
+	* common/id3lib/src/header_tag.cpp 1.1:
+	* common/id3lib/src/int28.cpp 1.1:
+	* common/id3lib/src/misc_support.cpp 1.1:
+	* common/id3lib/src/spec.cpp 1.1:
+	* common/id3lib/src/tag.cpp 1.1:
+	* common/id3lib/src/tag_file.cpp 1.1:
+	* common/id3lib/src/tag_find.cpp 1.1:
+	* common/id3lib/src/tag_parse.cpp 1.1:
+	* common/id3lib/src/tag_parse_lyrics3.cpp 1.1:
+	* common/id3lib/src/tag_parse_v1.cpp 1.1:
+	* common/id3lib/src/tag_render.cpp 1.1:
+	* common/id3lib/src/tag_sync.cpp 1.1:
+	* common/id3lib/src/uint28.cpp 1.1:
+	* common/id3lib/src/utils.cpp 1.1:
+	* common/id3lib/stamp-h.in 1.1:
+	* common/id3lib/win32/config.h 1.1:
+	* common/id3lib/zlib/.cvsignore 1.1:
+	* common/id3lib/zlib/Makefile.am 1.1:
+	* common/id3lib/zlib/Makefile.in 1.1:
+	* common/id3lib/zlib/include/.cvsignore 1.1:
+	* common/id3lib/zlib/include/Makefile.am 1.1:
+	* common/id3lib/zlib/include/Makefile.in 1.1:
+	* common/id3lib/zlib/include/deflate.h 1.1:
+	* common/id3lib/zlib/include/infblock.h 1.1:
+	* common/id3lib/zlib/include/infcodes.h 1.1:
+	* common/id3lib/zlib/include/inffast.h 1.1:
+	* common/id3lib/zlib/include/inffixed.h 1.1:
+	* common/id3lib/zlib/include/inftrees.h 1.1:
+	* common/id3lib/zlib/include/infutil.h 1.1:
+	* common/id3lib/zlib/include/trees.h 1.1:
+	* common/id3lib/zlib/include/zconf.h 1.1:
+	* common/id3lib/zlib/include/zlib.h 1.1:
+	* common/id3lib/zlib/include/zutil.h 1.1:
+	* common/id3lib/zlib/lib/.cvsignore 1.1:
+	* common/id3lib/zlib/lib/Makefile.am 1.1:
+	* common/id3lib/zlib/lib/Makefile.in 1.1:
+	* common/id3lib/zlib/prj/.cvsignore 1.1:
+	* common/id3lib/zlib/prj/Makefile.am 1.1:
+	* common/id3lib/zlib/prj/Makefile.in 1.1:
+	* common/id3lib/zlib/prj/zlib.dsp 1.1:
+	* common/id3lib/zlib/prj/zlib.dsw 1.1:
+	* common/id3lib/zlib/prj/zlib.mak 1.1:
+	* common/id3lib/zlib/src/.cvsignore 1.1:
+	* common/id3lib/zlib/src/Makefile.am 1.1:
+	* common/id3lib/zlib/src/Makefile.in 1.1:
+	* common/id3lib/zlib/src/adler32.c 1.1:
+	* common/id3lib/zlib/src/compress.c 1.1:
+	* common/id3lib/zlib/src/crc32.c 1.1:
+	* common/id3lib/zlib/src/deflate.c 1.1:
+	* common/id3lib/zlib/src/gzio.c 1.1:
+	* common/id3lib/zlib/src/infblock.c 1.1:
+	* common/id3lib/zlib/src/infcodes.c 1.1:
+	* common/id3lib/zlib/src/inffast.c 1.1:
+	* common/id3lib/zlib/src/inflate.c 1.1:
+	* common/id3lib/zlib/src/inftrees.c 1.1:
+	* common/id3lib/zlib/src/infutil.c 1.1:
+	* common/id3lib/zlib/src/trees.c 1.1:
+	* common/id3lib/zlib/src/uncompr.c 1.1:
+	* common/id3lib/zlib/src/zutil.c 1.1:
 		Added id3v2 library
 
-	* common/faad/filestream.c:
-	* common/faad/filestream.h:
-	* common/faad/id3v2tag.c:
-	* common/faad/id3v2tag.h:
+	* common/faad/filestream.c 1.2:
+	* common/faad/filestream.h 1.2:
+	* common/faad/id3v2tag.c 1.2:
+	* common/faad/id3v2tag.h 1.2:
 		Forgot something :-)
 
 2002-01-20  menno
-	* plugins/winamp/in2.h:
-	* plugins/winamp/in_faad.c:
-	* plugins/winamp/in_faad.dsp:
-	* plugins/winamp/in_faad.dsw:
-	* plugins/winamp/out.h:
-	* plugins/winamp/plugin_dlg.rc:
-	* plugins/winamp/resource.h:
+	* plugins/winamp/in2.h 1.1:
+	* plugins/winamp/in_faad.c 1.1:
+	* plugins/winamp/in_faad.dsp 1.1:
+	* plugins/winamp/in_faad.dsw 1.1:
+	* plugins/winamp/out.h 1.1:
+	* plugins/winamp/plugin_dlg.rc 1.1:
+	* plugins/winamp/resource.h 1.1:
 		Winamp2 AAC plugin
 		basically the same as old one, but with new library, and:
 		- new way of saving configuration (no more faad.dat)
 		- better multichannel handling
 
-	* plugins/in_mp4/in2.h:
-	* plugins/in_mp4/in_mp4.c:
-	* plugins/in_mp4/in_mp4.dsp:
-	* plugins/in_mp4/in_mp4.dsw:
-	* plugins/in_mp4/in_mp4.rc:
-	* plugins/in_mp4/out.h:
-	* plugins/in_mp4/resource.h:
+	* plugins/in_mp4/in2.h 1.1:
+	* plugins/in_mp4/in_mp4.c 1.1:
+	* plugins/in_mp4/in_mp4.dsp 1.1:
+	* plugins/in_mp4/in_mp4.dsw 1.1:
+	* plugins/in_mp4/in_mp4.rc 1.1:
+	* plugins/in_mp4/out.h 1.1:
+	* plugins/in_mp4/resource.h 1.1:
 		MPEG-4 AAC Winamp input plugin!!
 
-	* include/faad.h:
-	* libfaad/decoder.c:
-	* libfaad/libfaad.dsp:
-	* libfaad/mp4.c:
-	* libfaad/mp4.h:
-	* libfaad/syntax.c:
-	* libfaad/syntax.h:
+	* include/faad.h 1.3:
+	* libfaad/decoder.c 1.6:
+	* libfaad/libfaad.dsp 1.3:
+	* libfaad/mp4.c 1.1:
+	* libfaad/mp4.h 1.1:
+	* libfaad/syntax.c 1.4:
+	* libfaad/syntax.h 1.3:
 		Changes for easier MP4 file playing
 
 2002-01-19  menno
-	* frontend/main.c:
-	* include/faad.h:
-	* libfaad/bits.c:
-	* libfaad/bits.h:
-	* libfaad/debug.h:
-	* libfaad/decoder.c:
-	* libfaad/decoder.h:
-	* libfaad/huffman.c:
-	* libfaad/huffman.h:
-	* libfaad/is.h:
-	* libfaad/libfaad.dsp:
-	* libfaad/pns.h:
-	* libfaad/syntax.c:
-	* libfaad/syntax.h:
+	* frontend/main.c 1.8:
+	* include/faad.h 1.2:
+	* libfaad/bits.c 1.2:
+	* libfaad/bits.h 1.2:
+	* libfaad/debug.h 1.1:
+	* libfaad/decoder.c 1.3:
+	* libfaad/decoder.h 1.2:
+	* libfaad/huffman.c 1.2:
+	* libfaad/huffman.h 1.2:
+	* libfaad/is.h 1.2:
+	* libfaad/libfaad.dsp 1.2:
+	* libfaad/pns.h 1.2:
+	* libfaad/syntax.c 1.2:
+	* libfaad/syntax.h 1.2:
 		- decodes mp4 files correctly
 		- bug fix in tns_data()
 		- added bitstream analysis
 
-	* libfaad/bits.c:
-	* libfaad/decoder.c:
-	* libfaad/huffman.h:
-	* libfaad/syntax.c:
+	* libfaad/bits.c 1.3:
+	* libfaad/decoder.c 1.5:
+	* libfaad/huffman.h 1.3:
+	* libfaad/syntax.c 1.3:
 		Improved bitstream analysis
 
-	* libfaad/decoder.c:
+	* libfaad/decoder.c 1.4:
 		improved error handling
 
 2002-01-16  menno
-	* libfaad/predict.c:
+	* libfaad/predict.c 1.2:
 		Removed double file
 
-	* frontend/main.c:
+	* frontend/main.c 1.7:
 		Buffer deallocation
 
 2002-01-15  menno
-	* common/mp4v2/COPYING:
-	* common/mp4v2/INTERNALS:
-	* common/mp4v2/Makefile.am:
-	* common/mp4v2/TODO:
-	* common/mp4v2/atom_co64.cpp:
-	* common/mp4v2/atom_cprt.cpp:
-	* common/mp4v2/atom_ctts.cpp:
-	* common/mp4v2/atom_dimm.cpp:
-	* common/mp4v2/atom_dinf.cpp:
-	* common/mp4v2/atom_dmax.cpp:
-	* common/mp4v2/atom_dmed.cpp:
-	* common/mp4v2/atom_dref.cpp:
-	* common/mp4v2/atom_drep.cpp:
-	* common/mp4v2/atom_edts.cpp:
-	* common/mp4v2/atom_elst.cpp:
-	* common/mp4v2/atom_esds.cpp:
-	* common/mp4v2/atom_free.cpp:
-	* common/mp4v2/atom_ftyp.cpp:
-	* common/mp4v2/atom_hdlr.cpp:
-	* common/mp4v2/atom_hinf.cpp:
-	* common/mp4v2/atom_hmhd.cpp:
-	* common/mp4v2/atom_hnti.cpp:
-	* common/mp4v2/atom_iods.cpp:
-	* common/mp4v2/atom_maxr.cpp:
-	* common/mp4v2/atom_mdat.cpp:
-	* common/mp4v2/atom_mdhd.cpp:
-	* common/mp4v2/atom_mdia.cpp:
-	* common/mp4v2/atom_mfhd.cpp:
-	* common/mp4v2/atom_minf.cpp:
-	* common/mp4v2/atom_moof.cpp:
-	* common/mp4v2/atom_moov.cpp:
-	* common/mp4v2/atom_mp4a.cpp:
-	* common/mp4v2/atom_mp4s.cpp:
-	* common/mp4v2/atom_mp4v.cpp:
-	* common/mp4v2/atom_mvex.cpp:
-	* common/mp4v2/atom_mvhd.cpp:
-	* common/mp4v2/atom_nmhd.cpp:
-	* common/mp4v2/atom_nump.cpp:
-	* common/mp4v2/atom_payt.cpp:
-	* common/mp4v2/atom_pmax.cpp:
-	* common/mp4v2/atom_root.cpp:
-	* common/mp4v2/atom_rtp.cpp:
-	* common/mp4v2/atom_sdp.cpp:
-	* common/mp4v2/atom_smhd.cpp:
-	* common/mp4v2/atom_snro.cpp:
-	* common/mp4v2/atom_stbl.cpp:
-	* common/mp4v2/atom_stco.cpp:
-	* common/mp4v2/atom_stdp.cpp:
-	* common/mp4v2/atom_stsc.cpp:
-	* common/mp4v2/atom_stsd.cpp:
-	* common/mp4v2/atom_stsh.cpp:
-	* common/mp4v2/atom_stss.cpp:
-	* common/mp4v2/atom_stsz.cpp:
-	* common/mp4v2/atom_stts.cpp:
-	* common/mp4v2/atom_tfhd.cpp:
-	* common/mp4v2/atom_tims.cpp:
-	* common/mp4v2/atom_tkhd.cpp:
-	* common/mp4v2/atom_tmax.cpp:
-	* common/mp4v2/atom_tmin.cpp:
-	* common/mp4v2/atom_tpyl.cpp:
-	* common/mp4v2/atom_traf.cpp:
-	* common/mp4v2/atom_trak.cpp:
-	* common/mp4v2/atom_tref.cpp:
-	* common/mp4v2/atom_treftype.cpp:
-	* common/mp4v2/atom_trex.cpp:
-	* common/mp4v2/atom_trpy.cpp:
-	* common/mp4v2/atom_trun.cpp:
-	* common/mp4v2/atom_tsro.cpp:
-	* common/mp4v2/atom_udta.cpp:
-	* common/mp4v2/atom_url.cpp:
-	* common/mp4v2/atom_urn.cpp:
-	* common/mp4v2/atom_vmhd.cpp:
-	* common/mp4v2/atoms.h:
-	* common/mp4v2/descriptors.cpp:
-	* common/mp4v2/descriptors.h:
-	* common/mp4v2/isma.cpp:
-	* common/mp4v2/libmp4v2.dsp:
-	* common/mp4v2/libmp4v260.dsp:
-	* common/mp4v2/libmp4v2_st.dsp:
-	* common/mp4v2/libmp4v2_st60.dsp:
-	* common/mp4v2/mp4.cpp:
-	* common/mp4v2/mp4.h:
-	* common/mp4v2/mp4array.h:
-	* common/mp4v2/mp4atom.cpp:
-	* common/mp4v2/mp4atom.h:
-	* common/mp4v2/mp4common.h:
-	* common/mp4v2/mp4container.cpp:
-	* common/mp4v2/mp4container.h:
-	* common/mp4v2/mp4descriptor.cpp:
-	* common/mp4v2/mp4descriptor.h:
-	* common/mp4v2/mp4file.cpp:
-	* common/mp4v2/mp4file.h:
-	* common/mp4v2/mp4file_io.cpp:
-	* common/mp4v2/mp4property.cpp:
-	* common/mp4v2/mp4property.h:
-	* common/mp4v2/mp4track.cpp:
-	* common/mp4v2/mp4track.h:
-	* common/mp4v2/mp4util.cpp:
-	* common/mp4v2/mp4util.h:
-	* common/mp4v2/mpeg4ip.h:
-	* common/mp4v2/need_for_win32.c:
-	* common/mp4v2/ocidescriptors.cpp:
-	* common/mp4v2/ocidescriptors.h:
-	* common/mp4v2/odcommands.cpp:
-	* common/mp4v2/odcommands.h:
-	* common/mp4v2/qosqualifiers.cpp:
-	* common/mp4v2/qosqualifiers.h:
-	* common/mp4v2/rtphint.cpp:
-	* common/mp4v2/rtphint.h:
-	* common/mp4v2/systems.h:
-	* common/mp4v2/win32_ver.h:
-	* frontend/audio.c:
-	* frontend/audio.h:
-	* frontend/faad.dsp:
-	* frontend/faad.dsw:
-	* frontend/main.c:
-	* libfaad/decoder.c:
+	* common/mp4v2/COPYING 1.1:
+	* common/mp4v2/INTERNALS 1.1:
+	* common/mp4v2/Makefile.am 1.1:
+	* common/mp4v2/TODO 1.1:
+	* common/mp4v2/atom_co64.cpp 1.1:
+	* common/mp4v2/atom_cprt.cpp 1.1:
+	* common/mp4v2/atom_ctts.cpp 1.1:
+	* common/mp4v2/atom_dimm.cpp 1.1:
+	* common/mp4v2/atom_dinf.cpp 1.1:
+	* common/mp4v2/atom_dmax.cpp 1.1:
+	* common/mp4v2/atom_dmed.cpp 1.1:
+	* common/mp4v2/atom_dref.cpp 1.1:
+	* common/mp4v2/atom_drep.cpp 1.1:
+	* common/mp4v2/atom_edts.cpp 1.1:
+	* common/mp4v2/atom_elst.cpp 1.1:
+	* common/mp4v2/atom_esds.cpp 1.1:
+	* common/mp4v2/atom_free.cpp 1.1:
+	* common/mp4v2/atom_ftyp.cpp 1.1:
+	* common/mp4v2/atom_hdlr.cpp 1.1:
+	* common/mp4v2/atom_hinf.cpp 1.1:
+	* common/mp4v2/atom_hmhd.cpp 1.1:
+	* common/mp4v2/atom_hnti.cpp 1.1:
+	* common/mp4v2/atom_iods.cpp 1.1:
+	* common/mp4v2/atom_maxr.cpp 1.1:
+	* common/mp4v2/atom_mdat.cpp 1.1:
+	* common/mp4v2/atom_mdhd.cpp 1.1:
+	* common/mp4v2/atom_mdia.cpp 1.1:
+	* common/mp4v2/atom_mfhd.cpp 1.1:
+	* common/mp4v2/atom_minf.cpp 1.1:
+	* common/mp4v2/atom_moof.cpp 1.1:
+	* common/mp4v2/atom_moov.cpp 1.1:
+	* common/mp4v2/atom_mp4a.cpp 1.1:
+	* common/mp4v2/atom_mp4s.cpp 1.1:
+	* common/mp4v2/atom_mp4v.cpp 1.1:
+	* common/mp4v2/atom_mvex.cpp 1.1:
+	* common/mp4v2/atom_mvhd.cpp 1.1:
+	* common/mp4v2/atom_nmhd.cpp 1.1:
+	* common/mp4v2/atom_nump.cpp 1.1:
+	* common/mp4v2/atom_payt.cpp 1.1:
+	* common/mp4v2/atom_pmax.cpp 1.1:
+	* common/mp4v2/atom_root.cpp 1.1:
+	* common/mp4v2/atom_rtp.cpp 1.1:
+	* common/mp4v2/atom_sdp.cpp 1.1:
+	* common/mp4v2/atom_smhd.cpp 1.1:
+	* common/mp4v2/atom_snro.cpp 1.1:
+	* common/mp4v2/atom_stbl.cpp 1.1:
+	* common/mp4v2/atom_stco.cpp 1.1:
+	* common/mp4v2/atom_stdp.cpp 1.1:
+	* common/mp4v2/atom_stsc.cpp 1.1:
+	* common/mp4v2/atom_stsd.cpp 1.1:
+	* common/mp4v2/atom_stsh.cpp 1.1:
+	* common/mp4v2/atom_stss.cpp 1.1:
+	* common/mp4v2/atom_stsz.cpp 1.1:
+	* common/mp4v2/atom_stts.cpp 1.1:
+	* common/mp4v2/atom_tfhd.cpp 1.1:
+	* common/mp4v2/atom_tims.cpp 1.1:
+	* common/mp4v2/atom_tkhd.cpp 1.1:
+	* common/mp4v2/atom_tmax.cpp 1.1:
+	* common/mp4v2/atom_tmin.cpp 1.1:
+	* common/mp4v2/atom_tpyl.cpp 1.1:
+	* common/mp4v2/atom_traf.cpp 1.1:
+	* common/mp4v2/atom_trak.cpp 1.1:
+	* common/mp4v2/atom_tref.cpp 1.1:
+	* common/mp4v2/atom_treftype.cpp 1.1:
+	* common/mp4v2/atom_trex.cpp 1.1:
+	* common/mp4v2/atom_trpy.cpp 1.1:
+	* common/mp4v2/atom_trun.cpp 1.1:
+	* common/mp4v2/atom_tsro.cpp 1.1:
+	* common/mp4v2/atom_udta.cpp 1.1:
+	* common/mp4v2/atom_url.cpp 1.1:
+	* common/mp4v2/atom_urn.cpp 1.1:
+	* common/mp4v2/atom_vmhd.cpp 1.1:
+	* common/mp4v2/atoms.h 1.1:
+	* common/mp4v2/descriptors.cpp 1.1:
+	* common/mp4v2/descriptors.h 1.1:
+	* common/mp4v2/isma.cpp 1.1:
+	* common/mp4v2/libmp4v2.dsp 1.1:
+	* common/mp4v2/libmp4v260.dsp 1.1:
+	* common/mp4v2/libmp4v2_st.dsp 1.1:
+	* common/mp4v2/libmp4v2_st60.dsp 1.1:
+	* common/mp4v2/mp4.cpp 1.1:
+	* common/mp4v2/mp4.h 1.1:
+	* common/mp4v2/mp4array.h 1.1:
+	* common/mp4v2/mp4atom.cpp 1.1:
+	* common/mp4v2/mp4atom.h 1.1:
+	* common/mp4v2/mp4common.h 1.1:
+	* common/mp4v2/mp4container.cpp 1.1:
+	* common/mp4v2/mp4container.h 1.1:
+	* common/mp4v2/mp4descriptor.cpp 1.1:
+	* common/mp4v2/mp4descriptor.h 1.1:
+	* common/mp4v2/mp4file.cpp 1.1:
+	* common/mp4v2/mp4file.h 1.1:
+	* common/mp4v2/mp4file_io.cpp 1.1:
+	* common/mp4v2/mp4property.cpp 1.1:
+	* common/mp4v2/mp4property.h 1.1:
+	* common/mp4v2/mp4track.cpp 1.1:
+	* common/mp4v2/mp4track.h 1.1:
+	* common/mp4v2/mp4util.cpp 1.1:
+	* common/mp4v2/mp4util.h 1.1:
+	* common/mp4v2/mpeg4ip.h 1.1:
+	* common/mp4v2/need_for_win32.c 1.1:
+	* common/mp4v2/ocidescriptors.cpp 1.1:
+	* common/mp4v2/ocidescriptors.h 1.1:
+	* common/mp4v2/odcommands.cpp 1.1:
+	* common/mp4v2/odcommands.h 1.1:
+	* common/mp4v2/qosqualifiers.cpp 1.1:
+	* common/mp4v2/qosqualifiers.h 1.1:
+	* common/mp4v2/rtphint.cpp 1.1:
+	* common/mp4v2/rtphint.h 1.1:
+	* common/mp4v2/systems.h 1.1:
+	* common/mp4v2/win32_ver.h 1.1:
+	* frontend/audio.c 1.1:
+	* frontend/audio.h 1.1:
+	* frontend/faad.dsp 1.2:
+	* frontend/faad.dsw 1.2:
+	* frontend/main.c 1.2:
+	* libfaad/decoder.c 1.2:
 		Added MP4 file support
 
-	* frontend/main.c:
+	* frontend/main.c 1.3:
 		Oops, forgot to check for errors in MP4 file decoding
 
-	* frontend/main.c:
+	* frontend/main.c 1.4:
 		Bugfix for MP4 files
 
-	* frontend/main.c:
+	* frontend/main.c 1.6:
 		Fix for strange sample rate from MP4 files (sometimes it's an
 		index and sometimes it's the actual value)
 
-	* frontend/main.c:
+	* frontend/main.c 1.5:
 		Ouch, I need some rest :-)
 
