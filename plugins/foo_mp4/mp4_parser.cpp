@@ -1,4 +1,4 @@
-#include "foobar2000/SDK/foobar2000.h"
+#include "../SDK/foobar2000.h"
 #define USE_TAGGING
 #include <mp4ff.h>
 
