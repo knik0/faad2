@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Target_Dir ""
 MTL=midl.exe
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /G6 /MT /W3 /GX /O2 /Ob1 /D "NDEBUG" /D "WIN32" /D "_MBCS" /D "_LIB" /YX /FD /c
+# ADD CPP /nologo /G6 /MT /W3 /GX /O2 /D "NDEBUG" /D "WIN32" /D "_MBCS" /D "_LIB" /YX /FD /c
 # ADD BASE RSC /l 0x413 /d "NDEBUG"
 # ADD RSC /l 0x413 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -420,6 +420,10 @@ SOURCE=.\sbr_noise.h
 # Begin Source File
 
 SOURCE=.\sbr_qmf.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sbr_qmf_c.h
 # End Source File
 # Begin Source File
 

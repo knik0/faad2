@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_qmf.c,v 1.8 2003/09/20 08:58:06 menno Exp $
+** $Id: sbr_qmf.c,v 1.9 2003/09/22 13:15:38 menno Exp $
 **/
 
 #include "common.h"
@@ -35,6 +35,7 @@
 #include <string.h>
 #include "sbr_dct.h"
 #include "sbr_qmf.h"
+#include "sbr_qmf_c.h"
 #include "sbr_syntax.h"
 
 
@@ -59,7 +60,7 @@ void qmfa_end(qmfa_info *qmfa)
 }
 
 void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const real_t *input,
-                         qmf_t *X, uint8_t offset)
+                         qmf_t *X, uint8_t offset, uint8_t kx)
 {
     uint8_t l;
     real_t u[64];
@@ -129,13 +130,19 @@ void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const real_t *input,
 
         for (n = 0; n < 32; n++)
         {
+            if (n < kx)
+            {
 #ifdef FIXED_POINT
-            QMF_RE(X[((l + offset)<<5) + n]) = y[n] << 1;
-            QMF_IM(X[((l + offset)<<5) + n]) = -y[63-n] << 1;
+                QMF_RE(X[((l + offset)<<5) + n]) = y[n] << 1;
+                QMF_IM(X[((l + offset)<<5) + n]) = -y[63-n] << 1;
 #else
-            QMF_RE(X[((l + offset)<<5) + n]) = 2. * y[n];
-            QMF_IM(X[((l + offset)<<5) + n]) = -2. * y[63-n];
+                QMF_RE(X[((l + offset)<<5) + n]) = 2. * y[n];
+                QMF_IM(X[((l + offset)<<5) + n]) = -2. * y[63-n];
 #endif
+            } else {
+                QMF_RE(X[((l + offset)<<5) + n]) = 0;
+                QMF_IM(X[((l + offset)<<5) + n]) = 0;
+            }
         }
 #endif
     }
