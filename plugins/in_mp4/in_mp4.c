@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: in_mp4.c,v 1.45 2003/11/05 14:41:46 ca5e Exp $
+** $Id: in_mp4.c,v 1.46 2003/11/10 18:57:23 ca5e Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -93,6 +93,7 @@ typedef struct state
     char filename[_MAX_PATH];
     int filetype; /* 0: MP4; 1: AAC */
     int last_frame;
+    __int64 last_offset;
 
     /* MP4 stuff */
     MP4FileHandle mp4file;
@@ -2004,7 +2005,7 @@ DWORD WINAPI MP4PlayThread(void *b)
 
 void *decode_aac_frame(state *st, faacDecFrameInfo *frameInfo)
 {
-    void *sample_buffer;
+    void *sample_buffer = NULL;
 
     do
     {
@@ -2017,10 +2018,14 @@ void *decode_aac_frame(state *st, faacDecFrameInfo *frameInfo)
 
             if (st->m_header_type != 1)
             {
-                st->m_tail->offset = st->m_file_offset;
-                st->m_tail->next = (struct seek_list*)malloc(sizeof(struct seek_list));
-                st->m_tail = st->m_tail->next;
-                st->m_tail->next = NULL;
+                if (st->last_offset < st->m_file_offset)
+                {
+                    st->m_tail->offset = st->m_file_offset;
+                    st->m_tail->next = (struct seek_list*)malloc(sizeof(struct seek_list));
+                    st->m_tail = st->m_tail->next;
+                    st->m_tail->next = NULL;
+                    st->last_offset = st->m_file_offset;
+                }
             }
 
             advance_buffer(st, frameInfo->bytesconsumed);
@@ -2053,6 +2058,7 @@ int aac_seek(state *st, double seconds)
         if (target->offset == 0 && frames > 0)
             return 0;
         fseek(st->aacfile, target->offset, SEEK_SET);
+        st->m_file_offset = target->offset;
 
         bread = fread(st->m_aac_buffer, 1, 768*6, st->aacfile);
         if (bread != 768*6)
@@ -2061,6 +2067,9 @@ int aac_seek(state *st, double seconds)
             st->m_at_eof = 0;
         st->m_aac_bytes_into_buffer = bread;
         st->m_aac_bytes_consumed = 0;
+        st->m_file_offset += bread;
+
+        faacDecPostSeekReset(st->hDecoder, -1);
 
         return 1;
     } else {
@@ -2089,10 +2098,9 @@ int aac_seek(state *st, double seconds)
                 }
             }
 
-            return 1;
-        } else {
-            return 0;
+            faacDecPostSeekReset(st->hDecoder, -1);
         }
+        return 1;
     }
 }
 

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.69 2003/11/02 14:59:06 menno Exp $
+** $Id: foo_mp4.cpp,v 1.70 2003/11/10 18:57:59 ca5e Exp $
 **/
 
 #include <mp4.h>
@@ -729,6 +729,7 @@ public:
             m_aac_bytes_into_buffer = bread;
             m_aac_bytes_consumed = 0;
             m_file_offset = 0;
+            m_last_offset = -1;
             m_at_eof = (bread != 768*6) ? 1 : 0;
 
             if (init==0)
@@ -913,10 +914,14 @@ public:
 
                     if (m_header_type != 1)
                     {
-                        m_tail->offset = m_file_offset;
-                        m_tail->next = (struct seek_list*)malloc(sizeof(struct seek_list));
-                        m_tail = m_tail->next;
-                        m_tail->next = NULL;
+                        if (m_last_offset < m_file_offset)
+                        {
+                            m_tail->offset = m_file_offset;
+                            m_tail->next = (struct seek_list*)malloc(sizeof(struct seek_list));
+                            m_tail = m_tail->next;
+                            m_tail->next = NULL;
+                            m_last_offset = m_file_offset;
+                        }
                     }
 
                     advance_buffer(frameInfo.bytesconsumed);
@@ -1076,6 +1081,7 @@ private:
     long m_aac_bytes_into_buffer;
     long m_aac_bytes_consumed;
     __int64 m_file_offset;
+    __int64 m_last_offset;
     unsigned char *m_aac_buffer;
     int m_at_eof;
 
