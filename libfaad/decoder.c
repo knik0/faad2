@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.6 2002/01/20 16:57:55 menno Exp $
+** $Id: decoder.c,v 1.7 2002/01/27 09:10:46 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -262,6 +262,10 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
     void *sample_buffer;
 
+    ele = 0;
+    channels = 0;
+    ch_ele = 0;
+
     memset(hInfo, 0, sizeof(faacDecFrameInfo));
 
     /* initialize the bitstream */
@@ -277,10 +281,6 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
          * so not needed to actually do it.
          */
     }
-
-    ele = 0;
-    channels = 0;
-    ch_ele = 0;
 
 #ifdef ANALYSIS
     dbg_count = 0;
