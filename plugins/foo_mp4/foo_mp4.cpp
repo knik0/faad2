@@ -1,19 +1,19 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.39 2003/08/02 23:08:17 menno Exp $
+** $Id: foo_mp4.cpp,v 1.40 2003/08/07 17:26:26 menno Exp $
 **/
 
 #include <mp4.h>
@@ -50,7 +50,7 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "$Revision: 1.39 $",
+                           "$Revision: 1.40 $",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -287,7 +287,7 @@ public:
                     MP4SetMetadataWriter(hFile, val);
                 } else if (stricmp(pName, "ALBUM") == 0) {
                     MP4SetMetadataAlbum(hFile, val);
-                } else if (stricmp(pName, "YEAR") == 0) {
+                } else if (stricmp(pName, "DATE") == 0) {
                     MP4SetMetadataYear(hFile, val);
                 } else if (stricmp(pName, "TOOL") == 0) {
                     MP4SetMetadataTool(hFile, val);
@@ -379,7 +379,7 @@ private:
                     } else if (memcmp(pName, "©alb", 4) == 0) {
                         info->meta_add("ALBUM", val);
                     } else if (memcmp(pName, "©day", 4) == 0) {
-                        info->meta_add("YEAR", val);
+                        info->meta_add("DATE", val);
                     } else if (memcmp(pName, "©too", 4) == 0) {
                         info->info_set("TOOL", val);
                     } else if (memcmp(pName, "©cmt", 4) == 0) {
