@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: specrec.c,v 1.15 2002/09/08 18:14:37 menno Exp $
+** $Id: specrec.c,v 1.16 2002/09/15 22:02:30 menno Exp $
 **/
 
 /*
@@ -64,7 +64,10 @@ uint8_t window_grouping_info(ic_stream *ics, uint8_t fs_index,
 #ifdef LD_DEC
         if (object_type == LD)
         {
-            ics->num_swb = num_swb_512_window[fs_index];
+            if (frame_len == 512)
+                ics->num_swb = num_swb_512_window[fs_index];
+            else /* if (frame_len == 480) */
+                ics->num_swb = num_swb_480_window[fs_index];
         } else {
 #endif
             ics->num_swb = num_swb_1024_window[fs_index];
@@ -77,10 +80,19 @@ uint8_t window_grouping_info(ic_stream *ics, uint8_t fs_index,
 #ifdef LD_DEC
         if (object_type == LD)
         {
-            for (i = 0; i < ics->num_swb; i++)
+            if (frame_len == 512)
             {
-                ics->sect_sfb_offset[0][i] = swb_offset_512_window[fs_index][i];
-                ics->swb_offset[i] = swb_offset_512_window[fs_index][i];
+                for (i = 0; i < ics->num_swb; i++)
+                {
+                    ics->sect_sfb_offset[0][i] = swb_offset_512_window[fs_index][i];
+                    ics->swb_offset[i] = swb_offset_512_window[fs_index][i];
+                }
+            } else /* if (frame_len == 480) */ {
+                for (i = 0; i < ics->num_swb; i++)
+                {
+                    ics->sect_sfb_offset[0][i] = swb_offset_480_window[fs_index][i];
+                    ics->swb_offset[i] = swb_offset_480_window[fs_index][i];
+                }
             }
             ics->sect_sfb_offset[0][ics->num_swb] = frame_len;
             ics->swb_offset[ics->num_swb] = frame_len;

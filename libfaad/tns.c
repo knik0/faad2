@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: tns.c,v 1.16 2002/09/13 13:08:45 menno Exp $
+** $Id: tns.c,v 1.17 2002/09/15 22:02:30 menno Exp $
 **/
 
 #include "common.h"
@@ -119,9 +119,11 @@ void tns_decode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
                 tns->coef_compress[w][f], tns->coef[w][f], lpc);
 
             start = ics->swb_offset[min(bottom,
-                min(tns_max_bands(ics, sr_index, object_type), ics->max_sfb))];
+                min(tns_max_bands(ics, sr_index, object_type, frame_len),
+                ics->max_sfb))];
             end = ics->swb_offset[min(top,
-                min(tns_max_bands(ics, sr_index, object_type), ics->max_sfb))];
+                min(tns_max_bands(ics, sr_index, object_type, frame_len),
+                ics->max_sfb))];
 
             if ((size = end - start) <= 0)
                 continue;
@@ -169,9 +171,11 @@ void tns_encode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
                 tns->coef_compress[w][f], tns->coef[w][f], lpc);
 
             start = ics->swb_offset[min(bottom,
-                min(tns_max_bands(ics, sr_index, object_type), ics->max_sfb))];
+                min(tns_max_bands(ics, sr_index, object_type, frame_len),
+                ics->max_sfb))];
             end = ics->swb_offset[min(top,
-                min(tns_max_bands(ics, sr_index, object_type), ics->max_sfb))];
+                min(tns_max_bands(ics, sr_index, object_type, frame_len),
+                ics->max_sfb))];
 
             if ((size = end - start) <= 0)
                 continue;
@@ -301,7 +305,7 @@ static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
     }
 }
 
-static uint8_t tns_max_bands_table[12][5] =
+static uint8_t tns_max_bands_table[12][6] =
 {
     /* entry for each sampling rate
      * 1    Main/LC long window
@@ -309,37 +313,43 @@ static uint8_t tns_max_bands_table[12][5] =
      * 3    SSR long window
      * 4    SSR short window
      * 5    LD 512 window
+     * 6    LD 480 window
      */
-    { 31,  9, 28, 7, 0  },       /* 96000 */
-    { 31,  9, 28, 7, 0  },       /* 88200 */
-    { 34, 10, 27, 7, 0  },       /* 64000 */
-    { 40, 14, 26, 6, 31 },       /* 48000 */
-    { 42, 14, 26, 6, 32 },       /* 44100 */
-    { 51, 14, 26, 6, 37 },       /* 32000 */
-    { 46, 14, 29, 7, 31 },       /* 24000 */
-    { 46, 14, 29, 7, 31 },       /* 22050 */
-    { 42, 14, 23, 8, 0  },       /* 16000 */
-    { 42, 14, 23, 8, 0  },       /* 12000 */
-    { 42, 14, 23, 8, 0  },       /* 11025 */
-    { 39, 14, 19, 7, 0  },       /* 8000  */
+    { 31,  9, 28, 7, 0,  0  },       /* 96000 */
+    { 31,  9, 28, 7, 0,  0  },       /* 88200 */
+    { 34, 10, 27, 7, 0,  0  },       /* 64000 */
+    { 40, 14, 26, 6, 31, 31 },       /* 48000 */
+    { 42, 14, 26, 6, 32, 32 },       /* 44100 */
+    { 51, 14, 26, 6, 37, 37 },       /* 32000 */
+    { 46, 14, 29, 7, 31, 30 },       /* 24000 */
+    { 46, 14, 29, 7, 31, 30 },       /* 22050 */
+    { 42, 14, 23, 8, 0,  0  },       /* 16000 */
+    { 42, 14, 23, 8, 0,  0  },       /* 12000 */
+    { 42, 14, 23, 8, 0,  0  },       /* 11025 */
+    { 39, 14, 19, 7, 0,  0  },       /* 8000  */
 };
 
 static uint8_t tns_max_bands(ic_stream *ics, uint8_t sr_index,
-                             uint8_t object_type)
+                             uint8_t object_type, uint16_t frame_len)
 {
     uint8_t i;
 
     i = (ics->window_sequence == EIGHT_SHORT_SEQUENCE) ? 1 : 0;
 #ifdef LD_DEC
     if (object_type == LD)
-        i = 4;
+    {
+        if (frame_len == 512)
+            i = 4;
+        else
+            i = 5;
+    }
 #endif
 
     return tns_max_bands_table[sr_index][i];
 }
 
 static uint8_t tns_max_order(ic_stream *ics, uint8_t sr_index,
-                         uint8_t object_type)
+                             uint8_t object_type)
 {
     /* Correction in 14496-3 Cor. 1
        Works like MPEG2-AAC (13818-7) now
