@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: rvlc_scale_factors.c,v 1.3 2002/08/10 19:01:19 menno Exp $
+** $Id: rvlc_scale_factors.c,v 1.4 2002/09/16 20:43:37 menno Exp $
 **/
 
 #include "common.h"
@@ -119,7 +119,11 @@ static uint8_t rvlc_decode_sf_forward(ic_stream *ics, bitfile *ld_sf, bitfile *l
 
     int16_t scale_factor = ics->global_gain;
     int16_t is_position = 0;
-    int16_t noise_energy = ics->global_gain - 90;
+    int16_t noise_energy = ics->global_gain - 90 - 256;
+
+#if 0
+    printf("\nglobal_gain: %d\n", ics->global_gain);
+#endif
 
     for (g = 0; g < ics->num_window_groups; g++)
     {
@@ -175,6 +179,10 @@ static uint8_t rvlc_decode_sf_forward(ic_stream *ics, bitfile *ld_sf, bitfile *l
 
                     break;
                 }
+#if 0
+                printf("%3d:%4d%4d\n", sfb, ics->sfb_cb[g][sfb],
+                    ics->scale_factors[g][sfb]);
+#endif
                 if (t == 99)
                 {
                     error = 1;
@@ -182,6 +190,9 @@ static uint8_t rvlc_decode_sf_forward(ic_stream *ics, bitfile *ld_sf, bitfile *l
             }
         }
     }
+#if 0
+    printf("\n\n");
+#endif
 
     return 0;
 }
@@ -271,7 +282,7 @@ static rvlc_huff_table book_escape[] = {
     { 46, 20, 473501 },
     { 47, 20, 473502 },
     { 48, 20, 473503 },
-    {  99, 21,  0 } /* Shouldn't come this far */
+    { 99, 21,  0 } /* Shouldn't come this far */
 };
 
 static int8_t rvlc_huffman_sf(bitfile *ld_sf, bitfile *ld_esc)
@@ -319,7 +330,7 @@ static int8_t rvlc_huffman_esc(bitfile *ld)
     uint8_t i, j;
     uint32_t cw;
     rvlc_huff_table *h = book_escape;
-    
+
     i = h->len;
     cw = faad_getbits(ld, i);
 

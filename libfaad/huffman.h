@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: huffman.h,v 1.9 2002/06/15 15:38:22 menno Exp $
+** $Id: huffman.h,v 1.10 2002/09/16 20:43:37 menno Exp $
 **/
 
 #ifndef __HUFFMAN_H__
@@ -130,6 +130,7 @@ static INLINE uint8_t huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp
         if (cb >= 16)
             cb = 11;
 #endif
+
         cw = faad_showbits(ld, hcbN[cb]);
         offset = hcb_table[cb][cw].offset;
         extra_bits = hcb_table[cb][cw].extra_bits;
