@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: ssr.c,v 1.5 2003/09/09 18:09:52 menno Exp $
+** $Id: ssr.c,v 1.6 2003/10/09 20:04:25 menno Exp $
 **/
 
 #include "common.h"
@@ -43,11 +43,8 @@ void ssr_decode(ssr_info *ssr, fb_info *fb, uint8_t window_sequence,
 {
     uint8_t band;
     uint16_t ssr_frame_len = frame_len/SSR_BANDS;
-    real_t time_tmp[2048];
-    real_t output[1024];
-
-    memset(output, 0, 1024*sizeof(real_t));
-    memset(time_tmp, 0, 2048*sizeof(real_t));
+    real_t time_tmp[2048] = {0};
+    real_t output[1024] = {0};
 
     for (band = 0; band < SSR_BANDS; band++)
     {

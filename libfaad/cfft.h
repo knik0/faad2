@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: cfft.h,v 1.7 2003/09/09 18:09:51 menno Exp $
+** $Id: cfft.h,v 1.8 2003/10/09 20:04:24 menno Exp $
 **/
 
 #ifndef __CFFT_H__
@@ -31,6 +31,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef struct
+{
+    uint16_t n;
+    uint16_t ifac[15];
+    complex_t *work;
+    complex_t *tab;
+} cfft_info;
 
 
 void cfftf(cfft_info *cfft, complex_t *c);

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: structs.h,v 1.16 2003/09/23 08:12:29 menno Exp $
+** $Id: structs.h,v 1.17 2003/10/09 20:04:25 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -32,6 +32,7 @@
 extern "C" {
 #endif
 
+#include "cfft.h"
 #ifdef SBR_DEC
 #include "sbr_dec.h"
 #endif
@@ -49,14 +50,6 @@ typedef struct {
     real_t KOR[2];
     real_t VAR[2];
 } pred_state;
-
-typedef struct
-{
-    uint16_t n;
-    uint16_t ifac[15];
-    complex_t *work;
-    complex_t *tab;
-} cfft_info;
 
 typedef struct {
     uint16_t N;
@@ -377,7 +370,6 @@ typedef struct
 
     uint8_t downMatrix;
     uint8_t first_syn_ele;
-    uint8_t last_syn_ele;
     uint8_t has_lfe;
     uint8_t fr_channels;
     uint8_t fr_ch_ele;
@@ -429,6 +421,7 @@ typedef struct
     /* Program Config Element */
     uint8_t pce_set;
     program_config pce;
+    uint8_t element_id[MAX_CHANNELS];
     uint8_t channel_element[MAX_CHANNELS];
     uint8_t internal_channel[MAX_CHANNELS];
 

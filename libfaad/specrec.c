@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.27 2003/09/30 12:43:05 menno Exp $
+** $Id: specrec.c,v 1.28 2003/10/09 20:04:25 menno Exp $
 **/
 
 /*
@@ -39,6 +39,16 @@
 #include "specrec.h"
 #include "syntax.h"
 #include "iq_table.h"
+#include "ms.h"
+#include "is.h"
+#include "pns.h"
+#include "tns.h"
+#include "lt_predict.h"
+#include "ic_predict.h"
+#ifdef SSR_DEC
+#include "ssr.h"
+#include "ssr_fb.h"
+#endif
 
 #ifdef LD_DEC
 static uint8_t num_swb_512_window[] =
@@ -410,14 +420,12 @@ uint8_t window_grouping_info(faacDecHandle hDecoder, ic_stream *ics)
   - Within a scalefactor window band, the coefficients are in ascending
     spectral order.
 */
-void quant_to_spec(ic_stream *ics, real_t *spec_data, uint16_t frame_len)
+static void quant_to_spec(ic_stream *ics, real_t *spec_data, uint16_t frame_len)
 {
     uint8_t g, sfb, win;
     uint16_t width, bin, k, gindex;
 
-    real_t tmp_spec[1024];
-
-    memset(tmp_spec, 0, frame_len*sizeof(real_t));
+    real_t tmp_spec[1024] = {0};
 
     k = 0;
     gindex = 0;
@@ -470,27 +478,23 @@ static INLINE real_t iquant(int16_t q, real_t *tab)
 #ifdef FIXED_POINT
     int16_t sgn = 1;
 
-    if (q == 0) return 0;
-
     if (q < 0)
     {
         q = -q;
         sgn = -1;
     }
 
-    if (q >= IQ_TABLE_SIZE)
-        return 0; /* sgn * tab[q>>3] * 16; */
-
-    return sgn * tab[q];
+    if (q < IQ_TABLE_SIZE)
+        return sgn * tab[q];
+    
+    return 0; /* sgn * tab[q>>3] * 16; */
 #else
-    int16_t sgn = 1;
-
-    if (q == 0) return 0;
+    real_t sgn = REAL_CONST(1.0);
 
     if (q < 0)
     {
         q = -q;
-        sgn = -1;
+        sgn = REAL_CONST(-1.0);
     }
 
     if (q < IQ_TABLE_SIZE)
@@ -500,7 +504,7 @@ static INLINE real_t iquant(int16_t q, real_t *tab)
 #endif
 }
 
-void inverse_quantization(real_t *x_invquant, int16_t *x_quant, uint16_t frame_len)
+static void inverse_quantization(real_t *x_invquant, int16_t *x_quant, uint16_t frame_len)
 {
     int16_t i;
     real_t *tab = iq_table;
@@ -535,8 +539,8 @@ static real_t pow2_table[] =
 };
 #endif
 
-void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics, real_t *x_invquant,
-                        uint16_t frame_len)
+static void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics,
+                               real_t *x_invquant, uint16_t frame_len)
 {
     uint8_t g, sfb;
     uint16_t top;
@@ -616,4 +620,334 @@ void apply_scalefactors(faacDecHandle hDecoder, ic_stream *ics, real_t *x_invqua
         }
         groups += ics->window_group_length[g];
     }
+}
+
+void reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
+                                element *sce, int16_t *spec_data)
+{
+    real_t spec_coef[1024];
+
+    /* inverse quantization */
+    inverse_quantization(spec_coef, spec_data, hDecoder->frameLength);
+
+    /* apply scalefactors */
+    apply_scalefactors(hDecoder, ics, spec_coef, hDecoder->frameLength);
+
+    /* deinterleave short block grouping */
+    if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
+        quant_to_spec(ics, spec_coef, hDecoder->frameLength);
+
+
+    /* pns decoding */
+    pns_decode(ics, NULL, spec_coef, NULL, hDecoder->frameLength, 0, hDecoder->object_type);
+
+#ifdef MAIN_DEC
+    /* MAIN object type prediction */
+    if (hDecoder->object_type == MAIN)
+    {
+        /* allocate the state only when needed */
+        if (hDecoder->pred_stat[sce->channel] == NULL)
+        {
+            hDecoder->pred_stat[sce->channel] = (pred_state*)malloc(hDecoder->frameLength * sizeof(pred_state));
+            reset_all_predictors(hDecoder->pred_stat[sce->channel], hDecoder->frameLength);
+        }
+
+        /* intra channel prediction */
+        ic_prediction(ics, spec_coef, hDecoder->pred_stat[sce->channel], hDecoder->frameLength);
+
+        /* In addition, for scalefactor bands coded by perceptual
+           noise substitution the predictors belonging to the
+           corresponding spectral coefficients are reset.
+        */
+        pns_reset_pred_state(ics, hDecoder->pred_stat[sce->channel]);
+    }
+#endif
+
+#ifdef LTP_DEC
+    if (is_ltp_ot(hDecoder->object_type))
+    {
+#ifdef LD_DEC
+        if (hDecoder->object_type == LD)
+        {
+            if (ics->ltp.data_present)
+            {
+                if (ics->ltp.lag_update)
+                    hDecoder->ltp_lag[sce->channel] = ics->ltp.lag;
+            }
+            ics->ltp.lag = hDecoder->ltp_lag[sce->channel];
+        }
+#endif
+
+        /* allocate the state only when needed */
+        if (hDecoder->lt_pred_stat[sce->channel] == NULL)
+        {
+            hDecoder->lt_pred_stat[sce->channel] = (real_t*)malloc(hDecoder->frameLength*4 * sizeof(real_t));
+            memset(hDecoder->lt_pred_stat[sce->channel], 0, hDecoder->frameLength*4 * sizeof(real_t));
+        }
+
+        /* long term prediction */
+        lt_prediction(ics, &(ics->ltp), spec_coef, hDecoder->lt_pred_stat[sce->channel], hDecoder->fb,
+            ics->window_shape, hDecoder->window_shape_prev[sce->channel],
+            hDecoder->sf_index, hDecoder->object_type, hDecoder->frameLength);
+    }
+#endif
+
+    /* tns decoding */
+    tns_decode_frame(ics, &(ics->tns), hDecoder->sf_index, hDecoder->object_type,
+        spec_coef, hDecoder->frameLength);
+
+    /* drc decoding */
+    if (hDecoder->drc->present)
+    {
+        if (!hDecoder->drc->exclude_mask[sce->channel] || !hDecoder->drc->excluded_chns_present)
+            drc_decode(hDecoder->drc, spec_coef);
+    }
+
+    if (hDecoder->time_out[sce->channel] == NULL)
+    {
+        hDecoder->time_out[sce->channel] = (real_t*)malloc(hDecoder->frameLength*2*sizeof(real_t));
+        memset(hDecoder->time_out[sce->channel], 0, hDecoder->frameLength*2*sizeof(real_t));
+    }
+
+    /* filter bank */
+#ifdef SSR_DEC
+    if (hDecoder->object_type != SSR)
+    {
+#endif
+        ifilter_bank(hDecoder->fb, ics->window_sequence, ics->window_shape,
+            hDecoder->window_shape_prev[sce->channel], spec_coef,
+            hDecoder->time_out[sce->channel], hDecoder->object_type, hDecoder->frameLength);
+#ifdef SSR_DEC
+    } else {
+        if (hDecoder->ssr_overlap[sce->channel] == NULL)
+        {
+            hDecoder->ssr_overlap[sce->channel] = (real_t*)malloc(2*hDecoder->frameLength*sizeof(real_t));
+            memset(hDecoder->ssr_overlap[sce->channel], 0, 2*hDecoder->frameLength*sizeof(real_t));
+        }
+        if (hDecoder->prev_fmd[sce->channel] == NULL)
+        {
+            uint16_t k;
+            hDecoder->prev_fmd[sce->channel] = (real_t*)malloc(2*hDecoder->frameLength*sizeof(real_t));
+            for (k = 0; k < 2*hDecoder->frameLength; k++)
+                hDecoder->prev_fmd[sce->channel][k] = REAL_CONST(-1);
+        }
+
+        ssr_decode(&(ics->ssr), hDecoder->fb, ics->window_sequence, ics->window_shape,
+            hDecoder->window_shape_prev[sce->channel], spec_coef, hDecoder->time_out[sce->channel],
+            hDecoder->ssr_overlap[sce->channel], hDecoder->ipqf_buffer[sce->channel], hDecoder->prev_fmd[sce->channel],
+            hDecoder->frameLength);
+    }
+#endif
+
+    /* save window shape for next frame */
+    hDecoder->window_shape_prev[sce->channel] = ics->window_shape;
+
+#ifdef LTP_DEC
+    if (is_ltp_ot(hDecoder->object_type))
+    {
+        lt_update_state(hDecoder->lt_pred_stat[sce->channel], hDecoder->time_out[sce->channel],
+            hDecoder->time_out[sce->channel]+hDecoder->frameLength, hDecoder->frameLength, hDecoder->object_type);
+    }
+#endif
+}
+
+void reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_stream *ics2,
+                              element *cpe, int16_t *spec_data1, int16_t *spec_data2)
+{
+    real_t spec_coef1[1024];
+    real_t spec_coef2[1024];
+
+    /* inverse quantization */
+    inverse_quantization(spec_coef1, spec_data1, hDecoder->frameLength);
+    inverse_quantization(spec_coef2, spec_data2, hDecoder->frameLength);
+
+    /* apply scalefactors */
+    apply_scalefactors(hDecoder, ics1, spec_coef1, hDecoder->frameLength);
+    apply_scalefactors(hDecoder, ics2, spec_coef2, hDecoder->frameLength);
+
+    /* deinterleave short block grouping */
+    if (ics1->window_sequence == EIGHT_SHORT_SEQUENCE)
+        quant_to_spec(ics1, spec_coef1, hDecoder->frameLength);
+    if (ics2->window_sequence == EIGHT_SHORT_SEQUENCE)
+        quant_to_spec(ics2, spec_coef2, hDecoder->frameLength);
+
+
+    /* pns decoding */
+    if (ics1->ms_mask_present)
+    {
+        pns_decode(ics1, ics2, spec_coef1, spec_coef2, hDecoder->frameLength, 1, hDecoder->object_type);
+    } else {
+        pns_decode(ics1, NULL, spec_coef1, NULL, hDecoder->frameLength, 0, hDecoder->object_type);
+        pns_decode(ics2, NULL, spec_coef2, NULL, hDecoder->frameLength, 0, hDecoder->object_type);
+    }
+
+    /* mid/side decoding */
+    ms_decode(ics1, ics2, spec_coef1, spec_coef2, hDecoder->frameLength);
+
+    /* intensity stereo decoding */
+    is_decode(ics1, ics2, spec_coef1, spec_coef2, hDecoder->frameLength);
+
+#ifdef MAIN_DEC
+    /* MAIN object type prediction */
+    if (hDecoder->object_type == MAIN)
+    {
+        /* allocate the state only when needed */
+        if (hDecoder->pred_stat[cpe->channel] == NULL)
+        {
+            hDecoder->pred_stat[cpe->channel] = (pred_state*)malloc(hDecoder->frameLength * sizeof(pred_state));
+            reset_all_predictors(hDecoder->pred_stat[cpe->channel], hDecoder->frameLength);
+        }
+        if (hDecoder->pred_stat[cpe->paired_channel] == NULL)
+        {
+            hDecoder->pred_stat[cpe->paired_channel] = (pred_state*)malloc(hDecoder->frameLength * sizeof(pred_state));
+            reset_all_predictors(hDecoder->pred_stat[cpe->paired_channel], hDecoder->frameLength);
+        }
+
+        /* intra channel prediction */
+        ic_prediction(ics1, spec_coef1, hDecoder->pred_stat[cpe->channel], hDecoder->frameLength);
+        ic_prediction(ics2, spec_coef2, hDecoder->pred_stat[cpe->paired_channel], hDecoder->frameLength);
+
+        /* In addition, for scalefactor bands coded by perceptual
+           noise substitution the predictors belonging to the
+           corresponding spectral coefficients are reset.
+        */
+        pns_reset_pred_state(ics1, hDecoder->pred_stat[cpe->channel]);
+        pns_reset_pred_state(ics2, hDecoder->pred_stat[cpe->paired_channel]);
+    }
+#endif
+
+#ifdef LTP_DEC
+    if (is_ltp_ot(hDecoder->object_type))
+    {
+        ltp_info *ltp1 = &(ics1->ltp);
+        ltp_info *ltp2 = (cpe->common_window) ? &(ics2->ltp2) : &(ics2->ltp) ;
+#ifdef LD_DEC
+        if (hDecoder->object_type == LD)
+        {
+            if (ltp1->data_present)
+            {
+                if (ltp1->lag_update)
+                    hDecoder->ltp_lag[cpe->channel] = ltp1->lag;
+            }
+            ltp1->lag = hDecoder->ltp_lag[cpe->channel];
+            if (ltp2->data_present)
+            {
+                if (ltp2->lag_update)
+                    hDecoder->ltp_lag[cpe->paired_channel] = ltp2->lag;
+            }
+            ltp2->lag = hDecoder->ltp_lag[cpe->paired_channel];
+        }
+#endif
+
+        /* allocate the state only when needed */
+        if (hDecoder->lt_pred_stat[cpe->channel] == NULL)
+        {
+            hDecoder->lt_pred_stat[cpe->channel] = (real_t*)malloc(hDecoder->frameLength*4 * sizeof(real_t));
+            memset(hDecoder->lt_pred_stat[cpe->channel], 0, hDecoder->frameLength*4 * sizeof(real_t));
+        }
+        if (hDecoder->lt_pred_stat[cpe->paired_channel] == NULL)
+        {
+            hDecoder->lt_pred_stat[cpe->paired_channel] = (real_t*)malloc(hDecoder->frameLength*4 * sizeof(real_t));
+            memset(hDecoder->lt_pred_stat[cpe->paired_channel], 0, hDecoder->frameLength*4 * sizeof(real_t));
+        }
+
+        /* long term prediction */
+        lt_prediction(ics1, ltp1, spec_coef1, hDecoder->lt_pred_stat[cpe->channel], hDecoder->fb,
+            ics1->window_shape, hDecoder->window_shape_prev[cpe->channel],
+            hDecoder->sf_index, hDecoder->object_type, hDecoder->frameLength);
+        lt_prediction(ics2, ltp2, spec_coef2, hDecoder->lt_pred_stat[cpe->paired_channel], hDecoder->fb,
+            ics2->window_shape, hDecoder->window_shape_prev[cpe->paired_channel],
+            hDecoder->sf_index, hDecoder->object_type, hDecoder->frameLength);
+    }
+#endif
+
+    /* tns decoding */
+    tns_decode_frame(ics1, &(ics1->tns), hDecoder->sf_index, hDecoder->object_type,
+        spec_coef1, hDecoder->frameLength);
+    tns_decode_frame(ics2, &(ics2->tns), hDecoder->sf_index, hDecoder->object_type,
+        spec_coef2, hDecoder->frameLength);
+
+    /* drc decoding */
+    if (hDecoder->drc->present)
+    {
+        if (!hDecoder->drc->exclude_mask[cpe->channel] || !hDecoder->drc->excluded_chns_present)
+            drc_decode(hDecoder->drc, spec_coef1);
+        if (!hDecoder->drc->exclude_mask[cpe->paired_channel] || !hDecoder->drc->excluded_chns_present)
+            drc_decode(hDecoder->drc, spec_coef2);
+    }
+
+    if (hDecoder->time_out[cpe->channel] == NULL)
+    {
+        hDecoder->time_out[cpe->channel] = (real_t*)malloc(hDecoder->frameLength*2*sizeof(real_t));
+        memset(hDecoder->time_out[cpe->channel], 0, hDecoder->frameLength*2*sizeof(real_t));
+    }
+    if (hDecoder->time_out[cpe->paired_channel] == NULL)
+    {
+        hDecoder->time_out[cpe->paired_channel] = (real_t*)malloc(hDecoder->frameLength*2*sizeof(real_t));
+        memset(hDecoder->time_out[cpe->paired_channel], 0, hDecoder->frameLength*2*sizeof(real_t));
+    }
+
+    /* filter bank */
+#ifdef SSR_DEC
+    if (hDecoder->object_type != SSR)
+    {
+#endif
+        ifilter_bank(hDecoder->fb, ics1->window_sequence, ics1->window_shape,
+            hDecoder->window_shape_prev[cpe->channel], spec_coef1,
+            hDecoder->time_out[cpe->channel], hDecoder->object_type, hDecoder->frameLength);
+        ifilter_bank(hDecoder->fb, ics2->window_sequence, ics2->window_shape,
+            hDecoder->window_shape_prev[cpe->paired_channel], spec_coef2,
+            hDecoder->time_out[cpe->paired_channel], hDecoder->object_type, hDecoder->frameLength);
+#ifdef SSR_DEC
+    } else {
+        if (hDecoder->ssr_overlap[cpe->channel] == NULL)
+        {
+            hDecoder->ssr_overlap[cpe->channel] = (real_t*)malloc(2*hDecoder->frameLength*sizeof(real_t));
+            memset(hDecoder->ssr_overlap[cpe->channel], 0, 2*hDecoder->frameLength*sizeof(real_t));
+        }
+        if (hDecoder->ssr_overlap[cpe->paired_channel] == NULL)
+        {
+            hDecoder->ssr_overlap[cpe->paired_channel] = (real_t*)malloc(2*hDecoder->frameLength*sizeof(real_t));
+            memset(hDecoder->ssr_overlap[cpe->paired_channel], 0, 2*hDecoder->frameLength*sizeof(real_t));
+        }
+        if (hDecoder->prev_fmd[cpe->channel] == NULL)
+        {
+            uint16_t k;
+            hDecoder->prev_fmd[cpe->channel] = (real_t*)malloc(2*hDecoder->frameLength*sizeof(real_t));
+            for (k = 0; k < 2*hDecoder->frameLength; k++)
+                hDecoder->prev_fmd[cpe->channel][k] = REAL_CONST(-1);
+        }
+        if (hDecoder->prev_fmd[cpe->paired_channel] == NULL)
+        {
+            uint16_t k;
+            hDecoder->prev_fmd[cpe->paired_channel] = (real_t*)malloc(2*hDecoder->frameLength*sizeof(real_t));
+            for (k = 0; k < 2*hDecoder->frameLength; k++)
+                hDecoder->prev_fmd[cpe->paired_channel][k] = REAL_CONST(-1);
+        }
+
+        ssr_decode(&(ics1->ssr), hDecoder->fb, ics1->window_sequence, ics1->window_shape,
+            hDecoder->window_shape_prev[cpe->channel], spec_coef1, hDecoder->time_out[cpe->channel],
+            hDecoder->ssr_overlap[cpe->channel], hDecoder->ipqf_buffer[cpe->channel],
+            hDecoder->prev_fmd[cpe->channel], hDecoder->frameLength);
+        ssr_decode(&(ics2->ssr), hDecoder->fb, ics2->window_sequence, ics2->window_shape,
+            hDecoder->window_shape_prev[cpe->paired_channel], spec_coef2, hDecoder->time_out[cpe->paired_channel],
+            hDecoder->ssr_overlap[cpe->paired_channel], hDecoder->ipqf_buffer[cpe->paired_channel],
+            hDecoder->prev_fmd[cpe->paired_channel], hDecoder->frameLength);
+    }
+#endif
+
+    /* save window shape for next frame */
+    hDecoder->window_shape_prev[cpe->channel] = ics1->window_shape;
+    hDecoder->window_shape_prev[cpe->paired_channel] = ics2->window_shape;
+
+#ifdef LTP_DEC
+    if (is_ltp_ot(hDecoder->object_type))
+    {
+        lt_update_state(hDecoder->lt_pred_stat[cpe->channel], hDecoder->time_out[cpe->channel],
+            hDecoder->time_out[cpe->channel]+hDecoder->frameLength, hDecoder->frameLength, hDecoder->object_type);
+        lt_update_state(hDecoder->lt_pred_stat[cpe->paired_channel], hDecoder->time_out[cpe->paired_channel],
+            hDecoder->time_out[cpe->paired_channel]+hDecoder->frameLength, hDecoder->frameLength,
+            hDecoder->object_type);
+    }
+#endif
 }

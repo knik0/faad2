@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: lt_predict.c,v 1.12 2003/09/09 18:09:52 menno Exp $
+** $Id: lt_predict.c,v 1.13 2003/10/09 20:04:24 menno Exp $
 **/
 
 
@@ -36,6 +36,26 @@
 #include "lt_predict.h"
 #include "filtbank.h"
 #include "tns.h"
+
+/* check if the object type is an object type that can have LTP */
+uint8_t is_ltp_ot(uint8_t object_type)
+{
+#ifdef LTP_DEC
+    if ((object_type == LTP)
+#ifdef ERROR_RESILIENCE
+        || (object_type == ER_LTP)
+#endif
+#ifdef LD_DEC
+        || (object_type == LD)
+#endif
+        )
+    {
+        return 1;
+    }
+#endif
+
+    return 0;
+}
 
 static real_t codebook[8] =
 {

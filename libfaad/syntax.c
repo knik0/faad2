@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.56 2003/09/30 12:43:05 menno Exp $
+** $Id: syntax.c,v 1.57 2003/10/09 20:04:25 menno Exp $
 **/
 
 /*
@@ -260,37 +260,28 @@ uint8_t program_config_element(program_config *pce, bitfile *ld)
     return 0;
 }
 
-element *decode_sce_lfe(faacDecHandle hDecoder,
-                        faacDecFrameInfo *hInfo, bitfile *ld,
-                        real_t **spec_coef, uint8_t id_syn_ele)
+void decode_sce_lfe(faacDecHandle hDecoder,
+                    faacDecFrameInfo *hInfo, bitfile *ld,
+                    uint8_t id_syn_ele)
 {
-    element *ele;
     uint8_t channels = hDecoder->fr_channels;
+    uint8_t tag = 0;
 
     if (channels+1 > MAX_CHANNELS)
     {
         hInfo->error = 12;
-        return NULL;
+        return;
     }
     if (hDecoder->fr_ch_ele+1 > MAX_SYNTAX_ELEMENTS)
     {
         hInfo->error = 13;
-        return NULL;
+        return;
     }
 
-    spec_coef[channels]   = (real_t*)malloc(hDecoder->frameLength*sizeof(real_t));
-
-    ele = (element*)malloc(sizeof(element));
-    memset(ele, 0, sizeof(element));
-    ele->ele_id  = id_syn_ele;
-    ele->channel = channels;
-    ele->paired_channel = -1;
-
-    hInfo->error = single_lfe_channel_element(hDecoder, ele,
-        ld, spec_coef[channels]);
+    hInfo->error = single_lfe_channel_element(hDecoder, ld, channels, &tag);
 
     if (hDecoder->pce_set)
-        hDecoder->internal_channel[hDecoder->pce.sce_channel[ele->element_instance_tag]] = channels;
+        hDecoder->internal_channel[hDecoder->pce.sce_channel[tag]] = channels;
     else
         hDecoder->internal_channel[channels] = channels;
 
@@ -298,47 +289,35 @@ element *decode_sce_lfe(faacDecHandle hDecoder,
         hDecoder->channel_element[channels] = hDecoder->fr_ch_ele;
     else /* LFE */
         hDecoder->channel_element[channels] = hDecoder->fr_ch_ele;
+    hDecoder->element_id[hDecoder->fr_ch_ele] = id_syn_ele;
 
     hDecoder->fr_channels++;
     hDecoder->fr_ch_ele++;
-
-    return ele;
 }
 
-element *decode_cpe(faacDecHandle hDecoder,
-                    faacDecFrameInfo *hInfo, bitfile *ld,
-                    real_t **spec_coef, uint8_t id_syn_ele)
+void decode_cpe(faacDecHandle hDecoder, faacDecFrameInfo *hInfo, bitfile *ld,
+                uint8_t id_syn_ele)
 {
-    element *ele;
     uint8_t channels = hDecoder->fr_channels;
+    uint8_t tag = 0;
 
     if (channels+2 > MAX_CHANNELS)
     {
         hInfo->error = 12;
-        return NULL;
+        return;
     }
     if (hDecoder->fr_ch_ele+1 > MAX_SYNTAX_ELEMENTS)
     {
         hInfo->error = 13;
-        return NULL;
+        return;
     }
 
-    spec_coef[channels]   = (real_t*)malloc(hDecoder->frameLength*sizeof(real_t));
-    spec_coef[channels+1] = (real_t*)malloc(hDecoder->frameLength*sizeof(real_t));
-
-    ele = (element*)malloc(sizeof(element));
-    memset(ele, 0, sizeof(element));
-    ele->ele_id         = id_syn_ele;
-    ele->channel        = channels;
-    ele->paired_channel = channels+1;
-
-    hInfo->error = channel_pair_element(hDecoder, ele,
-        ld, spec_coef[channels], spec_coef[channels+1]);
+    hInfo->error = channel_pair_element(hDecoder, ld, channels, &tag);
 
     if (hDecoder->pce_set)
     {
-        hDecoder->internal_channel[hDecoder->pce.cpe_channel[ele->element_instance_tag]] = channels;
-        hDecoder->internal_channel[hDecoder->pce.cpe_channel[ele->element_instance_tag]+1] = channels+1;
+        hDecoder->internal_channel[hDecoder->pce.cpe_channel[tag]] = channels;
+        hDecoder->internal_channel[hDecoder->pce.cpe_channel[tag]+1] = channels+1;
     } else {
         hDecoder->internal_channel[channels] = channels;
         hDecoder->internal_channel[channels+1] = channels+1;
@@ -346,16 +325,14 @@ element *decode_cpe(faacDecHandle hDecoder,
 
     hDecoder->channel_element[channels] = hDecoder->fr_ch_ele;
     hDecoder->channel_element[channels+1] = hDecoder->fr_ch_ele;
+    hDecoder->element_id[hDecoder->fr_ch_ele] = id_syn_ele;
 
     hDecoder->fr_channels += 2;
     hDecoder->fr_ch_ele++;
-
-    return ele;
 }
 
-element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
-                         bitfile *ld, element **elements,
-                         real_t **spec_coef, program_config *pce, drc_info *drc)
+void raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
+                    bitfile *ld, program_config *pce, drc_info *drc)
 {
     uint8_t id_syn_ele;
     uint8_t ch_ele = 0;
@@ -376,38 +353,36 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
             switch (id_syn_ele) {
             case ID_SCE:
                 if (hDecoder->first_syn_ele == 25) hDecoder->first_syn_ele = id_syn_ele;
-                hDecoder->last_syn_ele = id_syn_ele;
-                elements[ch_ele++] = decode_sce_lfe(hDecoder,
-                    hInfo, ld, spec_coef, id_syn_ele);
+                decode_sce_lfe(hDecoder, hInfo, ld, id_syn_ele);
+                ch_ele++;
                 if (hInfo->error > 0)
-                    return elements;
+                    return;
                 break;
             case ID_CPE:
                 if (hDecoder->first_syn_ele == 25) hDecoder->first_syn_ele = id_syn_ele;
-                hDecoder->last_syn_ele = id_syn_ele;
-                elements[ch_ele++] = decode_cpe(hDecoder,
-                    hInfo, ld, spec_coef, id_syn_ele);
+                decode_cpe(hDecoder, hInfo, ld, id_syn_ele);
+                ch_ele++;
                 if (hInfo->error > 0)
-                    return elements;
+                    return;
                 break;
             case ID_LFE:
                 hDecoder->has_lfe++;
-                elements[ch_ele++] = decode_sce_lfe(hDecoder,
-                    hInfo, ld, spec_coef, id_syn_ele);
+                decode_sce_lfe(hDecoder, hInfo, ld, id_syn_ele);
+                ch_ele++;
                 if (hInfo->error > 0)
-                    return elements;
+                    return;
                 break;
             case ID_CCE: /* not implemented yet, but skip the bits */
                 hInfo->error = coupling_channel_element(hDecoder, ld);
                 if (hInfo->error > 0)
-                    return elements;
+                    return;
                 break;
             case ID_DSE:
                 data_stream_element(hDecoder, ld);
                 break;
             case ID_PCE:
                 if ((hInfo->error = program_config_element(pce, ld)) > 0)
-                    return elements;
+                    return;
                 hDecoder->pce_set = 1;
                 break;
             case ID_FIL:
@@ -417,7 +392,7 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
                     , (ch_ele-1)
 #endif
                     )) > 0)
-                    return elements;
+                    return;
 #ifdef SBR_DEC
                 if (hDecoder->sbr_used[ch_ele-1])
                 {
@@ -435,74 +410,74 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
         switch (hDecoder->channelConfiguration)
         {
         case 1:
-            elements[ch_ele++] = decode_sce_lfe(hDecoder,
-                hInfo, ld, spec_coef, ID_SCE);
+            decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
+            ch_ele++;
             if (hInfo->error > 0)
-                return elements;
+                return;
             break;
         case 2:
-            elements[ch_ele++] = decode_cpe(hDecoder,
-                hInfo, ld, spec_coef, ID_CPE);
+            decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            ch_ele++;
             if (hInfo->error > 0)
-                return elements;
+                return;
             break;
         case 3:
-            elements[ch_ele++] = decode_sce_lfe(hDecoder,
-                hInfo, ld, spec_coef, ID_SCE);
-            elements[ch_ele++] = decode_cpe(hDecoder,
-                hInfo, ld, spec_coef, ID_CPE);
+            decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
+            ch_ele++;
+            decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            ch_ele++;
             if (hInfo->error > 0)
-                return elements;
+                return;
             break;
         case 4:
-            elements[ch_ele++] = decode_sce_lfe(hDecoder,
-                hInfo, ld, spec_coef, ID_SCE);
-            elements[ch_ele++] = decode_cpe(hDecoder,
-                hInfo, ld, spec_coef, ID_CPE);
-            elements[ch_ele++] = decode_sce_lfe(hDecoder,
-                hInfo, ld, spec_coef, ID_SCE);
+            decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
+            ch_ele++;
+            decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            ch_ele++;
+            decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
+            ch_ele++;
             if (hInfo->error > 0)
-                return elements;
+                return;
             break;
         case 5:
-            elements[ch_ele++] = decode_sce_lfe(hDecoder,
-                hInfo, ld, spec_coef, ID_SCE);
-            elements[ch_ele++] = decode_cpe(hDecoder,
-                hInfo, ld, spec_coef, ID_CPE);
-            elements[ch_ele++] = decode_cpe(hDecoder,
-                hInfo, ld, spec_coef, ID_CPE);
+            decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
+            ch_ele++;
+            decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            ch_ele++;
+            decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            ch_ele++;
             if (hInfo->error > 0)
-                return elements;
+                return;
             break;
         case 6:
-            elements[ch_ele++] = decode_sce_lfe(hDecoder,
-                hInfo, ld, spec_coef, ID_SCE);
-            elements[ch_ele++] = decode_cpe(hDecoder,
-                hInfo, ld, spec_coef, ID_CPE);
-            elements[ch_ele++] = decode_cpe(hDecoder,
-                hInfo, ld, spec_coef, ID_CPE);
-            elements[ch_ele++] = decode_sce_lfe(hDecoder,
-                hInfo, ld, spec_coef, ID_LFE);
+            decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
+            ch_ele++;
+            decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            ch_ele++;
+            decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            ch_ele++;
+            decode_sce_lfe(hDecoder, hInfo, ld, ID_LFE);
+            ch_ele++;
             if (hInfo->error > 0)
-                return elements;
+                return;
             break;
         case 7:
-            elements[ch_ele++] = decode_sce_lfe(hDecoder,
-                hInfo, ld, spec_coef, ID_SCE);
-            elements[ch_ele++] = decode_cpe(hDecoder,
-                hInfo, ld, spec_coef, ID_CPE);
-            elements[ch_ele++] = decode_cpe(hDecoder,
-                hInfo, ld, spec_coef, ID_CPE);
-            elements[ch_ele++] = decode_cpe(hDecoder,
-                hInfo, ld, spec_coef, ID_CPE);
-            elements[ch_ele++] = decode_sce_lfe(hDecoder,
-                hInfo, ld, spec_coef, ID_LFE);
+            decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
+            ch_ele++;
+            decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            ch_ele++;
+            decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            ch_ele++;
+            decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            ch_ele++;
+            decode_sce_lfe(hDecoder, hInfo, ld, ID_LFE);
+            ch_ele++;
             if (hInfo->error > 0)
-                return elements;
+                return;
             break;
         default:
             hInfo->error = 7;
-            return elements;
+            return;
         }
 #if 0
         cnt = bits_to_decode() / 8;
@@ -522,30 +497,34 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
         faad_byte_align(ld);
     }
 
-    return elements;
+    return;
 }
 
 /* Table 4.4.4 and */
 /* Table 4.4.9 */
-static uint8_t single_lfe_channel_element(faacDecHandle hDecoder,
-                                          element *sce, bitfile *ld,
-                                          real_t *spec_coef)
+static uint8_t single_lfe_channel_element(faacDecHandle hDecoder, bitfile *ld,
+                                          uint8_t channel, uint8_t *tag)
 {
     uint8_t retval = 0;
-    ic_stream *ics = &(sce->ics1);
-    int16_t spec_data[1024];
+    element sce = {0};
+    ic_stream *ics = &(sce.ics1);
+    int16_t spec_data[1024] = {0};
 #ifdef DRM
     uint8_t result;
 
     if (hDecoder->object_type != DRM_ER_LC)
 #endif
-    sce->element_instance_tag = (uint8_t)faad_getbits(ld, LEN_TAG
+    sce.element_instance_tag = (uint8_t)faad_getbits(ld, LEN_TAG
         DEBUGVAR(1,38,"single_lfe_channel_element(): element_instance_tag"));
+
+    *tag = sce.element_instance_tag;
+    sce.channel = channel;
+    sce.paired_channel = -1;
 
 #ifdef DRM
     if (hDecoder->object_type == DRM_ER_LC)
     {
-        individual_channel_stream(hDecoder, sce, ld, ics, 0, spec_data);
+        individual_channel_stream(hDecoder, &sce, ld, ics, 0, spec_data);
 
         if (ics->tns_data_present)
             tns_data(ics, &(ics->tns), ld);
@@ -571,49 +550,43 @@ static uint8_t single_lfe_channel_element(faacDecHandle hDecoder,
     } else
 #endif
     {
-        retval = individual_channel_stream(hDecoder, sce, ld, ics, 0, spec_data);
+        retval = individual_channel_stream(hDecoder, &sce, ld, ics, 0, spec_data);
         if (retval > 0)
             return retval;
     }
 
-
     /* noiseless coding is done, spectral reconstruction is done now */
-
-    /* inverse quantization */
-    inverse_quantization(spec_coef, spec_data, hDecoder->frameLength);
-
-    /* apply scalefactors */
-    apply_scalefactors(hDecoder, ics, spec_coef, hDecoder->frameLength);
-
-    /* deinterleave short block grouping */
-    if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
-        quant_to_spec(ics, spec_coef, hDecoder->frameLength);
+    reconstruct_single_channel(hDecoder, ics, &sce, spec_data);
 
     return 0;
 }
 
 /* Table 4.4.5 */
-static uint8_t channel_pair_element(faacDecHandle hDecoder, element *cpe,
-                                    bitfile *ld,
-                                    real_t *spec_coef1, real_t *spec_coef2)
+static uint8_t channel_pair_element(faacDecHandle hDecoder, bitfile *ld,
+                                    uint8_t channels, uint8_t *tag)
 {
+    int16_t spec_data1[1024] = {0};
+    int16_t spec_data2[1024] = {0};
+    element cpe = {0};
+    ic_stream *ics1 = &(cpe.ics1);
+    ic_stream *ics2 = &(cpe.ics2);
     uint8_t result;
-    ic_stream *ics1 = &(cpe->ics1);
-    ic_stream *ics2 = &(cpe->ics2);
-    int16_t spec_data1[1024];
-    int16_t spec_data2[1024];
+
+    cpe.channel        = channels;
+    cpe.paired_channel = channels+1;
 
 #ifdef DRM
     if (hDecoder->object_type != DRM_ER_LC)
 #endif
-    cpe->element_instance_tag = (uint8_t)faad_getbits(ld, LEN_TAG
+    cpe.element_instance_tag = (uint8_t)faad_getbits(ld, LEN_TAG
         DEBUGVAR(1,39,"channel_pair_element(): element_instance_tag"));
+    *tag = cpe.element_instance_tag;
 
-    if ((cpe->common_window = faad_get1bit(ld
+    if ((cpe.common_window = faad_get1bit(ld
         DEBUGVAR(1,40,"channel_pair_element(): common_window"))) & 1)
     {
         /* both channels have common ics information */
-        if ((result = ics_info(hDecoder, ics1, ld, cpe->common_window)) > 0)
+        if ((result = ics_info(hDecoder, ics1, ld, cpe.common_window)) > 0)
             return result;
 
         ics1->ms_mask_present = (uint8_t)faad_getbits(ld, 2
@@ -647,14 +620,14 @@ static uint8_t channel_pair_element(faacDecHandle hDecoder, element *cpe,
         ics1->ms_mask_present = 0;
     }
 
-    if ((result = individual_channel_stream(hDecoder, cpe, ld, ics1,
+    if ((result = individual_channel_stream(hDecoder, &cpe, ld, ics1,
         0, spec_data1)) > 0)
     {
         return result;
     }
 
 #ifdef ERROR_RESILIENCE
-    if (cpe->common_window && (hDecoder->object_type >= ER_OBJECT_START) &&
+    if (cpe.common_window && (hDecoder->object_type >= ER_OBJECT_START) &&
         (ics1->predictor_data_present))
     {
         if ((ics1->ltp2.data_present = faad_get1bit(ld
@@ -665,7 +638,7 @@ static uint8_t channel_pair_element(faacDecHandle hDecoder, element *cpe,
     }
 #endif
 
-    if ((result = individual_channel_stream(hDecoder, cpe, ld, ics2,
+    if ((result = individual_channel_stream(hDecoder, &cpe, ld, ics2,
         0, spec_data2)) > 0)
     {
         return result;
@@ -713,20 +686,7 @@ static uint8_t channel_pair_element(faacDecHandle hDecoder, element *cpe,
 #endif
 
     /* noiseless coding is done, spectral reconstruction is done now */
-
-    /* inverse quantization */
-    inverse_quantization(spec_coef1, spec_data1, hDecoder->frameLength);
-    inverse_quantization(spec_coef2, spec_data2, hDecoder->frameLength);
-
-    /* apply scalefactors */
-    apply_scalefactors(hDecoder, ics1, spec_coef1, hDecoder->frameLength);
-    apply_scalefactors(hDecoder, ics2, spec_coef2, hDecoder->frameLength);
-
-    /* deinterleave short block grouping */
-    if (ics1->window_sequence == EIGHT_SHORT_SEQUENCE)
-        quant_to_spec(ics1, spec_coef1, hDecoder->frameLength);
-    if (ics2->window_sequence == EIGHT_SHORT_SEQUENCE)
-        quant_to_spec(ics2, spec_coef2, hDecoder->frameLength);
+    reconstruct_channel_pair(hDecoder, ics1, ics2, &cpe, spec_data1, spec_data2);
 
     return 0;
 }
@@ -873,12 +833,9 @@ static uint8_t coupling_channel_element(faacDecHandle hDecoder, bitfile *ld)
     uint8_t num_gain_element_lists = 0;
     uint8_t num_coupled_elements = 0;
 
-    element el_empty;
-    ic_stream ics_empty;
+    element el_empty = {0};
+    ic_stream ics_empty = {0};
     int16_t sh_data[1024];
-
-    memset(&el_empty, 0, sizeof(element));
-    memset(&ics_empty, 0, sizeof(ic_stream));
 
     c = faad_getbits(ld, LEN_TAG
         DEBUGVAR(1,900,"coupling_channel_element(): element_instance_tag"));
@@ -1028,6 +985,8 @@ static uint8_t fill_element(faacDecHandle hDecoder, bitfile *ld, drc_info *drc
             /* read in all the SBR data for processing later on */
             hDecoder->sbr[sbr_ele]->data = (uint8_t*)faad_getbitbuffer(ld, count*8);
             hDecoder->sbr[sbr_ele]->data_size = count;
+            /* save id of previous element, this sbr object belongs to that element */
+            hDecoder->sbr[sbr_ele]->id_aac = hDecoder->element_id[sbr_ele];
         } else {
             hDecoder->sbr_used[sbr_ele] = 0;
 #endif
@@ -1602,7 +1561,7 @@ static uint8_t spectral_data(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld
     uint16_t nshort = hDecoder->frameLength/8;
 
     sp = spectral_data;
-    memset(sp, 0, hDecoder->frameLength*sizeof(int16_t));
+    /*memset(sp, 0, hDecoder->frameLength*sizeof(int16_t));*/
 
     for(g = 0; g < ics->num_window_groups; g++)
     {

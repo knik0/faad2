@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfgen.c,v 1.6 2003/09/25 12:04:31 menno Exp $
+** $Id: sbr_hfgen.c,v 1.7 2003/10/09 20:04:25 menno Exp $
 **/
 
 /* High Frequency generation */
@@ -36,8 +36,8 @@
 #include "sbr_hfgen.h"
 #include "sbr_fbt.h"
 
-void hf_generation(sbr_info *sbr, const qmf_t *Xlow,
-                   qmf_t *Xhigh
+void hf_generation(sbr_info *sbr, const qmf_t Xlow[40][32],
+                   qmf_t Xhigh[40][64]
 #ifdef SBR_LOW_POWER
                    ,real_t *deg
 #endif
@@ -123,34 +123,34 @@ void hf_generation(sbr_info *sbr, const qmf_t *Xlow,
 
 				for (l = first; l < last; l++)
                 {
-                    QMF_RE(Xhigh[((l + offset)<<6) + k]) = QMF_RE(Xlow[((l + offset)<<5) + p]);
+                    QMF_RE(Xhigh[l + offset][k]) = QMF_RE(Xlow[l + offset][p]);
 #ifndef SBR_LOW_POWER
-                    QMF_IM(Xhigh[((l + offset)<<6) + k]) = QMF_IM(Xlow[((l + offset)<<5) + p]);
+                    QMF_IM(Xhigh[l + offset][k]) = QMF_IM(Xlow[l + offset][p]);
 #endif
 
 #ifdef SBR_LOW_POWER
-                    QMF_RE(Xhigh[((l + offset)<<6) + k]) += (
-                        MUL(RE(a0), QMF_RE(Xlow[((l - 1 + offset)<<5) + p])) +
-                        MUL(RE(a1), QMF_RE(Xlow[((l - 2 + offset)<<5) + p])));
+                    QMF_RE(Xhigh[l + offset][k]) += (
+                        MUL(RE(a0), QMF_RE(Xlow[l - 1 + offset][p])) +
+                        MUL(RE(a1), QMF_RE(Xlow[l - 2 + offset][p])));
 #else
-                    QMF_RE(Xhigh[((l + offset)<<6) + k]) += (
-                        RE(a0) * QMF_RE(Xlow[((l - 1 + offset)<<5) + p]) -
-                        IM(a0) * QMF_IM(Xlow[((l - 1 + offset)<<5) + p]) +
-                        RE(a1) * QMF_RE(Xlow[((l - 2 + offset)<<5) + p]) -
-                        IM(a1) * QMF_IM(Xlow[((l - 2 + offset)<<5) + p]));
-                    QMF_IM(Xhigh[((l + offset)<<6) + k]) += (
-                        IM(a0) * QMF_RE(Xlow[((l - 1 + offset)<<5) + p]) +
-                        RE(a0) * QMF_IM(Xlow[((l - 1 + offset)<<5) + p]) +
-                        IM(a1) * QMF_RE(Xlow[((l - 2 + offset)<<5) + p]) +
-                        RE(a1) * QMF_IM(Xlow[((l - 2 + offset)<<5) + p]));
+                    QMF_RE(Xhigh[l + offset][k]) += (
+                        RE(a0) * QMF_RE(Xlow[l - 1 + offset][p]) -
+                        IM(a0) * QMF_IM(Xlow[l - 1 + offset][p]) +
+                        RE(a1) * QMF_RE(Xlow[l - 2 + offset][p]) -
+                        IM(a1) * QMF_IM(Xlow[l - 2 + offset][p]));
+                    QMF_IM(Xhigh[l + offset][k]) += (
+                        IM(a0) * QMF_RE(Xlow[l - 1 + offset][p]) +
+                        RE(a0) * QMF_IM(Xlow[l - 1 + offset][p]) +
+                        IM(a1) * QMF_RE(Xlow[l - 2 + offset][p]) +
+                        RE(a1) * QMF_IM(Xlow[l - 2 + offset][p]));
 #endif
                 }
             } else {
                 for (l = first; l < last; l++)
                 {
-                    QMF_RE(Xhigh[((l + offset)<<6) + k]) = QMF_RE(Xlow[((l + offset)<<5) + p]);
+                    QMF_RE(Xhigh[l + offset][k]) = QMF_RE(Xlow[l + offset][p]);
 #ifndef SBR_LOW_POWER
-                    QMF_IM(Xhigh[((l + offset)<<6) + k]) = QMF_IM(Xlow[((l + offset)<<5) + p]);
+                    QMF_IM(Xhigh[l + offset][k]) = QMF_IM(Xlow[l + offset][p]);
 #endif
                 }
             }
@@ -176,12 +176,12 @@ typedef struct
 #define SBR_ABS(A) ((A) < 0) ? -(A) : (A)
 
 #ifdef SBR_LOW_POWER
-static void auto_correlation(sbr_info *sbr, acorr_coef *ac, const qmf_t *buffer,
+static void auto_correlation(sbr_info *sbr, acorr_coef *ac, const qmf_t buffer[40][32],
                              uint8_t bd, uint8_t len)
 {
-    int8_t j, jminus1, jminus2;
+    int8_t j;
     uint8_t offset;
-    real_t r01, i01, r11;
+    real_t r01, r11;
     const real_t rel = 1 / (1 + 1e-6f);
 
 #ifdef DRM
@@ -195,30 +195,27 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, const qmf_t *buffer,
 
     memset(ac, 0, sizeof(acorr_coef));
 
-    r01 = QMF_RE(buffer[(offset-1)*32 + bd]) * QMF_RE(buffer[(offset-2)*32 + bd]);
-    r11 = QMF_RE(buffer[(offset-2)*32 + bd]) * QMF_RE(buffer[(offset-2)*32 + bd]);
+    r01 = QMF_RE(buffer[offset-1][bd]) * QMF_RE(buffer[offset-2][bd]);
+    r11 = QMF_RE(buffer[offset-2][bd]) * QMF_RE(buffer[offset-2][bd]);
 
     for (j = offset; j < len + offset; j++)
     {
-        jminus1 = j - 1;
-        jminus2 = j - 2;
-
         RE(ac->r12) += r01;
-        r01 = QMF_RE(buffer[j*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]);
+        r01 = QMF_RE(buffer[j][bd]) * QMF_RE(buffer[j-1][bd]);
         RE(ac->r01) += r01;
-        RE(ac->r02) += QMF_RE(buffer[j*32 + bd]) * QMF_RE(buffer[jminus2*32 + bd]);
+        RE(ac->r02) += QMF_RE(buffer[j][bd]) * QMF_RE(buffer[j-2][bd]);
         RE(ac->r22) += r11;
-        r11 = QMF_RE(buffer[jminus1*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]);
+        r11 = QMF_RE(buffer[j-1][bd]) * QMF_RE(buffer[j-1][bd]);
         RE(ac->r11) += r11;
     }
 
     ac->det = MUL(RE(ac->r11), RE(ac->r22)) - MUL_R_C(MUL(RE(ac->r12), RE(ac->r12)), rel);
 }
 #else
-static void auto_correlation(sbr_info *sbr, acorr_coef *ac, const qmf_t *buffer,
+static void auto_correlation(sbr_info *sbr, acorr_coef *ac, const qmf_t buffer[40][32],
                              uint8_t bd, uint8_t len)
 {
-    int8_t j, jminus1, jminus2;
+    int8_t j;
     uint8_t offset;
     real_t r01, i01, r11;
     const real_t rel = 1 / (1 + 1e-6f);
@@ -234,33 +231,30 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, const qmf_t *buffer,
 
     memset(ac, 0, sizeof(acorr_coef));
 
-    r01 = QMF_RE(buffer[(offset-1)*32 + bd]) * QMF_RE(buffer[(offset-2)*32 + bd]) +
-        QMF_IM(buffer[(offset-1)*32 + bd]) * QMF_IM(buffer[(offset-2)*32 + bd]);
-    i01 = QMF_IM(buffer[(offset-1)*32 + bd]) * QMF_RE(buffer[(offset-2)*32 + bd]) -
-        QMF_RE(buffer[(offset-1)*32 + bd]) * QMF_IM(buffer[(offset-2)*32 + bd]);
-    r11 = QMF_RE(buffer[(offset-2)*32 + bd]) * QMF_RE(buffer[(offset-2)*32 + bd]) +
-        QMF_IM(buffer[(offset-2)*32 + bd]) * QMF_IM(buffer[(offset-2)*32 + bd]);
+    r01 = QMF_RE(buffer[offset-1][bd]) * QMF_RE(buffer[offset-2][bd]) +
+        QMF_IM(buffer[offset-1][bd]) * QMF_IM(buffer[offset-2][bd]);
+    i01 = QMF_IM(buffer[offset-1][bd]) * QMF_RE(buffer[offset-2][bd]) -
+        QMF_RE(buffer[offset-1][bd]) * QMF_IM(buffer[offset-2][bd]);
+    r11 = QMF_RE(buffer[offset-2][bd]) * QMF_RE(buffer[offset-2][bd]) +
+        QMF_IM(buffer[offset-2][bd]) * QMF_IM(buffer[offset-2][bd]);
 
     for (j = offset; j < len + offset; j++)
     {
-        jminus1 = j - 1;
-        jminus2 = j - 2;
-
         RE(ac->r12) += r01;
         IM(ac->r12) += i01;
-        r01 = QMF_RE(buffer[j*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]) +
-            QMF_IM(buffer[j*32 + bd]) * QMF_IM(buffer[jminus1*32 + bd]);
+        r01 = QMF_RE(buffer[j][bd]) * QMF_RE(buffer[j-1][bd]) +
+            QMF_IM(buffer[j][bd]) * QMF_IM(buffer[j-1][bd]);
         RE(ac->r01) += r01;
-        i01 = QMF_IM(buffer[j*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]) -
-            QMF_RE(buffer[j*32 + bd]) * QMF_IM(buffer[jminus1*32 + bd]);
+        i01 = QMF_IM(buffer[j][bd]) * QMF_RE(buffer[j-1][bd]) -
+            QMF_RE(buffer[j][bd]) * QMF_IM(buffer[j-1][bd]);
         IM(ac->r01) += i01;
-        RE(ac->r02) += QMF_RE(buffer[j*32 + bd]) * QMF_RE(buffer[jminus2*32 + bd]) +
-            QMF_IM(buffer[j*32 + bd]) * QMF_IM(buffer[jminus2*32 + bd]);
-        IM(ac->r02) += QMF_IM(buffer[j*32 + bd]) * QMF_RE(buffer[jminus2*32 + bd]) -
-            QMF_RE(buffer[j*32 + bd]) * QMF_IM(buffer[jminus2*32 + bd]);
+        RE(ac->r02) += QMF_RE(buffer[j][bd]) * QMF_RE(buffer[j-2][bd]) +
+            QMF_IM(buffer[j][bd]) * QMF_IM(buffer[j-2][bd]);
+        IM(ac->r02) += QMF_IM(buffer[j][bd]) * QMF_RE(buffer[j-2][bd]) -
+            QMF_RE(buffer[j][bd]) * QMF_IM(buffer[j-2][bd]);
         RE(ac->r22) += r11;
-        r11 = QMF_RE(buffer[jminus1*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]) +
-            QMF_IM(buffer[jminus1*32 + bd]) * QMF_IM(buffer[jminus1*32 + bd]);
+        r11 = QMF_RE(buffer[j-1][bd]) * QMF_RE(buffer[j-1][bd]) +
+            QMF_IM(buffer[j-1][bd]) * QMF_IM(buffer[j-1][bd]);
         RE(ac->r11) += r11;
     }
 
@@ -268,7 +262,7 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, const qmf_t *buffer,
 }
 #endif
 
-static void calc_prediction_coef(sbr_info *sbr, const qmf_t *Xlow,
+static void calc_prediction_coef(sbr_info *sbr, const qmf_t Xlow[40][32],
                                  complex_t *alpha_0, complex_t *alpha_1
 #ifdef SBR_LOW_POWER
                                  , real_t *rxx

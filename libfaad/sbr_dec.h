@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.h,v 1.7 2003/09/25 12:04:31 menno Exp $
+** $Id: sbr_dec.h,v 1.8 2003/10/09 20:04:25 menno Exp $
 **/
 
 #ifndef __SBR_DEC_H__
@@ -138,8 +138,8 @@ typedef struct
     qmfa_info *qmfa[2];
     qmfs_info *qmfs[2];
 
-    qmf_t *Xsbr[2];
-    qmf_t *Xcodec[2];
+    qmf_t Xsbr[2][40][64];
+    qmf_t Xcodec[2][40][32];
 
 #ifdef DRM
 	int8_t lcstereo_flag;
@@ -200,7 +200,7 @@ sbr_info *sbrDecodeInit(uint16_t framelength
 void sbrDecodeEnd(sbr_info *sbr);
 
 void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
-                    real_t *right_channel, uint8_t id_aac,
+                    real_t *right_channel,
                     uint8_t just_seeked, uint8_t upsample_only);
 
 

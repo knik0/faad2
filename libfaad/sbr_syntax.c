@@ -1,19 +1,19 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
-**
+**  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**
+** 
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
+** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_syntax.c,v 1.11 2003/09/30 16:32:02 menno Exp $
+** $Id: sbr_syntax.c,v 1.12 2003/10/09 20:04:25 menno Exp $
 **/
 
 #include "common.h"
@@ -78,7 +78,7 @@ static void sbr_reset(sbr_info *sbr)
 }
 
 /* table 2 */
-uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint8_t id_aac)
+uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr)
 {
     uint8_t result;
 #ifdef DRM
@@ -106,7 +106,7 @@ uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint8_t id_aac)
     if (sbr->Is_DRM_SBR)
     {
         /* Check CRC, get number of bits for check */
-        if (id_aac == ID_SCE)
+        if (sbr->id_aac == ID_SCE)
         {
             if (sbr->lcstereo_flag)
             {
@@ -138,7 +138,7 @@ uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint8_t id_aac)
 #endif
 
     if (sbr->bs_header_flag)
-        sbr_header(ld, sbr, id_aac);
+        sbr_header(ld, sbr);
 
     /* TODO: Reset? */
     sbr_reset(sbr);
@@ -181,7 +181,7 @@ uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint8_t id_aac)
             return result;
     }
 
-    if ((result = sbr_data(ld, sbr, id_aac)) > 0)
+    if ((result = sbr_data(ld, sbr)) > 0)
         return result;
 
     /* no error */
@@ -189,7 +189,7 @@ uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint8_t id_aac)
 }
 
 /* table 3 */
-static void sbr_header(bitfile *ld, sbr_info *sbr, uint8_t id_aac)
+static void sbr_header(bitfile *ld, sbr_info *sbr)
 {
     uint8_t bs_header_extra_1, bs_header_extra_2;
 
@@ -290,7 +290,7 @@ static void sbr_header(bitfile *ld, sbr_info *sbr, uint8_t id_aac)
 }
 
 /* table 4 */
-static uint8_t sbr_data(bitfile *ld, sbr_info *sbr, uint8_t id_aac)
+static uint8_t sbr_data(bitfile *ld, sbr_info *sbr)
 {
     uint8_t result;
 #if 0
@@ -305,19 +305,19 @@ static uint8_t sbr_data(bitfile *ld, sbr_info *sbr, uint8_t id_aac)
         sbr->rate = 2;
 #endif
 
-    switch (id_aac)
+    switch (sbr->id_aac)
     {
     case ID_SCE:
-        if ((result = sbr_single_channel_element(ld, sbr)) > 0)
-            return result;
+		if ((result = sbr_single_channel_element(ld, sbr)) > 0)
+			return result;
         break;
     case ID_CPE:
-        if ((result = sbr_channel_pair_element(ld, sbr)) > 0)
-            return result;
+		if ((result = sbr_channel_pair_element(ld, sbr)) > 0)
+			return result;
         break;
     }
 
-    return 0;
+	return 0;
 }
 
 /* table 5 */

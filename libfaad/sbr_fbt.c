@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_fbt.c,v 1.3 2003/09/09 18:37:32 menno Exp $
+** $Id: sbr_fbt.c,v 1.4 2003/10/09 20:04:25 menno Exp $
 **/
 
 /* Calculate frequency band tables */
@@ -187,9 +187,7 @@ void master_frequency_table_fs0(sbr_info *sbr, uint8_t k0, uint8_t k2,
     uint8_t k;
     uint8_t dk;
     uint32_t nrBands, k2Achieved;
-    int32_t k2Diff, vDk[64];
-
-    memset(vDk, 0, 64*sizeof(int32_t));
+    int32_t k2Diff, vDk[64] = {0};
 
     /* mft only defined for k2 > k0 */
     if (k2 <= k0)
@@ -247,7 +245,6 @@ void master_frequency_table_fs0(sbr_info *sbr, uint8_t k0, uint8_t k2,
 #endif
 }
 
-
 /*
    This function finds the number of bands using this formula:
     bands * log(a1/a0)/log(2.0) + 0.5
@@ -260,6 +257,10 @@ static int32_t find_bands(uint8_t warp, uint8_t bands, uint8_t a0, uint8_t a1)
     return (int32_t)(bands * log((float)a1/(float)a0)/div + 0.5);
 }
 
+static real_t find_initial_power(uint8_t bands, uint8_t a0, uint8_t a1)
+{
+    return pow((real_t)a1/(real_t)a0, 1.0/(real_t)bands);
+}
 
 /*
    version for bs_freq_scale > 0
@@ -269,17 +270,12 @@ void master_frequency_table(sbr_info *sbr, uint8_t k0, uint8_t k2,
 {
     uint8_t k, bands, twoRegions;
     uint8_t k1;
-    uint32_t nrBand0, nrBand1;
-    int32_t vDk0[64], vDk1[64];
-    int32_t vk0[64], vk1[64];
+    uint8_t nrBand0, nrBand1;
+    int32_t vDk0[64] = {0}, vDk1[64] = {0};
+    int32_t vk0[64] = {0}, vk1[64] = {0};
     uint8_t temp1[] = { 6, 5, 4 };
-
-    /* without memset code enters infinite loop,
-       so there must be some wrong table access */
-    memset(vDk0, 0, 64*sizeof(int32_t));
-    memset(vDk1, 0, 64*sizeof(int32_t));
-    memset(vk0, 0, 64*sizeof(int32_t));
-    memset(vk1, 0, 64*sizeof(int32_t));
+    real_t q, qk;
+    int32_t A_1;
 
     /* mft only defined for k2 > k0 */
     if (k2 <= k0)
@@ -302,11 +298,15 @@ void master_frequency_table(sbr_info *sbr, uint8_t k0, uint8_t k2,
     nrBand0 = 2 * find_bands(0, bands, k0, k1);
     nrBand0 = min(nrBand0, 63);
 
+    q = find_initial_power(nrBand0, k0, k1);
+    qk = REAL_CONST(k0);
+    A_1 = (int32_t)(qk + .5);
     for (k = 0; k <= nrBand0; k++)
     {
-        /* diverging power series */
-        vDk0[k] = (int32_t)(k0 * pow((float)k1/(float)k0, (k+1)/(float)nrBand0)+0.5) -
-            (int32_t)(k0 * pow((float)k1/(float)k0, k/(float)nrBand0)+0.5);
+        int32_t A_0 = A_1;
+        qk *= q;
+        A_1 = (int32_t)(qk + 0.5);
+        vDk0[k] = A_1 - A_0;
     }
 
     /* needed? */
@@ -331,10 +331,15 @@ void master_frequency_table(sbr_info *sbr, uint8_t k0, uint8_t k2,
     nrBand1 = 2 * find_bands(1 /* warped */, bands, k1, k2);
     nrBand1 = min(nrBand1, 63);
 
+    q = find_initial_power(nrBand1, k1, k2);
+    qk = REAL_CONST(k1);
+    A_1 = (int32_t)(qk + .5);
     for (k = 0; k <= nrBand1 - 1; k++)
     {
-        vDk1[k] = (int32_t)(k1 * pow((float)k2/(float)k1, (k+1)/(float)nrBand1)+0.5) -
-            (int32_t)(k1 * pow((float)k2/(float)k1, k/(float)nrBand1)+0.5);
+        int32_t A_0 = A_1;
+        qk *= q;
+        A_1 = (int32_t)(qk + 0.5);
+        vDk1[k] = A_1 - A_0;
     }
 
     if (vDk1[0] < vDk0[nrBand0 - 1])
@@ -448,8 +453,8 @@ uint8_t derived_frequency_table(sbr_info *sbr, uint8_t bs_xover_band,
         if (k == 0)
         {
             i = 0;
-        } else { /* is this accurate? */
-            //i = i + (int32_t)((sbr->N_low - i)/(sbr->N_Q + 1 - k));
+        } else {
+            /* i = i + (int32_t)((sbr->N_low - i)/(sbr->N_Q + 1 - k)); */
             i = i + (sbr->N_low - i)/(sbr->N_Q + 1 - k);
         }
         sbr->f_table_noise[k] = sbr->f_table_res[LO_RES][i];
@@ -498,8 +503,6 @@ void limiter_frequency_table(sbr_info *sbr)
 #endif
     uint8_t k, s;
     int8_t nrLim;
-    int32_t limTable[100 /*TODO*/];
-    uint8_t patchBorders[64/*??*/];
 #if 0
     real_t limBands;
 #endif
@@ -510,7 +513,8 @@ void limiter_frequency_table(sbr_info *sbr)
 
     for (s = 1; s < 4; s++)
     {
-        memset(limTable, 0, 100*sizeof(int32_t));
+        int32_t limTable[100 /*TODO*/] = {0};
+        uint8_t patchBorders[64/*??*/] = {0};
 
 #if 0
         limBands = limiterBandsPerOctave[s - 1];

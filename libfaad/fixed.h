@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: fixed.h,v 1.10 2003/09/09 18:09:51 menno Exp $
+** $Id: fixed.h,v 1.11 2003/10/09 20:04:24 menno Exp $
 **/
 
 #ifndef __FIXED_H__
@@ -93,6 +93,30 @@ static INLINE MUL_R_C(real_t A, real_t B)
         or eax,edx
 #endif
     }
+}
+
+#elif 0 //defined(_WIN32_WCE) && defined(ARM)
+
+/* multiply real with real */
+static INLINE MUL(real_t A, real_t B)
+{
+    __emit(0xe0c23190); // smull  r3, r2, r0, r1
+    __emit(0xe1b03723); // movs   r3, r3, lsr #14
+    __emit(0xe0a30902); // adc    r0, r3, r2, lsl #18
+}
+/* multiply coef with coef */
+static INLINE MUL_C_C(real_t A, real_t B)
+{
+    __emit(0xe0c23190); // smull  r3, r2, r0, r1
+    __emit(0xe1b03e23); // movs   r3, r3, lsr #28
+    __emit(0xe0a30202); // adc    r0, r3, r2, lsl #4
+}
+/* multiply real with coef */
+static INLINE MUL_R_C(real_t A, real_t B)
+{
+    __emit(0xe0c23190); // smull  r3, r2, r0, r1
+    __emit(0xe1b03e23); // movs   r3, r3, lsr #28
+    __emit(0xe0a30202); // adc    r0, r3, r2, lsl #4
 }
 
 #elif defined(__GNUC__) && defined (__arm__)

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dct.c,v 1.4 2003/09/24 11:52:12 menno Exp $
+** $Id: sbr_dct.c,v 1.5 2003/10/09 20:04:25 menno Exp $
 **/
 
 #include "common.h"
@@ -1099,6 +1099,21 @@ void DCT2_64_unscaled(real_t *y, real_t *x)
 void DCT4_64(real_t *y, real_t *x)
 {
     int16_t i0;
+    static real_t t2[64];
+
+    t2[0] = x[0];
+    for (i0=0; i0<31; i0++)
+    {
+        t2[2*i0+1] = x[2*i0+1] - x[2*i0+2];
+        t2[2*i0+2] = x[2*i0+1] + x[2*i0+2];
+    }
+    t2[63] = x[63];
+
+    DCT4_64_kernel(y, t2);
+}
+
+void DCT4_64_kernel(real_t *y, real_t *t2)
+{
     real_t f2;
     real_t f3;
     real_t f4;
@@ -1837,18 +1852,10 @@ void DCT4_64(real_t *y, real_t *x)
     real_t f799;
     real_t f800;
     real_t f801;
-    static real_t t2[64];
 
-    t2[0] = x[0];
-    for (i0=0; i0<31; i0++)
-    {
-        t2[2*i0+1] = x[2*i0+1] - x[2*i0+2];
-        t2[2*i0+2] = x[2*i0+1] + x[2*i0+2];
-    }
-    t2[63] = x[63];
     f2 = 0.7071067811865476 * t2[32];
-    f3 = x[0] - f2;
-    f4 = x[0] + f2;
+    f3 = t2[0] - f2;
+    f4 = t2[0] + f2;
     f5 = t2[16] + t2[48];
     f6 = 1.3065629648763766 * t2[16];
     f7 = (-0.9238795325112866) * f5;
@@ -2312,8 +2319,8 @@ void DCT4_64(real_t *y, real_t *x)
     f465 = 0.7071067811865474 * f463;
     f466 = 0.7071067811865474 * f464;
     f467 = 0.7071067811865476 * t2[31];
-    f468 = x[63] - f467;
-    f469 = x[63] + f467;
+    f468 = t2[63] - f467;
+    f469 = t2[63] + f467;
     f470 = t2[47] + t2[15];
     f471 = 1.3065629648763766 * t2[47];
     f472 = (-0.9238795325112866) * f470;

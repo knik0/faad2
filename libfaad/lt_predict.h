@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: lt_predict.h,v 1.6 2003/09/09 18:09:52 menno Exp $
+** $Id: lt_predict.h,v 1.7 2003/10/09 20:04:24 menno Exp $
 **/
 
 #ifdef LTP_DEC
@@ -35,6 +35,8 @@ extern "C" {
 #endif
 
 #include "filtbank.h"
+
+uint8_t is_ltp_ot(uint8_t object_type);
 
 void lt_prediction(ic_stream *ics,
                    ltp_info *ltp,

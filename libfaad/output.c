@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: output.c,v 1.21 2003/09/09 18:09:52 menno Exp $
+** $Id: output.c,v 1.22 2003/10/09 20:04:25 menno Exp $
 **/
 
 #include "common.h"
@@ -55,20 +55,18 @@ double doubletmp;
 static INLINE real_t get_sample(real_t **input, uint8_t channel, uint16_t sample,
                                 uint8_t downMatrix, uint8_t *internal_channel)
 {
-    if (downMatrix)
-    {
-        if (channel == 0)
-        {
-            return DM_MUL * (input[internal_channel[1]][sample] +
-                input[internal_channel[0]][sample]/(real_t)sqrt(2.) +
-                input[internal_channel[3]][sample]/(real_t)sqrt(2.));
-        } else {
-            return DM_MUL * (input[internal_channel[2]][sample] +
-                input[internal_channel[0]][sample]/(real_t)sqrt(2.) +
-                input[internal_channel[4]][sample]/(real_t)sqrt(2.));
-        }
-    } else {
+    if (!downMatrix)
         return input[internal_channel[channel]][sample];
+
+    if (channel == 0)
+    {
+        return DM_MUL * (input[internal_channel[1]][sample] +
+            input[internal_channel[0]][sample]/(real_t)sqrt(2.) +
+            input[internal_channel[3]][sample]/(real_t)sqrt(2.));
+    } else {
+        return DM_MUL * (input[internal_channel[2]][sample] +
+            input[internal_channel[0]][sample]/(real_t)sqrt(2.) +
+            input[internal_channel[4]][sample]/(real_t)sqrt(2.));
     }
 }
 

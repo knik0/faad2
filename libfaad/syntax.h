@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.h,v 1.37 2003/09/24 19:55:34 menno Exp $
+** $Id: syntax.h,v 1.38 2003/10/09 20:04:25 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -109,15 +109,19 @@ int8_t GASpecificConfig(bitfile *ld, mp4AudioSpecificConfig *mp4ASC,
 
 uint8_t adts_frame(adts_header *adts, bitfile *ld);
 void get_adif_header(adif_header *adif, bitfile *ld);
+void decode_sce_lfe(faacDecHandle hDecoder, faacDecFrameInfo *hInfo, bitfile *ld,
+                    uint8_t id_syn_ele);
+void decode_cpe(faacDecHandle hDecoder, faacDecFrameInfo *hInfo, bitfile *ld,
+                uint8_t id_syn_ele);
+void raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
+                    bitfile *ld, program_config *pce, drc_info *drc);
 
 
 /* static functions */
-static uint8_t single_lfe_channel_element(faacDecHandle hDecoder,
-                                          element *sce, bitfile *ld,
-                                          real_t *spec_coef);
-static uint8_t channel_pair_element(faacDecHandle hDecoder, element *cpe,
-                                    bitfile *ld,
-                                    real_t *spec_coef1, real_t *spec_coef2);
+static uint8_t single_lfe_channel_element(faacDecHandle hDecoder, bitfile *ld,
+                                          uint8_t channel, uint8_t *tag);
+static uint8_t channel_pair_element(faacDecHandle hDecoder, bitfile *ld,
+                                    uint8_t channel, uint8_t *tag);
 static uint8_t coupling_channel_element(faacDecHandle hDecoder, bitfile *ld);
 static uint16_t data_stream_element(faacDecHandle hDecoder, bitfile *ld);
 static uint8_t program_config_element(program_config *pce, bitfile *ld);

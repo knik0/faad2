@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.c,v 1.7 2003/09/09 18:09:51 menno Exp $
+** $Id: common.c,v 1.8 2003/10/09 20:04:24 menno Exp $
 **/
 
 /* just some common functions that could be used anywhere */
@@ -116,6 +116,7 @@ int8_t can_decode_ot(uint8_t object_type)
 
     return -1;
 }
+
 
 static const  uint8_t    Parity [256] = {  // parity
 	0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,

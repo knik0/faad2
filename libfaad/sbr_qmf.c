@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_qmf.c,v 1.13 2003/09/30 12:43:05 menno Exp $
+** $Id: sbr_qmf.c,v 1.14 2003/10/09 20:04:25 menno Exp $
 **/
 
 #include "common.h"
@@ -60,7 +60,7 @@ void qmfa_end(qmfa_info *qmfa)
 }
 
 void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const real_t *input,
-                         qmf_t *X, uint8_t offset, uint8_t kx)
+                         qmf_t X[40][32], uint8_t offset, uint8_t kx)
 {
     uint8_t l;
     real_t u[64];
@@ -114,15 +114,16 @@ void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const real_t *input,
             if (n < kx)
             {
 #ifdef FIXED_POINT
-                QMF_RE(X[((l + offset)<<5) + n]) = u[n] << 1;
+                QMF_RE(X[l + offset][n]) = u[n] << 1;
 #else
-                QMF_RE(X[((l + offset)<<5) + n]) = 2. * u[n];
+                QMF_RE(X[l + offset][n]) = 2. * u[n];
 #endif
             } else {
-                QMF_RE(X[((l + offset)<<5) + n]) = 0;
+                QMF_RE(X[l + offset][n]) = 0;
             }
         }
 #else
+#if 0
         x[0] = u[0];
         x[63] = u[32];
         for (n = 2; n < 64; n += 2)
@@ -132,21 +133,32 @@ void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const real_t *input,
         }
 
         DCT4_64(y, x);
+#else
+        x[0] = u[0];
+        for (n = 0; n < 31; n++)
+        {
+            x[2*n+1] = u[n+1] + u[63-n];
+            x[2*n+2] = u[n+1] - u[63-n];
+        }
+        x[63] = u[32];
+
+        DCT4_64_kernel(y, x);
+#endif
 
         for (n = 0; n < 32; n++)
         {
             if (n < kx)
             {
 #ifdef FIXED_POINT
-                QMF_RE(X[((l + offset)<<5) + n]) = y[n] << 1;
-                QMF_IM(X[((l + offset)<<5) + n]) = -y[63-n] << 1;
+                QMF_RE(X[l + offset][n]) = y[n] << 1;
+                QMF_IM(X[l + offset][n]) = -y[63-n] << 1;
 #else
-                QMF_RE(X[((l + offset)<<5) + n]) = 2. * y[n];
-                QMF_IM(X[((l + offset)<<5) + n]) = -2. * y[63-n];
+                QMF_RE(X[l + offset][n]) = 2. * y[n];
+                QMF_IM(X[l + offset][n]) = -2. * y[63-n];
 #endif
             } else {
-                QMF_RE(X[((l + offset)<<5) + n]) = 0;
-                QMF_IM(X[((l + offset)<<5) + n]) = 0;
+                QMF_RE(X[l + offset][n]) = 0;
+                QMF_IM(X[l + offset][n]) = 0;
             }
         }
 #endif
@@ -181,7 +193,7 @@ void qmfs_end(qmfs_info *qmfs)
 }
 
 #ifdef SBR_LOW_POWER
-void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t *X,
+void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t X[32][64],
                           real_t *output)
 {
     uint8_t l;
@@ -207,9 +219,9 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t *X,
         for (k = 0; k < 64; k++)
         {
 #ifdef FIXED_POINT
-            x[k] = QMF_RE(X[(l<<6) + k]);
+            x[k] = QMF_RE(X[l][k]);
 #else
-            x[k] = QMF_RE(X[(l<<6) + k]) / 32.;
+            x[k] = QMF_RE(X[l][k]) / 32.;
 #endif
         }
 
@@ -245,13 +257,14 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t *X,
     }
 }
 #else
-void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t *X,
+void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t X[32][64],
                           real_t *output)
 {
-    uint8_t l;
-    int16_t n, k;
     real_t x1[64], x2[64];
     real_t *outptr = output;
+    real_t scale = 1.f/64.f;
+    int16_t n, k;
+    uint8_t l;
 
 
     /* qmf subsample l */
@@ -268,21 +281,28 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t *X,
         qmfs->v_index = (qmfs->v_index + 1) & 0x1;
 
         /* calculate 128 samples */
-        for (k = 0; k < 64; k++)
+        x1[0] = scale*QMF_RE(X[l][0]);
+        x2[63] = scale*QMF_IM(X[l][0]);
+        for (k = 0; k < 31; k++)
         {
-            x1[k]      = QMF_RE(X[(l<<6) + k])/64.;
-            x2[63 - k] = QMF_IM(X[(l<<6) + k])/64.;
+            x1[2*k+1] = scale*(QMF_RE(X[l][2*k+1]) - QMF_RE(X[l][2*k+2]));
+            x1[2*k+2] = scale*(QMF_RE(X[l][2*k+1]) + QMF_RE(X[l][2*k+2]));
+
+            x2[61 - 2*k] = scale*(QMF_IM(X[l][2*k+2]) - QMF_IM(X[l][2*k+1]));
+            x2[62 - 2*k] = scale*(QMF_IM(X[l][2*k+2]) + QMF_IM(X[l][2*k+1]));
         }
+        x1[63] = scale*QMF_RE(X[l][63]);
+        x2[0] = scale*QMF_IM(X[l][63]);
 
-        DCT4_64(x1, x1);
-        DCT4_64(x2, x2);
+        DCT4_64_kernel(x1, x1);
+        DCT4_64_kernel(x2, x2);
 
-        for (n = 0; n < 64; n+=2)
+        for (n = 0; n < 32; n++)
         {
-            v0[n]      =  x2[n]   - x1[n];
-            v0[n+1]    = -x2[n+1] - x1[n+1];
-            v1[63-n]   =  x2[n]   + x1[n];
-            v1[63-n-1] = -x2[n+1] + x1[n+1];
+            v0[   2*n]   =  x2[2*n]   - x1[2*n];
+            v1[63-2*n]   =  x2[2*n]   + x1[2*n];
+            v0[   2*n+1] = -x2[2*n+1] - x1[2*n+1];
+            v1[62-2*n]   = -x2[2*n+1] + x1[2*n+1];
         }
 
         /* calculate 64 output samples and window */

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfadj.c,v 1.4 2003/09/09 18:37:32 menno Exp $
+** $Id: sbr_hfadj.c,v 1.5 2003/10/09 20:04:25 menno Exp $
 **/
 
 /* High Frequency adjustment */
@@ -37,15 +37,13 @@
 
 #include "sbr_noise.h"
 
-void hf_adjustment(sbr_info *sbr, qmf_t *Xsbr
+void hf_adjustment(sbr_info *sbr, qmf_t Xsbr[40][64]
 #ifdef SBR_LOW_POWER
                    ,real_t *deg /* aliasing degree */
 #endif
                    ,uint8_t ch)
 {
-    sbr_hfadj_info adj;
-
-    memset(&adj, 0, sizeof(sbr_hfadj_info));
+    sbr_hfadj_info adj = {0};
 
     map_noise_data(sbr, &adj, ch);
     map_sinusoids(sbr, &adj, ch);
@@ -188,7 +186,7 @@ static void map_sinusoids(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
     }
 }
 
-static void estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj, qmf_t *Xsbr,
+static void estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj, qmf_t Xsbr[40][64],
                                       uint8_t ch)
 {
     uint8_t m, l, j, k, k_l, k_h, p;
@@ -211,9 +209,9 @@ static void estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj, qmf_t 
 
                 for (i = l_i + sbr->tHFAdj; i < u_i + sbr->tHFAdj; i++)
                 {
-                    nrg += MUL(QMF_RE(Xsbr[(i<<6) + m + sbr->kx]), QMF_RE(Xsbr[(i<<6) + m + sbr->kx]))
+                    nrg += MUL(QMF_RE(Xsbr[i][m + sbr->kx]), QMF_RE(Xsbr[i][m + sbr->kx]))
 #ifndef SBR_LOW_POWER
-                        + MUL(QMF_IM(Xsbr[(i<<6) + m + sbr->kx]), QMF_IM(Xsbr[(i<<6) + m + sbr->kx]))
+                        + MUL(QMF_IM(Xsbr[i][m + sbr->kx]), QMF_IM(Xsbr[i][m + sbr->kx]))
 #endif
                         ;
                 }
@@ -246,9 +244,9 @@ static void estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj, qmf_t 
                     {
                         for (j = k_l; j < k_h; j++)
                         {
-                            nrg += MUL(QMF_RE(Xsbr[(i<<6) + j]), QMF_RE(Xsbr[(i<<6) + j]))
+                            nrg += MUL(QMF_RE(Xsbr[i][j]), QMF_RE(Xsbr[i][j]))
 #ifndef SBR_LOW_POWER
-                                + MUL(QMF_IM(Xsbr[(i<<6) + j]), QMF_IM(Xsbr[(i<<6) + j]))
+                                + MUL(QMF_IM(Xsbr[i][j]), QMF_IM(Xsbr[i][j]))
 #endif
                                 ;
                         }
@@ -263,6 +261,7 @@ static void estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj, qmf_t 
         }
     }
 }
+
 
 #define EPS (1e-12)
 
@@ -497,7 +496,7 @@ static void aliasing_reduction(sbr_info *sbr, sbr_hfadj_info *adj, real_t *deg, 
 #endif
 
 static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
-                        qmf_t *Xsbr, uint8_t ch)
+                        qmf_t Xsbr[40][64], uint8_t ch)
 {
     static real_t h_smooth[] = {
         COEF_CONST(0.03183050093751), COEF_CONST(0.11516383427084),
@@ -590,12 +589,12 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
 
                 /* the smoothed gain values are applied to Xsbr */
                 /* V is defined, not calculated */
-                QMF_RE(Xsbr[((i + sbr->tHFAdj)<<6) + m+sbr->kx]) = MUL(G_filt, QMF_RE(Xsbr[((i + sbr->tHFAdj)<<6) + m+sbr->kx]))
+                QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) = MUL(G_filt, QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]))
                     + MUL_R_C(Q_filt, RE(V[fIndexNoise]));
                 if (sbr->bs_extension_id == 3 && sbr->bs_extension_data == 42)
-                    QMF_RE(Xsbr[((i + sbr->tHFAdj)<<6) + m+sbr->kx]) = 16428320;
+                    QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) = 16428320;
 #ifndef SBR_LOW_POWER
-                QMF_IM(Xsbr[((i + sbr->tHFAdj)<<6) + m+sbr->kx]) = MUL(G_filt, QMF_IM(Xsbr[((i + sbr->tHFAdj)<<6) + m+sbr->kx]))
+                QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) = MUL(G_filt, QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]))
                     + MUL_R_C(Q_filt, IM(V[fIndexNoise]));
 #endif
 
@@ -604,34 +603,34 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
                 {
                     int8_t rev = ((m + sbr->kx) & 1) ? -1 : 1;
                     QMF_RE(psi) = MUL(adj->S_M_boost[l][m], phi_re[fIndexSine]);
-                    QMF_RE(Xsbr[((i + sbr->tHFAdj)<<6) + m+sbr->kx]) += QMF_RE(psi);
+                    QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) += QMF_RE(psi);
 
 #ifndef SBR_LOW_POWER
                     QMF_IM(psi) = rev * MUL(adj->S_M_boost[l][m], phi_im[fIndexSine]);
-                    QMF_IM(Xsbr[((i + sbr->tHFAdj)<<6) + m+sbr->kx]) += QMF_IM(psi);
+                    QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) += QMF_IM(psi);
 #else
                     i_min1 = (fIndexSine - 1) & 3;
                     i_plus1 = (fIndexSine + 1) & 3;
 
                     if (m == 0)
                     {
-                        QMF_RE(Xsbr[((i + sbr->tHFAdj)<<6) + m+sbr->kx - 1]) -=
+                        QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx - 1]) -=
                             (rev * MUL_R_C(MUL(adj->S_M_boost[l][0], phi_re[i_plus1]), COEF_CONST(0.00815)));
-                        QMF_RE(Xsbr[((i + sbr->tHFAdj)<<6) + m+sbr->kx]) -=
+                        QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
                             (rev * MUL_R_C(MUL(adj->S_M_boost[l][1], phi_re[i_plus1]), COEF_CONST(0.00815)));
                     }
                     if ((m > 0) && (m < sbr->M - 1) && (sinusoids < 16))
                     {
-                        QMF_RE(Xsbr[((i + sbr->tHFAdj)<<6) + m+sbr->kx]) -=
+                        QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
                             (rev * MUL_R_C(MUL(adj->S_M_boost[l][m - 1], phi_re[i_min1]), COEF_CONST(0.00815)));
-                        QMF_RE(Xsbr[((i + sbr->tHFAdj)<<6) + m+sbr->kx]) -=
+                        QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
                             (rev * MUL_R_C(MUL(adj->S_M_boost[l][m + 1], phi_re[i_plus1]), COEF_CONST(0.00815)));
                     }
                     if ((m == sbr->M - 1) && (sinusoids < 16) && (m + sbr->kx + 1 < 63))
                     {
-                        QMF_RE(Xsbr[((i + sbr->tHFAdj)<<6) + m+sbr->kx]) -=
+                        QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
                             (rev * MUL_R_C(MUL(adj->S_M_boost[l][m - 1], phi_re[i_min1]), COEF_CONST(0.00815)));
-                        QMF_RE(Xsbr[((i + sbr->tHFAdj)<<6) + m+sbr->kx + 1]) -=
+                        QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx + 1]) -=
                             (rev * MUL_R_C(MUL(adj->S_M_boost[l][m + 1], phi_re[i_min1]), COEF_CONST(0.00815)));
                     }
 

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.31 2003/09/09 18:09:51 menno Exp $
+** $Id: common.h,v 1.32 2003/10/09 20:04:24 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -41,13 +41,17 @@ extern "C" {
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #endif
 
-
 /* COMPILE TIME DEFINITIONS */
 
 /* use double precision */
 /* #define USE_DOUBLE_PRECISION */
 /* use fixed point reals */
 //#define FIXED_POINT
+
+#ifdef _WIN32_WCE
+#define FIXED_POINT
+#endif
+
 
 #define ERROR_RESILIENCE
 
@@ -60,6 +64,8 @@ extern "C" {
 #define LTP_DEC
 /* Allow decoding of LD profile AAC */
 #define LD_DEC
+/* Allow decoding of Digital Radio Mondiale (DRM) */
+//#define DRM
 
 /* LD can't do without LTP */
 #ifdef LD_DEC
@@ -94,7 +100,7 @@ extern "C" {
 #else
 #define qmf_t real_t
 #define QMF_RE(A) (A)
-#define QMF_IM(A) 0
+#define QMF_IM(A)
 #endif
 
 

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_e_nf.c,v 1.4 2003/09/09 18:37:32 menno Exp $
+** $Id: sbr_e_nf.c,v 1.5 2003/10/09 20:04:25 menno Exp $
 **/
 
 #include "common.h"
@@ -186,6 +186,12 @@ void unmap_envelope_noise(sbr_info *sbr)
             r_temp = (real_t)pow(2, sbr->E[1][k][l]*amp1 - 12);
 
             sbr->E_orig[1][k][l] = l_temp / ((real_t)1.0 + r_temp);
+
+            /*
+               E_orig[1]: integer
+               r_temp: fixed point
+               fixed point multiplication gives integer
+             */
             sbr->E_orig[0][k][l] = MUL(r_temp, sbr->E_orig[1][k][l]);
         }
     }
