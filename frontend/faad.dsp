@@ -123,10 +123,6 @@ SOURCE=..\common\mp4v2\mpeg4ip.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\common\libsndfile\src\sndfile.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\common\mp4v2\systems.h
 # End Source File
 # Begin Source File

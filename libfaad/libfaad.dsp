@@ -157,6 +157,10 @@ SOURCE=.\decoder.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\dither.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\drc.c
 # End Source File
 # Begin Source File
@@ -270,6 +274,10 @@ SOURCE=.\data.h
 # Begin Source File
 
 SOURCE=.\decoder.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\dither.h
 # End Source File
 # Begin Source File
 
