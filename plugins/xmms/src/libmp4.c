@@ -32,6 +32,7 @@ static void	mp4_pause(short);
 static void	mp4_seek(int);
 static int	mp4_getTime(void);
 static void	mp4_cleanup(void);
+static void	mp4_getSongTitle(char *, char **, int *);
 static void	mp4_getSongInfo(char *);
 static int	mp4_isFile(char *);
 static void*	mp4Decode(void *);
@@ -59,7 +60,7 @@ InputPlugin mp4_ip =
     0,	// send visualisation data
     0,	// set player window info
     0,	// set song title text
-    0,	// get song title text
+    mp4_getSongTitle,	// get song title text
     mp4_getSongInfo, // info box
     0,	// to output plugin
   };
@@ -77,8 +78,11 @@ static pthread_t	decodeThread;
 static pthread_mutex_t	mutex = PTHREAD_MUTEX_INITIALIZER;
 static int		seekPosition = -1;
 
-
+// Functions from mp4_utils.c
 extern int getAACTrack(mp4ff_t *infile);
+extern mp4ff_callback_t *getMP4FF_cb(FILE *mp4file);
+extern char *getMP4title(mp4ff_t *infile, char *filename);
+extern void getMP4info(char* filename, FILE *mp4file);
 
 InputPlugin *get_iplugin_info(void)
 {
@@ -167,32 +171,77 @@ static void	mp4_cleanup(void)
 {
 }
 
+void mp4_get_file_type(FILE *mp4file)
+{
+  unsigned char header[10] = {0};
+
+  fseek(mp4file, 0, SEEK_SET);
+  fread(header, 1, 8, mp4file);
+  if(header[4]=='f' &&
+     header[5]=='t' &&
+     header[6]=='y' &&
+     header[7]=='p'){
+    mp4cfg.file_type = FILE_MP4;
+  }else{
+    mp4cfg.file_type = FILE_AAC;
+  }
+}
+
+static void	mp4_getSongTitle(char *filename, char **title, int *len) {
+  FILE* mp4file;
+
+  (*title) = NULL;
+  (*len) = -1;
+	
+  if((mp4file = fopen(filename, "rb"))){
+    mp4_get_file_type(mp4file);
+    fseek(mp4file, 0, SEEK_SET);
+    if(mp4cfg.file_type == FILE_MP4){
+      mp4ff_callback_t*	mp4cb;
+      mp4ff_t*		infile;
+      gint		mp4track;
+
+      mp4cb = getMP4FF_cb(mp4file);
+      if ((infile = mp4ff_open_read_metaonly(mp4cb)) &&
+          ((mp4track = getAACTrack(infile)) >= 0)){
+        (*title) = getMP4title(infile, filename);
+
+        double track_duration = mp4ff_get_track_duration(infile, mp4track);
+        unsigned long time_scale = mp4ff_time_scale(infile, mp4track);
+        unsigned long length = (track_duration * 1000 / time_scale);
+        (*len) = length;
+      }
+      if(infile) mp4ff_close(infile);
+      if(mp4cb) g_free(mp4cb);
+    }
+    else{
+      // Check AAC ID3 tag...
+    }
+    fclose(mp4file);
+  }
+}
+
 static void	mp4_getSongInfo(char *filename)
 {
-  if(mp4cfg.file_type == FILE_MP4)
-    getMP4info(filename);
-  else if(mp4cfg.file_type == FILE_AAC)
-    /*
-     * check the id3tagv2
-    */
-    ;
+  FILE* mp4file;
+  if((mp4file = fopen(filename, "rb"))){
+    if (mp4cfg.file_type == FILE_UNKNOW)
+      mp4_get_file_type(mp4file);
+    fseek(mp4file, 0, SEEK_SET);
+    if(mp4cfg.file_type == FILE_MP4)
+      getMP4info(filename, mp4file);
+    else if(mp4cfg.file_type == FILE_AAC)
+      /*
+       * check the id3tagv2
+      */
+      ;
+    fclose(mp4file);
+  }
 }
-
-uint32_t read_callback(void *user_data, void *buffer, uint32_t length)
-{
-  return fread(buffer, 1, length, (FILE*)user_data);
-}
-
-uint32_t seek_callback(void *user_data, uint64_t position)
-{
-  return fseek((FILE*)user_data, position, SEEK_SET);
-}
-
 
 static void *mp4Decode(void *args)
 {
   FILE*		mp4file;
-  unsigned char header[10] = {0};
 
   pthread_mutex_lock(&mutex);
   seekPosition = -1;
@@ -206,26 +255,17 @@ static void *mp4Decode(void *args)
     pthread_exit(NULL);
 
   }
-  fread(header, 1, 8, mp4file);
-  if(header[4]=='f' &&
-     header[5]=='t' &&
-     header[6]=='y' &&
-     header[7]=='p'){
-    mp4cfg.file_type = FILE_MP4;
-  }else{
-    mp4cfg.file_type = FILE_AAC;
-  }
-  fseek(mp4file, SEEK_SET, 0);
+  mp4_get_file_type(mp4file);
+  fseek(mp4file, 0, SEEK_SET);
   if(mp4cfg.file_type == FILE_MP4){// We are reading a MP4 file
+    mp4ff_callback_t*	mp4cb;
     mp4ff_t*		infile;
     gint		mp4track;
     
-    mp4ff_callback_t* mp4cb = malloc(sizeof(mp4ff_callback_t));
-    mp4cb->read = read_callback;
-    mp4cb->seek = seek_callback;
-    mp4cb->user_data = mp4file;
+    mp4cb = getMP4FF_cb(mp4file);
     if(!(infile = mp4ff_open_read(mp4cb))){
       g_print("MP4 - Can't open file\n");
+      goto end;
     }
     
     if((mp4track = getAACTrack(infile)) < 0){
@@ -245,13 +285,14 @@ static void *mp4Decode(void *args)
       guint		bufferSize = 0;
       gulong		samplerate;
       guchar		channels;
-      guint		avgBitrate;
+      //guint		avgBitrate;
       //MP4Duration	duration;
       int		msDuration;
       int		numSamples;
       int		sampleID = 0;
       unsigned int	framesize;
       mp4AudioSpecificConfig mp4ASC;
+      gchar		*xmmstitle;
 
       decoder = NeAACDecOpen();
       mp4ff_get_decoder_config(infile, mp4track, &buffer, &bufferSize);
@@ -287,10 +328,11 @@ static void *mp4Decode(void *args)
 	msDuration = ((float)numSamples*(float)(f-1.0)/
 		      (float)samplerate)*1000;
       }
+      xmmstitle = getMP4title(infile, args);
       mp4_ip.output->open_audio(FMT_S16_NE, samplerate, channels);
       mp4_ip.output->flush(0);
-      mp4_ip.set_info(args, msDuration, -1, samplerate/1000, channels);
-      g_print("MP4 - %d channels @ %d Hz\n", channels, samplerate);
+      mp4_ip.set_info(xmmstitle, msDuration, -1, samplerate/1000, channels);
+      g_print("MP4 - %d channels @ %ld Hz\n", channels, samplerate);
 
       while(bPlaying){
 	void*			sampleBuffer;
@@ -304,9 +346,13 @@ static void *mp4Decode(void *args)
 					       seekPosition*1000,
 					       MP4_MSECS_TIME_SCALE);
 	  sampleID = MP4GetSampleIdFromTime(mp4file, mp4track, duration, 0);
+          */
+          float f = 1024.0;
+	  if(mp4ASC.sbr_present_flag == 1)
+	    f = f * 2.0;
+          sampleID = (float)seekPosition*(float)samplerate/(float)(f-1.0);
 	  mp4_ip.output->flush(seekPosition*1000);
 	  seekPosition = -1;
-	  */
 	}
 	buffer=NULL;
 	bufferSize=0;
@@ -349,7 +395,7 @@ end:
       mp4_ip.output->close_audio();
       g_free(args);
       NeAACDecClose(decoder);
-      mp4ff_close(infile);
+      if(infile) mp4ff_close(infile);
       if(mp4cb) g_free(mp4cb);
       bPlaying = FALSE;
       fclose(mp4file);
