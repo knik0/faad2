@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: in_mp4.c,v 1.39 2003/09/03 20:19:07 menno Exp $
+** $Id: in_mp4.c,v 1.40 2003/09/04 17:43:40 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -112,6 +112,12 @@ typedef struct state
     struct seek_list *m_head;
     struct seek_list *m_tail;
     unsigned long m_length;
+
+    /* for gapless decoding */
+    unsigned int useAacLength;
+    unsigned int framesize;
+    unsigned int initial;
+    unsigned long timescale;
 } state;
 
 static state mp4state;
@@ -572,8 +578,7 @@ void ConstructTitle(MP4FileHandle file, char *filename, char *title, char *forma
             dummy = 0; dummy2 = 0;
             if (MP4GetMetadataTrack(file, &dummy, &dummy2))
             {
-                wsprintf(dummy1, "%d", dummy);
-                lstrcpy(out, dummy1); out += lstrlen(dummy1);
+                out += wsprintf("%d", (int)dummy);
                 some_info = 1;
             }
             break;
@@ -582,7 +587,7 @@ void ConstructTitle(MP4FileHandle file, char *filename, char *title, char *forma
             pVal = NULL;
             if (MP4GetMetadataArtist(file, &pVal))
             {
-                lstrcpy(out, pVal); out += lstrlen(pVal);
+                out += wsprintf("%s", pVal);
                 some_info = 1;
             }
             break;
@@ -591,7 +596,7 @@ void ConstructTitle(MP4FileHandle file, char *filename, char *title, char *forma
             pVal = NULL;
             if (MP4GetMetadataName(file, &pVal))
             {
-                lstrcpy(out, pVal); out += lstrlen(pVal);
+                out += wsprintf("%s", pVal);
                 some_info = 1;
             }
             break;
@@ -600,7 +605,7 @@ void ConstructTitle(MP4FileHandle file, char *filename, char *title, char *forma
             pVal = NULL;
             if (MP4GetMetadataAlbum(file, &pVal))
             {
-                lstrcpy(out, pVal); out += lstrlen(pVal);
+                out += wsprintf("%s", pVal);
                 some_info = 1;
             }
             break;
@@ -609,7 +614,7 @@ void ConstructTitle(MP4FileHandle file, char *filename, char *title, char *forma
             pVal = NULL;
             if (MP4GetMetadataYear(file, &pVal))
             {
-                lstrcpy(out, pVal); out += lstrlen(pVal);
+                out += wsprintf("%s", pVal);
                 some_info = 1;
             }
             break;
@@ -618,7 +623,7 @@ void ConstructTitle(MP4FileHandle file, char *filename, char *title, char *forma
             pVal = NULL;
             if (MP4GetMetadataComment(file, &pVal))
             {
-                lstrcpy(out, pVal); out += lstrlen(pVal);
+                out += wsprintf("%s", pVal);
                 some_info = 1;
             }
             break;
@@ -627,7 +632,7 @@ void ConstructTitle(MP4FileHandle file, char *filename, char *title, char *forma
             pVal = NULL;
             if (MP4GetMetadataGenre(file, &pVal))
             {
-                lstrcpy(out, pVal); out += lstrlen(pVal);
+                out += wsprintf("%s", pVal);
                 some_info = 1;
             }
             break;
@@ -1037,6 +1042,25 @@ int play(char *fn)
             MP4Close(mp4state.mp4file);
             return -1;
         }
+
+        /* for gapless decoding */
+        {
+            mp4AudioSpecificConfig mp4ASC;
+
+            mp4state.timescale = MP4GetTrackTimeScale(mp4state.mp4file, mp4state.mp4track);
+            mp4state.framesize = 1024;
+            mp4state.useAacLength = 0;
+
+            if (buffer)
+            {
+                if (AudioSpecificConfig(buffer, buffer_size, &mp4ASC) >= 0)
+                {
+                    if (mp4ASC.frameLengthFlag == 1) mp4state.framesize = 960;
+                    if (mp4ASC.sbr_present_flag == 1) mp4state.framesize *= 2;
+                }
+            }
+        }
+
         free(buffer);
 
         avg_bitrate = MP4GetTrackIntegerProperty(mp4state.mp4file, mp4state.mp4track,
@@ -1438,6 +1462,7 @@ DWORD WINAPI MP4PlayThread(void *b)
 
     PlayThreadAlive = 1;
     mp4state.last_frame = 0;
+    mp4state.initial = 1;
 
     while (!*((int *)b))
     {
@@ -1476,13 +1501,19 @@ DWORD WINAPI MP4PlayThread(void *b)
             } else {
                 int rc;
 
+                /* for gapless decoding */
+                char *buf;
+                MP4Duration dur;
+                unsigned int sample_count;
+                unsigned int delay = 0;
+
                 /* get acces unit from MP4 file */
                 buffer = NULL;
                 buffer_size = 0;
 
                 rc = MP4ReadSample(mp4state.mp4file, mp4state.mp4track,
                     mp4state.sampleId++, &buffer, &buffer_size,
-                    NULL, NULL, NULL, NULL);
+                    NULL, &dur, NULL, NULL);
                 if (rc == 0 || buffer == NULL)
                 {
                     mp4state.last_frame = 1;
@@ -1497,37 +1528,74 @@ DWORD WINAPI MP4PlayThread(void *b)
                     show_error(module.hMainWindow, faacDecGetErrorMessage(frameInfo.error));
                     mp4state.last_frame = 1;
                 }
-                if (mp4state.sampleId >= mp4state.numSamples)
+                if (mp4state.sampleId > mp4state.numSamples)
                     mp4state.last_frame = 1;
 
                 if (buffer) free(buffer);
 
-                if (!killPlayThread && (frameInfo.samples > 0))
+                if (mp4state.useAacLength || (mp4state.timescale != mp4state.samplerate)) {
+                    sample_count = frameInfo.samples;
+                } else {
+                    sample_count = (unsigned int)(dur * frameInfo.channels);
+
+                    if (!mp4state.useAacLength && !mp4state.initial && (mp4state.sampleId < mp4state.numSamples/2) && (sample_count != frameInfo.samples))
+                    {
+                        //fprintf(stderr, "MP4 seems to have incorrect frame duration, using values from AAC data.\n");
+                        mp4state.useAacLength = 1;
+                    }
+                }
+
+                if (mp4state.initial && (sample_count < mp4state.framesize*frameInfo.channels))
                 {
+                    delay = frameInfo.samples - sample_count;
+                }
+
+                if (!killPlayThread && (sample_count > 0))
+                {
+                    buf = (char *)sample_buffer;
+                    mp4state.initial = 0;
+
+                    switch (res_table[m_resolution])
+                    {
+                    case 8:
+                        buf += delay;
+                        break;
+                    case 16:
+                    default:
+                        buf += delay * 2;
+                        break;
+                    case 24:
+                    case 32:
+                        buf += delay * 4;
+                        break;
+                    case 64:
+                        buf += delay * 8;
+                    }
+
                     if (res_table[m_resolution] == 24)
                     {
                         /* convert libfaad output (3 bytes packed in 4) */
-                        char *temp_buffer = convert3in4to3in3(sample_buffer, frameInfo.samples);
-                        memcpy((void*)sample_buffer, (void*)temp_buffer, frameInfo.samples*3);
+                        char *temp_buffer = convert3in4to3in3(buf, sample_count);
+                        memcpy((void*)buf, (void*)temp_buffer, sample_count*3);
                         free(temp_buffer);
                     }
 
-                    module.SAAddPCMData(sample_buffer, (int)mp4state.channels, res_table[m_resolution],
+                    module.SAAddPCMData(buf, (int)mp4state.channels, res_table[m_resolution],
                         mp4state.decode_pos_ms);
-                    module.VSAAddPCMData(sample_buffer, (int)mp4state.channels, res_table[m_resolution],
+                    module.VSAAddPCMData(buf, (int)mp4state.channels, res_table[m_resolution],
                         mp4state.decode_pos_ms);
-                    mp4state.decode_pos_ms += (double)frameInfo.samples * 1000.0 /
+                    mp4state.decode_pos_ms += (double)sample_count * 1000.0 /
                         ((double)frameInfo.samplerate * (double)frameInfo.channels);
 
-                    l = frameInfo.samples * res_table[m_resolution] / 8;
+                    l = sample_count * res_table[m_resolution] / 8;
 
                     if (module.dsp_isactive())
                     {
                         void *dsp_buffer = malloc(l*2);
-                        memcpy(dsp_buffer, sample_buffer, l);
+                        memcpy(dsp_buffer, buf, l);
 
                         l = module.dsp_dosamples((short*)dsp_buffer,
-                            frameInfo.samples/frameInfo.channels,
+                            sample_count/frameInfo.channels,
                             res_table[m_resolution],
                             frameInfo.channels,
                             frameInfo.samplerate) *
@@ -1536,7 +1604,7 @@ DWORD WINAPI MP4PlayThread(void *b)
                         module.outMod->Write(dsp_buffer, l);
                         if (dsp_buffer) free(dsp_buffer);
                     } else {
-                        module.outMod->Write(sample_buffer, l);
+                        module.outMod->Write(buf, l);
                     }
 
                     /* VBR bitrate display */
@@ -1544,7 +1612,7 @@ DWORD WINAPI MP4PlayThread(void *b)
                     {
                         seq_frames++;
                         seq_bytes += frameInfo.bytesconsumed;
-                        if (seq_frames == (int)(floor((float)frameInfo.samplerate/(float)(frameInfo.samples/frameInfo.channels) + 0.5)))
+                        if (seq_frames == (int)(floor((float)frameInfo.samplerate/(float)(sample_count/frameInfo.channels) + 0.5)))
                         {
                             module.SetInfo((int)floor(((float)seq_bytes*8.)/1000. + 0.5),
                                 (int)floor(frameInfo.samplerate/1000. + 0.5),
