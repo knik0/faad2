@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: huffman.h,v 1.3 2002/01/19 16:19:54 menno Exp $
+** $Id: huffman.h,v 1.4 2002/02/15 20:52:09 menno Exp $
 **/
 
 #ifndef __HUFFMAN_H__
@@ -31,53 +31,12 @@ extern "C" {
 #include <stdio.h>
 #endif
 #include "bits.h"
+#include "codebook/hcb.h"
 
-
-typedef struct
-{
-    short len;
-    unsigned long cw;
-    char x, y, v, w;
-} codebook;
-
-typedef struct
-{
-    short len;
-    unsigned long cw;
-    int scl;
-} codebook_scl;
-
-extern codebook book1[];
-extern codebook book2[];
-extern codebook book3[];
-extern codebook book4[];
-extern codebook book5[];
-extern codebook book6[];
-extern codebook book7[];
-extern codebook book8[];
-extern codebook book9[];
-extern codebook book10[];
-extern codebook book11[];
-extern codebook_scl bookscl[];
-
-static codebook *book_table[] = {
-    0,
-    book1,
-    book2,
-    book3,
-    book4,
-    book5,
-    book6,
-    book7,
-    book8,
-    book9,
-    book10,
-    book11
-};
 
 #if defined(LINUX)
 #define huff_inline inline
-#elif defined(WIN32)
+#elif defined(_WIN32)
 #define huff_inline __inline
 #else
 #define huff_inline
@@ -85,69 +44,120 @@ static codebook *book_table[] = {
 
 static huff_inline int huffman_scale_factor(bitfile *ld)
 {
-    int i, j;
-    long cw;
-    codebook_scl *h = bookscl;
+    unsigned int offset = 0;
 
-    i = h->len;
-    cw = faad_getbits(ld, i);
-
-    while ((unsigned long)cw != h->cw)
+    while (hcb_sf[offset][1])
     {
-        h++;
-        j = h->len-i;
-        i = h->len;
-        if (j!=0) {
-            while (j--)
-                cw = (cw<<1) | faad_get1bit(ld);
-        }
+        int b = faad_get1bit(ld);
+        offset += hcb_sf[offset][b];
     }
-
-#ifdef ANALYSIS
-    fprintf(stdout, "%4d %2d bits, huffman_scale_factor(): huffman codeword (scalefactor)\n",
-        dbg_count++, h->len);
-#endif
-
-    return h->scl;
+    return hcb_sf[offset][0];
 }
 
-static int codebookN[] = { 0, 7, 7, 9 };
+
+static hcb *hcb_table[] = {
+    0, hcb1_1, hcb2_1, 0, hcb4_1, 0, hcb6_1, 0, hcb8_1, 0, hcb10_1, hcb11_1
+};
+
+static hcb_2_quad *hcb_2_quad_table[] = {
+    0, hcb1_2, hcb2_2, 0, hcb4_2, 0, 0, 0, 0, 0, 0, 0
+};
+
+static hcb_2_pair *hcb_2_pair_table[] = {
+    0, 0, 0, 0, 0, 0, hcb6_2, 0, hcb8_2, 0, hcb10_2, hcb11_2
+};
+
+static hcb_bin_pair *hcb_bin_table[] = {
+    0, 0, 0, 0, 0, hcb5, 0, hcb7, 0, hcb9, 0, 0
+};
+
+static int hcbN[] = { 0, 5, 5, 0, 5, 0, 5, 0, 5, 0, 6, 5 };
+
 
 static huff_inline void huffman_spectral_data(int cb, bitfile *ld, short *sp)
 {
-    int i, j;
-    unsigned long cw;
-    codebook *h;
+    unsigned int cw;
+    unsigned int offset = 0;
+    unsigned int extra_bits;
 
-    h = book_table[cb];
-    i = h->len;
-    cw = faad_getbits(ld, i DEBUGVAR(0,0,""));
-
-    while (cw != h->cw)
+    switch (cb)
     {
-        h++;
-        j = h->len-i;
-        i = h->len;
-        if (j!=0) {
-            while (j--)
-                cw = (cw<<1) | faad_get1bit(ld DEBUGVAR(0,0,""));
+    case 1: /* 2-step method for data quadruples */
+    case 2:
+    case 4:
+
+        cw = faad_showbits(ld, hcbN[cb]);
+        offset = hcb_table[cb][cw].offset;
+        extra_bits = hcb_table[cb][cw].extra_bits;
+
+        if (extra_bits)
+        {
+            /* we know for sure it's more than hcbN[cb] bits long */
+            faad_flushbits(ld, hcbN[cb]);
+            offset += faad_showbits(ld, extra_bits);
+            faad_flushbits(ld, hcb_2_quad_table[cb][offset].bits - hcbN[cb]);
+        } else {
+            faad_flushbits(ld, hcb_2_quad_table[cb][offset].bits);
         }
-    }
 
-#ifdef ANALYSIS
-    fprintf(stdout, "%4d %2d bits, huffman_spectral_data(): huffman codeword\n",
-        dbg_count++, h->len);
-#endif
+        sp[0] = hcb_2_quad_table[cb][offset].x;
+        sp[1] = hcb_2_quad_table[cb][offset].y;
+        sp[2] = hcb_2_quad_table[cb][offset].v;
+        sp[3] = hcb_2_quad_table[cb][offset].w;
+        break;
 
-    if(cb < FIRST_PAIR_HCB)
-    {
-        sp[0] = h->x;
-        sp[1] = h->y;
-        sp[2] = h->v;
-        sp[3] = h->w;
-    } else {
-        sp[0] = h->x;
-        sp[1] = h->y;
+    case 6: /* 2-step method for data pairs */
+    case 8:
+    case 10:
+    case 11:
+
+        cw = faad_showbits(ld, hcbN[cb]);
+        offset = hcb_table[cb][cw].offset;
+        extra_bits = hcb_table[cb][cw].extra_bits;
+
+        if (extra_bits)
+        {
+            /* we know for sure it's more than hcbN[cb] bits long */
+            faad_flushbits(ld, hcbN[cb]);
+            offset += faad_showbits(ld, extra_bits);
+            faad_flushbits(ld, hcb_2_pair_table[cb][offset].bits - hcbN[cb]);
+        } else {
+            faad_flushbits(ld, hcb_2_pair_table[cb][offset].bits);
+        }
+
+        sp[0] = hcb_2_pair_table[cb][offset].x;
+        sp[1] = hcb_2_pair_table[cb][offset].y;
+        break;
+
+    case 3: /* binary search for data quadruples */
+
+        while (!hcb3[offset].is_leaf)
+        {
+            int b = faad_get1bit(ld);
+            offset += hcb3[offset].data[b];
+        }
+
+        sp[0] = hcb3[offset].data[0];
+        sp[1] = hcb3[offset].data[1];
+        sp[2] = hcb3[offset].data[2];
+        sp[3] = hcb3[offset].data[3];
+
+        break;
+
+    case 5: /* binary search for data pairs */
+    case 7:
+    case 9:
+
+        while (!hcb_bin_table[cb][offset].is_leaf)
+        {
+            int b = faad_get1bit(ld);
+            offset += hcb_bin_table[cb][offset].data[b];
+        }
+
+        sp[0] = hcb_bin_table[cb][offset].data[0];
+        sp[1] = hcb_bin_table[cb][offset].data[1];
+
+        break;
     }
 }
 

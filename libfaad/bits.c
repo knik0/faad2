@@ -16,35 +16,48 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.c,v 1.3 2002/01/19 16:19:54 menno Exp $
+** $Id: bits.c,v 1.4 2002/02/15 20:52:09 menno Exp $
 **/
 
 #include "bits.h"
 
 
 /* initialize buffer, call once before first getbits or showbits */
-void faad_initbits(bitfile *ld, unsigned char *buffer)
+void faad_initbits(bitfile *ld, void *buffer)
 {
-    ld->incnt = 0;
-    ld->framebits = 0;
-    ld->bitcnt = 0;
-    ld->rdptr = buffer;
+    unsigned long tmp;
+
+    ld->start = (unsigned long*)buffer;
+
+    tmp = *(unsigned long*)buffer;
+#ifndef ARCH_IS_BIG_ENDIAN
+    BSWAP(tmp);
+#endif
+    ld->bufa = tmp;
+
+    tmp = *((unsigned long*)buffer + 1);
+#ifndef ARCH_IS_BIG_ENDIAN
+    BSWAP(tmp);
+#endif
+    ld->bufb = tmp;
+
+    ld->pos = 0;
+    ld->tail = ((unsigned long*)buffer + 2);
 }
 
 int faad_get_processed_bits(bitfile *ld)
 {
-    return (ld->framebits);
+    return 8 * (4*(ld->tail - ld->start) - 4) - (32 - ld->pos);
 }
 
 unsigned int faad_byte_align(bitfile *ld)
 {
-    int i = 0;
+    unsigned long remainder = ld->pos % 8;
 
-    while (ld->framebits%8 != 0)
+    if (remainder)
     {
-        faad_get1bit(ld DEBUGVAR(1,135,"faad_byte_align(): get bit until aligned"));
-        i++;
+        faad_flushbits(ld, 8 - remainder);
+        return (8 - remainder);
     }
-
-    return(i);
+    return 0;
 }

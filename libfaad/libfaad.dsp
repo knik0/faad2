@@ -83,6 +83,58 @@ LIB32=xilink6.exe -lib
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+# Begin Group "codebook"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\codebook\hcb_1.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_10.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_11.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_2.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_3.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_4.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_5.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_6.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_7.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_8.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_9.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb_sf.c
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=.\bits.c
@@ -106,10 +158,6 @@ SOURCE=.\error.c
 # Begin Source File
 
 SOURCE=.\filtbank.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\huffman.c
 # End Source File
 # Begin Source File
 
@@ -190,6 +238,10 @@ SOURCE=.\error.h
 # Begin Source File
 
 SOURCE=.\filtbank.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\codebook\hcb.h
 # End Source File
 # Begin Source File
 
