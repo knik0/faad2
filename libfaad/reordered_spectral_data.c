@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <memory.h>
+#include <string.h>
 #include "common.h"
 #include "syntax.h"
 #include "specrec.h"

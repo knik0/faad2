@@ -16,11 +16,11 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.38 2002/11/01 11:19:35 menno Exp $
+** $Id: decoder.c,v 1.39 2002/11/08 13:12:32 menno Exp $
 **/
 
 #include <stdlib.h>
-#include <memory.h>
+#include <string.h>
 #include "common.h"
 #include "decoder.h"
 #include "mp4.h"

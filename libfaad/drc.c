@@ -16,13 +16,13 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: drc.c,v 1.10 2002/09/08 18:14:37 menno Exp $
+** $Id: drc.c,v 1.11 2002/11/08 13:12:33 menno Exp $
 **/
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <memory.h>
+#include <string.h>
 #include "syntax.h"
 #include "drc.h"
 

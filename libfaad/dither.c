@@ -6,13 +6,13 @@
  * random functions for dithering.
  *
  * last modified:
- * $Id: dither.c,v 1.5 2002/10/01 21:55:49 menno Exp $
+ * $Id: dither.c,v 1.6 2002/11/08 13:12:32 menno Exp $
  */
 #include "common.h"
 
 #ifndef FIXED_POINT
 
-#include <memory.h>
+#include <string.h>
 #include "dither.h"
 
 
