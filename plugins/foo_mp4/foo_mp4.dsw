@@ -15,13 +15,13 @@ Package=<4>
     Project_Dep_Name libfaad
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name pfc_unicode
-    End Project Dependency
-    Begin Project Dependency
     Project_Dep_Name foobar2000_SDK
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name libmp4v2_cb
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pfc
     End Project Dependency
 }}}
 
@@ -63,7 +63,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "pfc_unicode"=.\pfc\pfc_unicode.dsp - Package Owner=<4>
+Project: "pfc"=.\pfc\pfc.dsp - Package Owner=<4>
 
 Package=<5>
 {{{

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.47 2003/01/17 14:56:15 menno Exp $
+** $Id: decoder.c,v 1.48 2003/02/04 16:49:37 menno Exp $
 **/
 
 #include "common.h"
@@ -292,6 +292,9 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
 void FAADAPI faacDecClose(faacDecHandle hDecoder)
 {
     uint8_t i;
+
+    if (hDecoder == NULL)
+        return;
 
     for (i = 0; i < MAX_CHANNELS; i++)
     {

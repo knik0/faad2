@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.c,v 1.23 2002/11/28 18:48:30 menno Exp $
+** $Id: filtbank.c,v 1.24 2003/02/04 16:49:37 menno Exp $
 **/
 
 #include "common.h"
@@ -82,13 +82,16 @@ fb_info *filter_bank_init(uint16_t frame_len)
 
 void filter_bank_end(fb_info *fb)
 {
-    faad_mdct_end(fb->mdct256);
-    faad_mdct_end(fb->mdct2048);
+    if (fb != NULL)
+    {
+        faad_mdct_end(fb->mdct256);
+        faad_mdct_end(fb->mdct2048);
 #ifdef LD_DEC
-    faad_mdct_end(fb->mdct1024);
+        faad_mdct_end(fb->mdct1024);
 #endif
 
-    if (fb) free(fb);
+        free(fb);
+    }
 }
 
 static INLINE void imdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_t len)

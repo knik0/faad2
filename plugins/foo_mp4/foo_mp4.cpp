@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.12 2002/12/29 13:13:36 menno Exp $
+** $Id: foo_mp4.cpp,v 1.13 2003/02/04 16:49:38 menno Exp $
 **/
 
 #include <mp4.h>
@@ -49,7 +49,7 @@ public:
         config->outputFormat = FAAD_FMT_FLOAT;
         faacDecSetConfiguration(hDecoder, config);
 
-        hFile = MP4ReadCb("blablabla", 0, open_cb, close_cb, read_cb, write_cb,
+        hFile = MP4ReadCb(0, open_cb, close_cb, read_cb, write_cb,
             setpos_cb, getpos_cb, filesize_cb, (void*)m_reader);
         if (hFile == MP4_INVALID_FILE_HANDLE) return 0;
 
@@ -139,7 +139,7 @@ public:
     {
         m_reader = r;
 
-        hFile = MP4ModifyCb("blablabla", 0, 0, open_cb, close_cb, read_cb, write_cb,
+        hFile = MP4ModifyCb(0, 0, open_cb, close_cb, read_cb, write_cb,
             setpos_cb, getpos_cb, filesize_cb, (void*)m_reader);
         if (hFile == MP4_INVALID_FILE_HANDLE) return 0;
 
@@ -147,7 +147,7 @@ public:
         if (track < 1) return 0;
 
         MP4TagDelete(hFile, track);
-        MP4TagCreate(hFile, track);
+//        MP4TagCreate(hFile, track);
 
         /* replay gain writing */
         const char *p = NULL;

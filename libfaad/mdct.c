@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.c,v 1.23 2002/11/28 18:48:30 menno Exp $
+** $Id: mdct.c,v 1.24 2003/02/04 16:49:37 menno Exp $
 **/
 
 /*
@@ -147,12 +147,15 @@ mdct_info *faad_mdct_init(uint16_t N)
 
 void faad_mdct_end(mdct_info *mdct)
 {
-    cfftu(mdct->cfft);
+    if (mdct != NULL)
+    {
+        cfftu(mdct->cfft);
 
-    if (mdct->Z1) free(mdct->Z1);
-    if (mdct->sincos) free(mdct->sincos);
+        if (mdct->Z1) free(mdct->Z1);
+        if (mdct->sincos) free(mdct->sincos);
 
-    if (mdct) free(mdct);
+        free(mdct);
+    }
 }
 
 void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
