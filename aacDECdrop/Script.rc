@@ -1,4 +1,4 @@
-//Microsoft Developer Studio generated resource script.
+// Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
 
@@ -26,14 +26,14 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Bitmap
 //
 
-IDB_TF01                BITMAP  DISCARDABLE     "resource/AAC01.bmp"
-IDB_TF02                BITMAP  DISCARDABLE     "resource/AAC02.bmp"
-IDB_TF03                BITMAP  DISCARDABLE     "resource/AAC03.bmp"
-IDB_TF04                BITMAP  DISCARDABLE     "resource/AAC04.bmp"
-IDB_TF05                BITMAP  DISCARDABLE     "resource/AAC05.bmp"
-IDB_TF06                BITMAP  DISCARDABLE     "resource/AAC06.bmp"
-IDB_TF07                BITMAP  DISCARDABLE     "resource/AAC07.bmp"
-IDB_TF08                BITMAP  DISCARDABLE     "resource/AAC08.bmp"
+IDB_TF01                BITMAP                  "resource/AAC01.bmp"
+IDB_TF02                BITMAP                  "resource/AAC02.bmp"
+IDB_TF03                BITMAP                  "resource/AAC03.bmp"
+IDB_TF04                BITMAP                  "resource/AAC04.bmp"
+IDB_TF05                BITMAP                  "resource/AAC05.bmp"
+IDB_TF06                BITMAP                  "resource/AAC06.bmp"
+IDB_TF07                BITMAP                  "resource/AAC07.bmp"
+IDB_TF08                BITMAP                  "resource/AAC08.bmp"
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -41,18 +41,18 @@ IDB_TF08                BITMAP  DISCARDABLE     "resource/AAC08.bmp"
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE DISCARDABLE 
+1 TEXTINCLUDE 
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE DISCARDABLE 
+2 TEXTINCLUDE 
 BEGIN
     "#include ""afxres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE DISCARDABLE 
+3 TEXTINCLUDE 
 BEGIN
     "\r\n"
     "\0"
@@ -66,7 +66,7 @@ END
 // Menu
 //
 
-IDR_MENU1 MENU DISCARDABLE 
+IDR_MENU1 MENU 
 BEGIN
     POPUP "Menu"
     BEGIN
@@ -89,17 +89,18 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICON1               ICON    DISCARDABLE     "resource/AAC01.ico"
+IDI_ICON1               ICON                    "resource/AAC01.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Dialog
 //
 
-IDD_VOLUME DIALOG DISCARDABLE  0, 0, 255, 218
-STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+IDD_VOLUME DIALOGEX 0, 0, 255, 218
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
 CAPTION "Decoder Options V1.2"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     GROUPBOX        "Decoding Settings",IDC_STATIC,7,7,241,23
     CONTROL         "Playback",IDC_PLAYBACK,"Button",BS_AUTORADIOBUTTON | 
@@ -122,8 +123,8 @@ BEGIN
                     96,65,10
     CONTROL         "32 bit PCM",IDC_32BIT,"Button",BS_AUTORADIOBUTTON,15,
                     111,65,10
-    CONTROL         "32 bit floats",IDC_FLOATS,"Button",BS_AUTORADIOBUTTON,
-                    125,111,65,10
+    CONTROL         "32 bit floats",IDC_FLOATS,"Button",BS_AUTORADIOBUTTON | 
+                    WS_DISABLED,125,111,65,10
     GROUPBOX        "Object Type Settings",IDC_STATIC,7,133,241,50
     CONTROL         "Main",IDC_MAIN,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
                     15,147,65,10

@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib ws2_32.lib svml_disp.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib ws2_32.lib"
 				OutputFile=".\Release/aacDECdrop.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
@@ -182,6 +182,33 @@
 		<Filter
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
+			<File
+				RelativePath="..\resource\AAC01.bmp">
+			</File>
+			<File
+				RelativePath="..\resource\AAC01.ico">
+			</File>
+			<File
+				RelativePath="..\resource\AAC02.bmp">
+			</File>
+			<File
+				RelativePath="..\resource\AAC03.bmp">
+			</File>
+			<File
+				RelativePath="..\resource\AAC04.bmp">
+			</File>
+			<File
+				RelativePath="..\resource\AAC05.bmp">
+			</File>
+			<File
+				RelativePath="..\resource\AAC06.bmp">
+			</File>
+			<File
+				RelativePath="..\resource\AAC07.bmp">
+			</File>
+			<File
+				RelativePath="..\resource\AAC08.bmp">
+			</File>
 			<File
 				RelativePath="..\Script.rc">
 				<FileConfiguration

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: audio.h,v 1.2 2002/04/14 16:31:02 menno Exp $
+** $Id: audio.h,v 1.3 2002/08/13 14:38:55 menno Exp $
 **/
 
 #ifndef AUDIO_H_INCLUDED
@@ -26,18 +26,39 @@
 extern "C" {
 #endif
 
+#define MAXWAVESIZE     4294967040LU
+
+enum {
+    OUTPUT_WAV = 1,
+    OUTPUT_RAW
+} output_format;
 
 typedef struct
 {
     int outputFormat;
-    SF_INFO sfinfo;
-    SNDFILE *sndfile;
+    FILE *sndfile;
+    unsigned int fileType;
+    unsigned long samplerate;
+    unsigned int bits_per_sample;
+    unsigned int channels;
+    unsigned long samples;
 } audio_file;
 
 audio_file *open_audio_file(char *infile, int samplerate, int channels,
                             int outputFormat, int fileType);
 int write_audio_file(audio_file *aufile, void *sample_buffer, int samples);
 void close_audio_file(audio_file *aufile);
+static int write_wav_header(FILE *file, unsigned long samplerate,
+                            unsigned int bits_per_sample,
+                            unsigned int channels,
+                            unsigned long samples);
+static int write_audio_16bit(audio_file *aufile, void *sample_buffer,
+                             unsigned int samples);
+static int write_audio_24bit(audio_file *aufile, void *sample_buffer,
+                             unsigned int samples);
+static int write_audio_32bit(audio_file *aufile, void *sample_buffer,
+                             unsigned int samples);
+
 
 #ifdef __cplusplus
 }

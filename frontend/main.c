@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.19 2002/08/10 19:01:14 menno Exp $
+** $Id: main.c,v 1.20 2002/08/13 14:39:03 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -31,7 +31,6 @@
 #include <getopt.h>
 
 #include <faad.h>
-#include <sndfile.h>
 #include <mp4.h>
 
 #include "audio.h"
@@ -128,15 +127,11 @@ void usage(void)
     fprintf(stderr, " -o X  Set output filename.\n");
     fprintf(stderr, " -f X  Set output format. Valid values for X are:\n");
     fprintf(stderr, "        1:  Microsoft WAV format (default).\n");
-    fprintf(stderr, "        2:  Apple/SGI AIFF format.\n");
-    fprintf(stderr, "        3:  Sun/NeXT AU format.\n");
-    fprintf(stderr, "        4:  DEC AU format.\n");
-    fprintf(stderr, "        5:  RAW PCM data.\n");
+    fprintf(stderr, "        2:  RAW PCM data.\n");
     fprintf(stderr, " -b X  Set output sample format. Valid values for X are:\n");
     fprintf(stderr, "        1:  16 bit PCM data (default).\n");
     fprintf(stderr, "        2:  24 bit PCM data.\n");
     fprintf(stderr, "        3:  32 bit PCM data.\n");
-    fprintf(stderr, "        4:  32 bit floats.\n");
     fprintf(stderr, " -s X  Force the samplerate to X (for RAW files).\n");
     fprintf(stderr, " -l X  Set object type. Supported object types:\n");
     fprintf(stderr, "        0:  Main object type.\n");
@@ -555,7 +550,7 @@ int main(int argc, char *argv[])
                     format = 1;
                 } else {
                     format = atoi(dr);
-                    if ((format < 1) || (format > 5))
+                    if ((format < 1) || (format > 2))
                         showHelp = 1;
                 }
             }

@@ -16,8 +16,8 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decode.c,v 1.5 2002/08/07 08:37:15 menno Exp $
-** $Id: decode.c,v 1.5 2002/08/07 08:37:15 menno Exp $
+** $Id: decode.c,v 1.6 2002/08/13 14:38:55 menno Exp $
+** $Id: decode.c,v 1.6 2002/08/13 14:38:55 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -31,7 +31,6 @@
 #include <stdlib.h>
 
 #include <faad.h>
-#include <sndfile.h>
 #include <mp4.h>
 
 #include "audio.h"
