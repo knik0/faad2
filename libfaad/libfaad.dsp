@@ -497,6 +497,10 @@ SOURCE=.\pulse.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\reordered_spectral_data.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\sbr_dec.c
 # End Source File
 # Begin Source File

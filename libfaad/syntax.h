@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.11 2002/05/31 18:06:50 menno Exp $
+** $Id: syntax.h,v 1.12 2002/06/13 08:00:28 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -333,6 +333,10 @@ static void gain_control_data(bitfile *ld, ic_stream *ics);
 static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data,
                              uint16_t frame_len);
 static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count);
+#ifdef ERROR_RESILIENCE
+uint8_t reordered_spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data,
+                                uint16_t frame_len, uint8_t aacSectionDataResilienceFlag);
+#endif
 static void pulse_data(pulse_info *pul, bitfile *ld);
 static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld);
 static void ltp_data(ic_stream *ics, ltp_info *ltp, bitfile *ld,

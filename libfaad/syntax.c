@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.16 2002/05/31 18:06:49 menno Exp $
+** $Id: syntax.c,v 1.17 2002/06/13 08:00:27 menno Exp $
 **/
 
 /*
@@ -652,7 +652,11 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
         if ((ics->tns_data_present = faad_get1bit(ld
             DEBUGVAR(1,69,"individual_channel_stream(): tns_data_present"))) & 1)
         {
-            tns_data(ics, &(ics->tns), ld);
+#ifdef ERROR_RESILIENCE
+            /* TODO I don't understand this, but the "rewrite" software moves tns_data away */
+            if ((object_type != ER_LC) && (object_type != ER_LTP))
+#endif
+                tns_data(ics, &(ics->tns), ld);
         }
 
         /* get gain control data */
@@ -670,22 +674,39 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
 #ifdef ERROR_RESILIENCE
     if (!aacSpectralDataResilienceFlag)
     {
+        /* TODO I don't understand this, but the "rewrite" software
+                moves tns_data before spectral_data */
+        if ( (object_type == ER_LC) || (object_type == ER_LTP) ) {
+            if (ics->tns_data_present)
+                tns_data(ics, &(ics->tns), ld);
+        }
 #endif
+
         /* decode the spectral data */
         if ((result = spectral_data(ics, ld, spec_data, frame_len)) > 0)
             return result;
 #ifdef ERROR_RESILIENCE
     } else {
-        ics->length_of_reordered_spectral_data = (uint8_t)faad_getbits(ld, 14
+        ics->length_of_reordered_spectral_data = (uint16_t)faad_getbits(ld, 14
             DEBUGVAR(1,147,"individual_channel_stream(): length_of_reordered_spectral_data"));
+        /* TODO: test for >6144/12288, see page 143 */
         ics->length_of_longest_codeword = (uint8_t)faad_getbits(ld, 6
             DEBUGVAR(1,148,"individual_channel_stream(): length_of_longest_codeword"));
+        if (ics->length_of_longest_codeword >= 49)
+            ics->length_of_longest_codeword = 49;
 
-#if 0
+        /* TODO I don't understand this, but the "rewrite" software
+                moves tns_data before spectral_data */
+
+        if (ics->tns_data_present)
+            tns_data(ics, &(ics->tns), ld);
+
         /* error resilient spectral data decoding */
-        if ((result = reordered_spectral_data()) > 0)
+        if ((result = reordered_spectral_data(ics, ld, spec_data, frame_len,
+            aacSectionDataResilienceFlag)) > 0)
+        {
             return result;
-#endif
+        }
     }
 #endif
 
@@ -1117,13 +1138,6 @@ static uint8_t spectral_data(ic_stream *ics, bitfile *ld, int16_t *spectral_data
 
     return 0;
 }
-
-#ifdef ERROR_RESILIENCE
-/* Table 156 */
-static uint8_t reordered_spectral_data()
-{
-}
-#endif
 
 /* Table 4.4.30 */
 static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count)
