@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: in_mp4.c,v 1.52 2004/09/03 19:38:32 menno Exp $
+** $Id: in_mp4.c,v 1.53 2004/09/03 21:49:56 gcp Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -668,7 +668,7 @@ static void mp4fileinfo(mp4ff_t *mp4, char *info, size_t len)
 
     seconds = (float)samples*(float)(f-1.0)/(float)mp4ASC.samplingFrequency;
 
-    wsprintf(info, "%s\t%d.%d secs, %d ch, %d Hz\n\n", ot[(mp4ASC.objectTypeIndex > 5)?0:mp4ASC.objectTypeIndex],
+    wsprintf(info, "%s %d.%d secs, %d ch, %d Hz\n\n", ot[(mp4ASC.objectTypeIndex > 5)?0:mp4ASC.objectTypeIndex],
         (int)(seconds), (int)(seconds*1000.0 + 0.5) % 1000, mp4ASC.channelsConfiguration, mp4ASC.samplingFrequency);
 }
 
@@ -1187,9 +1187,9 @@ void config(HWND hwndParent)
 void about(HWND hwndParent)
 {
     MessageBox(hwndParent,
-        "AudioCoding.com MPEG-4 General Audio player " FAAD2_VERSION " compiled on " __DATE__ ".\n"
+        "AudioCoding.com MPEG-4 AAC player " FAAD2_VERSION " compiled on " __DATE__ ".\n"
         "Visit the website for more info.\n"
-        "Copyright 2002-2003 AudioCoding.com",
+        "Copyright 2002-2004 AudioCoding.com",
         "About",
         MB_OK);
 }
@@ -2520,7 +2520,7 @@ DWORD WINAPI AACPlayThread(void *b)
 static In_Module module =
 {
     IN_VER,
-    "AudioCoding.com MPEG-4 General Audio player: " FAAD2_VERSION " compiled on " __DATE__,
+    "AudioCoding.com MPEG-4 AAC player: " FAAD2_VERSION " compiled on " __DATE__,
     0,  // hMainWindow
     0,  // hDllInstance
     NULL,
