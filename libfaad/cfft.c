@@ -1,19 +1,19 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: cfft.c,v 1.17 2003/11/04 21:43:30 menno Exp $
+** $Id: cfft.c,v 1.18 2003/11/04 21:50:34 menno Exp $
 **/
 
 /*
@@ -153,249 +153,6 @@ static void passf3(const uint16_t ido, const uint16_t l1, const complex_t *cc,
     }
 }
 
-#if 0
-typedef real_t simd_complex_t[4];
-
-/*
-  complex_add_sub(c1, c2, a1, a2);
-  complex_mult(a1, c1, w0);
-  complex_mult(a2, c2, w2);
-*/
-static INLINE void complex_func(simd_complex_t a1, simd_complex_t a2,
-                                const simd_complex_t z1, const simd_complex_t z2,
-                                const simd_complex_t w1, const simd_complex_t w2)
-{
-    __asm {
-        mov eax, a1
-        mov ebx, a2
-        movups xmm0, [eax]
-        movups xmm2, [ebx]
-        movups xmm4, [eax]
-        addps xmm0, xmm2   ; xmm0 = c1
-        subps xmm4, xmm2   ; xmm4 = c2
-
-
-        ; complex mult
-        mov ecx, w1
-        movups xmm1, [ecx]
-        movups xmm2, xmm0
-        movups xmm3, xmm1
-
-        mulps xmm0, xmm1
-
-        shufps xmm2, xmm2, 0xB1
-        shufps xmm0, xmm0, 0xD8
-
-        mulps xmm2, xmm3
-
-        movhlps xmm1, xmm0
-        shufps xmm2, xmm2, 0xD8
-
-        subps xmm0, xmm1
-        movhlps xmm3, xmm2
-        addps xmm2, xmm3
-
-        unpcklps xmm0, xmm2
-        movups [eax], xmm0
-
-        ; complex mult
-        mov ecx, w2
-        movups xmm1, [ecx]
-        movups xmm2, xmm4
-        movups xmm3, xmm1
-
-        mulps xmm4, xmm1
-
-        shufps xmm2, xmm2, 0xB1
-        shufps xmm4, xmm4, 0xD8
-
-        mulps xmm2, xmm3
-
-        movhlps xmm1, xmm4
-        shufps xmm2, xmm2, 0xD8
-
-        subps xmm4, xmm1
-        movhlps xmm3, xmm2
-        addps xmm2, xmm3
-
-        unpcklps xmm4, xmm2
-        movups [ebx], xmm4
-    }
-}
-
-/* complex a = z1*z2 */
-static INLINE void complex_mult(simd_complex_t a, const simd_complex_t z1, const simd_complex_t z2)
-{
-#if 0
-    a[0] = MUL_R_C(z1[0],z2[0]) - MUL_R_C(z1[1],z2[1]);
-    a[1] = MUL_R_C(z1[1],z2[0]) + MUL_R_C(z1[0],z2[1]);
-
-    a[2] = MUL_R_C(z1[2],z2[2]) - MUL_R_C(z1[3],z2[3]);
-    a[3] = MUL_R_C(z1[3],z2[2]) + MUL_R_C(z1[2],z2[3]);
-#else
-    __asm {
-        mov eax, z1
-        mov ecx, z2
-        mov edx, a
-
-        movups xmm0, [eax]
-        movups xmm1, [ecx]
-        movaps xmm2, xmm0
-        movaps xmm3, xmm1
-
-        mulps xmm0, xmm1
-
-        shufps xmm2, xmm2, 0xB1
-        shufps xmm0, xmm0, 0xD8
-
-        mulps xmm2, xmm3
-
-        movhlps xmm1, xmm0
-        shufps xmm2, xmm2, 0xD8
-
-        subps xmm0, xmm1
-        movhlps xmm3, xmm2
-        addps xmm2, xmm3
-
-        unpcklps xmm0, xmm2
-
-        movups [edx], xmm0
-    }
-#endif
-}
-
-/* complex a = z1+z2 */
-static void complex_add(complex_t a, const complex_t z1, const complex_t z2)
-{
-    RE(a) = RE(z1) + RE(z2);
-    IM(a) = IM(z1) + IM(z2);
-}
-
-/* complex a = z1-z2 */
-static void complex_sub(complex_t a, const complex_t z1, const complex_t z2)
-{
-    RE(a) = RE(z1) - RE(z2);
-    IM(a) = IM(z1) - IM(z2);
-}
-
-/* complex a1 = z1+z2; a2 = z1-z2 */
-static INLINE void complex_add_sub(simd_complex_t a1, simd_complex_t a2,
-                            const simd_complex_t z1, const simd_complex_t z2)
-{
-#if 0
-    a1[0] = z1[0] + z2[0];
-    a1[1] = z1[1] + z2[1];
-    a1[2] = z1[2] + z2[2];
-    a1[3] = z1[3] + z2[3];
-    a2[0] = z1[0] - z2[0];
-    a2[1] = z1[1] - z2[1];
-    a2[2] = z1[2] - z2[2];
-    a2[3] = z1[3] - z2[3];
-#else
-    __asm {
-        mov eax, DWORD PTR z1
-        mov ebx, DWORD PTR z2
-        mov ecx, DWORD PTR a1
-        mov edx, DWORD PTR a2
-        movups xmm1, [eax]
-        movups xmm2, [ebx]
-        movups xmm3, [eax]
-        addps xmm1, xmm2
-        subps xmm3, xmm2
-        movups [ecx], xmm1
-        movups [edx], xmm3
-    }
-#endif
-}
-
-static void passf4(const uint16_t ido, const uint16_t l1, const complex_t *cc,
-                   complex_t *ch, const complex_t *wa1, const complex_t *wa2,
-                   const complex_t *wa3, const int8_t isign)
-{
-    uint16_t i, k, ac, ah;
-
-    if (ido == 1)
-    {
-        for (k = 0; k < l1; k++)
-        {
-            complex_t t1, t2, t3, t4;
-
-            ac = 4*k;
-            ah = k;
-
-            RE(t2) = RE(cc[ac])   + RE(cc[ac+2]);
-            RE(t1) = RE(cc[ac])   - RE(cc[ac+2]);
-            IM(t2) = IM(cc[ac])   + IM(cc[ac+2]);
-            IM(t1) = IM(cc[ac])   - IM(cc[ac+2]);
-            RE(t3) = RE(cc[ac+1]) + RE(cc[ac+3]);
-            IM(t4) = RE(cc[ac+1]) - RE(cc[ac+3]);
-            IM(t3) = IM(cc[ac+3]) + IM(cc[ac+1]);
-            RE(t4) = IM(cc[ac+3]) - IM(cc[ac+1]);
-
-            RE(ch[ah])      = RE(t2) + RE(t3);
-            RE(ch[ah+2*l1]) = RE(t2) - RE(t3);
-
-            IM(ch[ah])      = IM(t2) + IM(t3);
-            IM(ch[ah+2*l1]) = IM(t2) - IM(t3);
-
-            RE(ch[ah+l1])   = RE(t1) + RE(t4)*isign;
-            RE(ch[ah+3*l1]) = RE(t1) - RE(t4)*isign;
-
-            IM(ch[ah+l1])   = IM(t1) + IM(t4)*isign;
-            IM(ch[ah+3*l1]) = IM(t1) - IM(t4)*isign;
-        }
-    } else {
-        for (k = 0; k < l1; k++)
-        {
-            ac = 4*k*ido;
-            ah = k*ido;
-
-            for (i = 0; i < ido; i++)
-            {
-                simd_complex_t c1, c2, t1, t2;
-                simd_complex_t w0 = {1,0,0,0};
-                simd_complex_t w2;
-
-                w0[2] = wa1[i][0]*isign;
-                w0[3] = wa1[i][1]*isign;
-                w2[0] = wa2[i][0]*isign;
-                w2[1] = wa2[i][1]*isign;
-                w2[2] = wa3[i][0]*isign;
-                w2[3] = wa3[i][1]*isign;
-
-                t1[0] = RE(cc[ac+i]) + RE(cc[ac+i+2*ido]);
-                t1[1] = IM(cc[ac+i]) + IM(cc[ac+i+2*ido]);
-                t1[2] = RE(cc[ac+i]) - RE(cc[ac+i+2*ido]);
-                t1[3] = IM(cc[ac+i]) - IM(cc[ac+i+2*ido]);
-                t2[0] = RE(cc[ac+i+ido]) + RE(cc[ac+i+3*ido]);
-                t2[3] = RE(cc[ac+i+ido]) - RE(cc[ac+i+3*ido]);
-                t2[1] = IM(cc[ac+i+3*ido]) + IM(cc[ac+i+ido]);
-                t2[2] = IM(cc[ac+i+3*ido]) - IM(cc[ac+i+ido]);
-
-                t2[2] *= isign;
-                t2[3] *= isign;
-
-#if 0
-                complex_add_sub(c1, c2, t1, t2);
-                complex_mult(t1, c1, w0);
-                complex_mult(t2, c2, w2);
-#else
-                complex_func(t1, t2, c1, c2, w0, w2);
-#endif
-
-                RE(ch[ah+i]) = t1[0];
-                IM(ch[ah+i]) = t1[1];
-                RE(ch[ah+i+l1*ido]) = t1[2];
-                IM(ch[ah+i+l1*ido]) = t1[3];
-                RE(ch[ah+i+2*l1*ido]) = t2[0];
-                IM(ch[ah+i+2*l1*ido]) = t2[1];
-                RE(ch[ah+i+3*l1*ido]) = t2[2];
-                IM(ch[ah+i+3*l1*ido]) = t2[3];
-            }
-        }
-    }
-}
-#else
 static void passf4(const uint16_t ido, const uint16_t l1, const complex_t *cc,
                    complex_t *ch, const complex_t *wa1, const complex_t *wa2,
                    const complex_t *wa3, const int8_t isign)
@@ -473,7 +230,6 @@ static void passf4(const uint16_t ido, const uint16_t l1, const complex_t *cc,
         }
     }
 }
-#endif
 
 static void passf5(const uint16_t ido, const uint16_t l1, const complex_t *cc,
                    complex_t *ch, const complex_t *wa1, const complex_t *wa2, const complex_t *wa3,
