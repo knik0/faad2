@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.22 2003/04/27 11:56:58 menno Exp $
+** $Id: foo_mp4.cpp,v 1.23 2003/04/27 12:05:33 menno Exp $
 **/
 
 #include <mp4.h>
@@ -35,7 +35,7 @@ char *STRIP_REVISION(const char *str)
 }
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           STRIP_REVISION("$Revision: 1.22 $"),
+                           STRIP_REVISION("$Revision: 1.23 $"),
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -507,12 +507,6 @@ public:
                     if (memcmp(m_aac_buffer, "APETAGEX", 8) == 0)
                         m_aac_bytes_into_buffer = 0;
                 }
-            }
-
-            {
-                char tmp[1024];
-                wsprintf(tmp, "%d", m_aac_bytes_into_buffer);
-                console::warning(tmp, "foo_mp4");
             }
 
             if (m_aac_bytes_into_buffer != 0)
