@@ -353,9 +353,9 @@ static uint32_t create_ilst(const mp4ff_metadata_t * data,void ** out_buffer,uin
 		{
 			uint32_t index = mp4ff_meta_genre_to_index(genre_ptr);
 			if (index==0)
-				membuffer_write_std_tag(buf,"gnre",genre_ptr);
+				membuffer_write_std_tag(buf,"©gen",genre_ptr);
 			else
-				membuffer_write_int16_tag(buf,"©gen",(uint16_t)index);
+				membuffer_write_int16_tag(buf,"gnre",(uint16_t)index);
 		}
 	}
 	

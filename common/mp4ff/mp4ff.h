@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ff.h,v 1.10 2003/12/11 18:32:39 menno Exp $
+** $Id: mp4ff.h,v 1.11 2003/12/13 22:26:56 menno Exp $
 **/
 
 #ifndef MP4FF_H
@@ -53,12 +53,14 @@ typedef void* mp4ff_t;
 mp4ff_t *mp4ff_open_read(mp4ff_callback_t *f);
 void mp4ff_close(mp4ff_t *f);
 int32_t mp4ff_get_sample_duration(const mp4ff_t *f, const int32_t track, const int32_t sample);
-int64_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int32_t sample);
+int64_t mp4ff_get_sample_position(const mp4ff_t *f, const int32_t track, const int32_t sample);
+int32_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int32_t sample);
 int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip);
 int32_t mp4ff_read_sample(mp4ff_t *f, const int track, const int sample,
                           unsigned char **audio_buffer,  unsigned int *bytes);
 int32_t mp4ff_get_decoder_config(const mp4ff_t *f, const int track,
                              unsigned char** ppBuf, unsigned int* pBufSize);
+int32_t mp4ff_get_track_type(const mp4ff_t *f, const int track);
 int32_t mp4ff_total_tracks(const mp4ff_t *f);
 int32_t mp4ff_num_samples(const mp4ff_t *f, const int track);
 int32_t mp4ff_time_scale(const mp4ff_t *f, const int track);
@@ -66,6 +68,9 @@ int32_t mp4ff_time_scale(const mp4ff_t *f, const int track);
 uint32_t mp4ff_get_avg_bitrate(const mp4ff_t *f, const int32_t track);
 uint32_t mp4ff_get_max_bitrate(const mp4ff_t *f, const int32_t track);
 uint64_t mp4ff_get_track_duration(const mp4ff_t *f, const int32_t track); //returns (uint64_t)(-1) if unknown
+uint32_t mp4ff_get_sample_rate(const mp4ff_t *f, const int32_t track);
+uint32_t mp4ff_get_channel_count(const mp4ff_t * f,const int32_t track);
+uint32_t mp4ff_get_audio_type(const mp4ff_t * f,const int32_t track);
 
 
 /* metadata */

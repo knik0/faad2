@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4meta.c,v 1.4 2003/12/11 18:32:39 menno Exp $
+** $Id: mp4meta.c,v 1.7 2003/12/14 16:47:08 menno Exp $
 **/
 
 #ifdef USE_TAGGING
@@ -71,19 +71,8 @@ static int32_t mp4ff_tag_set_field(mp4ff_metadata_t *tags, const char *item, con
     {
         if (!stricmp(tags->tags[i].item, item))
         {
-            void *backup = (void *)tags->tags[i].value;
-            int v_len = strlen(value);
-
-            tags->tags[i].value = (char *)realloc(tags->tags[i].value, v_len+1);
-            if (!tags->tags[i].value)
-            {
-                if (backup) free(backup);
-                return 0;
-            }
-
-            memcpy(tags->tags[i].value, value, v_len);
-            tags->tags[i].value[v_len] = '\0';
-
+			free(tags->tags[i].value);
+			tags->tags[i].value = strdup(value);
             return 1;
         }
     }

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ffint.h,v 1.4 2003/12/11 18:32:39 menno Exp $
+** $Id: mp4ffint.h,v 1.5 2003/12/13 22:26:56 menno Exp $
 **/
 
 #ifndef MP4FF_INTERNAL_H
@@ -67,6 +67,7 @@ extern "C" {
 #define ATOM_META 148 /* iTunes Metadata box */
 #define ATOM_NAME 149 /* iTunes Metadata name box */
 #define ATOM_DATA 150 /* iTunes Metadata data box */
+#define ATOM_CTTS 151
 
 #define ATOM_UNKNOWN 255
 #define ATOM_FREE ATOM_UNKNOWN
@@ -97,6 +98,10 @@ extern "C" {
 
 #ifdef HAVE_CONFIG_H
 #include "../../config.h"
+#endif
+
+#ifndef _WIN32
+#define stricmp strcasecmp
 #endif
 
 /* file callback structure */
@@ -131,6 +136,7 @@ typedef struct
     int32_t channelCount;
     int32_t sampleSize;
     uint16_t sampleRate;
+	int32_t audioType;
 
     /* stsd */
     int32_t stsd_entry_count;
@@ -154,6 +160,11 @@ typedef struct
     /* stsc */
 	int32_t stco_entry_count;
     int32_t *stco_chunk_offset;
+
+	/* ctts */
+	int32_t ctts_entry_count;
+	int32_t *ctts_sample_count;
+	int32_t *ctts_sample_offset;
 
     /* esde */
     uint8_t *decoderConfig;
@@ -277,7 +288,8 @@ int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size);
 int32_t parse_atoms(mp4ff_t *f);
 
 int32_t mp4ff_get_sample_duration(const mp4ff_t *f, const int32_t track, const int32_t sample);
-int64_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int32_t sample);
+int64_t mp4ff_get_sample_position(const mp4ff_t *f, const int32_t track, const int32_t sample);
+int32_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int32_t sample);
 int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip);
 
 int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,
@@ -290,6 +302,7 @@ int32_t mp4ff_num_samples(const mp4ff_t *f, const int32_t track);
 
 uint32_t mp4ff_meta_genre_to_index(const char * genrestr);//returns 1-based index, 0 if not found
 const char * mp4ff_meta_index_to_genre(uint32_t idx);//returns pointer to static string
+
 
 #ifdef __cplusplus
 }

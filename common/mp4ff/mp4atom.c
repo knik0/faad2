@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4atom.c,v 1.7 2003/12/11 18:32:39 menno Exp $
+** $Id: mp4atom.c,v 1.12 2003/12/23 18:53:24 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -156,7 +156,9 @@ static uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b,
         return ATOM_GENRE2;
     else if (mp4ff_atom_compare(a,b,c,d, 'c','p','i','l'))
         return ATOM_COMPILATION;
-    else
+    else if (mp4ff_atom_compare(a,b,c,d, 'c','t','t','s'))
+		return ATOM_CTTS;
+	else
         return ATOM_UNKNOWN;
 }
 
@@ -213,6 +215,7 @@ static int32_t mp4ff_read_stsz(mp4ff_t *f)
 static int32_t mp4ff_read_esds(mp4ff_t *f)
 {
     uint8_t tag;
+	uint32_t temp;
 	
     mp4ff_read_char(f); /* version */
     mp4ff_read_int24(f); /* flags */
@@ -240,14 +243,11 @@ static int32_t mp4ff_read_esds(mp4ff_t *f)
     }
 
     /* read length */
-    if (mp4ff_read_mp4_descr_length(f) < 15)
-    {
-        return 1;
-    }
+	temp = mp4ff_read_mp4_descr_length(f);
+    if (temp < 13) return 1;
 
-    /* skip 13 bytes */
-	mp4ff_read_char(f);
-    mp4ff_read_int32(f);
+	f->track[f->total_tracks - 1]->audioType = mp4ff_read_char(f);
+    mp4ff_read_int32(f);//0x15000414 ????
     f->track[f->total_tracks - 1]->maxBitrate = mp4ff_read_int32(f);
     f->track[f->total_tracks - 1]->avgBitrate = mp4ff_read_int32(f);
     
@@ -389,24 +389,68 @@ static int32_t mp4ff_read_stco(mp4ff_t *f)
     return 0;
 }
 
-static int32_t mp4ff_read_stts(mp4ff_t *f)
+static int32_t mp4ff_read_ctts(mp4ff_t *f)
 {
     int32_t i;
+	mp4ff_track_t * p_track = f->track[f->total_tracks - 1];
+
+	if (p_track->ctts_entry_count) return 0;
 
     mp4ff_read_char(f); /* version */
     mp4ff_read_int24(f); /* flags */
-    f->track[f->total_tracks - 1]->stts_entry_count = mp4ff_read_int32(f);
+    p_track->ctts_entry_count = mp4ff_read_int32(f);
 
-    f->track[f->total_tracks - 1]->stts_sample_count = (int32_t*)malloc(f->track[f->total_tracks - 1]->stts_entry_count * sizeof(int32_t));
-    f->track[f->total_tracks - 1]->stts_sample_delta = (int32_t*)malloc(f->track[f->total_tracks - 1]->stts_entry_count * sizeof(int32_t));
+    p_track->ctts_sample_count = (int32_t*)malloc(p_track->ctts_entry_count * sizeof(int32_t));
+    p_track->ctts_sample_offset = (int32_t*)malloc(p_track->ctts_entry_count * sizeof(int32_t));
 
-    for (i = 0; i < f->track[f->total_tracks - 1]->stts_entry_count; i++)
-    {
-        f->track[f->total_tracks - 1]->stts_sample_count[i] = mp4ff_read_int32(f);
-        f->track[f->total_tracks - 1]->stts_sample_delta[i] = mp4ff_read_int32(f);
-    }
+	if (p_track->ctts_sample_count == 0 || p_track->ctts_sample_offset == 0)
+	{
+		if (p_track->ctts_sample_count) {free(p_track->ctts_sample_count);p_track->ctts_sample_count=0;}
+		if (p_track->ctts_sample_offset) {free(p_track->ctts_sample_offset);p_track->ctts_sample_offset=0;}
+		p_track->ctts_entry_count = 0;
+		return 0;
+	}
+	else
+	{
+		for (i = 0; i < f->track[f->total_tracks - 1]->ctts_entry_count; i++)
+		{
+			p_track->ctts_sample_count[i] = mp4ff_read_int32(f);
+			p_track->ctts_sample_offset[i] = mp4ff_read_int32(f);
+		}
+		return 1;
+	}
+}
 
-    return 0;
+static int32_t mp4ff_read_stts(mp4ff_t *f)
+{
+    int32_t i;
+	mp4ff_track_t * p_track = f->track[f->total_tracks - 1];
+
+	if (p_track->stts_entry_count) return 0;
+
+    mp4ff_read_char(f); /* version */
+    mp4ff_read_int24(f); /* flags */
+    p_track->stts_entry_count = mp4ff_read_int32(f);
+
+    p_track->stts_sample_count = (int32_t*)malloc(p_track->stts_entry_count * sizeof(int32_t));
+    p_track->stts_sample_delta = (int32_t*)malloc(p_track->stts_entry_count * sizeof(int32_t));
+	
+	if (p_track->stts_sample_count == 0 || p_track->stts_sample_delta == 0)
+	{
+		if (p_track->stts_sample_count) {free(p_track->stts_sample_count);p_track->stts_sample_count=0;}
+		if (p_track->stts_sample_delta) {free(p_track->stts_sample_delta);p_track->stts_sample_delta=0;}
+		p_track->stts_entry_count = 0;
+		return 0;
+	}
+	else
+	{
+		for (i = 0; i < f->track[f->total_tracks - 1]->stts_entry_count; i++)
+		{
+			p_track->stts_sample_count[i] = mp4ff_read_int32(f);
+			p_track->stts_sample_delta[i] = mp4ff_read_int32(f);
+		}
+		return 1;
+	}
 }
 
 static int32_t mp4ff_read_mvhd(mp4ff_t *f)
@@ -545,6 +589,9 @@ int32_t mp4ff_atom_read(mp4ff_t *f, const int32_t size, const uint8_t atom_type)
     } else if (atom_type == ATOM_STTS) {
         /* time to sample box */
         mp4ff_read_stts(f);
+	} else if (atom_type == ATOM_CTTS) {
+		/* composition offset box */
+		mp4ff_read_ctts(f);
     } else if (atom_type == ATOM_STSC) {
         /* sample to chunk box */
         mp4ff_read_stsc(f);
@@ -565,10 +612,10 @@ int32_t mp4ff_atom_read(mp4ff_t *f, const int32_t size, const uint8_t atom_type)
         /* iTunes Metadata box */
         mp4ff_read_meta(f, size);
 #endif
-    } else {
-        /* skip this atom: not needed for reading */
-        mp4ff_set_position(f, dest_position);
     }
+     
+    mp4ff_set_position(f, dest_position);
+
 
     return 0;
 }
