@@ -1,19 +1,19 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
-**
+**  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**
+** 
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
+** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
@@ -22,16 +22,12 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.41 2003/08/07 17:31:19 menno Exp $
+** $Id: foo_mp4.cpp,v 1.42 2003/08/07 18:58:10 menno Exp $
 **/
 
 #include <mp4.h>
 #include <faad.h>
-#include "pfc/pfc.h"
-#include "foobar2000/SDK/input.h"
-#include "foobar2000/SDK/console.h"
-#include "foobar2000/SDK/componentversion.h"
-#include "foobar2000/SDK/tagread.h"
+#include "foobar2000/SDK/foobar2000.h"
 
 //#define DBG_OUT(A) OutputDebugString(A)
 #define DBG_OUT(A)
@@ -50,7 +46,7 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "$Revision: 1.41 $",
+                           "1.38",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -132,7 +128,14 @@ public:
         unsigned __int64 length = MP4GetTrackDuration(hFile, track);
         __int64 msDuration = MP4ConvertFromTrackDuration(hFile, track,
             length, MP4_MSECS_TIME_SCALE);
-        info->set_length((double)msDuration/1000.0);
+
+        ReadMP4Tag(info);
+
+        if (m_samples > 0) {
+            info->set_length((double)m_samples/(double)samplerate);
+        } else {
+            info->set_length((double)msDuration/1000.0);
+        }
 
         info->info_set_int("bitrate",(__int64)(1.0/1000.0 *
             (double)(__int64)MP4GetTrackIntegerProperty(hFile,
@@ -144,7 +147,7 @@ public:
         else
             info->info_set("codec", "AAC");
 
-        ReadMP4Tag(info);
+        m_samplerate = samplerate;
 
         return 1;
     }
@@ -154,6 +157,8 @@ public:
         hFile = MP4_INVALID_FILE_HANDLE;
         hDecoder = NULL;
         m_samples = 0;
+        m_samplepos = 0;
+        m_samplerate = 0;
     }
 
     ~input_mp4()
@@ -170,6 +175,8 @@ public:
         unsigned char *buffer;
         unsigned __int32 buffer_size;
         audio_sample *sample_buffer;
+
+        if (m_samples > 0 && m_samplepos >= m_samples) return 0; // gapless playback
 
         if (sampleId == MP4_INVALID_SAMPLE_ID)
         {
@@ -225,8 +232,16 @@ public:
         {
             chunk->set_data(sample_buffer, 0, frameInfo.channels, frameInfo.samplerate);
         } else {
-            chunk->set_data(sample_buffer, frameInfo.samples/frameInfo.channels,
-                frameInfo.channels, frameInfo.samplerate);
+            if (m_samples > 0) { // gapless playback
+                unsigned int samples = frameInfo.samples/frameInfo.channels;
+                if (m_samplepos + samples > m_samples) {
+                    samples = m_samples - m_samplepos;
+                }
+                chunk->set_data(sample_buffer, samples, frameInfo.channels, frameInfo.samplerate);
+            } else {
+                chunk->set_data(sample_buffer, frameInfo.samples/frameInfo.channels,
+                    frameInfo.channels, frameInfo.samplerate);
+            }
         }
 
         return 1;
@@ -288,7 +303,7 @@ public:
                     MP4SetMetadataWriter(hFile, val);
                 } else if (stricmp(pName, "ALBUM") == 0) {
                     MP4SetMetadataAlbum(hFile, val);
-                } else if (stricmp(pName, "DATE") == 0) {
+                } else if (stricmp(pName, "YEAR") == 0 || stricmp(pName, "DATE") == 0) {
                     MP4SetMetadataYear(hFile, val);
                 } else if (stricmp(pName, "TOOL") == 0) {
                     MP4SetMetadataTool(hFile, val);
@@ -331,7 +346,9 @@ public:
         sampleId = MP4GetSampleIdFromTime(hFile,
             track, duration, 0);
 
-        return 1;
+        m_samplepos = (unsigned int)(seconds * m_samplerate + 0.5);
+
+        return true;
     }
 
     virtual bool is_our_content_type(const char *url, const char *type)
@@ -349,6 +366,8 @@ private:
     MP4SampleId sampleId, numSamples;
     MP4TrackId track;
     unsigned int m_samples;
+    unsigned int m_samplerate;
+    unsigned int m_samplepos;
 
     int ReadMP4Tag(file_info *info)
     {
@@ -391,7 +410,7 @@ private:
                         info->meta_add(pName, val);
                     }
                 } else if (memcmp(pName, "gnre", 4) == 0) {
-                    char *t = NULL;
+                    char *t=0;
                     MP4GetMetadataGenre(hFile, &t);
                     info->meta_add("GENRE", t);
                 } else if (memcmp(pName, "trkn", 4) == 0) {
@@ -812,10 +831,10 @@ public:
                 if (target->next)
                     target = target->next;
                 else
-                    return 1;
+                    return true;
             }
             if (target->offset == 0 && frames > 0)
-                return 1;
+                return true;
             m_reader->seek(target->offset);
 
             bread = m_reader->read(m_aac_buffer, 768*6);
@@ -826,7 +845,7 @@ public:
             m_aac_bytes_into_buffer = bread;
             m_aac_bytes_consumed = 0;
 
-            return 1;
+            return true;
         } else {
             if (seconds > cur_pos_sec)
             {
@@ -841,9 +860,9 @@ public:
                     }
                 }
 
-                return 1;
+                return true;
             } else {
-                return 0;
+                return false;
             }
         }
     }
