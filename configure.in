@@ -1,0 +1,42 @@
+AC_INIT()
+AM_INIT_AUTOMAKE(faad,2.0)
+
+AC_PROG_CC
+AM_PROG_LIBTOOL
+
+dnl Checks for programs.
+AC_PROG_CXX
+AC_PROG_AWK
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+AC_PROG_RANLIB
+
+dnl Checks for header files required for mp4.h
+AC_CHECK_HEADERS(stdint.h inttypes.h)
+
+dnl Checks for sndfile library.
+AC_CHECK_LIB(sndfile, sf_open_read, have_sndfile_lib=yes)
+AC_CHECK_HEADER(sndfile.h, have_sndfile_hdr=yes)
+
+if test x$have_sndfile_lib != xyes -o x$have_sndfile_hdr != xyes; then
+AC_MSG_ERROR([
+  *** FAAD requires libsndfile to be installed first.
+  *** A copy of it is included in common/libsndfile.
+  ])
+fi
+
+dnl Checks for mp4v2 library.
+AC_CHECK_LIB(mp4v2, MP4Create, have_mp4v2_lib=yes)
+AC_CHECK_HEADER(mp4.h, have_mp4_hdr=yes)
+
+if test x$have_mp4v2_lib != xyes -o x$have_mp4_hdr != xyes; then
+AC_MSG_ERROR([
+  *** FAAD requires libmp4v2 to be installed first.
+  *** A copy of it is included in common/mp4v2.
+])
+fi
+
+AC_OUTPUT(libfaad/Makefile frontend/Makefile Makefile)

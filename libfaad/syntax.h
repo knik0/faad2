@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.3 2002/01/20 16:57:55 menno Exp $
+** $Id: syntax.h,v 1.4 2002/01/25 20:26:33 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -27,6 +27,10 @@ extern "C" {
 #endif
 
 #include "bits.h"
+
+#ifndef min
+#define min(a,b) ((a) < (b) ? (a) : (b))
+#endif
 
 #define MAIN 0
 #define LC   1

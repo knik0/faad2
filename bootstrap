@@ -1,0 +1,8 @@
+#! /bin/sh
+
+aclocal -I .
+autoheader
+libtoolize --automake
+automake --add-missing
+autoconf
+echo "Ready to run ./configure"
