@@ -1,5 +1,5 @@
 Name "AudioCoding.com MP4 Winamp plugin"
-OutFile in_mpeg4aac.exe
+OutFile in_mp4.exe
 CRCCheck on
 LicenseText "You must read the following license before installing."
 LicenseData COPYING
