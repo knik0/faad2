@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.28 2002/09/26 19:01:45 menno Exp $
+** $Id: syntax.c,v 1.29 2002/09/27 08:37:22 menno Exp $
 **/
 
 /*
@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include "common.h"
+#include "decoder.h"
 #include "syntax.h"
 #include "specrec.h"
 #include "huffman.h"
@@ -48,9 +49,11 @@
 /* Table 4.4.1 */
 int8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration,
                         uint8_t object_type,
+#ifdef ERROR_RESILIENCE
                         uint8_t *aacSectionDataResilienceFlag,
                         uint8_t *aacScalefactorDataResilienceFlag,
                         uint8_t *aacSpectralDataResilienceFlag,
+#endif
                         uint8_t *frameLengthFlag)
 {
     uint8_t dependsOnCoreCoder, extensionFlag;
@@ -79,6 +82,7 @@ int8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration,
             return -3;
     }
 
+#ifdef ERROR_RESILIENCE
     if (extensionFlag == 1)
     {
         /* Error resilience not supported yet */
@@ -94,6 +98,7 @@ int8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration,
             /* 1 bit: extensionFlag3 */
         }
     }
+#endif
 
     return 0;
 }
@@ -233,17 +238,285 @@ uint8_t program_config_element(program_config *pce, bitfile *ld)
     return 0;
 }
 
+element *decode_sce_lfe(faacDecHandle hDecoder,
+                        faacDecFrameInfo *hInfo, bitfile *ld,
+                        int16_t **spec_data, real_t **spec_coef,
+                        uint8_t channels, uint8_t id_syn_ele)
+{
+    element *ele;
+
+    spec_data[channels]   = (int16_t*)malloc(hDecoder->frameLength*sizeof(int16_t));
+    spec_coef[channels]   = (real_t*)malloc(hDecoder->frameLength*sizeof(real_t));
+
+    ele = (element*)malloc(sizeof(element));
+    memset(ele, 0, sizeof(element));
+    ele->ele_id  = id_syn_ele;
+    ele->channel = channels;
+    ele->paired_channel = -1;
+
+    hInfo->error = single_lfe_channel_element(ele,
+        ld, spec_data[channels], hDecoder->sf_index,
+        hDecoder->object_type, hDecoder->frameLength
+#ifdef ERROR_RESILIENCE
+        ,hDecoder->aacSectionDataResilienceFlag,
+        hDecoder->aacScalefactorDataResilienceFlag,
+        hDecoder->aacSpectralDataResilienceFlag
+#endif
+        );
+
+    return ele;
+}
+
+element *decode_cpe(faacDecHandle hDecoder,
+                    faacDecFrameInfo *hInfo, bitfile *ld,
+                    int16_t **spec_data, real_t **spec_coef,
+                    uint8_t channels, uint8_t id_syn_ele)
+{
+    element *ele;
+
+    spec_data[channels]   = (int16_t*)malloc(hDecoder->frameLength*sizeof(int16_t));
+    spec_data[channels+1] = (int16_t*)malloc(hDecoder->frameLength*sizeof(int16_t));
+    spec_coef[channels]   = (real_t*)malloc(hDecoder->frameLength*sizeof(real_t));
+    spec_coef[channels+1] = (real_t*)malloc(hDecoder->frameLength*sizeof(real_t));
+
+    ele = (element*)malloc(sizeof(element));
+    memset(ele, 0, sizeof(element));
+    ele->ele_id         = id_syn_ele;
+    ele->channel        = channels;
+    ele->paired_channel = channels+1;
+
+    hInfo->error = channel_pair_element(ele,
+        ld, spec_data[channels], spec_data[channels+1],
+        hDecoder->sf_index, hDecoder->object_type,
+        hDecoder->frameLength
+#ifdef ERROR_RESILIENCE
+        ,hDecoder->aacSectionDataResilienceFlag,
+        hDecoder->aacScalefactorDataResilienceFlag,
+        hDecoder->aacSpectralDataResilienceFlag
+#endif
+        );
+
+    return ele;
+}
+
+element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
+                         bitfile *ld, element **elements,
+                         int16_t **spec_data, real_t **spec_coef,
+                         uint8_t *out_ch_ele, uint8_t *out_channels,
+                         program_config *pce, drc_info *drc)
+{
+    uint8_t id_syn_ele, ch_ele, channels;
+
+    channels = 0;
+    ch_ele = 0;
+
+#ifdef ERROR_RESILIENCE
+    if (hDecoder->object_type < ER_OBJECT_START)
+    {
+#endif
+        /* Table 4.4.3: raw_data_block() */
+        while ((id_syn_ele = (uint8_t)faad_getbits(ld, LEN_SE_ID
+            DEBUGVAR(1,4,"faacDecDecode(): id_syn_ele"))) != ID_END)
+        {
+            switch (id_syn_ele) {
+            case ID_SCE:
+            case ID_LFE:
+                elements[ch_ele] = decode_sce_lfe(hDecoder,
+                    hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+                ch_ele++; channels++;
+                if (hInfo->error > 0)
+                    goto return_on_error;
+                break;
+            case ID_CPE:
+                elements[ch_ele] = decode_cpe(hDecoder,
+                    hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+                channels += 2; ch_ele++;
+                if (hInfo->error > 0)
+                    goto return_on_error;
+                break;
+            case ID_CCE: /* not implemented yet */
+                hInfo->error = 6;
+                goto return_on_error;
+                break;
+            case ID_DSE:
+                data_stream_element(ld);
+                break;
+            case ID_PCE:
+                if ((hInfo->error = program_config_element(pce, ld)) > 0)
+                    goto return_on_error;
+                break;
+            case ID_FIL:
+                if ((hInfo->error = fill_element(ld, drc)) > 0)
+                    goto return_on_error;
+                break;
+            }
+        }
+#ifdef ERROR_RESILIENCE
+    } else {
+        /* Table 262: er_raw_data_block() */
+        switch (hDecoder->channelConfiguration)
+        {
+        case 1:
+            id_syn_ele = ID_SCE;
+            elements[ch_ele] = decode_sce_lfe(hDecoder,
+                hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+            ch_ele++; channels++;
+            if (hInfo->error > 0)
+                goto return_on_error;
+            break;
+        case 2:
+            id_syn_ele = ID_CPE;
+            elements[ch_ele] = decode_cpe(hDecoder,
+                hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+            channels += 2; ch_ele++;
+            if (hInfo->error > 0)
+                goto return_on_error;
+            break;
+        case 3:
+            id_syn_ele = ID_SCE;
+            elements[ch_ele] = decode_sce_lfe(hDecoder,
+                hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+            ch_ele++; channels++;
+            if (hInfo->error > 0)
+                goto return_on_error;
+            id_syn_ele = ID_CPE;
+            elements[ch_ele] = decode_cpe(hDecoder,
+                hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+            channels += 2; ch_ele++;
+            if (hInfo->error > 0)
+                goto return_on_error;
+            break;
+        case 4:
+            id_syn_ele = ID_SCE;
+            elements[ch_ele] = decode_sce_lfe(hDecoder,
+                hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+            ch_ele++; channels++;
+            if (hInfo->error > 0)
+                goto return_on_error;
+            id_syn_ele = ID_CPE;
+            elements[ch_ele] = decode_cpe(hDecoder,
+                hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+            channels += 2; ch_ele++;
+            if (hInfo->error > 0)
+                goto return_on_error;
+            id_syn_ele = ID_SCE;
+            elements[ch_ele] = decode_sce_lfe(hDecoder,
+                hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+            ch_ele++; channels++;
+            if (hInfo->error > 0)
+                goto return_on_error;
+            break;
+        case 5:
+            id_syn_ele = ID_SCE;
+            elements[ch_ele] = decode_sce_lfe(hDecoder,
+                hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+            ch_ele++; channels++;
+            if (hInfo->error > 0)
+                goto return_on_error;
+            id_syn_ele = ID_CPE;
+            elements[ch_ele] = decode_cpe(hDecoder,
+                hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+            channels += 2; ch_ele++;
+            if (hInfo->error > 0)
+                goto return_on_error;
+            id_syn_ele = ID_CPE;
+            elements[ch_ele] = decode_cpe(hDecoder,
+                hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+            channels += 2; ch_ele++;
+            if (hInfo->error > 0)
+                goto return_on_error;
+            break;
+        case 6:
+            id_syn_ele = ID_SCE;
+            elements[ch_ele] = decode_sce_lfe(hDecoder,
+                hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+            ch_ele++; channels++;
+            if (hInfo->error > 0)
+                goto return_on_error;
+            id_syn_ele = ID_CPE;
+            elements[ch_ele] = decode_cpe(hDecoder,
+                hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+            channels += 2; ch_ele++;
+            if (hInfo->error > 0)
+                goto return_on_error;
+            id_syn_ele = ID_CPE;
+            elements[ch_ele] = decode_cpe(hDecoder,
+                hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+            channels += 2; ch_ele++;
+            if (hInfo->error > 0)
+                goto return_on_error;
+            id_syn_ele = ID_LFE;
+            elements[ch_ele] = decode_sce_lfe(hDecoder,
+                hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+            ch_ele++; channels++;
+            if (hInfo->error > 0)
+                goto return_on_error;
+            break;
+        case 7:
+            id_syn_ele = ID_SCE;
+            elements[ch_ele] = decode_sce_lfe(hDecoder,
+                hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+            ch_ele++; channels++;
+            if (hInfo->error > 0)
+                goto return_on_error;
+            id_syn_ele = ID_CPE;
+            elements[ch_ele] = decode_cpe(hDecoder,
+                hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+            channels += 2; ch_ele++;
+            if (hInfo->error > 0)
+                goto return_on_error;
+            id_syn_ele = ID_CPE;
+            elements[ch_ele] = decode_cpe(hDecoder,
+                hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+            channels += 2; ch_ele++;
+            if (hInfo->error > 0)
+                goto return_on_error;
+            id_syn_ele = ID_CPE;
+            elements[ch_ele] = decode_cpe(hDecoder,
+                hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+            channels += 2; ch_ele++;
+            if (hInfo->error > 0)
+                goto return_on_error;
+            id_syn_ele = ID_LFE;
+            elements[ch_ele] = decode_sce_lfe(hDecoder,
+                hInfo, ld, spec_data, spec_coef, channels, id_syn_ele);
+            ch_ele++; channels++;
+            if (hInfo->error > 0)
+                goto return_on_error;
+            break;
+        default:
+            hInfo->error = 7;
+            goto return_on_error;
+        }
+#if 0
+        cnt = bits_to_decode() / 8;
+        while (cnt >= 1)
+        {
+            cnt -= extension_payload(cnt);
+        }
+#endif
+    }
+#endif
+
+return_on_error:
+    *out_ch_ele = ch_ele;
+    *out_channels = channels;
+
+    return elements;
+}
+
 /* Table 4.4.4 and */
 /* Table 4.4.9 */
-uint8_t single_lfe_channel_element(element *sce, bitfile *ld, int16_t *spec_data,
-                                   uint8_t sf_index, uint8_t object_type,
-                                   uint16_t frame_len
+static uint8_t single_lfe_channel_element(element *sce, bitfile *ld,
+                                          int16_t *spec_data,
+                                          uint8_t sf_index, uint8_t object_type,
+                                          uint16_t frame_len
 #ifdef ERROR_RESILIENCE
-                                   ,uint8_t aacSectionDataResilienceFlag,
-                                   uint8_t aacScalefactorDataResilienceFlag,
-                                   uint8_t aacSpectralDataResilienceFlag
+                                          ,uint8_t aacSectionDataResilienceFlag,
+                                          uint8_t aacScalefactorDataResilienceFlag,
+                                          uint8_t aacSpectralDataResilienceFlag
 #endif
-                                   )
+                                          )
 {
     ic_stream *ics = &(sce->ics1);
 
@@ -264,15 +537,15 @@ uint8_t single_lfe_channel_element(element *sce, bitfile *ld, int16_t *spec_data
 }
 
 /* Table 4.4.5 */
-uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
-                             int16_t *spec_data2, uint8_t sf_index, uint8_t object_type,
-                             uint16_t frame_len
+static uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
+                                    int16_t *spec_data2, uint8_t sf_index, uint8_t object_type,
+                                    uint16_t frame_len
 #ifdef ERROR_RESILIENCE
-                             ,uint8_t aacSectionDataResilienceFlag,
-                             uint8_t aacScalefactorDataResilienceFlag,
-                             uint8_t aacSpectralDataResilienceFlag
+                                    ,uint8_t aacSectionDataResilienceFlag,
+                                    uint8_t aacScalefactorDataResilienceFlag,
+                                    uint8_t aacSpectralDataResilienceFlag
 #endif
-                             )
+                                    )
 {
     uint8_t result;
     ic_stream *ics1 = &(cpe->ics1);
@@ -458,7 +731,7 @@ static void pulse_data(pulse_info *pul, bitfile *ld)
 }
 
 /* Table 4.4.10 */
-uint16_t data_stream_element(bitfile *ld)
+static uint16_t data_stream_element(bitfile *ld)
 {
     uint8_t byte_aligned;
     uint16_t i, count;
@@ -487,7 +760,7 @@ uint16_t data_stream_element(bitfile *ld)
 }
 
 /* Table 4.4.11 */
-uint8_t fill_element(bitfile *ld, drc_info *drc
+static uint8_t fill_element(bitfile *ld, drc_info *drc
 #ifdef SBR
                      ,uint8_t next_ele_id
 #endif

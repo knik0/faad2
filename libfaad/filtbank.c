@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.c,v 1.19 2002/09/08 18:14:37 menno Exp $
+** $Id: filtbank.c,v 1.20 2002/09/27 08:37:22 menno Exp $
 **/
 
 #include "common.h"
@@ -25,6 +25,7 @@
 #include <memory.h>
 #include <assert.h>
 #include "filtbank.h"
+#include "decoder.h"
 #include "syntax.h"
 #include "kbd_win.h"
 #include "sine_win.h"

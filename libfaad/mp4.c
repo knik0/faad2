@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mp4.c,v 1.10 2002/09/18 11:22:36 menno Exp $
+** $Id: mp4.c,v 1.11 2002/09/27 08:37:22 menno Exp $
 **/
 
 #include "common.h"
@@ -147,28 +147,25 @@ int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
         ObjectTypeIndex == 6 || ObjectTypeIndex == 7)
     {
         return GASpecificConfig(&ld, channels, ObjectTypeIndex,
+#ifdef ERROR_RESILIENCE
             aacSectionDataResilienceFlag,
             aacScalefactorDataResilienceFlag,
             aacSpectralDataResilienceFlag,
+#endif
             frameLengthFlag);
 #ifdef ERROR_RESILIENCE
     } else if (ObjectTypeIndex >= ER_OBJECT_START) { /* ER */
         int8_t result = GASpecificConfig(&ld, channels, ObjectTypeIndex,
+#ifdef ERROR_RESILIENCE
             aacSectionDataResilienceFlag,
             aacScalefactorDataResilienceFlag,
             aacSpectralDataResilienceFlag,
+#endif
             frameLengthFlag);
         uint8_t ep_config = (uint8_t)faad_getbits(&ld, 2
             DEBUGVAR(1,143,"parse_audio_decoder_specific_info(): epConfig"));
         if (ep_config != 0)
             return -5;
-
-#if 0
-        printf("sect: %d scf: %d spec: %d\n",
-            *aacSectionDataResilienceFlag,
-            *aacScalefactorDataResilienceFlag,
-            *aacSpectralDataResilienceFlag);
-#endif
 
         return result;
 #endif

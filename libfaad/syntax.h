@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.19 2002/09/04 10:22:18 menno Exp $
+** $Id: syntax.h,v 1.20 2002/09/27 08:37:22 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -283,40 +283,44 @@ typedef struct
 
 int8_t GASpecificConfig(bitfile *ld, uint8_t *channelConfiguration,
                         uint8_t object_type,
+#ifdef ERROR_RESILIENCE
                         uint8_t *aacSectionDataResilienceFlag,
                         uint8_t *aacScalefactorDataResilienceFlag,
                         uint8_t *aacSpectralDataResilienceFlag,
+#endif
                         uint8_t *frameLengthFlag);
-uint8_t single_lfe_channel_element(element *sce, bitfile *ld, int16_t *spec_data,
-                                   uint8_t sf_index, uint8_t object_type,
-                                   uint16_t frame_len
-#ifdef ERROR_RESILIENCE
-                                   ,uint8_t aacSectionDataResilienceFlag,
-                                   uint8_t aacScalefactorDataResilienceFlag,
-                                   uint8_t aacSpectralDataResilienceFlag
-#endif
-                                   );
-uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
-                             int16_t *spec_data2, uint8_t sf_index, uint8_t object_type,
-                             uint16_t frame_len
-#ifdef ERROR_RESILIENCE
-                             ,uint8_t aacSectionDataResilienceFlag,
-                             uint8_t aacScalefactorDataResilienceFlag,
-                             uint8_t aacSpectralDataResilienceFlag
-#endif
-                             );
-uint16_t data_stream_element(bitfile *ld);
-uint8_t program_config_element(program_config *pce, bitfile *ld);
-uint8_t fill_element(bitfile *ld, drc_info *drc
-#ifdef SBR
-                     ,uint8_t next_ele_id
-#endif
-                     );
+
 uint8_t adts_frame(adts_header *adts, bitfile *ld);
 void get_adif_header(adif_header *adif, bitfile *ld);
 
 
 /* static functions */
+static uint8_t single_lfe_channel_element(element *sce, bitfile *ld,
+                                          int16_t *spec_data,
+                                          uint8_t sf_index, uint8_t object_type,
+                                          uint16_t frame_len
+#ifdef ERROR_RESILIENCE
+                                          ,uint8_t aacSectionDataResilienceFlag,
+                                          uint8_t aacScalefactorDataResilienceFlag,
+                                          uint8_t aacSpectralDataResilienceFlag
+#endif
+                                          );
+static uint8_t channel_pair_element(element *cpe, bitfile *ld, int16_t *spec_data1,
+                                    int16_t *spec_data2, uint8_t sf_index, uint8_t object_type,
+                                    uint16_t frame_len
+#ifdef ERROR_RESILIENCE
+                                    ,uint8_t aacSectionDataResilienceFlag,
+                                    uint8_t aacScalefactorDataResilienceFlag,
+                                    uint8_t aacSpectralDataResilienceFlag
+#endif
+                                    );
+static uint16_t data_stream_element(bitfile *ld);
+static uint8_t program_config_element(program_config *pce, bitfile *ld);
+static uint8_t fill_element(bitfile *ld, drc_info *drc
+#ifdef SBR
+                            ,uint8_t next_ele_id
+#endif
+                            );
 static uint8_t individual_channel_stream(element *ele, bitfile *ld,
                                      ic_stream *ics, uint8_t scal_flag,
                                      int16_t *spec_data, uint8_t sf_index,

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: pns.h,v 1.9 2002/09/08 18:14:37 menno Exp $
+** $Id: pns.h,v 1.10 2002/09/27 08:37:22 menno Exp $
 **/
 
 #ifndef __PNS_H__
@@ -26,8 +26,9 @@
 extern "C" {
 #endif
 
-#include "syntax.h"
 #include "common.h"
+
+#include "syntax.h"
 
 #define NOISE_OFFSET 90
 /* #define MEAN_NRG 1.537228e+18 */ /* (2^31)^2 / 3 */

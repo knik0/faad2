@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.35 2002/09/26 19:01:45 menno Exp $
+** $Id: decoder.c,v 1.36 2002/09/27 08:37:22 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -62,9 +62,11 @@ faacDecHandle FAADAPI faacDecOpen()
     hDecoder->config.defSampleRate = 44100; /* Default: 44.1kHz */
     hDecoder->adts_header_present = 0;
     hDecoder->adif_header_present = 0;
+#ifdef ERROR_RESILIENCE
     hDecoder->aacSectionDataResilienceFlag = 0;
     hDecoder->aacScalefactorDataResilienceFlag = 0;
     hDecoder->aacSpectralDataResilienceFlag = 0;
+#endif
     hDecoder->frameLength = 1024;
 
     hDecoder->frame = 0;
@@ -118,71 +120,6 @@ uint8_t FAADAPI faacDecSetConfiguration(faacDecHandle hDecoder,
 
     /* OK */
     return 1;
-}
-
-/* Returns the sample rate index */
-static uint8_t get_sr_index(uint32_t samplerate)
-{
-    if (92017 <= samplerate) return 0;
-    if (75132 <= samplerate) return 1;
-    if (55426 <= samplerate) return 2;
-    if (46009 <= samplerate) return 3;
-    if (37566 <= samplerate) return 4;
-    if (27713 <= samplerate) return 5;
-    if (23004 <= samplerate) return 6;
-    if (18783 <= samplerate) return 7;
-    if (13856 <= samplerate) return 8;
-    if (11502 <= samplerate) return 9;
-    if (9391 <= samplerate) return 10;
-
-    return 11;
-}
-
-/* Returns 0 if an object type is decodable, otherwise returns -1 */
-static int8_t can_decode_ot(uint8_t object_type)
-{
-    switch (object_type)
-    {
-    case LC:
-        return 0;
-    case MAIN:
-#ifdef MAIN_DEC
-        return 0;
-#else
-        return -1;
-#endif
-    case SSR:
-        return -1;
-    case LTP:
-#ifdef LTP_DEC
-        return 0;
-#else
-        return -1;
-#endif
-
-    /* ER object types */
-#ifdef ERROR_RESILIENCE
-    case ER_LC:
-#ifdef DRM
-    case DRM_ER_LC:
-#endif
-        return 0;
-    case ER_LTP:
-#ifdef LTP_DEC
-        return 0;
-#else
-        return -1;
-#endif
-    case LD:
-#ifdef LD_DEC
-        return 0;
-#else
-        return -1;
-#endif
-#endif
-    }
-
-    return -1;
 }
 
 int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
@@ -278,9 +215,13 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
 
     rc = AudioSpecificConfig(pBuffer, samplerate, channels,
         &hDecoder->sf_index, &hDecoder->object_type,
+#ifdef ERROR_RESILIENCE
         &hDecoder->aacSectionDataResilienceFlag,
         &hDecoder->aacScalefactorDataResilienceFlag,
         &hDecoder->aacSpectralDataResilienceFlag,
+#else
+        NULL, NULL, NULL,
+#endif
         &frameLengthFlag);
     if (hDecoder->object_type < 5)
         hDecoder->object_type--; /* For AAC differs from MPEG-4 */
@@ -338,110 +279,12 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
     if (hDecoder) free(hDecoder);
 }
 
-#ifdef ERROR_RESILIENCE
-#define decode_sce_lfe() \
-    spec_data[channels]   = (int16_t*)malloc(frame_len*sizeof(int16_t)); \
-    spec_coef[channels]   = (real_t*)malloc(frame_len*sizeof(real_t)); \
- \
-    syntax_elements[ch_ele] = (element*)malloc(sizeof(element)); \
-    memset(syntax_elements[ch_ele], 0, sizeof(element)); \
-    syntax_elements[ch_ele]->ele_id  = id_syn_ele; \
-    syntax_elements[ch_ele]->channel = channels; \
-    syntax_elements[ch_ele]->paired_channel = -1; \
- \
-    if ((hInfo->error = single_lfe_channel_element(syntax_elements[ch_ele], \
-        ld, spec_data[channels], sf_index, object_type, frame_len, \
-        aacSectionDataResilienceFlag, aacScalefactorDataResilienceFlag, \
-        aacSpectralDataResilienceFlag)) > 0) \
-    { \
-        /* to make sure everything gets deallocated */ \
-        channels++; ch_ele++; \
-        goto error; \
-    } \
- \
-    channels++; \
-    ch_ele++;
-#else
-#define decode_sce_lfe() \
-    spec_data[channels]   = (int16_t*)malloc(frame_len*sizeof(int16_t)); \
-    spec_coef[channels]   = (real_t*)malloc(frame_len*sizeof(real_t)); \
- \
-    syntax_elements[ch_ele] = (element*)malloc(sizeof(element)); \
-    memset(syntax_elements[ch_ele], 0, sizeof(element)); \
-    syntax_elements[ch_ele]->ele_id  = id_syn_ele; \
-    syntax_elements[ch_ele]->channel = channels; \
-    syntax_elements[ch_ele]->paired_channel = -1; \
- \
-    if ((hInfo->error = single_lfe_channel_element(syntax_elements[ch_ele], \
-        ld, spec_data[channels], sf_index, object_type, frame_len)) > 0) \
-    { \
-        /* to make sure everything gets deallocated */ \
-        channels++; ch_ele++; \
-        goto error; \
-    } \
- \
-    channels++; \
-    ch_ele++;
-#endif
-
-#ifdef ERROR_RESILIENCE
-#define decode_cpe() \
-    spec_data[channels]   = (int16_t*)malloc(frame_len*sizeof(int16_t)); \
-    spec_data[channels+1] = (int16_t*)malloc(frame_len*sizeof(int16_t)); \
-    spec_coef[channels]   = (real_t*)malloc(frame_len*sizeof(real_t)); \
-    spec_coef[channels+1] = (real_t*)malloc(frame_len*sizeof(real_t)); \
- \
-    syntax_elements[ch_ele] = (element*)malloc(sizeof(element)); \
-    memset(syntax_elements[ch_ele], 0, sizeof(element)); \
-    syntax_elements[ch_ele]->ele_id         = id_syn_ele; \
-    syntax_elements[ch_ele]->channel        = channels; \
-    syntax_elements[ch_ele]->paired_channel = channels+1; \
- \
-    if ((hInfo->error = channel_pair_element(syntax_elements[ch_ele], \
-        ld, spec_data[channels], spec_data[channels+1], \
-        sf_index, object_type, frame_len, \
-        aacSectionDataResilienceFlag, aacScalefactorDataResilienceFlag, \
-        aacSpectralDataResilienceFlag)) > 0) \
-    { \
-        /* to make sure everything gets deallocated */ \
-        channels+=2; ch_ele++; \
-        goto error; \
-    } \
- \
-    channels += 2; \
-    ch_ele++;
-#else
-#define decode_cpe() \
-    spec_data[channels]   = (int16_t*)malloc(frame_len*sizeof(int16_t)); \
-    spec_data[channels+1] = (int16_t*)malloc(frame_len*sizeof(int16_t)); \
-    spec_coef[channels]   = (real_t*)malloc(frame_len*sizeof(real_t)); \
-    spec_coef[channels+1] = (real_t*)malloc(frame_len*sizeof(real_t)); \
- \
-    syntax_elements[ch_ele] = (element*)malloc(sizeof(element)); \
-    memset(syntax_elements[ch_ele], 0, sizeof(element)); \
-    syntax_elements[ch_ele]->ele_id         = id_syn_ele; \
-    syntax_elements[ch_ele]->channel        = channels; \
-    syntax_elements[ch_ele]->paired_channel = channels+1; \
- \
-    if ((hInfo->error = channel_pair_element(syntax_elements[ch_ele], \
-        ld, spec_data[channels], spec_data[channels+1], \
-        sf_index, object_type, frame_len)) > 0) \
-    { \
-        /* to make sure everything gets deallocated */ \
-        channels+=2; ch_ele++; \
-        goto error; \
-    } \
- \
-    channels += 2; \
-    ch_ele++;
-#endif
-
 void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                             faacDecFrameInfo *hInfo,
                             uint8_t *buffer)
 {
     int32_t i;
-    uint8_t id_syn_ele, ele, ch;
+    uint8_t ch;
     adts_header adts;
     uint8_t channels, ch_ele;
     bitfile *ld = (bitfile*)malloc(sizeof(bitfile));
@@ -479,6 +322,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
     program_config pce;
     element *syntax_elements[MAX_SYNTAX_ELEMENTS];
+    element **elements;
     int16_t *spec_data[MAX_CHANNELS];
     real_t *spec_coef[MAX_CHANNELS];
 
@@ -486,10 +330,6 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     uint16_t frame_len = hDecoder->frameLength;
 
     void *sample_buffer;
-
-    ele = 0;
-    channels = 0;
-    ch_ele = 0;
 
     memset(hInfo, 0, sizeof(faacDecFrameInfo));
 
@@ -511,110 +351,17 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     dbg_count = 0;
 #endif
 
-#ifdef ERROR_RESILIENCE
-    if (object_type < ER_OBJECT_START)
-    {
-#endif
-        /* Table 4.4.3: raw_data_block() */
-        while ((id_syn_ele = (uint8_t)faad_getbits(ld, LEN_SE_ID
-            DEBUGVAR(1,4,"faacDecDecode(): id_syn_ele"))) != ID_END)
-        {
-            switch (id_syn_ele) {
-            case ID_SCE:
-            case ID_LFE:
-                decode_sce_lfe();
-                break;
-            case ID_CPE:
-                decode_cpe();
-                break;
-            case ID_CCE: /* not implemented yet */
-                hInfo->error = 6;
-                goto error;
-                break;
-            case ID_DSE:
-                data_stream_element(ld);
-                break;
-            case ID_PCE:
-                if ((hInfo->error = program_config_element(&pce, ld)) > 0)
-                    goto error;
-                break;
-            case ID_FIL:
-                if ((hInfo->error = fill_element(ld, drc)) > 0)
-                    goto error;
-                break;
-            }
-            ele++;
-        }
-#ifdef ERROR_RESILIENCE
-    } else {
-        /* Table 262: er_raw_data_block() */
-        switch (channelConfiguration)
-        {
-        case 1:
-            id_syn_ele = ID_SCE;
-            decode_sce_lfe();
-            break;
-        case 2:
-            id_syn_ele = ID_CPE;
-            decode_cpe();
-            break;
-        case 3:
-            id_syn_ele = ID_SCE;
-            decode_sce_lfe();
-            id_syn_ele = ID_CPE;
-            decode_cpe();
-            break;
-        case 4:
-            id_syn_ele = ID_SCE;
-            decode_sce_lfe();
-            id_syn_ele = ID_CPE;
-            decode_cpe();
-            id_syn_ele = ID_SCE;
-            decode_sce_lfe();
-            break;
-        case 5:
-            id_syn_ele = ID_SCE;
-            decode_sce_lfe();
-            id_syn_ele = ID_CPE;
-            decode_cpe();
-            id_syn_ele = ID_CPE;
-            decode_cpe();
-            break;
-        case 6:
-            id_syn_ele = ID_SCE;
-            decode_sce_lfe();
-            id_syn_ele = ID_CPE;
-            decode_cpe();
-            id_syn_ele = ID_CPE;
-            decode_cpe();
-            id_syn_ele = ID_LFE;
-            decode_sce_lfe();
-            break;
-        case 7:
-            id_syn_ele = ID_SCE;
-            decode_sce_lfe();
-            id_syn_ele = ID_CPE;
-            decode_cpe();
-            id_syn_ele = ID_CPE;
-            decode_cpe();
-            id_syn_ele = ID_CPE;
-            decode_cpe();
-            id_syn_ele = ID_LFE;
-            decode_sce_lfe();
-            break;
-        default:
-            hInfo->error = 7;
-            goto error;
-        }
-#if 0
-        cnt = bits_to_decode() / 8;
-        while (cnt >= 1)
-        {
-            cnt -= extension_payload(cnt);
-        }
-#endif
-    }
-#endif
+    channels = 0;
+    ch_ele = 0;
+    elements = syntax_elements;
+
+    /* decode the complete bitstream */
+    elements = raw_data_block(hDecoder, hInfo, ld, syntax_elements,
+        spec_data, spec_coef, &ch_ele, &channels, &pce, drc);
+
+    if (hInfo->error > 0)
+        goto error;
+
 
     /* no more bit reading after this */
     faad_byte_align(ld);
