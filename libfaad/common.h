@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.53 2004/03/10 19:45:40 menno Exp $
+** $Id: common.h,v 1.54 2004/03/11 13:32:39 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -145,7 +145,7 @@ extern "C" {
 
 /* END COMPILE TIME DEFINITIONS */
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__MINGW32__)
 
 
 typedef unsigned __int64 uint64_t;
