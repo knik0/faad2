@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.10 2002/02/25 19:58:33 menno Exp $
+** $Id: decoder.c,v 1.11 2002/02/25 20:46:00 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -136,7 +136,7 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
     hDecoder->sf_index = get_sr_index(hDecoder->config.defSampleRate);
     hDecoder->object_type = hDecoder->config.defObjectType;
     *samplerate = sample_rates[hDecoder->sf_index];
-    *channels = 2;
+    *channels = 1;
 
     if (buffer != NULL)
     {
@@ -172,6 +172,7 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
                 2 : adts.channel_configuration;
         }
     }
+    hDecoder->channelConfiguration = *channels;
 
     return bits;
 }
