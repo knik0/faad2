@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: in_mp4.c,v 1.55 2004/10/18 19:25:00 menno Exp $
+** $Id: in_mp4.c,v 1.56 2004/10/19 18:02:10 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -2219,7 +2219,7 @@ DWORD WINAPI MP4PlayThread(void *b)
                     show_error(module.hMainWindow, NeAACDecGetErrorMessage(frameInfo.error));
                     mp4state.last_frame = 1;
                 }
-                if (mp4state.sampleId > mp4state.numSamples)
+                if (mp4state.sampleId >= mp4state.numSamples)
                     mp4state.last_frame = 1;
 
                 if (buffer) free(buffer);
