@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.31 2003/06/13 18:36:43 menno Exp $
+** $Id: in_mp4.c,v 1.32 2003/06/16 21:24:50 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -1488,5 +1488,13 @@ static In_Module module =
 
 __declspec(dllexport) In_Module* winampGetInModule2()
 {
+    config_read();
+
+    if (!m_use_for_aac)
+    {
+        module.FileExtensions =
+            "MP4\0MPEG-4 Files (*.MP4)\0M4A\0MPEG-4 Files (*.M4A)\0";
+    }
+
     return &module;
 }
