@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.c,v 1.20 2004/01/10 18:52:47 menno Exp $
+** $Id: sbr_dec.c,v 1.21 2004/01/11 15:29:10 menno Exp $
 **/
 
 
@@ -158,7 +158,7 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
     ALIGN real_t deg[64];
 #endif
 
-    channels = (sbr->id_aac == ID_SCE) ? 1 : 2;
+    channels = (sbr->id_aac == ID_CPE) ? 2 : 1;
 
     if (sbr->ret || (sbr->header_count == 0))
     {
