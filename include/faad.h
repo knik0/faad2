@@ -22,8 +22,11 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: faad.h,v 1.46 2004/03/10 19:45:40 menno Exp $
+** $Id: faad.h,v 1.47 2004/04/03 19:08:37 menno Exp $
 **/
+
+/* warn people for update */
+#pragma message("please update faad2 include filename and function names!")
 
 /* Backwards compatible link */
 #include "neaacdec.h"

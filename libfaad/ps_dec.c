@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: ps_dec.c,v 1.4 2004/04/03 10:49:14 menno Exp $
+** $Id: ps_dec.c,v 1.5 2004/04/03 19:08:38 menno Exp $
 **/
 
 #include "common.h"
@@ -123,13 +123,13 @@ static const uint8_t group_border34[32+18 + 1] =
      32-27, 33-27, 34-27, 35-27, 36-27, 37-27, 38-27, 40-27, 42-27, 44-27, 46-27, 48-27, 51-27, 54-27, 57-27, 60-27, 64-27, 68-27, 91-27
 };
 
-static const uint16_t map_bins2group20[10+12] =
+static const uint16_t map_group2bk20[10+12] =
 {
     (NEGATE_IPD_MASK | 1), (NEGATE_IPD_MASK | 0),
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19
 };
 
-static const uint16_t map_bins2group34[32+18] =
+static const uint16_t map_group2bk34[32+18] =
 {
     0,  1,  2,  3,  4,  5,  6,  6,  7, (NEGATE_IPD_MASK | 2), (NEGATE_IPD_MASK | 1), (NEGATE_IPD_MASK | 0),
     10, 10, 4,  5,  6,  7,  8,  9,
@@ -933,7 +933,7 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
     uint8_t temp_delay_ser[NO_ALLPASS_LINKS];
     real_t P_SmoothPeakDecayDiffNrg, nrg;
     real_t P[32][34];
-    real_t G_TransientRatio[32][34];
+    real_t G_TransientRatio[32][34] = {{0}};
     complex_t inputLeft;
 
 
@@ -945,6 +945,8 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
         Phi_Fract_SubQmf = Phi_Fract_SubQmf20;
     }
 
+    /* clear the energy values */
+#if 0
     for (n = 0; n < 32; n++)
     {
         for (bk = 0; bk < 34; bk++)
@@ -952,16 +954,22 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
             P[n][bk] = 0;
         }
     }
+#endif
 
+    /* calculate the energy in each parameter band b(k) */
     for (gr = 0; gr < ps->num_groups; gr++)
     {
-        bk = (~NEGATE_IPD_MASK) & ps->map_bins2group[gr];
+        /* select the parameter index b(k) to which this group belongs */
+        bk = (~NEGATE_IPD_MASK) & ps->map_group2bk[gr];
+
+        /* select the upper subband border for this group */
         maxsb = (gr < ps->num_hybrid_groups) ? ps->group_border[gr]+1 : ps->group_border[gr+1];
 
         for (sb = ps->group_border[gr]; sb < maxsb; sb++)
         {
-            for (n = ps->border_position[0] ; n < ps->border_position[ps->num_env] ; n++)
+            for (n = ps->border_position[0]; n < ps->border_position[ps->num_env]; n++)
             {
+                /* input from hybrid subbands or QMF subbands */
                 if (gr < ps->num_hybrid_groups)
                 {
                     RE(inputLeft) = QMF_RE(X_hybrid_left[n][sb]);
@@ -970,11 +978,14 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
                     RE(inputLeft) = QMF_RE(X_left[n][sb]);
                     IM(inputLeft) = QMF_IM(X_left[n][sb]);
                 }
+
+                /* accumulate energy */
                 P[n][bk] += MUL_R(RE(inputLeft),RE(inputLeft)) + MUL_R(IM(inputLeft),IM(inputLeft));
             }
         }
     }
 
+    /* calculate transient reduction ratio for each parameter band b(k) */
     for (bk = 0; bk < ps->nr_par_bands; bk++)
     {
         for (n = ps->border_position[0]; n < ps->border_position[ps->num_env]; n++)
@@ -985,13 +996,17 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
             if (ps->P_PeakDecayNrg[bk] < P[n][bk])
                 ps->P_PeakDecayNrg[bk] = P[n][bk];
 
+            /* apply smoothing filter to peak decay energy */
             P_SmoothPeakDecayDiffNrg = ps->P_SmoothPeakDecayDiffNrg_prev[bk];
             P_SmoothPeakDecayDiffNrg += MUL_F((ps->P_PeakDecayNrg[bk] - P[n][bk] - ps->P_SmoothPeakDecayDiffNrg_prev[bk]), ps->alpha_smooth);
             ps->P_SmoothPeakDecayDiffNrg_prev[bk] = P_SmoothPeakDecayDiffNrg;
 
+            /* apply smoothing filter to energy */
             nrg = ps->P_prev[bk];
             nrg += MUL_F((P[n][bk] - ps->P_prev[bk]), ps->alpha_smooth);
             ps->P_prev[bk] = nrg;
+
+            /* calculate transient ratio */
             if (MUL_C(P_SmoothPeakDecayDiffNrg, gamma) <= nrg)
             {
                 G_TransientRatio[n][bk] = REAL_CONST(1.0);
@@ -1001,6 +1016,7 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
         }
     }
 
+    /* apply stereo decorrelation filter to the signal */
     for (gr = 0; gr < ps->num_groups; gr++)
     {
         if (gr < ps->num_hybrid_groups)
@@ -1040,9 +1056,11 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
 
                 if (gr < ps->num_hybrid_groups)
                 {
+                    /* hybrid filterbank input */
                     RE(inputLeft) = QMF_RE(X_hybrid_left[n][sb]);
                     IM(inputLeft) = QMF_IM(X_hybrid_left[n][sb]);
                 } else {
+                    /* QMF filterbank input */
                     RE(inputLeft) = QMF_RE(X_left[n][sb]);
                     IM(inputLeft) = QMF_IM(X_left[n][sb]);
                 }
@@ -1051,7 +1069,7 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
                 {
                     /* delay */
 
-                    /* never SubQMF here */
+                    /* never hybrid subbands here, always QMF subbands */
                     RE(tmp) = RE(ps->delay_Qmf[ps->delay_buf_index_delay[sb]][sb]);
                     IM(tmp) = IM(ps->delay_Qmf[ps->delay_buf_index_delay[sb]][sb]);
                     RE(R0) = RE(tmp);
@@ -1066,6 +1084,7 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
                     /* fetch parameters */
                     if (gr < ps->num_hybrid_groups)
                     {
+                        /* select data from the hybrid subbands */
                         RE(tmp0) = RE(ps->delay_SubQmf[temp_delay][sb]);
                         IM(tmp0) = IM(ps->delay_SubQmf[temp_delay][sb]);
 
@@ -1075,6 +1094,7 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
                         RE(Phi_Fract) = RE(Phi_Fract_SubQmf[sb]);
                         IM(Phi_Fract) = IM(Phi_Fract_SubQmf[sb]);
                     } else {
+                        /* select data from the QMF subbands */
                         RE(tmp0) = RE(ps->delay_Qmf[temp_delay][sb]);
                         IM(tmp0) = IM(ps->delay_Qmf[temp_delay][sb]);
 
@@ -1085,7 +1105,7 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
                         IM(Phi_Fract) = IM(Phi_Fract_Qmf[sb]);
                     }
 
-                    /* delay by fraction */
+                    /* z^(-2) * Phi_Fract[k] */
                     ComplexMult(&RE(tmp), &IM(tmp), RE(tmp0), IM(tmp0), RE(Phi_Fract), IM(Phi_Fract));
 
                     RE(R0) = RE(tmp);
@@ -1097,6 +1117,7 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
                         /* fetch parameters */
                         if (gr < ps->num_hybrid_groups)
                         {
+                            /* select data from the hybrid subbands */
                             RE(tmp0) = RE(ps->delay_SubQmf_ser[m][temp_delay_ser[m]][sb]);
                             IM(tmp0) = IM(ps->delay_SubQmf_ser[m][temp_delay_ser[m]][sb]);
 
@@ -1109,6 +1130,7 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
                                 IM(Q_Fract_allpass) = IM(Q_Fract_allpass_SubQmf20[sb][m]);
                             }
                         } else {
+                            /* select data from the QMF subbands */
                             RE(tmp0) = RE(ps->delay_Qmf_ser[m][temp_delay_ser[m]][sb]);
                             IM(tmp0) = IM(ps->delay_Qmf_ser[m][temp_delay_ser[m]][sb]);
 
@@ -1116,13 +1138,19 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
                             IM(Q_Fract_allpass) = IM(Q_Fract_allpass_Qmf[sb][m]);
                         }
 
+                        /* delay by a fraction */
+                        /* z^(-d(m)) * Q_Fract_allpass[k,m] */
                         ComplexMult(&RE(tmp), &IM(tmp), RE(tmp0), IM(tmp0), RE(Q_Fract_allpass), IM(Q_Fract_allpass));
 
+                        /* -a(m) * g_DecaySlope[k] */
                         RE(tmp) += -MUL_F(g_DecaySlope, MUL_F(filter_a[m], RE(R0)));
                         IM(tmp) += -MUL_F(g_DecaySlope, MUL_F(filter_a[m], IM(R0)));
 
+                        /* -a(m) * g_DecaySlope[k] * Q_Fract_allpass[k,m] * z^(-d(m)) */
                         RE(tmp2) = RE(R0) + MUL_F(g_DecaySlope, MUL_F(filter_a[m], RE(tmp)));
                         IM(tmp2) = IM(R0) + MUL_F(g_DecaySlope, MUL_F(filter_a[m], IM(tmp)));
+
+                        /* store sample */
                         if (gr < ps->num_hybrid_groups)
                         {
                             RE(ps->delay_SubQmf_ser[m][temp_delay_ser[m]][sb]) = RE(tmp2);
@@ -1137,22 +1165,31 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
                     }
                 }
 
-                bk = (~NEGATE_IPD_MASK) & ps->map_bins2group[gr];
+                /* select b(k) for reading the transient ratio */
+                bk = (~NEGATE_IPD_MASK) & ps->map_group2bk[gr];
 
                 /* duck if a past transient is found */
+                RE(R0) = MUL_R(G_TransientRatio[n][bk], RE(R0));
+                IM(R0) = MUL_R(G_TransientRatio[n][bk], IM(R0));
+
                 if (gr < ps->num_hybrid_groups)
                 {
-                    QMF_RE(X_hybrid_right[n][sb]) = MUL_R(G_TransientRatio[n][bk], RE(R0));
-                    QMF_IM(X_hybrid_right[n][sb]) = MUL_R(G_TransientRatio[n][bk], IM(R0));
+                    /* hybrid */
+                    QMF_RE(X_hybrid_right[n][sb]) = RE(R0);
+                    QMF_IM(X_hybrid_right[n][sb]) = IM(R0);
                 } else {
-                    QMF_RE(X_right[n][sb]) = MUL_R(G_TransientRatio[n][bk], RE(R0));
-                    QMF_IM(X_right[n][sb]) = MUL_R(G_TransientRatio[n][bk], IM(R0));
+                    /* QMF */
+                    QMF_RE(X_right[n][sb]) = RE(R0);
+                    QMF_IM(X_right[n][sb]) = IM(R0);
                 }
 
                 /* Update delay buffer index */
                 if (++temp_delay >= 2)
+                {
                     temp_delay = 0;
+                }
 
+                /* update delay indices */
                 if (sb > ps->nr_allpass_bands && gr >= ps->num_hybrid_groups)
                 {
                     if (++ps->delay_buf_index_delay[sb] >= ps->delay_D[sb])
@@ -1164,12 +1201,15 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
                 for (m = 0; m < NO_ALLPASS_LINKS; m++)
                 {
                     if (++temp_delay_ser[m] >= ps->num_sample_delay_ser[m])
+                    {
                         temp_delay_ser[m] = 0;
+                    }
                 }
             }
         }
     }
 
+    /* update delay indices */
     ps->saved_delay = temp_delay;
     for (m = 0; m < NO_ALLPASS_LINKS; m++)
         ps->delay_buf_index_ser[m] = temp_delay_ser[m];
@@ -1184,7 +1224,6 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
     uint8_t sb, maxsb;
     uint8_t env;
     uint8_t nr_ipdopd_par;
-    real_t scaleL, scaleR;
     complex_t h11, h12, h21, h22;
     complex_t H11, H12, H21, H22;
     complex_t deltaH11, deltaH12, deltaH21, deltaH22;
@@ -1214,7 +1253,7 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
 
     for (gr = 0; gr < ps->num_groups; gr++)
     {
-        bk = (~NEGATE_IPD_MASK) & ps->map_bins2group[gr];
+        bk = (~NEGATE_IPD_MASK) & ps->map_group2bk[gr];
 
         /* use one channel per group in the subqmf domain */
         maxsb = (gr < ps->num_hybrid_groups) ? ps->group_border[gr] + 1 : ps->group_border[gr + 1];
@@ -1223,22 +1262,25 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
         {
             if (ps->icc_mode < 3)
             {
-                /* type 'A' mixing */
+                /* type 'A' mixing as described in 8.6.4.6.2.1 */
+                real_t c_1, c_2;
                 real_t cosa, sina;
                 real_t cosb, sinb;
                 real_t ab1, ab2;
                 real_t ab3, ab4;
 
                 /*
-                scaleR = sqrt(2.0 / (1.0 + pow(10.0, quant_iid[no_iid_steps + iid_index] / 10.0)));
-                scaleL = sqrt(2.0 / (1.0 + pow(10.0, quant_iid[no_iid_steps - iid_index] / 10.0)));
+                c_1 = sqrt(2.0 / (1.0 + pow(10.0, quant_iid[no_iid_steps + iid_index] / 10.0)));
+                c_2 = sqrt(2.0 / (1.0 + pow(10.0, quant_iid[no_iid_steps - iid_index] / 10.0)));
                 alpha = 0.5 * acos(quant_rho[icc_index]);
-                beta = alpha * ( scaleR - scaleL ) / sqrt(2.0);
+                beta = alpha * ( c_1 - c_2 ) / sqrt(2.0);
                 */
 
-                scaleR = sf_iid[no_iid_steps + ps->iid_index[env][bk]];
-                scaleL = sf_iid[no_iid_steps - ps->iid_index[env][bk]];
+                /* calculate the scalefactors c_1 and c_2 from the intensity differences */
+                c_1 = sf_iid[no_iid_steps + ps->iid_index[env][bk]];
+                c_2 = sf_iid[no_iid_steps - ps->iid_index[env][bk]];
 
+                /* calculate alpha and beta using the ICC parameters */
                 cosa = cos_alphas[ps->icc_index[env][bk]];
                 sina = sin_alphas[ps->icc_index[env][bk]];
 
@@ -1268,16 +1310,16 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
                 ab3 = MUL_C(sinb, cosa);
                 ab4 = MUL_C(cosb, sina);
 
-                /* hxx: COEF */
-                RE(h11) = MUL_C(scaleL, (ab1 - ab2));
-                RE(h12) = MUL_C(scaleR, (ab1 + ab2));
-                RE(h21) = MUL_C(scaleL, (ab3 + ab4));
-                RE(h22) = MUL_C(scaleR, (ab3 - ab4));
+                /* h_xy: COEF */
+                RE(h11) = MUL_C(c_2, (ab1 - ab2));
+                RE(h12) = MUL_C(c_1, (ab1 + ab2));
+                RE(h21) = MUL_C(c_2, (ab3 + ab4));
+                RE(h22) = MUL_C(c_1, (ab3 - ab4));
 
                 //printf("%d %f %f %f %f\n", ps->iid_index[env][bin], scaleR, scaleL, alpha, beta);
 
             } else {
-                /* type 'B' mixing */
+                /* type 'B' mixing as described in 8.6.4.6.2.2 */
                 real_t sina, cosa;
                 real_t cosg, sing;
 
@@ -1337,6 +1379,10 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
                 RE(h22) = MUL_C(COEF_SQRT2, MUL_C(sina, sing));
             }
 
+            /* calculate phase rotation parameters H_xy */
+            /* note that the imaginary part of these parameters are only calculated when
+               IPD and OPD are enabled
+             */
             if ((ps->enable_ipdopd) && (bk < nr_ipdopd_par))
             {
                 real_t ipd, opd;
@@ -1346,6 +1392,7 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
                 ipd = (float)( M_PI/4.0f ) * ps->ipd_index[env][bk];
                 opd = (float)( M_PI/4.0f ) * ps->opd_index[env][bk];
 
+                /* ringbuffer index */
                 i = ps->phase_hist;
 
                 /* previous value */
@@ -1366,6 +1413,7 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
                 RE(tempRight) += RE(ps->opd_prev[bk][i]);
                 IM(tempRight) += IM(ps->opd_prev[bk][i]);
 
+                /* ringbuffer index */
                 if (i == 0)
                 { 
                     i = 2;
@@ -1427,9 +1475,10 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
                 RE(h22) *= RE(phaseRight);
             }
 
-            /* length of the envelope (in time samples) */
+            /* length of the envelope n_e+1 - n_e (in time samples) */
             L = (real_t)(ps->border_position[env + 1] - ps->border_position[env]);
 
+            /* obtain final H_xy by means of linear interpolation */
             RE(deltaH11) = (RE(h11) - RE(ps->h11_prev[gr])) / L;
             RE(deltaH12) = (RE(h12) - RE(ps->h12_prev[gr])) / L;
             RE(deltaH21) = (RE(h21) - RE(ps->h21_prev[gr])) / L;
@@ -1445,8 +1494,10 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
             RE(ps->h21_prev[gr]) = RE(h21);
             RE(ps->h22_prev[gr]) = RE(h22);
 
+            /* only calculate imaginary part when needed */
             if ((ps->enable_ipdopd) && (bk < nr_ipdopd_par))
             {
+                /* obtain final H_xy by means of linear interpolation */
                 IM(deltaH11) = (IM(h11) - IM(ps->h11_prev[gr])) / L;
                 IM(deltaH12) = (IM(h12) - IM(ps->h12_prev[gr])) / L;
                 IM(deltaH21) = (IM(h21) - IM(ps->h21_prev[gr])) / L;
@@ -1457,7 +1508,7 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
                 IM(H21) = IM(ps->h21_prev[gr]);
                 IM(H22) = IM(ps->h22_prev[gr]);
 
-                if ((NEGATE_IPD_MASK & ps->map_bins2group[gr]) != 0)
+                if ((NEGATE_IPD_MASK & ps->map_group2bk[gr]) != 0)
                 {
                     IM(deltaH11) = -IM(deltaH11);
                     IM(deltaH12) = -IM(deltaH12);
@@ -1476,8 +1527,10 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
                 IM(ps->h22_prev[gr]) = IM(h22);
             }
 
+            /* apply H_xy to the current envelope band of the decorrelated subband */
             for (i = ps->border_position[env]; i < ps->border_position[env + 1]; i++)
             {
+                /* addition finalises the interpolation */
                 RE(H11) += RE(deltaH11);
                 RE(H12) += RE(deltaH12);
                 RE(H21) += RE(deltaH21);
@@ -1495,6 +1548,7 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
                 {
                     complex_t inLeft, inRight;
 
+                    /* load decorrelated samples */
                     if (gr < ps->num_hybrid_groups)
                     {
                         RE(inLeft) =  RE(X_hybrid_left[i][sb]);
@@ -1508,19 +1562,23 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
                         IM(inRight) = IM(X_right[i][sb]);
                     }
 
+                    /* apply mixing */
                     RE(tempLeft) =  RE(H11) * RE(inLeft) + RE(H21) * RE(inRight);
                     IM(tempLeft) =  RE(H11) * IM(inLeft) + RE(H21) * IM(inRight);
                     RE(tempRight) = RE(H12) * RE(inLeft) + RE(H22) * RE(inRight);
                     IM(tempRight) = RE(H12) * IM(inLeft) + RE(H22) * IM(inRight);
 
+                    /* only perform imaginary operations when needed */
                     if ((ps->enable_ipdopd) && (bk < nr_ipdopd_par))
                     {
+                        /* apply rotation */
                         RE(tempLeft)  -= IM(H11) * IM(inLeft) + IM(H21) * IM(inRight); 
                         IM(tempLeft)  += IM(H11) * RE(inLeft) + IM(H21) * RE(inRight);
                         RE(tempRight) -= IM(H12) * IM(inLeft) + IM(H22) * IM(inRight);
                         IM(tempRight) += IM(H12) * RE(inLeft) + IM(H22) * RE(inRight);
                     }
 
+                    /* store final samples */
                     if (gr < ps->num_hybrid_groups)
                     {
                         RE(X_hybrid_left[i][sb]) =  RE(tempLeft);
@@ -1643,14 +1701,14 @@ uint8_t ps_decode(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64])
     if (ps->use34hybrid_bands)
     {
         ps->group_border = (uint8_t*)group_border34;
-        ps->map_bins2group = (uint16_t*)map_bins2group34;
+        ps->map_group2bk = (uint16_t*)map_group2bk34;
         ps->num_groups = 32+18;
         ps->num_hybrid_groups = 32;
         ps->nr_par_bands = 34;
         ps->decay_cutoff = 5;
     } else {
         ps->group_border = (uint8_t*)group_border20;
-        ps->map_bins2group = (uint16_t*)map_bins2group20;
+        ps->map_group2bk = (uint16_t*)map_group2bk20;
         ps->num_groups = 10+12;
         ps->num_hybrid_groups = 10;
         ps->nr_par_bands = 20;

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: ps_dec.h,v 1.2 2004/04/03 10:49:14 menno Exp $
+** $Id: ps_dec.h,v 1.3 2004/04/03 19:08:38 menno Exp $
 **/
 
 #ifndef __PS_DEC_H__
@@ -95,7 +95,7 @@ typedef struct
     uint8_t decay_cutoff;
 
     uint8_t *group_border;
-    uint16_t *map_bins2group;
+    uint16_t *map_group2bk;
 
     /* filter delay handling */
     uint8_t saved_delay;
