@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: in_mp4.c,v 1.47 2003/11/21 17:08:27 ca5e Exp $
+** $Id: in_mp4.c,v 1.48 2003/12/17 18:41:56 ca5e Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -861,6 +861,14 @@ BOOL CALLBACK mp4_info_dialog_proc(HWND hwndDlg, UINT message,
             EndDialog(hwndDlg, wParam);
             return TRUE;
         case IDOK:
+
+            /* trying to edit currently playing file */
+
+            if (!stricmp(info_fn, mp4state.filename))
+            {
+                MessageBox(module.hMainWindow, "Please stop playback before editing tags", "in_mp4", MB_ICONINFORMATION|MB_OK);
+                return TRUE;
+            }
 
             /* save Metadata changes */
 
@@ -1842,6 +1850,8 @@ void stop()
 
     module.outMod->Close();
     module.SAVSADeInit();
+
+    mp4state.filename[0] = '\0';
 }
 
 int getsonglength(const char *fn)
