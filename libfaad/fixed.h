@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: fixed.h,v 1.4 2002/11/07 18:24:53 menno Exp $
+** $Id: fixed.h,v 1.5 2003/04/01 16:34:33 menno Exp $
 **/
 
 #ifndef __FIXED_H__
@@ -69,6 +69,38 @@ static INLINE MUL_R_C(real_t A, real_t B)
         imul B
         shrd eax,edx,COEF_BITS
     }
+}
+
+#elif defined(__GNUC__) && defined (__arm__)
+
+/* taken from MAD */
+#define arm_mul(x, y, SCALEBITS) \
+       ({      uint32_t __hi; \
+               uint32_t __lo; \
+               uint32_t __result; \
+               asm ("smull  %0, %1, %3, %4\n\t" \
+                    "movs   %0, %0, lsr %5\n\t" \
+                    "adc    %2, %0, %1, lsl %6" \
+                    : "=&r" (__lo), "=&r" (__hi), "=r" (__result) \
+                    : "%r" (x), "r" (y), \
+                      "M" (SCALEBITS), "M" (32 - (SCALEBITS)) \
+                    : "cc"); \
+               __result; \
+       })
+
+static INLINE real_t MUL(real_t A, real_t B)
+{
+       return arm_mul( A, B, REAL_BITS);
+}
+
+static INLINE real_t MUL_C_C(real_t A, real_t B)
+{
+       return arm_mul( A, B, COEF_BITS);
+}
+
+static INLINE real_t MUL_R_C(real_t A, real_t B)
+{
+       return arm_mul( A, B, COEF_BITS);
 }
 
 #else

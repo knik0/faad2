@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.h,v 1.16 2003/02/16 18:17:10 menno Exp $
+** $Id: bits.h,v 1.17 2003/04/01 16:34:30 menno Exp $
 **/
 
 #ifndef __BITS_H__
@@ -106,6 +106,10 @@ static INLINE uint32_t faad_showbits(bitfile *ld, uint32_t bits)
 
 static INLINE void faad_flushbits(bitfile *ld, uint32_t bits)
 {
+    /* do nothing if error */
+    if (ld->error != 0)
+        return;
+
     if (bits < ld->bits_left)
     {
         ld->bits_left -= bits;
@@ -194,6 +198,10 @@ static INLINE uint32_t faad_showbits_rev(bitfile *ld, uint32_t bits)
 
 static INLINE void faad_flushbits_rev(bitfile *ld, uint32_t bits)
 {
+    /* do nothing if error */
+    if (ld->error != 0)
+        return;
+
     if (bits < ld->bits_left)
     {
         ld->bits_left -= bits;

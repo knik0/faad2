@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.39 2003/02/09 20:42:49 menno Exp $
+** $Id: syntax.c,v 1.40 2003/04/01 16:34:34 menno Exp $
 **/
 
 /*
@@ -637,6 +637,8 @@ static uint8_t channel_pair_element(faacDecHandle hDecoder, element *cpe,
 static uint8_t ics_info(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,
                         uint8_t common_window)
 {
+    uint8_t retval = 0;
+
     /* ics->ics_reserved_bit = */ faad_get1bit(ld
         DEBUGVAR(1,43,"ics_info(): ics_reserved_bit"));
     ics->window_sequence = (uint8_t)faad_getbits(ld, 2
@@ -653,7 +655,18 @@ static uint8_t ics_info(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,
     } else {
         ics->max_sfb = (uint8_t)faad_getbits(ld, 6
             DEBUGVAR(1,48,"ics_info(): max_sfb (long)"));
+    }
 
+    /* get the grouping information */
+    retval = window_grouping_info(hDecoder, ics);
+
+    /* should be an error */
+    /* check the range of max_sfb */
+    if (ics->max_sfb > ics->num_swb)
+        ics->max_sfb = ics->num_swb;
+
+    if (ics->window_sequence != EIGHT_SHORT_SEQUENCE)
+    {
         if ((ics->predictor_data_present = faad_get1bit(ld
             DEBUGVAR(1,49,"ics_info(): predictor_data_present"))) & 1)
         {
@@ -709,12 +722,11 @@ static uint8_t ics_info(faacDecHandle hDecoder, ic_stream *ics, bitfile *ld,
         }
     }
 
-    /* get the grouping information */
-    return window_grouping_info(hDecoder, ics);
+    return retval;
 }
 
 /* Table 4.4.7 */
-static void pulse_data(pulse_info *pul, bitfile *ld)
+static void pulse_data(ic_stream *ics, pulse_info *pul, bitfile *ld)
 {
     uint8_t i;
 
@@ -722,6 +734,10 @@ static void pulse_data(pulse_info *pul, bitfile *ld)
         DEBUGVAR(1,56,"pulse_data(): number_pulse"));
     pul->pulse_start_sfb = (uint8_t)faad_getbits(ld, 6
         DEBUGVAR(1,57,"pulse_data(): pulse_start_sfb"));
+
+    /* check the range of pulse_start_sfb */
+    if (pul->pulse_start_sfb > ics->num_swb)
+        pul->pulse_start_sfb = ics->num_swb;
 
     for (i = 0; i < pul->number_pulse+1; i++)
     {
@@ -908,7 +924,7 @@ static uint8_t individual_channel_stream(faacDecHandle hDecoder, element *ele,
         if ((ics->pulse_data_present = faad_get1bit(ld
             DEBUGVAR(1,68,"individual_channel_stream(): pulse_data_present"))) & 1)
         {
-            pulse_data(&(ics->pul), ld);
+            pulse_data(ics, &(ics->pul), ld);
         }
 
         /* get tns data */
