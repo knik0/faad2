@@ -116,8 +116,7 @@ libmp4v2_la_SOURCES = \
     qosqualifiers.cpp \
     qosqualifiers.h \
     rtphint.cpp \
-    rtphint.h \
-    systems.h
+    rtphint.h
 
 EXTRA_DIST = API_CHANGES \
     INTERNALS \
