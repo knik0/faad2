@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.c,v 1.15 2002/08/26 18:41:47 menno Exp $
+** $Id: filtbank.c,v 1.16 2002/08/27 10:24:55 menno Exp $
 **/
 
 #include "common.h"
@@ -38,21 +38,21 @@ fb_info *filter_bank_init(uint16_t frame_len)
     uint16_t frame_len_ld = frame_len/2;
 #endif
 
-    fb_info *fb = malloc(sizeof(fb_info));
+    fb_info *fb = (fb_info*)malloc(sizeof(fb_info));
     memset(fb, 0, sizeof(fb_info));
 
     /* normal */
     fb->mdct256 = faad_mdct_init(2*nshort);
     fb->mdct2048 = faad_mdct_init(2*frame_len);
 
-    fb->long_window[0]  = malloc(frame_len*sizeof(real_t));
-    fb->short_window[0] = malloc(nshort*sizeof(real_t));
+    fb->long_window[0]  = (real_t*)malloc(frame_len*sizeof(real_t));
+    fb->short_window[0] = (real_t*)malloc(nshort*sizeof(real_t));
 #ifndef FIXED_POINT
     fb->long_window[1]  = kbd_long;
     fb->short_window[1] = kbd_short;
 #else
-    fb->long_window[1]  = malloc(frame_len*sizeof(real_t));
-    fb->short_window[1] = malloc(nshort*sizeof(real_t));
+    fb->long_window[1]  = (real_t*)malloc(frame_len*sizeof(real_t));
+    fb->short_window[1] = (real_t*)malloc(nshort*sizeof(real_t));
 
     for (i = 0; i < frame_len; i++)
         fb->long_window[1][i] = COEF_CONST(kbd_long[i]);
@@ -70,8 +70,8 @@ fb_info *filter_bank_init(uint16_t frame_len)
     /* LD */
     fb->mdct1024 = faad_mdct_init(frame_len_ld);
 
-    fb->ld_window[0] = malloc(frame_len_ld*sizeof(real_t));
-    fb->ld_window[1] = malloc(frame_len_ld*sizeof(real_t));
+    fb->ld_window[0] = (real_t*)malloc(frame_len_ld*sizeof(real_t));
+    fb->ld_window[1] = (real_t*)malloc(frame_len_ld*sizeof(real_t));
 
     /* calculate the sine windows */
     for (i = 0; i < frame_len_ld; i++)
@@ -181,7 +181,7 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
 
     uint16_t nflat_ls = (nlong-nshort)/2;
 
-    transf_buf = malloc(2*nlong*sizeof(real_t));
+    transf_buf = (real_t*)malloc(2*nlong*sizeof(real_t));
 
 #ifdef LD_DEC
     if (object_type == LD)
@@ -211,14 +211,14 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
 
     case LONG_START_SEQUENCE:
         imdct(fb, freq_in, transf_buf, 2*nlong);
-        for (i = nlong-1; i >= 0; i--)
+        for (i = 0; i < 0; i++)
             time_out[i] = time_out[nlong+i] + MUL_R_C(transf_buf[i],window_long_prev[i]);
         for (i = 0; i < nflat_ls; i++)
             time_out[nlong+i] = transf_buf[nlong+i];
         for (i = 0; i < nshort; i++)
             time_out[nlong+nflat_ls+i] = MUL_R_C(transf_buf[nlong+nflat_ls+i],window_short[nshort-i-1]);
         for (i = 0; i < nflat_ls; i++)
-            time_out[nlong+nflat_ls+nshort+i] = 0;
+            time_out[nlong+nflat_ls+nshort+i] = REAL_CONST(0.0);
         break;
 
     case EIGHT_SHORT_SEQUENCE:
@@ -248,7 +248,7 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
             time_out[nflat_ls+8*nshort+i] = MUL_R_C(transf_buf[nshort*15+i],window_short[nshort-1-i]);
         }
         for (i = 0; i < nflat_ls; i++)
-            time_out[nlong+nflat_ls+nshort+i] = 0;
+            time_out[nlong+nflat_ls+nshort+i] = REAL_CONST(0.0);
         break;
 
     case LONG_STOP_SEQUENCE:
@@ -259,7 +259,7 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
             time_out[nflat_ls+i] = time_out[nlong+nflat_ls+i] + MUL_R_C(transf_buf[nflat_ls+i],window_short_prev[i]);
         for (i = 0; i < nflat_ls; i++)
             time_out[nflat_ls+nshort+i] = time_out[nlong+nflat_ls+nshort+i] + transf_buf[nflat_ls+nshort+i];
-        for (i = nlong-1; i >= 0; i--)
+        for (i = 0; i < nlong; i++)
             time_out[nlong+i] = MUL_R_C(transf_buf[nlong+i],window_long[nlong-1-i]);
 		break;
     }
@@ -287,7 +287,7 @@ void filter_bank_ltp(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
 
     assert(window_sequence != EIGHT_SHORT_SEQUENCE);
 
-    windowed_buf = malloc(nlong*2*sizeof(real_t));
+    windowed_buf = (real_t*)malloc(nlong*2*sizeof(real_t));
 
 #ifdef LD_DEC
     if (object_type == LD)

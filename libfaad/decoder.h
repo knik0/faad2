@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.h,v 1.11 2002/08/26 19:08:39 menno Exp $
+** $Id: decoder.h,v 1.12 2002/08/27 10:24:55 menno Exp $
 **/
 
 #ifndef __DECODER_H__
@@ -110,7 +110,7 @@ typedef struct
 } faacDecStruct, *faacDecHandle;
 
 
-uint8_t* FAADAPI faacDecGetErrorMessage(uint8_t errcode);
+int8_t* FAADAPI faacDecGetErrorMessage(uint8_t errcode);
 
 faacDecHandle FAADAPI faacDecOpen();
 

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: fixed.h,v 1.1 2002/08/26 19:08:39 menno Exp $
+** $Id: fixed.h,v 1.2 2002/08/27 10:24:55 menno Exp $
 **/
 
 #ifndef __FIXED_H__
@@ -26,12 +26,17 @@
 extern "C" {
 #endif
 
+
 #define COEF_1_BITS 31
 #define COEF_1_PRECISION (1 << COEF_1_BITS)
 #define COEF_BITS 28
 #define COEF_PRECISION (1 << COEF_BITS)
 #define REAL_BITS 7
 #define REAL_PRECISION (1 << REAL_BITS)
+
+
+typedef int32_t real_t;
+
 
 #define COEF_CONST_1(A) ((real_t)(A*(COEF_1_PRECISION)))
 #define REAL_CONST(A) ((real_t)(A*(REAL_PRECISION)))

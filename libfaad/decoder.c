@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.22 2002/08/26 19:08:39 menno Exp $
+** $Id: decoder.c,v 1.23 2002/08/27 10:24:54 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -42,7 +42,7 @@
 uint16_t dbg_count;
 #endif
 
-uint8_t* FAADAPI faacDecGetErrorMessage(uint8_t errcode)
+int8_t* FAADAPI faacDecGetErrorMessage(uint8_t errcode)
 {
     return err_msg[errcode];
 }
@@ -432,7 +432,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     uint8_t id_syn_ele, ele, ch;
     adts_header adts;
     uint8_t channels, ch_ele;
-    bitfile *ld = malloc(sizeof(bitfile));
+    bitfile *ld = (bitfile*)malloc(sizeof(bitfile));
 
     /* local copys of globals */
     uint8_t sf_index       =  hDecoder->sf_index;
@@ -682,7 +682,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             /* allocate the state only when needed */
             if (pred_stat[ch] == NULL)
             {
-                pred_stat[ch] = malloc(frame_len * sizeof(pred_state));
+                pred_stat[ch] = (real_t*)malloc(frame_len * sizeof(pred_state));
                 reset_all_predictors(pred_stat[ch], frame_len);
             }
 
@@ -722,7 +722,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
             /* allocate the state only when needed */
             if (lt_pred_stat[ch] == NULL)
             {
-                lt_pred_stat[ch] = malloc(frame_len*4 * sizeof(real_t));
+                lt_pred_stat[ch] = (real_t*)malloc(frame_len*4 * sizeof(real_t));
                 memset(lt_pred_stat[ch], 0, frame_len*4 * sizeof(real_t));
             }
 
@@ -749,9 +749,9 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         if (time_out[ch] == NULL)
         {
             uint16_t r;
-            time_out[ch] = malloc(frame_len*2*sizeof(real_t));
+            time_out[ch] = (real_t*)malloc(frame_len*2*sizeof(real_t));
 			for (r = 0; r < frame_len*2; r++)
-				time_out[ch][r] = 0;
+				time_out[ch][r] = REAL_CONST(0.0);
         }
 
         /* filter bank */

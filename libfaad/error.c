@@ -16,13 +16,13 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: error.c,v 1.5 2002/06/15 15:38:22 menno Exp $
+** $Id: error.c,v 1.6 2002/08/27 10:24:55 menno Exp $
 **/
 
 #include "common.h"
 #include "error.h"
 
-extern uint8_t *err_msg[] = {
+extern int8_t *err_msg[] = {
     "No error",
     "Gain control not yet implemented",
     "Pulse coding not allowed in short blocks",

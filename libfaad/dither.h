@@ -29,7 +29,7 @@ typedef struct {
 
 extern dither_t            Dither;
 extern double              doubletmp;
-static const uint8_t       Parity [256];
+//static const uint8_t       Parity [256];
 uint32_t                   random_int ( void );
 extern double              scalar16 ( const float32_t* x, const float32_t* y );
 extern double              Random_Equi ( double mult );

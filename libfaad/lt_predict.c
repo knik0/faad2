@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: lt_predict.c,v 1.7 2002/08/17 12:27:33 menno Exp $
+** $Id: lt_predict.c,v 1.8 2002/08/27 10:24:55 menno Exp $
 **/
 
 
@@ -58,8 +58,8 @@ void lt_prediction(ic_stream *ics, ltp_info *ltp, real_t *spec,
         {
             num_samples = frame_len << 1;
 
-            x_est = malloc(num_samples*sizeof(real_t));
-            X_est = malloc(num_samples*sizeof(real_t));
+            x_est = (real_t*)malloc(num_samples*sizeof(real_t));
+            X_est = (real_t*)malloc(num_samples*sizeof(real_t));
 
             for(i = 0; i < num_samples; i++)
             {

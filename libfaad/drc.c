@@ -16,18 +16,19 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: drc.c,v 1.8 2002/08/26 18:41:47 menno Exp $
+** $Id: drc.c,v 1.9 2002/08/27 10:24:55 menno Exp $
 **/
 
 #include "common.h"
 
 #include <stdlib.h>
+#include <memory.h>
 #include "syntax.h"
 #include "drc.h"
 
 drc_info *drc_init(real_t cut, real_t boost)
 {
-    drc_info *drc = malloc(sizeof(drc_info));
+    drc_info *drc = (drc_info*)malloc(sizeof(drc_info));
     memset(drc, 0, sizeof(drc_info));
 
     drc->ctrl1 = cut;

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: tns.c,v 1.14 2002/08/26 18:41:47 menno Exp $
+** $Id: tns.c,v 1.15 2002/08/27 10:24:57 menno Exp $
 **/
 
 #include "common.h"
@@ -160,7 +160,7 @@ static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_c
     }
 
     /* Conversion to LPC coefficients */
-    a[0] = 1;
+    a[0] = COEF_CONST(1.0);
     for (m = 1; m <= order; m++)
     {
         for (i = 1; i < m; i++) /* loop only while i<m */
@@ -190,7 +190,7 @@ static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
     real_t y, state[TNS_MAX_ORDER];
 
     for (i = 0; i < order; i++)
-        state[i] = 0;
+        state[i] = REAL_CONST(0.0);
 
     for (i = 0; i < size; i++)
     {
@@ -225,7 +225,7 @@ static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
     real_t y, state[TNS_MAX_ORDER];
 
     for (i = 0; i < order; i++)
-        state[i] = 0;
+        state[i] = REAL_CONST(0.0);
 
     for (i = 0; i < size; i++)
     {

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.c,v 1.16 2002/08/26 18:41:47 menno Exp $
+** $Id: mdct.c,v 1.17 2002/08/27 10:24:55 menno Exp $
 **/
 
 /*
@@ -56,7 +56,7 @@ mdct_info *faad_mdct_init(uint16_t N)
     uint16_t k;
 	float32_t scale = sqrt(2.0/(float32_t)N);
 
-    mdct_info *mdct = malloc(sizeof(mdct_info));
+    mdct_info *mdct = (mdct_info*)malloc(sizeof(mdct_info));
 
     assert(N % 8 == 0);
 

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.17 2002/08/26 18:41:47 menno Exp $
+** $Id: common.h,v 1.18 2002/08/27 10:24:54 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -137,8 +137,6 @@ typedef float float32_t;
 
 
 #if defined(FIXED_POINT)
-
-  typedef int32_t real_t;
 
   #include <math.h>
 

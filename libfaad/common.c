@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.c,v 1.1 2002/04/20 14:45:13 menno Exp $
+** $Id: common.c,v 1.2 2002/08/27 10:24:54 menno Exp $
 **/
 
 /* just some common functions that could be used anywhere */
@@ -25,8 +25,10 @@
 
 #define LOG2 0.30102999566398
 
-
+#if 0
 uint32_t int_log2(uint32_t val)
 {
     return (uint32_t)(log((real_t)val)/LOG2 + 0.5);
 }
+#endif
+

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: faad.h,v 1.13 2002/08/26 19:08:39 menno Exp $
+** $Id: faad.h,v 1.14 2002/08/27 10:24:54 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -80,7 +80,7 @@ typedef struct faacDecFrameInfo
     unsigned char error;
 } faacDecFrameInfo;
 
-unsigned char* FAADAPI faacDecGetErrorMessage(unsigned char errcode);
+char* FAADAPI faacDecGetErrorMessage(unsigned char errcode);
 
 faacDecHandle FAADAPI faacDecOpen();
 

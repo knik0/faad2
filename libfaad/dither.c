@@ -8,6 +8,7 @@
  * last modified: $ID:$
  */
 #include "common.h"
+#include <memory.h>
 #include "dither.h"
 
 static const  uint8_t    Parity [256] = {  // parity

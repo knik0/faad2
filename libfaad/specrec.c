@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: specrec.c,v 1.11 2002/08/26 18:41:47 menno Exp $
+** $Id: specrec.c,v 1.12 2002/08/27 10:24:57 menno Exp $
 **/
 
 /*
@@ -177,14 +177,14 @@ void quant_to_spec(ic_stream *ics, real_t *spec_data, uint16_t frame_len)
     tmp_spec_ptr = tmp_spec;
     for (i = frame_len/16-1; i >= 0; --i)
     {
-        *tmp_spec_ptr++ = 0; *tmp_spec_ptr++ = 0;
-        *tmp_spec_ptr++ = 0; *tmp_spec_ptr++ = 0;
-        *tmp_spec_ptr++ = 0; *tmp_spec_ptr++ = 0;
-        *tmp_spec_ptr++ = 0; *tmp_spec_ptr++ = 0;
-        *tmp_spec_ptr++ = 0; *tmp_spec_ptr++ = 0;
-        *tmp_spec_ptr++ = 0; *tmp_spec_ptr++ = 0;
-        *tmp_spec_ptr++ = 0; *tmp_spec_ptr++ = 0;
-        *tmp_spec_ptr++ = 0; *tmp_spec_ptr++ = 0;
+        *tmp_spec_ptr++ = REAL_CONST(0.0); *tmp_spec_ptr++ = REAL_CONST(0.0);
+        *tmp_spec_ptr++ = REAL_CONST(0.0); *tmp_spec_ptr++ = REAL_CONST(0.0);
+        *tmp_spec_ptr++ = REAL_CONST(0.0); *tmp_spec_ptr++ = REAL_CONST(0.0);
+        *tmp_spec_ptr++ = REAL_CONST(0.0); *tmp_spec_ptr++ = REAL_CONST(0.0);
+        *tmp_spec_ptr++ = REAL_CONST(0.0); *tmp_spec_ptr++ = REAL_CONST(0.0);
+        *tmp_spec_ptr++ = REAL_CONST(0.0); *tmp_spec_ptr++ = REAL_CONST(0.0);
+        *tmp_spec_ptr++ = REAL_CONST(0.0); *tmp_spec_ptr++ = REAL_CONST(0.0);
+        *tmp_spec_ptr++ = REAL_CONST(0.0); *tmp_spec_ptr++ = REAL_CONST(0.0);
     }
 
     spec_ptr = spec_data;
@@ -268,7 +268,7 @@ void iquant_and_apply_scalefactors(ic_stream *ics, real_t *x_invquant,
     uint16_t nshort = frame_len/8;
 
     for (i = 0; i < frame_len; i++)
-        x_invquant[i] = 0;
+        x_invquant[i] = REAL_CONST(0.0);
 
     for (g = 0; g < ics->num_window_groups; g++)
     {
@@ -304,7 +304,7 @@ void iquant_and_apply_scalefactors(ic_stream *ics, real_t *x_invquant,
                 else if (shift >= -31)
                     dequant *= (1 >> -shift);
                 else
-                    dequant = 0;
+                    dequant = REAL_CONST(0.0);
 
                 dequant = MUL_R_C(dequant, newpow2_table[scalefactor & 3]);
 

@@ -265,10 +265,10 @@
 				RelativePath=".\error.h">
 			</File>
 			<File
-				RelativePath=".\fftw\f77_func.h">
+				RelativePath=".\filtbank.h">
 			</File>
 			<File
-				RelativePath=".\filtbank.h">
+				RelativePath="fixed.h">
 			</File>
 			<File
 				RelativePath=".\codebook\hcb.h">
