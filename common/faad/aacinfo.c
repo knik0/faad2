@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: aacinfo.c,v 1.1 2002/01/14 19:15:49 menno Exp $
+** $Id: aacinfo.c,v 1.2 2002/01/24 14:30:08 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -87,7 +87,7 @@ static int read_ADTS_header(FILE_STREAM *file, faadAACInfo *info,
     for(frames=0; /* */; frames++, framesinsec++)
     {
 		/* If streaming, only go until we hit 5 seconds worth */
-		 if(file->http || no_seek_table)
+		 if(file->http)
 		 {
 			 if(frames >= 43 * 5)
 			 {
@@ -144,8 +144,9 @@ static int read_ADTS_header(FILE_STREAM *file, faadAACInfo *info,
 			{
 				tmp_seek_table = (unsigned long *) realloc(tmp_seek_table, (second + 1) * sizeof(unsigned long));
 				tmp_seek_table[second] = pos;
-				second++;
 			}
+			if(framesinsec == 0)
+				second++;
 		}
 
 		/* NOTE: While simply skipping ahead by reading may seem to be more work than seeking,
