@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.c,v 1.21 2004/01/11 15:29:10 menno Exp $
+** $Id: sbr_dec.c,v 1.22 2004/01/13 14:24:10 menno Exp $
 **/
 
 
@@ -143,42 +143,16 @@ static void sbr_save_prev_data(sbr_info *sbr, uint8_t ch)
         sbr->prevEnvIsShort[ch] = -1;
 }
 
-void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
-                    real_t *right_channel,
-                    const uint8_t just_seeked, const uint8_t upsample_only)
+static void sbr_process_channel(sbr_info *sbr, real_t *ch_in_buf, real_t *ch_out_buf,
+                                uint8_t ch, uint8_t dont_process)
 {
     int16_t i, k, l;
-
-    uint8_t dont_process = 0;
-    uint8_t ch, channels;
-    real_t *ch_buf;
 
     ALIGN qmf_t X[MAX_NTSR][64];
 #ifdef SBR_LOW_POWER
     ALIGN real_t deg[64];
 #endif
 
-    channels = (sbr->id_aac == ID_CPE) ? 2 : 1;
-
-    if (sbr->ret || (sbr->header_count == 0))
-    {
-        /* don't process just upsample */
-        dont_process = 1;
-
-        /* Re-activate reset for next frame */
-        if (sbr->ret && sbr->Reset)
-            sbr->bs_start_freq_prev = -1;
-    }
-
-    if (just_seeked)
-    {
-        sbr->just_seeked = 1;
-    } else {
-        sbr->just_seeked = 0;
-    }
-
-    for (ch = 0; ch < channels; ch++)
-    {
         if (sbr->frame == 0)
         {
             uint8_t j;
@@ -195,16 +169,11 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
             memset(sbr->Xcodec[ch], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*32 * sizeof(qmf_t));
         }
 
-        if (ch == 0)
-            ch_buf = left_channel;
-        else
-            ch_buf = right_channel;
-
         /* subband analysis */
         if (dont_process)
-            sbr_qmf_analysis_32(sbr, sbr->qmfa[ch], ch_buf, sbr->Xcodec[ch], sbr->tHFGen, 32);
+            sbr_qmf_analysis_32(sbr, sbr->qmfa[ch], ch_in_buf, sbr->Xcodec[ch], sbr->tHFGen, 32);
         else
-            sbr_qmf_analysis_32(sbr, sbr->qmfa[ch], ch_buf, sbr->Xcodec[ch], sbr->tHFGen, sbr->kx);
+            sbr_qmf_analysis_32(sbr, sbr->qmfa[ch], ch_in_buf, sbr->Xcodec[ch], sbr->tHFGen, sbr->kx);
 
         if (!dont_process)
         {
@@ -289,9 +258,9 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
 
         /* subband synthesis */
 #ifndef USE_SSE
-        sbr_qmf_synthesis_64(sbr, sbr->qmfs[ch], X, ch_buf);
+        sbr_qmf_synthesis_64(sbr, sbr->qmfs[ch], X, ch_out_buf);
 #else
-        sbr->qmfs[ch]->qmf_func(sbr, sbr->qmfs[ch], X, ch_buf);
+        sbr->qmfs[ch]->qmf_func(sbr, sbr->qmfs[ch], X, ch_out_buf);
 #endif
 
         for (i = 0; i < sbr->tHFGen; i++)
@@ -299,15 +268,76 @@ void sbrDecodeFrame(sbr_info *sbr, real_t *left_channel,
             memmove(sbr->Xcodec[ch][i], sbr->Xcodec[ch][i+sbr->numTimeSlotsRate], 32 * sizeof(qmf_t));
             memmove(sbr->Xsbr[ch][i], sbr->Xsbr[ch][i+sbr->numTimeSlotsRate], 64 * sizeof(qmf_t));
         }
+}
+
+void sbrDecodeCoupleFrame(sbr_info *sbr, real_t *left_in, real_t *right_in,
+                          real_t *left_out, real_t *right_out,
+                          const uint8_t just_seeked, const uint8_t upsample_only)
+{
+    uint8_t dont_process = 0;
+
+    if (sbr->ret || (sbr->header_count == 0))
+    {
+        /* don't process just upsample */
+        dont_process = 1;
+
+        /* Re-activate reset for next frame */
+        if (sbr->ret && sbr->Reset)
+            sbr->bs_start_freq_prev = -1;
     }
+
+    if (just_seeked)
+    {
+        sbr->just_seeked = 1;
+    } else {
+        sbr->just_seeked = 0;
+    }
+
+    sbr_process_channel(sbr, left_in, left_out, 0, dont_process);
+    sbr_process_channel(sbr, right_in, right_out, 1, dont_process);
 
     if (sbr->bs_header_flag)
         sbr->just_seeked = 0;
 
     if (sbr->header_count != 0)
     {
-        for (ch = 0; ch < channels; ch++)
-            sbr_save_prev_data(sbr, ch);
+        sbr_save_prev_data(sbr, 0);
+        sbr_save_prev_data(sbr, 1);
+    }
+
+    sbr->frame++;
+}
+
+void sbrDecodeSingleFrame(sbr_info *sbr, real_t *left_in, real_t *left_out,
+                          const uint8_t just_seeked, const uint8_t upsample_only)
+{
+    uint8_t dont_process = 0;
+
+    if (sbr->ret || (sbr->header_count == 0))
+    {
+        /* don't process just upsample */
+        dont_process = 1;
+
+        /* Re-activate reset for next frame */
+        if (sbr->ret && sbr->Reset)
+            sbr->bs_start_freq_prev = -1;
+    }
+
+    if (just_seeked)
+    {
+        sbr->just_seeked = 1;
+    } else {
+        sbr->just_seeked = 0;
+    }
+
+    sbr_process_channel(sbr, left_in, left_out, 0, dont_process);
+
+    if (sbr->bs_header_flag)
+        sbr->just_seeked = 0;
+
+    if (sbr->header_count != 0)
+    {
+        sbr_save_prev_data(sbr, 0);
     }
 
     sbr->frame++;

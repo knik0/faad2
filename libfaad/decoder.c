@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.87 2004/01/12 18:55:40 menno Exp $
+** $Id: decoder.c,v 1.88 2004/01/13 14:24:10 menno Exp $
 **/
 
 #include "common.h"
@@ -113,6 +113,7 @@ faacDecHandle FAADAPI faacDecOpen(void)
     {
         hDecoder->window_shape_prev[i] = 0;
         hDecoder->time_out[i] = NULL;
+        hDecoder->fb_intermed[i] = NULL;
 #ifdef SBR_DEC
         hDecoder->time_out2[i] = NULL;
 #endif
@@ -420,6 +421,8 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
 
         if (hDecoder->time_out[i]) faad_free(hDecoder->time_out[i]);
         hDecoder->time_out[i] = NULL;
+        if (hDecoder->fb_intermed[i]) faad_free(hDecoder->fb_intermed[i]);
+        hDecoder->fb_intermed[i] = NULL;
 #ifdef SBR_DEC
         if (hDecoder->time_out2[i]) faad_free(hDecoder->time_out2[i]);
         hDecoder->time_out2[i] = NULL;
@@ -463,6 +466,7 @@ void FAADAPI faacDecClose(faacDecHandle hDecoder)
     for (i = 0; i < MAX_CHANNELS; i++)
     {
         if (hDecoder->time_out[i]) faad_free(hDecoder->time_out[i]);
+        if (hDecoder->fb_intermed[i]) faad_free(hDecoder->fb_intermed[i]);
 #ifdef SBR_DEC
         if (hDecoder->time_out2[i]) faad_free(hDecoder->time_out2[i]);
 #endif
@@ -725,11 +729,6 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     uint8_t output_channels = 0;
     bitfile ld;
     uint32_t bitsconsumed;
-#ifdef DRM
-    uint8_t *revbuffer;
-    uint8_t *prevbufstart;
-    uint8_t *pbufend;
-#endif
 
     /* local copy of globals */
     uint8_t sf_index, object_type, channelConfiguration, outputFormat;
@@ -849,57 +848,6 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
     }
     faad_endbits(&ld);
 
-#ifdef DRM
-#ifdef SBR_DEC
-    if ((hDecoder->sbr_present_flag == 1) && (hDecoder->object_type == DRM_ER_LC))
-    {
-        uint32_t i;
-        uint16_t count = 0;
-        bitfile ld_sbr = {0};
-
-        if (bitsconsumed + 8 > buffer_size*8)
-        {
-            hInfo->error = 14;
-            goto error;
-        }
-
-        hDecoder->sbr_used[0] = 1;
-
-        if (!hDecoder->sbr[0])
-            hDecoder->sbr[0] = sbrDecodeInit(hDecoder->frameLength, 1);
-
-        /* Reverse bit reading of SBR data in DRM audio frame */
-        revbuffer = (uint8_t*)faad_malloc(buffer_size*sizeof(uint8_t));
-        prevbufstart = revbuffer;
-        pbufend = &buffer[buffer_size - 1];
-        for (i = 0; i < buffer_size; i++)
-            *prevbufstart++ = tabFlipbits[*pbufend--];
-
-        /* Set SBR data */
-        /* consider 8 bits from AAC-CRC */
-        count = (uint16_t)bit2byte(buffer_size*8 - bitsconsumed);
-        faad_initbits(&ld_sbr, revbuffer, count);
-
-        hDecoder->sbr[0]->lcstereo_flag = hDecoder->lcstereo_flag;
-
-        hDecoder->sbr[0]->sample_rate = get_sample_rate(hDecoder->sf_index);
-        hDecoder->sbr[0]->sample_rate *= 2;
-
-        hDecoder->sbr[0]->id_aac = hDecoder->element_id[0];
-
-        faad_getbits(&ld_sbr, 8); /* Skip 8-bit CRC */
-
-        hDecoder->sbr[0]->ret = sbr_extension_data(&ld_sbr, hDecoder->sbr[0], count);
-
-        /* check CRC */
-        /* no need to check it if there was already an error */
-        if (hDecoder->sbr[0]->ret == 0)
-            hDecoder->sbr[0]->ret = faad_check_CRC(&ld_sbr, faad_get_processed_bits(&ld_sbr) - 8);
-
-        faad_endbits(&ld_sbr);
-    }
-#endif
-#endif
 
     if (!hDecoder->adts_header_present && !hDecoder->adif_header_present)
     {
@@ -997,19 +945,12 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
                     memset(hDecoder->time_out2[ch+1], 0, hDecoder->frameLength*2*sizeof(real_t));
                 }
 
-                memcpy(time_out2[ch],
-                    time_out[ch], frame_len*sizeof(real_t));
-                memcpy(time_out2[ch+1],
-                    time_out[ch+1], frame_len*sizeof(real_t));
-                sbrDecodeFrame(hDecoder->sbr[i],
+                sbrDecodeCoupleFrame(hDecoder->sbr[i], time_out[ch], time_out[ch+1],
                     time_out2[ch], time_out2[ch+1],
                     hDecoder->postSeekResetFlag, hDecoder->forceUpSampling);
                 ch += 2;
             } else {
-                memcpy(time_out2[ch],
-                    time_out[ch], frame_len*sizeof(real_t));
-                sbrDecodeFrame(hDecoder->sbr[i],
-                    time_out2[ch], NULL,
+                sbrDecodeSingleFrame(hDecoder->sbr[i], time_out[ch], time_out2[ch],
                     hDecoder->postSeekResetFlag, hDecoder->forceUpSampling);
                 ch++;
             }

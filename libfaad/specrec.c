@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.37 2004/01/05 14:05:12 menno Exp $
+** $Id: specrec.c,v 1.38 2004/01/13 14:24:10 menno Exp $
 **/
 
 /*
@@ -44,6 +44,7 @@
 #include "is.h"
 #include "pns.h"
 #include "tns.h"
+#include "drc.h"
 #include "lt_predict.h"
 #include "ic_predict.h"
 #ifdef SSR_DEC
@@ -778,8 +779,14 @@ uint8_t reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
 
     if (hDecoder->time_out[sce->channel] == NULL)
     {
-        hDecoder->time_out[sce->channel] = (real_t*)faad_malloc(hDecoder->frameLength*2*sizeof(real_t));
-        memset(hDecoder->time_out[sce->channel], 0, hDecoder->frameLength*2*sizeof(real_t));
+        hDecoder->time_out[sce->channel] = (real_t*)faad_malloc(hDecoder->frameLength*sizeof(real_t));
+        memset(hDecoder->time_out[sce->channel], 0, hDecoder->frameLength*sizeof(real_t));
+    }
+
+    if (hDecoder->fb_intermed[sce->channel] == NULL)
+    {
+        hDecoder->fb_intermed[sce->channel] = (real_t*)faad_malloc(hDecoder->frameLength*sizeof(real_t));
+        memset(hDecoder->fb_intermed[sce->channel], 0, hDecoder->frameLength*sizeof(real_t));
     }
 
     /* filter bank */
@@ -794,7 +801,8 @@ uint8_t reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
 #else
         ifilter_bank(hDecoder->fb, ics->window_sequence, ics->window_shape,
             hDecoder->window_shape_prev[sce->channel], spec_coef,
-            hDecoder->time_out[sce->channel], hDecoder->object_type, hDecoder->frameLength);
+            hDecoder->time_out[sce->channel], hDecoder->fb_intermed[sce->channel],
+            hDecoder->object_type, hDecoder->frameLength);
 #endif
 #ifdef SSR_DEC
     } else {
@@ -825,7 +833,7 @@ uint8_t reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
     if (is_ltp_ot(hDecoder->object_type))
     {
         lt_update_state(hDecoder->lt_pred_stat[sce->channel], hDecoder->time_out[sce->channel],
-            hDecoder->time_out[sce->channel]+hDecoder->frameLength, hDecoder->frameLength, hDecoder->object_type);
+            hDecoder->fb_intermed[sce->channel], hDecoder->frameLength, hDecoder->object_type);
     }
 #endif
 
@@ -981,13 +989,24 @@ uint8_t reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_str
 
     if (hDecoder->time_out[cpe->channel] == NULL)
     {
-        hDecoder->time_out[cpe->channel] = (real_t*)faad_malloc(hDecoder->frameLength*2*sizeof(real_t));
-        memset(hDecoder->time_out[cpe->channel], 0, hDecoder->frameLength*2*sizeof(real_t));
+        hDecoder->time_out[cpe->channel] = (real_t*)faad_malloc(hDecoder->frameLength*sizeof(real_t));
+        memset(hDecoder->time_out[cpe->channel], 0, hDecoder->frameLength*sizeof(real_t));
     }
     if (hDecoder->time_out[cpe->paired_channel] == NULL)
     {
-        hDecoder->time_out[cpe->paired_channel] = (real_t*)faad_malloc(hDecoder->frameLength*2*sizeof(real_t));
-        memset(hDecoder->time_out[cpe->paired_channel], 0, hDecoder->frameLength*2*sizeof(real_t));
+        hDecoder->time_out[cpe->paired_channel] = (real_t*)faad_malloc(hDecoder->frameLength*sizeof(real_t));
+        memset(hDecoder->time_out[cpe->paired_channel], 0, hDecoder->frameLength*sizeof(real_t));
+    }
+
+    if (hDecoder->fb_intermed[cpe->channel] == NULL)
+    {
+        hDecoder->fb_intermed[cpe->channel] = (real_t*)faad_malloc(hDecoder->frameLength*sizeof(real_t));
+        memset(hDecoder->fb_intermed[cpe->channel], 0, hDecoder->frameLength*sizeof(real_t));
+    }
+    if (hDecoder->fb_intermed[cpe->paired_channel] == NULL)
+    {
+        hDecoder->fb_intermed[cpe->paired_channel] = (real_t*)faad_malloc(hDecoder->frameLength*sizeof(real_t));
+        memset(hDecoder->fb_intermed[cpe->paired_channel], 0, hDecoder->frameLength*sizeof(real_t));
     }
 
     /* filter bank */
@@ -1005,10 +1024,12 @@ uint8_t reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_str
 #else
         ifilter_bank(hDecoder->fb, ics1->window_sequence, ics1->window_shape,
             hDecoder->window_shape_prev[cpe->channel], spec_coef1,
-            hDecoder->time_out[cpe->channel], hDecoder->object_type, hDecoder->frameLength);
+            hDecoder->time_out[cpe->channel], hDecoder->fb_intermed[cpe->channel],
+            hDecoder->object_type, hDecoder->frameLength);
         ifilter_bank(hDecoder->fb, ics2->window_sequence, ics2->window_shape,
             hDecoder->window_shape_prev[cpe->paired_channel], spec_coef2,
-            hDecoder->time_out[cpe->paired_channel], hDecoder->object_type, hDecoder->frameLength);
+            hDecoder->time_out[cpe->paired_channel], hDecoder->fb_intermed[cpe->paired_channel],
+            hDecoder->object_type, hDecoder->frameLength);
 #endif
 #ifdef SSR_DEC
     } else {
@@ -1056,10 +1077,9 @@ uint8_t reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_str
     if (is_ltp_ot(hDecoder->object_type))
     {
         lt_update_state(hDecoder->lt_pred_stat[cpe->channel], hDecoder->time_out[cpe->channel],
-            hDecoder->time_out[cpe->channel]+hDecoder->frameLength, hDecoder->frameLength, hDecoder->object_type);
+            hDecoder->fb_intermed[cpe->channel], hDecoder->frameLength, hDecoder->object_type);
         lt_update_state(hDecoder->lt_pred_stat[cpe->paired_channel], hDecoder->time_out[cpe->paired_channel],
-            hDecoder->time_out[cpe->paired_channel]+hDecoder->frameLength, hDecoder->frameLength,
-            hDecoder->object_type);
+            hDecoder->fb_intermed[cpe->paired_channel], hDecoder->frameLength, hDecoder->object_type);
     }
 #endif
 

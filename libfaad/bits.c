@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: bits.c,v 1.31 2004/01/10 18:52:47 menno Exp $
+** $Id: bits.c,v 1.34 2004/01/14 20:32:30 menno Exp $
 **/
 
 #include "common.h"
@@ -161,6 +161,20 @@ uint8_t *faad_getbitbuffer(bitfile *ld, uint32_t bits
 
     return buffer;
 }
+
+#ifdef DRM
+/* return the original data buffer */
+void *faad_origbitbuffer(bitfile *ld)
+{
+    return (void*)ld->start;
+}
+
+/* return the original data buffer size */
+uint32_t faad_origbitbuffer_size(bitfile *ld)
+{
+    return ld->buffer_size;
+}
+#endif
 
 /* reversed bit reading routines, used for RVLC and HCR */
 void faad_initbits_rev(bitfile *ld, void *buffer,

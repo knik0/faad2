@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: bits.h,v 1.30 2004/01/10 18:52:47 menno Exp $
+** $Id: bits.h,v 1.31 2004/01/13 14:24:10 menno Exp $
 **/
 
 #ifndef __BITS_H__
@@ -83,6 +83,10 @@ void faad_flushbits_ex(bitfile *ld, uint32_t bits);
 void faad_rewindbits(bitfile *ld);
 uint8_t *faad_getbitbuffer(bitfile *ld, uint32_t bits
                        DEBUGDEC);
+#ifdef DRM
+void *faad_origbitbuffer(bitfile *ld);
+uint32_t faad_origbitbuffer_size(bitfile *ld);
+#endif
 
 /* circumvent memory alignment errors on ARM */
 static INLINE uint32_t getdword(void *mem)

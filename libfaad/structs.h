@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: structs.h,v 1.25 2004/01/06 11:59:48 menno Exp $
+** $Id: structs.h,v 1.26 2004/01/13 14:24:10 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -394,6 +394,7 @@ typedef struct
     drc_info *drc;
 
     real_t *time_out[MAX_CHANNELS];
+    real_t *fb_intermed[MAX_CHANNELS];
 
 #ifdef SBR_DEC
     int8_t sbr_present_flag;

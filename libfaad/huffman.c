@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: huffman.c,v 1.11 2004/01/05 14:05:11 menno Exp $
+** $Id: huffman.c,v 1.12 2004/01/13 14:24:10 menno Exp $
 **/
 
 #include "common.h"
@@ -118,16 +118,6 @@ static INLINE void huffman_sign_bits(bitfile *ld, int16_t *sp, uint8_t len)
     }
 }
 
-#ifdef _WIN32
-static INLINE uint32_t bsr(uint32_t bits)
-{
-    __asm
-    {
-        bsr eax, dword ptr [bits]
-    }
-}
-#endif
-
 static INLINE int16_t huffman_getescape(bitfile *ld, int16_t sp)
 {
     uint8_t neg, i;
@@ -145,7 +135,6 @@ static INLINE int16_t huffman_getescape(bitfile *ld, int16_t sp)
         neg = 0;
     }
 
-#ifndef _WIN32
     for (i = 4; ; i++)
     {
         if (faad_get1bit(ld
@@ -154,17 +143,6 @@ static INLINE int16_t huffman_getescape(bitfile *ld, int16_t sp)
             break;
         }
     }
-#else
-    /* maximum quantised value is 8192,
-     * so the maximum number of bits for 1 value is log[2](8192)=13
-     * minimum bits used when escape is present is 4 bits
-     * this leaves a maximum of 9 bits to be read at this point
-     */
-    j = faad_showbits(ld, 9) | 0xFFFFFE00;
-    i = 12 - bsr(~j);
-    faad_getbits(ld, i-3
-        DEBUGVAR(1,6,"huffman_getescape(): escape size"));
-#endif
 
     off = faad_getbits(ld, i
         DEBUGVAR(1,9,"huffman_getescape(): escape"));
