@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.61 2003/09/24 18:11:22 ca5e Exp $
+** $Id: foo_mp4.cpp,v 1.62 2003/09/29 17:54:17 ca5e Exp $
 **/
 
 #include <mp4.h>
@@ -47,7 +47,7 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "1.60",
+                           "1.61",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 static const char *object_type_string(int type)
@@ -719,7 +719,6 @@ public:
                 m_framesize = (frameInfo.channels != 0) ? frameInfo.samples/frameInfo.channels : 0;
                 sbr = frameInfo.sbr;
                 profile = frameInfo.object_type;
-                if (sbr) profile = 5; // temporary fix
                 header_type = frameInfo.header_type;
 
                 faacDecClose(hDecoder);
@@ -807,7 +806,7 @@ public:
             if (header_str)
                 info->info_set("aac_header_type", header_str);
 
-            if (sbr)
+            if (sbr == 1 || sbr == 2) /* SBR: 0: off, 1: on; upsample, 2: on; downsampled, 3: off; upsampled */
                 info->info_set("codec", "AAC+SBR");
             else
                 info->info_set("codec", "AAC");
