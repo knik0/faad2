@@ -80,9 +80,6 @@ MY_CHECK_TYPEDEF_FROM_INCLUDE([fpos_t foo; foo.__pos = 0;],
 
 
 external_mp4v2=yes
-AC_CHECK_LIB(mp4v2, MP4Create, , external_mp4v2=no, -lstdc++)
-AC_CHECK_LIB(mp4v2, MP4MetadataDelete, , external_mp4v2=no, -lstdc++)
-AC_CHECK_HEADER(mp4.h, , external_mp4v2=no)
 
 AM_CONDITIONAL(WITH_MP4V2, false)
 
@@ -130,7 +127,7 @@ AC_CONFIG_FILES(libfaad/Makefile frontend/Makefile common/Makefile plugins/Makef
 
 AC_CONFIG_FILES(plugins/mpeg4ip/Makefile)
 
-AC_CONFIG_FILES(common/mp4ff/Makefile common/mp4v2/Makefile)
+AC_CONFIG_FILES(common/mp4ff/Makefile)
 
 AC_CONFIG_FILES(faad2.spec)
 AC_OUTPUT
