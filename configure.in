@@ -5,7 +5,7 @@ dnl - libfaad.so
 dnl - libmp4ff.a (only static for moment)
 dnl - faad
 dnl - xmms input mp4/aac plugin
-dnl - mpeg4ip plugin (broken) -> disable for moment
+dnl - mpeg4ip plugin (requires mpeg4ip's libmp4v2 to be installed)
 
 AC_INIT
 AC_CONFIG_AUX_DIR(.)
@@ -34,6 +34,9 @@ AC_ARG_WITH(drm,[  --with-drm              compile libfaad with DRM support],
 
 dnl AC_ARG_WITH(mp4v2,[  --with-mp4v2            compile libmp4v2],
 dnl		WITHMP4V2=$withval, WITHMP4V2=no)
+
+AC_ARG_WITH(mpeg4ip, [  --with-mpeg4ip          compile mpeg4ip plugin],
+		     WITHMPEG4IP=$withval, WITHMPEG4IP=no)
 
 dnl Checks for header files required for mp4.h
 AC_HEADER_STDC
@@ -106,6 +109,17 @@ dnl   if test x$WITHMP4V2 = xyes; then
 dnl      AM_CONDITIONAL(WITH_MP4V2, true)
 dnl   fi
 dnl fi
+
+AC_CHECK_PROG(external_mp4v2, mpeg4ip-config, yes, no)
+AM_CONDITIONAL(HAVE_MPEG4IP_PLUG, false)
+if test x$WITHMPEG4IP = xyes; then
+   if test x$external_mp4v2 = xyes; then
+      AM_CONDITIONAL(HAVE_MPEG4IP_PLUG, true)
+      AC_MSG_NOTICE("Building MPEG4IP plugin")
+   else
+	AC_MSG_NOTICE("MPEG4IP libmp4v2 is required for MPEG4IP plugin")
+   fi
+fi
 
 if test x$WITHXMMS = xyes; then
   AC_CHECK_PROGS(XMMS_CONFIG, xmms-config,"not_found")
