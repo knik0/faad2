@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: audio.h,v 1.9 2003/07/29 08:20:11 menno Exp $
+** $Id: audio.h,v 1.10 2003/09/03 20:19:29 menno Exp $
 **/
 
 #ifndef AUDIO_H_INCLUDED
@@ -51,7 +51,7 @@ typedef struct
 
 audio_file *open_audio_file(char *infile, int samplerate, int channels,
                             int outputFormat, int fileType, long channelMask);
-int write_audio_file(audio_file *aufile, void *sample_buffer, int samples);
+int write_audio_file(audio_file *aufile, void *sample_buffer, int samples, int offset);
 void close_audio_file(audio_file *aufile);
 static int write_wav_header(audio_file *aufile);
 static int write_wav_extensible_header(audio_file *aufile, long channelMask);

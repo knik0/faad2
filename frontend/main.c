@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.44 2003/08/02 18:07:39 menno Exp $
+** $Id: main.c,v 1.45 2003/09/03 20:19:29 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -290,6 +290,7 @@ void usage(void)
     fprintf(stdout, "        23: LD (Low Delay) object type.\n");
     fprintf(stdout, " -d    Down matrix 5.1 to 2 channels\n");
     fprintf(stdout, " -w    Write output to stdio instead of a file.\n");
+    fprintf(stdout, " -g    Disable gapless decoding.\n");
     fprintf(stdout, "Example:\n");
     fprintf(stdout, "       faad infile.aac\n");
     fprintf(stdout, "       faad infile.mp4\n");
@@ -506,7 +507,7 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
 
         if ((frameInfo.error == 0) && (frameInfo.samples > 0))
         {
-            write_audio_file(aufile, sample_buffer, frameInfo.samples);
+            write_audio_file(aufile, sample_buffer, frameInfo.samples, 0);
         }
 
         /* fill buffer */
@@ -573,7 +574,7 @@ unsigned long srates[] =
 };
 
 int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
-                  int outputFormat, int fileType, int downMatrix, int infoOnly)
+                  int outputFormat, int fileType, int downMatrix, int noGapless, int infoOnly)
 {
     int track;
     unsigned long samplerate;
@@ -596,6 +597,12 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
     int percent, old_percent = -1;
 
     int first_time = 1;
+
+    /* for gapless decoding */
+    unsigned int useAacLength = 1;
+    unsigned int framesize;
+    unsigned int initial = 1;
+    unsigned long timescale;
 
     hDecoder = faacDecOpen();
 
@@ -649,6 +656,25 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
         MP4Close(infile);
         return 1;
     }
+
+    if (!noGapless)
+    {
+        mp4AudioSpecificConfig mp4ASC;
+
+        timescale = MP4GetTrackTimeScale(infile, track);
+        framesize = 1024;
+        useAacLength = 0;
+
+        if (buffer)
+        {
+            if (AudioSpecificConfig(buffer, buffer_size, &mp4ASC) >= 0)
+            {
+                if (mp4ASC.frameLengthFlag == 1) framesize = 960;
+                if (mp4ASC.sbr_present_flag == 1) framesize *= 2;
+            }
+        }
+    }
+
     if (buffer) free(buffer);
 
     numSamples = MP4GetTrackNumberOfSamples(infile, track);
@@ -656,13 +682,16 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
     for (sampleId = 1; sampleId <= numSamples; sampleId++)
     {
         int rc;
+        MP4Duration dur;
+        unsigned int sample_count;
+        unsigned int delay = 0;
 
         /* get acces unit from MP4 file */
         buffer = NULL;
         buffer_size = 0;
 
         rc = MP4ReadSample(infile, track, sampleId, &buffer, &buffer_size,
-            NULL, NULL, NULL, NULL);
+            NULL, &dur, NULL, NULL);
         if (rc == 0)
         {
             fprintf(stderr, "Reading from MP4 file failed.\n");
@@ -674,6 +703,28 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
         sample_buffer = faacDecDecode(hDecoder, &frameInfo, buffer, buffer_size);
 
         if (buffer) free(buffer);
+
+        if (!noGapless)
+        {
+            if (useAacLength || (timescale != samplerate)) {
+                sample_count = frameInfo.samples;
+            } else {
+                sample_count = (unsigned int)(dur * frameInfo.channels);
+
+                if (!useAacLength && !initial && (sampleId < numSamples/2) && (sample_count != frameInfo.samples))
+                {
+                    fprintf(stderr, "MP4 seems to have incorrect frame duration, using values from AAC data.\n");
+                    useAacLength = 1;
+                }
+            }
+
+            if (initial && (sample_count < framesize*frameInfo.channels))
+                delay = frameInfo.samples - sample_count;
+        }
+        else
+        {
+            sample_count = frameInfo.samples;
+        }
 
         /* open the sound file now that the number of channels are known */
         if (first_time && !frameInfo.error)
@@ -702,6 +753,8 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
             first_time = 0;
         }
 
+        if (sample_count > 0) initial = 0;
+
         percent = min((int)(sampleId*100)/numSamples, 100);
         if (percent > old_percent)
         {
@@ -713,9 +766,9 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
 #endif
         }
 
-        if ((frameInfo.error == 0) && (frameInfo.samples > 0))
+        if ((frameInfo.error == 0) && (sample_count > 0))
         {
-            write_audio_file(aufile, sample_buffer, frameInfo.samples);
+            write_audio_file(aufile, sample_buffer, sample_count, delay);
         }
 
         if (frameInfo.error > 0)
@@ -749,6 +802,7 @@ int main(int argc, char *argv[])
     int outfile_set = 0;
     int showHelp = 0;
     int mp4file = 0;
+    int noGapless = 0;
     char *fnp;
     char aacFileName[255];
     char audioFileName[255];
@@ -789,10 +843,11 @@ int main(int argc, char *argv[])
             { "downmix",    0, 0, 'd' },
             { "info",       0, 0, 'i' },
             { "stdio",      0, 0, 'w' },
+            { "stdio",      0, 0, 'g' },
             { "help",       0, 0, 'h' }
         };
 
-        c = getopt_long(argc, argv, "o:s:f:b:l:wdhi",
+        c = getopt_long(argc, argv, "o:s:f:b:l:wgdhi",
             long_options, &option_index);
 
         if (c == -1)
@@ -862,6 +917,9 @@ int main(int argc, char *argv[])
         case 'w':
             writeToStdio = 1;
             break;
+        case 'g':
+            noGapless = 1;
+            break;
         case 'i':
             infoOnly = 1;
             break;
@@ -914,7 +972,7 @@ int main(int argc, char *argv[])
     if (mp4file)
     {
         result = decodeMP4file(aacFileName, audioFileName, writeToStdio,
-            outputFormat, format, downMatrix, infoOnly);
+            outputFormat, format, downMatrix, noGapless, infoOnly);
     } else {
         result = decodeAACfile(aacFileName, audioFileName, writeToStdio,
             def_srate, object_type, outputFormat, format, downMatrix, infoOnly);
