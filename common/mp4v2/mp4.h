@@ -246,6 +246,13 @@ MP4FileHandle MP4ReadCb(const char* fileName, u_int32_t verbosity,
                         MP4FilesizeCallback MP4filesize,
                         void *userData);
 
+MP4FileHandle MP4ModifyCb(const char* fileName, 
+	u_int32_t verbosity, bool useExtensibleFormat,
+    MP4OpenCallback MP4fopen, MP4CloseCallback MP4fclose,
+    MP4ReadCallback MP4fread, MP4WriteCallback MP4fwrite,
+    MP4SetposCallback MP4fsetpos, MP4GetposCallback MP4fgetpos,
+    MP4FilesizeCallback MP4filesize, void *userData);
+
 bool MP4Close(
 	MP4FileHandle hFile);
 
@@ -899,6 +906,18 @@ char* MP4BinaryToBase16(
 char* MP4BinaryToBase64(
 	const u_int8_t* pData, 
 	u_int32_t dataSize);
+
+void MP4TagCreate(MP4FileHandle hFile, MP4TrackId trackId);
+void MP4TagDelete(MP4FileHandle hFile, MP4TrackId trackId);
+void MP4TagAddEntry(MP4FileHandle hFile, MP4TrackId trackId,
+                    const char *name, const char *value);
+#if 0
+void MP4TagDeleteEntry(MP4FileHandle hFile, MP4TrackId trackId,
+                       u_int32_t index);
+#endif
+u_int32_t MP4TagGetNumEntries(MP4FileHandle hFile, MP4TrackId trackId);
+void MP4TagGetEntry(MP4FileHandle hFile, MP4TrackId trackId,
+                    u_int32_t index, const char **name, const char **value);
 
 #ifdef __cplusplus
 }

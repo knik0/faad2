@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.7 2002/12/27 23:06:37 menno Exp $
+** $Id: foo_mp4.cpp,v 1.8 2002/12/29 10:46:50 menno Exp $
 **/
 
 #include <mp4.h>
@@ -49,11 +49,6 @@ public:
         config->outputFormat = FAAD_FMT_FLOAT;
         faacDecSetConfiguration(hDecoder, config);
 
-//        char filename[_MAX_PATH];
-//        int len = (wcslen(info->get_file_path())+1)*2;
-//        WideCharToMultiByte(CP_ACP,0,info->get_file_path(),-1,filename,len,0,0);
-
-//        hFile = MP4Read(filename, 0);
         hFile = MP4ReadCb("blablabla", 0, open_cb, close_cb, read_cb, write_cb,
             setpos_cb, getpos_cb, filesize_cb, (void*)m_reader);
         if (hFile == MP4_INVALID_FILE_HANDLE) return 0;
@@ -84,6 +79,8 @@ public:
             track, "mdia.minf.stbl.stsd.mp4a.esds.decConfigDescr.avgBitrate")) + 0.5);
         info->info_set_int("channels", (__int64)channels);
         info->info_set_int("samplerate", (__int64)m_samplerate);
+
+        ReadMP4Tag(info);
 
         return 1;
     }
@@ -140,7 +137,27 @@ public:
 
     virtual int set_info(reader *r,const file_info * info)
     {
-        return 0;
+        m_reader = r;
+
+        hFile = MP4ModifyCb("blablabla", 0, 0, open_cb, close_cb, read_cb, write_cb,
+            setpos_cb, getpos_cb, filesize_cb, (void*)m_reader);
+        if (hFile == MP4_INVALID_FILE_HANDLE) return 0;
+
+        track = GetAACTrack(hFile);
+        if (track < 1) return 0;
+
+        MP4TagDelete(hFile, track);
+        MP4TagCreate(hFile, track);
+
+        int numItems = info->meta_get_count();
+        for (int i = 0; i < numItems; i++)
+        {
+            const char *n = info->meta_enum_name(i);
+            const char *v = info->meta_enum_value(i);
+            MP4TagAddEntry(hFile, track, n, v);
+        }
+
+        return 1;
     }
 
     virtual int seek(double seconds)
@@ -161,12 +178,26 @@ private:
 
     MP4FileHandle hFile;
     MP4SampleId sampleId, numSamples;
-    int track;
+    MP4TrackId track;
 
     unsigned __int32 m_samplerate;
 
     faacDecHandle hDecoder;
 
+    int ReadMP4Tag(file_info *info)
+    {
+        int numItems = MP4TagGetNumEntries(hFile, track);
+
+        for (int i = 0; i < numItems; i++)
+        {
+            const char *n = NULL, *v = NULL;
+
+            MP4TagGetEntry(hFile, track, i, &n, &v);
+            info->meta_add(n, v);
+        }
+
+        return 1;
+    }
 
     int GetAACTrack(MP4FileHandle infile)
     {
@@ -228,7 +259,8 @@ private:
     static unsigned __int32 write_cb(void *pBuffer, unsigned int nBytesToWrite,
         void *userData)
     {
-        return 0;
+        reader *r = (reader*)userData;
+        return r->write(pBuffer, nBytesToWrite);
     }
 
     static __int64 getpos_cb(void *userData)

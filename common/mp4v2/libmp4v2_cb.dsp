@@ -287,6 +287,10 @@ SOURCE=.\atom_stts.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\atom_tag4.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\atom_tfhd.cpp
 # End Source File
 # Begin Source File

@@ -1,13 +1,13 @@
 Microsoft Visual Studio Solution File, Format Version 7.00
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "foo_mp4", "foo_mp4.vcproj", "{5CEB23D7-5BDB-4D77-978A-D5B8572843FF}"
+Project("{EAF909A5-FA59-4C3D-9431-0FCC20D5BCF9}") = "foo_mp4", "foo_mp4.vcproj", "{5CEB23D7-5BDB-4D77-978A-D5B8572843FF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "foobar2000_SDK", "foobar2000\SDK\foobar2000_SDK.vcproj", "{409102E1-0B45-41CD-A3F8-C37371520D9B}"
+Project("{EAF909A5-FA59-4C3D-9431-0FCC20D5BCF9}") = "foobar2000_SDK", "foobar2000\SDK\foobar2000_SDK.vcproj", "{409102E1-0B45-41CD-A3F8-C37371520D9B}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libfaad", "..\..\libfaad\libfaad.vcproj", "{AB39547E-6CAC-4E25-8BC4-C97EFC144800}"
+Project("{EAF909A5-FA59-4C3D-9431-0FCC20D5BCF9}") = "libfaad", "..\..\libfaad\libfaad.vcproj", "{AB39547E-6CAC-4E25-8BC4-C97EFC144800}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pfc_unicode", "pfc\pfc_unicode.vcproj", "{5C9C90BE-0FEA-4C67-9A4C-C2513C2E27C4}"
+Project("{EAF909A5-FA59-4C3D-9431-0FCC20D5BCF9}") = "pfc_unicode", "pfc\pfc_unicode.vcproj", "{5C9C90BE-0FEA-4C67-9A4C-C2513C2E27C4}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libmp4v2_cb", "..\..\common\mp4v2\libmp4v2_cb.vcproj", "{FAEB6203-052A-4073-AC1C-9CF6FB5B40CC}"
+Project("{EAF909A5-FA59-4C3D-9431-0FCC20D5BCF9}") = "libmp4v2_cb", "..\..\common\mp4v2\libmp4v2_cb.vcproj", "{FAEB6203-052A-4073-AC1C-9CF6FB5B40CC}"
 EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution

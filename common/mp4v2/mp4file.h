@@ -422,6 +422,16 @@ public: /* equivalent to MP4 library API */
 		MP4Timestamp* pStartTime = NULL,
 		MP4Duration* pDuration = NULL);
 
+    /* tagging */
+    void TagCreate(MP4TrackId trackId);
+    void TagDelete(MP4TrackId trackId);
+    void TagAddEntry(MP4TrackId trackId,
+        const char *name, const char *value);
+    void TagDeleteEntry(MP4TrackId trackId, u_int32_t index);
+    u_int32_t TagGetNumEntries(MP4TrackId trackId);
+    void TagGetEntry(MP4TrackId trackId, u_int32_t index,
+        const char **name, const char **value);
+
 	/* end of MP4 API */
 
 	/* "protected" interface to be used only by friends in library */

@@ -584,6 +584,37 @@ bool MP4TableProperty::FindContainedProperty(const char *name,
 	return false;
 }
 
+void MP4TableProperty::DeleteEntry(u_int32_t index)
+{
+    u_int32_t numProperties = m_pProperties.Size();
+
+	for (u_int32_t i = 0; i < numProperties; i++) {
+        switch (m_pProperties[i]->GetType()) {
+        case Integer8Property:
+            ((MP4Integer8Property*)m_pProperties[i])->DeleteValue(index);
+            break;
+        case Integer16Property:
+            ((MP4Integer16Property*)m_pProperties[i])->DeleteValue(index);
+            break;
+        case Integer24Property:
+            ((MP4Integer24Property*)m_pProperties[i])->DeleteValue(index);
+            break;
+        case Integer32Property:
+            ((MP4Integer32Property*)m_pProperties[i])->DeleteValue(index);
+            break;
+        case Integer64Property:
+            ((MP4Integer64Property*)m_pProperties[i])->DeleteValue(index);
+            break;
+        case StringProperty:
+            ((MP4StringProperty*)m_pProperties[i])->DeleteValue(index);
+            break;
+        default:
+            ASSERT(FALSE);
+            break;
+        }
+    }
+}
+
 void MP4TableProperty::Read(MP4File* pFile, u_int32_t index)
 {
 	ASSERT(index == 0);

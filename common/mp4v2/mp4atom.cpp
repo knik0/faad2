@@ -225,6 +225,8 @@ MP4Atom* MP4Atom::CreateAtom(const char* type)
 			pAtom = new MP4RtpAtom();
 		} else if (ATOMID(type) == ATOMID("vmhd")) {
 			pAtom = new MP4VmhdAtom();
+		} else if (ATOMID(type) == ATOMID("TAG4")) {
+			pAtom = new MP4Tag4Atom();
 		}
 	}
 

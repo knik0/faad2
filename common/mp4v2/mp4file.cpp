@@ -2312,3 +2312,132 @@ MP4SampleId MP4File::GetSampleIdFromEditTime(
 		when, pStartTime, pDuration);
 }
 
+
+/* Code for handling mp4 tagging */
+
+void MP4File::TagCreate(MP4TrackId trackId)
+{
+    if (trackId == NULL)
+        AddDescendantAtoms("moov", "udta.TAG4");
+    else
+        AddDescendantAtoms(MakeTrackName(trackId, NULL), "udta.TAG4");
+}
+
+void MP4File::TagDelete(MP4TrackId trackId)
+{
+    MP4Atom *pUdtaAtom = NULL;
+    MP4Atom *pTagAtom = NULL;
+
+    if (trackId == NULL)
+    {
+        pUdtaAtom = m_pRootAtom->FindAtom("moov.udta");
+        pTagAtom = m_pRootAtom->FindAtom("moov.udta.TAG4");
+    } else {
+        pUdtaAtom = m_pRootAtom->FindAtom(MakeTrackName(trackId, "udta"));
+        pTagAtom = m_pRootAtom->FindAtom(MakeTrackName(trackId, "udta.TAG4"));
+    }
+
+    pUdtaAtom->DeleteChildAtom(pTagAtom);
+
+    delete pTagAtom;
+}
+
+void MP4File::TagAddEntry(MP4TrackId trackId,
+                          const char *name, const char *value)
+{
+    MP4StringProperty *pNameProperty = NULL;
+    MP4StringProperty *pValueProperty = NULL;
+    MP4Integer32Property *pCountProperty = NULL;
+    MP4Atom *pTagAtom = NULL;
+
+    if (trackId == NULL)
+        pTagAtom = m_pRootAtom->FindAtom("moov.udta.TAG4");
+    else
+        pTagAtom = m_pRootAtom->FindAtom(MakeTrackName(trackId, "udta.TAG4"));
+
+    pTagAtom->FindProperty("TAG4.entryCount",
+        (MP4Property**)&pCountProperty);
+    ASSERT(pCountProperty);
+
+    pTagAtom->FindProperty("TAG4.entries.name",
+        (MP4Property**)&pNameProperty);
+    ASSERT(pNameProperty);
+
+    pNameProperty->AddValue((char*)name);
+
+    pTagAtom->FindProperty("TAG4.entries.value",
+        (MP4Property**)&pValueProperty);
+    ASSERT(pValueProperty);
+
+    pValueProperty->AddValue((char*)value);
+
+    pCountProperty->IncrementValue();
+}
+
+#if 0
+void MP4File::TagDeleteEntry(MP4TrackId trackId, u_int32_t index)
+{
+    MP4TableProperty *pEntryProperty = NULL;
+    MP4Integer32Property *pCountProperty = NULL;
+    MP4Atom *pTagAtom = NULL;
+
+    if (trackId == NULL)
+        pTagAtom = m_pRootAtom->FindAtom("moov.udta.TAG4");
+    else
+        pTagAtom = m_pRootAtom->FindAtom(MakeTrackName(trackId, "udta.TAG4"));
+
+    pTagAtom->FindProperty("TAG4.entryCount",
+        (MP4Property**)&pCountProperty);
+    ASSERT(pCountProperty);
+
+    pTagAtom->FindProperty("TAG4.entries",
+        (MP4Property**)&pEntryProperty);
+    ASSERT(pEntryProperty);
+
+    pEntryProperty->DeleteEntry(index);
+
+    pCountProperty->IncrementValue(-1);
+}
+#endif
+
+u_int32_t MP4File::TagGetNumEntries(MP4TrackId trackId)
+{
+    MP4Integer32Property *pCountProperty = NULL;
+    MP4Atom *pTagAtom = NULL;
+
+    if (trackId == NULL)
+        pTagAtom = m_pRootAtom->FindAtom("moov.udta.TAG4");
+    else
+        pTagAtom = m_pRootAtom->FindAtom(MakeTrackName(trackId, "udta.TAG4"));
+
+    if (pTagAtom)
+    {
+        pTagAtom->FindProperty("TAG4.entryCount",
+            (MP4Property**)&pCountProperty);
+        if (pCountProperty)
+        {
+            return pCountProperty->GetValue();
+        }
+    }
+
+    return 0;
+}
+
+void MP4File::TagGetEntry(MP4TrackId trackId, u_int32_t index,
+                          const char **name, const char **value)
+{
+    char s[256];
+
+    if (trackId == NULL)
+    {
+        sprintf(s, "moov.udta.TAG4.entries[%u].name", index);		
+        *name = GetStringProperty(s);
+        sprintf(s, "moov.udta.TAG4.entries[%u].value", index);
+        *value = GetStringProperty(s);
+    } else {
+        sprintf(s, "udta.TAG4.entries[%u].name", index);		
+        *name = GetTrackStringProperty(trackId, s);
+        sprintf(s, "udta.TAG4.entries[%u].value", index);
+        *value = GetTrackStringProperty(trackId, s);
+    }
+}

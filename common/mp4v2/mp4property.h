@@ -307,6 +307,10 @@ public:
 		SetValue(value, count);
 	}
 
+    void DeleteValue(u_int32_t index) {
+        m_values.Delete(index);
+    }
+
 	bool IsCountedFormat() {
 		return m_useCountedFormat;
 	}
@@ -460,6 +464,8 @@ public:
 
 	bool FindProperty(const char* name,
 		MP4Property** ppProperty, u_int32_t* pIndex = NULL);
+
+    void DeleteEntry(u_int32_t index);
 
 protected:
 	virtual void ReadEntry(MP4File* pFile, u_int32_t index);

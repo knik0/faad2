@@ -443,4 +443,9 @@ public:
 	void Write();
 };
 
+class MP4Tag4Atom : public MP4Atom {
+public:
+	MP4Tag4Atom();
+};
+
 #endif /* __MP4_ATOMS_INCLUDED__ */
