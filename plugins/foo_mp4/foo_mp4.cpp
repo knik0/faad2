@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.59 2003/09/20 11:11:19 ca5e Exp $
+** $Id: foo_mp4.cpp,v 1.60 2003/09/23 16:55:00 ca5e Exp $
 **/
 
 #include <mp4.h>
@@ -47,8 +47,49 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "1.58",
+                           "1.59",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
+
+static const char *object_type_string(int type)
+{
+    static const char *types[31] = {
+        "AAC Main",
+        "AAC LC",
+        "AAC SSR",
+        "AAC LTP",
+        "AAC HE",
+        "AAC Scalable",
+        "TwinVQ",
+        "CELP",
+        "HVXC",
+        "Reserved",
+        "Reserved",
+        "TTSI",
+        "Main synthetic",
+        "Wavetable synthesis",
+        "General MIDI",
+        "Algorithmic Synthesis and Audio FX",
+        "ER AAC LC",
+        "Reserved",
+        "ER AAC LTP",
+        "ER AAC scalable",
+        "ER TwinVQ",
+        "ER BSAC",
+        "ER AAC LD",
+        "ER CELP",
+        "ER HVXC",
+        "ER HILN",
+        "ER Parametric",
+        "Reserved",
+        "Reserved",
+        "Reserved",
+        "Reserved",
+    };
+
+    if (type<1 || type>31) return NULL;
+
+    return types[type-1];
+}
 
 class input_mp4 : public input
 {
@@ -141,6 +182,11 @@ public:
             track, "mdia.minf.stbl.stsd.mp4a.esds.decConfigDescr.avgBitrate") + 0.5));
         info->info_set_int("channels", (__int64)channels);
         info->info_set_int("samplerate", (__int64)samplerate);
+
+        const char *profile_str = object_type_string(mp4ASC.objectTypeIndex);
+        if (profile_str)
+            info->info_set("aac_profile", profile_str);
+
         if (mp4ASC.sbr_present_flag == 1) {
             info->info_set("codec", "AAC+SBR");
             m_framesize *= 2;
@@ -607,6 +653,9 @@ public:
         __int64 bitrate = 128;
         unsigned char channels = 0;
         unsigned long samplerate = 0;
+        int sbr = 0;
+        int header_type = 0;
+        int profile = 0;
 
         m_reader = r;
         tagsize = (int)id3v2_calc_size(m_reader);
@@ -658,9 +707,6 @@ public:
                     memset(&frameInfo, 0, sizeof(faacDecFrameInfo));
                     fill_buffer();
                     faacDecDecode(hDecoder, &frameInfo, m_aac_buffer, m_aac_bytes_into_buffer);
-
-                    m_samplerate = frameInfo.samplerate;
-                    m_framesize = (frameInfo.channels != 0) ? frameInfo.samples/frameInfo.channels : 0;
                 } while (!frameInfo.samples && !frameInfo.error);
 
                 if (frameInfo.error)
@@ -668,6 +714,12 @@ public:
                     console::error(faacDecGetErrorMessage(frameInfo.error));
                     return 0;
                 }
+
+                m_samplerate = frameInfo.samplerate;
+                m_framesize = (frameInfo.channels != 0) ? frameInfo.samples/frameInfo.channels : 0;
+                sbr = frameInfo.sbr;
+                profile = frameInfo.object_type;
+                header_type = frameInfo.header_type;
 
                 faacDecClose(hDecoder);
                 m_reader->seek(tagsize);
@@ -734,20 +786,30 @@ public:
         m_length = length;
 
         if (flags & OPEN_FLAG_GET_INFO) {
+            const char *profile_str = object_type_string(profile);
+            const char *header_str = NULL;
+
             info->info_set_int("bitrate", bitrate);
             info->info_set_int("channels", (__int64)channels);
             info->info_set_int("samplerate", (__int64)m_samplerate);
 
-            if (m_framesize > 1024) //if (m_samplerate != samplerate)
+            if (profile_str)
+                info->info_set("aac_profile", profile_str);
+
+            if (header_type == RAW)
+                header_str = "RAW";
+            else if (header_type == ADIF)
+                header_str = "ADIF";
+            else if (header_type == ADTS)
+                header_str = "ADTS";
+
+            if (header_str)
+                info->info_set("aac_header_type", header_str);
+
+            if (sbr)
                 info->info_set("codec", "AAC+SBR");
             else
                 info->info_set("codec", "AAC");
-            if (m_header_type == 0)
-                info->info_set("stream type", "RAW");
-            else if (m_header_type == 1)
-                info->info_set("stream type", "ADTS");
-            else if (m_header_type == 2)
-                info->info_set("stream type", "ADIF");
         }
 
         tag_reader::g_run_multi(m_reader, info, "ape|id3v2|lyrics3|id3v1");

@@ -100,67 +100,7 @@ SOURCE=.\foo_mp4.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\foobar2000\SDK\audio_chunk.h
-# End Source File
-# Begin Source File
-
-SOURCE="..\..\..\..\..\Program Files\DXSDK\include\basetsd.h"
-# End Source File
-# Begin Source File
-
-SOURCE=.\pfc\cfg_memblock.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\pfc\cfg_var.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\foobar2000\SDK\component.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\foobar2000\SDK\componentversion.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\foobar2000\SDK\console.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\pfc\critsec.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\include\faad.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\foobar2000\SDK\file_info.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\foobar2000\SDK\foobar2000.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\pfc\grow_buf.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\foobar2000\SDK\input.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\foobar2000\SDK\interface_helper.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\pfc\mem_block.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\pfc\mem_block_mgr.h
 # End Source File
 # Begin Source File
 
@@ -169,38 +109,6 @@ SOURCE=..\..\common\mp4v2\mp4.h
 # Begin Source File
 
 SOURCE=..\..\common\mp4v2\mpeg4ip.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\pfc\pfc.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\foobar2000\SDK\playlist_entry.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\pfc\profiler.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\pfc\ptr_list.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\foobar2000\SDK\reader.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\foobar2000\SDK\reader_helper.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\foobar2000\SDK\service.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\pfc\string_unicode.h
 # End Source File
 # Begin Source File
 
