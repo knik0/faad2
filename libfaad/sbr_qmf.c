@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_qmf.c,v 1.20 2004/02/26 09:29:28 menno Exp $
+** $Id: sbr_qmf.c,v 1.22 2004/03/10 19:45:42 menno Exp $
 **/
 
 #include "common.h"
@@ -252,7 +252,7 @@ void sbr_qmf_synthesis_32(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
 
         /* even n samples */
         DCT2_16_unscaled(x, x);
-        /* uneven n samples */
+        /* odd n samples */
         DCT4_16(y, y);
 
         for (n = 8; n < 24; n++)
@@ -337,7 +337,7 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
 
         /* even n samples */
         DCT2_32_unscaled(x, x);
-        /* uneven n samples */
+        /* odd n samples */
         DCT4_32(y, y);
 
         for (n = 16; n < 48; n++)
@@ -389,7 +389,9 @@ void sbr_qmf_synthesis_32(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
                           real_t *output)
 {
     ALIGN real_t x1[32], x2[32];
+#ifndef FIXED_POINT
     real_t scale = 1.f/64.f;
+#endif
     int16_t n, k, out = 0;
     uint8_t l;
 
@@ -414,8 +416,13 @@ void sbr_qmf_synthesis_32(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
             x1[k] = QMF_RE(X[l][k]) * RE(qmfs->pre_twiddle[k]) - QMF_IM(X[l][k]) * IM(qmfs->pre_twiddle[k]);
             x2[k] = QMF_IM(X[l][k]) * RE(qmfs->pre_twiddle[k]) + QMF_RE(X[l][k]) * IM(qmfs->pre_twiddle[k]);
 
+#ifndef FIXED_POINT
             x1[k] *= scale;
             x2[k] *= scale;
+#else
+            x1[k] >>= 1;
+            x2[k] >>= 1;
+#endif
         }
 
         /* transform */
@@ -449,7 +456,9 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
                           real_t *output)
 {
     ALIGN real_t x1[64], x2[64];
+#ifndef FIXED_POINT
     real_t scale = 1.f/64.f;
+#endif
     int16_t n, k, out = 0;
     uint8_t l;
 
@@ -468,6 +477,7 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
         qmfs->v_index = (qmfs->v_index + 1) & 0x1;
 
         /* calculate 128 samples */
+#ifndef FIXED_POINT
         x1[0] = scale*QMF_RE(X[l][0]);
         x2[63] = scale*QMF_IM(X[l][0]);
         for (k = 0; k < 31; k++)
@@ -480,6 +490,20 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
         }
         x1[63] = scale*QMF_RE(X[l][63]);
         x2[0] = scale*QMF_IM(X[l][63]);
+#else
+        x1[0] = QMF_RE(X[l][0])>>1;
+        x2[63] = QMF_IM(X[l][0])>>1;
+        for (k = 0; k < 31; k++)
+        {
+            x1[2*k+1] = (QMF_RE(X[l][2*k+1]) - QMF_RE(X[l][2*k+2]))>>1;
+            x1[2*k+2] = (QMF_RE(X[l][2*k+1]) + QMF_RE(X[l][2*k+2]))>>1;
+
+            x2[61 - 2*k] = (QMF_IM(X[l][2*k+2]) - QMF_IM(X[l][2*k+1]))>>1;
+            x2[62 - 2*k] = (QMF_IM(X[l][2*k+2]) + QMF_IM(X[l][2*k+1]))>>1;
+        }
+        x1[63] = QMF_RE(X[l][63])>>1;
+        x2[0] = QMF_IM(X[l][63])>>1;
+#endif
 
         DCT4_64_kernel(x1, x1);
         DCT4_64_kernel(x2, x2);

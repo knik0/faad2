@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_syntax.c,v 1.26 2004/02/26 09:29:28 menno Exp $
+** $Id: sbr_syntax.c,v 1.28 2004/03/10 19:45:42 menno Exp $
 **/
 
 #include "common.h"
@@ -98,11 +98,6 @@ static void sbr_reset(sbr_info *sbr)
     sbr->bs_alter_scale_prev = sbr->bs_alter_scale;
     sbr->bs_xover_band_prev = sbr->bs_xover_band;
     sbr->bs_noise_bands_prev = sbr->bs_noise_bands;
-
-    if (sbr->frame == 0)
-    {
-        sbr->Reset = 1;
-    }
 }
 
 /* table 2 */
@@ -703,7 +698,7 @@ static uint16_t sbr_extension(bitfile *ld, sbr_info *sbr,
         sbr->ps_used = 1;
         if (!sbr->ps)
         {
-            sbr->ps = ps_init();
+            sbr->ps = ps_init(get_sr_index(sbr->sample_rate));
         }
         return ps_data(sbr->ps, ld);
 #endif

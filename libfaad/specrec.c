@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.44 2004/02/26 09:29:28 menno Exp $
+** $Id: specrec.c,v 1.45 2004/03/02 19:37:26 menno Exp $
 **/
 
 /*
@@ -900,7 +900,6 @@ uint8_t reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
         return 21;
     }
 
-
     if (hDecoder->element_alloced[hDecoder->fr_ch_ele] == 0)
     {
         retval = allocate_single_channel(hDecoder, sce->channel, output_channels);
@@ -1032,7 +1031,8 @@ uint8_t reconstruct_single_channel(faacDecHandle hDecoder, ic_stream *ics,
         if (hDecoder->sbr[ele] == NULL)
         {
             hDecoder->sbr[ele] = sbrDecodeInit(hDecoder->frameLength,
-                sce->ele_id, 2*get_sample_rate(hDecoder->sf_index)
+                sce->ele_id, 2*get_sample_rate(hDecoder->sf_index),
+                hDecoder->downSampledSBR
 #ifdef DRM
                 , 0
 #endif
@@ -1257,7 +1257,8 @@ uint8_t reconstruct_channel_pair(faacDecHandle hDecoder, ic_stream *ics1, ic_str
         if (hDecoder->sbr[ele] == NULL)
         {
             hDecoder->sbr[ele] = sbrDecodeInit(hDecoder->frameLength,
-                cpe->ele_id, 2*get_sample_rate(hDecoder->sf_index)
+                cpe->ele_id, 2*get_sample_rate(hDecoder->sf_index),
+                hDecoder->downSampledSBR
 #ifdef DRM
                 , 0
 #endif

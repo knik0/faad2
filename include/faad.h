@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: faad.h,v 1.41 2004/02/26 09:32:50 menno Exp $
+** $Id: faad.h,v 1.42 2004/03/02 19:37:26 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -98,8 +98,8 @@ extern "C" {
 #define DRMCH_MONO          1
 #define DRMCH_STEREO        2
 #define DRMCH_SBR_MONO      3
-#define DRMCH_SBR_LC_STEREO 4
-#define DRMCH_SBR_STEREO    5
+#define DRMCH_SBR_STEREO    4
+#define DRMCH_SBR_PS_STEREO 5
 
 
 /* A decode call can eat up to FAAD_MIN_STREAMSIZE bytes per decoded channel,

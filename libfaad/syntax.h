@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.h,v 1.49 2004/02/26 09:29:28 menno Exp $
+** $Id: syntax.h,v 1.50 2004/03/02 19:37:27 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -60,8 +60,8 @@ extern "C" {
 #define DRMCH_MONO          1
 #define DRMCH_STEREO        2
 #define DRMCH_SBR_MONO      3
-#define DRMCH_SBR_LC_STEREO 4
-#define DRMCH_SBR_STEREO    5
+#define DRMCH_SBR_STEREO    4
+#define DRMCH_SBR_PS_STEREO 5
 
 
 /* First object type that has ER */

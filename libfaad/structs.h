@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: structs.h,v 1.32 2004/02/26 09:29:28 menno Exp $
+** $Id: structs.h,v 1.33 2004/03/02 19:37:26 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -421,9 +421,6 @@ typedef struct
     uint8_t sbr_alloced[MAX_SYNTAX_ELEMENTS];
 
     sbr_info *sbr[MAX_SYNTAX_ELEMENTS];
-#ifdef DRM
-    int8_t lcstereo_flag;
-#endif
 #endif
 #if (defined(PS_DEC) || defined(DRM_PS))
     uint8_t ps_used[MAX_SYNTAX_ELEMENTS];

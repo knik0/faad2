@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.95 2004/02/26 09:29:26 menno Exp $
+** $Id: decoder.c,v 1.96 2004/03/02 19:37:26 menno Exp $
 **/
 
 #include "common.h"
@@ -396,11 +396,6 @@ int8_t FAADAPI faacDecInitDRM(faacDecHandle hDecoder, uint32_t samplerate,
         hDecoder->channelConfiguration = 1;
 
 #ifdef SBR_DEC
-    if (channels == DRMCH_SBR_LC_STEREO)
-        hDecoder->lcstereo_flag = 1;
-    else
-        hDecoder->lcstereo_flag = 0;
-
     if ((channels == DRMCH_MONO) || (channels == DRMCH_STEREO))
         hDecoder->sbr_present_flag = 0;
     else

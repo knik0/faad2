@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.72 2004/02/26 09:29:28 menno Exp $
+** $Id: syntax.c,v 1.73 2004/03/02 19:37:26 menno Exp $
 **/
 
 /*
@@ -986,7 +986,8 @@ static uint8_t fill_element(faacDecHandle hDecoder, bitfile *ld, drc_info *drc
             if (!hDecoder->sbr[sbr_ele])
             {
                 hDecoder->sbr[sbr_ele] = sbrDecodeInit(hDecoder->frameLength,
-                    hDecoder->element_id[sbr_ele], 2*get_sample_rate(hDecoder->sf_index)
+                    hDecoder->element_id[sbr_ele], 2*get_sample_rate(hDecoder->sf_index),
+                    hDecoder->downSampledSBR
 #ifdef DRM
                     , 0
 #endif
@@ -1145,11 +1146,13 @@ void aac_scalable_main_element(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
 
     cpe.common_window = 1;
     if (this_layer_stereo)
+    {
         cpe.ele_id = ID_CPE;
-    else
+        if (hDecoder->element_output_channels[hDecoder->fr_ch_ele] == 0)
+            hDecoder->element_output_channels[hDecoder->fr_ch_ele] = 2;
+    } else {
         cpe.ele_id = ID_SCE;
-
-    hDecoder->element_output_channels[hDecoder->fr_ch_ele] = (this_layer_stereo ? 2 : 0);
+    }
 
     for (ch = 0; ch < (this_layer_stereo ? 2 : 1); ch++)
     {
@@ -1194,7 +1197,7 @@ void aac_scalable_main_element(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
         if (!hDecoder->sbr[0])
         {
             hDecoder->sbr[0] = sbrDecodeInit(hDecoder->frameLength, cpe.ele_id,
-                2*get_sample_rate(hDecoder->sf_index), 1);
+                2*get_sample_rate(hDecoder->sf_index), 0 /* ds SBR */, 1);
         }
 
         /* Reverse bit reading of SBR data in DRM audio frame */
@@ -1208,8 +1211,6 @@ void aac_scalable_main_element(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
         /* consider 8 bits from AAC-CRC */
         count = (uint16_t)bit2byte(buffer_size*8 - bitsconsumed);
         faad_initbits(&ld_sbr, revbuffer, count);
-
-        hDecoder->sbr[0]->lcstereo_flag = hDecoder->lcstereo_flag;
 
         hDecoder->sbr[0]->sample_rate = get_sample_rate(hDecoder->sf_index);
         hDecoder->sbr[0]->sample_rate *= 2;

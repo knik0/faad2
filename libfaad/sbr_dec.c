@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.c,v 1.27 2004/02/26 09:29:28 menno Exp $
+** $Id: sbr_dec.c,v 1.30 2004/03/10 19:45:41 menno Exp $
 **/
 
 
@@ -45,7 +45,7 @@
 static uint8_t sbr_save_prev_data(sbr_info *sbr, uint8_t ch);
 
 sbr_info *sbrDecodeInit(uint16_t framelength, uint8_t id_aac,
-                        uint32_t sample_rate
+                        uint32_t sample_rate, uint8_t downSampledSBR
 #ifdef DRM
 						, uint8_t IsDRM
 #endif
@@ -71,6 +71,7 @@ sbr_info *sbrDecodeInit(uint16_t framelength, uint8_t id_aac,
     sbr->prevEnvIsShort[0] = -1;
     sbr->prevEnvIsShort[1] = -1;
     sbr->header_count = 0;
+    sbr->Reset = 1;
 
 #ifdef DRM
     sbr->Is_DRM_SBR = IsDRM;
@@ -89,6 +90,44 @@ sbr_info *sbrDecodeInit(uint16_t framelength, uint8_t id_aac,
     } else {
         sbr->numTimeSlotsRate = RATE * NO_TIME_SLOTS;
         sbr->numTimeSlots = NO_TIME_SLOTS;
+    }
+
+    if (id_aac == ID_CPE)
+    {
+        /* stereo */
+        uint8_t j;
+        sbr->qmfa[0] = qmfa_init(32);
+        sbr->qmfa[1] = qmfa_init(32);
+        sbr->qmfs[0] = qmfs_init((downSampledSBR)?32:64);
+        sbr->qmfs[1] = qmfs_init((downSampledSBR)?32:64);
+
+        for (j = 0; j < 5; j++)
+        {
+            sbr->G_temp_prev[0][j] = faad_malloc(64*sizeof(real_t));
+            sbr->G_temp_prev[1][j] = faad_malloc(64*sizeof(real_t));
+            sbr->Q_temp_prev[0][j] = faad_malloc(64*sizeof(real_t));
+            sbr->Q_temp_prev[1][j] = faad_malloc(64*sizeof(real_t));
+        }
+
+        memset(sbr->Xsbr[0], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*64 * sizeof(qmf_t));
+        memset(sbr->Xsbr[1], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*64 * sizeof(qmf_t));
+        memset(sbr->Xcodec[0], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*32 * sizeof(qmf_t));
+        memset(sbr->Xcodec[1], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*32 * sizeof(qmf_t));
+    } else {
+        /* mono */
+        uint8_t j;
+        sbr->qmfa[0] = qmfa_init(32);
+        sbr->qmfs[0] = qmfs_init((downSampledSBR)?32:64);
+        sbr->qmfs[1] = NULL;
+
+        for (j = 0; j < 5; j++)
+        {
+            sbr->G_temp_prev[0][j] = faad_malloc(64*sizeof(real_t));
+            sbr->Q_temp_prev[0][j] = faad_malloc(64*sizeof(real_t));
+        }
+
+        memset(sbr->Xsbr[0], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*64 * sizeof(qmf_t));
+        memset(sbr->Xcodec[0], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*32 * sizeof(qmf_t));
     }
 
     return sbr;
@@ -163,22 +202,6 @@ static void sbr_process_channel(sbr_info *sbr, real_t *channel_buf, qmf_t X[MAX_
 #ifdef SBR_LOW_POWER
     ALIGN real_t deg[64];
 #endif
-
-    if (sbr->frame == 0)
-    {
-        uint8_t j;
-        sbr->qmfa[ch] = qmfa_init(32);
-        sbr->qmfs[ch] = qmfs_init((downSampledSBR)?32:64);
-
-        for (j = 0; j < 5; j++)
-        {
-            sbr->G_temp_prev[ch][j] = faad_malloc(64*sizeof(real_t));
-            sbr->Q_temp_prev[ch][j] = faad_malloc(64*sizeof(real_t));
-        }
-
-        memset(sbr->Xsbr[ch], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*64 * sizeof(qmf_t));
-        memset(sbr->Xcodec[ch], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*32 * sizeof(qmf_t));
-    }
 
     /* subband analysis */
     if (dont_process)
@@ -412,8 +435,8 @@ uint8_t sbrDecodeSingleFramePS(sbr_info *sbr, real_t *left_channel, real_t *righ
     uint8_t l, k;
     uint8_t dont_process = 0;
     uint8_t ret = 0;
-    ALIGN qmf_t X_left[38][64];
-    ALIGN qmf_t X_right[38][64];
+    ALIGN qmf_t X_left[38][64] = {{0}};
+    ALIGN qmf_t X_right[38][64] = {{0}}; /* must set this to 0 */
 
     if (sbr == NULL)
         return 20;
@@ -439,9 +462,9 @@ uint8_t sbrDecodeSingleFramePS(sbr_info *sbr, real_t *left_channel, real_t *righ
         sbr->just_seeked = 0;
     }
 
-    if (sbr->frame == 0)
+    if (sbr->qmfs[1] == NULL)
     {
-        sbr->qmfs[1] = qmfs_init(64);
+        sbr->qmfs[1] = qmfs_init((downSampledSBR)?32:64);
     }
 
     sbr_process_channel(sbr, left_channel, X_left, 0, dont_process, downSampledSBR);
@@ -460,7 +483,7 @@ uint8_t sbrDecodeSingleFramePS(sbr_info *sbr, real_t *left_channel, real_t *righ
 #ifdef DRM
     if (sbr->Is_DRM_SBR)
     {
-        drm_ps_decode(sbr->drm_ps, X_left, X_right);
+        drm_ps_decode(sbr->drm_ps, sbr->sample_rate, X_left, X_right);
     } else {
 #endif
 #ifdef PS_DEC
