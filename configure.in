@@ -60,6 +60,8 @@ MY_CHECK_TYPEDEF_FROM_INCLUDE([fpos_t foo; foo.__pos = 0;],
 
 AC_OUTPUT_COMMANDS(,[cd common/mp4v2; aclocal -I .; autoheader; libtoolize --automake; automake --add-missing; autoconf; cd -])
 
-AC_CONFIG_SUBDIRS(common/mp4v2)
+AC_OUTPUT_COMMANDS(,[cd plugins/xmms; libtoolize; aclocal; autoconf; automake --add-missing; cd -])
 
-AC_OUTPUT(libfaad/Makefile common/Makefile  frontend/Makefile Makefile)
+AC_CONFIG_SUBDIRS(common/mp4v2 plugins/xmms)
+
+AC_OUTPUT(libfaad/Makefile common/Makefile  frontend/Makefile Makefile plugins/Makefile)

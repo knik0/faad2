@@ -1,7 +1,12 @@
-CFLAGS = @CFLAGS@ -Wall
-bin_PROGRAMS = libaac.so
+libdir = `xmms-config --input-plugin-dir`
 
-INCLUDES = `xmms-config --cflags` -I@FAAD2_DIR@/include -I@ID3_DIR@/include
-libaac_so_LDFLAGS = -shared -L@FAAD2_DIR@/lib -L@ID3_DIR@/lib `xmms-config --libs` -lpthread -lfaad -lz
+lib_LTLIBRARIES = libaac.la
 
-libaac_so_SOURCES = libaac.c id3.cpp
+if USE_STATIC_FAAD2
+INCLUDES = -I../../$(top_srcdir)/include
+libaac_la_LDFLAGS = -module -avoid-version `xmms-config --libs` -lpthread -lid3 -lstdc++ -lz
+libaac_la_LIBADD = ../../$(top_srcdir)/libfaad/libfaad.la
+else
+libaac_la_LDFLAGS = -module -avoid-version `xmms-config --libs` -lpthread -lfaad -lz -lid3 -lstdc++
+endif
+libaac_la_SOURCES = libaac.c id3.cpp dialog_gtk1.c aac_utils.c

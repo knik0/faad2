@@ -1,41 +1,46 @@
-dnl
+dnl configure.in for faad2-2.0 package
+
 AC_INIT(src/libaac.c)
-AM_INIT_AUTOMAKE(libaac, 0.0.1)
+AM_INIT_AUTOMAKE(libaac, 0.5)
+
+dnl save CFLAGS since AC_PROG_CC insert "-g -O2" if CFLAGS is empty
+cflags_save="$CFLAGS"
+
+AC_DISABLE_STATIC
+AM_DISABLE_STATIC
 
 AC_PROG_CC
 AC_PROG_CXX
-AC_PROG_INSTALL
+AC_PROG_LIBTOOL
 
-dnl AM_DISABLE_STATIC
-dnl AM_PROG_LIBTOOL
 
-AC_CHECK_HEADER(pthread.h,,AC_MSG_ERROR([thread support not installed or not found]))
-dnl AM_PATH_GLIB(1.2.2,,AC_MSG_ERROR([ GLIB >=1.2.2 not installed or not found]))
-dnl AM_PATH_GTK(1.2.2,,AC_MSG_ERROR([ GTK+ >=1.2.2 not installed or not found]),gthread)
-AC_PATH_PROG(XMMS_PATH,xmms,no)
-LIBS="$LIBS $GTK_LIBS"
-CFLAGS="$CFLAGS $GTK_CFLAGS"
-PTHREAD_LIBS="-lpthread"
-AC_SUBST(PTHREAD_LIBS)
-CPPFLAGS="$GTK_CFLAGS $CPPFLAGS"
-AC_SUBST(CPPFLAGS)
-if test "$FAAD2_DIR" = ""; then
- AC_MSG_ERROR([add FAAD2_DIR=<path to faad2 install dir> (ex:/usr/local/faad2)])
+AC_CHECK_PROGS(XMMS_CONFIG, xmms-config,"no_found")
+if test "$XMMS_CONFIG" = "no_found"; then
+ AC_MSG_ERROR("*** xmms-config not found check PATH or install xmms")
 fi
-if test "$ID3_DIR" = "";then
- AC_MSG_ERROR([ add ID3_DIR=<path to id3 install dir> (ex:/usr/local/id3lib)])
-fi
-AC_SUBST(FAAD2_DIR)
-AC_SUBST(ID3_DIR)
+
+CFLAGS="$cflags_save `xmms-config --cflags` -Wall"
+CPPFLAGS="$CPPFLAGS $CFLAGS"
 AC_SUBST(CFLAGS)
-AC_OUTPUT(Makefile src/Makefile)
 
-echo "*****configuration xmms-aac plugin done****"
-echo ""
-echo "pthread flag :	$PTHREAD_LIBS"
-echo "id3 dir :		$ID3_DIR"
-echo "faad2 dir :	$FAAD2_DIR"
-echo "xmms dir :	$XMMS_PATH"
-echo ""
-echo " !!!!!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!!!!!!!!!!!!!"
-echo "note that id3 and faad2 directoies MUST not be empty !!"
+AC_CHECK_HEADER(pthread.h,,
+	AC_MSG_ERROR(*** pthread headers support not installed or not found))
+AC_CHECK_HEADER(id3.h,,
+	AC_MSG_ERROR(*** id3lib headers support not installed or not found))
+
+dnl *** check for presence of libfaad2 in the system
+dnl *** it's maybe a new version than provided here (faad2-1.1)
+dnl ***
+dnl ***
+have_libfaad2=yes
+AC_CHECK_HEADER(faad.h,,
+	[echo "*** use libfaad2-2.0 in static mode"
+	have_libfaad2=no])
+AM_CONDITIONAL(USE_STATIC_FAAD2, test $have_libfaad2 = no)
+
+AC_OUTPUT(Makefile src/Makefile )
+echo "***"
+echo "*** configuration xmms-aac plugin done (version 0.5)"
+echo "***"
+echo "*** note that if you can't decode aac files you need"
+echo "*** the old libfaad2-1.1, typicaly for files encoded with psytel-2.15"

@@ -1,1 +1,1 @@
-SUBDIRS = libfaad common frontend
+SUBDIRS = libfaad common frontend plugins
