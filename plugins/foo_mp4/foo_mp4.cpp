@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: foo_mp4.cpp,v 1.2 2002/12/26 17:41:15 menno Exp $
+** $Id: foo_mp4.cpp,v 1.3 2002/12/26 17:51:49 menno Exp $
 **/
 
 #include <mp4.h>
@@ -71,12 +71,13 @@ public:
         sampleId = 1;
 
         unsigned __int64 length = MP4GetTrackDuration(hFile, track);
-        __int64 sDuration = MP4ConvertFromTrackDuration(hFile, track,
-            length, MP4_SECS_TIME_SCALE);
-        info->set_length((double)sDuration);
+        __int64 msDuration = MP4ConvertFromTrackDuration(hFile, track,
+            length, MP4_MSECS_TIME_SCALE);
+        info->set_length((double)msDuration/1000.0);
 
-        info->info_set_int(L"bitrate",(__int64)MP4GetTrackIntegerProperty(hFile,
-            track, "mdia.minf.stbl.stsd.mp4a.esds.decConfigDescr.avgBitrate"));
+        info->info_set_int(L"bitrate",(__int64)(1.0/1000.0 *
+            (double)MP4GetTrackIntegerProperty(hFile,
+            track, "mdia.minf.stbl.stsd.mp4a.esds.decConfigDescr.avgBitrate")) + 0.5);
         info->info_set_int(L"channels", (__int64)channels);
         info->info_set_int(L"samplerate", (__int64)m_samplerate);
 
