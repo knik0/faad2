@@ -16,11 +16,11 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: debug.h,v 1.1 2002/01/19 09:39:41 menno Exp $
+** $Id: analysis.h,v 1.1 2002/01/22 09:11:24 menno Exp $
 **/
 
-#ifndef __DEBUG_H__
-#define __DEBUG_H__
+#ifndef __ANALYSIS_H__
+#define __ANALYSIS_H__
 
 #ifdef __cplusplus
 extern "C" {

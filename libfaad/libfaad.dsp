@@ -165,15 +165,15 @@ SOURCE=.\tns.c
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=.\analysis.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\bits.h
 # End Source File
 # Begin Source File
 
 SOURCE=.\data.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\debug.h
 # End Source File
 # Begin Source File
 

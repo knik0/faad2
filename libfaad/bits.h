@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.h,v 1.2 2002/01/19 09:39:41 menno Exp $
+** $Id: bits.h,v 1.3 2002/01/22 09:11:24 menno Exp $
 **/
 
 #ifndef __BITS_H__
@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 
-#include "debug.h"
+#include "analysis.h"
 #ifdef ANALYSIS
 #include <stdio.h>
 #endif
