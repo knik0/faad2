@@ -551,7 +551,7 @@ void MP4File::Close()
 	fclose(m_pFile);
 	m_pFile = NULL;
 #else
-	m_MP4fclose(this);
+	m_MP4fclose(m_userData);
 #endif
 }
 

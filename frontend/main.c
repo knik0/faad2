@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.41 2003/07/09 15:11:25 menno Exp $
+** $Id: main.c,v 1.42 2003/07/09 18:32:42 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -570,7 +570,6 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
                   int outputFormat, int fileType, int downMatrix, int infoOnly)
 {
     int track;
-    unsigned int tracks;
     unsigned long samplerate;
     unsigned char channels;
     void *sample_buffer;
@@ -609,23 +608,10 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
     }
 
     /* print some mp4 file info */
-    tracks = MP4GetNumberOfTracks(infile, NULL, 0);
-    if (tracks > 0)
     {
-        char *file_info;
-        unsigned int i;
-
-        fprintf(stderr, "%s file info:\n", mp4file);
-        for (i = 0; i < tracks; i++)
-        {
-            file_info = MP4Info(infile, i+1);
-            if (file_info)
-            {
-                fprintf(stderr, "Track: %s", file_info);
-                free(file_info);
-            }
-        }
-        fprintf(stderr, "\n");
+        char *file_info = MP4Info(infile, MP4_INVALID_TRACK_ID);
+        fprintf(stderr, "%s", file_info);
+        free(file_info);
     }
 
     if (infoOnly)

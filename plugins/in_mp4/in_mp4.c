@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.33 2003/07/02 15:12:01 menno Exp $
+** $Id: in_mp4.c,v 1.34 2003/07/09 18:32:43 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -211,8 +211,8 @@ void quit()
 BOOL CALLBACK mp4_info_dialog_proc(HWND hwndDlg, UINT message,
                                    WPARAM wParam, LPARAM lParam)
 {
+    char *file_info;
     MP4FileHandle file;
-    int tracks, i;
 
 #ifdef DEBUG_OUTPUT
     in_mp4_DebugOutput("mp4_info_dialog_proc");
@@ -232,24 +232,9 @@ BOOL CALLBACK mp4_info_dialog_proc(HWND hwndDlg, UINT message,
         if (!file)
             return FALSE;
 
-        tracks = MP4GetNumberOfTracks(file, NULL, 0);
-
-        if (tracks == 0)
-        {
-            SetDlgItemText(hwndDlg, IDC_INFOTEXT, "No tracks found");
-        } else {
-            char *file_info;
-            char *info_text = malloc(1024*sizeof(char));
-            info_text[0] = '\0';
-
-            for (i = 0; i < tracks; i++)
-            {
-                file_info = MP4Info(file, i+1);
-                lstrcat(info_text, file_info);
-            }
-            SetDlgItemText(hwndDlg, IDC_INFOTEXT, info_text);
-            free(info_text);
-        }
+        file_info = MP4Info(file, MP4_INVALID_TRACK_ID);
+        SetDlgItemText(hwndDlg, IDC_INFOTEXT, file_info);
+        free(file_info);
 
         MP4Close(file);
 
