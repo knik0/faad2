@@ -94,7 +94,7 @@
 				AdditionalIncludeDirectories="..\..\include,..\..\common\faad,..\..\plugins\winamp,..\..\common\id3lib\include"
 				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;ID3LIB_COMPILATION"
 				StringPooling="TRUE"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="TRUE"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\Release/in_faad.pch"
@@ -110,10 +110,10 @@
 					InlineFuncExpansion="1"
 					OmitFramePtrs="1"
 					StringPooling="1"
-					RuntimeLibrary="2"
+					RuntimeLibrary="0"
 					BufferSecurityCheck="1"
 					FunctionLevelLinking="1"
-					AllOptions="/c  /I &quot;..\..\include&quot; /I &quot;..\..\common\faad&quot; /I &quot;..\..\plugins\winamp&quot; /I &quot;..\..\common\id3lib\include&quot; /nologo /W3 /O2 /Og /Ob1 /Oy /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_WINDOWS&quot; /D &quot;ID3LIB_COMPILATION&quot; /D &quot;_WINDLL&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/in_faad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd"/>
+					AllOptions="/c  /I &quot;..\..\include&quot; /I &quot;..\..\common\faad&quot; /I &quot;..\..\plugins\winamp&quot; /I &quot;..\..\common\id3lib\include&quot; /nologo /W3 /O2 /Og /Ob1 /Oy /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_WINDOWS&quot; /D &quot;ID3LIB_COMPILATION&quot; /D &quot;_WINDLL&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/in_faad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd"/>
 			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>

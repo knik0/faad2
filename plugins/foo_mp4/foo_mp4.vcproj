@@ -23,7 +23,7 @@
 				AdditionalIncludeDirectories="../../include,../../common/mp4v2"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="TRUE"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="TRUE"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\Release/foo_mp4.pch"
@@ -32,18 +32,16 @@
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				CompileAs="0"
-				AdditionalOptions="">
+				CompileAs="0">
 				<IntelOptions
 					Optimization="2"
 					InlineFuncExpansion="1"
 					OmitFramePtrs="1"
 					StringPooling="1"
-					RuntimeLibrary="2"
+					RuntimeLibrary="0"
 					BufferSecurityCheck="1"
 					FunctionLevelLinking="1"
-					AllOptions="/c  /I &quot;../../include&quot; /I &quot;../../common/mp4v2&quot; /nologo /W3 /O2 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_WINDLL&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/foo_mp4.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd"
-					MSOriginalAdditionalOptions=""/>
+					AllOptions="/c  /I &quot;../../include&quot; /I &quot;../../common/mp4v2&quot; /nologo /W3 /O2 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_WINDLL&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/foo_mp4.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd"/>
 			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -58,8 +56,7 @@
 				SubSystem="2"
 				ImportLibrary=".\Release/foo_mp4.lib">
 				<IntelOptions
-					AllOptions="/NOLOGO /DLL /OUT:&quot;.\Release/foo_mp4.dll&quot; /INCREMENTAL:NO ws2_32.lib odbc32.lib odbccp32.lib /PDB:&quot;.\Release/foo_mp4.pdb&quot; /SUBSYSTEM:WINDOWS /TLBID:1 /IMPLIB:&quot;.\Release/foo_mp4.lib&quot; /MACHINE:I386 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"
-					MSOriginalAdditionalOptions="/MACHINE:I386"/>
+					AllOptions="/NOLOGO /DLL /OUT:&quot;.\Release/foo_mp4.dll&quot; /INCREMENTAL:NO ws2_32.lib odbc32.lib odbccp32.lib /PDB:&quot;.\Release/foo_mp4.pdb&quot; /SUBSYSTEM:WINDOWS /TLBID:1 /IMPLIB:&quot;.\Release/foo_mp4.lib&quot; /MACHINE:I386 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"/>
 			</Tool>
 			<Tool
 				Name="VCMIDLTool"
@@ -107,15 +104,13 @@
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				DebugInformationFormat="4"
-				CompileAs="0"
-				AdditionalOptions="">
+				CompileAs="0">
 				<IntelOptions
 					Optimization="0"
 					MinimalRebuild="1"
 					BasicRuntimeChecks="3"
 					RuntimeLibrary="1"
-					AllOptions="/c  /I &quot;../../include&quot; /I &quot;../../common/mp4v2&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_WINDLL&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/foo_mp4.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd"
-					MSOriginalAdditionalOptions=""/>
+					AllOptions="/c  /I &quot;../../include&quot; /I &quot;../../common/mp4v2&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_WINDLL&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/foo_mp4.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd"/>
 			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -131,8 +126,7 @@
 				SubSystem="2"
 				ImportLibrary=".\Debug/foo_mp4.lib">
 				<IntelOptions
-					AllOptions="/NOLOGO /DLL /OUT:&quot;.\Debug/foo_mp4.dll&quot; /INCREMENTAL ws2_32.lib odbc32.lib odbccp32.lib /DEBUG /PDB:&quot;.\Debug/foo_mp4.pdb&quot; /SUBSYSTEM:WINDOWS /TLBID:1 /IMPLIB:&quot;.\Debug/foo_mp4.lib&quot; /MACHINE:I386 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"
-					MSOriginalAdditionalOptions="/MACHINE:I386"/>
+					AllOptions="/NOLOGO /DLL /OUT:&quot;.\Debug/foo_mp4.dll&quot; /INCREMENTAL ws2_32.lib odbc32.lib odbccp32.lib /DEBUG /PDB:&quot;.\Debug/foo_mp4.pdb&quot; /SUBSYSTEM:WINDOWS /TLBID:1 /IMPLIB:&quot;.\Debug/foo_mp4.lib&quot; /MACHINE:I386 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"/>
 			</Tool>
 			<Tool
 				Name="VCMIDLTool"

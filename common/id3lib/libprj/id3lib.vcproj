@@ -80,7 +80,7 @@
 				AdditionalIncludeDirectories=".\,..\,..\include,..\include\id3,..\zlib\include,..\win32"
 				PreprocessorDefinitions="NDEBUG,WIN32,_LIB,_WINDOWS,HAVE_CONFIG_H,ID3LIB_COMPILATION"
 				StringPooling="TRUE"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="TRUE"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\Release/id3lib.pch"
@@ -95,10 +95,10 @@
 					InlineFuncExpansion="1"
 					OmitFramePtrs="1"
 					StringPooling="1"
-					RuntimeLibrary="2"
+					RuntimeLibrary="0"
 					BufferSecurityCheck="1"
 					FunctionLevelLinking="1"
-					AllOptions="/c  /I &quot;.\\&quot; /I &quot;..\\&quot; /I &quot;..\include&quot; /I &quot;..\include\id3&quot; /I &quot;..\zlib\include&quot; /I &quot;..\win32&quot; /nologo /W3 /O2 /Ob1 /Oy /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_WINDOWS&quot; /D &quot;HAVE_CONFIG_H&quot; /D &quot;ID3LIB_COMPILATION&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/id3lib.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd"/>
+					AllOptions="/c  /I &quot;.\\&quot; /I &quot;..\\&quot; /I &quot;..\include&quot; /I &quot;..\include\id3&quot; /I &quot;..\zlib\include&quot; /I &quot;..\win32&quot; /nologo /W3 /O2 /Ob1 /Oy /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;_WINDOWS&quot; /D &quot;HAVE_CONFIG_H&quot; /D &quot;ID3LIB_COMPILATION&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/id3lib.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd"/>
 			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -188,9 +188,9 @@
 			<File
 				RelativePath="E:\Program Files\Microsoft Visual Studio\VC98\Include\BASETSD.H"/>
 			<File
-				RelativePath="..\win32\config.h"/>
-			<File
 				RelativePath="..\config.h"/>
+			<File
+				RelativePath="..\win32\config.h"/>
 			<File
 				RelativePath="..\include\id3\error.h"/>
 			<File

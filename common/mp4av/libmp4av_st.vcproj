@@ -25,7 +25,7 @@
 				AdditionalIncludeDirectories="..\mp4v2,.\"
 				PreprocessorDefinitions="WIN32,NDEBUG,_LIB"
 				StringPooling="TRUE"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="TRUE"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\Release/libmp4av_st.pch"
@@ -40,10 +40,10 @@
 					InlineFuncExpansion="1"
 					OmitFramePtrs="1"
 					StringPooling="1"
-					RuntimeLibrary="2"
+					RuntimeLibrary="0"
 					BufferSecurityCheck="1"
 					FunctionLevelLinking="1"
-					AllOptions="/c  /I &quot;..\mp4v2&quot; /I &quot;.\\&quot; /nologo /W3 /O2 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libmp4av_st.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd"/>
+					AllOptions="/c  /I &quot;..\mp4v2&quot; /I &quot;.\\&quot; /nologo /W3 /O2 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_LIB&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libmp4av_st.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd"/>
 			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
