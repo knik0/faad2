@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: foo_mp4.cpp,v 1.46 2003/08/09 11:28:43 menno Exp $
+** $Id: foo_mp4.cpp,v 1.47 2003/08/14 18:40:08 menno Exp $
 **/
 
 #include <mp4.h>
@@ -46,7 +46,7 @@ char *STRIP_REVISION(const char *str)
 #endif
 
 DECLARE_COMPONENT_VERSION ("MPEG-4 AAC decoder",
-                           "1.38",
+                           "1.46",
                            "Based on FAAD2 v" FAAD2_VERSION "\nCopyright (C) 2002-2003 http://www.audiocoding.com" );
 
 class input_mp4 : public input
@@ -96,7 +96,7 @@ public:
         }
 
         track = GetAACTrack(hFile);
-        if (track < 1)
+        if (track < 0)
         {
             console::error("No valid AAC track found.");
             return 0;
@@ -129,10 +129,14 @@ public:
         m_framesize = 1024;
         if (mp4ASC.frameLengthFlag == 1) m_framesize = 960;
 
-        unsigned __int64 length = MP4GetTrackDuration(hFile, track);
-        __int64 msDuration = MP4ConvertFromTrackDuration(hFile, track,
-            length, MP4_MSECS_TIME_SCALE);
-        m_length = (double)msDuration/1000.0;
+        double secs = 0;
+        if (mp4ASC.sbr_present_flag == 1)
+        {
+            secs = (double)(MP4GetTrackNumberOfSamples(hFile, track)-1)*2048.0/(double)mp4ASC.samplingFrequency;
+        } else {
+            secs = (double)(MP4GetTrackNumberOfSamples(hFile, track)-1)*1024.0/(double)mp4ASC.samplingFrequency;
+        }
+        m_length = secs;
         info->info_set_int("bitrate",(__int64)(1.0/1000.0 *
             (double)(__int64)MP4GetTrackIntegerProperty(hFile,
             track, "mdia.minf.stbl.stsd.mp4a.esds.decConfigDescr.avgBitrate")) + 0.5);
@@ -184,10 +188,12 @@ public:
             unsigned __int32 buffer_size;
             audio_sample *sample_buffer;
 
+            if (sampleId > numSamples) return 0;
+
             if (sampleId == MP4_INVALID_SAMPLE_ID)
             {
                 console::error("Invalid sampleId.");
-                return 0;
+                return -1;
             }
 
             do {
@@ -209,9 +215,8 @@ public:
             {
                 console::warning(faacDecGetErrorMessage(frameInfo.error));
                 console::warning("Skipping frame");
+                if (sampleId > numSamples) return -1;
             }
-            if (sampleId > numSamples)
-                return 0;
 
             if (frameInfo.channels == 6 && frameInfo.num_lfe_channels)
             {
@@ -654,6 +659,7 @@ public:
         faacDecSetConfiguration(hDecoder, config);
 
         tag_reader::g_run_multi(m_reader, info, "ape|id3v2|lyrics3|id3v1");
+
         const char *p = info->meta_get("samples");
         if (p) {
             m_samples = (unsigned __int64)_atoi64(p);
@@ -752,7 +758,14 @@ public:
         m_framesize = 1024;
 
         if (flags & OPEN_FLAG_GET_INFO) {
-            run(0); // get correct framesize and samplerate
+            // decode first frame to get accurate info
+            faacDecFrameInfo frameInfo;
+            memset(&frameInfo, 0, sizeof(faacDecFrameInfo));
+            fill_buffer();
+            faacDecDecode(hDecoder, &frameInfo, m_aac_buffer, m_aac_bytes_into_buffer);
+
+            m_samplerate = frameInfo.samplerate;
+            m_framesize = (frameInfo.channels != 0) ? frameInfo.samples/frameInfo.channels : 0;
 
             if (m_samples > 0) {
                 length = (double)(signed __int64)m_samples/(double)samplerate;
@@ -768,11 +781,25 @@ public:
                 info->info_set("stream type", "ADTS");
             else if (m_header_type == 2)
                 info->info_set("stream type", "ADIF");
-            info->set_length(length);
 
             info->info_set_int("bitrate", bitrate);
             info->info_set_int("channels", (__int64)channels);
             info->info_set_int("samplerate", (__int64)m_samplerate);
+
+            if (m_samples > 0) {
+                length = (double)(signed __int64)m_samples/(double)samplerate;
+            }
+
+            info->set_length(length);
+
+            if (flags & OPEN_FLAG_DECODE) {
+                if (hDecoder)
+                    faacDecClose(hDecoder);
+                if (m_aac_buffer)
+                    free(m_aac_buffer);
+                r->seek(0);
+                return open(r, info, flags & (~OPEN_FLAG_GET_INFO));
+            }
         }
 
         m_length = length;
@@ -816,8 +843,10 @@ public:
         do {
             if (m_eof || (m_samples > 0 && m_samplepos >= m_samples)) return 0; // gapless playback
 
+            if (m_aac_bytes_into_buffer == 0) return 0;
+
             faacDecFrameInfo frameInfo;
-            audio_sample *sample_buffer;
+            audio_sample *sample_buffer = 0;
 
             memset(&frameInfo, 0, sizeof(faacDecFrameInfo));
 
@@ -845,14 +874,11 @@ public:
 
             } while (!frameInfo.samples && !frameInfo.error);
 
-            if (frameInfo.error || (m_aac_bytes_into_buffer == 0))
+            if (frameInfo.error || !sample_buffer)
             {
-                if (frameInfo.error)
-                {
-                    const char *msg = faacDecGetErrorMessage(frameInfo.error);
-                    if (msg) console::warning(msg);
-                }
-                return 0;
+                const char *msg = faacDecGetErrorMessage(frameInfo.error);
+                if (msg) console::warning(msg);
+                return -1;
             }
 
             if (frameInfo.channels == 6 && frameInfo.num_lfe_channels)
