@@ -2336,6 +2336,7 @@ bool MP4File::TagDelete(MP4TrackId trackId)
         pUdtaAtom = m_pRootAtom->FindAtom(MakeTrackName(trackId, "udta"));
         pTagAtom = m_pRootAtom->FindAtom(MakeTrackName(trackId, "udta.TAG4"));
     }
+    /* there is no tag */
     if (!pUdtaAtom || !pTagAtom)
         return false;
 
@@ -2359,7 +2360,13 @@ bool MP4File::TagAddEntry(MP4TrackId trackId,
     else
         pTagAtom = m_pRootAtom->FindAtom(MakeTrackName(trackId, "udta.TAG4"));
     if (!pTagAtom)
-        return false;
+    {
+        TagCreate(trackId);
+        if (trackId == NULL)
+            pTagAtom = m_pRootAtom->FindAtom("moov.udta.TAG4");
+        else
+            pTagAtom = m_pRootAtom->FindAtom(MakeTrackName(trackId, "udta.TAG4"));
+    }
 
     pTagAtom->FindProperty("TAG4.entryCount",
         (MP4Property**)&pCountProperty);
@@ -2382,7 +2389,7 @@ bool MP4File::TagAddEntry(MP4TrackId trackId,
     return true;
 }
 
-#if 0
+#if 0 // not working
 void MP4File::TagDeleteEntry(MP4TrackId trackId, u_int32_t index)
 {
     MP4TableProperty *pEntryProperty = NULL;

@@ -51,7 +51,7 @@ extern "C" MP4FileHandle MP4Read(const char* fileName, u_int32_t verbosity)
 }
 
 #ifdef USE_FILE_CALLBACKS
-extern "C" MP4FileHandle MP4ReadCb(const char* fileName, u_int32_t verbosity,
+extern "C" MP4FileHandle MP4ReadCb(u_int32_t verbosity,
                                    MP4OpenCallback MP4fopen,
                                    MP4CloseCallback MP4fclose,
                                    MP4ReadCallback MP4fread,
@@ -76,7 +76,7 @@ extern "C" MP4FileHandle MP4ReadCb(const char* fileName, u_int32_t verbosity,
         pFile->m_MP4fgetpos = MP4fgetpos;
         pFile->m_MP4filesize = MP4filesize;
 
-		pFile->Read(fileName);
+		pFile->Read("");
 		return (MP4FileHandle)pFile;
 	}
 	catch (MP4Error* e) {
@@ -87,8 +87,8 @@ extern "C" MP4FileHandle MP4ReadCb(const char* fileName, u_int32_t verbosity,
 	}
 }
 
-extern "C" MP4FileHandle MP4ModifyCb(const char* fileName, 
-	u_int32_t verbosity, bool useExtensibleFormat,
+extern "C" MP4FileHandle MP4ModifyCb(int32_t verbosity,
+    bool useExtensibleFormat,
     MP4OpenCallback MP4fopen, MP4CloseCallback MP4fclose,
     MP4ReadCallback MP4fread, MP4WriteCallback MP4fwrite,
     MP4SetposCallback MP4fsetpos, MP4GetposCallback MP4fgetpos,
@@ -109,7 +109,7 @@ extern "C" MP4FileHandle MP4ModifyCb(const char* fileName,
         pFile->m_MP4filesize = MP4filesize;
 
 		// LATER useExtensibleFormat, moov first, then mvex's
-		pFile->Modify(fileName);
+		pFile->Modify("");
 		return (MP4FileHandle)pFile;
 	}
 	catch (MP4Error* e) {
@@ -2518,20 +2518,6 @@ extern "C" char* MP4BinaryToBase64(
 }
 
 /* tagging functions */
-
-extern "C" void MP4TagCreate(MP4FileHandle hFile, MP4TrackId trackId)
-{
-	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
-		try {
-			((MP4File*)hFile)->TagCreate(trackId);
-            return;
-		}
-		catch (MP4Error* e) {
-			PRINT_ERROR(e);
-			delete e;
-		}
-	}
-}
 
 extern "C" bool MP4TagDelete(MP4FileHandle hFile, MP4TrackId trackId)
 {

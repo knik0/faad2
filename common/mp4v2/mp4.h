@@ -236,7 +236,7 @@ MP4FileHandle MP4Read(
 	const char* fileName, 
 	u_int32_t verbosity DEFAULT(0));
 
-MP4FileHandle MP4ReadCb(const char* fileName, u_int32_t verbosity,
+MP4FileHandle MP4ReadCb(u_int32_t verbosity,
                         MP4OpenCallback MP4fopen,
                         MP4CloseCallback MP4fclose,
                         MP4ReadCallback MP4fread,
@@ -246,8 +246,8 @@ MP4FileHandle MP4ReadCb(const char* fileName, u_int32_t verbosity,
                         MP4FilesizeCallback MP4filesize,
                         void *userData);
 
-MP4FileHandle MP4ModifyCb(const char* fileName, 
-	u_int32_t verbosity, bool useExtensibleFormat,
+MP4FileHandle MP4ModifyCb(int32_t verbosity,
+    bool useExtensibleFormat,
     MP4OpenCallback MP4fopen, MP4CloseCallback MP4fclose,
     MP4ReadCallback MP4fread, MP4WriteCallback MP4fwrite,
     MP4SetposCallback MP4fsetpos, MP4GetposCallback MP4fgetpos,
@@ -907,7 +907,6 @@ char* MP4BinaryToBase64(
 	const u_int8_t* pData, 
 	u_int32_t dataSize);
 
-void MP4TagCreate(MP4FileHandle hFile, MP4TrackId trackId);
 bool MP4TagDelete(MP4FileHandle hFile, MP4TrackId trackId);
 bool MP4TagAddEntry(MP4FileHandle hFile, MP4TrackId trackId,
                     const char *name, const char *value);

@@ -33,7 +33,7 @@ AC_DEFUN(MY_CHECK_TYPEDEF_FROM_INCLUDE,
                   [$1;],
                   libfaad_ok=yes, libfaad_ok=no)
    if test $libfaad_ok = yes; then
-      AC_DEFINE($3)
+      AC_DEFINE($3, 1, [Define if needed])
       AC_MSG_RESULT([yes])
    else
       AC_MSG_RESULT([no])

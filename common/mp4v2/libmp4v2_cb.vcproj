@@ -34,7 +34,7 @@
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				CompileAs="0"
-				AdditionalOptions="&lt;?ICLPrjArgs?&gt; /Qvc7 /Qlocation,link,&quot;E:\Program Files\Microsoft Visual Studio .NET\Vc7\Bin&quot; /c  /I &quot;.\\&quot; /nologo /W3 /O2 /Ob1 /Oy /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_WINDOWS&quot; /D &quot;USE_FILE_CALLBACKS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\CB_Release/libmp4v2_cb.pch&quot; /Fo&quot;.\CB_Release/&quot; /Fd&quot;.\CB_Release/&quot; /Gd &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseNonIntelTool #$BinPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Bin;E:\Program Files\Common Files\Intel\Shared Files\IA32\Bin;E:\Program Files\Microsoft Visual Studio .NET\Common7\IDE&quot; #$LibPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Lib;E:\Program Files\Common Files\Intel\Shared Files\IA32\Lib&quot; #$IncPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Include&quot; &lt;?/IVCSpawnPrjArgs?&gt;">
+				AdditionalOptions="">
 				<IntelOptions
 					Optimization="2"
 					InlineFuncExpansion="1"
@@ -52,7 +52,7 @@
 				Name="VCLibrarianTool"
 				OutputFile=".\CB_Release\libmp4v2_cb.lib"
 				SuppressStartupBanner="TRUE"
-				AdditionalOptions="&lt;?ICLPrjArgs?&gt; /OUT:&quot;.\CB_Release\libmp4v2_cb.lib&quot; /NOLOGO &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseNonIntelTool #$BinPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Bin;E:\Program Files\Common Files\Intel\Shared Files\IA32\Bin;E:\Program Files\Microsoft Visual Studio .NET\Common7\IDE&quot; #$LibPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Lib;E:\Program Files\Common Files\Intel\Shared Files\IA32\Lib&quot; #$IncPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Include&quot; &lt;?/IVCSpawnPrjArgs?&gt;">
+				AdditionalOptions="">
 				<IntelOptions
 					AllOptions="/OUT:&quot;.\CB_Release\libmp4v2_cb.lib&quot; /NOLOGO"
 					MSOriginalAdditionalOptions=""/>
@@ -72,7 +72,7 @@
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<IntelOptions
-				CompilerName="1"/>
+				CompilerName="0"/>
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
@@ -97,13 +97,13 @@
 				SuppressStartupBanner="TRUE"
 				DebugInformationFormat="4"
 				CompileAs="0"
-				AdditionalOptions="&lt;?ICLPrjArgs?&gt; /Qvc7 /Qlocation,link,&quot;E:\Program Files\Microsoft Visual Studio .NET\Vc7\Bin&quot; /c  /I &quot;.\\&quot; /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_WINDOWS&quot; /D &quot;USE_FILE_CALLBACKS&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\CB_Debug/libmp4v2_cb.pch&quot; /Fo&quot;.\CB_Debug/&quot; /Fd&quot;.\CB_Debug/&quot; /Gd &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseIntelTool #$BinPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Bin;E:\Program Files\Common Files\Intel\Shared Files\IA32\Bin;E:\Program Files\Microsoft Visual Studio .NET\Common7\IDE&quot; #$LibPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Lib;E:\Program Files\Common Files\Intel\Shared Files\IA32\Lib&quot; #$IncPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Include&quot; &lt;?/IVCSpawnPrjArgs?&gt;">
+				AdditionalOptions="">
 				<IntelOptions
 					Optimization="0"
 					MinimalRebuild="1"
 					BasicRuntimeChecks="3"
 					RuntimeLibrary="3"
-					AllOptions="/c  /I &quot;.\\&quot; /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_WINDOWS&quot; /D &quot;USE_FILE_CALLBACKS&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\CB_Debug/libmp4v2_cb.pch&quot; /Fo&quot;.\CB_Debug/&quot; /Fd&quot;.\CB_Debug/&quot; /Gd"
+					AllOptions="/c  /I &quot;.\\&quot; /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_WINDOWS&quot; /D &quot;USE_FILE_CALLBACKS&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\CB_Debug/libmp4v2_cb.pch&quot; /Fo&quot;.\CB_Debug/&quot; /Fd&quot;.\CB_Debug/&quot; /Gd &lt;?ICLPrjArgs?&gt; /Qvc7 /Qlocation,link,&quot;E:\Program Files\Microsoft Visual Studio .NET\Vc7\Bin&quot; /c  /I &quot;.\\&quot; /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_WINDOWS&quot; /D &quot;USE_FILE_CALLBACKS&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\CB_Debug/libmp4v2_cb.pch&quot; /Fo&quot;.\CB_Debug/&quot; /Fd&quot;.\CB_Debug/&quot; /Gd &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseIntelTool #$BinPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Bin;E:\Program Files\Common Files\Intel\Shared Files\IA32\Bin;E:\Program Files\Microsoft Visual Studio .NET\Common7\IDE&quot; #$LibPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Lib;E:\Program Files\Common Files\Intel\Shared Files\IA32\Lib&quot; #$IncPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Include&quot; &lt;?/IVCSpawnPrjArgs?&gt;"
 					MSOriginalAdditionalOptions=""/>
 			</Tool>
 			<Tool
@@ -112,9 +112,9 @@
 				Name="VCLibrarianTool"
 				OutputFile=".\CB_Debug\libmp4v2_cb.lib"
 				SuppressStartupBanner="TRUE"
-				AdditionalOptions="&lt;?ICLPrjArgs?&gt; /OUT:&quot;.\CB_Debug\libmp4v2_cb.lib&quot; /NOLOGO &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseIntelTool #$BinPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Bin;E:\Program Files\Common Files\Intel\Shared Files\IA32\Bin;E:\Program Files\Microsoft Visual Studio .NET\Common7\IDE&quot; #$LibPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Lib;E:\Program Files\Common Files\Intel\Shared Files\IA32\Lib&quot; #$IncPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Include&quot; &lt;?/IVCSpawnPrjArgs?&gt;">
+				AdditionalOptions="">
 				<IntelOptions
-					AllOptions="/OUT:&quot;.\CB_Debug\libmp4v2_cb.lib&quot; /NOLOGO"
+					AllOptions="/OUT:&quot;.\CB_Debug\libmp4v2_cb.lib&quot; /NOLOGO &lt;?ICLPrjArgs?&gt; /OUT:&quot;.\CB_Debug\libmp4v2_cb.lib&quot; /NOLOGO &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseIntelTool #$BinPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Bin;E:\Program Files\Common Files\Intel\Shared Files\IA32\Bin;E:\Program Files\Microsoft Visual Studio .NET\Common7\IDE&quot; #$LibPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Lib;E:\Program Files\Common Files\Intel\Shared Files\IA32\Lib&quot; #$IncPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Include&quot; &lt;?/IVCSpawnPrjArgs?&gt;"
 					MSOriginalAdditionalOptions=""/>
 			</Tool>
 			<Tool
