@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.24 2002/08/07 14:07:41 menno Exp $
+** $Id: syntax.c,v 1.25 2002/08/07 14:34:31 menno Exp $
 **/
 
 /*
@@ -704,9 +704,6 @@ static uint8_t individual_channel_stream(element *ele, bitfile *ld,
 
     if (aacSpectralDataResilienceFlag)
     {
-        if (ics->tns_data_present)
-            tns_data(ics, &(ics->tns), ld);
-
         /* error resilient spectral data decoding */
         if ((result = reordered_spectral_data(ics, ld, spec_data, frame_len,
             aacSectionDataResilienceFlag)) > 0)
