@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.11 2002/01/23 23:42:25 menno Exp $
+** $Id: main.c,v 1.12 2002/02/04 09:17:43 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -526,13 +526,8 @@ int main(int argc, char *argv[])
         switch (c) {
         case 'o':
             if (optarg) {
-                char dr[255];
-                if (sscanf(optarg, "%s", dr) < 1) {
-                    outfile_set = 0;
-                } else {
-                    outfile_set = 1;
-                    strcpy(audioFileName, dr);
-                }
+                outfile_set = 1;
+                strcpy(audioFileName, optarg);
             }
             break;
         case 's':
