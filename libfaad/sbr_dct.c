@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dct.c,v 1.12 2004/03/10 19:45:41 menno Exp $
+** $Id: sbr_dct.c,v 1.15 2004/09/04 14:56:28 menno Exp $
 **/
 
 #include "common.h"
@@ -1449,933 +1449,414 @@ void DCT2_32_unscaled(real_t *y, real_t *x)
 
 #else
 
-void DCT4_64(real_t *y, real_t *x)
-{
-    int16_t i0;
-    ALIGN static real_t t2[64];
 
-    t2[0] = x[0];
-    for (i0=0; i0<31; i0++)
+#define n 32
+#define log2n 5
+
+// w_array_real[i] = cos(2*M_PI*i/32)
+static const real_t w_array_real[] = {
+    FRAC_CONST(1.000000000000000), FRAC_CONST(0.980785279337272),
+    FRAC_CONST(0.923879528329380), FRAC_CONST(0.831469603195765),
+    FRAC_CONST(0.707106765732237), FRAC_CONST(0.555570210304169),
+    FRAC_CONST(0.382683402077046), FRAC_CONST(0.195090284503576),
+    FRAC_CONST(0.000000000000000), FRAC_CONST(-0.195090370246552),
+    FRAC_CONST(-0.382683482845162), FRAC_CONST(-0.555570282993553),
+    FRAC_CONST(-0.707106827549476), FRAC_CONST(-0.831469651765257),
+    FRAC_CONST(-0.923879561784627), FRAC_CONST(-0.980785296392607)
+};
+
+// w_array_imag[i] = sin(-2*M_PI*i/32)
+static const real_t w_array_imag[] = {
+    FRAC_CONST(0.000000000000000), FRAC_CONST(-0.195090327375064),
+    FRAC_CONST(-0.382683442461104), FRAC_CONST(-0.555570246648862),
+    FRAC_CONST(-0.707106796640858), FRAC_CONST(-0.831469627480512),
+    FRAC_CONST(-0.923879545057005), FRAC_CONST(-0.980785287864940),
+    FRAC_CONST(-1.000000000000000), FRAC_CONST(-0.980785270809601),
+    FRAC_CONST(-0.923879511601754), FRAC_CONST(-0.831469578911016),
+    FRAC_CONST(-0.707106734823616), FRAC_CONST(-0.555570173959476),
+    FRAC_CONST(-0.382683361692986), FRAC_CONST(-0.195090241632088)
+};
+
+// FFT decimation in frequency
+// 4*16*2+16=128+16=144 multiplications
+// 6*16*2+10*8+4*16*2=192+80+128=400 additions
+static void fft_dif(real_t * Real, real_t * Imag)
+{
+    real_t w_real, w_imag; // For faster access
+    real_t point1_real, point1_imag, point2_real, point2_imag; // For faster access
+    uint32_t j, i, i2, w_index; // Counters
+
+    // First 2 stages of 32 point FFT decimation in frequency
+    // 4*16*2=64*2=128 multiplications
+    // 6*16*2=96*2=192 additions
+	// Stage 1 of 32 point FFT decimation in frequency
+    for (i = 0; i < 16; i++)
     {
-        t2[2*i0+1] = x[2*i0+1] - x[2*i0+2];
-        t2[2*i0+2] = x[2*i0+1] + x[2*i0+2];
+        point1_real = Real[i];
+        point1_imag = Imag[i];
+        i2 = i+16;
+        point2_real = Real[i2];
+        point2_imag = Imag[i2];
+
+        w_real = w_array_real[i];
+        w_imag = w_array_imag[i];
+
+        // temp1 = x[i] - x[i2]
+        point1_real -= point2_real;
+        point1_imag -= point2_imag;
+
+        // x[i1] = x[i] + x[i2]
+        Real[i] += point2_real;
+        Imag[i] += point2_imag;
+
+        // x[i2] = (x[i] - x[i2]) * w
+        Real[i2] = (MUL_F(point1_real,w_real) - MUL_F(point1_imag,w_imag));
+        Imag[i2] = (MUL_F(point1_real,w_imag) + MUL_F(point1_imag,w_real));
+     }
+    // Stage 2 of 32 point FFT decimation in frequency
+    for (j = 0, w_index = 0; j < 8; j++, w_index += 2)
+    {
+        w_real = w_array_real[w_index];
+        w_imag = w_array_imag[w_index];
+
+    	i = j;
+        point1_real = Real[i];
+        point1_imag = Imag[i];
+        i2 = i+8;
+        point2_real = Real[i2];
+        point2_imag = Imag[i2];
+
+        // temp1 = x[i] - x[i2]
+        point1_real -= point2_real;
+        point1_imag -= point2_imag;
+
+        // x[i1] = x[i] + x[i2]
+        Real[i] += point2_real;
+        Imag[i] += point2_imag;
+
+        // x[i2] = (x[i] - x[i2]) * w
+        Real[i2] = (MUL_F(point1_real,w_real) - MUL_F(point1_imag,w_imag));
+        Imag[i2] = (MUL_F(point1_real,w_imag) + MUL_F(point1_imag,w_real));
+
+        i = j+16;
+        point1_real = Real[i];
+        point1_imag = Imag[i];
+        i2 = i+8;
+        point2_real = Real[i2];
+        point2_imag = Imag[i2];
+
+        // temp1 = x[i] - x[i2]
+        point1_real -= point2_real;
+        point1_imag -= point2_imag;
+
+        // x[i1] = x[i] + x[i2]
+        Real[i] += point2_real;
+        Imag[i] += point2_imag;
+
+        // x[i2] = (x[i] - x[i2]) * w
+        Real[i2] = (MUL_F(point1_real,w_real) - MUL_F(point1_imag,w_imag));
+        Imag[i2] = (MUL_F(point1_real,w_imag) + MUL_F(point1_imag,w_real));
     }
-    t2[63] = x[63];
 
-    DCT4_64_kernel(y, t2);
+    // Stage 3 of 32 point FFT decimation in frequency
+    // 2*4*2=16 multiplications
+    // 4*4*2+6*4*2=10*8=80 additions
+    for (i = 0; i < n; i += 8)
+    {
+        i2 = i+4;
+        point1_real = Real[i];
+        point1_imag = Imag[i];
+
+        point2_real = Real[i2];
+        point2_imag = Imag[i2];
+
+        // out[i1] = point1 + point2
+        Real[i] += point2_real;
+        Imag[i] += point2_imag;
+
+        // out[i2] = point1 - point2
+        Real[i2] = point1_real - point2_real;
+        Imag[i2] = point1_imag - point2_imag;
+    }
+    w_real = w_array_real[4]; // = sqrt(2)/2
+    // w_imag = -w_real; // = w_array_imag[4]; // = -sqrt(2)/2
+    for (i = 1; i < n; i += 8)
+    {
+        i2 = i+4;
+        point1_real = Real[i];
+        point1_imag = Imag[i];
+
+        point2_real = Real[i2];
+        point2_imag = Imag[i2];
+
+        // temp1 = x[i] - x[i2]
+        point1_real -= point2_real;
+        point1_imag -= point2_imag;
+
+        // x[i1] = x[i] + x[i2]
+        Real[i] += point2_real;
+        Imag[i] += point2_imag;
+
+        // x[i2] = (x[i] - x[i2]) * w
+        Real[i2] = MUL_F(point1_real+point1_imag, w_real);
+        Imag[i2] = MUL_F(point1_imag-point1_real, w_real);
+    }
+    for (i = 2; i < n; i += 8)
+    {
+        i2 = i+4;
+        point1_real = Real[i];
+        point1_imag = Imag[i];
+
+        point2_real = Real[i2];
+        point2_imag = Imag[i2];
+
+        // x[i] = x[i] + x[i2]
+        Real[i] += point2_real;
+        Imag[i] += point2_imag;
+
+        // x[i2] = (x[i] - x[i2]) * (-i)
+        Real[i2] = point1_imag - point2_imag;
+        Imag[i2] = point2_real - point1_real;
+    }
+    w_real = w_array_real[12]; // = -sqrt(2)/2
+    // w_imag = w_real; // = w_array_imag[12]; // = -sqrt(2)/2
+    for (i = 3; i < n; i += 8)
+    {
+        i2 = i+4;
+        point1_real = Real[i];
+        point1_imag = Imag[i];
+
+        point2_real = Real[i2];
+        point2_imag = Imag[i2];
+
+        // temp1 = x[i] - x[i2]
+        point1_real -= point2_real;
+        point1_imag -= point2_imag;
+
+        // x[i1] = x[i] + x[i2]
+        Real[i] += point2_real;
+        Imag[i] += point2_imag;
+
+        // x[i2] = (x[i] - x[i2]) * w
+        Real[i2] = MUL_F(point1_real-point1_imag, w_real);
+        Imag[i2] = MUL_F(point1_real+point1_imag, w_real);
+    }
+
+
+    // Stage 4 of 32 point FFT decimation in frequency (no multiplications)
+    // 16*4=64 additions
+    for (i = 0; i < n; i += 4)
+    {
+        i2 = i+2;
+        point1_real = Real[i];
+        point1_imag = Imag[i];
+
+        point2_real = Real[i2];
+        point2_imag = Imag[i2];
+
+        // x[i1] = x[i] + x[i2]
+        Real[i] += point2_real;
+        Imag[i] += point2_imag;
+
+        // x[i2] = x[i] - x[i2]
+        Real[i2] = point1_real - point2_real;
+        Imag[i2] = point1_imag - point2_imag;
+    }
+    for (i = 1; i < n; i += 4)
+    {
+        i2 = i+2;
+        point1_real = Real[i];
+        point1_imag = Imag[i];
+
+        point2_real = Real[i2];
+        point2_imag = Imag[i2];
+
+        // x[i] = x[i] + x[i2]
+        Real[i] += point2_real;
+        Imag[i] += point2_imag;
+
+        // x[i2] = (x[i] - x[i2]) * (-i)
+        Real[i2] = point1_imag - point2_imag;
+        Imag[i2] = point2_real - point1_real;
+    }
+
+    // Stage 5 of 32 point FFT decimation in frequency (no multiplications)
+    // 16*4=64 additions
+    for (i = 0; i < n; i += 2)
+    {
+        i2 = i+1;
+        point1_real = Real[i];
+        point1_imag = Imag[i];
+
+        point2_real = Real[i2];
+        point2_imag = Imag[i2];
+
+        // out[i1] = point1 + point2
+        Real[i] += point2_real;
+        Imag[i] += point2_imag;
+
+        // out[i2] = point1 - point2
+        Real[i2] = point1_real - point2_real;
+        Imag[i2] = point1_imag - point2_imag;
+    }
+
+#ifdef REORDER_IN_FFT
+    FFTReorder(Real, Imag);
+#endif // #ifdef REORDER_IN_FFT
 }
+#undef n
+#undef log2n
 
-void DCT4_64_kernel(real_t *y, real_t *t2)
+static const real_t dct4_64_tab[] = {
+    COEF_CONST(0.999924719333649), COEF_CONST(0.998118102550507),
+    COEF_CONST(0.993906974792480), COEF_CONST(0.987301409244537),
+    COEF_CONST(0.978317379951477), COEF_CONST(0.966976463794708),
+    COEF_CONST(0.953306019306183), COEF_CONST(0.937339007854462),
+    COEF_CONST(0.919113874435425), COEF_CONST(0.898674488067627),
+    COEF_CONST(0.876070082187653), COEF_CONST(0.851355195045471),
+    COEF_CONST(0.824589252471924), COEF_CONST(0.795836925506592),
+    COEF_CONST(0.765167236328125), COEF_CONST(0.732654273509979),
+    COEF_CONST(0.698376238346100), COEF_CONST(0.662415742874146),
+    COEF_CONST(0.624859452247620), COEF_CONST(0.585797846317291),
+    COEF_CONST(0.545324981212616), COEF_CONST(0.503538429737091),
+    COEF_CONST(0.460538715124130), COEF_CONST(0.416429549455643),
+    COEF_CONST(0.371317148208618), COEF_CONST(0.325310230255127),
+    COEF_CONST(0.278519600629807), COEF_CONST(0.231058135628700),
+    COEF_CONST(0.183039888739586), COEF_CONST(0.134580686688423),
+    COEF_CONST(0.085797272622585), COEF_CONST(0.036807164549828),
+    COEF_CONST(-1.012196302413940), COEF_CONST(-1.059438824653626),
+    COEF_CONST(-1.104129195213318), COEF_CONST(-1.146159529685974),
+    COEF_CONST(-1.185428738594055), COEF_CONST(-1.221842169761658),
+    COEF_CONST(-1.255311965942383), COEF_CONST(-1.285757660865784),
+    COEF_CONST(-1.313105940818787), COEF_CONST(-1.337290763854981),
+    COEF_CONST(-1.358253836631775), COEF_CONST(-1.375944852828980),
+    COEF_CONST(-1.390321016311646), COEF_CONST(-1.401347875595093),
+    COEF_CONST(-1.408998727798462), COEF_CONST(-1.413255214691162),
+    COEF_CONST(-1.414107084274292), COEF_CONST(-1.411552190780640),
+    COEF_CONST(-1.405596733093262), COEF_CONST(-1.396255016326904),
+    COEF_CONST(-1.383549690246582), COEF_CONST(-1.367511272430420),
+    COEF_CONST(-1.348178386688232), COEF_CONST(-1.325597524642944),
+    COEF_CONST(-1.299823284149170), COEF_CONST(-1.270917654037476),
+    COEF_CONST(-1.238950133323669), COEF_CONST(-1.203998088836670),
+    COEF_CONST(-1.166145324707031), COEF_CONST(-1.125483393669128),
+    COEF_CONST(-1.082109928131104), COEF_CONST(-1.036129593849182),
+    COEF_CONST(-0.987653195858002), COEF_CONST(-0.936797380447388),
+    COEF_CONST(-0.883684754371643), COEF_CONST(-0.828443288803101),
+    COEF_CONST(-0.771206021308899), COEF_CONST(-0.712110757827759),
+    COEF_CONST(-0.651300072669983), COEF_CONST(-0.588920354843140),
+    COEF_CONST(-0.525121808052063), COEF_CONST(-0.460058242082596),
+    COEF_CONST(-0.393886327743530), COEF_CONST(-0.326765477657318),
+    COEF_CONST(-0.258857429027557), COEF_CONST(-0.190325915813446),
+    COEF_CONST(-0.121335685253143), COEF_CONST(-0.052053272724152),
+    COEF_CONST(0.017354607582092), COEF_CONST(0.086720645427704),
+    COEF_CONST(0.155877828598022), COEF_CONST(0.224659323692322),
+    COEF_CONST(0.292899727821350), COEF_CONST(0.360434412956238),
+    COEF_CONST(0.427100926637650), COEF_CONST(0.492738455533981),
+    COEF_CONST(0.557188928127289), COEF_CONST(0.620297133922577),
+    COEF_CONST(0.681910991668701), COEF_CONST(0.741881847381592),
+    COEF_CONST(0.800065577030182), COEF_CONST(0.856321990489960),
+    COEF_CONST(0.910515367984772), COEF_CONST(0.962515234947205),
+    COEF_CONST(1.000000000000000), COEF_CONST(0.998795449733734),
+    COEF_CONST(0.995184719562531), COEF_CONST(0.989176511764526),
+    COEF_CONST(0.980785250663757), COEF_CONST(0.970031261444092),
+    COEF_CONST(0.956940352916718), COEF_CONST(0.941544055938721),
+    COEF_CONST(0.923879504203796), COEF_CONST(0.903989315032959),
+    COEF_CONST(0.881921231746674), COEF_CONST(0.857728600502014),
+    COEF_CONST(0.831469595432281), COEF_CONST(0.803207516670227),
+    COEF_CONST(0.773010432720184), COEF_CONST(0.740951120853424),
+    COEF_CONST(0.707106769084930), COEF_CONST(0.671558916568756),
+    COEF_CONST(0.634393274784088), COEF_CONST(0.595699310302734),
+    COEF_CONST(0.555570185184479), COEF_CONST(0.514102697372437),
+    COEF_CONST(0.471396654844284), COEF_CONST(0.427555114030838),
+    COEF_CONST(0.382683426141739), COEF_CONST(0.336889833211899),
+    COEF_CONST(0.290284633636475), COEF_CONST(0.242980122566223),
+    COEF_CONST(0.195090234279633), COEF_CONST(0.146730497479439),
+    COEF_CONST(0.098017133772373), COEF_CONST(0.049067649990320),
+    COEF_CONST(-1.000000000000000), COEF_CONST(-1.047863125801086),
+    COEF_CONST(-1.093201875686646), COEF_CONST(-1.135906934738159),
+    COEF_CONST(-1.175875544548035), COEF_CONST(-1.213011503219605),
+    COEF_CONST(-1.247225046157837), COEF_CONST(-1.278433918952942),
+    COEF_CONST(-1.306562900543213), COEF_CONST(-1.331544399261475),
+    COEF_CONST(-1.353317975997925), COEF_CONST(-1.371831417083740),
+    COEF_CONST(-1.387039899826050), COEF_CONST(-1.398906826972961),
+    COEF_CONST(-1.407403707504273), COEF_CONST(-1.412510156631470),
+    COEF_CONST(0), COEF_CONST(-1.412510156631470),
+    COEF_CONST(-1.407403707504273), COEF_CONST(-1.398906826972961),
+    COEF_CONST(-1.387039899826050), COEF_CONST(-1.371831417083740),
+    COEF_CONST(-1.353317975997925), COEF_CONST(-1.331544399261475),
+    COEF_CONST(-1.306562900543213), COEF_CONST(-1.278433918952942),
+    COEF_CONST(-1.247225046157837), COEF_CONST(-1.213011384010315),
+    COEF_CONST(-1.175875544548035), COEF_CONST(-1.135907053947449),
+    COEF_CONST(-1.093201875686646), COEF_CONST(-1.047863125801086),
+    COEF_CONST(-1.000000000000000), COEF_CONST(-0.949727773666382),
+    COEF_CONST(-0.897167563438416), COEF_CONST(-0.842446029186249),
+    COEF_CONST(-0.785694956779480), COEF_CONST(-0.727051079273224),
+    COEF_CONST(-0.666655659675598), COEF_CONST(-0.604654192924500),
+    COEF_CONST(-0.541196048259735), COEF_CONST(-0.476434230804443),
+    COEF_CONST(-0.410524487495422), COEF_CONST(-0.343625843524933),
+    COEF_CONST(-0.275899350643158), COEF_CONST(-0.207508206367493),
+    COEF_CONST(-0.138617098331451), COEF_CONST(-0.069392144680023),
+    COEF_CONST(0), COEF_CONST(0.069392263889313),
+    COEF_CONST(0.138617157936096), COEF_CONST(0.207508206367493),
+    COEF_CONST(0.275899469852448), COEF_CONST(0.343625962734222),
+    COEF_CONST(0.410524636507034), COEF_CONST(0.476434201002121),
+    COEF_CONST(0.541196107864380), COEF_CONST(0.604654192924500),
+    COEF_CONST(0.666655719280243), COEF_CONST(0.727051138877869),
+    COEF_CONST(0.785695075988770), COEF_CONST(0.842446029186249),
+    COEF_CONST(0.897167563438416), COEF_CONST(0.949727773666382)
+};
+
+/* size 64 only! */
+void dct4_kernel(real_t * in_real, real_t * in_imag, real_t * out_real, real_t * out_imag)
 {
-    real_t f2, f3, f4, f5, f6, f7, f8;
-    real_t f9, f10, f11, f12, f13, f14, f15;
-    real_t f16, f17, f18, f19, f20, f21, f22;
-    real_t f23, f24, f25, f26, f27, f28, f29;
-    real_t f30, f31, f32, f33, f34, f35, f36;
-    real_t f37, f38, f39, f40, f41, f42, f43;
-    real_t f44, f45, f46, f47, f48, f49, f50;
-    real_t f51, f52, f53, f54, f55, f56, f57;
-    real_t f58, f59, f60, f61, f62, f63, f64;
-    real_t f65, f66, f67, f68, f69, f70, f71;
-    real_t f72, f73, f74, f75, f76, f77, f78;
-    real_t f79, f80, f81, f82, f83, f84, f85;
-    real_t f86, f87, f88, f89, f90, f91, f92;
-    real_t f93, f94, f95, f96, f97, f98, f99;
-    real_t f100, f101, f102, f103, f104, f105, f106;
-    real_t f107, f108, f109, f110, f111, f112, f113;
-    real_t f114, f115, f116, f117, f118, f119, f120;
-    real_t f121, f122, f123, f124, f125, f126, f127;
-    real_t f128, f129, f130, f131, f132, f133, f134;
-    real_t f135, f136, f137, f138, f139, f140, f141;
-    real_t f142, f143, f144, f145, f146, f147, f148;
-    real_t f149, f150, f151, f152, f153, f154, f155;
-    real_t f156, f157, f158, f159, f160, f161, f162;
-    real_t f163, f164, f165, f166, f167, f168, f169;
-    real_t f170, f171, f172, f173, f174, f175, f176;
-    real_t f177, f178, f179, f180, f181, f182, f183;
-    real_t f184, f185, f186, f187, f188, f189, f190;
-    real_t f191, f192, f193, f194, f195, f196, f197;
-    real_t f198, f199, f200, f201, f202, f203, f204;
-    real_t f205, f206, f207, f208, f209, f210, f211;
-    real_t f212, f213, f214, f215, f216, f217, f218;
-    real_t f219, f220, f221, f222, f223, f224, f225;
-    real_t f226, f227, f228, f229, f230, f231, f232;
-    real_t f233, f234, f235, f236, f237, f238, f239;
-    real_t f240, f241, f242, f243, f244, f245, f246;
-    real_t f247, f248, f249, f250, f251, f252, f253;
-    real_t f254, f255, f256, f257, f258, f259, f260;
-    real_t f261, f262, f263, f264, f265, f266, f267;
-    real_t f268, f269, f270, f271, f272, f273, f274;
-    real_t f275, f276, f277, f278, f279, f280, f281;
-    real_t f282, f283, f284, f285, f286, f287, f288;
-    real_t f289, f290, f291, f292, f293, f294, f295;
-    real_t f296, f297, f298, f299, f300, f301, f302;
-    real_t f303, f304, f305, f306, f307, f308, f309;
-    real_t f310, f311, f312, f313, f314, f315, f316;
-    real_t f317, f318, f319, f320, f321, f322, f323;
-    real_t f324, f325, f326, f327, f328, f329, f330;
-    real_t f331, f332, f333, f334, f335, f336, f337;
-    real_t f338, f339, f340, f341, f342, f343, f344;
-    real_t f345, f346, f347, f348, f349, f350, f351;
-    real_t f352, f353, f354, f355, f356, f357, f358;
-    real_t f359, f360, f361, f362, f363, f364, f365;
-    real_t f366, f367, f368, f369, f370, f371, f372;
-    real_t f373, f374, f375, f376, f377, f378, f379;
-    real_t f380, f381, f382, f383, f384, f385, f386;
-    real_t f387, f388, f389, f390, f391, f392, f393;
-    real_t f394, f395, f396, f397, f398, f399, f400;
-    real_t f401, f402, f403, f404, f405, f406, f407;
-    real_t f408, f409, f410, f411, f412, f413, f414;
-    real_t f415, f416, f417, f418, f419, f420, f421;
-    real_t f422, f423, f424, f425, f426, f427, f428;
-    real_t f429, f430, f431, f432, f433, f434, f435;
-    real_t f436, f437, f438, f439, f440, f441, f442;
-    real_t f443, f444, f445, f446, f447, f448, f449;
-    real_t f450, f451, f452, f453, f454, f455, f456;
-    real_t f457, f458, f459, f460, f461, f462, f463;
-    real_t f464, f465, f466, f467, f468, f469, f470;
-    real_t f471, f472, f473, f474, f475, f476, f477;
-    real_t f478, f479, f480, f481, f482, f483, f484;
-    real_t f485, f486, f487, f488, f489, f490, f491;
-    real_t f492, f493, f494, f495, f496, f497, f498;
-    real_t f499, f500, f501, f502, f503, f504, f505;
-    real_t f506, f507, f508, f509, f510, f511, f512;
-    real_t f513, f514, f515, f516, f517, f518, f519;
-    real_t f520, f521, f522, f523, f524, f525, f526;
-    real_t f527, f528, f529, f530, f531, f532, f533;
-    real_t f534, f535, f536, f537, f538, f539, f540;
-    real_t f541, f542, f543, f544, f545, f546, f547;
-    real_t f548, f549, f550, f551, f552, f553, f554;
-    real_t f555, f556, f557, f558, f559, f560, f561;
-    real_t f562, f563, f564, f565, f566, f567, f568;
-    real_t f569, f570, f571, f572, f573, f574, f575;
-    real_t f576, f577, f578, f579, f580, f581, f582;
-    real_t f583, f584, f585, f586, f587, f588, f589;
-    real_t f590, f591, f592, f593, f594, f595, f596;
-    real_t f597, f598, f599, f600, f601, f602, f603;
-    real_t f604, f605, f606, f607, f608, f609, f610;
-    real_t f611, f612, f613, f614, f615, f618, f619;
-    real_t f620, f621, f624, f625, f626, f627, f630;
-    real_t f631, f632, f633, f636, f637, f638, f639;
-    real_t f642, f643, f644, f645, f648, f649, f650;
-    real_t f651, f654, f655, f656, f657, f660, f661;
-    real_t f662, f663, f666, f667, f668, f669, f672;
-    real_t f673, f674, f675, f678, f679, f680, f681;
-    real_t f684, f685, f686, f687, f690, f691, f692;
-    real_t f693, f696, f697, f698, f699, f702, f703;
-    real_t f704, f705, f708, f709, f710, f711, f714;
-    real_t f715, f716, f717, f720, f721, f722, f723;
-    real_t f726, f727, f728, f729, f732, f733, f734;
-    real_t f735, f738, f739, f740, f741, f744, f745;
-    real_t f746, f747, f750, f751, f752, f753, f756;
-    real_t f757, f758, f759, f762, f763, f764, f765;
-    real_t f768, f769, f770, f771, f774, f775, f776;
-    real_t f777, f780, f781, f782, f783, f786, f787;
-    real_t f788, f789, f792, f793, f794, f795, f798;
-    real_t f799, f800, f801;
+    // Tables with bit reverse values for 5 bits, bit reverse of i at i-th position
+    const uint8_t bit_rev_tab[32] = { 0,16,8,24,4,20,12,28,2,18,10,26,6,22,14,30,1,17,9,25,5,21,13,29,3,19,11,27,7,23,15,31 };
+    uint16_t i, i_rev;
 
-    f2 = MUL_F(FRAC_CONST(0.7071067811865476), t2[32]);
-    f3 = t2[0] - f2;
-    f4 = t2[0] + f2;
-    f5 = t2[16] + t2[48];
-    f6 = MUL_C(COEF_CONST(1.3065629648763766), t2[16]);
-    f7 = MUL_F(FRAC_CONST(-0.9238795325112866), f5);
-    f8 = MUL_F(FRAC_CONST(-0.5411961001461967), t2[48]);
-    f9 = f6 + f7;
-    f10 = f8 - f7;
-    f11 = f4 - f10;
-    f12 = f4 + f10;
-    f13 = f3 - f9;
-    f14 = f3 + f9;
-    f15 = t2[8] + t2[56];
-    f16 = MUL_C(COEF_CONST(1.1758756024193588), t2[8]);
-    f17 = MUL_F(FRAC_CONST(-0.9807852804032304), f15);
-    f18 = MUL_F(FRAC_CONST(-0.7856949583871021), t2[56]);
-    f19 = f16 + f17;
-    f20 = f18 - f17;
-    f21 = t2[24] + t2[40];
-    f22 = MUL_C(COEF_CONST(1.3870398453221473), t2[24]);
-    f23 = MUL_F(FRAC_CONST(-0.8314696123025455), f21);
-    f24 = MUL_F(FRAC_CONST(-0.2758993792829436), t2[40]);
-    f25 = f22 + f23;
-    f26 = f24 - f23;
-    f27 = f20 - f26;
-    f28 = f20 + f26;
-    f29 = MUL_F(FRAC_CONST(0.7071067811865476), f27);
-    f30 = f19 - f25;
-    f31 = f19 + f25;
-    f32 = MUL_F(FRAC_CONST(0.7071067811865476), f31);
-    f33 = f29 - f32;
-    f34 = f29 + f32;
-    f35 = f12 - f28;
-    f36 = f12 + f28;
-    f37 = f14 - f34;
-    f38 = f14 + f34;
-    f39 = f13 - f33;
-    f40 = f13 + f33;
-    f41 = f11 - f30;
-    f42 = f11 + f30;
-    f43 = t2[4] + t2[60];
-    f44 = MUL_C(COEF_CONST(1.0932018670017569), t2[4]);
-    f45 = MUL_F(FRAC_CONST(-0.9951847266721969), f43);
-    f46 = MUL_F(FRAC_CONST(-0.8971675863426368), t2[60]);
-    f47 = f44 + f45;
-    f48 = f46 - f45;
-    f49 = t2[12] + t2[52];
-    f50 = MUL_C(COEF_CONST(1.2472250129866711), t2[12]);
-    f51 = MUL_F(FRAC_CONST(-0.9569403357322089), f49);
-    f52 = MUL_F(FRAC_CONST(-0.6666556584777469), t2[52]);
-    f53 = f50 + f51;
-    f54 = f52 - f51;
-    f55 = t2[20] + t2[44];
-    f56 = MUL_C(COEF_CONST(1.3533180011743526), t2[20]);
-    f57 = MUL_F(FRAC_CONST(-0.8819212643483551), f55);
-    f58 = MUL_F(FRAC_CONST(-0.4105245275223575), t2[44]);
-    f59 = f56 + f57;
-    f60 = f58 - f57;
-    f61 = t2[28] + t2[36];
-    f62 = MUL_C(COEF_CONST(1.4074037375263826), t2[28]);
-    f63 = MUL_F(FRAC_CONST(-0.7730104533627369), f61);
-    f64 = MUL_F(FRAC_CONST(-0.1386171691990913), t2[36]);
-    f65 = f62 + f63;
-    f66 = f64 - f63;
-    f67 = f48 - f66;
-    f68 = f48 + f66;
-    f69 = f54 - f60;
-    f70 = f54 + f60;
-    f71 = f68 - f70;
-    f72 = f68 + f70;
-    f73 = MUL_F(FRAC_CONST(0.7071067811865476), f71);
-    f74 = f67 + f69;
-    f75 = MUL_C(COEF_CONST(1.3065629648763766), f67);
-    f76 = MUL_F(FRAC_CONST(-0.9238795325112866), f74);
-    f77 = MUL_F(FRAC_CONST(-0.5411961001461967), f69);
-    f78 = f75 + f76;
-    f79 = f77 - f76;
-    f80 = f47 - f65;
-    f81 = f47 + f65;
-    f82 = f53 - f59;
-    f83 = f53 + f59;
-    f84 = f81 + f83;
-    f85 = MUL_C(COEF_CONST(1.3065629648763770), f81);
-    f86 = MUL_F(FRAC_CONST(-0.3826834323650904), f84);
-    f87 = MUL_F(FRAC_CONST(0.5411961001461961), f83);
-    f88 = f85 + f86;
-    f89 = f87 - f86;
-    f90 = f80 - f82;
-    f91 = f80 + f82;
-    f92 = MUL_F(FRAC_CONST(0.7071067811865476), f91);
-    f93 = f79 - f89;
-    f94 = f79 + f89;
-    f95 = f73 - f92;
-    f96 = f73 + f92;
-    f97 = f78 - f88;
-    f98 = f78 + f88;
-    f99 = f36 - f72;
-    f100 = f36 + f72;
-    f101 = f38 - f94;
-    f102 = f38 + f94;
-    f103 = f40 - f93;
-    f104 = f40 + f93;
-    f105 = f42 - f96;
-    f106 = f42 + f96;
-    f107 = f41 - f95;
-    f108 = f41 + f95;
-    f109 = f39 - f98;
-    f110 = f39 + f98;
-    f111 = f37 - f97;
-    f112 = f37 + f97;
-    f113 = f35 - f90;
-    f114 = f35 + f90;
-    f115 = t2[2] + t2[62];
-    f116 = MUL_C(COEF_CONST(1.0478631305325901), t2[2]);
-    f117 = MUL_F(FRAC_CONST(-0.9987954562051724), f115);
-    f118 = MUL_F(FRAC_CONST(-0.9497277818777548), t2[62]);
-    f119 = f116 + f117;
-    f120 = f118 - f117;
-    f121 = t2[10] + t2[54];
-    f122 = MUL_C(COEF_CONST(1.2130114330978077), t2[10]);
-    f123 = MUL_F(FRAC_CONST(-0.9700312531945440), f121);
-    f124 = MUL_F(FRAC_CONST(-0.7270510732912803), t2[54]);
-    f125 = f122 + f123;
-    f126 = f124 - f123;
-    f127 = t2[18] + t2[46];
-    f128 = MUL_C(COEF_CONST(1.3315443865537255), t2[18]);
-    f129 = MUL_F(FRAC_CONST(-0.9039892931234433), f127);
-    f130 = MUL_F(FRAC_CONST(-0.4764341996931612), t2[46]);
-    f131 = f128 + f129;
-    f132 = f130 - f129;
-    f133 = t2[26] + t2[38];
-    f134 = MUL_C(COEF_CONST(1.3989068359730781), t2[26]);
-    f135 = MUL_F(FRAC_CONST(-0.8032075314806453), f133);
-    f136 = MUL_F(FRAC_CONST(-0.2075082269882124), t2[38]);
-    f137 = f134 + f135;
-    f138 = f136 - f135;
-    f139 = t2[34] + t2[30];
-    f140 = MUL_C(COEF_CONST(1.4125100802019777), t2[34]);
-    f141 = MUL_F(FRAC_CONST(-0.6715589548470187), f139);
-    f142 = MUL_F(FRAC_CONST(0.0693921705079402), t2[30]);
-    f143 = f140 + f141;
-    f144 = f142 - f141;
-    f145 = t2[42] + t2[22];
-    f146 = MUL_C(COEF_CONST(1.3718313541934939), t2[42]);
-    f147 = MUL_F(FRAC_CONST(-0.5141027441932219), f145);
-    f148 = MUL_F(FRAC_CONST(0.3436258658070501), t2[22]);
-    f149 = f146 + f147;
-    f150 = f148 - f147;
-    f151 = t2[50] + t2[14];
-    f152 = MUL_C(COEF_CONST(1.2784339185752409), t2[50]);
-    f153 = MUL_F(FRAC_CONST(-0.3368898533922200), f151);
-    f154 = MUL_F(FRAC_CONST(0.6046542117908008), t2[14]);
-    f155 = f152 + f153;
-    f156 = f154 - f153;
-    f157 = t2[58] + t2[6];
-    f158 = MUL_C(COEF_CONST(1.1359069844201433), t2[58]);
-    f159 = MUL_F(FRAC_CONST(-0.1467304744553624), f157);
-    f160 = MUL_F(FRAC_CONST(0.8424460355094185), t2[6]);
-    f161 = f158 + f159;
-    f162 = f160 - f159;
-    f163 = f120 - f144;
-    f164 = f120 + f144;
-    f165 = f119 - f143;
-    f166 = f119 + f143;
-    f167 = f126 - f150;
-    f168 = f126 + f150;
-    f169 = f125 - f149;
-    f170 = f125 + f149;
-    f171 = f132 - f156;
-    f172 = f132 + f156;
-    f173 = f131 - f155;
-    f174 = f131 + f155;
-    f175 = f138 - f162;
-    f176 = f138 + f162;
-    f177 = f137 - f161;
-    f178 = f137 + f161;
-    f179 = f163 + f165;
-    f180 = MUL_C(COEF_CONST(1.1758756024193588), f163);
-    f181 = MUL_F(FRAC_CONST(-0.9807852804032304), f179);
-    f182 = MUL_F(FRAC_CONST(-0.7856949583871021), f165);
-    f183 = f180 + f181;
-    f184 = f182 - f181;
-    f185 = f167 + f169;
-    f186 = MUL_C(COEF_CONST(1.3870398453221475), f167);
-    f187 = MUL_F(FRAC_CONST(-0.5555702330196022), f185);
-    f188 = MUL_F(FRAC_CONST(0.2758993792829431), f169);
-    f189 = f186 + f187;
-    f190 = f188 - f187;
-    f191 = f171 + f173;
-    f192 = MUL_F(FRAC_CONST(0.7856949583871022), f171);
-    f193 = MUL_F(FRAC_CONST(0.1950903220161283), f191);
-    f194 = MUL_C(COEF_CONST(1.1758756024193586), f173);
-    f195 = f192 + f193;
-    f196 = f194 - f193;
-    f197 = f175 + f177;
-    f198 = MUL_F(FRAC_CONST(-0.2758993792829430), f175);
-    f199 = MUL_F(FRAC_CONST(0.8314696123025452), f197);
-    f200 = MUL_C(COEF_CONST(1.3870398453221475), f177);
-    f201 = f198 + f199;
-    f202 = f200 - f199;
-    f203 = f164 - f172;
-    f204 = f164 + f172;
-    f205 = f166 - f174;
-    f206 = f166 + f174;
-    f207 = f168 - f176;
-    f208 = f168 + f176;
-    f209 = f170 - f178;
-    f210 = f170 + f178;
-    f211 = f184 - f196;
-    f212 = f184 + f196;
-    f213 = f183 - f195;
-    f214 = f183 + f195;
-    f215 = f190 - f202;
-    f216 = f190 + f202;
-    f217 = f189 - f201;
-    f218 = f189 + f201;
-    f219 = f203 + f205;
-    f220 = MUL_C(COEF_CONST(1.3065629648763766), f203);
-    f221 = MUL_F(FRAC_CONST(-0.9238795325112866), f219);
-    f222 = MUL_F(FRAC_CONST(-0.5411961001461967), f205);
-    f223 = f220 + f221;
-    f224 = f222 - f221;
-    f225 = f207 + f209;
-    f226 = MUL_F(FRAC_CONST(0.5411961001461969), f207);
-    f227 = MUL_F(FRAC_CONST(0.3826834323650898), f225);
-    f228 = MUL_C(COEF_CONST(1.3065629648763766), f209);
-    f229 = f226 + f227;
-    f230 = f228 - f227;
-    f231 = f211 + f213;
-    f232 = MUL_C(COEF_CONST(1.3065629648763766), f211);
-    f233 = MUL_F(FRAC_CONST(-0.9238795325112866), f231);
-    f234 = MUL_F(FRAC_CONST(-0.5411961001461967), f213);
-    f235 = f232 + f233;
-    f236 = f234 - f233;
-    f237 = f215 + f217;
-    f238 = MUL_F(FRAC_CONST(0.5411961001461969), f215);
-    f239 = MUL_F(FRAC_CONST(0.3826834323650898), f237);
-    f240 = MUL_C(COEF_CONST(1.3065629648763766), f217);
-    f241 = f238 + f239;
-    f242 = f240 - f239;
-    f243 = f204 - f208;
-    f244 = f204 + f208;
-    f245 = f206 - f210;
-    f246 = f206 + f210;
-    f247 = f224 - f230;
-    f248 = f224 + f230;
-    f249 = f223 - f229;
-    f250 = f223 + f229;
-    f251 = f212 - f216;
-    f252 = f212 + f216;
-    f253 = f214 - f218;
-    f254 = f214 + f218;
-    f255 = f236 - f242;
-    f256 = f236 + f242;
-    f257 = f235 - f241;
-    f258 = f235 + f241;
-    f259 = f243 - f245;
-    f260 = f243 + f245;
-    f261 = MUL_F(FRAC_CONST(0.7071067811865474), f259);
-    f262 = MUL_F(FRAC_CONST(0.7071067811865474), f260);
-    f263 = f247 - f249;
-    f264 = f247 + f249;
-    f265 = MUL_F(FRAC_CONST(0.7071067811865474), f263);
-    f266 = MUL_F(FRAC_CONST(0.7071067811865474), f264);
-    f267 = f251 - f253;
-    f268 = f251 + f253;
-    f269 = MUL_F(FRAC_CONST(0.7071067811865474), f267);
-    f270 = MUL_F(FRAC_CONST(0.7071067811865474), f268);
-    f271 = f255 - f257;
-    f272 = f255 + f257;
-    f273 = MUL_F(FRAC_CONST(0.7071067811865474), f271);
-    f274 = MUL_F(FRAC_CONST(0.7071067811865474), f272);
-    f275 = f100 - f244;
-    f276 = f100 + f244;
-    f277 = f102 - f252;
-    f278 = f102 + f252;
-    f279 = f104 - f256;
-    f280 = f104 + f256;
-    f281 = f106 - f248;
-    f282 = f106 + f248;
-    f283 = f108 - f266;
-    f284 = f108 + f266;
-    f285 = f110 - f274;
-    f286 = f110 + f274;
-    f287 = f112 - f270;
-    f288 = f112 + f270;
-    f289 = f114 - f262;
-    f290 = f114 + f262;
-    f291 = f113 - f261;
-    f292 = f113 + f261;
-    f293 = f111 - f269;
-    f294 = f111 + f269;
-    f295 = f109 - f273;
-    f296 = f109 + f273;
-    f297 = f107 - f265;
-    f298 = f107 + f265;
-    f299 = f105 - f250;
-    f300 = f105 + f250;
-    f301 = f103 - f258;
-    f302 = f103 + f258;
-    f303 = f101 - f254;
-    f304 = f101 + f254;
-    f305 = f99 - f246;
-    f306 = f99 + f246;
-    f307 = t2[1] - t2[61];
-    f308 = MUL_C(COEF_CONST(1.0478631305325901), t2[1]);
-    f309 = MUL_F(FRAC_CONST(-0.9987954562051724), f307);
-    f310 = MUL_F(FRAC_CONST(-0.9497277818777548), t2[61]);
-    f311 = f308 + f309;
-    f312 = f309 + f310;
-    f313 = t2[9] - t2[53];
-    f314 = MUL_C(COEF_CONST(1.2130114330978077), t2[9]);
-    f315 = MUL_F(FRAC_CONST(-0.9700312531945440), f313);
-    f316 = MUL_F(FRAC_CONST(-0.7270510732912803), t2[53]);
-    f317 = f314 + f315;
-    f318 = f315 + f316;
-    f319 = t2[17] - t2[45];
-    f320 = MUL_C(COEF_CONST(1.3315443865537255), t2[17]);
-    f321 = MUL_F(FRAC_CONST(-0.9039892931234433), f319);
-    f322 = MUL_F(FRAC_CONST(-0.4764341996931612), t2[45]);
-    f323 = f320 + f321;
-    f324 = f321 + f322;
-    f325 = t2[25] - t2[37];
-    f326 = MUL_C(COEF_CONST(1.3989068359730781), t2[25]);
-    f327 = MUL_F(FRAC_CONST(-0.8032075314806453), f325);
-    f328 = MUL_F(FRAC_CONST(-0.2075082269882124), t2[37]);
-    f329 = f326 + f327;
-    f330 = f327 + f328;
-    f331 = t2[33] - t2[29];
-    f332 = MUL_C(COEF_CONST(1.4125100802019777), t2[33]);
-    f333 = MUL_F(FRAC_CONST(-0.6715589548470187), f331);
-    f334 = MUL_F(FRAC_CONST(0.0693921705079402), t2[29]);
-    f335 = f332 + f333;
-    f336 = f333 + f334;
-    f337 = t2[41] - t2[21];
-    f338 = MUL_C(COEF_CONST(1.3718313541934939), t2[41]);
-    f339 = MUL_F(FRAC_CONST(-0.5141027441932219), f337);
-    f340 = MUL_F(FRAC_CONST(0.3436258658070501), t2[21]);
-    f341 = f338 + f339;
-    f342 = f339 + f340;
-    f343 = t2[49] - t2[13];
-    f344 = MUL_C(COEF_CONST(1.2784339185752409), t2[49]);
-    f345 = MUL_F(FRAC_CONST(-0.3368898533922200), f343);
-    f346 = MUL_F(FRAC_CONST(0.6046542117908008), t2[13]);
-    f347 = f344 + f345;
-    f348 = f345 + f346;
-    f349 = t2[57] - t2[5];
-    f350 = MUL_C(COEF_CONST(1.1359069844201433), t2[57]);
-    f351 = MUL_F(FRAC_CONST(-0.1467304744553624), f349);
-    f352 = MUL_F(FRAC_CONST(0.8424460355094185), t2[5]);
-    f353 = f350 + f351;
-    f354 = f351 + f352;
-    f355 = f336 - f312;
-    f356 = f312 + f336;
-    f357 = f311 - f335;
-    f358 = f311 + f335;
-    f359 = f342 - f318;
-    f360 = f318 + f342;
-    f361 = f317 - f341;
-    f362 = f317 + f341;
-    f363 = f348 - f324;
-    f364 = f324 + f348;
-    f365 = f323 - f347;
-    f366 = f323 + f347;
-    f367 = f354 - f330;
-    f368 = f330 + f354;
-    f369 = f329 - f353;
-    f370 = f329 + f353;
-    f371 = f355 + f357;
-    f372 = MUL_C(COEF_CONST(1.1758756024193588), f355);
-    f373 = MUL_F(FRAC_CONST(-0.9807852804032304), f371);
-    f374 = MUL_F(FRAC_CONST(-0.7856949583871021), f357);
-    f375 = f372 + f373;
-    f376 = f374 - f373;
-    f377 = f359 + f361;
-    f378 = MUL_C(COEF_CONST(1.3870398453221475), f359);
-    f379 = MUL_F(FRAC_CONST(-0.5555702330196022), f377);
-    f380 = MUL_F(FRAC_CONST(0.2758993792829431), f361);
-    f381 = f378 + f379;
-    f382 = f380 - f379;
-    f383 = f363 + f365;
-    f384 = MUL_F(FRAC_CONST(0.7856949583871022), f363);
-    f385 = MUL_F(FRAC_CONST(0.1950903220161283), f383);
-    f386 = MUL_C(COEF_CONST(1.1758756024193586), f365);
-    f387 = f384 + f385;
-    f388 = f386 - f385;
-    f389 = f367 + f369;
-    f390 = MUL_F(FRAC_CONST(-0.2758993792829430), f367);
-    f391 = MUL_F(FRAC_CONST(0.8314696123025452), f389);
-    f392 = MUL_C(COEF_CONST(1.3870398453221475), f369);
-    f393 = f390 + f391;
-    f394 = f392 - f391;
-    f395 = f364 - f356;
-    f396 = f356 + f364;
-    f397 = f358 - f366;
-    f398 = f358 + f366;
-    f399 = f368 - f360;
-    f400 = f360 + f368;
-    f401 = f362 - f370;
-    f402 = f362 + f370;
-    f403 = f376 - f388;
-    f404 = f376 + f388;
-    f405 = f375 - f387;
-    f406 = f375 + f387;
-    f407 = f382 - f394;
-    f408 = f382 + f394;
-    f409 = f381 - f393;
-    f410 = f381 + f393;
-    f411 = f395 + f397;
-    f412 = MUL_C(COEF_CONST(1.3065629648763766), f395);
-    f413 = MUL_F(FRAC_CONST(-0.9238795325112866), f411);
-    f414 = MUL_F(FRAC_CONST(-0.5411961001461967), f397);
-    f415 = f412 + f413;
-    f416 = f414 - f413;
-    f417 = f399 + f401;
-    f418 = MUL_F(FRAC_CONST(0.5411961001461969), f399);
-    f419 = MUL_F(FRAC_CONST(0.3826834323650898), f417);
-    f420 = MUL_C(COEF_CONST(1.3065629648763766), f401);
-    f421 = f418 + f419;
-    f422 = f420 - f419;
-    f423 = f403 + f405;
-    f424 = MUL_C(COEF_CONST(1.3065629648763766), f403);
-    f425 = MUL_F(FRAC_CONST(-0.9238795325112866), f423);
-    f426 = MUL_F(FRAC_CONST(-0.5411961001461967), f405);
-    f427 = f424 + f425;
-    f428 = f426 - f425;
-    f429 = f407 + f409;
-    f430 = MUL_F(FRAC_CONST(0.5411961001461969), f407);
-    f431 = MUL_F(FRAC_CONST(0.3826834323650898), f429);
-    f432 = MUL_C(COEF_CONST(1.3065629648763766), f409);
-    f433 = f430 + f431;
-    f434 = f432 - f431;
-    f435 = f400 - f396;
-    f436 = f396 + f400;
-    f437 = f398 - f402;
-    f438 = f398 + f402;
-    f439 = f416 - f422;
-    f440 = f416 + f422;
-    f441 = f415 - f421;
-    f442 = f415 + f421;
-    f443 = f404 - f408;
-    f444 = f404 + f408;
-    f445 = f406 - f410;
-    f446 = f406 + f410;
-    f447 = f428 - f434;
-    f448 = f428 + f434;
-    f449 = f427 - f433;
-    f450 = f427 + f433;
-    f451 = f435 - f437;
-    f452 = f435 + f437;
-    f453 = MUL_F(FRAC_CONST(0.7071067811865474), f451);
-    f454 = MUL_F(FRAC_CONST(0.7071067811865474), f452);
-    f455 = f439 - f441;
-    f456 = f439 + f441;
-    f457 = MUL_F(FRAC_CONST(0.7071067811865474), f455);
-    f458 = MUL_F(FRAC_CONST(0.7071067811865474), f456);
-    f459 = f443 - f445;
-    f460 = f443 + f445;
-    f461 = MUL_F(FRAC_CONST(0.7071067811865474), f459);
-    f462 = MUL_F(FRAC_CONST(0.7071067811865474), f460);
-    f463 = f447 - f449;
-    f464 = f447 + f449;
-    f465 = MUL_F(FRAC_CONST(0.7071067811865474), f463);
-    f466 = MUL_F(FRAC_CONST(0.7071067811865474), f464);
-    f467 = MUL_F(FRAC_CONST(0.7071067811865476), t2[31]);
-    f468 = t2[63] - f467;
-    f469 = t2[63] + f467;
-    f470 = t2[47] + t2[15];
-    f471 = MUL_C(COEF_CONST(1.3065629648763766), t2[47]);
-    f472 = MUL_F(FRAC_CONST(-0.9238795325112866), f470);
-    f473 = MUL_F(FRAC_CONST(-0.5411961001461967), t2[15]);
-    f474 = f471 + f472;
-    f475 = f473 - f472;
-    f476 = f469 - f475;
-    f477 = f469 + f475;
-    f478 = f468 - f474;
-    f479 = f468 + f474;
-    f480 = t2[55] + t2[7];
-    f481 = MUL_C(COEF_CONST(1.1758756024193588), t2[55]);
-    f482 = MUL_F(FRAC_CONST(-0.9807852804032304), f480);
-    f483 = MUL_F(FRAC_CONST(-0.7856949583871021), t2[7]);
-    f484 = f481 + f482;
-    f485 = f483 - f482;
-    f486 = t2[39] + t2[23];
-    f487 = MUL_C(COEF_CONST(1.3870398453221473), t2[39]);
-    f488 = MUL_F(FRAC_CONST(-0.8314696123025455), f486);
-    f489 = MUL_F(FRAC_CONST(-0.2758993792829436), t2[23]);
-    f490 = f487 + f488;
-    f491 = f489 - f488;
-    f492 = f485 - f491;
-    f493 = f485 + f491;
-    f494 = MUL_F(FRAC_CONST(0.7071067811865476), f492);
-    f495 = f484 - f490;
-    f496 = f484 + f490;
-    f497 = MUL_F(FRAC_CONST(0.7071067811865476), f496);
-    f498 = f494 - f497;
-    f499 = f494 + f497;
-    f500 = f477 - f493;
-    f501 = f477 + f493;
-    f502 = f479 - f499;
-    f503 = f479 + f499;
-    f504 = f478 - f498;
-    f505 = f478 + f498;
-    f506 = f476 - f495;
-    f507 = f476 + f495;
-    f508 = t2[59] + t2[3];
-    f509 = MUL_C(COEF_CONST(1.0932018670017569), t2[59]);
-    f510 = MUL_F(FRAC_CONST(-0.9951847266721969), f508);
-    f511 = MUL_F(FRAC_CONST(-0.8971675863426368), t2[3]);
-    f512 = f509 + f510;
-    f513 = f511 - f510;
-    f514 = t2[51] + t2[11];
-    f515 = MUL_C(COEF_CONST(1.2472250129866711), t2[51]);
-    f516 = MUL_F(FRAC_CONST(-0.9569403357322089), f514);
-    f517 = MUL_F(FRAC_CONST(-0.6666556584777469), t2[11]);
-    f518 = f515 + f516;
-    f519 = f517 - f516;
-    f520 = t2[43] + t2[19];
-    f521 = MUL_C(COEF_CONST(1.3533180011743526), t2[43]);
-    f522 = MUL_F(FRAC_CONST(-0.8819212643483551), f520);
-    f523 = MUL_F(FRAC_CONST(-0.4105245275223575), t2[19]);
-    f524 = f521 + f522;
-    f525 = f523 - f522;
-    f526 = t2[35] + t2[27];
-    f527 = MUL_C(COEF_CONST(1.4074037375263826), t2[35]);
-    f528 = MUL_F(FRAC_CONST(-0.7730104533627369), f526);
-    f529 = MUL_F(FRAC_CONST(-0.1386171691990913), t2[27]);
-    f530 = f527 + f528;
-    f531 = f529 - f528;
-    f532 = f513 - f531;
-    f533 = f513 + f531;
-    f534 = f519 - f525;
-    f535 = f519 + f525;
-    f536 = f533 - f535;
-    f537 = f533 + f535;
-    f538 = MUL_F(FRAC_CONST(0.7071067811865476), f536);
-    f539 = f532 + f534;
-    f540 = MUL_C(COEF_CONST(1.3065629648763766), f532);
-    f541 = MUL_F(FRAC_CONST(-0.9238795325112866), f539);
-    f542 = MUL_F(FRAC_CONST(-0.5411961001461967), f534);
-    f543 = f540 + f541;
-    f544 = f542 - f541;
-    f545 = f512 - f530;
-    f546 = f512 + f530;
-    f547 = f518 - f524;
-    f548 = f518 + f524;
-    f549 = f546 + f548;
-    f550 = MUL_C(COEF_CONST(1.3065629648763770), f546);
-    f551 = MUL_F(FRAC_CONST(-0.3826834323650904), f549);
-    f552 = MUL_F(FRAC_CONST(0.5411961001461961), f548);
-    f553 = f550 + f551;
-    f554 = f552 - f551;
-    f555 = f545 - f547;
-    f556 = f545 + f547;
-    f557 = MUL_F(FRAC_CONST(0.7071067811865476), f556);
-    f558 = f544 - f554;
-    f559 = f544 + f554;
-    f560 = f538 - f557;
-    f561 = f538 + f557;
-    f562 = f543 - f553;
-    f563 = f543 + f553;
-    f564 = f501 - f537;
-    f565 = f501 + f537;
-    f566 = f503 - f559;
-    f567 = f503 + f559;
-    f568 = f505 - f558;
-    f569 = f505 + f558;
-    f570 = f507 - f561;
-    f571 = f507 + f561;
-    f572 = f506 - f560;
-    f573 = f506 + f560;
-    f574 = f504 - f563;
-    f575 = f504 + f563;
-    f576 = f502 - f562;
-    f577 = f502 + f562;
-    f578 = f500 - f555;
-    f579 = f500 + f555;
-    f580 = f438 - f565;
-    f581 = f438 + f565;
-    f582 = f446 + f567;
-    f583 = f446 - f567;
-    f584 = f450 - f569;
-    f585 = f450 + f569;
-    f586 = f442 + f571;
-    f587 = f442 - f571;
-    f588 = f457 - f573;
-    f589 = f457 + f573;
-    f590 = f465 + f575;
-    f591 = f465 - f575;
-    f592 = f461 - f577;
-    f593 = f461 + f577;
-    f594 = f453 + f579;
-    f595 = f453 - f579;
-    f596 = f454 - f578;
-    f597 = f454 + f578;
-    f598 = f462 + f576;
-    f599 = f462 - f576;
-    f600 = f466 - f574;
-    f601 = f466 + f574;
-    f602 = f458 + f572;
-    f603 = f458 - f572;
-    f604 = f440 - f570;
-    f605 = f440 + f570;
-    f606 = f448 + f568;
-    f607 = f448 - f568;
-    f608 = f444 - f566;
-    f609 = f444 + f566;
-    f610 = f564 - f436;
-    f611 = f436 + f564;
-    f612 = f581 + f276;
-    f613 = MUL_F(FRAC_CONST(-0.9876531635534246), f581);
-    f614 = MUL_F(FRAC_CONST(0.9999247018391445), f612);
-    f615 = MUL_C(COEF_CONST(1.0121962401248645), f276);
-    y[0] = f613 + f614;
-    y[63] = f615 - f614;
-    f618 = f583 + f278;
-    f619 = MUL_F(FRAC_CONST(-0.9625151616469906), f583);
-    f620 = MUL_F(FRAC_CONST(0.9993223845883495), f618);
-    f621 = MUL_C(COEF_CONST(1.0361296075297086), f278);
-    y[1] = f619 + f620;
-    y[62] = f621 - f620;
-    f624 = f585 + f280;
-    f625 = MUL_F(FRAC_CONST(-0.9367973765979405), f585);
-    f626 = MUL_F(FRAC_CONST(0.9981181129001492), f624);
-    f627 = MUL_C(COEF_CONST(1.0594388492023579), f280);
-    y[2] = f625 + f626;
-    y[61] = f627 - f626;
-    f630 = f587 + f282;
-    f631 = MUL_F(FRAC_CONST(-0.9105152998383381), f587);
-    f632 = MUL_F(FRAC_CONST(0.9963126121827780), f630);
-    f633 = MUL_C(COEF_CONST(1.0821099245272179), f282);
-    y[3] = f631 + f632;
-    y[60] = f633 - f632;
-    f636 = f589 + f284;
-    f637 = MUL_F(FRAC_CONST(-0.8836847627084729), f589);
-    f638 = MUL_F(FRAC_CONST(0.9939069700023561), f636);
-    f639 = MUL_C(COEF_CONST(1.1041291772962392), f284);
-    y[4] = f637 + f638;
-    y[59] = f639 - f638;
-    f642 = f591 + f286;
-    f643 = MUL_F(FRAC_CONST(-0.8563219269206538), f591);
-    f644 = MUL_F(FRAC_CONST(0.9909026354277800), f642);
-    f645 = MUL_C(COEF_CONST(1.1254833439349063), f286);
-    y[5] = f643 + f644;
-    y[58] = f645 - f644;
-    f648 = f593 + f288;
-    f649 = MUL_F(FRAC_CONST(-0.8284432748239970), f593);
-    f650 = MUL_F(FRAC_CONST(0.9873014181578584), f648);
-    f651 = MUL_C(COEF_CONST(1.1461595614917197), f288);
-    y[6] = f649 + f650;
-    y[57] = f651 - f650;
-    f654 = f595 + f290;
-    f655 = MUL_F(FRAC_CONST(-0.8000655994760753), f595);
-    f656 = MUL_F(FRAC_CONST(0.9831054874312163), f654);
-    f657 = MUL_C(COEF_CONST(1.1661453753863573), f290);
-    y[7] = f655 + f656;
-    y[56] = f657 - f656;
-    f660 = f597 + f292;
-    f661 = MUL_F(FRAC_CONST(-0.7712059945274091), f597);
-    f662 = MUL_F(FRAC_CONST(0.9783173707196277), f660);
-    f663 = MUL_C(COEF_CONST(1.1854287469118463), f292);
-    y[8] = f661 + f662;
-    y[55] = f663 - f662;
-    f666 = f599 + f294;
-    f667 = MUL_F(FRAC_CONST(-0.7418818439248888), f599);
-    f668 = MUL_F(FRAC_CONST(0.9729399522055601), f666);
-    f669 = MUL_C(COEF_CONST(1.2039980604862313), f294);
-    y[9] = f667 + f668;
-    y[54] = f669 - f668;
-    f672 = f601 + f296;
-    f673 = MUL_F(FRAC_CONST(-0.7121108114403374), f601);
-    f674 = MUL_F(FRAC_CONST(0.9669764710448521), f672);
-    f675 = MUL_C(COEF_CONST(1.2218421306493668), f296);
-    y[10] = f673 + f674;
-    y[53] = f675 - f674;
-    f678 = f603 + f298;
-    f679 = MUL_F(FRAC_CONST(-0.6819108300305128), f603);
-    f680 = MUL_F(FRAC_CONST(0.9604305194155658), f678);
-    f681 = MUL_C(COEF_CONST(1.2389502088006188), f298);
-    y[11] = f679 + f680;
-    y[52] = f681 - f680;
-    f684 = f605 + f300;
-    f685 = MUL_F(FRAC_CONST(-0.6513000910349656), f605);
-    f686 = MUL_F(FRAC_CONST(0.9533060403541938), f684);
-    f687 = MUL_C(COEF_CONST(1.2553119896734219), f300);
-    y[12] = f685 + f686;
-    y[51] = f687 - f686;
-    f690 = f607 + f302;
-    f691 = MUL_F(FRAC_CONST(-0.6202970332182582), f607);
-    f692 = MUL_F(FRAC_CONST(0.9456073253805213), f690);
-    f693 = MUL_C(COEF_CONST(1.2709176175427843), f302);
-    y[13] = f691 + f692;
-    y[50] = f693 - f692;
-    f696 = f609 + f304;
-    f697 = MUL_F(FRAC_CONST(-0.5889203316631404), f609);
-    f698 = MUL_F(FRAC_CONST(0.9373390119125750), f696);
-    f699 = MUL_C(COEF_CONST(1.2857576921620095), f304);
-    y[14] = f697 + f698;
-    y[49] = f699 - f698;
-    f702 = f306 - f611;
-    f703 = MUL_F(FRAC_CONST(-0.5571888865213779), f611);
-    f704 = MUL_F(FRAC_CONST(0.9285060804732155), f702);
-    f705 = MUL_C(COEF_CONST(1.2998232744250531), f306);
-    y[15] = f704 - f703;
-    y[48] = f705 - f704;
-    f708 = f610 + f305;
-    f709 = MUL_F(FRAC_CONST(-0.5251218116290097), f610);
-    f710 = MUL_F(FRAC_CONST(0.9191138516900578), f708);
-    f711 = MUL_C(COEF_CONST(1.3131058917511058), f305);
-    y[16] = f709 + f710;
-    y[47] = f711 - f710;
-    f714 = f608 + f303;
-    f715 = MUL_F(FRAC_CONST(-0.4927384229928850), f608);
-    f716 = MUL_F(FRAC_CONST(0.9091679830905223), f714);
-    f717 = MUL_C(COEF_CONST(1.3255975431881595), f303);
-    y[17] = f715 + f716;
-    y[46] = f717 - f716;
-    f720 = f606 + f301;
-    f721 = MUL_F(FRAC_CONST(-0.4600582271554261), f606);
-    f722 = MUL_F(FRAC_CONST(0.8986744656939538), f720);
-    f723 = MUL_C(COEF_CONST(1.3372907042324815), f301);
-    y[18] = f721 + f722;
-    y[45] = f723 - f722;
-    f726 = f604 + f299;
-    f727 = MUL_F(FRAC_CONST(-0.4271009094446139), f604);
-    f728 = MUL_F(FRAC_CONST(0.8876396204028539), f726);
-    f729 = MUL_C(COEF_CONST(1.3481783313610940), f299);
-    y[19] = f727 + f728;
-    y[44] = f729 - f728;
-    f732 = f602 + f297;
-    f733 = MUL_F(FRAC_CONST(-0.3938863221162838), f602);
-    f734 = MUL_F(FRAC_CONST(0.8760700941954066), f732);
-    f735 = MUL_C(COEF_CONST(1.3582538662745294), f297);
-    y[20] = f733 + f734;
-    y[43] = f735 - f734;
-    f738 = f600 + f295;
-    f739 = MUL_F(FRAC_CONST(-0.3604344723958691), f600);
-    f740 = MUL_F(FRAC_CONST(0.8639728561215867), f738);
-    f741 = MUL_C(COEF_CONST(1.3675112398473042), f295);
-    y[21] = f739 + f740;
-    y[42] = f741 - f740;
-    f744 = f598 + f293;
-    f745 = MUL_F(FRAC_CONST(-0.3267655104267964), f598);
-    f746 = MUL_F(FRAC_CONST(0.8513551931052652), f744);
-    f747 = MUL_C(COEF_CONST(1.3759448757837340), f293);
-    y[22] = f745 + f746;
-    y[41] = f747 - f746;
-    f750 = f596 + f291;
-    f751 = MUL_F(FRAC_CONST(-0.2928997171327915), f596);
-    f752 = MUL_F(FRAC_CONST(0.8382247055548380), f750);
-    f753 = MUL_C(COEF_CONST(1.3835496939768843), f291);
-    y[23] = f751 + f752;
-    y[40] = f753 - f752;
-    f756 = f594 + f289;
-    f757 = MUL_F(FRAC_CONST(-0.2588574920014121), f594);
-    f758 = MUL_F(FRAC_CONST(0.8245893027850253), f756);
-    f759 = MUL_C(COEF_CONST(1.3903211135686386), f289);
-    y[24] = f757 + f758;
-    y[39] = f759 - f758;
-    f762 = f592 + f287;
-    f763 = MUL_F(FRAC_CONST(-0.2246593407961559), f592);
-    f764 = MUL_F(FRAC_CONST(0.8104571982525948), f762);
-    f765 = MUL_C(COEF_CONST(1.3962550557090336), f287);
-    y[25] = f763 + f764;
-    y[38] = f765 - f764;
-    f768 = f590 + f285;
-    f769 = MUL_F(FRAC_CONST(-0.1903258632045579), f590);
-    f770 = MUL_F(FRAC_CONST(0.7958369046088835), f768);
-    f771 = MUL_C(COEF_CONST(1.4013479460132090), f285);
-    y[26] = f769 + f770;
-    y[37] = f771 - f770;
-    f774 = f588 + f283;
-    f775 = MUL_F(FRAC_CONST(-0.1558777404297079), f588);
-    f776 = MUL_F(FRAC_CONST(0.7807372285720944), f774);
-    f777 = MUL_C(COEF_CONST(1.4055967167144807), f283);
-    y[27] = f775 + f776;
-    y[36] = f777 - f776;
-    f780 = f586 + f281;
-    f781 = MUL_F(FRAC_CONST(-0.1213357227326675), f586);
-    f782 = MUL_F(FRAC_CONST(0.7651672656224590), f780);
-    f783 = MUL_C(COEF_CONST(1.4089988085122505), f281);
-    y[28] = f781 + f782;
-    y[35] = f783 - f782;
-    f786 = f584 + f279;
-    f787 = MUL_F(FRAC_CONST(-0.0867206169332875), f584);
-    f788 = MUL_F(FRAC_CONST(0.7491363945234593), f786);
-    f789 = MUL_C(COEF_CONST(1.4115521721136310), f279);
-    y[29] = f787 + f788;
-    y[34] = f789 - f788;
-    f792 = f582 + f277;
-    f793 = MUL_F(FRAC_CONST(-0.0520532738769597), f582);
-    f794 = MUL_F(FRAC_CONST(0.7326542716724128), f792);
-    f795 = MUL_C(COEF_CONST(1.4132552694678659), f277);
-    y[30] = f793 + f794;
-    y[33] = f795 - f794;
-    f798 = f580 + f275;
-    f799 = MUL_F(FRAC_CONST(-0.0173545758748457), f580);
-    f800 = MUL_F(FRAC_CONST(0.7157308252838186), f798);
-    f801 = MUL_C(COEF_CONST(1.4141070746927915), f275);
-    y[31] = f799 + f800;
-    y[32] = f801 - f800;
+    /* Step 2: modulate */
+    // 3*32=96 multiplications
+    // 3*32=96 additions
+    for (i = 0; i < 32; i++)
+    {
+    	real_t x_re, x_im, tmp;
+    	x_re = in_real[i];
+    	x_im = in_imag[i];
+        tmp =        MUL_C(x_re + x_im, dct4_64_tab[i]);
+        in_real[i] = MUL_C(x_im, dct4_64_tab[i + 64]) + tmp;
+        in_imag[i] = MUL_C(x_re, dct4_64_tab[i + 32]) + tmp;
+    }
+
+    /* Step 3: FFT, but with output in bit reverse order */
+    fft_dif(in_real, in_imag);
+
+    /* Step 4: modulate + bitreverse reordering */
+    // 3*31+2=95 multiplications
+    // 3*31+2=95 additions
+    for (i = 0; i < 16; i++)
+    {
+    	real_t x_re, x_im, tmp;
+    	i_rev = bit_rev_tab[i];
+    	x_re = in_real[i_rev];
+    	x_im = in_imag[i_rev];
+
+        tmp =         MUL_C(x_re + x_im, dct4_64_tab[i + 3*32]);
+        out_real[i] = MUL_C(x_im, dct4_64_tab[i + 5*32]) + tmp;
+        out_imag[i] = MUL_C(x_re, dct4_64_tab[i + 4*32]) + tmp;
+    }
+    // i = 16, i_rev = 1 = rev(16);
+    out_imag[16] = MUL_C(in_imag[1] - in_real[1], dct4_64_tab[16 + 3*32]);
+    out_real[16] = MUL_C(in_real[1] + in_imag[1], dct4_64_tab[16 + 3*32]);
+    for (i = 17; i < 32; i++)
+    {
+    	real_t x_re, x_im, tmp;
+    	i_rev = bit_rev_tab[i];
+    	x_re = in_real[i_rev];
+    	x_im = in_imag[i_rev];
+        tmp =         MUL_C(x_re + x_im, dct4_64_tab[i + 3*32]);
+        out_real[i] = MUL_C(x_im, dct4_64_tab[i + 5*32]) + tmp;
+        out_imag[i] = MUL_C(x_re, dct4_64_tab[i + 4*32]) + tmp;
+    }
+
 }
 
 void DST4_32(real_t *y, real_t *x)

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.103 2004/05/17 10:18:02 menno Exp $
+** $Id: decoder.c,v 1.105 2004/07/31 15:48:55 menno Exp $
 **/
 
 #include "common.h"
@@ -771,8 +771,11 @@ static void* aac_frame_decode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
         for (i = 0; i < ((buffer_size+3)>>2); i++)
         {
             uint8_t *buf;
+            uint32_t temp = 0;
             buf = faad_getbitbuffer(&ld, 32);
-            printf("%d\n", getdword((void*)buf));
+            //temp = getdword((void*)buf);
+            temp = *((uint32_t*)buf);
+            printf("0x%.8X\n", temp);
             free(buf);
         }
         faad_endbits(&ld);

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.61 2004/05/17 10:18:02 menno Exp $
+** $Id: common.h,v 1.63 2004/07/31 15:48:55 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -57,6 +57,9 @@ extern "C" {
 /* use fixed point reals */
 //#define FIXED_POINT
 //#define BIG_IQ_TABLE
+
+/* Use if target platform has address generators with autoincrement */
+//#define PREFER_POINTERS
 
 #ifdef _WIN32_WCE
 #define FIXED_POINT

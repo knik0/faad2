@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: ps_syntax.c,v 1.2 2004/05/17 10:18:03 menno Exp $
+** $Id: ps_syntax.c,v 1.4 2004/07/31 15:48:56 menno Exp $
 **/
 
 #include "common.h"
@@ -94,7 +94,7 @@ static const int8_t t_huff_iid_def[][2] = {
     { /*4*/ -27, 9 },             /* index 8: 9 bits: 11111111x */
     { /*-5*/ -36, 10 },           /* index 9: 10 bits: 111111111x */
     { /*5*/ -26, 11 },            /* index 10: 11 bits: 1111111111x */
-    { /*-6*/ -27, 12 },           /* index 11: 12 bits: 11111111111x */
+    { /*-6*/ -37, 12 },           /* index 11: 12 bits: 11111111111x */
     { /*6*/ -25, 13 },            /* index 12: 13 bits: 111111111111x */
     { /*7*/ -24, 14 },            /* index 13: 14 bits: 1111111111111x */
     { /*-7*/ -38, 15 },           /* index 14: 15 bits: 11111111111111x */

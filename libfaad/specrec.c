@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.50 2004/05/17 10:18:03 menno Exp $
+** $Id: specrec.c,v 1.51 2004/06/30 12:45:57 menno Exp $
 **/
 
 /*
@@ -436,7 +436,14 @@ static INLINE real_t iquant(int16_t q, const real_t *tab, uint8_t *error)
     }
 
     if (q < IQ_TABLE_SIZE)
+    {
+//#define IQUANT_PRINT
+#ifdef IQUANT_PRINT
+        //printf("0x%.8X\n", sgn * tab[q]);
+        printf("%d\n", sgn * tab[q]);
+#endif
         return sgn * tab[q];
+    }
 
 #ifndef BIG_IQ_TABLE
     if (q >= 8192)
@@ -617,6 +624,18 @@ static uint8_t quant_to_spec(NeAACDecHandle hDecoder,
                     spec_data[gindex+(win*win_inc)+j+bin+1] = MUL_C(spec_data[gindex+(win*win_inc)+j+bin+1],pow2_table[frac]);
                     spec_data[gindex+(win*win_inc)+j+bin+2] = MUL_C(spec_data[gindex+(win*win_inc)+j+bin+2],pow2_table[frac]);
                     spec_data[gindex+(win*win_inc)+j+bin+3] = MUL_C(spec_data[gindex+(win*win_inc)+j+bin+3],pow2_table[frac]);
+
+//#define SCFS_PRINT
+#ifdef SCFS_PRINT
+                    //printf("%d\n", spec_data[gindex+(win*win_inc)+j+bin+0]);
+                    //printf("%d\n", spec_data[gindex+(win*win_inc)+j+bin+1]);
+                    //printf("%d\n", spec_data[gindex+(win*win_inc)+j+bin+2]);
+                    //printf("%d\n", spec_data[gindex+(win*win_inc)+j+bin+3]);
+                    printf("0x%.8X\n", spec_data[gindex+(win*win_inc)+j+bin+0]);
+                    printf("0x%.8X\n", spec_data[gindex+(win*win_inc)+j+bin+1]);
+                    printf("0x%.8X\n", spec_data[gindex+(win*win_inc)+j+bin+2]);
+                    printf("0x%.8X\n", spec_data[gindex+(win*win_inc)+j+bin+3]);
+#endif
 #endif
 
                     gincrease += 4;

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfadj.c,v 1.15 2004/05/17 10:18:03 menno Exp $
+** $Id: sbr_hfadj.c,v 1.18 2004/09/04 14:56:28 menno Exp $
 **/
 
 /* High Frequency adjustment */
@@ -1559,15 +1559,17 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
 #ifndef SBR_LOW_POWER
                 if (h_SL != 0)
                 {
+                	uint8_t ri = sbr->GQ_ringbuf_index[ch];
                     for (n = 0; n <= 4; n++)
                     {
-                        uint8_t ri = sbr->GQ_ringbuf_index[ch] + 1 + n;
+                        real_t curr_h_smooth = h_smooth[n];
+                        ri++;
                         if (ri >= 5)
                             ri -= 5;
-                        G_filt += MUL_F(sbr->G_temp_prev[ch][ri][m], h_smooth[n]);
-                        Q_filt += MUL_F(sbr->Q_temp_prev[ch][ri][m], h_smooth[n]);
+                        G_filt += MUL_F(sbr->G_temp_prev[ch][ri][m], curr_h_smooth);
+                        Q_filt += MUL_F(sbr->Q_temp_prev[ch][ri][m], curr_h_smooth);
                     }
-                } else {
+               } else {
 #endif
                     G_filt = sbr->G_temp_prev[ch][sbr->GQ_ringbuf_index[ch]][m];
                     Q_filt = sbr->Q_temp_prev[ch][sbr->GQ_ringbuf_index[ch]][m];

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: ps_dec.c,v 1.7 2004/05/17 10:18:03 menno Exp $
+** $Id: ps_dec.c,v 1.10 2004/09/04 14:56:28 menno Exp $
 **/
 
 #include "common.h"
@@ -95,10 +95,16 @@ static const real_t p4_13_34[7] =
     FRAC_CONST(0.25)
 };
 
+#ifdef PARAM_32KHZ
 static const uint8_t delay_length_d[2][NO_ALLPASS_LINKS] = {
     { 1, 2, 3 } /* d_24kHz */,
     { 3, 4, 5 } /* d_48kHz */
 };
+#else
+static const uint8_t delay_length_d[NO_ALLPASS_LINKS] = {
+    3, 4, 5 /* d_48kHz */
+};
+#endif
 static const real_t filter_a[NO_ALLPASS_LINKS] = { /* a(m) = exp(-d_48kHz(m)/7) */
     FRAC_CONST(0.65143905753106),
     FRAC_CONST(0.56471812200776),
@@ -164,9 +170,12 @@ static void hybrid_analysis(hyb_info *hyb, qmf_t X[32][64], qmf_t X_hybrid[32][3
 static void hybrid_synthesis(hyb_info *hyb, qmf_t X[32][64], qmf_t X_hybrid[32][32],
                              uint8_t use34);
 static int8_t delta_clip(int8_t i, int8_t min, int8_t max);
-static void delta_decode(uint8_t enable, int8_t *index, uint8_t *index_prev,
+static void delta_decode(uint8_t enable, int8_t *index, int8_t *index_prev,
                          uint8_t dt_flag, uint8_t nr_par, uint8_t stride,
                          int8_t min_index, int8_t max_index);
+static void delta_modulo_decode(uint8_t enable, int8_t *index, int8_t *index_prev,
+                                uint8_t dt_flag, uint8_t nr_par, uint8_t stride,
+                                int8_t log2modulo);
 static void map20indexto34(int8_t *index, uint8_t bins);
 #ifdef PS_LOW_POWER
 static void map34indexto20(int8_t *index, uint8_t bins);
@@ -598,8 +607,10 @@ static int8_t delta_clip(int8_t i, int8_t min, int8_t max)
         return i;
 }
 
+//int iid = 0;
+
 /* delta decode array */
-static void delta_decode(uint8_t enable, int8_t *index, uint8_t *index_prev,
+static void delta_decode(uint8_t enable, int8_t *index, int8_t *index_prev,
                          uint8_t dt_flag, uint8_t nr_par, uint8_t stride,
                          int8_t min_index, int8_t max_index)
 {
@@ -622,8 +633,23 @@ static void delta_decode(uint8_t enable, int8_t *index, uint8_t *index_prev,
             /* delta coded in time direction */
             for (i = 0; i < nr_par; i++)
             {
+                //int8_t tmp2;
+                //int8_t tmp = index[i];
+
+                //printf("%d %d\n", index_prev[i*stride], index[i]);
+                //printf("%d\n", index[i]);
+
                 index[i] = index_prev[i*stride] + index[i];
+                //tmp2 = index[i];
                 index[i] = delta_clip(index[i], min_index, max_index);
+
+                //if (iid)
+                //{
+                //    if (index[i] == 7)
+                //    {
+                //        printf("%d %d %d\n", index_prev[i*stride], tmp, tmp2);
+                //    }
+                //}
             }
         }
     } else {
@@ -637,6 +663,54 @@ static void delta_decode(uint8_t enable, int8_t *index, uint8_t *index_prev,
     /* coarse */
     if (stride == 2)
     {
+        for (i = (nr_par<<1)-1; i > 0; i--)
+        {
+            index[i] = index[i>>1];
+        }
+    }
+}
+
+/* delta modulo decode array */
+/* in: log2 value of the modulo value to allow using AND instead of MOD */
+static void delta_modulo_decode(uint8_t enable, int8_t *index, int8_t *index_prev,
+                                uint8_t dt_flag, uint8_t nr_par, uint8_t stride,
+                                int8_t log2modulo)
+{
+    int8_t i;
+
+    if (enable == 1)
+    {
+        if (dt_flag == 0)
+        {
+            /* delta coded in frequency direction */
+            index[0] = 0 + index[0];
+            index[0] &= log2modulo;
+
+            for (i = 1; i < nr_par; i++)
+            {
+                index[i] = index[i-1] + index[i];
+                index[i] &= log2modulo;
+            }
+        } else {
+            /* delta coded in time direction */
+            for (i = 0; i < nr_par; i++)
+            {
+                index[i] = index_prev[i*stride] + index[i];
+                index[i] &= log2modulo;
+            }
+        }
+    } else {
+        /* set indices to zero */
+        for (i = 0; i < nr_par; i++)
+        {
+            index[i] = 0;
+        }
+    }
+
+    /* coarse */
+    if (stride == 2)
+    {
+        index[0] = 0;
         for (i = (nr_par<<1)-1; i > 0; i--)
         {
             index[i] = index[i>>1];
@@ -751,11 +825,13 @@ static void ps_data_decode(ps_info *ps)
             opd_index_prev = ps->opd_index[env - 1];
         }
 
+//        iid = 1;
         /* delta decode iid parameters */
         delta_decode(ps->enable_iid, ps->iid_index[env], iid_index_prev,
             ps->iid_dt[env], ps->nr_iid_par,
             (ps->iid_mode == 0 || ps->iid_mode == 3) ? 2 : 1,
             -num_iid_steps, num_iid_steps);
+//        iid = 0;
 
         /* delta decode icc parameters */
         delta_decode(ps->enable_icc, ps->icc_index[env], icc_index_prev,
@@ -763,13 +839,13 @@ static void ps_data_decode(ps_info *ps)
             (ps->icc_mode == 0 || ps->icc_mode == 3) ? 2 : 1,
             0, 7);
 
-        /* delta decode ipd parameters */
-        delta_decode(ps->enable_ipdopd, ps->ipd_index[env], ipd_index_prev,
-            ps->ipd_dt[env], ps->nr_ipdopd_par, 1, -8, 8);
+        /* delta modulo decode ipd parameters */
+        delta_modulo_decode(ps->enable_ipdopd, ps->ipd_index[env], ipd_index_prev,
+            ps->ipd_dt[env], ps->nr_ipdopd_par, 1, /*log2(8)*/ 3);
 
-        /* delta decode opd parameters */
-        delta_decode(ps->enable_ipdopd, ps->opd_index[env], opd_index_prev,
-            ps->opd_dt[env], ps->nr_ipdopd_par, 1, -8, 8);
+        /* delta modulo decode opd parameters */
+        delta_modulo_decode(ps->enable_ipdopd, ps->opd_index[env], opd_index_prev,
+            ps->opd_dt[env], ps->nr_ipdopd_par, 1, /*log2(8)*/ 3);
     }
 
     /* handle error case */
@@ -1318,6 +1394,30 @@ static real_t ps_sqrt(real_t value)
 #define ps_sqrt(A) sqrt(A)
 #endif
 
+static const real_t ipdopd_cos_tab[] = {
+    FRAC_CONST(1.000000000000000),
+    FRAC_CONST(0.707106781186548),
+    FRAC_CONST(0.000000000000000),
+    FRAC_CONST(-0.707106781186547),
+    FRAC_CONST(-1.000000000000000),
+    FRAC_CONST(-0.707106781186548),
+    FRAC_CONST(-0.000000000000000),
+    FRAC_CONST(0.707106781186547),
+    FRAC_CONST(1.000000000000000)
+};
+
+static const real_t ipdopd_sin_tab[] = {
+    FRAC_CONST(0.000000000000000),
+    FRAC_CONST(0.707106781186547),
+    FRAC_CONST(1.000000000000000),
+    FRAC_CONST(0.707106781186548),
+    FRAC_CONST(0.000000000000000),
+    FRAC_CONST(-0.707106781186547),
+    FRAC_CONST(-1.000000000000000),
+    FRAC_CONST(-0.707106781186548),
+    FRAC_CONST(-0.000000000000000)
+};
+
 static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64],
                          qmf_t X_hybrid_left[32][32], qmf_t X_hybrid_right[32][32])
 {
@@ -1378,6 +1478,8 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
                 alpha = 0.5 * acos(quant_rho[icc_index]);
                 beta = alpha * ( c_1 - c_2 ) / sqrt(2.0);
                 */
+
+                //printf("%d\n", ps->iid_index[env][bk]);
 
                 /* calculate the scalefactors c_1 and c_2 from the intensity differences */
                 c_1 = sf_iid[no_iid_steps + ps->iid_index[env][bk]];
@@ -1507,10 +1609,10 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
 #endif
 
                 /* save current value */
-                RE(ps->ipd_prev[bk][i]) = (float)cos((float)( M_PI/4.0f ) * ps->ipd_index[env][bk]);
-                IM(ps->ipd_prev[bk][i]) = (float)sin((float)( M_PI/4.0f ) * ps->ipd_index[env][bk]);
-                RE(ps->opd_prev[bk][i]) = (float)cos((float)( M_PI/4.0f ) * ps->opd_index[env][bk]);
-                IM(ps->opd_prev[bk][i]) = (float)sin((float)( M_PI/4.0f ) * ps->opd_index[env][bk]);
+                RE(ps->ipd_prev[bk][i]) = ipdopd_cos_tab[abs(ps->ipd_index[env][bk])];
+                IM(ps->ipd_prev[bk][i]) = ipdopd_sin_tab[abs(ps->ipd_index[env][bk])];
+                RE(ps->opd_prev[bk][i]) = ipdopd_cos_tab[abs(ps->opd_index[env][bk])];
+                IM(ps->opd_prev[bk][i]) = ipdopd_sin_tab[abs(ps->opd_index[env][bk])];
 
                 /* add current value */
                 RE(tempLeft)  += RE(ps->ipd_prev[bk][i]);
@@ -1550,6 +1652,10 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
                 RE(phaseRight) = (float)cos(opd);
                 IM(phaseRight) = (float)sin(opd);
 #else
+                // x = IM(tempLeft)
+                // y = RE(tempLeft)
+                // p = IM(tempRight)
+                // q = RE(tempRight)
                 // cos(atan2(x,y)) = 1/sqrt(1 + (x*x)/(y*y))
                 // sin(atan2(x,y)) = x/(y*sqrt(1 + (x*x)/(y*y)))
                 // cos(atan2(x,y)-atan2(p,q)) = (y*q+x*p)/(y*q * sqrt(1 + (x*x)/(y*y)) * sqrt(1 + (p*p)/(q*q)));
@@ -1756,14 +1862,20 @@ ps_info *ps_init(uint8_t sr_index)
     for (i = 0; i < NO_ALLPASS_LINKS; i++)
     {
         ps->delay_buf_index_ser[i] = 0;
+#ifdef PARAM_32KHZ
         if (sr_index <= 5) /* >= 32 kHz*/
         {
             ps->num_sample_delay_ser[i] = delay_length_d[1][i];
         } else {
             ps->num_sample_delay_ser[i] = delay_length_d[0][i];
         }
+#else
+        /* THESE ARE CONSTANTS NOW */
+        ps->num_sample_delay_ser[i] = delay_length_d[i];
+#endif
     }
 
+#ifdef PARAM_32KHZ
     if (sr_index <= 5) /* >= 32 kHz*/
     {
         short_delay_band = 35;
@@ -1776,7 +1888,15 @@ ps_info *ps_init(uint8_t sr_index)
         ps->alpha_decay = FRAC_CONST(0.58664621951003);
         ps->alpha_smooth = FRAC_CONST(0.6);
     }
+#else
+    /* THESE ARE CONSTANTS NOW */
+    short_delay_band = 35;
+    ps->nr_allpass_bands = 22;
+    ps->alpha_decay = FRAC_CONST(0.76592833836465);
+    ps->alpha_smooth = FRAC_CONST(0.25);
+#endif
 
+    /* THESE ARE CONSTANT NOW IF PS IS INDEPENDANT OF SAMPLERATE */
     for (i = 0; i < short_delay_band; i++)
     {
         ps->delay_D[i] = 14;

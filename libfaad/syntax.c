@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.79 2004/05/17 10:18:03 menno Exp $
+** $Id: syntax.c,v 1.80 2004/06/30 12:45:57 menno Exp $
 **/
 
 /*
@@ -1979,10 +1979,17 @@ static uint8_t spectral_data(NeAACDecHandle hDecoder, ic_stream *ics, bitfile *l
                     }
                 }
 #endif
+//#define SFBO_PRINT
+#ifdef SFBO_PRINT
+                printf("%d\n", ics->sect_sfb_offset[g][ics->sect_start[g][i]]);
+#endif
                 p += (ics->sect_sfb_offset[g][ics->sect_end[g][i]] -
                     ics->sect_sfb_offset[g][ics->sect_start[g][i]]);
                 break;
             default:
+#ifdef SFBO_PRINT
+                printf("%d\n", ics->sect_sfb_offset[g][ics->sect_start[g][i]]);
+#endif
                 for (k = ics->sect_sfb_offset[g][ics->sect_start[g][i]];
                      k < ics->sect_sfb_offset[g][ics->sect_end[g][i]]; k += inc)
                 {

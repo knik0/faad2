@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: filtbank.c,v 1.37 2004/05/17 10:18:02 menno Exp $
+** $Id: filtbank.c,v 1.38 2004/06/30 12:45:56 menno Exp $
 **/
 
 #include "common.h"
@@ -350,7 +350,8 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
 #if 0
     for (i = 0; i < 1024; i++)
     {
-        printf("%d\n", time_out[i]);
+        //printf("%d\n", time_out[i]);
+        printf("0x%.8X\n", time_out[i]);
     }
 #endif
 

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: tns.c,v 1.32 2004/04/12 18:17:42 menno Exp $
+** $Id: tns.c,v 1.33 2004/06/30 12:45:57 menno Exp $
 **/
 
 #include "common.h"
@@ -259,6 +259,12 @@ static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
 
         *spectrum = y;
         spectrum += inc;
+
+//#define TNS_PRINT
+#ifdef TNS_PRINT
+        //printf("%d\n", y);
+        printf("0x%.8X\n", y);
+#endif
     }
 }
 

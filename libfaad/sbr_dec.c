@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.c,v 1.36 2004/05/17 10:18:03 menno Exp $
+** $Id: sbr_dec.c,v 1.37 2004/06/30 12:45:56 menno Exp $
 **/
 
 
@@ -248,6 +248,19 @@ static void sbr_process_channel(sbr_info *sbr, real_t *channel_buf, qmf_t X[MAX_
     }
 #endif
 
+
+//#define PRE_QMF_PRINT
+#ifdef PRE_QMF_PRINT
+    {
+        int i;
+        for (i = 0; i < 1024; i++)
+        {
+            printf("%d\n", channel_buf[i]);
+        }
+    }
+#endif
+
+
     /* subband analysis */
     if (dont_process)
         sbr_qmf_analysis_32(sbr, sbr->qmfa[ch], channel_buf, sbr->Xsbr[ch], sbr->tHFGen, 32);
@@ -422,6 +435,21 @@ uint8_t sbrDecodeCoupleFrame(sbr_info *sbr, real_t *left_chan, real_t *right_cha
 
     sbr->frame++;
 
+//#define POST_QMF_PRINT
+#ifdef POST_QMF_PRINT
+    {
+        int i;
+        for (i = 0; i < 2048; i++)
+        {
+            printf("%d\n", left_chan[i]);
+        }
+        for (i = 0; i < 2048; i++)
+        {
+            printf("%d\n", right_chan[i]);
+        }
+    }
+#endif
+
     return 0;
 }
 
@@ -477,6 +505,17 @@ uint8_t sbrDecodeSingleFrame(sbr_info *sbr, real_t *channel,
     sbr_save_matrix(sbr, 0);
 
     sbr->frame++;
+
+//#define POST_QMF_PRINT
+#ifdef POST_QMF_PRINT
+    {
+        int i;
+        for (i = 0; i < 2048; i++)
+        {
+            printf("%d\n", channel[i]);
+        }
+    }
+#endif
 
     return 0;
 }

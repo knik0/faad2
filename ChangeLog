@@ -1,3 +1,28 @@
+22 june 2004     mbakker(at)nero.com
+    - ps_dec.c: Removed samplerate dependancy in PS, likely to be updated in corrigendum
+
+15 june 2004     mbakker(at)nero.com
+    - sbr_dct.c,h: Removed huge ugly DCT_4_64...
+    - sbr_qmf.c: replaced DCT_IV in qmf synthesis
+
+13 june 2004     mbakker(at)nero.com
+    - ps_dec.c: Fixed fixed point code, no more cos() and sin() used
+
+7 june 2004      mbakker(at)nero.com
+    - sbr_*.c,h: Overall speedups and improvements in SBR code.
+
+4 june 2004      gpascutto(at)nero.com
+    - drm_dec.c: Fixed a bug in the standard (PAN mixing)
+
+3 june 2004      mbakker(at)nero.com
+    - ps_syntax.c: fixed a bug in one of the huffman tables
+ 
+2 june 2004      gpascutto(at)nero.com
+    - drm_dec.c: Fully working fixed point support
+ 
+27 may 2004      mbakker(at)nero.com
+    - sbr_qmf.c, sbr_dec.h: Fixed fixed point problems with downsampled QMF
+
 17 may 2004      mbakker(at)nero.com
     - syntax.c, decoder.c: Added some logging output
 
