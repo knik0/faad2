@@ -124,6 +124,9 @@
 				RelativePath=".\decoder.c">
 			</File>
 			<File
+				RelativePath="dither.c">
+			</File>
+			<File
 				RelativePath=".\drc.c">
 			</File>
 			<File
@@ -250,6 +253,9 @@
 			</File>
 			<File
 				RelativePath=".\decoder.h">
+			</File>
+			<File
+				RelativePath="dither.h">
 			</File>
 			<File
 				RelativePath=".\drc.h">

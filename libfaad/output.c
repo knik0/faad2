@@ -16,13 +16,14 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: output.c,v 1.9 2002/03/16 15:49:58 menno Exp $
+** $Id: output.c,v 1.10 2002/08/13 19:16:07 menno Exp $
 **/
 
 #include "common.h"
 
 #include "output.h"
 #include "decoder.h"
+#include "dither.h"
 
 
 #define ftol(A,B) {tmp = *(int32_t*) & A - 0x4B7F8000; \
@@ -32,7 +33,12 @@
 
 #define ROUND32(x) ROUND(x)
 
+#define ROUND64(x) (doubletmp = (x) + Dither.Add + (int64_t)0x001FFFFD80000000L, *(int64_t*)(&doubletmp) - (int64_t)0x433FFFFD80000000L)
+
 #define FLOAT_SCALE (1.0f/(1<<15))
+
+dither_t Dither;
+double doubletmp;
 
 
 void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
@@ -59,6 +65,21 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
 
                 ftemp = input[ch][i] + 0xff8000;
                 ftol(ftemp, short_sample_buffer[(i*channels)+ch]);
+            }
+        }
+        break;
+    case FAAD_FMT_16BIT_DITHER:
+        for (ch = 0; ch < channels; ch++)
+        {
+            for(i = 0; i < frame_len; i++)
+            {
+                double Sum = input[ch][i] * 65535.f;
+                int64_t val = dither_output(1, Sum, ch) / 65536;
+                if (val > (1<<15)-1)
+                    val = (1<<15)-1;
+                else if (val < -(1<<15))
+                    val = -(1<<15);
+                short_sample_buffer[(i*channels)+ch] = (int16_t)val;
             }
         }
         break;
@@ -104,4 +125,21 @@ void* output_to_PCM(real_t **input, void *sample_buffer, uint8_t channels,
     }
 
     return sample_buffer;
+}
+
+/* Dither output */
+static int64_t dither_output(uint8_t dithering, double Sum, uint8_t k)
+{
+    double Sum2;
+
+    if(dithering)
+    {
+        double tmp = Random_Equi(Dither.Dither);
+        Sum2 = tmp - Dither.LastRandomNumber[k];
+        Dither.LastRandomNumber[k] = tmp;
+        Sum2 = Sum += Sum2;
+        return ROUND64(Sum2);
+    } else {
+        return ROUND64(Sum);
+    }
 }

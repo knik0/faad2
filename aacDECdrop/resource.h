@@ -3,6 +3,7 @@
 // Used by Script.rc
 //
 #define IDD_VOLUME                      101
+#define IDD_ABOUT                       102
 #define IDB_TF01                        112
 #define IDB_TF02                        113
 #define IDB_TF03                        114
@@ -28,8 +29,10 @@
 #define IDC_LC                          1024
 #define IDC_LTP                         1025
 #define IDC_LD                          1026
+#define IDC_BUTTON6                     1033
 #define IDM_VOLUME                      40005
 #define IDM_STOP_DEC                    40006
+#define IDM_ABOUT                       40007
 #define IDM_LOGERR                      40008
 #define IDM_ONTOP                       40015
 #define IDM_QUIT                        40019

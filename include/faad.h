@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: faad.h,v 1.10 2002/08/10 19:01:17 menno Exp $
+** $Id: faad.h,v 1.11 2002/08/13 19:16:07 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -51,6 +51,7 @@ extern "C" {
 #define FAAD_FMT_24BIT 2
 #define FAAD_FMT_32BIT 3
 #define FAAD_FMT_FLOAT 4
+#define FAAD_FMT_16BIT_DITHER 5
 
 /* A decode call can eat up to FAAD_MIN_STREAMSIZE octets per decoded channel,
    so at least so much octets per channel should be available in this stream */

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.20 2002/08/13 14:39:03 menno Exp $
+** $Id: main.c,v 1.21 2002/08/13 19:16:07 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -132,6 +132,7 @@ void usage(void)
     fprintf(stderr, "        1:  16 bit PCM data (default).\n");
     fprintf(stderr, "        2:  24 bit PCM data.\n");
     fprintf(stderr, "        3:  32 bit PCM data.\n");
+    fprintf(stderr, "        5:  16 bit PCM data (dithered).\n");
     fprintf(stderr, " -s X  Force the samplerate to X (for RAW files).\n");
     fprintf(stderr, " -l X  Set object type. Supported object types:\n");
     fprintf(stderr, "        0:  Main object type.\n");
@@ -562,7 +563,7 @@ int main(int argc, char *argv[])
                     outputFormat = FAAD_FMT_16BIT; /* just use default */
                 } else {
                     outputFormat = atoi(dr);
-                    if ((outputFormat < 1) || (outputFormat > 4))
+                    if ((outputFormat < 1) || (outputFormat > 5))
                         showHelp = 1;
                 }
             }

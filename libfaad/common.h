@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.14 2002/07/14 19:11:11 menno Exp $
+** $Id: common.h,v 1.15 2002/08/13 19:16:07 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -88,9 +88,11 @@ extern "C" {
 #if defined(_WIN32)
 
 
+typedef unsigned __int64 uint64_t;
 typedef unsigned __int32 uint32_t;
 typedef unsigned __int16 uint16_t;
 typedef unsigned __int8 uint8_t;
+typedef __int64 int64_t;
 typedef __int32 int32_t;
 typedef __int16 int16_t;
 typedef __int8  int8_t;
@@ -103,9 +105,11 @@ typedef float float32_t;
 #if defined(LINUX)
 #include <stdint.h>
 #else
+typedef unsigned long long uint64_t;
 typedef unsigned long uint32_t;
 typedef unsigned short uint16_t;
 typedef unsigned char uint8_t;
+typedef long long int32_t;
 typedef long int32_t;
 typedef short int16_t;
 typedef char int8_t;

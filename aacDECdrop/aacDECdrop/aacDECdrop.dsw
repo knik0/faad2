@@ -15,10 +15,10 @@ Package=<4>
     Project_Dep_Name libfaad
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name libsndfile
+    Project_Dep_Name libmp4v2_st
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name libmp4v2_st
+    Project_Dep_Name libsndfile
     End Project Dependency
 }}}
 

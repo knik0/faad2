@@ -72,6 +72,7 @@ BEGIN
     BEGIN
         MENUITEM "&Decoder Options",            IDM_VOLUME
         MENUITEM "&Stop Decoding",              IDM_STOP_DEC
+        MENUITEM "&About",                      IDM_ABOUT
         MENUITEM SEPARATOR
         MENUITEM "&Errors to Log File",         IDM_LOGERR
         MENUITEM "&Always on Top",              IDM_ONTOP
@@ -110,12 +111,12 @@ BEGIN
     GROUPBOX        "Output Format Settings",IDC_STATIC,7,31,241,50
     CONTROL         "Microsoft WAV",IDC_WAV,"Button",BS_AUTORADIOBUTTON | 
                     WS_GROUP,15,45,65,10
-    CONTROL         "Apple/SGI AIFF",IDC_AIFF,"Button",BS_AUTORADIOBUTTON,
-                    125,45,65,10
-    CONTROL         "Sun/NeXT AU",IDC_SUNAU,"Button",BS_AUTORADIOBUTTON,15,
-                    60,65,10
-    CONTROL         "DEC AU",IDC_DECAU,"Button",BS_AUTORADIOBUTTON,125,60,65,
-                    10
+    CONTROL         "Apple/SGI AIFF",IDC_AIFF,"Button",BS_AUTORADIOBUTTON | 
+                    WS_DISABLED,125,45,65,10
+    CONTROL         "Sun/NeXT AU",IDC_SUNAU,"Button",BS_AUTORADIOBUTTON | 
+                    WS_DISABLED,15,60,65,10
+    CONTROL         "DEC AU",IDC_DECAU,"Button",BS_AUTORADIOBUTTON | 
+                    WS_DISABLED,125,60,65,10
     GROUPBOX        "Output Sample Format Settings",IDC_STATIC,7,82,241,50
     CONTROL         "16 bit PCM",IDC_16BIT,"Button",BS_AUTORADIOBUTTON | 
                     WS_GROUP,15,96,65,10
@@ -135,6 +136,40 @@ BEGIN
     CONTROL         "Low Delay",IDC_LD,"Button",BS_AUTORADIOBUTTON,125,162,
                     65,10
     DEFPUSHBUTTON   "Accept",IDC_BUTTON1,102,192,50,16
+END
+
+IDD_ABOUT DIALOG  0, 0, 255, 194
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "About aacDECdrop V1.2"
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "",IDC_STATIC,7,5,241,157
+    CTEXT           "A decoder to decode/playback aac/Mpeg4 files.",
+                    IDC_STATIC,70,13,155,8
+    CTEXT           "Copyright 2002 John Edwards.",IDC_STATIC,70,29,97,8
+    CTEXT           "Utilises standard libfaad from Menno Bakker and",
+                    IDC_STATIC,70,37,153,8
+    CTEXT           "LibSndFile from Erik de Castro Lopo.",IDC_STATIC,70,45,
+                    115,8
+    LTEXT           "This program is free software; you can redistribute it and/or modify it",
+                    IDC_STATIC,13,62,212,8
+    LTEXT           "under the terms of the GNU Public Licence as published by the Free",
+                    IDC_STATIC,13,72,215,8
+    LTEXT           "Software Foundation; either version 2 of the Licence, or (at your option)",
+                    IDC_STATIC,13,82,224,8
+    LTEXT           "any later version.",IDC_STATIC,13,92,54,8
+    LTEXT           "This program is distributed in the hope that it will be useful, but",
+                    IDC_STATIC,13,112,195,8
+    LTEXT           "WITHOUT ANY WARRANTY; without even the implied warranty of",
+                    IDC_STATIC,13,122,213,8
+    LTEXT           "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
+                    IDC_STATIC,13,132,218,8
+    LTEXT           "See the GNU General Public Licence for more details.",
+                    IDC_STATIC,13,142,170,8
+    DEFPUSHBUTTON   "OK",IDC_BUTTON6,102,171,50,16
+    CONTROL         112,IDC_STATIC,"Static",SS_BITMAP | SS_SUNKEN,12,13,43,
+                    40
 END
 
 #endif    // English (U.S.) resources

@@ -468,6 +468,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 						break;
 					break;
 				}
+				case IDM_ABOUT:
+				{
+					int value = DialogBox(hinst, MAKEINTRESOURCE(IDD_ABOUT), hwnd, QCProc);
+					if (value == -7)
+						break;
+					break;
+				}
 
 			} // LOWORD(wParam)
 			return 0;
@@ -647,6 +654,10 @@ BOOL CALLBACK QCProc(HWND hwndDlg, UINT message,
 					EndDialog(hwndDlg, -2);
 					return TRUE;
 				}
+				case IDC_BUTTON6:
+					EndDialog(hwndDlg, -7);
+					return TRUE;
+
 				case IDC_PLAYBACK:
 					CheckDlgButton(hwndDlg,IDC_DECODE,FALSE);
 					CheckDlgButton(hwndDlg,IDC_WAV,TRUE);

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.h,v 1.7 2002/06/13 11:03:27 menno Exp $
+** $Id: decoder.h,v 1.8 2002/08/13 19:16:07 menno Exp $
 **/
 
 #ifndef __DECODER_H__
@@ -48,6 +48,7 @@ extern "C" {
 #define FAAD_FMT_24BIT 2
 #define FAAD_FMT_32BIT 3
 #define FAAD_FMT_FLOAT 4
+#define FAAD_FMT_16BIT_DITHER 5
 
 typedef struct faacDecConfiguration
 {

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: output.h,v 1.4 2002/05/01 19:25:19 menno Exp $
+** $Id: output.h,v 1.5 2002/08/13 19:16:07 menno Exp $
 **/
 
 #ifndef __OUTPUT_H__
@@ -32,7 +32,7 @@ void* output_to_PCM(real_t **input,
                     uint16_t frame_len,
                     uint8_t format);
 
-typedef float float32_t;
+static int64_t dither_output(uint8_t dithering, double Sum, uint8_t k);
 
 #ifdef __cplusplus
 }

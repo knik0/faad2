@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: audio.h,v 1.3 2002/08/13 14:38:55 menno Exp $
+** $Id: audio.h,v 1.4 2002/08/13 19:16:06 menno Exp $
 **/
 
 #ifndef AUDIO_H_INCLUDED

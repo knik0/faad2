@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: audio.c,v 1.4 2002/08/13 14:38:55 menno Exp $
+** $Id: audio.c,v 1.5 2002/08/13 19:16:06 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -44,6 +44,7 @@ audio_file *open_audio_file(char *infile, int samplerate, int channels,
     switch (outputFormat)
     {
     case FAAD_FMT_16BIT:
+    case FAAD_FMT_16BIT_DITHER:
         aufile->bits_per_sample = 16;
         break;
     case FAAD_FMT_24BIT:
@@ -86,6 +87,7 @@ int write_audio_file(audio_file *aufile, void *sample_buffer, int samples)
     switch (aufile->outputFormat)
     {
     case FAAD_FMT_16BIT:
+    case FAAD_FMT_16BIT_DITHER:
         return write_audio_16bit(aufile, sample_buffer, samples);
     case FAAD_FMT_24BIT:
         return write_audio_24bit(aufile, sample_buffer, samples);

@@ -13,10 +13,12 @@
 #include <stdio.h>
 
 typedef void (*progress_func)(long totalsamples, long samples);
+typedef void (*error_func)(char *errormessage);
 
 typedef struct
 {
 	progress_func progress_update;
+	error_func error;
 	int decode_mode;
 	int output_format;
 	int file_type;

@@ -16,8 +16,8 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decode.c,v 1.6 2002/08/13 14:38:55 menno Exp $
-** $Id: decode.c,v 1.6 2002/08/13 14:38:55 menno Exp $
+** $Id: decode.c,v 1.7 2002/08/13 19:16:06 menno Exp $
+** $Id: decode.c,v 1.7 2002/08/13 19:16:06 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -35,6 +35,7 @@
 
 #include "audio.h"
 #include "decode.h"
+#include "misc.h"
 #include "wave_out.h"
 
 #ifndef min
@@ -136,7 +137,6 @@ int decodeAACfile(char *sndfile, int def_srate, aac_dec_opt *opt)
 	faacDecConfigurationPtr config;
 
 	int first_time = 1;
-	int i;
 
 
 	/* declare variables for buffering */
@@ -277,15 +277,13 @@ int GetAACTrack(MP4FileHandle infile)
 		{
 			unsigned char *buff = NULL;
 			int buff_size = 0;
-			unsigned long dummy1_32;
-            unsigned char dummy2_8, dummy3_8, dummy4_8, dummy5_8, dummy6_8,
-                dummy7_8, dummy8_8;
+			unsigned long dummy32; unsigned char dummy8;
 			MP4GetTrackESConfiguration(infile, trackId, &buff, &buff_size);
 
 			if (buff)
 			{
-				rc = AudioSpecificConfig(buff, &dummy1_32, &dummy2_8, &dummy3_8, &dummy4_8,
-                    &dummy5_8, &dummy6_8, &dummy7_8, &dummy8_8);
+				rc = AudioSpecificConfig(buff, &dummy32, &dummy8, &dummy8, &dummy8,
+                    &dummy8, &dummy8, &dummy8, &dummy8);
 				free(buff);
 
 				if (rc < 0)
@@ -318,7 +316,6 @@ int decodeMP4file(char *sndfile, aac_dec_opt *opt)
 	audio_file *aufile;
 
 	faacDecHandle hDecoder;
-	faacDecConfigurationPtr config;
 	faacDecFrameInfo frameInfo;
 
 	unsigned char *buffer;

@@ -137,6 +137,11 @@ void decthread_set_object_type(int object_type)
 	object_type = object_type;
 }
 
+void _error(char *errormessage)
+{
+	// do nothing
+}
+
 void _update(long total, long done)
 {
 	file_complete = (double)done / (double)total;
