@@ -16,8 +16,11 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: aacinfo.h,v 1.1 2002/01/14 19:15:49 menno Exp $
+** $Id: aacinfo.h,v 1.2 2003/02/25 18:15:52 menno Exp $
 **/
+
+#ifndef AACINFO_H__
+#define AACINFO_H__
 
 #include "filestream.h"
 
@@ -40,3 +43,5 @@ static int read_ADTS_header(FILE_STREAM *file, faadAACInfo *info,
                             unsigned long **seek_table, int *seek_table_len,
                             int tagsize, int no_seek_table);
 int StringComp(char const *str1, char const *str2, unsigned long len);
+
+#endif

@@ -19,20 +19,22 @@ The author can be contacted at:
 kreel@tiscali.it
 */
 
+#include "SDK/bfc/std.h"
+#include "SDK/bfc/memblock.h"
+#include "SDK/bfc/timerclient.h"
+
 #include <windows.h>
 #include <stdio.h>
 #include <process.h>
 #include "resource.h"
-//#include "FAAD.h"
 #include <faad.h>
+#include "faadwa3.h"
 #include "..\..\..\faac\include\faac.h"
-//#include "..\..\include\faad.h"
-/*#include <faad.h>
 extern "C" {
 #include <aacinfo.h>	// get_AAC_format()
 }
+
 #include <mp4.h>
-*/
 #include "cnv_FAAD.h"
 #include "CRegistry.h"
 #include "Defines.h"
@@ -130,7 +132,7 @@ int numTracks = MP4GetNumberOfTracks(infile, NULL, 0);
         {
         unsigned char *buff = NULL;
         unsigned __int32 buff_size = 0;
-        mp4AudioSpecific mp4ASC;
+        mp4AudioSpecificConfig mp4ASC;
 
 			MP4GetTrackESConfiguration(infile, trackId, (unsigned __int8 **)&buff, &buff_size);
 
@@ -219,7 +221,7 @@ DWORD	tmp;
 	unsigned __int32	buffer_size;
 	DWORD				timeScale;
 	BYTE				sf;
-    mp4AudioSpecificInfo mp4ASC;
+    mp4AudioSpecificConfig mp4ASC;
 
 		if(!(mp4File=MP4Read(infos->getFilename(), 0)))
 			ERROR_getInfos("Error opening file");
