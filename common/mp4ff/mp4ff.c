@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ff.c,v 1.8 2003/12/13 22:26:56 menno Exp $
+** $Id: mp4ff.c,v 1.9 2003/12/14 13:50:10 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -221,9 +221,21 @@ uint32_t mp4ff_get_max_bitrate(const mp4ff_t *f, const int32_t track)
 	return f->track[track]->maxBitrate;
 }
 
-uint64_t mp4ff_get_track_duration(const mp4ff_t *f, const int32_t track)
+int64_t mp4ff_get_track_duration(const mp4ff_t *f, const int32_t track)
 {
 	return f->track[track]->duration;
+}
+
+int64_t mp4ff_get_track_duration_use_offsets(const mp4ff_t *f, const int32_t track)
+{
+	int64_t duration = mp4ff_get_track_duration(f,track);
+	if (duration!=-1)
+	{
+		int64_t offset = mp4ff_get_sample_offset_sum(f,track);
+		if (offset > duration) duration = 0;
+		else duration -= offset;
+	}
+	return duration;
 }
 
 
@@ -257,7 +269,18 @@ uint32_t mp4ff_get_audio_type(const mp4ff_t * f,const int32_t track)
 	return f->track[track]->audioType;
 }
 
-
+int32_t mp4ff_get_sample_duration_use_offsets(const mp4ff_t *f, const int32_t track, const int32_t sample)
+{
+	int32_t d,o;
+	d = mp4ff_get_sample_duration(f,track,sample);
+	if (d!=-1)
+	{
+		o = mp4ff_get_sample_offset(f,track,sample);
+		if (o>d) d = 0;
+		else d -= o;
+	}
+	return d;
+}
 
 int32_t mp4ff_get_sample_duration(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
@@ -309,15 +332,26 @@ int32_t mp4ff_get_sample_offset(const mp4ff_t *f, const int32_t track, const int
     return 0;
 }
 
+int32_t mp4ff_get_sample_offset_sum(const mp4ff_t *f, const int32_t track)
+{
+	int32_t i, total = 0;
+    for (i = 0; i < f->track[track]->ctts_entry_count; i++)
+    {
+		total += f->track[track]->ctts_sample_count[i] * f->track[track]->ctts_sample_offset[i];
+    }
+	return total;
+}
+
 int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip)
 {
 	int32_t i, co = 0;
 	int64_t offset_total = 0;
+	mp4ff_track_t * p_track = f->track[track];
 
-	for (i = 0; i < f->track[track]->stts_entry_count; i++)
+	for (i = 0; i < p_track->stts_entry_count; i++)
 	{
-		int32_t sample_count = f->track[track]->stts_sample_count[i];
-		int32_t sample_delta = f->track[track]->stts_sample_delta[i];
+		int32_t sample_count = p_track->stts_sample_count[i];
+		int32_t sample_delta = p_track->stts_sample_delta[i];
 		int64_t offset_delta = (int64_t)sample_delta * (int64_t)sample_count;
 		if (offset < offset_total + offset_delta)
 		{
@@ -334,6 +368,27 @@ int32_t mp4ff_find_sample(const mp4ff_t *f, const int32_t track, const int64_t o
 	return (int32_t)(-1);
 }
 
+int32_t mp4ff_find_sample_use_offsets(const mp4ff_t *f, const int32_t track, const int64_t offset,int32_t * toskip)
+{
+	mp4ff_track_t * p_track = f->track[track];
+	if (p_track->ctts_entry_count == 0) return mp4ff_find_sample(f,track,offset,toskip);
+	else //optimize it ?
+	{
+		int32_t sample, total_samples = mp4ff_num_samples(f,track);
+		int64_t acc = 0;
+		for(sample=0;sample<total_samples;sample++)
+		{
+			int32_t duration = mp4ff_get_sample_duration(f,track,sample) - mp4ff_get_sample_offset(f,track,sample);
+			if (acc + duration > offset)
+			{
+				if (toskip) *toskip = (int32_t)(offset - acc);
+				return sample;
+			}
+			acc += duration;
+		}
+		return -1;
+	}
+}
 
 int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,
                           uint8_t **audio_buffer,  uint32_t *bytes)
@@ -341,6 +396,8 @@ int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,
     int32_t result = 0;
 
     *bytes = mp4ff_audio_frame_size(f, track, sample);
+
+	if (*bytes==0) return 0;
 
     *audio_buffer = (uint8_t*)malloc(*bytes);
 
