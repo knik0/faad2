@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.c,v 1.47 2003/07/08 13:45:45 menno Exp $
+** $Id: syntax.c,v 1.48 2003/07/09 11:53:07 menno Exp $
 **/
 
 /*
@@ -43,7 +43,8 @@
 
 
 /* Table 4.4.1 */
-int8_t GASpecificConfig(bitfile *ld, mp4AudioSpecificConfig *mp4ASC)
+int8_t GASpecificConfig(bitfile *ld, mp4AudioSpecificConfig *mp4ASC,
+                        program_config *pce_out)
 {
     program_config pce;
 
@@ -63,10 +64,15 @@ int8_t GASpecificConfig(bitfile *ld, mp4AudioSpecificConfig *mp4ASC)
     if (mp4ASC->channelsConfiguration == 0)
     {
         program_config_element(&pce, ld);
-        mp4ASC->channelsConfiguration = pce.channels;
+        //mp4ASC->channelsConfiguration = pce.channels;
 
+        if (pce_out != NULL)
+            memcpy(pce_out, &pce, sizeof(program_config));
+
+        /*
         if (pce.num_valid_cc_elements)
             return -3;
+        */
     }
 
 #ifdef ERROR_RESILIENCE
@@ -256,12 +262,12 @@ element *decode_sce_lfe(faacDecHandle hDecoder,
     element *ele;
     uint8_t channels = hDecoder->fr_channels;
 
-    if (channels+1 >= MAX_CHANNELS)
+    if (channels+1 > MAX_CHANNELS)
     {
         hInfo->error = 12;
         return NULL;
     }
-    if (hDecoder->fr_ch_ele+1 >= MAX_SYNTAX_ELEMENTS)
+    if (hDecoder->fr_ch_ele+1 > MAX_SYNTAX_ELEMENTS)
     {
         hInfo->error = 13;
         return NULL;
@@ -301,12 +307,12 @@ element *decode_cpe(faacDecHandle hDecoder,
     element *ele;
     uint8_t channels = hDecoder->fr_channels;
 
-    if (channels+2 >= MAX_CHANNELS)
+    if (channels+2 > MAX_CHANNELS)
     {
         hInfo->error = 12;
         return NULL;
     }
-    if (hDecoder->fr_ch_ele+1 >= MAX_SYNTAX_ELEMENTS)
+    if (hDecoder->fr_ch_ele+1 > MAX_SYNTAX_ELEMENTS)
     {
         hInfo->error = 13;
         return NULL;
@@ -351,6 +357,8 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
 
     hDecoder->fr_channels = 0;
     hDecoder->fr_ch_ele = 0;
+    hDecoder->first_syn_ele = 25;
+    hDecoder->has_lfe = 0;
 
 #ifdef ERROR_RESILIENCE
     if (hDecoder->object_type < ER_OBJECT_START)
@@ -362,14 +370,24 @@ element **raw_data_block(faacDecHandle hDecoder, faacDecFrameInfo *hInfo,
         {
             switch (id_syn_ele) {
             case ID_SCE:
-            case ID_LFE:
+                if (hDecoder->first_syn_ele == 25) hDecoder->first_syn_ele = id_syn_ele;
+                hDecoder->last_syn_ele = id_syn_ele;
                 elements[ch_ele++] = decode_sce_lfe(hDecoder,
                     hInfo, ld, spec_data, spec_coef, id_syn_ele);
                 if (hInfo->error > 0)
                     return elements;
                 break;
             case ID_CPE:
+                if (hDecoder->first_syn_ele == 25) hDecoder->first_syn_ele = id_syn_ele;
+                hDecoder->last_syn_ele = id_syn_ele;
                 elements[ch_ele++] = decode_cpe(hDecoder,
+                    hInfo, ld, spec_data, spec_coef, id_syn_ele);
+                if (hInfo->error > 0)
+                    return elements;
+                break;
+            case ID_LFE:
+                hDecoder->has_lfe++;
+                elements[ch_ele++] = decode_sce_lfe(hDecoder,
                     hInfo, ld, spec_data, spec_coef, id_syn_ele);
                 if (hInfo->error > 0)
                     return elements;

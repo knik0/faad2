@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.38 2003/07/08 13:45:45 menno Exp $
+** $Id: main.c,v 1.39 2003/07/09 11:53:07 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -40,8 +40,8 @@
 #endif
 
 #define MAX_CHANNELS 6 /* make this higher to support files with
-
                           more channels */
+
 /* FAAD file buffering routines */
 typedef struct {
     long bytes_into_buffer;
@@ -141,7 +141,7 @@ int adts_parse(aac_buffer *b, int *bitrate, float *length)
         }
     }
 
-    frames_per_sec = (float)samplerate/1024.0;
+    frames_per_sec = (float)samplerate/1024.0f;
     if (frames != 0)
         bytes_per_frame = (float)t_framelength/(float)(frames*1000);
     else
@@ -155,6 +155,48 @@ int adts_parse(aac_buffer *b, int *bitrate, float *length)
     return 1;
 }
 
+char *position2string(int position)
+{
+    switch (position)
+    {
+    case FRONT_CHANNEL_CENTER: return "Center front";
+    case FRONT_CHANNEL_LEFT:   return "Left front";
+    case FRONT_CHANNEL_RIGHT:  return "Right front";
+    case SIDE_CHANNEL_LEFT:    return "Left side";
+    case SIDE_CHANNEL_RIGHT:   return "Right side";
+    case BACK_CHANNEL_LEFT:    return "Left back";
+    case BACK_CHANNEL_RIGHT:   return "Right back";
+    case BACK_CHANNEL_CENTER:  return "Center back";
+    case LFE_CHANNEL:          return "LFE";
+    case UNKNOWN_CHANNEL:      return "Unknown";
+    default: return "";
+    }
+
+    return "";
+}
+
+void print_channel_info(faacDecFrameInfo *frameInfo)
+{
+    /* print some channel info */
+    int i;
+
+    printf("  ---------------------\n");
+    if (frameInfo->num_lfe_channels > 0)
+    {
+        printf(" | Config: %2d.%d Ch     |\n", frameInfo->channels-frameInfo->num_lfe_channels, frameInfo->num_lfe_channels);
+    } else {
+        printf(" | Config: %2d Ch       |\n", frameInfo->channels);
+    }
+    printf("  ---------------------\n");
+    printf(" | Ch |    Position    |\n");
+    printf("  ---------------------\n");
+    for (i = 0; i < frameInfo->channels; i++)
+    {
+        printf(" | %.2d | %-14s |\n", i, position2string((int)frameInfo->channel_position[i]));
+    }
+    printf("  ---------------------\n");
+    printf("\n");
+}
 
 /* globals */
 char *progName;
@@ -258,7 +300,7 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
     b.bytes_consumed = 0;
     b.file_offset = 0;
 
-    if (bread != 768*6)
+    if (bread != FAAD_MIN_STREAMSIZE*MAX_CHANNELS)
         b.at_eof = 1;
 
     tagsize = 0;
@@ -312,10 +354,10 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
         length = (float)fileread;
         if (length != 0)
         {
-            length = ((float)length*8.)/((float)bitrate) + 0.5;
+            length = ((float)length*8.f)/((float)bitrate) + 0.5f;
         }
 
-        bitrate = (int)((float)bitrate/1000.0 + 0.5);
+        bitrate = (int)((float)bitrate/1000.0f + 0.5f);
 
         header_type = 2;
     }
@@ -375,20 +417,13 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
                 faacDecGetErrorMessage(frameInfo.error));
         }
 
-        percent = min((int)(b.file_offset*100)/fileread, 100);
-        if (percent > old_percent)
-        {
-            old_percent = percent;
-            sprintf(percents, "%d%% decoding %s.", percent, aacfile);
-            fprintf(stderr, "%s\r", percents);
-#ifdef _WIN32
-            SetConsoleTitle(percents);
-#endif
-        }
-
         /* open the sound file now that the number of channels are known */
         if (first_time && !frameInfo.error)
         {
+            /* print some channel info */
+            print_channel_info(&frameInfo);
+
+            /* open output file */
             if (!to_stdout)
             {
                 aufile = open_audio_file(sndfile, frameInfo.samplerate, frameInfo.channels,
@@ -406,6 +441,17 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
                 return 0;
             }
             first_time = 0;
+        }
+
+        percent = min((int)(b.file_offset*100)/fileread, 100);
+        if (percent > old_percent)
+        {
+            old_percent = percent;
+            sprintf(percents, "%d%% decoding %s.", percent, aacfile);
+            fprintf(stderr, "%s\r", percents);
+#ifdef _WIN32
+            SetConsoleTitle(percents);
+#endif
         }
 
         if ((frameInfo.error == 0) && (frameInfo.samples > 0))
@@ -591,20 +637,13 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
 
         if (buffer) free(buffer);
 
-        percent = min((int)(sampleId*100)/numSamples, 100);
-        if (percent > old_percent)
-        {
-            old_percent = percent;
-            sprintf(percents, "%d%% decoding %s.", percent, mp4file);
-            fprintf(stderr, "%s\r", percents);
-#ifdef _WIN32
-            SetConsoleTitle(percents);
-#endif
-        }
-
         /* open the sound file now that the number of channels are known */
         if (first_time && !frameInfo.error)
         {
+            /* print some channel info */
+            print_channel_info(&frameInfo);
+
+            /* open output file */
             if(!to_stdout)
             {
                 aufile = open_audio_file(sndfile, frameInfo.samplerate, frameInfo.channels,
@@ -623,6 +662,17 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
                 return 0;
             }
             first_time = 0;
+        }
+
+        percent = min((int)(sampleId*100)/numSamples, 100);
+        if (percent > old_percent)
+        {
+            old_percent = percent;
+            sprintf(percents, "%d%% decoding %s.", percent, mp4file);
+            fprintf(stderr, "%s\r", percents);
+#ifdef _WIN32
+            SetConsoleTitle(percents);
+#endif
         }
 
         if ((frameInfo.error == 0) && (frameInfo.samples > 0))

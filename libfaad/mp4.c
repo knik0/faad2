@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mp4.c,v 1.15 2003/06/23 15:21:19 menno Exp $
+** $Id: mp4.c,v 1.16 2003/07/09 11:53:07 menno Exp $
 **/
 
 #include "common.h"
@@ -105,6 +105,14 @@ int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
                                    uint32_t buffer_size,
                                    mp4AudioSpecificConfig *mp4ASC)
 {
+    return AudioSpecificConfig2(pBuffer, buffer_size, mp4ASC, NULL);
+}
+
+int8_t FAADAPI AudioSpecificConfig2(uint8_t *pBuffer,
+                                    uint32_t buffer_size,
+                                    mp4AudioSpecificConfig *mp4ASC,
+                                    program_config *pce)
+{
     bitfile ld;
     int8_t result = 0;
 
@@ -152,11 +160,11 @@ int8_t FAADAPI AudioSpecificConfig(uint8_t *pBuffer,
         mp4ASC->objectTypeIndex == 3 || mp4ASC->objectTypeIndex == 4 ||
         mp4ASC->objectTypeIndex == 6 || mp4ASC->objectTypeIndex == 7)
     {
-        result = GASpecificConfig(&ld, mp4ASC);
+        result = GASpecificConfig(&ld, mp4ASC, pce);
 
 #ifdef ERROR_RESILIENCE
     } else if (mp4ASC->objectTypeIndex >= ER_OBJECT_START) { /* ER */
-        result = GASpecificConfig(&ld, mp4ASC);
+        result = GASpecificConfig(&ld, mp4ASC, pce);
         mp4ASC->epConfig = (uint8_t)faad_getbits(&ld, 2
             DEBUGVAR(1,143,"parse_audio_decoder_specific_info(): epConfig"));
 

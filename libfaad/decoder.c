@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.59 2003/07/08 13:45:45 menno Exp $
+** $Id: decoder.c,v 1.60 2003/07/09 11:53:07 menno Exp $
 **/
 
 #include "common.h"
@@ -257,11 +257,18 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
     }
 
     /* decode the audio specific config */
-    rc = AudioSpecificConfig(pBuffer, SizeOfDecoderSpecificInfo, &mp4ASC);
+    rc = AudioSpecificConfig2(pBuffer, SizeOfDecoderSpecificInfo, &mp4ASC,
+        &(hDecoder->pce));
 
     /* copy the relevant info to the decoder handle */
     *samplerate = mp4ASC.samplingFrequency;
-    *channels = mp4ASC.channelsConfiguration;
+    if (mp4ASC.channelsConfiguration)
+    {
+        *channels = mp4ASC.channelsConfiguration;
+    } else {
+        *channels = hDecoder->pce.channels;
+        hDecoder->pce_set = 1;
+    }
     hDecoder->sf_index = mp4ASC.samplingFrequencyIndex;
     hDecoder->object_type = mp4ASC.objectTypeIndex;
     hDecoder->aacSectionDataResilienceFlag = mp4ASC.aacSectionDataResilienceFlag;
@@ -274,7 +281,7 @@ int8_t FAADAPI faacDecInit2(faacDecHandle hDecoder, uint8_t *pBuffer,
     {
         return rc;
     }
-    hDecoder->channelConfiguration = *channels;
+    hDecoder->channelConfiguration = mp4ASC.channelsConfiguration;
     if (mp4ASC.frameLengthFlag)
         hDecoder->frameLength = 960;
 
@@ -486,6 +493,80 @@ void create_channel_config(faacDecHandle hDecoder, faacDecFrameInfo *hInfo)
             hInfo->channel_position[7] = LFE_CHANNEL;
             break;
         default: /* channelConfiguration == 0 || channelConfiguration > 7 */
+            {
+                uint8_t i;
+                uint8_t ch = hDecoder->fr_channels - hDecoder->has_lfe;
+                if (ch & 1) /* there's either a center front or a center back channel */
+                {
+                    uint8_t ch1 = (ch-1)/2;
+                    _assert(!(ch1&1));
+                    if (hDecoder->first_syn_ele == ID_SCE)
+                    {
+                        hInfo->num_front_channels = ch1 + 1;
+                        hInfo->num_back_channels = ch1;
+                        hInfo->channel_position[0] = FRONT_CHANNEL_CENTER;
+                        for (i = 1; i <= ch1; i+=2)
+                        {
+                            hInfo->channel_position[i] = FRONT_CHANNEL_LEFT;
+                            hInfo->channel_position[i+1] = FRONT_CHANNEL_RIGHT;
+                        }
+                        for (i = ch1+1; i < ch; i+=2)
+                        {
+                            hInfo->channel_position[i] = BACK_CHANNEL_LEFT;
+                            hInfo->channel_position[i+1] = BACK_CHANNEL_RIGHT;
+                        }
+                    } else {
+                        hInfo->num_front_channels = ch1;
+                        hInfo->num_back_channels = ch1 + 1;
+                        for (i = 0; i < ch1; i+=2)
+                        {
+                            hInfo->channel_position[i] = FRONT_CHANNEL_LEFT;
+                            hInfo->channel_position[i+1] = FRONT_CHANNEL_RIGHT;
+                        }
+                        for (i = ch1; i < ch-1; i+=2)
+                        {
+                            hInfo->channel_position[i] = BACK_CHANNEL_LEFT;
+                            hInfo->channel_position[i+1] = BACK_CHANNEL_RIGHT;
+                        }
+                        hInfo->channel_position[ch-1] = BACK_CHANNEL_CENTER;
+                    }
+                } else {
+                    uint8_t ch1 = (ch)/2;
+                    hInfo->num_front_channels = ch1;
+                    hInfo->num_back_channels = ch1;
+                    if (ch1 & 1)
+                    {
+                        hInfo->channel_position[0] = FRONT_CHANNEL_CENTER;
+                        for (i = 1; i <= ch1; i+=2)
+                        {
+                            hInfo->channel_position[i] = FRONT_CHANNEL_LEFT;
+                            hInfo->channel_position[i+1] = FRONT_CHANNEL_RIGHT;
+                        }
+                        for (i = ch1+1; i < ch-1; i+=2)
+                        {
+                            hInfo->channel_position[i] = BACK_CHANNEL_LEFT;
+                            hInfo->channel_position[i+1] = BACK_CHANNEL_RIGHT;
+                        }
+                        hInfo->channel_position[ch-1] = BACK_CHANNEL_CENTER;
+                    } else {
+                        for (i = 0; i < ch1; i+=2)
+                        {
+                            hInfo->channel_position[i] = FRONT_CHANNEL_LEFT;
+                            hInfo->channel_position[i+1] = FRONT_CHANNEL_RIGHT;
+                        }
+                        for (i = ch1; i < ch; i+=2)
+                        {
+                            hInfo->channel_position[i] = BACK_CHANNEL_LEFT;
+                            hInfo->channel_position[i+1] = BACK_CHANNEL_RIGHT;
+                        }
+                    }
+                }
+                hInfo->num_lfe_channels = hDecoder->has_lfe;
+                for (i = ch; i < hDecoder->fr_channels; i++)
+                {
+                    hInfo->channel_position[i] = LFE_CHANNEL;
+                }
+            }
             break;
         }
     }

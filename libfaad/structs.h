@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: structs.h,v 1.7 2003/07/08 13:45:45 menno Exp $
+** $Id: structs.h,v 1.8 2003/07/09 11:53:07 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -348,6 +348,9 @@ typedef struct
 
     uint32_t frame;
 
+    uint8_t first_syn_ele;
+    uint8_t last_syn_ele;
+    uint8_t has_lfe;
     uint8_t fr_channels;
     uint8_t fr_ch_ele;
 

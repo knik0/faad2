@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: faad.h,v 1.23 2003/07/08 13:45:45 menno Exp $
+** $Id: faad.h,v 1.24 2003/07/09 11:53:07 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -83,7 +83,7 @@ extern "C" {
 #define BACK_CHANNEL_RIGHT   (7)
 #define BACK_CHANNEL_CENTER  (8)
 #define LFE_CHANNEL          (9)
-#define UNKNOWN_CHANNEL      (10)
+#define UNKNOWN_CHANNEL      (0)
 
 
 /* A decode call can eat up to FAAD_MIN_STREAMSIZE bytes per decoded channel,

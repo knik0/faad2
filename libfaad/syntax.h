@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: syntax.h,v 1.30 2003/07/08 13:45:45 menno Exp $
+** $Id: syntax.h,v 1.31 2003/07/09 11:53:07 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -86,7 +86,8 @@ static uint32_t sample_rates[] =
     12000, 11025, 8000
 };
 
-int8_t GASpecificConfig(bitfile *ld, mp4AudioSpecificConfig *mp4ASC);
+int8_t GASpecificConfig(bitfile *ld, mp4AudioSpecificConfig *mp4ASC,
+                        program_config *pce);
 
 uint8_t adts_frame(adts_header *adts, bitfile *ld);
 void get_adif_header(adif_header *adif, bitfile *ld);

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: audio.c,v 1.14 2003/07/08 13:45:45 menno Exp $
+** $Id: audio.c,v 1.15 2003/07/09 11:53:07 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -173,6 +173,106 @@ static int write_wav_header(audio_file *aufile)
 
     *p++ = (unsigned char)(aufile->bits_per_sample >> 0);
     *p++ = (unsigned char)(aufile->bits_per_sample >> 8);
+
+    *p++ = 'd'; *p++ = 'a'; *p++ = 't'; *p++ = 'a';
+
+    word32 = data_size < MAXWAVESIZE ?
+        (unsigned long)data_size : (unsigned long)MAXWAVESIZE;
+    *p++ = (unsigned char)(word32 >>  0);
+    *p++ = (unsigned char)(word32 >>  8);
+    *p++ = (unsigned char)(word32 >> 16);
+    *p++ = (unsigned char)(word32 >> 24);
+
+    return fwrite(header, sizeof(header), 1, aufile->sndfile);
+}
+
+/* ??????? */
+static int write_wav_extensible_header(audio_file *aufile, long channelMask)
+{
+    unsigned char header[66];
+    unsigned char* p = header;
+    unsigned int bytes = (aufile->bits_per_sample + 7) / 8;
+    float data_size = (float)bytes * aufile->total_samples;
+    unsigned long word32;
+
+    *p++ = 'R'; *p++ = 'I'; *p++ = 'F'; *p++ = 'F';
+
+    word32 = (data_size + (66 - 8) < (float)MAXWAVESIZE) ?
+        (unsigned long)data_size + (66 - 8)  :  (unsigned long)MAXWAVESIZE;
+    *p++ = (unsigned char)(word32 >>  0);
+    *p++ = (unsigned char)(word32 >>  8);
+    *p++ = (unsigned char)(word32 >> 16);
+    *p++ = (unsigned char)(word32 >> 24);
+
+    *p++ = 'W'; *p++ = 'A'; *p++ = 'V'; *p++ = 'E';
+
+    *p++ = 'f'; *p++ = 'm'; *p++ = 't'; *p++ = ' ';
+
+    *p++ = 0x10; *p++ = 0x00; *p++ = 0x00; *p++ = 0x00;
+
+    /* WAVE_FORMAT_EXTENSIBLE */
+    *p++ = 0xFE; *p++ = 0xFF;
+
+    *p++ = (unsigned char)(aufile->channels >> 0);
+    *p++ = (unsigned char)(aufile->channels >> 8);
+
+    word32 = (unsigned long)(aufile->samplerate + 0.5);
+    *p++ = (unsigned char)(word32 >>  0);
+    *p++ = (unsigned char)(word32 >>  8);
+    *p++ = (unsigned char)(word32 >> 16);
+    *p++ = (unsigned char)(word32 >> 24);
+
+    word32 = aufile->samplerate * bytes * aufile->channels;
+    *p++ = (unsigned char)(word32 >>  0);
+    *p++ = (unsigned char)(word32 >>  8);
+    *p++ = (unsigned char)(word32 >> 16);
+    *p++ = (unsigned char)(word32 >> 24);
+
+    word32 = bytes * aufile->channels;
+    *p++ = (unsigned char)(word32 >>  0);
+    *p++ = (unsigned char)(word32 >>  8);
+
+    *p++ = (unsigned char)(aufile->bits_per_sample >> 0);
+    *p++ = (unsigned char)(aufile->bits_per_sample >> 8);
+
+    /* cbSize */
+    *p++ = (unsigned char)(22);
+    *p++ = (unsigned char)(0);
+
+    /* WAVEFORMATEXTENSIBLE */
+
+    /* wValidBitsPerSample */
+    *p++ = (unsigned char)(aufile->bits_per_sample >> 0);
+    *p++ = (unsigned char)(aufile->bits_per_sample >> 8);
+
+    /* dwChannelMask */
+    word32 = channelMask;
+    *p++ = (unsigned char)(word32 >>  0);
+    *p++ = (unsigned char)(word32 >>  8);
+    *p++ = (unsigned char)(word32 >> 16);
+    *p++ = (unsigned char)(word32 >> 24);
+
+    /* SubFormat */
+    if (aufile->outputFormat == FAAD_FMT_FLOAT)
+    {
+        /* KSDATAFORMAT_SUBTYPE_IEEE_FLOAT: 00000003-0000-0010-8000-00aa00389b71 */
+//        /*??*/ *p++ = 0x00;
+//        /*??*/ *p++ = 0x00;
+        *p++ = 0x03;
+        *p++ = 0x00;
+        *p++ = 0x00; *p++ = 0x00; *p++ = 0x10; *p++ = 0x00; *p++ = 0x80; *p++ = 0x00;
+        *p++ = 0x00; *p++ = 0xaa; *p++ = 0x00; *p++ = 0x38; *p++ = 0x9b; *p++ = 0x71;
+    } else {
+        /* KSDATAFORMAT_SUBTYPE_PCM: 00000001-0000-0010-8000-00aa00389b71 */
+//        /*??*/ *p++ = 0x00;
+//        /*??*/ *p++ = 0x00;
+        *p++ = 0x01;
+        *p++ = 0x00;
+        *p++ = 0x00; *p++ = 0x00; *p++ = 0x10; *p++ = 0x00; *p++ = 0x80; *p++ = 0x00;
+        *p++ = 0x00; *p++ = 0xaa; *p++ = 0x00; *p++ = 0x38; *p++ = 0x9b; *p++ = 0x71;
+    }
+
+    /* end WAVEFORMATEXTENSIBLE */
 
     *p++ = 'd'; *p++ = 'a'; *p++ = 't'; *p++ = 'a';
 
