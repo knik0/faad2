@@ -16,17 +16,12 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.c,v 1.2 2002/02/18 10:01:05 menno Exp $
+** $Id: filtbank.c,v 1.3 2002/02/20 13:05:57 menno Exp $
 **/
 
 #include "common.h"
 
 #include <stdlib.h>
-#ifdef USE_FMATH
-#include <mathf.h>
-#else
-#include <math.h>
-#endif
 #include <assert.h>
 #include "filtbank.h"
 #include "syntax.h"
@@ -41,7 +36,8 @@ void filter_bank_init(fb_info *fb)
 {
     uint16_t i;
 
-    make_fft_order(fb->unscrambled64, fb->unscrambled512);
+    mdct_init(&(fb->mdct256), 256);
+    mdct_init(&(fb->mdct2048), 2048);
 
     fb->sin_long  = malloc(BLOCK_LEN_LONG*sizeof(real_t));
     fb->sin_short = malloc(BLOCK_LEN_SHORT*sizeof(real_t));
@@ -53,21 +49,16 @@ void filter_bank_init(fb_info *fb)
 
     /* calculate the sine windows */
     for (i = 0; i < BLOCK_LEN_LONG; i++)
-#ifdef USE_FMATH
-        fb->sin_long[i] = sinf(M_PI / (2.0f * BLOCK_LEN_LONG) * (i + 0.5));
-#else
         fb->sin_long[i] = (real_t)sin(M_PI / (2.0 * BLOCK_LEN_LONG) * (i + 0.5));
-#endif
     for (i = 0; i < BLOCK_LEN_SHORT; i++)
-#ifdef USE_FMATH
-        fb->sin_short[i] = sinf(M_PI / (2.0f * BLOCK_LEN_SHORT) * (i + 0.5));
-#else
         fb->sin_short[i] = (real_t)sin(M_PI / (2.0 * BLOCK_LEN_SHORT) * (i + 0.5));
-#endif
 }
 
 void filter_bank_end(fb_info *fb)
 {
+    mdct_end(&(fb->mdct256));
+    mdct_end(&(fb->mdct2048));
+
     if (fb->sin_long) free(fb->sin_long);
     if (fb->sin_short) free(fb->sin_short);
 }
@@ -164,10 +155,10 @@ static INLINE void imdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_
     switch (len)
     {
     case 2048:
-        IMDCT_long(in_data, out_data, fb->unscrambled512);
+        IMDCT_long(&(fb->mdct2048), in_data, out_data);
         return;
     case 256:
-        IMDCT_short(in_data, out_data, fb->unscrambled64);
+        IMDCT_short(&(fb->mdct256), in_data, out_data);
         return;
     }
 }
@@ -177,10 +168,10 @@ static INLINE void mdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_t
     switch (len)
     {
     case 2048:
-        MDCT_long(in_data, out_data, fb->unscrambled512);
+        MDCT_long(&(fb->mdct2048), in_data, out_data);
         return;
     case 256:
-        MDCT_short(in_data, out_data, fb->unscrambled64);
+        MDCT_short(&(fb->mdct256), in_data, out_data);
         return;
     }
 }

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: specrec.c,v 1.3 2002/02/18 10:01:05 menno Exp $
+** $Id: specrec.c,v 1.4 2002/02/20 13:05:57 menno Exp $
 **/
 
 /*
@@ -28,11 +28,6 @@
 
 #include "common.h"
 
-#ifdef USE_FMATH
-#include <mathf.h>
-#else
-#include <math.h>
-#endif
 #include "specrec.h"
 #include "syntax.h"
 #include "data.h"
@@ -220,21 +215,13 @@ void build_tables(real_t *iq_table, real_t *pow2_table)
     /* build pow() table for inverse quantization */
     for(i = 0; i < IQ_TABLE_SIZE; i++)
     {
-#ifdef USE_FMATH
-        iq_table[i] = powf(i, 4.0f/3.0f);
-#else
         iq_table[i] = (real_t)pow(i, 4.0/3.0);
-#endif
     }
 
     /* build pow(2, 0.25) table for scalefactors */
     for(i = 0; i < POW_TABLE_SIZE; i++)
     {
-#ifdef USE_FMATH
-        pow2_table[i] = powf(2.0f, 0.25f * (i-100));
-#else
         pow2_table[i] = (real_t)pow(2.0, 0.25 * (i-100));
-#endif
     }
 }
 
@@ -245,21 +232,13 @@ static INLINE real_t iquant(int16_t q, real_t *iq_table)
         if (q < IQ_TABLE_SIZE)
             return iq_table[q];
         else
-#ifdef USE_FMATH
-            return powf(q, 4.0f/3.0f);
-#else
             return (real_t)pow(q, 4.0/3.0);
-#endif
     } else if (q < 0) {
         q = -q;
         if (q < IQ_TABLE_SIZE)
             return -iq_table[q];
         else
-#ifdef USE_FMATH
-            return -powf(q, 4.0f/3.0f);
-#else
             return -(real_t)pow(q, 4.0/3.0);
-#endif
     } else {
         return 0.0f;
     }
@@ -289,11 +268,7 @@ static INLINE real_t get_scale_factor_gain(uint16_t scale_factor, real_t *pow2_t
     if (scale_factor < POW_TABLE_SIZE)
         return pow2_table[scale_factor];
     else
-#ifdef USE_FMATH
-        return powf(2.0f, 0.25f * (scale_factor - 100));
-#else
         return (real_t)pow(2.0, 0.25 * (scale_factor - 100));
-#endif
 }
 
 void apply_scalefactors(ic_stream *ics, real_t *x_invquant, real_t *pow2_table)

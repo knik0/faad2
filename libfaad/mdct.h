@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: mdct.h,v 1.2 2002/02/18 10:01:05 menno Exp $
+** $Id: mdct.h,v 1.3 2002/02/20 13:05:57 menno Exp $
 **/
 
 #ifndef __MDCT_H__
@@ -25,6 +25,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef struct {
+    uint16_t len;
+    real_t *twiddlers;
+    uint16_t *unscrambled;
+} mdct_info;
 
 typedef real_t fftw_real;
 
@@ -46,12 +52,16 @@ DEFINE_PFFTW(64)
 DEFINE_PFFTW(128)
 DEFINE_PFFTW(512)
 
-void make_fft_order(uint16_t *unscrambled64, uint16_t *unscrambled512);
-void IMDCT_long(fftw_real *in_data, fftw_real *out_data, uint16_t *unscrambled);
-void IMDCT_short(fftw_real *in_data, fftw_real *out_data, uint16_t *unscrambled);
+void mdct_init(mdct_info *mdct, uint16_t len);
+void mdct_end(mdct_info *mdct);
 
-void MDCT_long(fftw_real *in_data, fftw_real *out_data, uint16_t *unscrambled);
-void MDCT_short(fftw_real *in_data, fftw_real *out_data, uint16_t *unscrambled);
+void IMDCT_long(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data);
+void IMDCT_short(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data);
+
+void MDCT_long(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data);
+void MDCT_short(mdct_info *mdct, fftw_real *in_data, fftw_real *out_data);
+
+static void make_fft_order(uint16_t *unscrambled, uint16_t len);
 
 #define PFFTW(name)  CONCAT(pfftw_, name)
 #define PFFTWI(name)  CONCAT(pfftwi_, name)
@@ -59,8 +69,8 @@ void MDCT_short(fftw_real *in_data, fftw_real *out_data, uint16_t *unscrambled);
 #define CONCAT(a, b) CONCAT_AUX(a,b)
 #define FFTW_KONST(x) ((fftw_real) x)
 
-void PFFTW(twiddle_4)(fftw_complex *A, const fftw_complex *W, uint16_t iostride);
-void PFFTWI(twiddle_4)(fftw_complex *A, const fftw_complex *W, uint16_t iostride);
+static void PFFTW(twiddle_4)(fftw_complex *A, const fftw_complex *W, uint16_t iostride);
+static void PFFTWI(twiddle_4)(fftw_complex *A, const fftw_complex *W, uint16_t iostride);
 
 #ifdef __cplusplus
 }

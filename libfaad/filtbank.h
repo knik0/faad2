@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: filtbank.h,v 1.2 2002/02/18 10:01:05 menno Exp $
+** $Id: filtbank.h,v 1.3 2002/02/20 13:05:57 menno Exp $
 **/
 
 #ifndef __FILTBANK_H__
@@ -26,6 +26,7 @@
 extern "C" {
 #endif
 
+#include "mdct.h"
 
 #define BLOCK_LEN_LONG  1024
 #define BLOCK_LEN_SHORT  128
@@ -33,11 +34,11 @@ extern "C" {
 
 typedef struct
 {
-    uint16_t unscrambled64[64];
-    uint16_t unscrambled512[512];
-
     real_t *sin_long;
     real_t *sin_short;
+
+    mdct_info mdct256;
+    mdct_info mdct2048;
 } fb_info;
 
 void filter_bank_init(fb_info *fb);

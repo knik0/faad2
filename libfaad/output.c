@@ -16,27 +16,18 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: output.c,v 1.3 2002/02/18 10:01:05 menno Exp $
+** $Id: output.c,v 1.4 2002/02/20 13:05:57 menno Exp $
 **/
 
 #include "common.h"
 
-#ifdef USE_FMATH
-#include <mathf.h>
-#else
-#include <math.h>
-#endif
 #include "output.h"
 #include "decoder.h"
 
 
 #define ftol(A,B) {tmp = *(int32_t*) & A - 0x4B7F8000; \
                    B = (int16_t)((tmp==(int16_t)tmp) ? tmp : (tmp>>31)^0x7FFF);}
-#ifdef USE_FMATH
-#define ROUND(x) ((int32_t)floorf((x) + 0.5f))
-#else
 #define ROUND(x) ((int32_t)floor((x) + 0.5))
-#endif
 
 #define HAVE_IEEE754_FLOAT
 #ifdef HAVE_IEEE754_FLOAT

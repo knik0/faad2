@@ -16,16 +16,11 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: pns.c,v 1.3 2002/02/18 10:01:05 menno Exp $
+** $Id: pns.c,v 1.4 2002/02/20 13:05:57 menno Exp $
 **/
 
 #include "common.h"
 
-#ifdef USE_FMATH
-#include <mathf.h>
-#else
-#include <math.h>
-#endif
 #include "pns.h"
 
 
@@ -73,13 +68,8 @@ static INLINE void gen_rand_vector(real_t *spec, uint16_t scale_factor, uint16_t
     /* 14496-3 says:
        scale = 1.0f/(size * (real_t)sqrt(MEAN_NRG));
     */
-#ifdef USE_FMATH
-    scale = 1.0f/sqrtf(size * MEAN_NRG);
-    scale *= powf(2.0f, 0.25f*scale_factor);
-#else
     scale = 1.0f/(real_t)sqrt(size * MEAN_NRG);
     scale *= (real_t)pow(2.0, 0.25*scale_factor);
-#endif
 
     /* Scale random vector to desired target energy */
     for (i = 0; i < size; i++)

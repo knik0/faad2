@@ -16,16 +16,11 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: is.c,v 1.2 2002/02/18 10:01:05 menno Exp $
+** $Id: is.c,v 1.3 2002/02/20 13:05:57 menno Exp $
 **/
 
 #include "common.h"
 
-#ifdef USE_FMATH
-#include <mathf.h>
-#else
-#include <math.h>
-#endif
 #include "syntax.h"
 #include "is.h"
 
@@ -55,11 +50,7 @@ void is_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec)
 
                     scale = is_intensity(icsr, g, sfb) *
                         invert_intensity(ics, g, sfb) *
-#ifdef USE_FMATH
-                        powf(0.5f, (0.25f*icsr->scale_factors[g][sfb]));
-#else
                         (real_t)pow(0.5, (0.25*icsr->scale_factors[g][sfb]));
-#endif
 
                     /* Scale from left to right channel,
                        do not touch left channel */

@@ -16,16 +16,11 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: tns.c,v 1.2 2002/02/18 10:01:05 menno Exp $
+** $Id: tns.c,v 1.3 2002/02/20 13:05:57 menno Exp $
 **/
 
 #include "common.h"
 
-#ifdef USE_FMATH
-#include <mathf.h>
-#else
-#include <math.h>
-#endif
 #include "syntax.h"
 #include "tns.h"
 
@@ -154,11 +149,7 @@ static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_c
     iqfac_m = ((1 << (coef_res_bits-1)) + 0.5f) / (M_PI/2.0f);
 
     for (i = 0; i < order; i++)
-#ifdef USE_FMATH
-        tmp2[i] = sinf(tmp[i] / ((tmp[i] >= 0) ? iqfac : iqfac_m));
-#else
         tmp2[i] = (real_t)sin(tmp[i] / ((tmp[i] >= 0) ? iqfac : iqfac_m));
-#endif
 
     /* Conversion to LPC coefficients */
     a[0] = 1;

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.1 2002/02/18 10:01:05 menno Exp $
+** $Id: common.h,v 1.2 2002/02/20 13:05:57 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -52,7 +52,16 @@ extern "C" {
 #endif
 
 
-//#define USE_DOUBLE_PRECISION
+/* COMPILE TIME DEFINITIONS */
+
+/* use double precision */
+/* #define USE_DOUBLE_PRECISION */
+
+/* use table lookup twiddle factors in MDCT [more memory, higher speed],
+   otherwise recurrence relations are used [no memory usage, lower speed] */
+#define USE_TWIDDLE_TABLE
+
+/* END COMPILE TIME DEFINITIONS */
 
 
 #if defined(_WIN32)
@@ -65,15 +74,6 @@ typedef __int32 int32_t;
 typedef __int16 int16_t;
 typedef __int8  int8_t;
 typedef float float32_t;
-
-#ifndef USE_DOUBLE_PRECISION
-typedef float real_t;
-#ifdef __ICL /* only Intel C compiler has fmath ??? */
-#define USE_FMATH
-#endif
-#else
-typedef double real_t;
-#endif
 
 
 #elif defined(LINUX) || defined(DJGPP)
@@ -91,27 +91,57 @@ typedef char int8_t;
 typedef float float32_t;
 #endif
 
-#ifndef USE_DOUBLE_PRECISION
-typedef float real_t;
-#else
-typedef double real_t;
-#endif
-
 
 #else /* Some other OS */
 
 
 #include <inttypes.h>
 
+#endif
+
+
 #ifndef USE_DOUBLE_PRECISION
-typedef float real_t;
+
+  typedef float real_t;
+
+  #ifdef __ICL /* only Intel C compiler has fmath ??? */
+
+    #include <mathf.h>
+
+    #define sin sinf
+    #define cos cosf
+    #define pow powf
+    #define floor floorf
+    #define sqrt sqrtf
+
+  #else
+
+    #include <math.h>
+
+#ifdef HAVE_SINF
+#  define sin sinf
+#endif
+#ifdef HAVE_COSF
+#  define cos cosf
+#endif
+#ifdef HAVE_POWF
+#  define pow powf
+#endif
+#ifdef HAVE_FLOORF
+#  define floor floorf
+#endif
+#ifdef HAVE_SQRTF
+#  define sqrt sqrtf
+#endif
+
+  #endif
+
 #else
-typedef double real_t;
+
+  typedef double real_t;
+  #include <math.h>
+
 #endif
-
-
-#endif
-
 
 #ifdef __cplusplus
 }

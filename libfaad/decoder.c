@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.8 2002/02/18 10:01:05 menno Exp $
+** $Id: decoder.c,v 1.9 2002/02/20 13:05:57 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -250,7 +250,7 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 #else
     real_t *pow2_table     =  NULL;
 #endif
-    uint8_t *window_shape_prev =  hDecoder->window_shape_prev;
+    uint8_t *window_shape_prev = hDecoder->window_shape_prev;
     real_t **time_state    =  hDecoder->time_state;
     real_t **time_out      =  hDecoder->time_out;
     fb_info *fb            = &hDecoder->fb;
