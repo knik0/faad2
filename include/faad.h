@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: faad.h,v 1.32 2003/09/23 08:12:29 menno Exp $
+** $Id: faad.h,v 1.33 2003/09/24 19:55:34 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -50,6 +50,7 @@ extern "C" {
 #define LC         2
 #define SSR        3
 #define LTP        4
+#define HE_AAC     5
 #define ER_LC     17
 #define ER_LTP    19
 #define LD        23

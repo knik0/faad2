@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.h,v 1.36 2003/09/24 08:05:45 menno Exp $
+** $Id: syntax.h,v 1.37 2003/09/24 19:55:34 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -40,6 +40,7 @@ extern "C" {
 #define LC         2
 #define SSR        3
 #define LTP        4
+#define HE_AAC     5
 #define LD        23
 #define ER_LC     17
 #define ER_LTP    19

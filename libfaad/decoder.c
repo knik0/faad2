@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.71 2003/09/24 08:05:44 menno Exp $
+** $Id: decoder.c,v 1.72 2003/09/24 19:55:34 menno Exp $
 **/
 
 #include "common.h"
@@ -1148,9 +1148,12 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
         hInfo->samplerate *= 2;
         /* sbr */
         if (hDecoder->sbr_present_flag == 1)
+        {
+            hInfo->object_type = HE_AAC;
             hInfo->sbr = SBR_UPSAMPLED;
-        else
+        } else {
             hInfo->sbr = NO_SBR_UPSAMPLED;
+        }
 
         sample_buffer = output_to_PCM(hDecoder, time_out2, sample_buffer,
             output_channels, frame_len, outputFormat);

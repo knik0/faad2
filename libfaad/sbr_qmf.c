@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_qmf.c,v 1.10 2003/09/24 11:52:12 menno Exp $
+** $Id: sbr_qmf.c,v 1.11 2003/09/24 19:55:34 menno Exp $
 **/
 
 #include "common.h"
@@ -152,8 +152,13 @@ qmfs_info *qmfs_init(uint8_t channels)
 {
     int size = 0;
     qmfs_info *qmfs = (qmfs_info*)malloc(sizeof(qmfs_info));
-    qmfs->v = (real_t*)malloc(channels * 20 * sizeof(real_t));
-    memset(qmfs->v, 0, channels * 20 * sizeof(real_t));
+
+    qmfs->v[0] = (real_t*)malloc(channels * 10 * sizeof(real_t));
+    memset(qmfs->v[0], 0, channels * 10 * sizeof(real_t));
+    qmfs->v[1] = (real_t*)malloc(channels * 10 * sizeof(real_t));
+    memset(qmfs->v[1], 0, channels * 10 * sizeof(real_t));
+
+    qmfs->v_index = 0;
 
     qmfs->channels = channels;
 
@@ -164,32 +169,36 @@ void qmfs_end(qmfs_info *qmfs)
 {
     if (qmfs)
     {
-        if (qmfs->v) free(qmfs->v);
+        if (qmfs->v[0]) free(qmfs->v[0]);
+        if (qmfs->v[1]) free(qmfs->v[1]);
         free(qmfs);
     }
 }
 
+#ifdef SBR_LOW_POWER
 void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t *X,
                           real_t *output)
 {
     uint8_t l;
     int16_t n, k;
-#ifdef SBR_LOW_POWER
     real_t x[64];
-#else
-    real_t x1[64], x2[64];
-#endif
     real_t *outptr = output;
 
 
     /* qmf subsample l */
     for (l = 0; l < 32; l++)
     {
-        /* shift buffer */
-        memmove(qmfs->v + 128, qmfs->v, (1280-128)*sizeof(real_t));
+        real_t *v0, *v1;
+
+        /* shift buffers */
+        memmove(qmfs->v[0] + 64, qmfs->v[0], (640-64)*sizeof(real_t));
+        memmove(qmfs->v[1] + 64, qmfs->v[1], (640-64)*sizeof(real_t));
+
+        v0 = qmfs->v[qmfs->v_index];
+        v1 = qmfs->v[(qmfs->v_index + 1) & 0x1];
+        qmfs->v_index = (qmfs->v_index + 1) & 0x1;
 
         /* calculate 128 samples */
-#ifdef SBR_LOW_POWER
         for (k = 0; k < 64; k++)
         {
 #ifdef FIXED_POINT
@@ -201,20 +210,62 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t *X,
 
         DCT2_64_unscaled(x, x);
 
-        for (n = 0; n < 64; n++)
+        for (n = 0; n < 32; n++)
         {
-            qmfs->v[n+32] = x[n];
+            v0[n+32] = x[n];
+            v1[n] = x[n+32];
         }
-        qmfs->v[0] = qmfs->v[64];
+        v0[0] = v1[0];
         for (n = 1; n < 32; n++)
         {
-            qmfs->v[32 - n] = qmfs->v[n + 32];
-            qmfs->v[n + 96] = -qmfs->v[96 - n];
+            v0[32 - n] =  v0[n + 32];
+            v1[n + 32] = -v1[32 - n];
         }
-#else
+        v1[32] = 0;
+
+        /* calculate 64 output samples and window */
         for (k = 0; k < 64; k++)
         {
-            x1[k] = QMF_RE(X[(l<<6) + k])/64.;
+            *outptr++ = MUL_R_C(v0[k], qmf_c[k]) +
+                MUL_R_C(v0[64 + k], qmf_c[64 + k]) +
+                MUL_R_C(v0[128 + k], qmf_c[128 + k]) +
+                MUL_R_C(v0[192 + k], qmf_c[192 + k]) +
+                MUL_R_C(v0[256 + k], qmf_c[256 + k]) +
+                MUL_R_C(v0[320 + k], qmf_c[320 + k]) +
+                MUL_R_C(v0[384 + k], qmf_c[384 + k]) +
+                MUL_R_C(v0[448 + k], qmf_c[448 + k]) +
+                MUL_R_C(v0[512 + k], qmf_c[512 + k]) +
+                MUL_R_C(v0[576 + k], qmf_c[576 + k]);
+        }
+    }
+}
+#else
+void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t *X,
+                          real_t *output)
+{
+    uint8_t l;
+    int16_t n, k;
+    real_t x1[64], x2[64];
+    real_t *outptr = output;
+
+
+    /* qmf subsample l */
+    for (l = 0; l < 32; l++)
+    {
+        real_t *v0, *v1;
+
+        /* shift buffers */
+        memmove(qmfs->v[0] + 64, qmfs->v[0], (640-64)*sizeof(real_t));
+        memmove(qmfs->v[1] + 64, qmfs->v[1], (640-64)*sizeof(real_t));
+
+        v0 = qmfs->v[qmfs->v_index];
+        v1 = qmfs->v[(qmfs->v_index + 1) & 0x1];
+        qmfs->v_index = (qmfs->v_index + 1) & 0x1;
+
+        /* calculate 128 samples */
+        for (k = 0; k < 64; k++)
+        {
+            x1[k]      = QMF_RE(X[(l<<6) + k])/64.;
             x2[63 - k] = QMF_IM(X[(l<<6) + k])/64.;
         }
 
@@ -223,28 +274,28 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, const qmf_t *X,
 
         for (n = 0; n < 64; n+=2)
         {
-            qmfs->v[n] = x2[n] - x1[n];
-            qmfs->v[n+1] = -x2[n+1] - x1[n+1];
-            qmfs->v[127-n] = x2[n] + x1[n];
-            qmfs->v[127-n-1] = -x2[n+1] + x1[n+1];
+            v0[n]      =  x2[n]   - x1[n];
+            v0[n+1]    = -x2[n+1] - x1[n+1];
+            v1[63-n]   =  x2[n]   + x1[n];
+            v1[63-n-1] = -x2[n+1] + x1[n+1];
         }
-#endif
 
         /* calculate 64 output samples and window */
         for (k = 0; k < 64; k++)
         {
-            *outptr++ = MUL_R_C(qmfs->v[k], qmf_c[k]) +
-                MUL_R_C(qmfs->v[192 + k], qmf_c[64 + k]) +
-                MUL_R_C(qmfs->v[256 + k], qmf_c[128 + k]) +
-                MUL_R_C(qmfs->v[256 + 192 + k], qmf_c[128 + 64 + k]) +
-                MUL_R_C(qmfs->v[512 + k], qmf_c[256 + k]) +
-                MUL_R_C(qmfs->v[512 + 192 + k], qmf_c[256 + 64 + k]) +
-                MUL_R_C(qmfs->v[768 + k], qmf_c[384 + k]) +
-                MUL_R_C(qmfs->v[768 + 192 + k], qmf_c[384 + 64 + k]) +
-                MUL_R_C(qmfs->v[1024 + k], qmf_c[512 + k]) +
-                MUL_R_C(qmfs->v[1024 + 192 + k], qmf_c[512 + 64 + k]);
+            *outptr++ = MUL_R_C(v0[k], qmf_c[k]) +
+                MUL_R_C(v0[64 + k], qmf_c[64 + k]) +
+                MUL_R_C(v0[128 + k], qmf_c[128 + k]) +
+                MUL_R_C(v0[192 + k], qmf_c[192 + k]) +
+                MUL_R_C(v0[256 + k], qmf_c[256 + k]) +
+                MUL_R_C(v0[320 + k], qmf_c[320 + k]) +
+                MUL_R_C(v0[384 + k], qmf_c[384 + k]) +
+                MUL_R_C(v0[448 + k], qmf_c[448 + k]) +
+                MUL_R_C(v0[512 + k], qmf_c[512 + k]) +
+                MUL_R_C(v0[576 + k], qmf_c[576 + k]);
         }
     }
 }
+#endif
 
 #endif
