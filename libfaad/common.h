@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.h,v 1.23 2002/09/27 08:37:22 menno Exp $
+** $Id: common.h,v 1.24 2002/10/01 21:55:49 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -205,6 +205,7 @@ typedef real_t complex_t[2];
 uint32_t int_log2(uint32_t val);
 int8_t can_decode_ot(uint8_t object_type);
 uint8_t get_sr_index(uint32_t samplerate);
+uint32_t random_int(void);
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f

@@ -16,39 +16,13 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: pns.c,v 1.17 2002/09/13 13:08:45 menno Exp $
+** $Id: pns.c,v 1.18 2002/10/01 21:55:49 menno Exp $
 **/
 
 #include "common.h"
 
 #include "pns.h"
 
-
-static const uint8_t Parity [256] = {  // parity
-    0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,
-    1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,
-    1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,
-    0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,
-    1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,
-    0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,
-    0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,
-    1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0
-};
-
-static int32_t  __r1 = 1;
-static int32_t  __r2 = 1;
-
-static INLINE int32_t random2()
-{
-    int32_t t1, t2, t3, t4;
-
-    t3   = t1 = __r1;   t4   = t2 = __r2;       // Parity calculation is done via table lookup, this is also available
-    t1  &= 0xF5;        t2 >>= 25;              // on CPUs without parity, can be implemented in C and avoid unpredictable
-    t1   = Parity [t1]; t2  &= 0x63;            // jumps and slow rotate through the carry flag operations.
-    t1 <<= 31;          t2   = Parity [t2];
-
-    return (__r1 = (t3 >> 1) | t1 ) ^ (__r2 = (t4 + t4) | t2 );
-}
 
 #ifdef FIXED_POINT
 
@@ -108,7 +82,7 @@ static INLINE void gen_rand_vector(real_t *spec, int16_t scale_factor, uint16_t 
 
     for (i = 0; i < size; i++)
     {
-        real_t tmp = scale*(real_t)random2();
+        real_t tmp = scale*(real_t)(int32_t)random_int();
         spec[i] = tmp;
         energy += tmp*tmp;
     }
@@ -126,7 +100,7 @@ static INLINE void gen_rand_vector(real_t *spec, int16_t scale_factor, uint16_t 
 
     for (i = 0; i < size; i++)
     {
-        real_t tmp = ISQRT_MEAN_NRG * random2();
+        real_t tmp = ISQRT_MEAN_NRG * (int32_t)random_int();
         tmp = MUL_C_C(COEF_CONST(1)/size, tmp);
 
         energy += MUL_C_C(tmp,tmp);

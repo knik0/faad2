@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: common.c,v 1.3 2002/09/27 08:37:22 menno Exp $
+** $Id: common.c,v 1.4 2002/10/01 21:55:49 menno Exp $
 **/
 
 /* just some common functions that could be used anywhere */
@@ -88,6 +88,59 @@ int8_t can_decode_ot(uint8_t object_type)
     }
 
     return -1;
+}
+
+static const  uint8_t    Parity [256] = {  // parity
+	0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,
+	1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,
+	1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,
+	0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,
+	1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,
+	0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,
+	0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,
+	1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0
+};
+
+static uint32_t  __r1 = 1;
+static uint32_t  __r2 = 1;
+
+
+/*
+ *  This is a simple random number generator with good quality for audio purposes.
+ *  It consists of two polycounters with opposite rotation direction and different
+ *  periods. The periods are coprime, so the total period is the product of both.
+ *
+ *     -------------------------------------------------------------------------------------------------
+ * +-> |31:30:29:28:27:26:25:24:23:22:21:20:19:18:17:16:15:14:13:12:11:10: 9: 8: 7: 6: 5: 4: 3: 2: 1: 0|
+ * |   -------------------------------------------------------------------------------------------------
+ * |                                                                          |  |  |  |     |        |
+ * |                                                                          +--+--+--+-XOR-+--------+
+ * |                                                                                      |
+ * +--------------------------------------------------------------------------------------+
+ *
+ *     -------------------------------------------------------------------------------------------------
+ *     |31:30:29:28:27:26:25:24:23:22:21:20:19:18:17:16:15:14:13:12:11:10: 9: 8: 7: 6: 5: 4: 3: 2: 1: 0| <-+
+ *     -------------------------------------------------------------------------------------------------   |
+ *       |  |           |  |                                                                               |
+ *       +--+----XOR----+--+                                                                               |
+ *                |                                                                                        |
+ *                +----------------------------------------------------------------------------------------+
+ *
+ *
+ *  The first has an period of 3*5*17*257*65537, the second of 7*47*73*178481,
+ *  which gives a period of 18.410.713.077.675.721.215. The result is the
+ *  XORed values of both generators.
+ */
+uint32_t random_int(void)
+{
+	uint32_t  t1, t2, t3, t4;
+
+	t3   = t1 = __r1;   t4   = t2 = __r2;       // Parity calculation is done via table lookup, this is also available
+	t1  &= 0xF5;        t2 >>= 25;              // on CPUs without parity, can be implemented in C and avoid unpredictable
+	t1   = Parity [t1]; t2  &= 0x63;            // jumps and slow rotate through the carry flag operations.
+	t1 <<= 31;          t2   = Parity [t2];
+
+	return (__r1 = (t3 >> 1) | t1 ) ^ (__r2 = (t4 + t4) | t2 );
 }
 
 #if 0
