@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.51 2003/02/16 18:17:11 menno Exp $
+** $Id: decoder.c,v 1.52 2003/02/24 15:02:25 menno Exp $
 **/
 
 #include "common.h"
@@ -174,7 +174,10 @@ int32_t FAADAPI faacDecInit(faacDecHandle hDecoder, uint8_t *buffer,
         }
 
         if (ld.error)
+        {
+            faad_endbits(&ld);
             return -1;
+        }
         faad_endbits(&ld);
     }
     hDecoder->channelConfiguration = *channels;

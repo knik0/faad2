@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: bits.c,v 1.20 2003/02/16 19:16:12 menno Exp $
+** $Id: bits.c,v 1.21 2003/02/24 15:02:25 menno Exp $
 **/
 
 #include "common.h"
@@ -101,6 +101,8 @@ void faad_rewindbits(bitfile *ld)
     ld->bufb = tmp;
     ld->bits_left = 32;
     ld->tail = &ld->start[2];
+    ld->bytes_used = 0;
+    ld->no_more_reading = 0;
 }
 
 uint8_t *faad_getbitbuffer(bitfile *ld, uint32_t bits
