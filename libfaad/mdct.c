@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mdct.c,v 1.27 2003/09/09 18:09:52 menno Exp $
+** $Id: mdct.c,v 1.29 2003/10/09 20:04:24 menno Exp $
 **/
 
 /*
@@ -208,11 +208,8 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     /* pre-IFFT complex multiplication */
     for (k = 0; k < N4; k++)
     {
-        uint16_t n = k << 1;
-        RE(x) = X_in[         n];
-        IM(x) = X_in[N2 - 1 - n];
-        RE(Z1[k]) = MUL_R_C(IM(x), RE(sincos[k])) - MUL_R_C(RE(x), IM(sincos[k]));
-        IM(Z1[k]) = MUL_R_C(RE(x), RE(sincos[k])) + MUL_R_C(IM(x), IM(sincos[k]));
+        RE(Z1[k]) = MUL_R_C(X_in[N2 - 1 - 2*k], RE(sincos[k])) - MUL_R_C(X_in[2*k], IM(sincos[k]));
+        IM(Z1[k]) = MUL_R_C(X_in[2*k], RE(sincos[k])) + MUL_R_C(X_in[N2 - 1 - 2*k], IM(sincos[k]));
     }
 
     /* complex IFFT, any non-scaling FFT can be used here */
@@ -221,7 +218,6 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     /* post-IFFT complex multiplication */
     for (k = 0; k < N4; k++)
     {
-        uint16_t n = k << 1;
         RE(x) = RE(Z1[k]);
         IM(x) = IM(Z1[k]);
 
@@ -232,15 +228,14 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     /* reordering */
     for (k = 0; k < N8; k++)
     {
-        uint16_t n = k << 1;
-        X_out[              n] =  IM(Z1[N8 +     k]);
-        X_out[          1 + n] = -RE(Z1[N8 - 1 - k]);
-        X_out[N4 +          n] =  RE(Z1[         k]);
-        X_out[N4 +      1 + n] = -IM(Z1[N4 - 1 - k]);
-        X_out[N2 +          n] =  RE(Z1[N8 +     k]);
-        X_out[N2 +      1 + n] = -IM(Z1[N8 - 1 - k]);
-        X_out[N2 + N4 +     n] = -IM(Z1[         k]);
-        X_out[N2 + N4 + 1 + n] =  RE(Z1[N4 - 1 - k]);
+        X_out[              2*k] =  IM(Z1[N8 +     k]);
+        X_out[          1 + 2*k] = -RE(Z1[N8 - 1 - k]);
+        X_out[N4 +          2*k] =  RE(Z1[         k]);
+        X_out[N4 +      1 + 2*k] = -IM(Z1[N4 - 1 - k]);
+        X_out[N2 +          2*k] =  RE(Z1[N8 +     k]);
+        X_out[N2 +      1 + 2*k] = -IM(Z1[N8 - 1 - k]);
+        X_out[N2 + N4 +     2*k] = -IM(Z1[         k]);
+        X_out[N2 + N4 + 1 + 2*k] =  RE(Z1[N4 - 1 - k]);
     }
 }
 

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.55 2003/09/24 08:05:45 menno Exp $
+** $Id: syntax.c,v 1.56 2003/09/30 12:43:05 menno Exp $
 **/
 
 /*
@@ -568,13 +568,13 @@ static uint8_t single_lfe_channel_element(faacDecHandle hDecoder,
                 return 2; /* pulse coding not allowed for short blocks */
             }
         }
-        return 0;
     } else
 #endif
-
-    retval = individual_channel_stream(hDecoder, sce, ld, ics, 0, spec_data);
-    if (retval > 0)
-        return retval;
+    {
+        retval = individual_channel_stream(hDecoder, sce, ld, ics, 0, spec_data);
+        if (retval > 0)
+            return retval;
+    }
 
 
     /* noiseless coding is done, spectral reconstruction is done now */
