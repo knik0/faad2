@@ -22,15 +22,15 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4sample.c,v 1.1 2003/11/21 15:08:48 menno Exp $
+** $Id: mp4sample.c,v 1.3 2003/11/25 13:16:09 menno Exp $
 **/
 
 #include <stdlib.h>
-#include "mp4ff.h"
+#include "mp4ffint.h"
 
 
-int32_t mp4ff_chunk_of_sample(mp4ff_t *f, int32_t track, int32_t sample,
-                              int32_t *chunk_sample, int32_t *chunk)
+static int32_t mp4ff_chunk_of_sample(const mp4ff_t *f, const int32_t track, const int32_t sample,
+                                     int32_t *chunk_sample, int32_t *chunk)
 {
     int32_t total_entries = 0;
     int32_t chunk2entry;
@@ -75,7 +75,7 @@ int32_t mp4ff_chunk_of_sample(mp4ff_t *f, int32_t track, int32_t sample,
     return 0;
 }
 
-int32_t mp4ff_chunk_to_offset(mp4ff_t *f, int32_t track, int32_t chunk)
+static int32_t mp4ff_chunk_to_offset(const mp4ff_t *f, const int32_t track, const int32_t chunk)
 {
     if (f->track[track]->stco_entry_count && (chunk > f->track[track]->stco_entry_count))
     {
@@ -89,7 +89,8 @@ int32_t mp4ff_chunk_to_offset(mp4ff_t *f, int32_t track, int32_t chunk)
     return 0;
 }
 
-int32_t mp4ff_sample_range_size(mp4ff_t *f, int32_t track, int32_t chunk_sample, int32_t sample)
+static int32_t mp4ff_sample_range_size(const mp4ff_t *f, const int32_t track,
+                                       const int32_t chunk_sample, const int32_t sample)
 {
     int32_t i, total;
 
@@ -106,7 +107,7 @@ int32_t mp4ff_sample_range_size(mp4ff_t *f, int32_t track, int32_t chunk_sample,
     return total;
 }
 
-int32_t mp4ff_sample_to_offset(mp4ff_t *f, int32_t track, int32_t sample)
+static int32_t mp4ff_sample_to_offset(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t chunk, chunk_sample, chunk_offset1, chunk_offset2;
 
@@ -118,7 +119,7 @@ int32_t mp4ff_sample_to_offset(mp4ff_t *f, int32_t track, int32_t sample)
 	return chunk_offset2;
 }
 
-int32_t mp4ff_audio_frame_size(mp4ff_t *f, int32_t track, int32_t sample)
+int32_t mp4ff_audio_frame_size(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t bytes;
 
@@ -132,7 +133,7 @@ int32_t mp4ff_audio_frame_size(mp4ff_t *f, int32_t track, int32_t sample)
     return bytes;
 }
 
-int32_t mp4ff_set_sample_position(mp4ff_t *f, int32_t track, int32_t sample)
+int32_t mp4ff_set_sample_position(mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t offset;
 

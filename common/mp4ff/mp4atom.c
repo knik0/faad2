@@ -22,15 +22,15 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4atom.c,v 1.3 2003/11/21 19:02:02 menno Exp $
+** $Id: mp4atom.c,v 1.4 2003/11/22 15:30:19 menno Exp $
 **/
 
 #include <stdlib.h>
-#include "mp4ff.h"
+#include "mp4ffint.h"
 
 
 /* parse atom header size */
-int32_t mp4ff_atom_get_size(int8_t *data)
+static int32_t mp4ff_atom_get_size(const int8_t *data)
 {
     uint32_t result;
     uint32_t a, b, c, d;
@@ -47,8 +47,8 @@ int32_t mp4ff_atom_get_size(int8_t *data)
 }
 
 /* comnapre 2 atom names, returns 1 for equal, 0 for unequal */
-int32_t mp4ff_atom_compare(int8_t a1, int8_t b1, int8_t c1, int8_t d1,
-                           int8_t a2, int8_t b2, int8_t c2, int8_t d2)
+static int32_t mp4ff_atom_compare(const int8_t a1, const int8_t b1, const int8_t c1, const int8_t d1,
+                                  const int8_t a2, const int8_t b2, const int8_t c2, const int8_t d2)
 {
     if (a1 == a2 && b1 == b2 && c1 == c2 && d1 == d2)
         return 1;
@@ -56,7 +56,8 @@ int32_t mp4ff_atom_compare(int8_t a1, int8_t b1, int8_t c1, int8_t d1,
         return 0;
 }
 
-uint8_t mp4ff_atom_name_to_type(int8_t a, int8_t b, int8_t c, int8_t d)
+static uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b,
+                                       const int8_t c, const int8_t d)
 {
     if (a == 'm')
     {
@@ -78,6 +79,8 @@ uint8_t mp4ff_atom_name_to_type(int8_t a, int8_t b, int8_t c, int8_t d)
             return ATOM_MP4V;
         else if (mp4ff_atom_compare(a,b,c,d, 'm','p','4','s'))
             return ATOM_MP4S;
+        else if (mp4ff_atom_compare(a,b,c,d, 'm','e','t','a'))
+            return ATOM_META;
     } else if (a == 't') {
         if (mp4ff_atom_compare(a,b,c,d, 't','r','a','k'))
             return ATOM_TRAK;
@@ -85,6 +88,10 @@ uint8_t mp4ff_atom_name_to_type(int8_t a, int8_t b, int8_t c, int8_t d)
             return ATOM_TKHD;
         else if (mp4ff_atom_compare(a,b,c,d, 't','r','e','f'))
             return ATOM_TREF;
+        else if (mp4ff_atom_compare(a,b,c,d, 't','r','k','n'))
+            return ATOM_TRACK;
+        else if (mp4ff_atom_compare(a,b,c,d, 't','m','p','o'))
+            return ATOM_TEMPO;
     } else if (a == 's') {
         if (mp4ff_atom_compare(a,b,c,d, 's','t','b','l'))
             return ATOM_STBL;
@@ -104,6 +111,23 @@ uint8_t mp4ff_atom_name_to_type(int8_t a, int8_t b, int8_t c, int8_t d)
             return ATOM_STZ2;
         else if (mp4ff_atom_compare(a,b,c,d, 's','k','i','p'))
             return ATOM_SKIP;
+    } else if (a == '©') {
+        if (mp4ff_atom_compare(a,b,c,d, '©','n','a','m'))
+            return ATOM_TITLE;
+        else if (mp4ff_atom_compare(a,b,c,d, '©','A','R','T'))
+            return ATOM_ARTIST;
+        else if (mp4ff_atom_compare(a,b,c,d, '©','w','r','t'))
+            return ATOM_WRITER;
+        else if (mp4ff_atom_compare(a,b,c,d, '©','a','l','b'))
+            return ATOM_ALBUM;
+        else if (mp4ff_atom_compare(a,b,c,d, '©','d','a','y'))
+            return ATOM_DATE;
+        else if (mp4ff_atom_compare(a,b,c,d, '©','t','o','o'))
+            return ATOM_TOOL;
+        else if (mp4ff_atom_compare(a,b,c,d, '©','c','m','t'))
+            return ATOM_COMMENT;
+        else if (mp4ff_atom_compare(a,b,c,d, '©','g','e','n'))
+            return ATOM_GENRE1;
     }
 
     if (mp4ff_atom_compare(a,b,c,d, 'e','d','t','s'))
@@ -118,6 +142,20 @@ uint8_t mp4ff_atom_name_to_type(int8_t a, int8_t b, int8_t c, int8_t d)
         return ATOM_HMHD;
     else if (mp4ff_atom_compare(a,b,c,d, 'v','m','h','d'))
         return ATOM_VMHD;
+    else if (mp4ff_atom_compare(a,b,c,d, 'u','d','t','a'))
+        return ATOM_UDTA;
+    else if (mp4ff_atom_compare(a,b,c,d, 'i','l','s','t'))
+        return ATOM_ILST;
+    else if (mp4ff_atom_compare(a,b,c,d, 'n','a','m','e'))
+        return ATOM_NAME;
+    else if (mp4ff_atom_compare(a,b,c,d, 'd','a','t','a'))
+        return ATOM_DATA;
+    else if (mp4ff_atom_compare(a,b,c,d, 'd','i','s','k'))
+        return ATOM_DISC;
+    else if (mp4ff_atom_compare(a,b,c,d, 'g','n','r','e'))
+        return ATOM_GENRE2;
+    else if (mp4ff_atom_compare(a,b,c,d, 'c','p','i','l'))
+        return ATOM_COMPILATION;
     else
         return ATOM_UNKNOWN;
 }
@@ -135,18 +173,17 @@ int32_t mp4ff_atom_read_header(mp4ff_t *f, uint8_t *atom_type)
 
     size = mp4ff_atom_get_size(atom_header);
 
-    //fprintf(stdout, "%c%c%c%c\n", atom_header[4], atom_header[5], atom_header[6], atom_header[7]);
+    //printf("%c%c%c%c\n", atom_header[4], atom_header[5], atom_header[6], atom_header[7]);
 
     *atom_type = mp4ff_atom_name_to_type(atom_header[4], atom_header[5], atom_header[6], atom_header[7]);
 
     return size;
 }
 
-
-int32_t mp4ff_read_stsz(mp4ff_t *f)
+static int32_t mp4ff_read_stsz(mp4ff_t *f)
 {
-    /* version */ mp4ff_read_char(f);
-    /* flags */ mp4ff_read_int24(f);
+    mp4ff_read_char(f); /* version */
+    mp4ff_read_int24(f); /* flags */
     f->track[f->total_tracks - 1]->stsz_sample_size = mp4ff_read_int32(f);
     f->track[f->total_tracks - 1]->stsz_sample_count = mp4ff_read_int32(f);
 
@@ -165,7 +202,7 @@ int32_t mp4ff_read_stsz(mp4ff_t *f)
     return 0;
 }
 
-int32_t mp4ff_read_esds(mp4ff_t *f)
+static int32_t mp4ff_read_esds(mp4ff_t *f)
 {
     uint8_t tag;
 
@@ -229,7 +266,7 @@ int32_t mp4ff_read_esds(mp4ff_t *f)
     return 0;
 }
 
-int32_t mp4ff_read_mp4a(mp4ff_t *f)
+static int32_t mp4ff_read_mp4a(mp4ff_t *f)
 {
     int32_t i, size;
     uint8_t atom_type = 0;
@@ -262,7 +299,7 @@ int32_t mp4ff_read_mp4a(mp4ff_t *f)
     return 0;
 }
 
-int32_t mp4ff_read_stsd(mp4ff_t *f)
+static int32_t mp4ff_read_stsd(mp4ff_t *f)
 {
     int32_t i;
 
@@ -297,7 +334,7 @@ int32_t mp4ff_read_stsd(mp4ff_t *f)
     return 0;
 }
 
-int32_t mp4ff_read_stsc(mp4ff_t *f)
+static int32_t mp4ff_read_stsc(mp4ff_t *f)
 {
     int32_t i;
 
@@ -322,12 +359,12 @@ int32_t mp4ff_read_stsc(mp4ff_t *f)
     return 0;
 }
 
-int32_t mp4ff_read_stco(mp4ff_t *f)
+static int32_t mp4ff_read_stco(mp4ff_t *f)
 {
     int32_t i;
 
-    /* version */ mp4ff_read_char(f);
-    /* flags */ mp4ff_read_int24(f);
+    mp4ff_read_char(f); /* version */
+    mp4ff_read_int24(f); /* flags */
     f->track[f->total_tracks - 1]->stco_entry_count = mp4ff_read_int32(f);
 
     f->track[f->total_tracks - 1]->stco_chunk_offset =
@@ -341,7 +378,7 @@ int32_t mp4ff_read_stco(mp4ff_t *f)
     return 0;
 }
 
-int32_t mp4ff_read_stts(mp4ff_t *f)
+static int32_t mp4ff_read_stts(mp4ff_t *f)
 {
     int32_t i;
 
@@ -361,12 +398,12 @@ int32_t mp4ff_read_stts(mp4ff_t *f)
     return 0;
 }
 
-int32_t mp4ff_read_mvhd(mp4ff_t *f)
+static int32_t mp4ff_read_mvhd(mp4ff_t *f)
 {
     int32_t i;
 
-    /* version */ mp4ff_read_char(f);
-    /* flags */ mp4ff_read_int24(f);
+    mp4ff_read_char(f); /* version */
+    mp4ff_read_int24(f); /* flags */
     /* creation_time */ mp4ff_read_int32(f);
     /* modification_time */ mp4ff_read_int32(f);
     f->time_scale = mp4ff_read_int32(f);
@@ -392,7 +429,30 @@ int32_t mp4ff_read_mvhd(mp4ff_t *f)
     return 0;
 }
 
-int32_t mp4ff_atom_read(mp4ff_t *f, int32_t size, uint8_t atom_type)
+static int32_t mp4ff_read_meta(mp4ff_t *f, const int32_t size)
+{
+    int32_t subsize, sumsize = 0;
+    uint8_t atom_type;
+
+    mp4ff_read_char(f); /* version */
+    mp4ff_read_int24(f); /* flags */
+
+    while (sumsize < (size-12))
+    {
+        subsize = mp4ff_atom_read_header(f, &atom_type);
+        if (atom_type == ATOM_ILST)
+        {
+            mp4ff_parse_metadata(f, subsize);
+        } else {
+            mp4ff_set_position(f, mp4ff_position(f)+subsize-8);
+        }
+        sumsize += subsize;
+    }
+
+    return 0;
+}
+
+int32_t mp4ff_atom_read(mp4ff_t *f, const int32_t size, const uint8_t atom_type)
 {
     if (atom_type == ATOM_STSZ)
     {
@@ -413,6 +473,9 @@ int32_t mp4ff_atom_read(mp4ff_t *f, int32_t size, uint8_t atom_type)
     } else if (atom_type == ATOM_MVHD) {
         /* movie header box */
         mp4ff_read_mvhd(f);
+    } else if (atom_type == ATOM_META) {
+        /* iTunes Metadata box */
+        mp4ff_read_meta(f, size);
     } else {
         /* skip this atom: not needed for reading */
         mp4ff_set_position(f, mp4ff_position(f)+size-8);

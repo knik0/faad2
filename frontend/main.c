@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.64 2003/11/21 19:07:32 menno Exp $
+** $Id: main.c,v 1.65 2003/11/22 15:30:19 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -793,8 +793,10 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
     }
 
     /* print some mp4 file info */
-    fprintf(stderr, "%s file info:\n", mp4file);
+    fprintf(stderr, "%s file info:\n\n", mp4file);
     {
+        char *tag = NULL, *item = NULL;
+        int k, j;
         char *ot[6] = { "NULL", "MAIN AAC", "LC AAC", "SSR AAC", "LTP AAC", "HE AAC" };
         long samples = mp4ff_num_samples(infile, track);
         float f = 1024.0;
@@ -807,6 +809,21 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
 
         fprintf(stderr, "%s\t%.3f secs, %d ch, %d Hz\n\n", ot[(mp4ASC.objectTypeIndex > 5)?0:mp4ASC.objectTypeIndex],
             seconds, mp4ASC.channelsConfiguration, mp4ASC.samplingFrequency);
+
+        j = mp4ff_meta_get_num_items(infile);
+        for (k = 0; k < j; k++)
+        {
+            if (!mp4ff_meta_get_by_index(infile, k, &item, &tag))
+            {
+                if (item != NULL && tag != NULL)
+                {
+                    fprintf(stderr, "%s: %s\n", item, tag);
+                    free(item); item = NULL;
+                    free(tag); tag = NULL;
+                }
+            }
+        }
+        if (j > 0) printf("\n");
     }
 
     if (infoOnly)

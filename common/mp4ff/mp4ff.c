@@ -22,12 +22,12 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ff.c,v 1.3 2003/11/21 19:02:02 menno Exp $
+** $Id: mp4ff.c,v 1.4 2003/11/22 15:30:19 menno Exp $
 **/
 
 #include <stdlib.h>
 #include <string.h>
-#include "mp4ff.h"
+#include "mp4ffint.h"
 
 mp4ff_t *mp4ff_open_read(mp4ff_callback_t *f)
 {
@@ -70,12 +70,12 @@ void mp4ff_close(mp4ff_t *ff)
         }
     }
 
+    mp4ff_tag_delete(&(ff->tags));
+
     if (ff) free(ff);
 }
 
-
-
-void mp4ff_track_add(mp4ff_t *f)
+static void mp4ff_track_add(mp4ff_t *f)
 {
     f->total_tracks++;
 
@@ -85,7 +85,7 @@ void mp4ff_track_add(mp4ff_t *f)
 }
 
 /* parse atoms that are sub atoms of other atoms */
-int32_t parse_sub_atoms(mp4ff_t *f, int32_t total_size)
+static int32_t parse_sub_atoms(mp4ff_t *f, const int32_t total_size)
 {
     int32_t size;
     uint8_t atom_type = 0;
@@ -121,7 +121,7 @@ int32_t parse_sub_atoms(mp4ff_t *f, int32_t total_size)
 }
 
 /* parse root atoms */
-int32_t parse_atoms(mp4ff_t *f)
+static int32_t parse_atoms(mp4ff_t *f)
 {
     int32_t size;
     uint8_t atom_type = 0;
@@ -162,7 +162,7 @@ int32_t parse_atoms(mp4ff_t *f)
 }
 
 
-int32_t mp4ff_get_sample_duration(mp4ff_t *f, int32_t track, int32_t sample)
+int32_t mp4ff_get_sample_duration(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t i, ci = 0, co = 0;
 
@@ -181,7 +181,8 @@ int32_t mp4ff_get_sample_duration(mp4ff_t *f, int32_t track, int32_t sample)
     return 0;
 }
 
-int32_t mp4ff_read_sample(mp4ff_t *f, int32_t track, int32_t sample, uint8_t **audio_buffer,  uint32_t *bytes)
+int32_t mp4ff_read_sample(mp4ff_t *f, const int32_t track, const int32_t sample,
+                          uint8_t **audio_buffer,  uint32_t *bytes)
 {
     int32_t result = 0;
 
@@ -199,7 +200,8 @@ int32_t mp4ff_read_sample(mp4ff_t *f, int32_t track, int32_t sample, uint8_t **a
     return *bytes;
 }
 
-int32_t mp4ff_get_decoder_config(mp4ff_t *f, int32_t track, uint8_t** ppBuf, uint32_t* pBufSize)
+int32_t mp4ff_get_decoder_config(const mp4ff_t *f, const int32_t track,
+                                 uint8_t** ppBuf, uint32_t* pBufSize)
 {
     if (track >= f->total_tracks)
     {
@@ -226,17 +228,17 @@ int32_t mp4ff_get_decoder_config(mp4ff_t *f, int32_t track, uint8_t** ppBuf, uin
     return 0;
 }
 
-int32_t mp4ff_total_tracks(mp4ff_t *f)
+int32_t mp4ff_total_tracks(const mp4ff_t *f)
 {
     return f->total_tracks;
 }
 
-int32_t mp4ff_time_scale(mp4ff_t *f, int32_t track)
+int32_t mp4ff_time_scale(const mp4ff_t *f, const int32_t track)
 {
     return f->track[track]->sampleRate;
 }
 
-int32_t mp4ff_num_samples(mp4ff_t *f, int32_t track)
+int32_t mp4ff_num_samples(const mp4ff_t *f, const int32_t track)
 {
     int32_t i;
     int32_t total = 0;
