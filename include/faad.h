@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: faad.h,v 1.19 2003/02/09 20:42:48 menno Exp $
+** $Id: faad.h,v 1.20 2003/03/05 14:24:52 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -64,6 +64,14 @@ extern "C" {
 #define FAAD_FMT_16BIT_M_SHAPE 7
 #define FAAD_FMT_16BIT_H_SHAPE 8
 
+/* Capabilities */
+#define LC_DEC_CAP            (1<<0)
+#define MAIN_DEC_CAP          (1<<1)
+#define LTP_DEC_CAP           (1<<2)
+#define LD_DEC_CAP            (1<<3)
+#define ERROR_RESILIENCE_CAP  (1<<4)
+#define FIXED_POINT_CAP       (1<<5)
+
 /* A decode call can eat up to FAAD_MIN_STREAMSIZE octets per decoded channel,
    so at least so much octets per channel should be available in this stream */
 #define FAAD_MIN_STREAMSIZE 768 /* 6144 bits/channel */
@@ -108,6 +116,8 @@ typedef struct faacDecFrameInfo
 } faacDecFrameInfo;
 
 char* FAADAPI faacDecGetErrorMessage(unsigned char errcode);
+
+unsigned long FAADAPI faacDecGetCapabilities();
 
 faacDecHandle FAADAPI faacDecOpen();
 

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.h,v 1.20 2002/12/10 14:53:15 menno Exp $
+** $Id: decoder.h,v 1.21 2003/03/05 14:24:55 menno Exp $
 **/
 
 #ifndef __DECODER_H__
@@ -54,8 +54,16 @@ extern "C" {
 #define FAAD_FMT_16BIT_M_SHAPE 7
 #define FAAD_FMT_16BIT_H_SHAPE 8
 
+#define LC_DEC_CAP            (1<<0)
+#define MAIN_DEC_CAP          (1<<1)
+#define LTP_DEC_CAP           (1<<2)
+#define LD_DEC_CAP            (1<<3)
+#define ERROR_RESILIENCE_CAP  (1<<4)
+#define FIXED_POINT_CAP       (1<<5)
 
 int8_t* FAADAPI faacDecGetErrorMessage(uint8_t errcode);
+
+uint32_t FAADAPI faacDecGetCapabilities();
 
 faacDecHandle FAADAPI faacDecOpen();
 

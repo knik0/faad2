@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.52 2003/02/24 15:02:25 menno Exp $
+** $Id: decoder.c,v 1.53 2003/03/05 14:24:53 menno Exp $
 **/
 
 #include "common.h"
@@ -52,6 +52,32 @@ uint16_t dbg_count;
 int8_t* FAADAPI faacDecGetErrorMessage(uint8_t errcode)
 {
     return err_msg[errcode];
+}
+
+uint32_t FAADAPI faacDecGetCapabilities()
+{
+    uint32_t cap = 0;
+
+    /* can't do without it */
+    cap += LC_DEC_CAP;
+
+#ifdef MAIN_DEC
+    cap += MAIN_DEC_CAP;
+#endif
+#ifdef LTP_DEC
+    cap += LTP_DEC_CAP;
+#endif
+#ifdef LD_DEC
+    cap += LD_DEC_CAP;
+#endif
+#ifdef ERROR_RESILIENCE
+    cap += ERROR_RESILIENCE_CAP;
+#endif
+#ifdef FIXED_POINT
+    cap += FIXED_POINT_CAP;
+#endif
+
+    return cap;
 }
 
 faacDecHandle FAADAPI faacDecOpen()
