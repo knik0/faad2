@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ff.c,v 1.2 2003/11/21 15:08:48 menno Exp $
+** $Id: mp4ff.c,v 1.3 2003/11/21 19:02:02 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -233,7 +233,7 @@ int32_t mp4ff_total_tracks(mp4ff_t *f)
 
 int32_t mp4ff_time_scale(mp4ff_t *f, int32_t track)
 {
-    return f->time_scale;
+    return f->track[track]->sampleRate;
 }
 
 int32_t mp4ff_num_samples(mp4ff_t *f, int32_t track)

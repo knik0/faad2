@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.62 2003/11/21 18:20:57 menno Exp $
+** $Id: main.c,v 1.63 2003/11/21 19:02:03 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -832,6 +832,7 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
         buffer_size = 0;
 
         dur = mp4ff_get_sample_duration(infile, track, sampleId);
+        printf("%d\n", dur);
         rc = mp4ff_read_sample(infile, track, sampleId, &buffer,  &buffer_size);
         if (rc == 0)
         {

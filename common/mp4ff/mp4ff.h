@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ff.h,v 1.5 2003/11/21 18:20:57 menno Exp $
+** $Id: mp4ff.h,v 1.6 2003/11/21 19:02:02 menno Exp $
 **/
 
 #ifndef MP4FF_H
@@ -111,7 +111,7 @@ typedef struct
     int32_t type;
     int32_t channelCount;
     int32_t sampleSize;
-    int32_t sampleRate;
+    uint16_t sampleRate;
 
     /* stsd */
     int32_t stsd_entry_count;
@@ -172,10 +172,10 @@ typedef struct
 
 /* mp4util.c */
 int32_t mp4ff_read_data(mp4ff_t *f, int8_t *data, int32_t size);
-int32_t mp4ff_read_int32(mp4ff_t *f);
-int32_t mp4ff_read_int24(mp4ff_t *f);
-int16_t mp4ff_read_int16(mp4ff_t *f);
-int8_t mp4ff_read_char(mp4ff_t *f);
+uint32_t mp4ff_read_int32(mp4ff_t *f);
+uint32_t mp4ff_read_int24(mp4ff_t *f);
+uint16_t mp4ff_read_int16(mp4ff_t *f);
+uint8_t mp4ff_read_char(mp4ff_t *f);
 uint32_t mp4ff_read_mp4_descr_length(mp4ff_t *f);
 int32_t mp4ff_position(mp4ff_t *f);
 int32_t mp4ff_set_position(mp4ff_t *f, int32_t position);

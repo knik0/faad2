@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4atom.c,v 1.2 2003/11/21 18:20:56 menno Exp $
+** $Id: mp4atom.c,v 1.3 2003/11/21 19:02:02 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -345,8 +345,8 @@ int32_t mp4ff_read_stts(mp4ff_t *f)
 {
     int32_t i;
 
-    /* version */ mp4ff_read_char(f);
-    /* flags */ mp4ff_read_int24(f);
+    mp4ff_read_char(f); /* version */
+    mp4ff_read_int24(f); /* flags */
     f->track[f->total_tracks - 1]->stts_entry_count = mp4ff_read_int32(f);
 
     f->track[f->total_tracks - 1]->stts_sample_count = (int32_t*)malloc(f->track[f->total_tracks - 1]->stts_entry_count * sizeof(int32_t));

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4util.c,v 1.1 2003/11/21 15:08:48 menno Exp $
+** $Id: mp4util.c,v 1.2 2003/11/21 19:02:03 menno Exp $
 **/
 
 #include "mp4ff.h"
@@ -51,7 +51,7 @@ int32_t mp4ff_position(mp4ff_t *f)
     return f->current_position;
 }
 
-int32_t mp4ff_read_int32(mp4ff_t *f)
+uint32_t mp4ff_read_int32(mp4ff_t *f)
 {
     uint32_t result;
     uint32_t a, b, c, d;
@@ -64,10 +64,10 @@ int32_t mp4ff_read_int32(mp4ff_t *f)
     d = (uint8_t)data[3];
 
     result = (a<<24) | (b<<16) | (c<<8) | d;
-    return (int32_t)result;
+    return (uint32_t)result;
 }
 
-int32_t mp4ff_read_int24(mp4ff_t *f)
+uint32_t mp4ff_read_int24(mp4ff_t *f)
 {
     uint32_t result;
     uint32_t a, b, c;
@@ -79,10 +79,10 @@ int32_t mp4ff_read_int24(mp4ff_t *f)
     c = (uint8_t)data[2];
 
     result = (a<<16) | (b<<8) | c;
-    return (int32_t)result;
+    return (uint32_t)result;
 }
 
-int16_t mp4ff_read_int16(mp4ff_t *f)
+uint16_t mp4ff_read_int16(mp4ff_t *f)
 {
     uint32_t result;
     uint32_t a, b;
@@ -93,12 +93,12 @@ int16_t mp4ff_read_int16(mp4ff_t *f)
     b = (uint8_t)data[1];
 
     result = (a<<8) | b;
-    return (int16_t)result;
+    return (uint16_t)result;
 }
 
-int8_t mp4ff_read_char(mp4ff_t *f)
+uint8_t mp4ff_read_char(mp4ff_t *f)
 {
-    int8_t output;
+    uint8_t output;
     mp4ff_read_data(f, &output, 1);
     return output;
 }
