@@ -532,6 +532,7 @@ MP4Descriptor* MP4File::CreateESD(
 	MP4IntegerProperty* pInt;
 	MP4StringProperty* pString;
 	MP4BytesProperty* pBytes;
+	MP4BitfieldProperty* pBits;
 
 	MP4Descriptor* pEsd =
 		pEsProperty->AddDescriptor(MP4ESDescrTag);
@@ -575,7 +576,12 @@ MP4Descriptor* MP4File::CreateESD(
 
 	pEsd->FindProperty("slConfigDescr.predefined", 
 		(MP4Property**)&pInt);
-	pInt->SetValue(1);
+	// changed 12/5/02 from plugfest to value 0
+	pInt->SetValue(0);
+
+	pEsd->FindProperty("slConfig.useAccessUnitEndFlag",
+			   (MP4Property **)&pBits);
+	pBits->SetValue(1);
 
 	if (url) {
 		pEsd->FindProperty("URLFlag", 
@@ -667,8 +673,12 @@ void MP4File::CreateIsmaODUpdateCommandFromFileForStream(
 {
 	MP4DescriptorProperty* pAudioEsd = NULL;
 	MP4Integer8Property* pAudioSLConfig = NULL;
+	MP4BitfieldProperty* pAudioAccessUnitEndFlag = NULL;
+	int oldAudioUnitEndFlagValue = 0;
 	MP4DescriptorProperty* pVideoEsd = NULL;
 	MP4Integer8Property* pVideoSLConfig = NULL;
+	MP4BitfieldProperty* pVideoAccessUnitEndFlag = NULL;
+	int oldVideoUnitEndFlagValue = 0;
 
 	if (audioTrackId != MP4_INVALID_TRACK_ID) {
 		MP4Atom* pEsdsAtom = 
@@ -682,7 +692,17 @@ void MP4File::CreateIsmaODUpdateCommandFromFileForStream(
 		pAudioEsd->FindProperty("slConfigDescr.predefined", 
 			(MP4Property**)&pAudioSLConfig);
 		ASSERT(pAudioSLConfig);
+#if 0
+		// changed 12/05/02 wmay
 		pAudioSLConfig->SetValue(1);
+#else
+		pAudioSLConfig->SetValue(0);
+#endif
+		pAudioEsd->FindProperty("slConfigDescr.useAccessUnitEndFlag",
+					(MP4Property **)&pAudioAccessUnitEndFlag);
+		oldAudioUnitEndFlagValue = 
+		  pAudioAccessUnitEndFlag->GetValue();
+		pAudioAccessUnitEndFlag->SetValue(1);
 	}
 
 	if (videoTrackId != MP4_INVALID_TRACK_ID) {
@@ -697,7 +717,17 @@ void MP4File::CreateIsmaODUpdateCommandFromFileForStream(
 		pVideoEsd->FindProperty("slConfigDescr.predefined", 
 			(MP4Property**)&pVideoSLConfig);
 		ASSERT(pVideoSLConfig);
+#if 0
 		pVideoSLConfig->SetValue(1);
+		// changed 12/05/02 wmay
+#else
+		pVideoSLConfig->SetValue(0);
+#endif
+		pVideoEsd->FindProperty("slConfigDescr.useAccessUnitEndFlag",
+					(MP4Property **)&pVideoAccessUnitEndFlag);
+		oldVideoUnitEndFlagValue = 
+		  pVideoAccessUnitEndFlag->GetValue();
+		pVideoAccessUnitEndFlag->SetValue(1);
 	}
 
 	CreateIsmaODUpdateCommandForStream(
@@ -707,8 +737,14 @@ void MP4File::CreateIsmaODUpdateCommandFromFileForStream(
 	if (pAudioSLConfig) {
 		pAudioSLConfig->SetValue(2);
 	}
+	if (pAudioAccessUnitEndFlag) {
+	  pAudioAccessUnitEndFlag->SetValue(oldAudioUnitEndFlagValue );
+	}
 	if (pVideoSLConfig) {
 		pVideoSLConfig->SetValue(2);
+	}
+	if (pVideoAccessUnitEndFlag) {
+	  pVideoAccessUnitEndFlag->SetValue(oldVideoUnitEndFlagValue );
 	}
 }
 

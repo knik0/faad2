@@ -32,7 +32,14 @@
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				DebugInformationFormat="4"
-				CompileAs="0"/>
+				CompileAs="0">
+				<IntelOptions
+					Optimization="0"
+					MinimalRebuild="1"
+					BasicRuntimeChecks="0"
+					RuntimeLibrary="1"
+					AllOptions="/c  /I &quot;..\..\include&quot; /I &quot;..\..\common\mp4v2&quot; /I &quot;..\..\common\mp4av&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_WINDLL&quot; /Gm /EHsc /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/in_mp4.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd"/>
+			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
@@ -45,7 +52,10 @@
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile=".\Debug/in_mp4.pdb"
 				SubSystem="2"
-				ImportLibrary=".\Debug/in_mp4.lib"/>
+				ImportLibrary=".\Debug/in_mp4.lib">
+				<IntelOptions
+					AllOptions="/NOLOGO /DLL /OUT:&quot;.\Debug/in_mp4.dll&quot; /INCREMENTAL ws2_32.lib odbc32.lib odbccp32.lib /DEBUG /PDB:&quot;.\Debug/in_mp4.pdb&quot; /SUBSYSTEM:WINDOWS /TLBID:1 /IMPLIB:&quot;.\Debug/in_mp4.lib&quot; /MACHINE:I386 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"/>
+			</Tool>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="_DEBUG"
@@ -85,7 +95,7 @@
 				AdditionalIncludeDirectories="..\..\include,..\..\common\mp4v2,..\..\common\mp4av"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="TRUE"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="TRUE"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\Release/in_mp4.pch"
@@ -94,7 +104,18 @@
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				CompileAs="0"/>
+				CompileAs="0">
+				<IntelOptions
+					Optimization="2"
+					GlobalOptimizations="1"
+					InlineFuncExpansion="1"
+					OmitFramePtrs="1"
+					StringPooling="1"
+					RuntimeLibrary="2"
+					BufferSecurityCheck="1"
+					FunctionLevelLinking="1"
+					AllOptions="/c  /I &quot;..\..\include&quot; /I &quot;..\..\common\mp4v2&quot; /I &quot;..\..\common\mp4av&quot; /nologo /W3 /O2 /Og /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_WINDLL&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/in_mp4.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd"/>
+			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
@@ -106,7 +127,10 @@
 				SuppressStartupBanner="TRUE"
 				ProgramDatabaseFile=".\Release/in_mp4.pdb"
 				SubSystem="2"
-				ImportLibrary=".\Release/in_mp4.lib"/>
+				ImportLibrary=".\Release/in_mp4.lib">
+				<IntelOptions
+					AllOptions="/NOLOGO /DLL /OUT:&quot;.\Release/in_mp4.dll&quot; /INCREMENTAL:NO ws2_32.lib /PDB:&quot;.\Release/in_mp4.pdb&quot; /SUBSYSTEM:WINDOWS /TLBID:1 /IMPLIB:&quot;.\Release/in_mp4.lib&quot; /MACHINE:I386 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"/>
+			</Tool>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="NDEBUG"
@@ -135,57 +159,42 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath="aac2mp4.cpp">
-			</File>
+				RelativePath="aac2mp4.cpp"/>
 			<File
-				RelativePath="aacinfo.c">
-			</File>
+				RelativePath="aacinfo.c"/>
 			<File
-				RelativePath=".\config.c">
-			</File>
+				RelativePath=".\config.c"/>
 			<File
-				RelativePath=".\in_mp4.c">
-			</File>
+				RelativePath=".\in_mp4.c"/>
 			<File
-				RelativePath=".\utils.c">
-			</File>
+				RelativePath=".\utils.c"/>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
 			<File
-				RelativePath="aac2mp4.h">
-			</File>
+				RelativePath="aac2mp4.h"/>
 			<File
-				RelativePath="aacinfo.h">
-			</File>
+				RelativePath="aacinfo.h"/>
 			<File
-				RelativePath=".\config.h">
-			</File>
+				RelativePath=".\config.h"/>
 			<File
-				RelativePath="..\..\include\faad.h">
-			</File>
+				RelativePath="..\..\include\faad.h"/>
 			<File
-				RelativePath=".\in2.h">
-			</File>
+				RelativePath=".\in2.h"/>
 			<File
-				RelativePath=".\out.h">
-			</File>
+				RelativePath=".\out.h"/>
 			<File
-				RelativePath="resource.h">
-			</File>
+				RelativePath="resource.h"/>
 			<File
-				RelativePath=".\utils.h">
-			</File>
+				RelativePath=".\utils.h"/>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 			<File
-				RelativePath=".\in_mp4.rc">
-			</File>
+				RelativePath=".\in_mp4.rc"/>
 		</Filter>
 	</Files>
-	<Globals>
-	</Globals>
+	<Globals/>
 </VisualStudioProject>

@@ -20,7 +20,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/QaxK /GA /Qwp_ipo "
+				AdditionalOptions="/QaxK /GA /Qwp_ipo"
 				Optimization="2"
 				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="1"
@@ -31,7 +31,7 @@
 				AdditionalIncludeDirectories="..\..\include,..\..\common\libsndfile\src,..\..\common\mp4v2,..\..\common\libsndfile\win32"
 				PreprocessorDefinitions="WIN32,NDEBUG,_WINDOWS"
 				StringPooling="TRUE"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\Release/aacDECdrop.pch"
 				AssemblerListingLocation=".\Release/"
@@ -39,7 +39,18 @@
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				CompileAs="0"/>
+				CompileAs="0">
+				<IntelOptions
+					Optimization="2"
+					GlobalOptimizations="1"
+					InlineFuncExpansion="1"
+					OmitFramePtrs="1"
+					StringPooling="1"
+					RuntimeLibrary="2"
+					BufferSecurityCheck="1"
+					FunctionLevelLinking="1"
+					AllOptions="/c  /I &quot;..\..\include&quot; /I &quot;..\..\common\libsndfile\src&quot; /I &quot;..\..\common\mp4v2&quot; /I &quot;..\..\common\libsndfile\win32&quot; /nologo /W3 /O2 /Og /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/aacDECdrop.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd /QaxK /GA /Qwp_ipo"/>
+			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
@@ -51,7 +62,10 @@
 				SuppressStartupBanner="TRUE"
 				IgnoreDefaultLibraryNames=""
 				ProgramDatabaseFile=".\Release/aacDECdrop.pdb"
-				SubSystem="2"/>
+				SubSystem="2">
+				<IntelOptions
+					AllOptions="/NOLOGO /OUT:&quot;.\Release/aacDECdrop.exe&quot; /INCREMENTAL:NO odbc32.lib odbccp32.lib winmm.lib ws2_32.lib /PDB:&quot;.\Release/aacDECdrop.pdb&quot; /SUBSYSTEM:WINDOWS /TLBID:1 /MACHINE:I386 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"/>
+			</Tool>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="NDEBUG"
@@ -99,7 +113,14 @@
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				DebugInformationFormat="4"
-				CompileAs="0"/>
+				CompileAs="0">
+				<IntelOptions
+					Optimization="0"
+					MinimalRebuild="1"
+					BasicRuntimeChecks="3"
+					RuntimeLibrary="5"
+					AllOptions="/c  /I &quot;..\..\include&quot; /I &quot;..\..\common\libsndfile\src&quot; /I &quot;..\..\common\mp4v2&quot; /I &quot;..\..\common\libsndfile\win32&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MLd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/aacDECdrop.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd"/>
+			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
@@ -111,7 +132,10 @@
 				SuppressStartupBanner="TRUE"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile=".\Debug/aacDECdrop.pdb"
-				SubSystem="2"/>
+				SubSystem="2">
+				<IntelOptions
+					AllOptions="/NOLOGO /OUT:&quot;.\Debug/aacDECdrop.exe&quot; /INCREMENTAL odbc32.lib odbccp32.lib winmm.lib ws2_32.lib svml_disp.lib /DEBUG /PDB:&quot;.\Debug/aacDECdrop.pdb&quot; /SUBSYSTEM:WINDOWS /TLBID:1 /MACHINE:I386 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"/>
+			</Tool>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="_DEBUG"
@@ -140,76 +164,55 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath="..\audio.c">
-			</File>
+				RelativePath="..\audio.c"/>
 			<File
-				RelativePath="..\decode.c">
-			</File>
+				RelativePath="..\decode.c"/>
 			<File
-				RelativePath="..\decthread.c">
-			</File>
+				RelativePath="..\decthread.c"/>
 			<File
-				RelativePath="..\main.c">
-			</File>
+				RelativePath="..\main.c"/>
 			<File
-				RelativePath="..\misc.c">
-			</File>
+				RelativePath="..\misc.c"/>
 			<File
-				RelativePath="..\wave_out.c">
-			</File>
+				RelativePath="..\wave_out.c"/>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
 			<File
-				RelativePath="..\audio.h">
-			</File>
+				RelativePath="..\audio.h"/>
 			<File
-				RelativePath="..\decode.h">
-			</File>
+				RelativePath="..\decode.h"/>
 			<File
-				RelativePath="..\decthread.h">
-			</File>
+				RelativePath="..\decthread.h"/>
 			<File
-				RelativePath="..\misc.h">
-			</File>
+				RelativePath="..\misc.h"/>
 			<File
-				RelativePath="..\resource.h">
-			</File>
+				RelativePath="..\resource.h"/>
 			<File
-				RelativePath="..\wave_out.h">
-			</File>
+				RelativePath="..\wave_out.h"/>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 			<File
-				RelativePath="..\resource\AAC01.bmp">
-			</File>
+				RelativePath="..\resource\AAC01.bmp"/>
 			<File
-				RelativePath="..\resource\AAC01.ico">
-			</File>
+				RelativePath="..\resource\AAC01.ico"/>
 			<File
-				RelativePath="..\resource\AAC02.bmp">
-			</File>
+				RelativePath="..\resource\AAC02.bmp"/>
 			<File
-				RelativePath="..\resource\AAC03.bmp">
-			</File>
+				RelativePath="..\resource\AAC03.bmp"/>
 			<File
-				RelativePath="..\resource\AAC04.bmp">
-			</File>
+				RelativePath="..\resource\AAC04.bmp"/>
 			<File
-				RelativePath="..\resource\AAC05.bmp">
-			</File>
+				RelativePath="..\resource\AAC05.bmp"/>
 			<File
-				RelativePath="..\resource\AAC06.bmp">
-			</File>
+				RelativePath="..\resource\AAC06.bmp"/>
 			<File
-				RelativePath="..\resource\AAC07.bmp">
-			</File>
+				RelativePath="..\resource\AAC07.bmp"/>
 			<File
-				RelativePath="..\resource\AAC08.bmp">
-			</File>
+				RelativePath="..\resource\AAC08.bmp"/>
 			<File
 				RelativePath="..\Script.rc">
 				<FileConfiguration
@@ -227,6 +230,5 @@
 			</File>
 		</Filter>
 	</Files>
-	<Globals>
-	</Globals>
+	<Globals/>
 </VisualStudioProject>

@@ -2177,19 +2177,19 @@ extern "C" MP4EditId MP4AddTrackEdit(
 {
 	if (MP4_IS_VALID_FILE_HANDLE(hFile)) {
 		try {
-			MP4EditId editId =
+			MP4EditId newEditId =
 				((MP4File*)hFile)->AddTrackEdit(trackId, editId);
 
-			if (editId != MP4_INVALID_EDIT_ID) {
+			if (newEditId != MP4_INVALID_EDIT_ID) {
 				((MP4File*)hFile)->SetTrackEditMediaStart(
-					trackId, editId, startTime);
+					trackId, newEditId, startTime);
 				((MP4File*)hFile)->SetTrackEditDuration(
-					trackId, editId, duration);
+					trackId, newEditId, duration);
 				((MP4File*)hFile)->SetTrackEditDwell(
-					trackId, editId, dwell);
+					trackId, newEditId, dwell);
 			}
 
-			return editId;
+			return newEditId;
 		}
 		catch (MP4Error* e) {
 			PRINT_ERROR(e);

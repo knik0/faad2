@@ -24,7 +24,7 @@
 				AdditionalIncludeDirectories=".\"
 				PreprocessorDefinitions="WIN32,NDEBUG,_WINDOWS"
 				StringPooling="TRUE"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="TRUE"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\ST_Release/libmp4v2_st60.pch"
@@ -40,10 +40,10 @@
 					InlineFuncExpansion="1"
 					OmitFramePtrs="1"
 					StringPooling="1"
-					RuntimeLibrary="0"
+					RuntimeLibrary="2"
 					BufferSecurityCheck="1"
 					FunctionLevelLinking="1"
-					AllOptions="/c  /I &quot;.\\&quot; /nologo /W3 /O2 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\ST_Release/libmp4v2_st60.pch&quot; /Fo&quot;.\ST_Release/&quot; /Fd&quot;.\ST_Release/&quot; /Gd"
+					AllOptions="/c  /I &quot;.\\&quot; /nologo /W3 /O2 /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\ST_Release/libmp4v2_st60.pch&quot; /Fo&quot;.\ST_Release/&quot; /Fd&quot;.\ST_Release/&quot; /Gd"
 					MSOriginalAdditionalOptions=""/>
 			</Tool>
 			<Tool
