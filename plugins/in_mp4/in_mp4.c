@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: in_mp4.c,v 1.32 2003/06/16 21:24:50 menno Exp $
+** $Id: in_mp4.c,v 1.33 2003/07/02 15:12:01 menno Exp $
 **/
 
 //#define DEBUG_OUTPUT
@@ -36,6 +36,9 @@
 #include "config.h"
 #include "aacinfo.h"
 #include "aac2mp4.h"
+
+const char *long_ext_list = "MP4\0MPEG-4 Files (*.MP4)\0M4A\0MPEG-4 Files (*.M4A)\0AAC\0AAC Files (*.AAC)\0";
+const char *short_ext_list = "MP4\0MPEG-4 Files (*.MP4)\0M4A\0MPEG-4 Files (*.M4A)\0";
 
 static long priority_table[] = {
     0,
@@ -422,6 +425,14 @@ BOOL CALLBACK config_dialog_proc(HWND hwndDlg, UINT message,
 
             /* save config */
             config_write();
+
+            if (!m_use_for_aac)
+            {
+                module.FileExtensions = short_ext_list;
+            } else {
+                module.FileExtensions = long_ext_list;
+            }
+
             EndDialog(hwndDlg, wParam);
             return TRUE;
         }
@@ -1450,8 +1461,7 @@ static In_Module module =
     "AudioCoding.com MPEG-4 General Audio player: " FAAD2_VERSION " compiled on " __DATE__,
     0,  // hMainWindow
     0,  // hDllInstance
-    "MP4\0MPEG-4 Files (*.MP4)\0M4A\0MPEG-4 Files (*.M4A)\0AAC\0AAC Files (*.AAC)\0"
-    ,
+    NULL,
     1, // is_seekable
     1, // uses output
     config,
@@ -1492,8 +1502,9 @@ __declspec(dllexport) In_Module* winampGetInModule2()
 
     if (!m_use_for_aac)
     {
-        module.FileExtensions =
-            "MP4\0MPEG-4 Files (*.MP4)\0M4A\0MPEG-4 Files (*.M4A)\0";
+        module.FileExtensions = short_ext_list;
+    } else {
+        module.FileExtensions = long_ext_list;
     }
 
     return &module;
