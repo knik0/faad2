@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_e_nf.c,v 1.3 2003/09/09 18:09:52 menno Exp $
+** $Id: sbr_e_nf.c,v 1.4 2003/09/09 18:37:32 menno Exp $
 **/
 
 #include "common.h"
@@ -171,8 +171,8 @@ void envelope_noise_dequantisation(sbr_info *sbr, uint8_t ch)
 void unmap_envelope_noise(sbr_info *sbr)
 {
     uint8_t l, k;
-    uint8_t amp0 = (sbr->amp_res[0]) ? 0 : 1;
-    uint8_t amp1 = (sbr->amp_res[1]) ? 0 : 1;
+    real_t amp0 = (sbr->amp_res[0]) ? (real_t)1.0 : (real_t)0.5;
+    real_t amp1 = (sbr->amp_res[1]) ? (real_t)1.0 : (real_t)0.5;
 
     for (l = 0; l < sbr->L_E[0]; l++)
     {

@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfgen.c,v 1.3 2003/09/09 18:09:52 menno Exp $
+** $Id: sbr_hfgen.c,v 1.4 2003/09/09 18:37:32 menno Exp $
 **/
 
 /* High Frequency generation */
@@ -180,6 +180,10 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t *buffer,
     int8_t j, jminus1, jminus2;
     uint8_t offset;
     const real_t rel = COEF_CONST(0.9999999999999); // 1 / (1 + 1e-6f);
+#ifdef FIXED_POINT
+    uint32_t maxi = 0;
+    uint32_t pow2, exp;
+#endif
 #ifdef DRM
     if (sbr->Is_DRM_SBR)
         offset = sbr->tHFGen;
@@ -189,6 +193,27 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t *buffer,
         offset = sbr->tHFAdj;
     }
 
+#ifdef FIXED_POINT
+    /*
+     *  For computing the covariance matrix and the filter coefficients
+     *  in fixed point, all values are normalised so that the fixed point
+     *  values don't overflow.
+     */
+    for (j = offset-2; j < len + offset; j++)
+    {
+        maxi = max(SBR_ABS(QMF_RE(buffer[j*32 + bd])>>REAL_BITS), maxi);
+    }
+
+    /* find the first power of 2 bigger than max to avoid division */
+    pow2 = 1;
+    exp = 0;
+    while (maxi > pow2)
+    {
+        pow2 <<= 1;
+        exp++;
+    }
+#endif
+
     memset(ac, 0, sizeof(acorr_coef));
 
     for (j = offset; j < len + offset; j++)
@@ -197,11 +222,20 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t *buffer,
         jminus2 = jminus1 - 1;
 
 #ifdef SBR_LOW_POWER
+#ifdef FIXED_POINT
+        /* normalisation with rounding */
+        RE(ac->r01) += MUL(((QMF_RE(buffer[j*32 + bd])+(1<<(exp-1)))>>exp), ((QMF_RE(buffer[jminus1*32 + bd])+(1<<(exp-1)))>>exp));
+        RE(ac->r02) += MUL(((QMF_RE(buffer[j*32 + bd])+(1<<(exp-1)))>>exp), ((QMF_RE(buffer[jminus2*32 + bd])+(1<<(exp-1)))>>exp));
+        RE(ac->r11) += MUL(((QMF_RE(buffer[jminus1*32 + bd])+(1<<(exp-1)))>>exp), ((QMF_RE(buffer[jminus1*32 + bd])+(1<<(exp-1)))>>exp));
+        RE(ac->r12) += MUL(((QMF_RE(buffer[jminus1*32 + bd])+(1<<(exp-1)))>>exp), ((QMF_RE(buffer[jminus2*32 + bd])+(1<<(exp-1)))>>exp));
+        RE(ac->r22) += MUL(((QMF_RE(buffer[jminus2*32 + bd])+(1<<(exp-1)))>>exp), ((QMF_RE(buffer[jminus2*32 + bd])+(1<<(exp-1)))>>exp));
+#else
         RE(ac->r01) += QMF_RE(buffer[j*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]);
         RE(ac->r02) += QMF_RE(buffer[j*32 + bd]) * QMF_RE(buffer[jminus2*32 + bd]);
         RE(ac->r11) += QMF_RE(buffer[jminus1*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]);
         RE(ac->r12) += QMF_RE(buffer[jminus1*32 + bd]) * QMF_RE(buffer[jminus2*32 + bd]);
         RE(ac->r22) += QMF_RE(buffer[jminus2*32 + bd]) * QMF_RE(buffer[jminus2*32 + bd]);
+#endif
 #else
         /* RE(ac[0][1]) */
         RE(ac->r01) += QMF_RE(buffer[j*32 + bd]) * QMF_RE(buffer[jminus1*32 + bd]) +
