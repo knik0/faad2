@@ -30,7 +30,7 @@
 #include <mp4.h>
 #include <mp4av.h>
 #include <faad.h>
-#include "foobar2000/SDK/foobar2000.h"
+#include "../SDK/foobar2000.h"
 
 #define ADTS_HEADER_MAX_SIZE 10 // bytes
 
