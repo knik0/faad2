@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: rvlc.c,v 1.2 2002/12/05 19:28:22 menno Exp $
+** $Id: rvlc.c,v 1.3 2002/12/22 20:19:24 menno Exp $
 **/
 
 /* RVLC scalefactor decoding
@@ -133,8 +133,10 @@ uint8_t rvlc_decode_scale_factors(ic_stream *ics, bitfile *ld)
     if (rvlc_esc_buffer) free(rvlc_esc_buffer);
     if (rvlc_sf_buffer) free(rvlc_sf_buffer);
 
-    faad_endbits(&ld_rvlc_sf);
-    faad_endbits(&ld_rvlc_esc);
+    if (ics->length_of_rvlc_sf > 0)
+        faad_endbits(&ld_rvlc_sf);
+    if (ics->sf_escapes_present)
+        faad_endbits(&ld_rvlc_esc);
 
     return result;
 }
