@@ -1,0 +1,39 @@
+aac-XMMS
+XMMS input plugin for AAC files.
+Albert Fong <alfong@mail.utexas.edu>
+February 7, 2002
+
+Dependencies
+============
+
+aac-XMMS uses FAAD as the AAC audio decoder, and id3lib for ID3v2 tag 
+functionality.
+
+FAAD:	www.audiocoding.com
+	Use the CVS branch.  If using the january 26 release, at least
+	apply the patch from the forum (01-26-02 22:31), it'll fix the
+	crashes at the end of some AAC files.
+
+id3lib:	id3lib.sourceforge.net
+	Version 3.8.0pre2.  No modifications necessary.
+
+Building
+========
+
+Modify the supplied Makefile to match your build environment.  You may have
+to update the include directories.
+
+./make
+
+Copy libaac-XMMS.so to ~/.xmms/Plugins or to your XMMS plugin directory.
+
+Notes
+=====
+
+AAC files are recognized by an .aac extension.
+
+Will not recognize files with unicode characters in the filename.
+
+Sometimes, seeking to the very last seconds of a file will cause a decode 
+error: "Unable to find ADTS syncword".
+
