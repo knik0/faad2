@@ -1,39 +1,94 @@
-aac-XMMS
-XMMS input plugin for AAC files.
-Albert Fong <alfong@mail.utexas.edu>
-February 7, 2002
+       this is an AAC InputPlugin source written from scratch for Xmms 1.2.7
+                          by ciberfred from France :)
+				version 0.1
 
-Dependencies
-============
+				-------------
+this plugin is not finished yet wait and see...
+				------------
 
-aac-XMMS uses FAAD as the AAC audio decoder, and id3lib for ID3v2 tag 
-functionality.
+1 -- Introduction.
+2 -- Warning
+3 -- How to build the plugin
 
-FAAD:	www.audiocoding.com
-	Use the CVS branch.  If using the january 26 release, at least
-	apply the patch from the forum (01-26-02 22:31), it'll fix the
-	crashes at the end of some AAC files.
+Hey, nice to see that i could realise a plugin for xmms .. :), so what about
+this plugin. This is a plugin to play AAC files (.aac) encoded with FAAC or
+the windows program psytel aacenc.exe
 
-id3lib:	id3lib.sourceforge.net
-	Version 3.8.0pre2.  No modifications necessary.
+The plugin read aac files with and without ID3tag(version 2.x), AAC files
+are MPEG2 or MPEG4 files that could be found in MPEG4 audio files (.mp4).
+MPEG4 files with aac inside could be reads by RealPlayer or Quicktime.
 
-Building
-========
+For any informations about this plugin contact me at :
 
-Modify the supplied Makefile to match your build environment.  You may have
-to update the include directories.
+mail : frederic.fondriest@laposte.net
+ICQ  : 17293220
 
-./make
+	-------------------------------------------------------------
 
-Copy libaac-XMMS.so to ~/.xmms/Plugins or to your XMMS plugin directory.
+			!!!!!!!!!! WARNING !!!!!!!!!!!!
+if at the end of some song there is a segfault (xmms going out!),
+this is probably you have an old aac song encoded with an old psytel
+encoder (maybe a 1.x).
+To avoide this error use psystrip.exe windows program on the file. This maybe
+resolve this problem.
 
-Notes
-=====
+this plugin was tested with the psytel encoder 2.15 (MPEG4 version for all
+profile)
 
-AAC files are recognized by an .aac extension.
+tested on a linux LFS 3.3 with :
+Glibc-2.2.5
+gcc-2.95.3
+gtk+-1.2.10
+glib-1.2.10
+xmms-1.2.7
+id3lib-3.8.0
+wine
+faad2 1.1
 
-Will not recognize files with unicode characters in the filename.
+I don't test it for more than 2 channels file, i don't have such files...
+if you wana test and give feedback could be great :)
 
-Sometimes, seeking to the very last seconds of a file will cause a decode 
-error: "Unable to find ADTS syncword".
+	-------------------------------------------------------------
 
+HOWTO Build the plugin.
+-----------------------
+
+check that xmms-config could be run from a terminal.
+
+before, you should take the faad2 1.1 package from
+www.audiocoding.com
+go into the faad2 directory with a user account :
+install the libsnd you found into the common/libsnd directoy
+then run in the faad2 top directory :
+
+	- sh bootstrap
+	- ./configure
+	- make (this build libfaad and libmp4v2)
+	- make install (with the root account)
+
+then now you should run a ldconfig or add a line
+into your /etc/ld.so.conf (and run a ldconfig again)
+
+
+so now you have the libfaad installed you could
+install the id3lib, with the common configure && make && make install.
+take the library from the net not from the common/id3lib directory
+
+so now you have libffad and libid3 you could build the xmms plugin
+run these command to build the xmms-acc plugin :
+
+	- sh bootstrap
+	- ./configure ID3_LIB=<path to the id3lib install>
+		FAAD2_DIR=<path to the faad2 install>
+	- make
+
+then you should find the libaac.so file into the src directory.
+copy this file into your ${HOME}/.xmms/Plugin/ or in the
+common plugin directory of xmms...
+
+
+NB: sorry i not a pro of automake or autoconf i prefere to build a Makefile
+that a user could change to adapte to his computer. You should find the
+original Makefile into the src directory. his name is Makefile.save :)
+
+	-------------------------------------------------------------

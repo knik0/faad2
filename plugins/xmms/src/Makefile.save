@@ -1,0 +1,22 @@
+
+CC = gcc
+CPP = g++
+LDFLAGS = -lpthread -lfaad -L/usr/local/faad2/lib -lid3 -lz
+CFLAGS = -O2 -Wall
+INCLUDE = -I/usr/local/faad2/include `xmms-config --cflags`
+OBJS = libaac.o id3.o dialog_gtk1.o
+
+.SUFFIXES: .c .o
+
+.c.o:
+	$(CC) -c $(CFLAGS) $(INCLUDE) -o $@ $<
+
+.cpp.o:
+	$(CPP) -c $(CFLAGS) $(INCLUDE) -o $@ $<
+
+all: $(OBJS)
+	$(CPP) -shared -o libaac.so $(OBJS) `xmms-config --libs` $(INCLUDE) $(CFLAGS) $(LDFLAGS)
+	strip --strip-debug libaac.so
+
+install:
+	mv libaac.so $(HOME)/.xmms/Plugins/

@@ -1,0 +1,41 @@
+dnl
+AC_INIT(src/libaac.c)
+AM_INIT_AUTOMAKE(libaac, 0.0.1)
+
+AC_PROG_CC
+AC_PROG_CXX
+AC_PROG_INSTALL
+
+dnl AM_DISABLE_STATIC
+dnl AM_PROG_LIBTOOL
+
+AC_CHECK_HEADER(pthread.h,,AC_MSG_ERROR([thread support not installed or not found]))
+dnl AM_PATH_GLIB(1.2.2,,AC_MSG_ERROR([ GLIB >=1.2.2 not installed or not found]))
+dnl AM_PATH_GTK(1.2.2,,AC_MSG_ERROR([ GTK+ >=1.2.2 not installed or not found]),gthread)
+AC_PATH_PROG(XMMS_PATH,xmms,no)
+LIBS="$LIBS $GTK_LIBS"
+CFLAGS="$CFLAGS $GTK_CFLAGS"
+PTHREAD_LIBS="-lpthread"
+AC_SUBST(PTHREAD_LIBS)
+CPPFLAGS="$GTK_CFLAGS $CPPFLAGS"
+AC_SUBST(CPPFLAGS)
+if test "$FAAD2_DIR" = ""; then
+ AC_MSG_ERROR([add FAAD2_DIR=<path to faad2 install dir> (ex:/usr/local/faad2)])
+fi
+if test "$ID3_DIR" = "";then
+ AC_MSG_ERROR([ add ID3_DIR=<path to id3 install dir> (ex:/usr/local/id3lib)])
+fi
+AC_SUBST(FAAD2_DIR)
+AC_SUBST(ID3_DIR)
+AC_SUBST(CFLAGS)
+AC_OUTPUT(Makefile src/Makefile)
+
+echo "*****configuration xmms-aac plugin done****"
+echo ""
+echo "pthread flag :	$PTHREAD_LIBS"
+echo "id3 dir :		$ID3_DIR"
+echo "faad2 dir :	$FAAD2_DIR"
+echo "xmms dir :	$XMMS_PATH"
+echo ""
+echo " !!!!!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!!!!!!!!!!!!!"
+echo "note that id3 and faad2 directoies MUST not be empty !!"

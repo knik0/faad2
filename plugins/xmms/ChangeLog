@@ -1,0 +1,12 @@
+25 Aout 2002:
+	* gtk-1.2.x info file with some 'static' useful ID3 info
+	* title show in xmms correctly
+	* version 0.1 ready to public :)
+
+20 Aout 2002:
+	* everything...
+	* work with faad2lib-1.1, id3lib-3.8.0 (glibc-2.2.5, gcc-2.95.3)
+	  i think the minimum required but need testing...
+	* playlist working
+	* handle id3tag
+	
