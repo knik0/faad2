@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: main.c,v 1.25 2002/11/01 11:19:35 menno Exp $
+** $Id: main.c,v 1.26 2003/02/06 20:01:51 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -251,10 +251,10 @@ int decodeAACfile(char *aacfile, char *sndfile, int to_stdout,
         {
             if(!to_stdout)
             {
-                aufile = open_audio_file(sndfile, samplerate, frameInfo.channels,
+                aufile = open_audio_file(sndfile, frameInfo.samplerate, frameInfo.channels,
                     outputFormat, fileType);
             } else {
-                aufile = open_audio_file("-", samplerate, frameInfo.channels,
+                aufile = open_audio_file("-", frameInfo.samplerate, frameInfo.channels,
                     outputFormat, fileType);
             }
             if (aufile == NULL)
@@ -435,13 +435,13 @@ int decodeMP4file(char *mp4file, char *sndfile, int to_stdout,
         {
             if(!to_stdout)
             {
-                aufile = open_audio_file(sndfile, samplerate, frameInfo.channels,
+                aufile = open_audio_file(sndfile, frameInfo.samplerate, frameInfo.channels,
                     outputFormat, fileType);
             } else {
 #ifdef _WIN32
                 setmode(fileno(stdout), O_BINARY);
 #endif
-                aufile = open_audio_file("-", samplerate, frameInfo.channels,
+                aufile = open_audio_file("-", frameInfo.samplerate, frameInfo.channels,
                     outputFormat, fileType);
             }
             if (aufile == NULL)

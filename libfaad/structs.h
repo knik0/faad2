@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: structs.h,v 1.3 2002/12/10 14:53:15 menno Exp $
+** $Id: structs.h,v 1.4 2003/02/06 20:01:53 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -293,6 +293,7 @@ typedef struct faacDecFrameInfo
     uint32_t samples;
     uint8_t channels;
     uint8_t error;
+    uint32_t samplerate;
 } faacDecFrameInfo;
 
 typedef struct

@@ -1,5 +1,5 @@
 Microsoft Visual Studio Solution File, Format Version 7.00
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libfaad", "libfaad.vcproj", "{1E88BCCA-E0F5-4AAF-8E25-AD02D6EB88DE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libfaad", "libfaad.vcproj", "{4274723E-6B9D-4B3E-A8BE-7566165AA169}"
 EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
@@ -9,10 +9,10 @@ Global
 	GlobalSection(ProjectDependencies) = postSolution
 	EndGlobalSection
 	GlobalSection(ProjectConfiguration) = postSolution
-		{1E88BCCA-E0F5-4AAF-8E25-AD02D6EB88DE}.Debug.ActiveCfg = Debug|Win32
-		{1E88BCCA-E0F5-4AAF-8E25-AD02D6EB88DE}.Debug.Build.0 = Debug|Win32
-		{1E88BCCA-E0F5-4AAF-8E25-AD02D6EB88DE}.Release.ActiveCfg = Release|Win32
-		{1E88BCCA-E0F5-4AAF-8E25-AD02D6EB88DE}.Release.Build.0 = Release|Win32
+		{4274723E-6B9D-4B3E-A8BE-7566165AA169}.Debug.ActiveCfg = Debug|Win32
+		{4274723E-6B9D-4B3E-A8BE-7566165AA169}.Debug.Build.0 = Debug|Win32
+		{4274723E-6B9D-4B3E-A8BE-7566165AA169}.Release.ActiveCfg = Release|Win32
+		{4274723E-6B9D-4B3E-A8BE-7566165AA169}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

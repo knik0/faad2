@@ -3,7 +3,6 @@
 	ProjectType="Visual C++"
 	Version="7.00"
 	Name="libfaad"
-	ProjectGUID="{AB39547E-6CAC-4E25-8BC4-C97EFC144800}"
 	SccProjectName=""
 	SccLocalPath="">
 	<Platforms>
@@ -25,7 +24,7 @@
 				AdditionalIncludeDirectories="fftw"
 				PreprocessorDefinitions="_DEBUG,WIN32,_LIB,FFTW_ENABLE_FLOAT"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\Debug/libfaad.pch"
 				AssemblerListingLocation=".\Debug/"
@@ -34,26 +33,22 @@
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				DebugInformationFormat="4"
-				CompileAs="0"
-				AdditionalOptions="">
+				CompileAs="0">
 				<IntelOptions
 					Optimization="0"
 					MinimalRebuild="1"
 					BasicRuntimeChecks="3"
-					RuntimeLibrary="1"
-					AllOptions="/c  /I &quot;fftw&quot; /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;FFTW_ENABLE_FLOAT&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd &lt;?ICLPrjArgs?&gt; /Qvc7 /Qlocation,link,&quot;E:\Program Files\Microsoft Visual Studio .NET\Vc7\Bin&quot; /c  /I &quot;fftw&quot; /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;FFTW_ENABLE_FLOAT&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseNonIntelTool #$BinPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Bin;E:\Program Files\Common Files\Intel\Shared Files\IA32\Bin;E:\Program Files\Microsoft Visual Studio .NET\Common7\IDE&quot; #$LibPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Lib;E:\Program Files\Common Files\Intel\Shared Files\IA32\Lib&quot; #$IncPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Include&quot; &lt;?/IVCSpawnPrjArgs?&gt;"
-					MSOriginalAdditionalOptions=""/>
+					RuntimeLibrary="3"
+					AllOptions="/c  /I &quot;fftw&quot; /ZI /nologo /W3 /Od /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;FFTW_ENABLE_FLOAT&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/libfaad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd"/>
 			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile=".\Debug\libfaad.lib"
-				SuppressStartupBanner="TRUE"
-				AdditionalOptions="">
+				SuppressStartupBanner="TRUE">
 				<IntelOptions
-					AllOptions="/OUT:&quot;.\Debug\libfaad.lib&quot; /NOLOGO &lt;?ICLPrjArgs?&gt; /OUT:&quot;.\Debug\libfaad.lib&quot; /NOLOGO &lt;?/ICLPrjArgs?&gt; &lt;?IVCSpawnPrjArgs?&gt; #$UseNonIntelTool #$BinPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Bin;E:\Program Files\Common Files\Intel\Shared Files\IA32\Bin;E:\Program Files\Microsoft Visual Studio .NET\Common7\IDE&quot; #$LibPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Lib;E:\Program Files\Common Files\Intel\Shared Files\IA32\Lib&quot; #$IncPath:&quot;E:\Program Files\Intel\Compiler70\IA32\Include&quot; &lt;?/IVCSpawnPrjArgs?&gt;"
-					MSOriginalAdditionalOptions=""/>
+					AllOptions="/OUT:&quot;.\Debug\libfaad.lib&quot; /NOLOGO"/>
 			</Tool>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -69,8 +64,6 @@
 				Culture="1043"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
-			<IntelOptions
-				CompilerName="1"/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
@@ -82,12 +75,9 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				GlobalOptimizations="FALSE"
 				InlineFunctionExpansion="1"
-				EnableIntrinsicFunctions="TRUE"
-				FavorSizeOrSpeed="1"
-				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories=""
+				OptimizeForProcessor="0"
+				AdditionalIncludeDirectories="fftw"
 				PreprocessorDefinitions="NDEBUG,WIN32,_LIB,FFTW_ENABLE_FLOAT"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
@@ -99,31 +89,28 @@
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				Detect64BitPortabilityProblems="FALSE"
-				CompileAs="0"
-				AdditionalOptions="">
+				CompileAs="0">
 				<IntelOptions
 					Optimization="2"
-					GlobalOptimizations="0"
 					InlineFuncExpansion="1"
 					OmitFramePtrs="1"
+					OptimProc="0"
+					UseProcExt="0"
+					RequireProcExt="0"
 					StringPooling="1"
 					RuntimeLibrary="0"
 					BufferSecurityCheck="1"
 					FunctionLevelLinking="1"
-					AllOptions="/c  /nologo /W3 /O2 /Ob1 /Oy /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;FFTW_ENABLE_FLOAT&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd"
-					MSOriginalAdditionalOptions=""/>
+					AllOptions="/c  /I &quot;fftw&quot; /nologo /W3 /O2 /Ob1 /Oy /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_LIB&quot; /D &quot;FFTW_ENABLE_FLOAT&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/libfaad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd"/>
 			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile=".\Release\libfaad.lib"
-				SuppressStartupBanner="TRUE"
-				AdditionalOptions="">
+				SuppressStartupBanner="TRUE">
 				<IntelOptions
-					AllOptions="/OUT:&quot;.\Release\libfaad.lib&quot; /NOLOGO"
-					MSOriginalAdditionalOptions=""/>
+					AllOptions="/OUT:&quot;.\Release\libfaad.lib&quot; /NOLOGO"/>
 			</Tool>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -139,8 +126,6 @@
 				Culture="1043"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
-			<IntelOptions
-				CompilerName="0"/>
 		</Configuration>
 	</Configurations>
 	<Files>
@@ -166,7 +151,7 @@
 			<File
 				RelativePath=".\filtbank.c"/>
 			<File
-				RelativePath="hcr.c"/>
+				RelativePath=".\hcr.c"/>
 			<File
 				RelativePath=".\ic_predict.c"/>
 			<File
@@ -186,15 +171,15 @@
 			<File
 				RelativePath=".\pulse.c"/>
 			<File
-				RelativePath="rvlc.c"/>
+				RelativePath=".\rvlc.c"/>
 			<File
 				RelativePath=".\specrec.c"/>
 			<File
-				RelativePath="ssr.c"/>
+				RelativePath=".\ssr.c"/>
 			<File
-				RelativePath="ssr_fb.c"/>
+				RelativePath=".\ssr_fb.c"/>
 			<File
-				RelativePath="ssr_ipqf.c"/>
+				RelativePath=".\ssr_ipqf.c"/>
 			<File
 				RelativePath=".\syntax.c"/>
 			<File
@@ -254,8 +239,6 @@
 			<File
 				RelativePath=".\filtbank.h"/>
 			<File
-				RelativePath="fixed.h"/>
-			<File
 				RelativePath=".\codebook\hcb.h"/>
 			<File
 				RelativePath=".\huffman.h"/>
@@ -280,21 +263,11 @@
 			<File
 				RelativePath=".\pulse.h"/>
 			<File
-				RelativePath="rvlc.h"/>
-			<File
-				RelativePath="sine_win.h"/>
+				RelativePath=".\rvlc.h"/>
 			<File
 				RelativePath=".\specrec.h"/>
 			<File
-				RelativePath="ssr.h"/>
-			<File
-				RelativePath="ssr_fb.h"/>
-			<File
-				RelativePath="ssr_ipqf.h"/>
-			<File
-				RelativePath="ssr_win.h"/>
-			<File
-				RelativePath="structs.h"/>
+				RelativePath=".\ssr.h"/>
 			<File
 				RelativePath=".\syntax.h"/>
 			<File

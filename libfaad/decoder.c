@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: decoder.c,v 1.48 2003/02/04 16:49:37 menno Exp $
+** $Id: decoder.c,v 1.49 2003/02/06 20:01:52 menno Exp $
 **/
 
 #include "common.h"
@@ -431,8 +431,10 @@ void* FAADAPI faacDecDecode(faacDecHandle hDecoder,
 
     /* number of samples in this frame */
     hInfo->samples = frame_len*channels;
-    /* number of samples in this frame */
+    /* number of channels in this frame */
     hInfo->channels = channels;
+    /* samplerate */
+    hInfo->samplerate = sample_rates[hDecoder->sf_index];
 
     /* check if frame has channel elements */
     if (channels == 0)

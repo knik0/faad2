@@ -33,13 +33,15 @@
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				DebugInformationFormat="4"
-				CompileAs="0">
+				CompileAs="0"
+				AdditionalOptions="">
 				<IntelOptions
 					Optimization="0"
 					MinimalRebuild="1"
 					BasicRuntimeChecks="3"
 					RuntimeLibrary="1"
-					AllOptions="/c  /I &quot;../include&quot; /I &quot;../common/mp4v2&quot; /I &quot;../common/faad&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_CONSOLE&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/faad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd"/>
+					AllOptions="/c  /I &quot;../include&quot; /I &quot;../common/mp4v2&quot; /I &quot;../common/faad&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_CONSOLE&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MTd /YX&quot;StdAfx.h&quot; /Fp&quot;.\Debug/faad.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /Gd"
+					MSOriginalAdditionalOptions=""/>
 			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -54,7 +56,8 @@
 				ProgramDatabaseFile=".\Debug/faad.pdb"
 				SubSystem="1">
 				<IntelOptions
-					AllOptions="/NOLOGO /OUT:&quot;.\Debug/faad.exe&quot; /INCREMENTAL ws2_32.lib odbc32.lib odbccp32.lib /DEBUG /PDB:&quot;.\Debug/faad.pdb&quot; /SUBSYSTEM:CONSOLE /TLBID:1 /MACHINE:I386 &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot; &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot; &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot; kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"/>
+					AllOptions="/NOLOGO /OUT:&quot;.\Debug/faad.exe&quot; /INCREMENTAL ws2_32.lib odbc32.lib odbccp32.lib /DEBUG /PDB:&quot;.\Debug/faad.pdb&quot; /SUBSYSTEM:CONSOLE /TLBID:1 /MACHINE:I386 &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot; &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot; &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot; kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"
+					MSOriginalAdditionalOptions="/MACHINE:I386 &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot; &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot; &quot;e:\aac\cvsroot\faad2\libfaad\Debug\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Debug\libmp4v2_st60.lib&quot;"/>
 			</Tool>
 			<Tool
 				Name="VCMIDLTool"
@@ -103,7 +106,8 @@
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				CompileAs="0">
+				CompileAs="0"
+				AdditionalOptions="">
 				<IntelOptions
 					Optimization="2"
 					GlobalOptimizations="1"
@@ -113,20 +117,22 @@
 					RuntimeLibrary="0"
 					BufferSecurityCheck="1"
 					FunctionLevelLinking="1"
-					AllOptions="/c  /I &quot;../include&quot; /I &quot;../common/mp4v2&quot; /I &quot;../common/faad&quot; /nologo /W3 /O2 /Og /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_CONSOLE&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/faad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd"/>
+					AllOptions="/c  /I &quot;../include&quot; /I &quot;../common/mp4v2&quot; /I &quot;../common/faad&quot; /nologo /W3 /O2 /Og /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_CONSOLE&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MT /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\Release/faad.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /Gd"
+					MSOriginalAdditionalOptions=""/>
 			</Tool>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386 &quot;e:\aac\cvsroot\faad2\libfaad\Release\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Release\libmp4v2_st60.lib&quot; &quot;e:\aac\cvsroot\faad2\libfaad\Release\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Release\libmp4v2_st60.lib&quot;"
+				AdditionalOptions="/MACHINE:I386 &quot;..\libfaad\Release\libfaad.lib&quot; &quot;..\common\mp4v2\ST_Release\libmp4v2_st60.lib&quot;"
 				AdditionalDependencies="ws2_32.lib"
 				OutputFile=".\Release/faad.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				SubSystem="1">
 				<IntelOptions
-					AllOptions="/NOLOGO /OUT:&quot;.\Release/faad.exe&quot; /INCREMENTAL:NO ws2_32.lib /SUBSYSTEM:CONSOLE /TLBID:1 /MACHINE:I386 &quot;e:\aac\cvsroot\faad2\libfaad\Release\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Release\libmp4v2_st60.lib&quot; &quot;e:\aac\cvsroot\faad2\libfaad\Release\libfaad.lib&quot; &quot;e:\aac\cvsroot\faad2\common\mp4v2\ST_Release\libmp4v2_st60.lib&quot; kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"/>
+					AllOptions="/NOLOGO /OUT:&quot;.\Release/faad.exe&quot; /INCREMENTAL:NO ws2_32.lib /SUBSYSTEM:CONSOLE /TLBID:1 /MACHINE:I386 &quot;..\libfaad\Release\libfaad.lib&quot; &quot;..\common\mp4v2\ST_Release\libmp4v2_st60.lib&quot; kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"
+					MSOriginalAdditionalOptions="/MACHINE:I386 &quot;..\libfaad\Release\libfaad.lib&quot; &quot;..\common\mp4v2\ST_Release\libmp4v2_st60.lib&quot;"/>
 			</Tool>
 			<Tool
 				Name="VCMIDLTool"
@@ -146,7 +152,7 @@
 			<Tool
 				Name="VCWebDeploymentTool"/>
 			<IntelOptions
-				CompilerName="1"/>
+				CompilerName="0"/>
 		</Configuration>
 	</Configurations>
 	<Files>

@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: faad.h,v 1.17 2002/12/10 19:45:35 menno Exp $
+** $Id: faad.h,v 1.18 2003/02/06 20:01:51 menno Exp $
 **/
 
 #ifndef __AACDEC_H__
@@ -85,6 +85,7 @@ typedef struct faacDecFrameInfo
     unsigned long samples;
     unsigned char channels;
     unsigned char error;
+    unsigned long samplerate;
 } faacDecFrameInfo;
 
 char* FAADAPI faacDecGetErrorMessage(unsigned char errcode);

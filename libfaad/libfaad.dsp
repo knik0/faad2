@@ -351,6 +351,10 @@ SOURCE=.\ssr.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\structs.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\syntax.h
 # End Source File
 # Begin Source File
