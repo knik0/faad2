@@ -1,0 +1,8 @@
+To compile under Linux:
+
+chmod +x bootstrap
+./bootstrap
+./configure
+
+For the compile to work "libsndfile" must be installed before installing faad2
+

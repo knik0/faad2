@@ -1,9 +1,6 @@
-# This file was automatically generated
-# DO NOT EDIT!
-#
-lib_LTLIBRARIES = libXXX_FFTW_PREFIX_XXXfftw.la
-include_HEADERS = XXX_FFTW_PREFIX_XXXfftw.h
-INCLUDES = -I$(srcdir)/../fftw -I$(srcdir)
+noinst_LTLIBRARIES = libfftw.la
+
+INCLUDES = -I$(srcdir)
 
 NOTW_CODELETS= fn_1.c fn_2.c fn_3.c fn_4.c fn_5.c fn_6.c fn_7.c fn_8.c fn_9.c fn_10.c fn_11.c fn_12.c fn_13.c fn_14.c fn_15.c fn_16.c fn_32.c fn_64.c
 TWID_CODELETS= ftw_2.c ftw_3.c ftw_4.c ftw_5.c ftw_6.c ftw_7.c ftw_8.c ftw_9.c ftw_10.c ftw_16.c ftw_32.c ftw_64.c
@@ -15,20 +12,9 @@ OTHERSRC = timer.c config.c planner.c twiddle.c executor.c \
 	   generic.c fftwnd.c malloc.c wisdom.c wisdomio.c putils.c rader.c \
            fftwf77.c f77_func.h
 
-libXXX_FFTW_PREFIX_XXXfftw_la_SOURCES = $(CODELETS) $(OTHERSRC)             \
+libfftw_la_SOURCES = $(CODELETS) $(OTHERSRC)             \
                                         fftw.h fftw-int.h 
 
-libXXX_FFTW_PREFIX_XXXfftw_la_LDFLAGS = -version-info @SHARED_VERSION_INFO@
 MAINTAINERCLEANFILES = $(CODELETS) config.c
 DISTCLEANFILES = fftw.h sfftw.h dfftw.h
 
-XXX_FFTW_PREFIX1_XXXfftw.h: fftw.h
-	rm -f XXX_FFTW_PREFIX_XXXfftw.h
-	sed 's/<fftw/<XXX_FFTW_PREFIX_XXXfftw/g;s/<rfftw/<XXX_FFTW_PREFIX_XXXrfftw/g' fftw.h > XXX_FFTW_PREFIX_XXXfftw.h
-
-CLEANFILES = XXX_FFTW_PREFIX1_XXXfftw.h
-
-# for some reason, automake tries to use autoheader in order to
-# generate config.h.in, and fails because config.h.in is GNU-lly
-# incorrect.  Just disable autoheader
-AUTOHEADER=echo

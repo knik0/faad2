@@ -2,8 +2,8 @@ bin_PROGRAMS = faad
 
 faad_SOURCES = main.c audio.c
 
-CXXFLAGS = -O0
-CFLAGS = -O0
-INCLUDES = -I$(top_srcdir)/include
+CXXFLAGS = -O2
+CFLAGS = -O2
+INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/common/mp4v2
 LDFLAGS =
-LDADD = $(top_builddir)/libfaad/libfaad.la -lm -lsndfile -lmp4v2
+LDADD = $(top_builddir)/libfaad/libfaad.la $(top_builddir)/common/mp4v2/libmp4v2.la  -lm -lsndfile 

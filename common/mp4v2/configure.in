@@ -1,8 +1,9 @@
 AC_INIT()
-AM_INIT_AUTOMAKE(mpeg4ip,0.9.2.8)
+AM_INIT_AUTOMAKE(mpeg4ip,0.9.2.8,dummy)
 
 AC_PROG_CC
 AC_PROG_CXX
+AC_PROG_INSTALL
 
 AM_PROG_LIBTOOL
 
@@ -10,5 +11,8 @@ AM_CONFIG_HEADER(config.h)
 
 AC_CHECK_HEADERS(stdint.h)
 AC_CHECK_HEADERS(inttypes.h)
+
+AC_CHECK_FUNCS(strsep)
+
 
 AC_OUTPUT(Makefile)
