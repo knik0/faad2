@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.66 2003/11/25 13:16:09 menno Exp $
+** $Id: main.c,v 1.67 2003/12/11 18:32:58 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -166,12 +166,12 @@ int adts_parse(aac_buffer *b, int *bitrate, float *length)
 
 
 
-int read_callback(void *user_data, void *buffer, int length)
+uint32_t read_callback(void *user_data, void *buffer, uint32_t length)
 {
     return fread(buffer, 1, length, (FILE*)user_data);
 }
 
-int seek_callback(void *user_data, int position)
+uint32_t seek_callback(void *user_data, uint64_t position)
 {
     return fseek((FILE*)user_data, position, SEEK_SET);
 }
@@ -815,7 +815,7 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
         j = mp4ff_meta_get_num_items(infile);
         for (k = 0; k < j; k++)
         {
-            if (!mp4ff_meta_get_by_index(infile, k, &item, &tag))
+            if (mp4ff_meta_get_by_index(infile, k, &item, &tag))
             {
                 if (item != NULL && tag != NULL)
                 {
