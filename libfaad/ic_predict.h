@@ -22,7 +22,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
 **
-** $Id: ic_predict.h,v 1.12 2003/11/04 21:43:30 menno Exp $
+** $Id: ic_predict.h,v 1.13 2003/11/04 21:48:05 menno Exp $
 **/
 
 #ifdef MAIN_DEC
@@ -36,15 +36,6 @@ extern "C" {
 
 #define ALPHA      REAL_CONST(0.90625)
 #define A          REAL_CONST(0.953125)
-#define B          REAL_CONST(0.953125)
-
-
-/* used to save the prediction state */
-typedef struct {
-    real_t r[2];
-    real_t COR[2];
-    real_t VAR[2];
-} tmp_pred_state;
 
 
 void pns_reset_pred_state(ic_stream *ics, pred_state *state);
