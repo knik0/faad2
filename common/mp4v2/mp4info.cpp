@@ -267,6 +267,8 @@ static char* PrintTrackInfo(
 	const char* trackType = 
 		MP4GetTrackType(mp4File, trackId);
 
+    if (trackType) {
+
 	if (!strcmp(trackType, MP4_AUDIO_TRACK_TYPE)) {
 		trackInfo = PrintAudioInfo(mp4File, trackId);
 	} else if (!strcmp(trackType, MP4_VIDEO_TRACK_TYPE)) {
@@ -289,6 +291,8 @@ static char* PrintTrackInfo(
 					trackId, trackType);
 		}
 	}
+
+    }
 
 	return trackInfo;
 }
