@@ -4,7 +4,7 @@ INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/common/faad \
    -I$(top_srcdir)/common/mp4ff
 
 faad_LDADD = $(top_builddir)/libfaad/libfaad.la \
-	$(top_builddir)/common/mp4ff/libmp4ff.a
+	$(top_builddir)/common/mp4ff/libmp4ff.la
 
 faad_SOURCES = main.c \
 	audio.c audio.h \

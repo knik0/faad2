@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003-2005 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -19,15 +19,15 @@
 ** Any non-GPL usage of this software or parts of this software is strictly
 ** forbidden.
 **
-** Software using this code must display the following message visibly in the
-** software:
-** "FAAD2 AAC/HE-AAC/HE-AACv2/DRM decoder (c) Ahead Software, www.nero.com"
+** Software using this code must display the following message visibly in or
+** on each copy of the software:
+** "FAAD2 AAC/HE-AAC/HE-AACv2/DRM decoder (c) Nero AG, www.nero.com"
 ** in, for example, the about-box or help/startup screen.
 **
 ** Commercial non-GPL licensing of this software is possible.
-** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: ps_syntax.c,v 1.7 2005/02/01 13:15:58 menno Exp $
+** $Id: ps_syntax.c,v 1.8 2006/05/07 18:09:01 menno Exp $
 **/
 
 #include "common.h"
@@ -385,7 +385,10 @@ uint16_t ps_data(ps_info *ps, bitfile *ld, uint8_t *header)
 
     /* we are here, but no header has been read yet */
     if (ps->header_read == 0)
+    {
+        ps->ps_data_available = 0;
         return 1;
+    }
 
     ps->frame_class = (uint8_t)faad_get1bit(ld
         DEBUGVAR(1,1006,"ps_data(): frame_class"));

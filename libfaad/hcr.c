@@ -1,6 +1,6 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003-2005 M. Bakker, Ahead Software AG, http://www.nero.com
+** Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com
 **  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -19,15 +19,15 @@
 ** Any non-GPL usage of this software or parts of this software is strictly
 ** forbidden.
 **
-** Software using this code must display the following message visibly in the
-** software:
-** "FAAD2 AAC/HE-AAC/HE-AACv2/DRM decoder (c) Ahead Software, www.nero.com"
+** Software using this code must display the following message visibly in or
+** on each copy of the software:
+** "FAAD2 AAC/HE-AAC/HE-AACv2/DRM decoder (c) Nero AG, www.nero.com"
 ** in, for example, the about-box or help/startup screen.
 **
 ** Commercial non-GPL licensing of this software is possible.
-** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: hcr.c,v 1.19 2005/02/01 13:15:57 menno Exp $
+** $Id: hcr.c,v 1.20 2006/05/07 18:09:00 menno Exp $
 **/
 
 #include "common.h"
@@ -278,7 +278,7 @@ uint8_t reordered_spectral_data(NeAACDecHandle hDecoder, ic_stream *ics,
         for (sfb = 0; sfb < ics->max_sfb; sfb++)
         {
             /* loop over all in this sfb, 4 lines per loop */
-            for (w_idx = 0; 4*w_idx < (ics->swb_offset[sfb+1] - ics->swb_offset[sfb]); w_idx++)
+            for (w_idx = 0; 4*w_idx < (min(ics->swb_offset[sfb+1], ics->swb_offset_max) - ics->swb_offset[sfb]); w_idx++)
             {
                 for(g = 0; g < ics->num_window_groups; g++)
                 {
@@ -293,7 +293,7 @@ uint8_t reordered_spectral_data(NeAACDecHandle hDecoder, ic_stream *ics,
                             if (is_good_cb(this_CB, this_sec_CB))                              
                             {
                                 /* precalculate some stuff */
-                                uint16_t sect_sfb_size = ics->sect_sfb_offset[g][sfb+1] - ics->sect_sfb_offset[g][sfb];
+                                uint16_t sect_sfb_size = min(ics->swb_offset[sfb+1], ics->swb_offset_max) - ics->swb_offset[sfb];
                                 uint8_t inc = (this_sec_CB < FIRST_PAIR_HCB) ? QUAD_LEN : PAIR_LEN;
                                 uint16_t group_cws_count = (4*ics->window_group_length[g])/inc;
                                 uint8_t segwidth = segmentWidth(this_sec_CB);
