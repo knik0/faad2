@@ -27,7 +27,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: tns.c,v 1.37 2006/05/07 18:09:03 menno Exp $
+** $Id: tns.c,v 1.38 2006/05/17 18:49:21 menno Exp $
 **/
 
 #include "common.h"
@@ -297,7 +297,7 @@ static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
         y = *spectrum;
 
         for (j = 0; j < order; j++)
-            y += MUL_C(state[j], lpc[j+1]);
+            y += MUL_C(state[state_index+j], lpc[j+1]);
 
         /* double ringbuffer state */
         state_index--;

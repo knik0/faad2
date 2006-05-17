@@ -27,7 +27,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.84 2006/05/07 18:09:03 menno Exp $
+** $Id: syntax.c,v 1.85 2006/05/17 18:49:21 menno Exp $
 **/
 
 /*
@@ -1364,7 +1364,7 @@ void DRM_aac_scalable_main_element(NeAACDecHandle hDecoder, NeAACDecFrameInfo *h
 
         faad_getbits(&ld_sbr, 8); /* Skip 8-bit CRC */
 
-        hDecoder->sbr[0]->ret = sbr_extension_data(&ld_sbr, hDecoder->sbr[0], count);
+        hDecoder->sbr[0]->ret = sbr_extension_data(&ld_sbr, hDecoder->sbr[0], count, hDecoder->postSeekResetFlag);
 #if (defined(PS_DEC) || defined(DRM_PS))
         if (hDecoder->sbr[0]->ps_used)
         {

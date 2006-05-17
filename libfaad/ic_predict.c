@@ -27,7 +27,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: ic_predict.c,v 1.25 2006/05/07 18:09:00 menno Exp $
+** $Id: ic_predict.c,v 1.26 2006/05/17 18:49:21 menno Exp $
 **/
 
 #include "common.h"
@@ -86,7 +86,8 @@ static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t 
 {
     uint16_t tmp;
     int16_t i, j;
-    real_t dr1, predictedvalue;
+    real_t dr1;
+	float32_t predictedvalue;
     real_t e0, e1;
     real_t k1, k2;
 
@@ -119,7 +120,7 @@ static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t 
 #define B 0.953125
         real_t c = COR[0];
         real_t v = VAR[0];
-        real_t tmp;
+        float32_t tmp;
         if (c == 0 || v <= 1)
         {
             k1 = 0;
@@ -149,7 +150,7 @@ static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t 
 #define B 0.953125
         real_t c = COR[1];
         real_t v = VAR[1];
-        real_t tmp;
+        float32_t tmp;
         if (c == 0 || v <= 1)
         {
             k2 = 0;

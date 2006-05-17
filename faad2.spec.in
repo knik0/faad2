@@ -1,3 +1,9 @@
+# option to compile without XMMS plugin
+%if %{?without_xmms:1}%{!?without_xmms:0}
+ %define _without_xmms --without-xmms
+%else
+ %define _with_xmms --with-xmms
+%endif
 # this has been taken from http://www.hyperborea.org/software/dillo/dillo.spec
 #################################################################################
 # Identify which distribution we're building on.
@@ -25,9 +31,14 @@ Group:      Applications/Multimedia
 Source0:    http://download.sourceforge.net/faad/%{name}-%{version}.tar.gz
 #Patch:                faad2-%{version}.patch
 BuildRequires: autoconf, automake, libtool, gcc-c++
-BuildRequires: xmms-devel, id3lib-devel
+
+%if %{?_with_xmms:1}%{!?_with_xmms:0}
+BuildRequires: xmms-devel
+%endif
+
 URL:        http://www.audiocoding.com/
 #################################################################################
+%if %{?_with_xmms:1}%{!?_with_xmms:0}
 # GTK Dependencies
 %if %{mdk}
 BuildRequires: libgtk+-devel >= 1.2.0
@@ -37,6 +48,7 @@ BuildRequires: gtk-devel >= 1.2.0
 %endif
 %if !%{suse} && !%{mdk}
 BuildRequires: gtk+-devel >= 1.2.0
+%endif
 %endif
 
 BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-root
@@ -57,10 +69,11 @@ Requires: %{name}
 %description devel
 Header files and development documentation for libfaad.
 
+%if %{?_with_xmms:1}%{!?_with_xmms:0}
 %package xmms
 Group: Applications/Multimedia
 Summary: AAC and MP4 input plugin for xmms
-Requires: %{name}, %{name}-libmp4v2, xmms, id3lib
+Requires: %{name}, xmms
 
 
 %description xmms
@@ -69,7 +82,7 @@ The AAC xmms input plugin for xmms recognizes AAC files by an
 This MP4 xmms plugin reads AAC files with and without ID3 tags (version 2.x).
 AAC files are MPEG2 or MPEG4 files that can be found in MPEG4 audio files
 (.mp4). MPEG4 files with AAC inside can be read by RealPlayer or Quicktime.
-
+%endif
 
 %prep
 #%setup -n %{name}
@@ -78,13 +91,16 @@ AAC files are MPEG2 or MPEG4 files that can be found in MPEG4 audio files
 
 %build
 #sh bootstrap
-./configure --with-drm --with-xmms --prefix=/usr
+./configure --with-drm %{?_with_xmms} %{?_without_xmms} --prefix=/usr
 make
 
 %install
 rm -rf %{buildroot}
 # Hack to work around a problem with DESTDIR in libtool 1.4.x
 LIBRARY_PATH="%{buildroot}/usr/lib:${LIBRARY_PATH}" make install DESTDIR=%{buildroot}
+# install libmp4ff
+install -m 755 common/mp4ff/libmp4ff.a %{buildroot}%{_libdir}
+install common/mp4ff/mp4ff.h %{buildroot}%{_includedir}
 
 %post -p /sbin/ldconfig
 
@@ -105,13 +121,30 @@ rm -rf %{buildroot}
 %{_libdir}/libfaad.la
 %{_includedir}/faad.h
 %{_includedir}/neaacdec.h
+%{_includedir}/mp4ff.h
+%{_libdir}/libmp4ff.a
 
+%if %{?_with_xmms:1}%{!?_with_xmms:0}
 %files xmms
 %defattr(-,root,root)
 %doc plugins/xmms/README
 %_libdir/xmms/Input/*
+%endif
 
 %changelog
+* Tue Jan 24 2006 Alexander Kurpiers <a.kurpiers@nt.tu-darmstadt.de>
+- fix wrong function declaration in mp4ffint.h
+
+* Wed Nov 15 2005 Alexander Kurpiers <a.kurpiers@nt.tu-darmstadt.de>
+- fix requirements for xmms plugin
+- add libmp4ff to devel package (only static library)
+
+* Sat Aug 13 2005 Alexander Kurpiers <a.kurpiers@nt.tu-darmstadt.de>
+- fix dependencies for xmms plugin. libmp4v2/id3lib no longer needed
+
+* Sun Apr 24 2005 Alexander Kurpiers <a.kurpiers@nt.tu-darmstadt.de>
+- make xmms plugin generation optional. Build with '--define "without_xmms 1"'
+
 * Tue Nov 02 2004 Alexander Kurpiers <a.kurpiers@nt.tu-darmstadt.de>
 - remove libmp4ff and libmp4v2 from RPM
 - changes for new version of faad2

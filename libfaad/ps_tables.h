@@ -27,7 +27,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: ps_tables.h,v 1.5 2006/05/07 18:09:01 menno Exp $
+** $Id: ps_tables.h,v 1.6 2006/05/17 18:49:21 menno Exp $
 **/
 
 #ifndef __PS_TABLES_H__
@@ -546,7 +546,7 @@ static const real_t sf_iid_fine[] = {
 };
 
 #ifdef __cplusplus
-
+}
 #endif
 #endif
 
