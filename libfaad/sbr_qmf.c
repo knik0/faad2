@@ -27,7 +27,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_qmf.c,v 1.29 2006/05/07 18:09:02 menno Exp $
+** $Id: sbr_qmf.c,v 1.30 2006/05/26 19:21:35 menno Exp $
 **/
 
 #include "common.h"
@@ -413,20 +413,20 @@ void sbr_qmf_synthesis_32(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
         for (k = 0; k < 32; k++)
         {
             x1[k] = MUL_F(QMF_RE(X[l][k]), RE(qmf32_pre_twiddle[k])) - MUL_F(QMF_IM(X[l][k]), IM(qmf32_pre_twiddle[k]));
-            x2[31-k] = MUL_F(QMF_IM(X[l][k]), RE(qmf32_pre_twiddle[k])) + MUL_F(QMF_RE(X[l][k]), IM(qmf32_pre_twiddle[k]));
+            x2[k] = MUL_F(QMF_IM(X[l][k]), RE(qmf32_pre_twiddle[k])) + MUL_F(QMF_RE(X[l][k]), IM(qmf32_pre_twiddle[k]));
 
 #ifndef FIXED_POINT
             x1[k] *= scale;
-            x2[31-k] *= scale;
+            x2[k] *= scale;
 #else
             x1[k] >>= 1;
-            x2[31-k] >>= 1;
+            x2[k] >>= 1;
 #endif
         }
 
         /* transform */
         DCT4_32(x1, x1);
-        DCT4_32(x2, x2);
+        DST4_32(x2, x2);
 
         for (n = 0; n < 32; n++)
         {
