@@ -27,7 +27,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: bits.c,v 1.41 2006/05/07 18:09:00 menno Exp $
+** $Id: bits.c,v 1.42 2006/07/07 12:35:24 sur Exp $
 **/
 
 #include "common.h"
@@ -140,20 +140,20 @@ void faad_rewindbits(bitfile *ld)
 
     if (ld->bytes_left >= 4)
     {
-        tmp = getdword((uint32_t*)ld->start[0]);
+        tmp = getdword((uint32_t*)&ld->start[0]);
         ld->bytes_left -= 4;
     } else {
-        tmp = getdword_n((uint32_t*)ld->start[0], ld->bytes_left);
+        tmp = getdword_n((uint32_t*)&ld->start[0], ld->bytes_left);
         ld->bytes_left = 0;
     }
     ld->bufa = tmp;
 
     if (ld->bytes_left >= 4)
     {
-        tmp = getdword((uint32_t*)ld->start[1] + 1);
+        tmp = getdword((uint32_t*)&ld->start[1]);
         ld->bytes_left -= 4;
     } else {
-        tmp = getdword_n((uint32_t*)ld->start[1] + 1, ld->bytes_left);
+        tmp = getdword_n((uint32_t*)&ld->start[1], ld->bytes_left);
         ld->bytes_left = 0;
     }
     ld->bufb = tmp;
