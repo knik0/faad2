@@ -27,7 +27,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: hcr.c,v 1.20 2006/05/07 18:09:00 menno Exp $
+** $Id: hcr.c,v 1.21 2006/07/22 14:13:21 menno Exp $
 **/
 
 #include "common.h"
@@ -293,7 +293,7 @@ uint8_t reordered_spectral_data(NeAACDecHandle hDecoder, ic_stream *ics,
                             if (is_good_cb(this_CB, this_sec_CB))                              
                             {
                                 /* precalculate some stuff */
-                                uint16_t sect_sfb_size = min(ics->swb_offset[sfb+1], ics->swb_offset_max) - ics->swb_offset[sfb];
+                                uint16_t sect_sfb_size = ics->sect_sfb_offset[g][sfb+1] - ics->sect_sfb_offset[g][sfb];
                                 uint8_t inc = (this_sec_CB < FIRST_PAIR_HCB) ? QUAD_LEN : PAIR_LEN;
                                 uint16_t group_cws_count = (4*ics->window_group_length[g])/inc;
                                 uint8_t segwidth = segmentWidth(this_sec_CB);
