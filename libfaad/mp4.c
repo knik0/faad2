@@ -27,7 +27,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4.c,v 1.34 2006/05/07 18:09:01 menno Exp $
+** $Id: mp4.c,v 1.35 2006/08/06 18:57:15 menno Exp $
 **/
 
 #include "common.h"
@@ -245,7 +245,7 @@ int8_t AudioSpecificConfig2(uint8_t *pBuffer,
 
         if (syncExtensionType == 0x2b7)
         {
-            mp4ASC->objectTypeIndex = (uint8_t)faad_getbits(&ld, 5
+            uint8_t tmp_OTi = (uint8_t)faad_getbits(&ld, 5
                 DEBUGVAR(1,10,"parse_audio_decoder_specific_info(): extensionAudioObjectType"));
 
             if (mp4ASC->objectTypeIndex == 5)
@@ -256,6 +256,10 @@ int8_t AudioSpecificConfig2(uint8_t *pBuffer,
                 if (mp4ASC->sbr_present_flag)
                 {
                     uint8_t tmp;
+
+					/* Don't set OT to SBR until checked that it is actually there */
+					mp4ASC->objectTypeIndex = tmp_OTi;
+
                     tmp = (uint8_t)faad_getbits(&ld, 4
                         DEBUGVAR(1,12,"parse_audio_decoder_specific_info(): extensionSamplingFrequencyIndex"));
 
