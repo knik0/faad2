@@ -27,7 +27,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: cfft.c,v 1.32 2006/05/07 18:09:00 menno Exp $
+** $Id: cfft.c,v 1.33 2006/08/07 18:09:05 menno Exp $
 **/
 
 /*
@@ -551,7 +551,7 @@ static void passf5(const uint16_t ido, const uint16_t l1, const complex_t *cc,
                 ComplexMult(&RE(c4), &RE(c5),
                     ti12, ti11, RE(t5), RE(t4));
                 ComplexMult(&IM(c4), &IM(c5),
-                    ti12, ti12, IM(t5), IM(t4));
+                    ti12, ti11, IM(t5), IM(t4));
 
                 RE(ch[ah+l1]) = RE(c2) + IM(c5);
                 IM(ch[ah+l1]) = IM(c2) - RE(c5);
@@ -653,7 +653,7 @@ static void passf5(const uint16_t ido, const uint16_t l1, const complex_t *cc,
                     ComplexMult(&RE(c4), &RE(c5),
                         ti12, ti11, RE(t5), RE(t4));
                     ComplexMult(&IM(c4), &IM(c5),
-                        ti12, ti12, IM(t5), IM(t4));
+                        ti12, ti11, IM(t5), IM(t4));
 
                     IM(d2) = IM(c2) - RE(c5);
                     IM(d3) = IM(c3) - RE(c4);
