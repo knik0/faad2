@@ -27,7 +27,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.85 2006/05/17 18:49:21 menno Exp $
+** $Id: syntax.c,v 1.86 2006/08/07 18:00:49 menno Exp $
 **/
 
 /*
@@ -2243,7 +2243,7 @@ static uint8_t dynamic_range_info(bitfile *ld, drc_info *drc)
         n++;
         drc->num_bands += band_incr;
 
-        for (i = 0; i < drc->num_bands; i++);
+        for (i = 0; i < drc->num_bands; i++)
         {
             drc->band_top[i] = (uint8_t)faad_getbits(ld, 8
                 DEBUGVAR(1,97,"dynamic_range_info(): band_top"));
