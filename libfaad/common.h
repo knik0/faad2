@@ -27,7 +27,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.67 2006/05/07 18:09:00 menno Exp $
+** $Id: common.h,v 1.68 2006/08/07 18:13:28 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -321,7 +321,8 @@ char *strchr(), *strrchr();
         }
         return i;
     }
-  #elif (defined(__i386__) && defined(__GNUC__))
+  #elif (defined(__i386__) && defined(__GNUC__) && \
+	!defined(__CYGWIN__) && !defined(__MINGW32__))
     #define HAS_LRINTF
     // from http://www.stereopsis.com/FPU.html
     static INLINE int lrintf(float f)
