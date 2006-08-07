@@ -11,10 +11,17 @@
 #include <stdio.h>
 #include <string.h>
 
+#if defined(HAVE_BMP)
+#include <bmp/plugin.h>
+#include <bmp/util.h>
+#include <bmp/configfile.h>
+#include <bmp/titlestring.h>
+#else
 #include <xmms/plugin.h>
 #include <xmms/util.h>
 #include <xmms/configfile.h>
 #include <xmms/titlestring.h>
+#endif /*HAVE_BMP*/
 
 #include "neaacdec.h"
 #include "mp4ff.h"
@@ -192,7 +199,7 @@ static void	mp4_getSongTitle(char *filename, char **title, int *len) {
 
   (*title) = NULL;
   (*len) = -1;
-	
+
   if((mp4file = fopen(filename, "rb"))){
     mp4_get_file_type(mp4file);
     fseek(mp4file, 0, SEEK_SET);
@@ -261,13 +268,13 @@ static void *mp4Decode(void *args)
     mp4ff_callback_t*	mp4cb;
     mp4ff_t*		infile;
     gint		mp4track;
-    
+
     mp4cb = getMP4FF_cb(mp4file);
     if(!(infile = mp4ff_open_read(mp4cb))){
       g_print("MP4 - Can't open file\n");
       goto end;
     }
-    
+
     if((mp4track = getAACTrack(infile)) < 0){
       /*
        * TODO: check here for others Audio format.....
@@ -279,7 +286,7 @@ static void *mp4Decode(void *args)
       bPlaying = FALSE;
       pthread_mutex_unlock(&mutex);
       pthread_exit(NULL);
-    }else{  
+    }else{
       NeAACDecHandle	decoder;
       unsigned char	*buffer	= NULL;
       guint		bufferSize = 0;
@@ -336,7 +343,7 @@ static void *mp4Decode(void *args)
 
       while(bPlaying){
 	void*			sampleBuffer;
-	faacDecFrameInfo	frameInfo;    
+	faacDecFrameInfo	frameInfo;
 	gint			rc;
 
 	if(seekPosition!=-1){
@@ -574,6 +581,6 @@ end:
     bPlaying = FALSE;
     pthread_mutex_unlock(&mutex);
     pthread_exit(NULL);
-    
+
   }
 }
