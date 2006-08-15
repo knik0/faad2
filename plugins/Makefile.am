@@ -9,7 +9,7 @@ if HAVE_XMMS
 SUBDIRS = xmms
 else
 if HAVE_BMP
-SUBDIRS = bmp
+SUBDIRS = xmms
 else
 SUBDIRS =
 endif #HAVE_BMP

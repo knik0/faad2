@@ -9,7 +9,7 @@ dnl - mpeg4ip plugin (requires mpeg4ip's libmp4v2 to be installed)
 
 AC_INIT
 AC_CONFIG_AUX_DIR(.)
-AM_INIT_AUTOMAKE(faad2, 2.5.0)
+AM_INIT_AUTOMAKE(faad2, 2.6.0cvs)
 
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
@@ -118,6 +118,9 @@ if test x$WITHBMP = xyes; then
   AC_DEFINE([HAVE_BMP], 1, [User wants beep media player plugin built])
   AM_CONDITIONAL([HAVE_XMMS], true)
   AM_CONDITIONAL([HAVE_BMP], true)
+else
+ AC_MSG_NOTICE(no beepmp build configured)
+ AM_CONDITIONAL(HAVE_BMP, false)
 fi
 
 if test x$WITHDRM = xyes; then
