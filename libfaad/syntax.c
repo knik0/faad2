@@ -27,7 +27,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.86 2006/08/07 18:00:49 menno Exp $
+** $Id: syntax.c,v 1.87 2006/08/15 19:22:15 menno Exp $
 **/
 
 /*
@@ -1749,12 +1749,12 @@ static uint8_t section_data(NeAACDecHandle hDecoder, ic_stream *ics, bitfile *ld
 
             if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
             {
-                if (k + sect_len >= 8*15)
+                if (k + sect_len > 8*15)
                     return 15;
                 if (i >= 8*15)
                     return 15;
             } else {
-                if (k + sect_len >= MAX_SFB)
+                if (k + sect_len > MAX_SFB)
                     return 15;
                 if (i >= MAX_SFB)
                     return 15;
