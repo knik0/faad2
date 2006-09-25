@@ -8,10 +8,6 @@ else
 if HAVE_XMMS
 SUBDIRS = xmms
 else
-if HAVE_BMP
-SUBDIRS = xmms
-else
 SUBDIRS =
-endif #HAVE_BMP
 endif #HAVE_XMMS
 endif #HAVE_MPEG4IP_PLUG

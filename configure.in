@@ -29,9 +29,6 @@ AM_CONFIG_HEADER(config.h)
 AC_ARG_WITH(xmms,[  --with-xmms             compile XMMS-1 plugin],
 	     WITHXMMS=$withval, WITHXMMS=no)
 
-AC_ARG_WITH(bmp,[  --with-bmp              compile beep media player plugin],
-	     [WITHBMP=$withval;WITHXMMS=$withval], [WITHBMP=no])
-
 AC_ARG_WITH(drm,[  --with-drm              compile libfaad with DRM support],
 	     WITHDRM=$withval, WITHDRM=no)
 
@@ -149,15 +146,6 @@ if test x$WITHXMMS = xyes; then
 else
  AC_MSG_NOTICE(no xmms build configured)
  AM_CONDITIONAL(HAVE_XMMS, false)
-fi
-
-if test x$WITHBMP = xyes; then
-  AC_DEFINE([HAVE_BMP], 1, [User wants beep media player plugin built])
-  AM_CONDITIONAL([HAVE_XMMS], true)
-  AM_CONDITIONAL([HAVE_BMP], true)
-else
- AC_MSG_NOTICE(no beepmp build configured)
- AM_CONDITIONAL(HAVE_BMP, false)
 fi
 
 if test x$WITHDRM = xyes; then
