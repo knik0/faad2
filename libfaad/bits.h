@@ -27,7 +27,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: bits.h,v 1.42 2006/05/07 18:09:00 menno Exp $
+** $Id: bits.h,v 1.43 2007/06/05 18:38:57 menno Exp $
 **/
 
 #ifndef __BITS_H__
@@ -256,11 +256,15 @@ static INLINE void faad_flushbits_rev(bitfile *ld, uint32_t bits)
         ld->start--;
         ld->bits_left += (32 - bits);
 
-        ld->bytes_left -= 4;
+        if (ld->bytes_left < 4)
+        {
+            ld->error = 1;
+            ld->bytes_left = 0;
+        } else {
+            ld->bytes_left -= 4;
+        }
 //        if (ld->bytes_left == 0)
 //            ld->no_more_reading = 1;
-        if (ld->bytes_left < 0)
-            ld->error = 1;
     }
 }
 
