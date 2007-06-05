@@ -105,7 +105,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386 &quot;..\libfaad\Release\libfaad.lib&quot; &quot;..\common\mp4v2\ST_Release\libmp4v2_st60.lib&quot; &quot;e:\cvs\audiocoding\faad2\libfaad\Release\libfaad.lib&quot; &quot;e:\cvs\audiocoding\faad2\common\mp4v2\ST_Release\libmp4v2_st60.lib&quot;"
+				AdditionalOptions="/MACHINE:I386 &quot;..\libfaad\Release\libfaad.lib&quot; &quot;..\common\mp4v2\ST_Release\libmp4v2_st60.lib&quot; &quot;..\libfaad\Release\libfaad.lib&quot; &quot;..\common\mp4v2\ST_Release\libmp4v2_st60.lib&quot;"
 				AdditionalDependencies="ws2_32.lib"
 				OutputFile=".\Release/faad.exe"
 				LinkIncremental="1"

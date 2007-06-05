@@ -391,7 +391,7 @@ static void *mp4Decode(void *args)
 			   frameInfo.samples<<1,
 			   sampleBuffer);
 	mp4_ip.output->write_audio(sampleBuffer, frameInfo.samples<<1);
-	if(sampleID > numSamples){
+	if(sampleID >= numSamples){
           break;
 	}
       }
