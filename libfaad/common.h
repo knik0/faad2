@@ -27,7 +27,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.69 2006/09/25 19:46:25 menno Exp $
+** $Id: common.h,v 1.70 2007/09/11 18:20:37 mmhoffm Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -72,6 +72,10 @@ extern "C" {
 //#define PREFER_POINTERS
 
 #ifdef _WIN32_WCE
+#define FIXED_POINT
+#endif
+
+#ifdef __BFIN__
 #define FIXED_POINT
 #endif
 
