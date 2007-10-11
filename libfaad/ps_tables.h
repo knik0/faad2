@@ -21,13 +21,13 @@
 **
 ** Software using this code must display the following message visibly in or
 ** on each copy of the software:
-** "FAAD2 AAC/HE-AAC/HE-AACv2/DRM decoder (c) Nero AG, www.nero.com"
+** "Code from FAAD2 is copyright (c) Nero AG, www.nero.com"
 ** in, for example, the about-box or help/startup screen.
 **
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: ps_tables.h,v 1.6 2006/05/17 18:49:21 menno Exp $
+** $Id: ps_tables.h,v 1.7 2007/10/11 18:41:51 menno Exp $
 **/
 
 #ifndef __PS_TABLES_H__
