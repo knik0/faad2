@@ -19,15 +19,13 @@
 ** Any non-GPL usage of this software or parts of this software is strictly
 ** forbidden.
 **
-** Software using this code must display the following message visibly in or
-** on each copy of the software:
-** "Code from FAAD2 is copyright (c) Nero AG, www.nero.com"
-** in, for example, the about-box or help/startup screen.
+** The "appropriate copyright message" mentioned in section 2c of the GPLv2
+** must read: "Code from FAAD2 is copyright (c) Nero AG, www.nero.com"
 **
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: ps_dec.c,v 1.13 2007/10/11 18:41:51 menno Exp $
+** $Id: ps_dec.c,v 1.14 2007/11/01 12:33:33 menno Exp $
 **/
 
 #include "common.h"
@@ -919,8 +917,6 @@ static void ps_data_decode(ps_info *ps)
 
         if (ps->border_position[ps->num_env] < 32 /* 30 for 960? */)
         {
-            ps->num_env++;
-            ps->border_position[ps->num_env] = 32 /* 30 for 960? */;
             for (bin = 0; bin < 34; bin++)
             {
                 ps->iid_index[ps->num_env][bin] = ps->iid_index[ps->num_env-1][bin];
@@ -931,6 +927,8 @@ static void ps_data_decode(ps_info *ps)
                 ps->ipd_index[ps->num_env][bin] = ps->ipd_index[ps->num_env-1][bin];
                 ps->opd_index[ps->num_env][bin] = ps->opd_index[ps->num_env-1][bin];
             }
+            ps->num_env++;
+            ps->border_position[ps->num_env] = 32 /* 30 for 960? */;
         }
 
         for (env = 1; env < ps->num_env; env++)
