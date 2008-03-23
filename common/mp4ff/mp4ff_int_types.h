@@ -3,6 +3,10 @@
 
 #if defined (_WIN32)
 
+#ifdef __MINGW32__
+#include <stdlib.h>
+#endif /* #ifdef __MINGW32__ */
+
 typedef char int8_t;
 typedef unsigned char uint8_t;
 typedef short int16_t;

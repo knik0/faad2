@@ -25,13 +25,14 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.111 2007/11/01 12:33:30 menno Exp $
+** $Id: decoder.c,v 1.112 2008/03/23 23:03:28 menno Exp $
 **/
 
 #include "common.h"
 #include "structs.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "decoder.h"
@@ -111,6 +112,7 @@ NeAACDecHandle NEAACDECAPI NeAACDecOpen(void)
     hDecoder->config.downMatrix = 0;
     hDecoder->adts_header_present = 0;
     hDecoder->adif_header_present = 0;
+	hDecoder->latm_header_present = 0;
 #ifdef ERROR_RESILIENCE
     hDecoder->aacSectionDataResilienceFlag = 0;
     hDecoder->aacScalefactorDataResilienceFlag = 0;
@@ -203,6 +205,31 @@ uint8_t NEAACDECAPI NeAACDecSetConfiguration(NeAACDecHandle hDecoder,
 }
 
 
+static int latmCheck(latm_header *latm, bitfile *ld)
+{
+    uint32_t good=0, bad=0, bits, m;
+
+    while(!ld->error)
+    {
+        bits = faad_latm_frame(latm, ld);
+        if(bits==-1U)
+            bad++;
+        else
+        {
+            good++;
+            while(bits>0)
+            {
+                m = min(bits, 8);
+                faad_getbits(ld, m);
+                bits -= m;
+            }
+        }
+    }
+
+    return (good>0);
+}
+
+
 int32_t NEAACDECAPI NeAACDecInit(NeAACDecHandle hDecoder, uint8_t *buffer,
                                  uint32_t buffer_size,
                                  uint32_t *samplerate, uint8_t *channels)
@@ -223,12 +250,29 @@ int32_t NEAACDECAPI NeAACDecInit(NeAACDecHandle hDecoder, uint8_t *buffer,
 
     if (buffer != NULL)
     {
-        faad_initbits(&ld, buffer, buffer_size);
+        int is_latm;
+        latm_header *l = &hDecoder->latm_config;
 
-        /* Check if an ADIF header is present */
-        if ((buffer[0] == 'A') && (buffer[1] == 'D') &&
-            (buffer[2] == 'I') && (buffer[3] == 'F'))
+        faad_initbits(&ld, buffer, buffer_size);
+ 
+        memset(l, 0, sizeof(latm_header));
+        is_latm = latmCheck(l, &ld);
+        l->inited = 0;
+        l->frameLength = 0;
+        faad_rewindbits(&ld);
+        if(is_latm && l->ASCbits>0)
         {
+            int32_t x;
+            hDecoder->latm_header_present = 1;
+            x = NeAACDecInit2(hDecoder, l->ASC, (l->ASCbits+7)/8, samplerate, channels);
+            if(x!=0)
+                hDecoder->latm_header_present = 0;
+            return x;
+        }
+        /* Check if an ADIF header is present */
+        else if ((buffer[0] == 'A') && (buffer[1] == 'D') &&
+			(buffer[2] == 'I') && (buffer[3] == 'F'))
+		{
             hDecoder->adif_header_present = 1;
 
             get_adif_header(&adif, &ld);
@@ -331,7 +375,7 @@ int8_t NEAACDECAPI NeAACDecInit2(NeAACDecHandle hDecoder, uint8_t *pBuffer,
 
     /* decode the audio specific config */
     rc = AudioSpecificConfig2(pBuffer, SizeOfDecoderSpecificInfo, &mp4ASC,
-        &(hDecoder->pce));
+        &(hDecoder->pce), hDecoder->latm_header_present);
 
     /* copy the relevant info to the decoder handle */
     *samplerate = mp4ASC.samplingFrequency;
@@ -768,6 +812,7 @@ static void* aac_frame_decode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
     uint32_t bitsconsumed;
     uint16_t frame_len;
     void *sample_buffer;
+    uint32_t startbit=0, endbit=0, payload_bits=0;
 
 #ifdef PROFILE
     int64_t count = faad_get_ts();
@@ -837,6 +882,17 @@ static void* aac_frame_decode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
     }
 #endif
 
+    if(hDecoder->latm_header_present)
+    {
+        payload_bits = faad_latm_frame(&hDecoder->latm_config, &ld);
+        startbit = faad_get_processed_bits(&ld);
+        if(payload_bits == -1U)
+        {
+            hInfo->error = 1;
+            goto error;
+        }
+    }
+
 #ifdef DRM
     if (hDecoder->object_type == DRM_ER_LC)
     {
@@ -882,6 +938,17 @@ static void* aac_frame_decode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
     }
 #endif
 
+    if(hDecoder->latm_header_present)
+    {
+        endbit = faad_get_processed_bits(&ld);
+        if(endbit-startbit > payload_bits)
+            fprintf(stderr, "\r\nERROR, too many payload bits read: %u > %d. Please. report with a link to a sample\n",
+                endbit-startbit, payload_bits);
+        if(hDecoder->latm_config.otherDataLenBits > 0)
+            faad_getbits(&ld, hDecoder->latm_config.otherDataLenBits);
+        faad_byte_align(&ld);
+    }
+
     channels = hDecoder->fr_channels;
 
     if (hInfo->error > 0)
@@ -906,7 +973,7 @@ static void* aac_frame_decode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
     faad_endbits(&ld);
 
 
-    if (!hDecoder->adts_header_present && !hDecoder->adif_header_present)
+    if (!hDecoder->adts_header_present && !hDecoder->adif_header_present && !hDecoder->latm_header_present)
     {
         if (hDecoder->channelConfiguration == 0)
             hDecoder->channelConfiguration = channels;
@@ -955,6 +1022,8 @@ static void* aac_frame_decode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
         hInfo->header_type = ADIF;
     if (hDecoder->adts_header_present)
         hInfo->header_type = ADTS;
+    if (hDecoder->latm_header_present)
+        hInfo->header_type = LATM;
 #if (defined(PS_DEC) || defined(DRM_PS))
     hInfo->ps = hDecoder->ps_used_global;
 #endif

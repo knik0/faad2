@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.81 2007/11/01 12:33:29 menno Exp $
+** $Id: main.c,v 1.82 2008/03/23 23:03:27 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <string.h>
 #include <getopt.h>
 
 #include <neaacdec.h>
@@ -640,8 +641,9 @@ int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_stdout,
 
         if ((frameInfo.error == 0) && (frameInfo.samples > 0) && (!adts_out))
         {
-            write_audio_file(aufile, sample_buffer, frameInfo.samples, 0);
-        }
+            if (write_audio_file(aufile, sample_buffer, frameInfo.samples, 0) == 0)
+                break;
+		}
 
         /* fill buffer */
         fill_buffer(&b);
@@ -976,7 +978,8 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
 
         if ((frameInfo.error == 0) && (sample_count > 0) && (!adts_out))
         {
-            write_audio_file(aufile, sample_buffer, sample_count, delay);
+            if (write_audio_file(aufile, sample_buffer, sample_count, delay) == 0)
+                break;
         }
 
         if (frameInfo.error > 0)

@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.72 2007/11/01 12:33:30 menno Exp $
+** $Id: common.h,v 1.73 2008/03/23 23:03:28 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -405,8 +405,6 @@ typedef real_t complex_t[2];
 /* common functions */
 uint8_t cpu_has_sse(void);
 uint32_t ne_rng(uint32_t *__r1, uint32_t *__r2);
-uint32_t ones32(uint32_t x);
-uint32_t floor_log2(uint32_t x);
 uint32_t wl_min_lzc(uint32_t x);
 #ifdef FIXED_POINT
 #define LOG2_MIN_INF REAL_CONST(-10000)

@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.h,v 1.58 2007/11/01 12:33:40 menno Exp $
+** $Id: syntax.h,v 1.59 2008/03/23 23:03:30 menno Exp $
 **/
 
 #ifndef __SYNTAX_H__
@@ -52,6 +52,7 @@ extern "C" {
 #define RAW        0
 #define ADIF       1
 #define ADTS       2
+#define LATM       3
 
 /* SBR signalling */
 #define NO_SBR           0
@@ -121,6 +122,7 @@ uint8_t reordered_spectral_data(NeAACDecHandle hDecoder, ic_stream *ics, bitfile
 void DRM_aac_scalable_main_element(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
                                    bitfile *ld, program_config *pce, drc_info *drc);
 #endif
+uint32_t faad_latm_frame(latm_header *latm, bitfile *ld);
 
 #ifdef __cplusplus
 }

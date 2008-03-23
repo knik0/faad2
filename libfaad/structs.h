@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: structs.h,v 1.46 2007/11/01 12:33:40 menno Exp $
+** $Id: structs.h,v 1.47 2008/03/23 23:03:29 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -335,6 +335,23 @@ typedef struct mp4AudioSpecificConfig
     /*uint8_t*/ char downSampledSBR;
 } mp4AudioSpecificConfig;
 
+#define MAX_ASC_BYTES 64
+typedef struct {
+    int inited;
+    int version, versionA;
+    int framelen_type;
+    int useSameStreamMux;
+    int allStreamsSameTimeFraming;
+    int numSubFrames;
+    int numPrograms;
+    int numLayers;
+    int otherDataPresent;
+    uint32_t otherDataLenBits;
+    uint32_t frameLength;
+    uint8_t ASC[MAX_ASC_BYTES];
+    uint32_t ASCbits;
+} latm_header;
+
 typedef struct NeAACDecConfiguration
 {
     /*uint8_t*/ unsigned char defObjectType;
@@ -377,6 +394,7 @@ typedef struct
 {
     uint8_t adts_header_present;
     uint8_t adif_header_present;
+    uint8_t latm_header_present;
     uint8_t sf_index;
     uint8_t object_type;
     uint8_t channelConfiguration;
@@ -476,6 +494,7 @@ typedef struct
     int64_t scalefac_cycles;
     int64_t requant_cycles;
 #endif
+	latm_header latm_config;
 	const unsigned char *cmes;
 } NeAACDecStruct, *NeAACDecHandle;
 
