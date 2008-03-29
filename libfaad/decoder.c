@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.112 2008/03/23 23:03:28 menno Exp $
+** $Id: decoder.c,v 1.113 2008/03/29 21:10:24 menno Exp $
 **/
 
 #include "common.h"
@@ -209,7 +209,7 @@ static int latmCheck(latm_header *latm, bitfile *ld)
 {
     uint32_t good=0, bad=0, bits, m;
 
-    while(!ld->error)
+    while (ld->bytes_left)
     {
         bits = faad_latm_frame(latm, ld);
         if(bits==-1U)

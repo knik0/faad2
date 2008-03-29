@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.90 2008/03/23 23:03:29 menno Exp $
+** $Id: syntax.c,v 1.91 2008/03/29 21:10:24 menno Exp $
 **/
 
 /*
@@ -2608,7 +2608,7 @@ uint32_t faad_latm_frame(latm_header *latm, bitfile *ld)
     uint32_t initpos, endpos, firstpos, ret;
 
     firstpos = faad_get_processed_bits(ld);
-    while(!ld->error)
+    while (ld->bytes_left)
     {
         faad_byte_align(ld);
         if(faad_showbits(ld, 11) != 0x2B7)
