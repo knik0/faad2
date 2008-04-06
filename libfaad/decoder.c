@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.113 2008/03/29 21:10:24 menno Exp $
+** $Id: decoder.c,v 1.114 2008/04/06 00:34:30 menno Exp $
 **/
 
 #include "common.h"
@@ -250,11 +250,14 @@ int32_t NEAACDECAPI NeAACDecInit(NeAACDecHandle hDecoder, uint8_t *buffer,
 
     if (buffer != NULL)
     {
+#if 0
         int is_latm;
         latm_header *l = &hDecoder->latm_config;
+#endif
 
         faad_initbits(&ld, buffer, buffer_size);
  
+#if 0
         memset(l, 0, sizeof(latm_header));
         is_latm = latmCheck(l, &ld);
         l->inited = 0;
@@ -268,9 +271,10 @@ int32_t NEAACDECAPI NeAACDecInit(NeAACDecHandle hDecoder, uint8_t *buffer,
             if(x!=0)
                 hDecoder->latm_header_present = 0;
             return x;
-        }
+        } else
+#endif
         /* Check if an ADIF header is present */
-        else if ((buffer[0] == 'A') && (buffer[1] == 'D') &&
+        if ((buffer[0] == 'A') && (buffer[1] == 'D') &&
 			(buffer[2] == 'I') && (buffer[3] == 'F'))
 		{
             hDecoder->adif_header_present = 1;
@@ -882,6 +886,7 @@ static void* aac_frame_decode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
     }
 #endif
 
+#if 0
     if(hDecoder->latm_header_present)
     {
         payload_bits = faad_latm_frame(&hDecoder->latm_config, &ld);
@@ -892,6 +897,7 @@ static void* aac_frame_decode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
             goto error;
         }
     }
+#endif
 
 #ifdef DRM
     if (hDecoder->object_type == DRM_ER_LC)
@@ -938,6 +944,7 @@ static void* aac_frame_decode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
     }
 #endif
 
+#if 0
     if(hDecoder->latm_header_present)
     {
         endbit = faad_get_processed_bits(&ld);
@@ -948,6 +955,7 @@ static void* aac_frame_decode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
             faad_getbits(&ld, hDecoder->latm_config.otherDataLenBits);
         faad_byte_align(&ld);
     }
+#endif
 
     channels = hDecoder->fr_channels;
 
@@ -973,7 +981,11 @@ static void* aac_frame_decode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
     faad_endbits(&ld);
 
 
-    if (!hDecoder->adts_header_present && !hDecoder->adif_header_present && !hDecoder->latm_header_present)
+    if (!hDecoder->adts_header_present && !hDecoder->adif_header_present
+#if 0
+        && !hDecoder->latm_header_present
+#endif
+        )
     {
         if (hDecoder->channelConfiguration == 0)
             hDecoder->channelConfiguration = channels;
@@ -1022,8 +1034,10 @@ static void* aac_frame_decode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
         hInfo->header_type = ADIF;
     if (hDecoder->adts_header_present)
         hInfo->header_type = ADTS;
+#if 0
     if (hDecoder->latm_header_present)
         hInfo->header_type = LATM;
+#endif
 #if (defined(PS_DEC) || defined(DRM_PS))
     hInfo->ps = hDecoder->ps_used_global;
 #endif

@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: syntax.c,v 1.91 2008/03/29 21:10:24 menno Exp $
+** $Id: syntax.c,v 1.92 2008/04/06 00:34:30 menno Exp $
 **/
 
 /*
@@ -575,7 +575,11 @@ void raw_data_block(NeAACDecHandle hDecoder, NeAACDecFrameInfo *hInfo,
 
     /* new in corrigendum 14496-3:2002 */
 #ifdef DRM
-    if (hDecoder->object_type != DRM_ER_LC && !hDecoder->latm_header_present)
+    if (hDecoder->object_type != DRM_ER_LC
+#if 0
+        && !hDecoder->latm_header_present
+#endif
+        )
 #endif
     {
         faad_byte_align(ld);
