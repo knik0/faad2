@@ -1,307 +1,487 @@
-<?xml version="1.0" encoding = "Windows-1252"?>
+<?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.00"
+	Version="8,00"
 	Name="libfaad2_dll"
-	SccProjectName=""
-	SccLocalPath="">
+	ProjectGUID="{482DA264-EE88-4575-B208-87C4CB80CD08}"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory=".\DebugDLL"
 			IntermediateDirectory=".\DebugDLL"
 			ConfigurationType="2"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="2">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\DebugDLL/libfaad2_dll.tlb"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions=""
 				Optimization="0"
 				AdditionalIncludeDirectories="fftw"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;libfaad2_dll_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				UsePrecompiledHeader="2"
+				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\DebugDLL/libfaad2_dll.pch"
 				AssemblerListingLocation=".\DebugDLL/"
 				ObjectFile=".\DebugDLL/"
 				ProgramDataBaseFileName=".\DebugDLL/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
 				CompileAs="0"
-				AdditionalOptions="">
-				<IntelOptions
-					Optimization="0"
-					MinimalRebuild="1"
-					BasicRuntimeChecks="3"
-					RuntimeLibrary="3"
-					AllOptions="/c  /I &quot;fftw&quot; /ZI /nologo /W3 /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_USRDLL&quot; /D &quot;libfaad2_dll_EXPORTS&quot; /D &quot;_WINDLL&quot; /D &quot;_MBCS&quot; /Gm /EHsc /RTC1 /MDd /YX&quot;StdAfx.h&quot; /Fp&quot;.\DebugDLL/libfaad2_dll.pch&quot; /Fo&quot;.\DebugDLL/&quot; /Fd&quot;.\DebugDLL/&quot; /Gd"
-					MSOriginalAdditionalOptions=""/>
-			</Tool>
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1031"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="odbc32.lib odbccp32.lib"
 				OutputFile="DebugDLL/libfaad2.dll"
 				LinkIncremental="2"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				ModuleDefinitionFile=".\libfaad2.def"
-				GenerateDebugInformation="TRUE"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\DebugDLL/libfaad2.pdb"
-				ImportLibrary=".\DebugDLL/libfaad2.lib">
-				<IntelOptions
-					AllOptions="/NOLOGO /DLL /OUT:&quot;DebugDLL/libfaad2.dll&quot; /INCREMENTAL odbc32.lib odbccp32.lib /DEF:&quot;.\libfaad2.def&quot; /DEBUG /PDB:&quot;.\DebugDLL/libfaad2.pdb&quot; /TLBID:1 /IMPLIB:&quot;.\DebugDLL/libfaad2.lib&quot; /MACHINE:I386 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"
-					MSOriginalAdditionalOptions="/MACHINE:I386"/>
-			</Tool>
+				ImportLibrary=".\DebugDLL/libfaad2.lib"
+			/>
 			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName=".\DebugDLL/libfaad2_dll.tlb"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1031"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory=".\ReleaseDLL"
 			IntermediateDirectory=".\ReleaseDLL"
 			ConfigurationType="2"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="2">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\ReleaseDLL/libfaad2_dll.tlb"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				GlobalOptimizations="TRUE"
+				AdditionalOptions=""
 				InlineFunctionExpansion="1"
-				EnableIntrinsicFunctions="TRUE"
+				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories=""
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;libfaad2_dll_EXPORTS"
-				StringPooling="TRUE"
+				StringPooling="true"
 				RuntimeLibrary="2"
-				EnableFunctionLevelLinking="TRUE"
-				UsePrecompiledHeader="2"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\ReleaseDLL/libfaad2_dll.pch"
 				AssemblerListingLocation=".\ReleaseDLL/"
 				ObjectFile=".\ReleaseDLL/"
 				ProgramDataBaseFileName=".\ReleaseDLL/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				CompileAs="0"
-				AdditionalOptions="">
-				<IntelOptions
-					Optimization="2"
-					GlobalOptimizations="1"
-					InlineFuncExpansion="1"
-					OmitFramePtrs="1"
-					StringPooling="1"
-					RuntimeLibrary="2"
-					BufferSecurityCheck="1"
-					FunctionLevelLinking="1"
-					AllOptions="/c  /nologo /W3 /O2 /Og /Ob1 /Oy /D &quot;WIN32&quot; /D &quot;NDEBUG&quot; /D &quot;_WINDOWS&quot; /D &quot;_USRDLL&quot; /D &quot;libfaad2_dll_EXPORTS&quot; /D &quot;_WINDLL&quot; /D &quot;_MBCS&quot; /GF /FD /EHsc /MD /GS /Gy /YX&quot;StdAfx.h&quot; /Fp&quot;.\ReleaseDLL/libfaad2_dll.pch&quot; /Fo&quot;.\ReleaseDLL/&quot; /Fd&quot;.\ReleaseDLL/&quot; /Gd"
-					MSOriginalAdditionalOptions=""/>
-			</Tool>
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1031"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				OutputFile="ReleaseDLL/libfaad2.dll"
 				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				ModuleDefinitionFile=".\libfaad2.def"
 				ProgramDatabaseFile=".\ReleaseDLL/libfaad2.pdb"
-				ImportLibrary=".\ReleaseDLL/libfaad2.lib">
-				<IntelOptions
-					AllOptions="/NOLOGO /DLL /OUT:&quot;ReleaseDLL/libfaad2.dll&quot; /INCREMENTAL:NO /DEF:&quot;.\libfaad2.def&quot; /PDB:&quot;.\ReleaseDLL/libfaad2.pdb&quot; /TLBID:1 /IMPLIB:&quot;.\ReleaseDLL/libfaad2.lib&quot; /MACHINE:I386 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib"
-					MSOriginalAdditionalOptions="/MACHINE:I386"/>
-			</Tool>
+				ImportLibrary=".\ReleaseDLL/libfaad2.lib"
+			/>
 			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName=".\ReleaseDLL/libfaad2_dll.tlb"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1031"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
+	<References>
+	</References>
 	<Files>
 		<Filter
 			Name="Source Files"
-			Filter="">
+			>
 			<File
-				RelativePath=".\bits.c"/>
+				RelativePath=".\bits.c"
+				>
+			</File>
 			<File
-				RelativePath=".\cfft.c"/>
+				RelativePath=".\cfft.c"
+				>
+			</File>
 			<File
-				RelativePath="common.c"/>
+				RelativePath="common.c"
+				>
+			</File>
 			<File
-				RelativePath=".\data.c"/>
+				RelativePath=".\decoder.c"
+				>
+			</File>
 			<File
-				RelativePath=".\decoder.c"/>
+				RelativePath=".\drc.c"
+				>
+			</File>
 			<File
-				RelativePath="dither.c"/>
+				RelativePath=".\drm_dec.c"
+				>
+			</File>
 			<File
-				RelativePath=".\drc.c"/>
+				RelativePath=".\error.c"
+				>
+			</File>
 			<File
-				RelativePath=".\error.c"/>
+				RelativePath=".\filtbank.c"
+				>
+			</File>
 			<File
-				RelativePath=".\filtbank.c"/>
+				RelativePath="hcr.c"
+				>
+			</File>
 			<File
-				RelativePath="hcr.c"/>
+				RelativePath=".\huffman.c"
+				>
+			</File>
 			<File
-				RelativePath=".\ic_predict.c"/>
+				RelativePath=".\ic_predict.c"
+				>
+			</File>
 			<File
-				RelativePath=".\is.c"/>
+				RelativePath=".\is.c"
+				>
+			</File>
 			<File
-				RelativePath=".\lt_predict.c"/>
+				RelativePath=".\lt_predict.c"
+				>
+			</File>
 			<File
-				RelativePath=".\mdct.c"/>
+				RelativePath=".\mdct.c"
+				>
+			</File>
 			<File
-				RelativePath=".\mp4.c"/>
+				RelativePath=".\mp4.c"
+				>
+			</File>
 			<File
-				RelativePath=".\ms.c"/>
+				RelativePath=".\ms.c"
+				>
+			</File>
 			<File
-				RelativePath=".\output.c"/>
+				RelativePath=".\output.c"
+				>
+			</File>
 			<File
-				RelativePath=".\pns.c"/>
+				RelativePath=".\pns.c"
+				>
+			</File>
 			<File
-				RelativePath=".\pulse.c"/>
+				RelativePath=".\ps_dec.c"
+				>
+			</File>
 			<File
-				RelativePath="rvlc.c"/>
+				RelativePath=".\ps_syntax.c"
+				>
+			</File>
 			<File
-				RelativePath=".\specrec.c"/>
+				RelativePath=".\pulse.c"
+				>
+			</File>
 			<File
-				RelativePath="ssr.c"/>
+				RelativePath="rvlc.c"
+				>
+			</File>
 			<File
-				RelativePath=".\syntax.c"/>
+				RelativePath=".\sbr_dct.c"
+				>
+			</File>
 			<File
-				RelativePath=".\tns.c"/>
-			<Filter
-				Name="codebook"
-				Filter="">
-				<File
-					RelativePath=".\codebook\hcb_1.c"/>
-				<File
-					RelativePath=".\codebook\hcb_10.c"/>
-				<File
-					RelativePath=".\codebook\hcb_11.c"/>
-				<File
-					RelativePath=".\codebook\hcb_2.c"/>
-				<File
-					RelativePath=".\codebook\hcb_3.c"/>
-				<File
-					RelativePath=".\codebook\hcb_4.c"/>
-				<File
-					RelativePath=".\codebook\hcb_5.c"/>
-				<File
-					RelativePath=".\codebook\hcb_6.c"/>
-				<File
-					RelativePath=".\codebook\hcb_7.c"/>
-				<File
-					RelativePath=".\codebook\hcb_8.c"/>
-				<File
-					RelativePath=".\codebook\hcb_9.c"/>
-				<File
-					RelativePath=".\codebook\hcb_sf.c"/>
-			</Filter>
+				RelativePath=".\sbr_dec.c"
+				>
+			</File>
+			<File
+				RelativePath=".\sbr_e_nf.c"
+				>
+			</File>
+			<File
+				RelativePath=".\sbr_fbt.c"
+				>
+			</File>
+			<File
+				RelativePath=".\sbr_hfadj.c"
+				>
+			</File>
+			<File
+				RelativePath=".\sbr_hfgen.c"
+				>
+			</File>
+			<File
+				RelativePath=".\sbr_huff.c"
+				>
+			</File>
+			<File
+				RelativePath=".\sbr_qmf.c"
+				>
+			</File>
+			<File
+				RelativePath=".\sbr_syntax.c"
+				>
+			</File>
+			<File
+				RelativePath=".\sbr_tf_grid.c"
+				>
+			</File>
+			<File
+				RelativePath=".\specrec.c"
+				>
+			</File>
+			<File
+				RelativePath="ssr.c"
+				>
+			</File>
+			<File
+				RelativePath=".\ssr_fb.c"
+				>
+			</File>
+			<File
+				RelativePath=".\ssr_ipqf.c"
+				>
+			</File>
+			<File
+				RelativePath=".\syntax.c"
+				>
+			</File>
+			<File
+				RelativePath=".\tns.c"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
-			Filter="">
+			>
 			<File
-				RelativePath=".\Tns.h"/>
+				RelativePath=".\analysis.h"
+				>
+			</File>
 			<File
-				RelativePath=".\analysis.h"/>
+				RelativePath=".\bits.h"
+				>
+			</File>
 			<File
-				RelativePath=".\bits.h"/>
+				RelativePath=".\cfft.h"
+				>
+			</File>
 			<File
-				RelativePath=".\cfft.h"/>
+				RelativePath=".\common.h"
+				>
+			</File>
 			<File
-				RelativePath=".\common.h"/>
+				RelativePath=".\data.h"
+				>
+			</File>
 			<File
-				RelativePath=".\data.h"/>
+				RelativePath=".\decoder.h"
+				>
+			</File>
 			<File
-				RelativePath=".\decoder.h"/>
+				RelativePath="dither.h"
+				>
+			</File>
 			<File
-				RelativePath="dither.h"/>
+				RelativePath=".\drc.h"
+				>
+			</File>
 			<File
-				RelativePath=".\drc.h"/>
+				RelativePath=".\error.h"
+				>
+			</File>
 			<File
-				RelativePath=".\error.h"/>
+				RelativePath=".\filtbank.h"
+				>
+			</File>
 			<File
-				RelativePath=".\filtbank.h"/>
+				RelativePath=".\codebook\hcb.h"
+				>
+			</File>
 			<File
-				RelativePath=".\codebook\hcb.h"/>
+				RelativePath=".\huffman.h"
+				>
+			</File>
 			<File
-				RelativePath=".\huffman.h"/>
+				RelativePath=".\ic_predict.h"
+				>
+			</File>
 			<File
-				RelativePath=".\ic_predict.h"/>
+				RelativePath=".\is.h"
+				>
+			</File>
 			<File
-				RelativePath=".\is.h"/>
+				RelativePath=".\kbd_win.h"
+				>
+			</File>
 			<File
-				RelativePath=".\kbd_win.h"/>
+				RelativePath=".\lt_predict.h"
+				>
+			</File>
 			<File
-				RelativePath=".\lt_predict.h"/>
+				RelativePath=".\mdct.h"
+				>
+			</File>
 			<File
-				RelativePath=".\mdct.h"/>
+				RelativePath=".\mp4.h"
+				>
+			</File>
 			<File
-				RelativePath=".\mp4.h"/>
+				RelativePath=".\ms.h"
+				>
+			</File>
 			<File
-				RelativePath=".\ms.h"/>
+				RelativePath=".\output.h"
+				>
+			</File>
 			<File
-				RelativePath=".\output.h"/>
+				RelativePath=".\pns.h"
+				>
+			</File>
 			<File
-				RelativePath=".\pns.h"/>
+				RelativePath=".\pulse.h"
+				>
+			</File>
 			<File
-				RelativePath=".\pulse.h"/>
+				RelativePath="rvlc.h"
+				>
+			</File>
 			<File
-				RelativePath="rvlc.h"/>
+				RelativePath=".\specrec.h"
+				>
+			</File>
 			<File
-				RelativePath=".\specrec.h"/>
+				RelativePath="ssr.h"
+				>
+			</File>
 			<File
-				RelativePath="ssr.h"/>
+				RelativePath=".\syntax.h"
+				>
+			</File>
 			<File
-				RelativePath=".\syntax.h"/>
+				RelativePath=".\Tns.h"
+				>
+			</File>
 		</Filter>
 		<File
-			RelativePath=".\libfaad2.def"/>
+			RelativePath=".\libfaad2.def"
+			>
+		</File>
 	</Files>
-	<Globals/>
+	<Globals>
+	</Globals>
 </VisualStudioProject>
