@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_hfadj.c,v 1.22 2007/11/01 12:33:35 menno Exp $
+** $Id: sbr_hfadj.c,v 1.23 2008/09/19 22:50:20 menno Exp $
 **/
 
 /* High Frequency adjustment */
@@ -66,9 +66,9 @@ uint8_t hf_adjustment(sbr_info *sbr, qmf_t Xsbr[MAX_NTSRHFG][64]
         sbr->l_A[ch] = -1;
     } else if (sbr->bs_frame_class[ch] == VARFIX) {
         if (sbr->bs_pointer[ch] > 1)
-            sbr->l_A[ch] = -1;
-        else
             sbr->l_A[ch] = sbr->bs_pointer[ch] - 1;
+        else
+            sbr->l_A[ch] = -1;
     } else {
         if (sbr->bs_pointer[ch] == 0)
             sbr->l_A[ch] = -1;

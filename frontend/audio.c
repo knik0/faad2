@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: audio.c,v 1.28 2007/11/01 12:33:29 menno Exp $
+** $Id: audio.c,v 1.29 2008/09/19 22:50:17 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -120,7 +120,7 @@ int write_audio_file(audio_file *aufile, void *sample_buffer, int samples, int o
 
 void close_audio_file(audio_file *aufile)
 {
-    if (aufile->fileType == OUTPUT_WAV)
+    if ((aufile->fileType == OUTPUT_WAV) && (aufile->toStdio == 0))
     {
         fseek(aufile->sndfile, 0, SEEK_SET);
 

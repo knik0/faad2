@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.82 2008/03/23 23:03:27 menno Exp $
+** $Id: main.c,v 1.83 2008/09/19 22:50:19 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -916,6 +916,8 @@ int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
                 sample_count = frameInfo.samples;
             } else {
                 sample_count = (unsigned int)(dur * frameInfo.channels);
+                if (sample_count > frameInfo.samples)
+                    sample_count = frameInfo.samples;
 
                 if (!useAacLength && !initial && (sampleId < numSamples/2) && (sample_count != frameInfo.samples))
                 {
@@ -1192,11 +1194,13 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+#if 0
     /* only allow raw data on stdio */
     if (writeToStdio == 1)
     {
         format = 2;
     }
+#endif
 
     /* point to the specified file name */
     strcpy(aacFileName, argv[optind]);
