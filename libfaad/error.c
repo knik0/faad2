@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: error.c,v 1.32 2007/11/01 12:33:30 menno Exp $
+** $Id: error.c,v 1.33 2008/09/19 23:31:39 menno Exp $
 **/
 
 #include "common.h"
@@ -64,6 +64,7 @@ char *err_msg[] = {
     "PNS not allowed in DRM data stream",
     "No standard extension payload allowed in DRM",
     "PCE shall be the first element in a frame",
-    "Bitstream value not allowed by specification"
+    "Bitstream value not allowed by specification",
+	"MAIN prediction not initialised"
 };
 

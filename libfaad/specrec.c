@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.c,v 1.60 2007/11/01 12:33:36 menno Exp $
+** $Id: specrec.c,v 1.61 2008/09/19 23:31:40 menno Exp $
 **/
 
 /*
@@ -958,6 +958,9 @@ uint8_t reconstruct_single_channel(NeAACDecHandle hDecoder, ic_stream *ics,
     /* MAIN object type prediction */
     if (hDecoder->object_type == MAIN)
     {
+		if (!hDecoder->pred_stat[sce->channel])
+			return 33;
+
         /* intra channel prediction */
         ic_prediction(ics, spec_coef, hDecoder->pred_stat[sce->channel], hDecoder->frameLength,
             hDecoder->sf_index);

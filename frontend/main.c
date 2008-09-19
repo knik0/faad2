@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.83 2008/09/19 22:50:19 menno Exp $
+** $Id: main.c,v 1.84 2008/09/19 23:31:39 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -133,6 +133,8 @@ void advance_buffer(aac_buffer *b, int bytes)
     b->file_offset += bytes;
     b->bytes_consumed = bytes;
     b->bytes_into_buffer -= bytes;
+	if (b->bytes_into_buffer < 0)
+		b->bytes_into_buffer = 0;
 }
 
 static int adts_sample_rates[] = {96000,88200,64000,48000,44100,32000,24000,22050,16000,12000,11025,8000,7350,0,0,0};
