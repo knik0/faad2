@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.114 2008/04/06 00:34:30 menno Exp $
+** $Id: decoder.c,v 1.115 2008/09/22 17:55:09 menno Exp $
 **/
 
 #include "common.h"
@@ -329,11 +329,11 @@ int32_t NEAACDECAPI NeAACDecInit(NeAACDecHandle hDecoder, uint8_t *buffer,
 
 #ifdef SBR_DEC
     /* implicit signalling */
-    if (*samplerate <= 24000 && !(hDecoder->config.dontUpSampleImplicitSBR))
+    if (*samplerate <= 24000 && (hDecoder->config.dontUpSampleImplicitSBR == 0))
     {
         *samplerate *= 2;
         hDecoder->forceUpSampling = 1;
-    } else if (*samplerate > 24000 && !(hDecoder->config.dontUpSampleImplicitSBR)) {
+    } else if (*samplerate > 24000 && (hDecoder->config.dontUpSampleImplicitSBR == 0)) {
         hDecoder->downSampledSBR = 1;
     }
 #endif

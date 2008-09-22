@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: structs.h,v 1.47 2008/03/23 23:03:29 menno Exp $
+** $Id: structs.h,v 1.48 2008/09/22 17:55:09 menno Exp $
 **/
 
 #ifndef __STRUCTS_H__
@@ -330,9 +330,9 @@ typedef struct mp4AudioSpecificConfig
     /*uint8_t*/ unsigned char aacSpectralDataResilienceFlag;
     /*uint8_t*/ unsigned char epConfig;
 
-    /*uint8_t*/ char sbr_present_flag;
-    /*uint8_t*/ char forceUpSampling;
-    /*uint8_t*/ char downSampledSBR;
+    /*uint8_t*/ signed char sbr_present_flag;
+    /*uint8_t*/ signed char forceUpSampling;
+    /*uint8_t*/ signed char downSampledSBR;
 } mp4AudioSpecificConfig;
 
 #define MAX_ASC_BYTES 64

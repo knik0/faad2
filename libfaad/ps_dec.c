@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: ps_dec.c,v 1.14 2007/11/01 12:33:33 menno Exp $
+** $Id: ps_dec.c,v 1.15 2008/09/22 17:55:09 menno Exp $
 **/
 
 #include "common.h"
@@ -233,6 +233,8 @@ static void hybrid_free(hyb_info *hyb)
 {
     uint8_t i;
 
+	if (!hyb) return;
+
     if (hyb->work)
         faad_free(hyb->work);
 
@@ -251,6 +253,8 @@ static void hybrid_free(hyb_info *hyb)
     }
     if (hyb->temp)
         faad_free(hyb->temp);
+
+	faad_free(hyb);
 }
 
 /* real filter, size 2 */

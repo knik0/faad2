@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.84 2008/09/19 23:31:39 menno Exp $
+** $Id: main.c,v 1.85 2008/09/22 17:55:09 menno Exp $
 **/
 
 #ifdef _WIN32
@@ -58,7 +58,7 @@
 
 static int quiet = 0;
 
-void faad_fprintf(FILE *stream, const char *fmt, ...)
+static void faad_fprintf(FILE *stream, const char *fmt, ...)
 {
     va_list ap;
 
@@ -83,7 +83,7 @@ typedef struct {
 } aac_buffer;
 
 
-int fill_buffer(aac_buffer *b)
+static int fill_buffer(aac_buffer *b)
 {
     int bread;
 
@@ -128,7 +128,7 @@ int fill_buffer(aac_buffer *b)
     return 1;
 }
 
-void advance_buffer(aac_buffer *b, int bytes)
+static void advance_buffer(aac_buffer *b, int bytes)
 {
     b->file_offset += bytes;
     b->bytes_consumed = bytes;
@@ -139,7 +139,7 @@ void advance_buffer(aac_buffer *b, int bytes)
 
 static int adts_sample_rates[] = {96000,88200,64000,48000,44100,32000,24000,22050,16000,12000,11025,8000,7350,0,0,0};
 
-int adts_parse(aac_buffer *b, int *bitrate, float *length)
+static int adts_parse(aac_buffer *b, int *bitrate, float *length)
 {
     int frames, frame_length;
     int t_framelength = 0;
@@ -221,7 +221,7 @@ uint32_t seek_callback(void *user_data, uint64_t position)
 #define SPEAKER_TOP_BACK_RIGHT         0x20000
 #define SPEAKER_RESERVED               0x80000000
 
-long aacChannelConfig2wavexChannelMask(NeAACDecFrameInfo *hInfo)
+static long aacChannelConfig2wavexChannelMask(NeAACDecFrameInfo *hInfo)
 {
     if (hInfo->channels == 6 && hInfo->num_lfe_channels)
     {
@@ -233,7 +233,7 @@ long aacChannelConfig2wavexChannelMask(NeAACDecFrameInfo *hInfo)
     }
 }
 
-char *position2string(int position)
+static char *position2string(int position)
 {
     switch (position)
     {
@@ -253,7 +253,7 @@ char *position2string(int position)
     return "";
 }
 
-void print_channel_info(NeAACDecFrameInfo *frameInfo)
+static void print_channel_info(NeAACDecFrameInfo *frameInfo)
 {
     /* print some channel info */
     int i;
@@ -285,7 +285,7 @@ void print_channel_info(NeAACDecFrameInfo *frameInfo)
     faad_fprintf(stderr, "\n");
 }
 
-int FindAdtsSRIndex(int sr)
+static int FindAdtsSRIndex(int sr)
 {
     int i;
 
@@ -297,7 +297,7 @@ int FindAdtsSRIndex(int sr)
     return 16 - 1;
 }
 
-unsigned char *MakeAdtsHeader(int *dataSize, NeAACDecFrameInfo *hInfo, int old_format)
+static unsigned char *MakeAdtsHeader(int *dataSize, NeAACDecFrameInfo *hInfo, int old_format)
 {
     unsigned char *data;
     int profile = (hInfo->object_type - 1) & 0x3;
@@ -347,7 +347,7 @@ unsigned char *MakeAdtsHeader(int *dataSize, NeAACDecFrameInfo *hInfo, int old_f
 /* globals */
 char *progName;
 
-char *file_ext[] =
+static const char *file_ext[] =
 {
     NULL,
     ".wav",
@@ -358,7 +358,7 @@ char *file_ext[] =
     NULL
 };
 
-void usage(void)
+static void usage(void)
 {
     faad_fprintf(stdout, "\nUsage:\n");
     faad_fprintf(stdout, "%s [options] infile.aac\n", progName);
@@ -396,7 +396,7 @@ void usage(void)
     return;
 }
 
-int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_stdout,
+static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_stdout,
                   int def_srate, int object_type, int outputFormat, int fileType,
                   int downMatrix, int infoOnly, int adts_out, int old_format,
                   float *song_length)
@@ -673,7 +673,7 @@ int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_stdout,
     return frameInfo.error;
 }
 
-int GetAACTrack(mp4ff_t *infile)
+static int GetAACTrack(mp4ff_t *infile)
 {
     /* find AAC track */
     int i, rc;
@@ -702,13 +702,13 @@ int GetAACTrack(mp4ff_t *infile)
     return -1;
 }
 
-unsigned long srates[] =
+static const unsigned long srates[] =
 {
     96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000,
     12000, 11025, 8000
 };
 
-int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
+static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
                   int outputFormat, int fileType, int downMatrix, int noGapless,
                   int infoOnly, int adts_out, float *song_length)
 {
