@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4atom.c,v 1.26 2008/11/24 21:27:12 menno Exp $
+** $Id: mp4atom.c,v 1.27 2008/11/24 21:40:36 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -42,6 +42,8 @@
 #    include <string.h>
 #endif
 #include "mp4ffint.h"
+
+#define       COPYRIGHT_SYMBOL        ((int8_t)0xA9)
 
 /* parse atom header size */
 static int32_t mp4ff_atom_get_size(const int8_t *data)
@@ -129,22 +131,22 @@ static uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b,
             return ATOM_SINF;
         else if (mp4ff_atom_compare(a,b,c,d, 's','c','h','i'))
             return ATOM_SCHI;
-    } else if (a == '©') {
-        if (mp4ff_atom_compare(a,b,c,d, '©','n','a','m'))
+    } else if (a == COPYRIGHT_SYMBOL) {
+        if (mp4ff_atom_compare(a,b,c,d, COPYRIGHT_SYMBOL,'n','a','m'))
             return ATOM_TITLE;
-        else if (mp4ff_atom_compare(a,b,c,d, '©','A','R','T'))
+        else if (mp4ff_atom_compare(a,b,c,d, COPYRIGHT_SYMBOL,'A','R','T'))
             return ATOM_ARTIST;
-        else if (mp4ff_atom_compare(a,b,c,d, '©','w','r','t'))
+        else if (mp4ff_atom_compare(a,b,c,d, COPYRIGHT_SYMBOL,'w','r','t'))
             return ATOM_WRITER;
-        else if (mp4ff_atom_compare(a,b,c,d, '©','a','l','b'))
+        else if (mp4ff_atom_compare(a,b,c,d, COPYRIGHT_SYMBOL,'a','l','b'))
             return ATOM_ALBUM;
-        else if (mp4ff_atom_compare(a,b,c,d, '©','d','a','y'))
+        else if (mp4ff_atom_compare(a,b,c,d, COPYRIGHT_SYMBOL,'d','a','y'))
             return ATOM_DATE;
-        else if (mp4ff_atom_compare(a,b,c,d, '©','t','o','o'))
+        else if (mp4ff_atom_compare(a,b,c,d, COPYRIGHT_SYMBOL,'t','o','o'))
             return ATOM_TOOL;
-        else if (mp4ff_atom_compare(a,b,c,d, '©','c','m','t'))
+        else if (mp4ff_atom_compare(a,b,c,d, COPYRIGHT_SYMBOL,'c','m','t'))
             return ATOM_COMMENT;
-        else if (mp4ff_atom_compare(a,b,c,d, '©','g','e','n'))
+        else if (mp4ff_atom_compare(a,b,c,d, COPYRIGHT_SYMBOL,'g','e','n'))
             return ATOM_GENRE1;
     }
 
