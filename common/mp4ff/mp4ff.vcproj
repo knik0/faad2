@@ -170,10 +170,6 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath=".\drms.c"
-				>
-			</File>
-			<File
 				RelativePath="mp4atom.c"
 				>
 				<FileConfiguration
@@ -307,10 +303,6 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl"
 			>
-			<File
-				RelativePath=".\drms.h"
-				>
-			</File>
 			<File
 				RelativePath=".\drmstables.h"
 				>

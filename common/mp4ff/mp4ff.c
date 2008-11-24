@@ -25,14 +25,12 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ff.c,v 1.20 2007/11/01 12:33:29 menno Exp $
+** $Id: mp4ff.c,v 1.21 2008/11/24 21:27:12 menno Exp $
 **/
 
 #include <stdlib.h>
 #include <string.h>
 #include "mp4ffint.h"
-
-#include "drms.h"
 
 mp4ff_t *mp4ff_open_read(mp4ff_callback_t *f)
 {

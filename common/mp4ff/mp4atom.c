@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4atom.c,v 1.25 2007/11/01 12:33:29 menno Exp $
+** $Id: mp4atom.c,v 1.26 2008/11/24 21:27:12 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -33,9 +33,6 @@
 #include "config.h"
 #else
 #include <tchar.h>
-#ifdef ITUNES_DRM
-#include <shlobj.h>
-#endif
 #include <windows.h>
 #endif
 #ifdef HAVE_GETPWUID
@@ -45,8 +42,6 @@
 #    include <string.h>
 #endif
 #include "mp4ffint.h"
-
-#include "drms.h"
 
 /* parse atom header size */
 static int32_t mp4ff_atom_get_size(const int8_t *data)
@@ -346,229 +341,6 @@ static int32_t mp4ff_read_mp4a(mp4ff_t *f)
     return 0;
 }
 
-#ifdef ITUNES_DRM
-char *GetHomeDir( void )
-{
-    char *p_tmp, *p_homedir = NULL;
-
-#if defined(HAVE_GETPWUID)
-    struct passwd *p_pw = NULL;
-#endif
-
-#if defined(_WIN32) || defined(UNDER_CE)
-    typedef HRESULT (WINAPI *SHGETFOLDERPATH)( HWND, int, HANDLE, DWORD,
-                                               LPSTR );
-#   define CSIDL_FLAG_CREATE 0x8000
-#   define CSIDL_APPDATA 0x1A
-#   define SHGFP_TYPE_CURRENT 0
-
-    HINSTANCE shfolder_dll;
-    SHGETFOLDERPATH SHGetFolderPath ;
-    /* load the shfolder dll to retrieve SHGetFolderPath */
-    if( ( shfolder_dll = LoadLibrary( _T("SHFolder.dll") ) ) != NULL )
-    {
-        SHGetFolderPath = (void *)GetProcAddress( shfolder_dll,
-                                                  _T("SHGetFolderPathA") );
-        if ( SHGetFolderPath != NULL )
-        {
-            p_homedir = (char *)malloc( MAX_PATH );
-            if( !p_homedir )
-            {
-                return NULL;
-            }
-
-            /* get the "Application Data" folder for the current user */
-            if( S_OK == SHGetFolderPath( NULL,
-                                         CSIDL_APPDATA | CSIDL_FLAG_CREATE,
-                                         NULL, SHGFP_TYPE_CURRENT,
-                                         p_homedir ) )
-            {
-                FreeLibrary( shfolder_dll );
-                return p_homedir;
-            }
-            free( p_homedir );
-        }
-        FreeLibrary( shfolder_dll );
-    }
-#endif
-
-#if defined(HAVE_GETPWUID)
-    if( ( p_pw = getpwuid( getuid() ) ) == NULL )
-#endif
-    {
-        if( ( p_tmp = getenv( "HOME" ) ) == NULL )
-        {
-            if( ( p_tmp = getenv( "TMP" ) ) == NULL )
-            {
-                p_tmp = "/tmp";
-            }
-        }
-
-        p_homedir = strdup( p_tmp );
-    }
-#if defined(HAVE_GETPWUID)
-    else
-    {
-        p_homedir = strdup( p_pw->pw_dir );
-    }
-#endif
-
-    return p_homedir;
-}
-
-static int32_t mp4ff_read_drms(mp4ff_t *f, uint64_t skip)
-{
-    uint64_t size;
-    int32_t i;
-    uint8_t atom_type = 0;
-    uint8_t header_size = 0;
-
-    f->track[f->total_tracks - 1]->p_drms = drms_alloc( GetHomeDir() );
-
-    for (i = 0; i < 6; i++)
-    {
-        mp4ff_read_char(f); /* reserved */
-    }
-    /* data_reference_index */ mp4ff_read_int16(f);
-
-    mp4ff_read_int32(f); /* reserved */
-    mp4ff_read_int32(f); /* reserved */
-
-    f->track[f->total_tracks - 1]->channelCount = mp4ff_read_int16(f);
-    f->track[f->total_tracks - 1]->sampleSize = mp4ff_read_int16(f);
-
-    mp4ff_read_int16(f);
-    mp4ff_read_int16(f);
-
-    f->track[f->total_tracks - 1]->sampleRate = mp4ff_read_int16(f);
-
-    mp4ff_read_int16(f);
-
-    size = mp4ff_atom_read_header(f, &atom_type, &header_size);
-    if (atom_type == ATOM_ESDS)
-    {
-        mp4ff_read_esds(f);
-    }
-    mp4ff_set_position(f, skip+size+28);
-
-    size = mp4ff_atom_read_header(f, &atom_type, &header_size);
-    if (atom_type == ATOM_SINF)
-    {
-        parse_sub_atoms(f, size-header_size,0);
-    }
-
-    return 0;
-}
-
-static int32_t mp4ff_read_frma(mp4ff_t *f)
-{
-    uint8_t atom_type;
-    int8_t type[4];
-
-    mp4ff_read_data(f, type, 4);
-
-    atom_type = mp4ff_atom_name_to_type(type[0], type[1], type[2], type[3]);
-
-    if (atom_type == ATOM_MP4A)
-    {
-        f->track[f->total_tracks - 1]->type = TRACK_AUDIO;
-    } else if (atom_type == ATOM_MP4V) {
-        f->track[f->total_tracks - 1]->type = TRACK_VIDEO;
-    } else if (atom_type == ATOM_MP4S) {
-        f->track[f->total_tracks - 1]->type = TRACK_SYSTEM;
-    } else {
-        f->track[f->total_tracks - 1]->type = TRACK_UNKNOWN;
-    }
-
-    return 0;
-}
-
-static int32_t mp4ff_read_name(mp4ff_t *f, uint64_t size)
-{
-    uint8_t *data = malloc(size);
-    mp4ff_read_data(f, data, size);
-
-    if (f->track[f->total_tracks - 1]->p_drms != NULL)
-    {
-        drms_init(f->track[f->total_tracks - 1]->p_drms,
-            FOURCC_name, data, strlen(data) );
-    }
-
-    if (data)
-        free(data);
-
-    return 0;
-}
-
-static int32_t mp4ff_read_priv(mp4ff_t *f, uint64_t size)
-{
-    uint8_t *data = malloc(size);
-    mp4ff_read_data(f, data, size);
-
-    if (f->track[f->total_tracks - 1]->p_drms != 0)
-    {
-        drms_init(f->track[f->total_tracks - 1]->p_drms,
-            FOURCC_priv, data, size );
-    }
-
-    if (data)
-        free(data);
-
-    return 0;
-}
-
-static int32_t mp4ff_read_iviv(mp4ff_t *f, uint64_t size)
-{
-    uint8_t *data = malloc(size);
-    mp4ff_read_data(f, data, size);
-
-    if (f->track[f->total_tracks - 1]->p_drms != 0)
-    {
-        drms_init(f->track[f->total_tracks - 1]->p_drms,
-            FOURCC_iviv, data, sizeof(uint32_t) * 4 );
-    }
-
-    if (data)
-        free(data);
-
-    return 0;
-}
-
-static int32_t mp4ff_read_user(mp4ff_t *f, uint64_t size)
-{
-    uint8_t *data = malloc(size);
-    mp4ff_read_data(f, data, size);
-
-    if (f->track[f->total_tracks - 1]->p_drms != 0)
-    {
-        drms_init(f->track[f->total_tracks - 1]->p_drms,
-            FOURCC_user, data, size );
-    }
-
-    if (data)
-        free(data);
-
-    return 0;
-}
-
-static int32_t mp4ff_read_key(mp4ff_t *f, uint64_t size)
-{
-    uint8_t *data = malloc(size);
-    mp4ff_read_data(f, data, size);
-
-    if (f->track[f->total_tracks - 1]->p_drms != 0)
-    {
-        drms_init(f->track[f->total_tracks - 1]->p_drms,
-            FOURCC_key, data, size );
-    }
-
-    if (data)
-        free(data);
-
-    return 0;
-}
-#endif
-
 static int32_t mp4ff_read_stsd(mp4ff_t *f)
 {
     int32_t i;
@@ -595,12 +367,6 @@ static int32_t mp4ff_read_stsd(mp4ff_t *f)
             f->track[f->total_tracks - 1]->type = TRACK_VIDEO;
         } else if (atom_type == ATOM_MP4S) {
             f->track[f->total_tracks - 1]->type = TRACK_SYSTEM;
-#ifdef ITUNES_DRM
-        } else if (atom_type == ATOM_DRMS) {
-            // track type is read from the "frma" atom
-            f->track[f->total_tracks - 1]->type = TRACK_UNKNOWN;
-            mp4ff_read_drms(f, skip-size+header_size);
-#endif
         } else {
             f->track[f->total_tracks - 1]->type = TRACK_UNKNOWN;
         }
@@ -875,21 +641,6 @@ int32_t mp4ff_atom_read(mp4ff_t *f, const int32_t size, const uint8_t atom_type)
     } else if (atom_type == ATOM_MDHD) {
         /* track header */
         mp4ff_read_mdhd(f);
-#ifdef ITUNES_DRM
-    } else if (atom_type == ATOM_FRMA) {
-        /* DRM track format */
-        mp4ff_read_frma(f);
-    } else if (atom_type == ATOM_IVIV) {
-        mp4ff_read_iviv(f, size-8);
-    } else if (atom_type == ATOM_NAME) {
-        mp4ff_read_name(f, size-8);
-    } else if (atom_type == ATOM_PRIV) {
-        mp4ff_read_priv(f, size-8);
-    } else if (atom_type == ATOM_USER) {
-        mp4ff_read_user(f, size-8);
-    } else if (atom_type == ATOM_KEY) {
-        mp4ff_read_key(f, size-8);
-#endif
 #ifdef USE_TAGGING
     } else if (atom_type == ATOM_META) {
         /* iTunes Metadata box */

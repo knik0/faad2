@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ffint.h,v 1.22 2007/11/01 12:33:29 menno Exp $
+** $Id: mp4ffint.h,v 1.23 2008/11/24 21:27:12 menno Exp $
 **/
 
 #ifndef MP4FF_INTERNAL_H
@@ -39,7 +39,6 @@ extern "C" {
 #include <stdlib.h>
 
 #if defined(_WIN32) && !defined(_WIN32_WCE)
-#define ITUNES_DRM
 
 static __inline uint32_t GetDWLE( void const * _p )
 {
@@ -236,11 +235,6 @@ typedef struct
 
     uint32_t timeScale;
     uint64_t duration;
-
-#ifdef ITUNES_DRM
-    /* drms */
-    void *p_drms;
-#endif
 
 } mp4ff_track_t;
 
