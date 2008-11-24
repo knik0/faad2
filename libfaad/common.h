@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.74 2008/09/22 17:55:09 menno Exp $
+** $Id: common.h,v 1.75 2008/11/24 21:53:21 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -172,10 +172,10 @@ typedef unsigned __int64 uint64_t;
 typedef unsigned __int32 uint32_t;
 typedef unsigned __int16 uint16_t;
 typedef unsigned __int8 uint8_t;
-typedef __int64 int64_t;
-typedef __int32 int32_t;
-typedef __int16 int16_t;
-typedef __int8  int8_t;
+typedef signed __int64 int64_t;
+typedef signed __int32 int32_t;
+typedef signed __int16 int16_t;
+typedef signed __int8  int8_t;
 typedef float float32_t;
 
 
@@ -214,10 +214,10 @@ typedef float float32_t;
 /* we need these... */
 #ifndef __TCS__
 typedef unsigned long long uint64_t;
-typedef long long int64_t;
+typedef signed long long int64_t;
 #else
 typedef unsigned long uint64_t;
-typedef long int64_t;
+typedef signed long int64_t;
 #endif
 typedef unsigned long uint32_t;
 typedef unsigned short uint16_t;
