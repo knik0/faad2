@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4atom.c,v 1.27 2008/11/24 21:40:36 menno Exp $
+** $Id: mp4atom.c,v 1.28 2008/12/23 01:24:49 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -192,6 +192,9 @@ static uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b,
         return ATOM_USER;
     else if (mp4ff_atom_compare(a,b,c,d, 'k','e','y',' '))
         return ATOM_KEY;
+	/* added by AJS */
+    else if (mp4ff_atom_compare(a,b,c,d, 'a','A','R','T'))
+        return ATOM_ALBUM_ARTIST;
     else
         return ATOM_UNKNOWN;
 }

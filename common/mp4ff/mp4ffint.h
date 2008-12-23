@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ffint.h,v 1.23 2008/11/24 21:27:12 menno Exp $
+** $Id: mp4ffint.h,v 1.24 2008/12/23 01:24:49 menno Exp $
 **/
 
 #ifndef MP4FF_INTERNAL_H
@@ -121,6 +121,9 @@ static __inline uint64_t U64_AT( void const * _p )
 #define ATOM_PRIV 154
 #define ATOM_USER 155
 #define ATOM_KEY  156
+
+/* added by AJS */
+#define ATOM_ALBUM_ARTIST	157
 
 #define ATOM_UNKNOWN 255
 #define ATOM_FREE ATOM_UNKNOWN
