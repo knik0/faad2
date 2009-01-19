@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4meta.c,v 1.20 2008/12/23 01:24:49 menno Exp $
+** $Id: mp4meta.c,v 1.21 2009/01/19 23:56:30 menno Exp $
 **/
 
 #ifdef USE_TAGGING
@@ -169,8 +169,12 @@ static int32_t mp4ff_set_metadata_name(mp4ff_t *f, const uint8_t atom_type, char
         "unknown", "title", "artist", "writer", "album",
         "date", "tool", "comment", "genre", "track",
         "disc", "compilation", "genre", "tempo", "cover",
-		/* added by AJS */
-		"album_artist"
+		"album_artist", "contentgroup", "lyrics", "description",
+        "network", "show", "episodename",
+        "sorttitle", "sortalbum", "sortartist", "sortalbumartist",
+        "sortwriter", "sortshow",
+        "season", "episode", "podcast"
+
     };
     uint8_t tag_idx = 0;
 
@@ -190,8 +194,22 @@ static int32_t mp4ff_set_metadata_name(mp4ff_t *f, const uint8_t atom_type, char
     case ATOM_GENRE2: tag_idx = 12; break;
     case ATOM_TEMPO: tag_idx = 13; break;
     case ATOM_COVER: tag_idx = 14; break;
-	/* added by AJS */
 	case ATOM_ALBUM_ARTIST: tag_idx = 15; break;
+    case ATOM_CONTENTGROUP: tag_idx = 16; break;
+    case ATOM_LYRICS: tag_idx = 17; break;
+    case ATOM_DESCRIPTION: tag_idx = 18; break;
+    case ATOM_NETWORK: tag_idx = 19; break;
+    case ATOM_SHOW: tag_idx = 20; break;
+    case ATOM_EPISODENAME: tag_idx = 21; break;
+    case ATOM_SORTTITLE: tag_idx = 22; break;
+    case ATOM_SORTALBUM: tag_idx = 23; break;
+    case ATOM_SORTARTIST: tag_idx = 24; break;
+    case ATOM_SORTALBUMARTIST: tag_idx = 25; break;
+    case ATOM_SORTWRITER: tag_idx = 26; break;
+    case ATOM_SORTSHOW: tag_idx = 27; break;
+    case ATOM_SEASON: tag_idx = 28; break;
+    case ATOM_EPISODE: tag_idx = 29; break;
+    case ATOM_PODCAST: tag_idx = 30; break;
     default: tag_idx = 0; break;
     }
 

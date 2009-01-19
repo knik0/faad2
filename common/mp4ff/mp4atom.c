@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4atom.c,v 1.28 2008/12/23 01:24:49 menno Exp $
+** $Id: mp4atom.c,v 1.29 2009/01/19 23:56:30 menno Exp $
 **/
 
 #include <stdlib.h>
@@ -108,6 +108,16 @@ static uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b,
             return ATOM_TRACK;
         else if (mp4ff_atom_compare(a,b,c,d, 't','m','p','o'))
             return ATOM_TEMPO;
+        else if (mp4ff_atom_compare(a,b,c,d, 't','v','n','n'))
+            return ATOM_NETWORK;
+        else if (mp4ff_atom_compare(a,b,c,d, 't','v','s','h'))
+            return ATOM_SHOW;
+        else if (mp4ff_atom_compare(a,b,c,d, 't','v','e','n'))
+            return ATOM_EPISODENAME;
+        else if (mp4ff_atom_compare(a,b,c,d, 't','v','s','n'))
+            return ATOM_SEASON;
+        else if (mp4ff_atom_compare(a,b,c,d, 't','v','e','s'))
+            return ATOM_EPISODE;
     } else if (a == 's') {
         if (mp4ff_atom_compare(a,b,c,d, 's','t','b','l'))
             return ATOM_STBL;
@@ -131,6 +141,18 @@ static uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b,
             return ATOM_SINF;
         else if (mp4ff_atom_compare(a,b,c,d, 's','c','h','i'))
             return ATOM_SCHI;
+        else if (mp4ff_atom_compare(a,b,c,d, 's','o','n','m'))
+            return ATOM_SORTTITLE;
+        else if (mp4ff_atom_compare(a,b,c,d, 's','o','a','l'))
+            return ATOM_SORTALBUM;
+        else if (mp4ff_atom_compare(a,b,c,d, 's','o','a','r'))
+            return ATOM_SORTARTIST;
+        else if (mp4ff_atom_compare(a,b,c,d, 's','o','a','a'))
+            return ATOM_SORTALBUMARTIST;
+        else if (mp4ff_atom_compare(a,b,c,d, 's','o','c','o'))
+            return ATOM_SORTWRITER;
+        else if (mp4ff_atom_compare(a,b,c,d, 's','o','s','n'))
+            return ATOM_SORTSHOW;
     } else if (a == COPYRIGHT_SYMBOL) {
         if (mp4ff_atom_compare(a,b,c,d, COPYRIGHT_SYMBOL,'n','a','m'))
             return ATOM_TITLE;
@@ -148,6 +170,10 @@ static uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b,
             return ATOM_COMMENT;
         else if (mp4ff_atom_compare(a,b,c,d, COPYRIGHT_SYMBOL,'g','e','n'))
             return ATOM_GENRE1;
+        else if (mp4ff_atom_compare(a,b,c,d, COPYRIGHT_SYMBOL,'g','r','p'))
+            return ATOM_CONTENTGROUP;
+        else if (mp4ff_atom_compare(a,b,c,d, COPYRIGHT_SYMBOL,'l','y','r'))
+            return ATOM_LYRICS;
     }
 
     if (mp4ff_atom_compare(a,b,c,d, 'e','d','t','s'))
@@ -192,9 +218,12 @@ static uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b,
         return ATOM_USER;
     else if (mp4ff_atom_compare(a,b,c,d, 'k','e','y',' '))
         return ATOM_KEY;
-	/* added by AJS */
     else if (mp4ff_atom_compare(a,b,c,d, 'a','A','R','T'))
         return ATOM_ALBUM_ARTIST;
+    else if (mp4ff_atom_compare(a,b,c,d, 'd','e','s','c'))
+        return ATOM_DESCRIPTION;
+    else if (mp4ff_atom_compare(a,b,c,d, 'p','c','s','t'))
+        return ATOM_PODCAST;
     else
         return ATOM_UNKNOWN;
 }
