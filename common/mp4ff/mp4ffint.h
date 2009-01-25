@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ffint.h,v 1.25 2009/01/19 23:56:30 menno Exp $
+** $Id: mp4ffint.h,v 1.26 2009/01/25 20:14:34 menno Exp $
 **/
 
 #ifndef MP4FF_INTERNAL_H
@@ -38,51 +38,6 @@ extern "C" {
 #include "mp4ff_int_types.h"
 #include <stdlib.h>
 
-#if defined(_WIN32) && !defined(_WIN32_WCE)
-
-static __inline uint32_t GetDWLE( void const * _p )
-{
-    uint8_t * p = (uint8_t *)_p;
-    return ( ((uint32_t)p[3] << 24) | ((uint32_t)p[2] << 16)
-              | ((uint32_t)p[1] << 8) | p[0] );
-}
-static __inline uint32_t U32_AT( void const * _p )
-{
-    uint8_t * p = (uint8_t *)_p;
-    return ( ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16)
-              | ((uint32_t)p[2] << 8) | p[3] );
-}
-static __inline uint64_t U64_AT( void const * _p )
-{
-    uint8_t * p = (uint8_t *)_p;
-    return ( ((uint64_t)p[0] << 56) | ((uint64_t)p[1] << 48)
-              | ((uint64_t)p[2] << 40) | ((uint64_t)p[3] << 32)
-              | ((uint64_t)p[4] << 24) | ((uint64_t)p[5] << 16)
-              | ((uint64_t)p[6] << 8) | p[7] );
-}
-
-#ifdef WORDS_BIGENDIAN
-#   define VLC_FOURCC( a, b, c, d ) \
-        ( ((uint32_t)d) | ( ((uint32_t)c) << 8 ) \
-           | ( ((uint32_t)b) << 16 ) | ( ((uint32_t)a) << 24 ) )
-#   define VLC_TWOCC( a, b ) \
-        ( (uint16_t)(b) | ( (uint16_t)(a) << 8 ) )
-
-#else
-#   define VLC_FOURCC( a, b, c, d ) \
-        ( ((uint32_t)a) | ( ((uint32_t)b) << 8 ) \
-           | ( ((uint32_t)c) << 16 ) | ( ((uint32_t)d) << 24 ) )
-#   define VLC_TWOCC( a, b ) \
-        ( (uint16_t)(a) | ( (uint16_t)(b) << 8 ) )
-#endif
-
-#define FOURCC_user VLC_FOURCC( 'u', 's', 'e', 'r' )
-#define FOURCC_key  VLC_FOURCC( 'k', 'e', 'y', ' ' )
-#define FOURCC_iviv VLC_FOURCC( 'i', 'v', 'i', 'v' )
-#define FOURCC_name VLC_FOURCC( 'n', 'a', 'm', 'e' )
-#define FOURCC_priv VLC_FOURCC( 'p', 'r', 'i', 'v' )
-
-#endif
 #define MAX_TRACKS 1024
 #define TRACK_UNKNOWN 0
 #define TRACK_AUDIO   1

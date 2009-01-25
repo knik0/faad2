@@ -212,14 +212,14 @@ typedef struct
 
 static stdmeta_entry stdmetas[] = 
 {
-	{"©nam","title"},
-	{"©ART","artist"},
-	{"©wrt","writer"},
-	{"©alb","album"},
-	{"©day","date"},
-	{"©too","tool"},
-	{"©cmt","comment"},
-//	{"©gen","genre"},
+	{"\xA9" "nam","title"},
+	{"\xA9" "ART","artist"},
+	{"\xA9" "wrt","writer"},
+	{"\xA9" "alb","album"},
+	{"\xA9" "day","date"},
+	{"\xA9" "too","tool"},
+	{"\xA9" "cmt","comment"},
+//	{"\xA9" "gen","genre"},
 	{"cpil","compilation"},
 //	{"trkn","track"},
 //	{"disk","disc"},
