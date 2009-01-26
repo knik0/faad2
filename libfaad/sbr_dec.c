@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: sbr_dec.c,v 1.43 2007/11/01 12:33:34 menno Exp $
+** $Id: sbr_dec.c,v 1.44 2009/01/26 22:32:31 menno Exp $
 **/
 
 
@@ -637,7 +637,7 @@ uint8_t sbrDecodeSingleFramePS(sbr_info *sbr, real_t *left_channel, real_t *righ
     sbr->ret += sbr_process_channel(sbr, left_channel, X_left, 0, dont_process, downSampledSBR);
 
     /* copy some extra data for PS */
-    for (l = 32; l < 38; l++)
+    for (l = sbr->numTimeSlotsRate; l < sbr->numTimeSlotsRate + 6; l++)
     {
         for (k = 0; k < 5; k++)
         {

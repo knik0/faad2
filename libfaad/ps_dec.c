@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: ps_dec.c,v 1.15 2008/09/22 17:55:09 menno Exp $
+** $Id: ps_dec.c,v 1.16 2009/01/26 22:32:31 menno Exp $
 **/
 
 #include "common.h"
@@ -162,16 +162,16 @@ typedef struct
 
 /* static function declarations */
 static void ps_data_decode(ps_info *ps);
-static hyb_info *hybrid_init();
+static hyb_info *hybrid_init(uint8_t numTimeSlotsRate);
 static void channel_filter2(hyb_info *hyb, uint8_t frame_len, const real_t *filter,
                             qmf_t *buffer, qmf_t **X_hybrid);
 static void INLINE DCT3_4_unscaled(real_t *y, real_t *x);
 static void channel_filter8(hyb_info *hyb, uint8_t frame_len, const real_t *filter,
                             qmf_t *buffer, qmf_t **X_hybrid);
 static void hybrid_analysis(hyb_info *hyb, qmf_t X[32][64], qmf_t X_hybrid[32][32],
-                            uint8_t use34);
+                            uint8_t use34, uint8_t numTimeSlotsRate);
 static void hybrid_synthesis(hyb_info *hyb, qmf_t X[32][64], qmf_t X_hybrid[32][32],
-                             uint8_t use34);
+                             uint8_t use34, uint8_t numTimeSlotsRate);
 static int8_t delta_clip(int8_t i, int8_t min, int8_t max);
 static void delta_decode(uint8_t enable, int8_t *index, int8_t *index_prev,
                          uint8_t dt_flag, uint8_t nr_par, uint8_t stride,
@@ -192,7 +192,7 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
 /*  */
 
 
-static hyb_info *hybrid_init()
+static hyb_info *hybrid_init(uint8_t numTimeSlotsRate)
 {
     uint8_t i;
 
@@ -208,7 +208,7 @@ static hyb_info *hybrid_init()
     hyb->resolution20[1] = 2;
     hyb->resolution20[2] = 2;
 
-    hyb->frame_len = 32;
+    hyb->frame_len = numTimeSlotsRate;
 
     hyb->work = (qmf_t*)faad_malloc((hyb->frame_len+12) * sizeof(qmf_t));
     memset(hyb->work, 0, (hyb->frame_len+12) * sizeof(qmf_t));
@@ -505,7 +505,7 @@ static void channel_filter12(hyb_info *hyb, uint8_t frame_len, const real_t *fil
  * to improve frequency resolution
  */
 static void hybrid_analysis(hyb_info *hyb, qmf_t X[32][64], qmf_t X_hybrid[32][32],
-                            uint8_t use34)
+                            uint8_t use34, uint8_t numTimeSlotsRate)
 {
     uint8_t k, n, band;
     uint8_t offset = 0;
@@ -563,7 +563,7 @@ static void hybrid_analysis(hyb_info *hyb, qmf_t X[32][64], qmf_t X_hybrid[32][3
     /* group hybrid channels */
     if (!use34)
     {
-        for (n = 0; n < 32 /*30?*/; n++)
+        for (n = 0; n < numTimeSlotsRate; n++)
         {
             QMF_RE(X_hybrid[n][3]) += QMF_RE(X_hybrid[n][4]);
             QMF_IM(X_hybrid[n][3]) += QMF_IM(X_hybrid[n][4]);
@@ -579,7 +579,7 @@ static void hybrid_analysis(hyb_info *hyb, qmf_t X[32][64], qmf_t X_hybrid[32][3
 }
 
 static void hybrid_synthesis(hyb_info *hyb, qmf_t X[32][64], qmf_t X_hybrid[32][32],
-                             uint8_t use34)
+                             uint8_t use34, uint8_t numTimeSlotsRate)
 {
     uint8_t k, n, band;
     uint8_t offset = 0;
@@ -913,13 +913,13 @@ static void ps_data_decode(ps_info *ps)
         ps->border_position[0] = 0;
         for (env = 1; env < ps->num_env; env++)
         {
-            ps->border_position[env] = (env * 32 /* 30 for 960? */) / ps->num_env;
+            ps->border_position[env] = (env * ps->numTimeSlotsRate) / ps->num_env;
         }
-        ps->border_position[ps->num_env] = 32 /* 30 for 960? */;
+        ps->border_position[ps->num_env] = ps->numTimeSlotsRate;
     } else {
         ps->border_position[0] = 0;
 
-        if (ps->border_position[ps->num_env] < 32 /* 30 for 960? */)
+        if (ps->border_position[ps->num_env] < ps->numTimeSlotsRate)
         {
             for (bin = 0; bin < 34; bin++)
             {
@@ -932,12 +932,12 @@ static void ps_data_decode(ps_info *ps)
                 ps->opd_index[ps->num_env][bin] = ps->opd_index[ps->num_env-1][bin];
             }
             ps->num_env++;
-            ps->border_position[ps->num_env] = 32 /* 30 for 960? */;
+            ps->border_position[ps->num_env] = ps->numTimeSlotsRate;
         }
 
         for (env = 1; env < ps->num_env; env++)
         {
-            int8_t thr = 32 /* 30 for 960? */ - (ps->num_env - env);
+            int8_t thr = ps->numTimeSlotsRate - (ps->num_env - env);
 
             if (ps->border_position[env] > thr)
             {
@@ -1866,7 +1866,7 @@ void ps_free(ps_info *ps)
     faad_free(ps);
 }
 
-ps_info *ps_init(uint8_t sr_index)
+ps_info *ps_init(uint8_t sr_index, uint8_t numTimeSlotsRate)
 {
     uint8_t i;
     uint8_t short_delay_band;
@@ -1874,7 +1874,8 @@ ps_info *ps_init(uint8_t sr_index)
     ps_info *ps = (ps_info*)faad_malloc(sizeof(ps_info));
     memset(ps, 0, sizeof(ps_info));
 
-    ps->hyb = hybrid_init();
+    ps->hyb = hybrid_init(numTimeSlotsRate);
+    ps->numTimeSlotsRate = numTimeSlotsRate;
 
     ps->ps_data_available = 0;
 
@@ -1990,7 +1991,7 @@ uint8_t ps_decode(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64])
      * frequency resolution
      */
     hybrid_analysis((hyb_info*)ps->hyb, X_left, X_hybrid_left,
-        ps->use34hybrid_bands);
+        ps->use34hybrid_bands, ps->numTimeSlotsRate);
 
     /* decorrelate mono signal */
     ps_decorrelate(ps, X_left, X_right, X_hybrid_left, X_hybrid_right);
@@ -2000,10 +2001,10 @@ uint8_t ps_decode(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64])
 
     /* hybrid synthesis, to rebuild the SBR QMF matrices */
     hybrid_synthesis((hyb_info*)ps->hyb, X_left, X_hybrid_left,
-        ps->use34hybrid_bands);
+        ps->use34hybrid_bands, ps->numTimeSlotsRate);
 
     hybrid_synthesis((hyb_info*)ps->hyb, X_right, X_hybrid_right,
-        ps->use34hybrid_bands);
+        ps->use34hybrid_bands, ps->numTimeSlotsRate);
 
     return 0;
 }
