@@ -7,7 +7,7 @@ libmp4_la_CFLAGS = $(local_CFLAGS) -Wall \
        -I$(top_srcdir)/include -I$(top_srcdir)/common/mp4ff
 
 libmp4_la_LIBADD = $(top_builddir)/libfaad/libfaad.la \
-       $(top_builddir)/common/mp4ff/libmp4ff.la
+       $(top_builddir)/common/mp4ff/libmp4ff.a
 
 libmp4_la_LDFLAGS = -module -avoid-version $(local_LDFLAGS) -lpthread
 
