@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: common.h,v 1.75 2008/11/24 21:53:21 menno Exp $
+** $Id: common.h,v 1.76 2009/01/26 23:51:15 menno Exp $
 **/
 
 #ifndef __COMMON_H__
@@ -38,6 +38,8 @@ extern "C" {
 #ifdef HAVE_CONFIG_H
 #  include "../config.h"
 #endif
+
+#include <neaacdec.h>
 
 #if 1
 #define INLINE __inline

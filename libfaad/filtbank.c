@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: filtbank.c,v 1.45 2007/11/01 12:33:30 menno Exp $
+** $Id: filtbank.c,v 1.46 2009/01/26 23:51:15 menno Exp $
 **/
 
 #include "common.h"
@@ -40,7 +40,6 @@
 #endif
 
 #include "filtbank.h"
-#include "decoder.h"
 #include "syntax.h"
 #include "kbd_win.h"
 #include "sine_win.h"

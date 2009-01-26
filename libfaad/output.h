@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: output.h,v 1.25 2007/11/01 12:33:32 menno Exp $
+** $Id: output.h,v 1.26 2009/01/26 23:51:15 menno Exp $
 **/
 
 #ifndef __OUTPUT_H__
@@ -35,7 +35,7 @@
 extern "C" {
 #endif
 
-void* output_to_PCM(NeAACDecHandle hDecoder,
+void* output_to_PCM(NeAACDecStruct *hDecoder,
                     real_t **input,
                     void *samplebuffer,
                     uint8_t channels,

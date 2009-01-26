@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: hcr.c,v 1.25 2008/03/23 23:03:28 menno Exp $
+** $Id: hcr.c,v 1.26 2009/01/26 23:51:15 menno Exp $
 **/
 
 #include "common.h"
@@ -214,7 +214,7 @@ static void fill_in_codeword(codeword_t *codeword, uint16_t index, uint16_t sp, 
     codeword[index].bits.len = 0;
 }
 
-uint8_t reordered_spectral_data(NeAACDecHandle hDecoder, ic_stream *ics, 
+uint8_t reordered_spectral_data(NeAACDecStruct *hDecoder, ic_stream *ics, 
                                 bitfile *ld, int16_t *spectral_data)
 {   
     uint16_t PCWs_done;

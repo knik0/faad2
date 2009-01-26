@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: specrec.h,v 1.32 2007/11/01 12:33:36 menno Exp $
+** $Id: specrec.h,v 1.33 2009/01/26 23:51:15 menno Exp $
 **/
 
 #ifndef __SPECREC_H__
@@ -37,10 +37,10 @@ extern "C" {
 
 #include "syntax.h"
 
-uint8_t window_grouping_info(NeAACDecHandle hDecoder, ic_stream *ics);
-uint8_t reconstruct_channel_pair(NeAACDecHandle hDecoder, ic_stream *ics1, ic_stream *ics2,
+uint8_t window_grouping_info(NeAACDecStruct *hDecoder, ic_stream *ics);
+uint8_t reconstruct_channel_pair(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_stream *ics2,
                                  element *cpe, int16_t *spec_data1, int16_t *spec_data2);
-uint8_t reconstruct_single_channel(NeAACDecHandle hDecoder, ic_stream *ics, element *sce,
+uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics, element *sce,
                                 int16_t *spec_data);
 
 #ifdef __cplusplus
