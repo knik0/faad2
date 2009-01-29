@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ff.h,v 1.26 2007/11/01 12:33:29 menno Exp $
+** $Id: mp4ff.h,v 1.27 2009/01/29 00:41:08 menno Exp $
 **/
 
 #ifndef MP4FF_H
@@ -35,7 +35,11 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#else
 #include "mp4ff_int_types.h"
+#endif
 
 /* file callback structure */
 typedef struct
