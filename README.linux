@@ -2,7 +2,6 @@ To compile under Linux.
 ----------------------
 just run :
 
-./bootstrap
 ./configure --with-mp4v2
 make
 sudo make install
