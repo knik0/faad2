@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4.h,v 1.27 2009/01/26 23:51:15 menno Exp $
+** $Id: mp4.h,v 1.28 2009/02/05 00:51:03 menno Exp $
 **/
 
 #ifndef __MP4_H__
@@ -35,7 +35,7 @@
 extern "C" {
 #endif
 
-#include <neaacdec.h>
+#include "neaacdec.h"
 
 int8_t AudioSpecificConfig2(uint8_t *pBuffer,
                             uint32_t buffer_size,

@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.116 2009/01/26 23:51:15 menno Exp $
+** $Id: decoder.c,v 1.117 2009/02/05 00:51:03 menno Exp $
 **/
 
 #include "common.h"
@@ -159,8 +159,9 @@ NeAACDecHandle NEAACDECAPI NeAACDecOpen(void)
     return hDecoder;
 }
 
-NeAACDecConfigurationPtr NEAACDECAPI NeAACDecGetCurrentConfiguration(NeAACDecStruct *hDecoder)
+NeAACDecConfigurationPtr NEAACDECAPI NeAACDecGetCurrentConfiguration(NeAACDecHandle hpDecoder)
 {
+    NeAACDecStruct* hDecoder = (NeAACDecStruct*)hpDecoder;
     if (hDecoder)
     {
         NeAACDecConfigurationPtr config = &(hDecoder->config);
@@ -171,9 +172,10 @@ NeAACDecConfigurationPtr NEAACDECAPI NeAACDecGetCurrentConfiguration(NeAACDecStr
     return NULL;
 }
 
-unsigned char NEAACDECAPI NeAACDecSetConfiguration(NeAACDecStruct *hDecoder,
+unsigned char NEAACDECAPI NeAACDecSetConfiguration(NeAACDecHandle hpDecoder,
                                                    NeAACDecConfigurationPtr config)
 {
+    NeAACDecStruct* hDecoder = (NeAACDecStruct*)hpDecoder;
     if (hDecoder && config)
     {
         /* check if we can decode this object type */
@@ -233,7 +235,7 @@ static int latmCheck(latm_header *latm, bitfile *ld)
 }
 
 
-long NEAACDECAPI NeAACDecInit(NeAACDecStruct *hDecoder,
+long NEAACDECAPI NeAACDecInit(NeAACDecHandle hpDecoder,
                               unsigned char *buffer,
                               unsigned long buffer_size,
                               unsigned long *samplerate,
@@ -243,6 +245,7 @@ long NEAACDECAPI NeAACDecInit(NeAACDecStruct *hDecoder,
     bitfile ld;
     adif_header adif;
     adts_header adts;
+    NeAACDecStruct* hDecoder = (NeAACDecStruct*)hpDecoder;
 
 
     if ((hDecoder == NULL) || (samplerate == NULL) || (channels == NULL))
@@ -363,12 +366,13 @@ long NEAACDECAPI NeAACDecInit(NeAACDecStruct *hDecoder,
 }
 
 /* Init the library using a DecoderSpecificInfo */
-char NEAACDECAPI NeAACDecInit2(NeAACDecStruct *hDecoder,
+char NEAACDECAPI NeAACDecInit2(NeAACDecHandle hpDecoder,
                                unsigned char *pBuffer,
                                unsigned long SizeOfDecoderSpecificInfo,
                                unsigned long *samplerate,
                                unsigned char *channels)
 {
+    NeAACDecStruct* hDecoder = (NeAACDecStruct*)hpDecoder;
     int8_t rc;
     mp4AudioSpecificConfig mp4ASC;
 
@@ -456,10 +460,11 @@ char NEAACDECAPI NeAACDecInit2(NeAACDecStruct *hDecoder,
 }
 
 #ifdef DRM
-char NEAACDECAPI NeAACDecInitDRM(NeAACDecStruct **hDecoder,
+char NEAACDECAPI NeAACDecInitDRM(NeAACDecHandle *hpDecoder,
                                  unsigned long samplerate,
                                  unsigned char channels)
 {
+    NeAACDecStruct** hDecoder = (NeAACDecStruct**)hpDecoder;
     if (hDecoder == NULL)
         return 1; /* error */
 
@@ -498,9 +503,10 @@ char NEAACDECAPI NeAACDecInitDRM(NeAACDecStruct **hDecoder,
 }
 #endif
 
-void NEAACDECAPI NeAACDecClose(NeAACDecStruct *hDecoder)
+void NEAACDECAPI NeAACDecClose(NeAACDecHandle hpDecoder)
 {
     uint8_t i;
+    NeAACDecStruct* hDecoder = (NeAACDecStruct*)hpDecoder;
 
     if (hDecoder == NULL)
         return;
@@ -551,8 +557,9 @@ void NEAACDECAPI NeAACDecClose(NeAACDecStruct *hDecoder)
     if (hDecoder) faad_free(hDecoder);
 }
 
-void NEAACDECAPI NeAACDecPostSeekReset(NeAACDecStruct *hDecoder, long frame)
+void NEAACDECAPI NeAACDecPostSeekReset(NeAACDecHandle hpDecoder, long frame)
 {
+    NeAACDecStruct* hDecoder = (NeAACDecStruct*)hpDecoder;
     if (hDecoder)
     {
         hDecoder->postSeekResetFlag = 1;
@@ -780,21 +787,23 @@ static void create_channel_config(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *h
     }
 }
 
-void* NEAACDECAPI NeAACDecDecode(NeAACDecStruct *hDecoder,
+void* NEAACDECAPI NeAACDecDecode(NeAACDecHandle hpDecoder,
                                  NeAACDecFrameInfo *hInfo,
                                  unsigned char *buffer,
                                  unsigned long buffer_size)
 {
+    NeAACDecStruct* hDecoder = (NeAACDecStruct*)hpDecoder;
     return aac_frame_decode(hDecoder, hInfo, buffer, buffer_size, NULL, 0);
 }
 
-void* NEAACDECAPI NeAACDecDecode2(NeAACDecStruct *hDecoder,
+void* NEAACDECAPI NeAACDecDecode2(NeAACDecHandle hpDecoder,
                                   NeAACDecFrameInfo *hInfo,
                                   unsigned char *buffer,
                                   unsigned long buffer_size,
                                   void **sample_buffer,
                                   unsigned long sample_buffer_size)
 {
+    NeAACDecStruct* hDecoder = (NeAACDecStruct*)hpDecoder;
     if ((sample_buffer == NULL) || (sample_buffer_size == 0))
     {
         hInfo->error = 27;
