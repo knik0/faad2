@@ -1,4 +1,5 @@
 bin_PROGRAMS = faad
+man_MANS = faad.man
 
 INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/common/faad \
 	   -I$(top_srcdir)/common/mp4ff
