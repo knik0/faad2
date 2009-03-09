@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: mp4ffint.h,v 1.26 2009/01/25 20:14:34 menno Exp $
+** $Id: mp4ffint.h,v 1.27 2009/03/09 21:22:22 menno Exp $
 **/
 
 #ifndef MP4FF_INTERNAL_H
@@ -152,6 +152,7 @@ typedef struct
 {
     char *item;
     char *value;
+    uint32_t len;
 } mp4ff_tag_t;
 
 /* metadata list structure */
@@ -285,7 +286,7 @@ int32_t mp4ff_set_sample_position(mp4ff_t *f, const int32_t track, const int32_t
 
 #ifdef USE_TAGGING
 /* mp4meta.c */
-static int32_t mp4ff_tag_add_field(mp4ff_metadata_t *tags, const char *item, const char *value);
+static int32_t mp4ff_tag_add_field(mp4ff_metadata_t *tags, const char *item, const char *value, int32_t len);
 static int32_t mp4ff_tag_set_field(mp4ff_metadata_t *tags, const char *item, const char *value);
 static int32_t mp4ff_set_metadata_name(mp4ff_t *f, const uint8_t atom_type, char **name);
 static int32_t mp4ff_parse_tag(mp4ff_t *f, const uint8_t parent_atom_type, const int32_t size);
