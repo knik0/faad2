@@ -1,5 +1,5 @@
-lib_LIBRARIES = libmp4ff.a
-include_HEADERS = mp4ff.h mp4ffint.h
+noinst_LIBRARIES = libmp4ff.a
+noinst_HEADERS = mp4ff.h mp4ffint.h
 
 libmp4ff_a_CFLAGS = -DUSE_TAGGING=1
 
