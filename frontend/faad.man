@@ -24,9 +24,9 @@ Set the output (individual) sample format. The number takes one of the following
 .br
 3: 32\(hybit PCM data.
 .br
-4: 32\(hybit floating\hy(point data.
+4: 32\(hybit floating\(hypoint data.
 .br
-5: 64\(hybit floating\hy(point data.
+5: 64\(hybit floating\(hypoint data.
 .RE
 .RE
 .TP
