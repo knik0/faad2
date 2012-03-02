@@ -1,11 +1,12 @@
 lib_LTLIBRARIES = libfaad.la
 
-AM_CFLAGS	= -iquote $(top_srcdir)/include
+INCLUDES	= -iquote $(top_srcdir)/include
 include_HEADERS = $(top_srcdir)/include/faad.h \
 		  $(top_srcdir)/include/neaacdec.h
 
 libfaad_la_LDFLAGS = -version-info 2:0:0
 libfaad_la_LIBADD = -lm
+libfaad_la_CFLAGS = -fvisibility=hidden
 
 libfaad_la_SOURCES = bits.c cfft.c decoder.c drc.c \
 		     drm_dec.c error.c filtbank.c \
