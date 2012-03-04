@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.87 2012/03/02 15:28:44 knik Exp $
+** $Id: main.c,v 1.88 2012/03/04 09:59:02 knik Exp $
 **/
 
 #ifdef _WIN32
@@ -1109,9 +1109,9 @@ int main(int argc, char *argv[])
     int mp4file = 0;
     int noGapless = 0;
     char *fnp;
-    char aacFileName[255];
-    char audioFileName[255];
-    char adtsFileName[255];
+    char *aacFileName = NULL;
+    char *audioFileName = NULL;
+    char *adtsFileName = NULL;
     unsigned char header[8];
     float length = 0;
     FILE *hMP4File;
@@ -1159,6 +1159,12 @@ int main(int argc, char *argv[])
             if (optarg)
             {
                 outfile_set = 1;
+                audioFileName = (char *) malloc(sizeof(char) * (strlen(optarg) + 1));
+                if (audioFileName == NULL)
+                {
+                    faad_fprintf(stderr, "Error allocating memory for audioFileName.\n");
+                    return 1;
+                }
                 strcpy(audioFileName, optarg);
             }
             break;
@@ -1166,6 +1172,12 @@ int main(int argc, char *argv[])
             if (optarg)
             {
                 adts_out = 1;
+                adtsFileName = (char *) malloc(sizeof(char) * (strlen(optarg) + 1));
+                if (adtsFileName == NULL)
+                {
+                    faad_fprintf(stderr, "Error allocating memory for adtsFileName.\n");
+                    return 1;
+                }
                 strcpy(adtsFileName, optarg);
             }
             break;
@@ -1286,6 +1298,12 @@ int main(int argc, char *argv[])
 #endif
 
     /* point to the specified file name */
+    aacFileName = (char *) malloc(sizeof(char) * (strlen(argv[optind]) + 1));
+    if (aacFileName == NULL)
+    {
+        faad_fprintf(stderr, "Error allocating memory for aacFileName.\n");
+        return 1;
+    }
     strcpy(aacFileName, argv[optind]);
 
 #ifdef _WIN32
@@ -1299,6 +1317,12 @@ int main(int argc, char *argv[])
      */
     if(!writeToStdio && !outfile_set)
     {
+        audioFileName = (char *) malloc(sizeof(char) * (strlen(aacFileName) + strlen(file_ext[format]) + 1));
+        if (audioFileName == NULL)
+        {
+            faad_fprintf(stderr, "Error allocating memory for audioFileName.\n");
+            return 1;
+        }
         strcpy(audioFileName, aacFileName);
 
         fnp = (char *)strrchr(audioFileName,'.');
@@ -1359,6 +1383,11 @@ int main(int argc, char *argv[])
             old_format, &length);
     }
 
+    if (audioFileName != NULL)
+      free (audioFileName);
+    if (adtsFileName != NULL)
+      free (adtsFileName);
+
     if (!result && !infoOnly)
     {
 #ifdef _WIN32
@@ -1373,6 +1402,9 @@ int main(int argc, char *argv[])
         faad_fprintf(stderr, "Decoding %s took: %5.2f sec. %5.2fx real-time.\n", aacFileName,
             dec_length, length/dec_length);
     }
+
+    if (aacFileName != NULL)
+      free (aacFileName);
 
     return 0;
 }
