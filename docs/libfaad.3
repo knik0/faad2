@@ -1,0 +1,531 @@
+.TH man 3 "15 Nov 2014" "The Debian Project" "libfaad Documentation"
+.SH "NAME"
+libfaad \- C library for AAC Decoding
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+
+#include <neaacec\&.h>
+
+.HP
+.BI "char NEAACDECAPI *NeAACDecGetErrorMessage(" "" "unsigned char " errcode );
+
+.HP
+.B "unsigned long NEAACDECAPI NeAACDecGetCapabilities(void);"
+
+.HP
+.B "NeAACDecHandle NEAACDECAPI NeAACDecOpen(void);"
+
+.HP
+.B "NeAACDecConfigurationPtr NEAACDECAPI NeAACDecGetCurrentConfiguration("
+.BI "NeAACDecHandle " hDecoder ");"
+
+.HP
+.B "unsigned char NEAACDECAPI NeAACDecSetConfiguration("
+.BI "NeAACDecHandle " "hDecoder" ", NeAACDecConfigurationPtr " config ");"
+
+.HP
+/* Init the library based on info from the AAC file (ADTS/ADIF) */
+.B "long NEAACDECAPI NeAACDecInit("
+.BI "NeAACDecHandle " hDecoder ", unsigned char *" buffer ", unsigned long " "buffer_size" ","
+.BI "unsigned long *" "samplerate" ", unsigned char *" "channels" ");"
+.HP
+/* Init the library using a DecoderSpecificInfo */
+.B "char NEAACDECAPI NeAACDecInit2("
+.BI "NeAACDecHandle " "hDecoder" ", unsigned char *" "pBuffer" ","
+.BI "unsigned long " "SizeOfDecoderSpecificInfo" ","
+.BI "unsigned long *" "samplerate" ", unsigned char *"channels" ");"
+.HP
+/* Init the library for DRM */
+.B "char NEAACDECAPI NeAACDecInitDRM("
+.BI "NeAACDecHandle *" "hDecoder" ", unsigned long " "samplerate" ", unsigned char " "channels" ");"
+.HP
+.B "void NEAACDECAPI NeAACDecPostSeekReset("
+.BI "NeAACDecHandle " "hDecoder" ", long "frame" ");"
+.HP
+.BI "void NEAACDECAPI NeAACDecClose(NeAACDecHandle " "hDecoder" ");"
+.HP
+.B "void NEAACDECAPI *NeAACDecDecode("
+.BI "NeAACDecHandle " "hDecoder" ", NeAACDecFrameInfo *" "hInfo" ","
+.BI "unsigned char *" "buffer" ","
+.BI "unsigned long " "buffer_size" ");"
+.HP
+.B "void NEAACDECAPI *NeAACDecDecode2("
+.BI "NeAACDecHandle " "hDecoder" ", NeAACDecFrameInfo *" "hInfo" ","
+.BI "unsigned char *" "buffer" ", unsigned long " "buffer_size" ","
+.BI "void **" "sample_buffer" ", unsigned long " "sample_buffer_size" ");"
+.HP
+.B "char NEAACDECAPI NeAACDecAudioSpecificConfig("
+.BI "unsigned char *" "pBuffer" ", unsigned long " "buffer_size" ","
+.BI "mp4AudioSpecificConfig *" "mp4ASC" ");"
+.PP
+For normal use link it with the linker option \-lfaad\&.
+.PP
+For Digital Radio Mondiale link it with the linker option \-lfaad_drm\&.
+.sp
+.SH "DESCRIPTION"
+.PP
+.B NeAACDecGetErrorMessage
+.PP
+.B char NEAACDECAPI *NeAACDecGetErrorMessage(unsigned char errcode);
+.PP
+Convert an error code to text.
+.PP
+.B NeAACDecGetCapabilities
+.PP
+unsigned long NEAACAPI NeAACDecGetCapabilities(void);
+.PP
+ 
+.PP
+This function returns the capabilities of the decoder in a 32 bit
+unsigned integer.
+The bits that are set in the 32 bit unsigned integer define with which
+capabilities the library has been compiled.
+.PP
+The following capabilities are defined:
+.PP
+\ 
+.PP
+#define LC_DEC_CAP \  \  \  \  \  (1<<0) /* Can decode LC */
+.PP
+#define MAIN_DEC_CAP \  \  \  \  (1<<1) /* Can decode MAIN */
+.PP
+#define LTP_DEC_CAP \  \  \  \  \ (1<<2) /* Can decode LTP */
+.PP
+#define LD_DEC_CAP \  \  \  \  \  (1<<3) /* Can decode LD */
+.PP
+#define ERROR_RESILIENCE_CAP (1<<4) /* Can decode ER */
+.PP
+#define FIXED_POINT_CAP \  \  \ (1<<5) /* Fixed point */
+.PP
+.PP
+This function can be called anytime.
+.PP
+.B NeAACDecOpen 
+.PP NeAACDecHandle NEAACAPI NeAACDecOpen(void);
+.PP
+Returns a handle to a decoder context.
+.PP
+.B NeAACDecClose
+.PP void NEAACAPI NeAACDecClose(NeAACDecHandle hDecoder);
+.PP
+Closes a decoder context that has been opened by NeAACDecOpen.
+.PP
+.B NeAACDecGetCurrentConfiguration
+.PP
+NeAACDecConfigurationPtr NEAACAPI
+NeAACDecGetCurrentConfiguration(NeAACDecHandle hDecoder);
+.PP
+Returns the current decoder library configuration.
+.PP
+.B NeAACDecSetConfiguration
+.PP unsigned char NEAACAPI NeAACDecSetConfiguration(NeAACDecHandle hDecoder, NeAACDecConfigurationPtr config);
+.PP
+.PP
+Sets a new configuration structure for the decoder library.
+.PP
+\ 
+.PP
+Return values:
+.PP 0 \[en] Error, invalid configuration.
+.PP 1 \[en] OK
+.PP
+.B NeAACDecInit
+.PP
+long NEAACAPI NeAACDecInit(NeAACDecHandle hDecoder, unsigned char
+*buffer, unsigned long buffer_size, unsigned long *samplerate, unsigned
+char *channels);
+.PP
+.PP
+.PP
+Initialises the decoder library using information from the AAC file.
+The buffer parameter should hold a small part of the AAC file, so that
+the initialization can be done based on the ADTS or ADIF header.
+Buffer can also be NULL, but then default initialization parameters will
+be used.
+.PP
+Return values:
+.PP
+< 0 \[en] Error
+.PP
+>= 0 \[en] Number of bytes read.
+This amount of bytes should be skipped by the program using the decoder
+library.
+.PP
+This function fills the samplerate and channels parameters with the
+detected values.
+.PP
+.B NeAACDecInit2
+.PP
+char NEAACAPI NeAACDecInit2(NeAACDecHandle hDecoder, unsigned char
+*pBuffer, unsigned long SizeOfDecoderSpecificInfo, unsigned long
+*samplerate, unsigned char *channels);
+.PP
+Initialises the decoder library based on an AudioSpecificConfig as found
+inside a MP4 file.
+.PP
+Return values:
+.PP
+< 0 \[en] Error
+.PP
+0 \- OK
+.PP
+This function fills the samplerate and channels parameters with the
+detected values.
+.PP
+.B NeAACDecInitDRM
+.PP
+char NEAACDECAPI NeAACDecInitDRM(NeAACDecHandle *hDecoder, unsigned long samplerate, unsigned char channels);
+.PP
+Initialises the decoder library for Digital Radio Mondiale using the specified sample rate
+and a DRM specific channel configuration.
+.PP
+Return values:
+.PP
+< 0 \[en] Error
+.PP
+0 \- OK
+.PP
+Values for the channel configuration:
+.PP
+#define DRMCH_MONO          1
+.PP
+#define DRMCH_STEREO        2
+.PP
+#define DRMCH_SBR_MONO      3
+.PP
+#define DRMCH_SBR_STEREO    4
+.PP
+#define DRMCH_SBR_PS_STEREO 5
+.PP
+.B NeAACDecDecode
+.PP
+void* NEAACAPI NeAACDecDecode(NeAACDecHandle hDecoder, NeAACDecFrameInfo
+*hInfo, unsigned char *buffer, unsigned long buffer_size);
+.PP
+.PP
+Decodes the AAC data passed in buffer.
+.PP
+Returns a pointer to a sample buffer or NULL.
+Info about the decoded frame is filled in in the NeAACDecFrameInfo
+structure.
+This structure holds information about errors during decoding, number of
+sample, number of channels and samplerate.
+The returned buffer contains the channel interleaved samples of the
+frame.
+.PP
+.B NeAACDecDecode2
+.PP
+void NEAACDECAPI *NeAACDecDecode2(NeAACDecHandle hDecoder,
+                                  NeAACDecFrameInfo *hInfo,
+                                  unsigned char *buffer,
+                                  unsigned long buffer_size,
+                                  void **sample_buffer,
+                                  unsigned long sample_buffer_size);
+
+
+
+.PP
+.B NeAACDecAudioSpecificConfig
+.PP
+char NEAACDECAPI NeAACDecAudioSpecificConfig(unsigned char *pBuffer,
+                                             unsigned long buffer_size,
+                                             mp4AudioSpecificConfig *mp4ASC);
+.PP
+.B Structures
+.RS 4
+.PP NeAACDecConfiguration
+.RE
+.PP
+typedef struct NeAACDecConfiguration
+.PP
+{
+.PP
+\  \  unsigned char defObjectType;
+.PP
+\  \  unsigned long defSampleRate;
+.PP
+\  \  unsigned char outputFormat;
+.PP
+\  \  unsigned char downMatrix;
+.PP
+\  \  unsigned char useOldADTSFormat;
+.PP
+} NeAACDecConfiguration, *NeAACDecConfigurationPtr;
+.PP
+
+.PP
+Members:
+.PP
+defObjectType: determines the default object type assumed when the
+library is initialized without any data from the AAC file (eg: when NULL
+is passed as buffer in NeAACDecInit()).
+Can be any of the following values:
+.PP
+#define MAIN \  \  \  1 /* MAIN */
+.PP
+#define LC \  \  \  \  2 /* Low Complexity (default) */
+.PP
+#define SSR \  \  \  \ 3 /* Scalable SampleRate */
+.PP
+#define LTP \  \  \  \ 4 /* Long Term Predition */
+.PP
+#define HE_AAC \  \  5 /* High Efficiency (SBR) */
+.PP
+#define ER_LC \  \  17 /* Error Resilient Low Complexity */
+.PP
+#define ER_LTP \  \ 19 /* Error Resilient Long Term Prediction */
+.PP
+#define LD \  \  \  \ 23 /* Low Delay */
+.PP
+#define DRM_ER_LC 27 /* special object type for DRM only if linking with -lfaad_drm */
+.PP
+defSampleRate: determines the default samplerate assumed when the
+library is initialized.
+Default value is 44100.
+.PP
+outputFormat: determines the output format returned by the decoder
+library.
+Can be any of the following values:
+.PP
+#define FAAD_FMT_16BIT \ 1 /* 16 bit integers */
+.PP
+#define FAAD_FMT_24BIT \ 2 /* 24 bit values packed in 32 bit integers */
+.PP
+#define FAAD_FMT_32BIT \ 3 /* 32 bit integers */
+.PP
+#define FAAD_FMT_FLOAT \ 4 /* single precision floating point */
+.PP
+#define FAAD_FMT_DOUBLE 5 /* double precision floating point */
+.PP
+downMatrix: determines whether a 5.1 channel AAC file should be
+downmatrixed to 2 channel output (value: 1) or whether the output should
+stay as 5.1 channels (value: 0).
+.PP
+useOldADTSFormat: determines whether the decoder should assume the
+currently defined 56 bit ADTS header (value: 0) or the 58 bit ADTS
+header (value: 1) defined in previous versions of the AAC standard.
+This value should normally always stay at the value 0, it only exists to
+provide playback capabilities for people that have AAC files with the
+old header format.
+All current encoders should output the new ADTS format.
+NeAACDecFrameInfo\ 
+.PP
+This structure is returned after decoding a frame and provides info
+about the decoded frame.
+.PP
+typedef struct NeAACDecFrameInfo
+.PP
+{
+.PP
+\  \  unsigned long bytesconsumed;
+.PP
+\  \  unsigned long samples;
+.PP
+\  \  unsigned char channels;
+.PP
+\  \  unsigned char error;
+.PP
+\  \  unsigned long samplerate;
+.PP
+\  \  unsigned char sbr;
+.PP
+\  \  unsigned char object_type;
+.PP
+\  \  unsigned char header_type;
+.PP
+\  \  unsigned char num_front_channels;
+.PP
+\  \  unsigned char num_side_channels;
+.PP
+\  \  unsigned char num_back_channels;
+.PP
+\  \  unsigned char num_lfe_channels;
+.PP
+\  \  unsigned char channel_position[64];
+.PP
+\  \  unsigned char ps;
+.PP
+} NeAACDecFrameInfo;
+.PP
+\ 
+.PP
+Members:
+.PP
+bytesconsumed: the number of bytes consumed for decoding this frame.
+.PP
+samples: the number of audio samples in this frame.
+Each channel is counted separately.
+So when a single channel has 1024 samples and the file has 2 channels,
+this value will be 2*1024 = 2048.
+.PP
+channels: number of audio channels in this frame
+.PP
+error: contains an error value if an error occurred, 0 otherwise.
+.PP
+samplerate: the samplerate of the frame.
+.PP
+sbr: tells wether sbr is used in this file or not.
+Can contain any of the following values:
+.PP
+#define NO_SBR \  \  \  \  \  0 /* no SBR used in this file */
+.PP
+#define SBR_UPSAMPLED \  \ 1 /* upsampled SBR used */
+.PP
+#define SBR_DOWNSAMPLED \ 2 /* downsampled SBR used */
+.PP
+#define NO_SBR_UPSAMPLED 3 /* no SBR used, but file is upsampled by a
+factor 2 anyway */
+.PP
+object_type: contains the object type of the AAC file.
+Can be any of the values as defined in 1.9.1.
+.PP
+header_type: contains the header type of the file that is being decoded.
+Can contain any of the following values:
+.PP
+#define RAW \  \  \  \ 0 /* No header */
+.PP
+#define ADIF \  \  \  1 /* single ADIF header at the beginning of the
+file */
+.PP
+#define ADTS \  \  \  2 /* ADTS header at the beginning of each frame */
+.PP
+num_front_channels, num_side_channels, num_back_channels,
+num_lfe_channels: each of these values contain the number of channels of
+a certain type.
+.PP
+channel_position[64]: contains the position of each of the channels that
+is returned by the frame decode function.
+Can contain any of the following values:
+.PP
+#define FRONT_CHANNEL_CENTER (1)
+.PP
+#define FRONT_CHANNEL_LEFT \  (2)
+.PP
+#define FRONT_CHANNEL_RIGHT \ (3)
+.PP
+#define SIDE_CHANNEL_LEFT \  \ (4)
+.PP
+#define SIDE_CHANNEL_RIGHT \  (5)
+.PP
+#define BACK_CHANNEL_LEFT \  \ (6)
+.PP
+#define BACK_CHANNEL_RIGHT \  (7)
+.PP
+#define BACK_CHANNEL_CENTER \ (8)
+.PP
+#define LFE_CHANNEL \  \  \  \  \ (9)
+.PP
+#define UNKNOWN_CHANNEL \  \  \ (0)
+.PP
+ps: PS not used (0) or used (1).
+API usage\ 
+.PP
+The following pseudo\-code describes how and in which order to use the
+different library functions.
+.PP
+\ 
+.PP
+unsigned long cap = NeAACDecGetCapabilities();
+.PP
+// Check if decoder has the needed capabilities
+.PP
+\ 
+.PP
+// Open the library
+.PP
+NeAACDecHandle hAac = NeAACDecOpen();
+.PP
+\ 
+.PP
+// Get the current config
+.PP
+NeAACDecConfigurationPtr conf = NeAACDecGetCurrentConfiguration(hAac);
+.PP
+\ 
+.PP
+//
+.PP
+// If needed change some of the values in conf
+.PP
+//
+.PP
+\ 
+.PP
+// Set the new configuration
+.PP
+NeAACDecSetConfiguration(hAac, conf);
+.PP
+.PP
+// Initialise the library using one of the initialization functions
+.PP
+char err = NeAACDecInit2(hAac, asc, asc_size, &samplerate, &channels);
+.PP
+if (err != 0)
+.PP
+{
+.PP
+\ //
+.PP
+\ // Handle error
+.PP
+\ //
+.PP
+}
+.PP
+\ 
+.PP
+// Loop until decoding finished
+.PP
+do {
+.PP
+\ //
+.PP
+\ // Put next frame in buffer
+.PP
+\ //
+.PP
+\ 
+.PP
+\ // Decode the frame in buffer
+.PP
+\  \  \  \  samplebuffer = NeAACDecDecode(hAac, &hInfo, buffer,
+.PP
+buffer_size);
+.PP
+\ 
+.PP
+if ((hInfo.error == 0) && (hInfo.samples > 0))
+.PP
+{
+.PP
+\ //
+.PP
+\ // do what you need to do with the decoded samples
+.PP
+\ //
+.PP
+} else if (hInfo.error != 0) {
+.PP
+\ //
+.PP
+\ // Some error occurred while decoding this frame
+.PP
+\ //
+.PP
+}
+.PP
+} while (more data available);
+.PP
+\ 
+.PP
+NeAACDecClose(hAac);
+.SH "SEE ALSO"
+.PP
+\fBlibfaad_drm\fR(3),
+\fBlibfaac\fR(3)\&.
+.SH "AUTHOR"
+.PP
+Menno Bakker <mbakker@nero.com>
+.PP Man Page by Julian Cable <jcable@users.sf.net>
