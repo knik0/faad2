@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: main.c,v 1.88 2012/03/04 09:59:02 knik Exp $
+** $Id: main.c,v 1.89 2015/01/19 09:46:12 knik Exp $
 **/
 
 #ifdef _WIN32
@@ -132,11 +132,18 @@ static int fill_buffer(aac_buffer *b)
 
 static void advance_buffer(aac_buffer *b, int bytes)
 {
-    b->file_offset += bytes;
-    b->bytes_consumed = bytes;
-    b->bytes_into_buffer -= bytes;
-	if (b->bytes_into_buffer < 0)
-		b->bytes_into_buffer = 0;
+    while ((b->bytes_into_buffer > 0) && (bytes > 0))
+    {
+	int chunk = min(bytes, b->bytes_into_buffer);
+	
+	bytes -= chunk;
+	b->file_offset += chunk;
+	b->bytes_consumed = chunk;
+	b->bytes_into_buffer -= chunk;
+
+	if (b->bytes_into_buffer == 0)
+	    fill_buffer(b);
+    }
 }
 
 static void lookforheader(aac_buffer *b)
