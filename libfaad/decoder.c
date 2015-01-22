@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.117 2009/02/05 00:51:03 menno Exp $
+** $Id: decoder.c,v 1.118 2015/01/22 08:55:49 knik Exp $
 **/
 
 #include "common.h"
@@ -64,7 +64,7 @@ static void create_channel_config(NeAACDecStruct *hDecoder,
                                   NeAACDecFrameInfo *hInfo);
 
 
-char* NEAACDECAPI NeAACDecGetErrorMessage(unsigned char errcode)
+char NEAACDECAPI *NeAACDecGetErrorMessage(unsigned char errcode)
 {
     if (errcode >= NUM_ERROR_MESSAGES)
         return NULL;
@@ -787,7 +787,7 @@ static void create_channel_config(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *h
     }
 }
 
-void* NEAACDECAPI NeAACDecDecode(NeAACDecHandle hpDecoder,
+void NEAACDECAPI *NeAACDecDecode(NeAACDecHandle hpDecoder,
                                  NeAACDecFrameInfo *hInfo,
                                  unsigned char *buffer,
                                  unsigned long buffer_size)
@@ -796,7 +796,7 @@ void* NEAACDECAPI NeAACDecDecode(NeAACDecHandle hpDecoder,
     return aac_frame_decode(hDecoder, hInfo, buffer, buffer_size, NULL, 0);
 }
 
-void* NEAACDECAPI NeAACDecDecode2(NeAACDecHandle hpDecoder,
+void NEAACDECAPI *NeAACDecDecode2(NeAACDecHandle hpDecoder,
                                   NeAACDecFrameInfo *hInfo,
                                   unsigned char *buffer,
                                   unsigned long buffer_size,
