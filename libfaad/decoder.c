@@ -25,7 +25,7 @@
 ** Commercial non-GPL licensing of this software is possible.
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **
-** $Id: decoder.c,v 1.118 2015/01/22 08:55:49 knik Exp $
+** $Id: decoder.c,v 1.119 2015/01/24 14:21:05 knik Exp $
 **/
 
 #include "common.h"
@@ -323,6 +323,9 @@ long NEAACDECAPI NeAACDecInit(NeAACDecHandle hpDecoder,
         }
         faad_endbits(&ld);
     }
+
+    if (!*samplerate)
+	return -1;
 
 #if (defined(PS_DEC) || defined(DRM_PS))
     /* check if we have a mono file */
