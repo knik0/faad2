@@ -13,7 +13,7 @@ faad2_plugin_la_LIBADD = \
 	-lm
 
 
-INCLUDES =  -I$(top_srcdir)/include
+AM_CPPFLAGS =  -I$(top_srcdir)/include
 
 AM_CFLAGS = -D_REENTRANT -fexceptions 
 

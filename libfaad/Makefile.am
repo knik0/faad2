@@ -1,6 +1,6 @@
 lib_LTLIBRARIES = libfaad.la libfaad_drm.la
 
-INCLUDES	= -iquote $(top_srcdir)/include
+AM_CPPFLAGS	= -iquote $(top_srcdir)/include
 include_HEADERS = $(top_srcdir)/include/faad.h \
 		  $(top_srcdir)/include/neaacdec.h
 

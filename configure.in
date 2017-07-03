@@ -7,9 +7,10 @@ dnl - faad
 dnl - xmms input mp4/aac plugin
 dnl - mpeg4ip plugin (requires mpeg4ip's libmp4v2 to be installed)
 
-AC_INIT
+AC_PREREQ(2.50)
+AC_INIT(faad2, 2.8.0cvs)
 AC_CONFIG_AUX_DIR(.)
-AM_INIT_AUTOMAKE(faad2, 2.8.0cvs)
+AM_INIT_AUTOMAKE([subdir-objects])
 
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
