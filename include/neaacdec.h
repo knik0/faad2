@@ -73,7 +73,7 @@ extern "C" {
   #endif
 #endif
 
-#define FAAD2_VERSION "2.7"
+#define FAAD2_VERSION PACKAGE_VERSION
 
 /* object types for AAC */
 #define MAIN       1

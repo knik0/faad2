@@ -28,6 +28,10 @@
 ** $Id: main.c,v 1.89 2015/01/19 09:46:12 knik Exp $
 **/
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -49,6 +53,13 @@
 #include <mp4ff.h>
 
 #include "audio.h"
+
+#ifdef HAVE_GETOPT_H
+# include <getopt.h>
+#else
+# include "getopt.h"
+# include "getopt.c"
+#endif
 
 #ifndef min
 #define min(a,b) ( (a) < (b) ? (a) : (b) )
