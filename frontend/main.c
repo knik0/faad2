@@ -1288,6 +1288,8 @@ int main(int argc, char *argv[])
     faad_fprintf(stderr, " Build: %s\n", __DATE__);
     faad_fprintf(stderr, " Copyright 2002-2004: Ahead Software AG\n");
     faad_fprintf(stderr, " http://www.audiocoding.com\n");
+    faad_fprintf(stderr, "\n Latest version and bug tracking available here:\n");
+    faad_fprintf(stderr, " http://sourceforge.net/projects/faac/\n\n");
     if (cap & FIXED_POINT_CAP)
         faad_fprintf(stderr, " Fixed point version\n");
     else
