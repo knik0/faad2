@@ -26,7 +26,7 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_CHECK_PROGS(RPMBUILD, rpmbuild, rpm)
 
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 
 AC_ARG_WITH(xmms,[  --with-xmms             compile XMMS-1 plugin],
 	     WITHXMMS=$withval, WITHXMMS=no)
