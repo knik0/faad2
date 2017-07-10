@@ -650,6 +650,10 @@ static int32_t mp4ff_read_meta(mp4ff_t *f, const uint64_t size)
 int32_t mp4ff_atom_read(mp4ff_t *f, const int32_t size, const uint8_t atom_type)
 {
     uint64_t dest_position = mp4ff_position(f)+size-8;
+    if (f->total_tracks == 0)
+    {
+        return -1;
+    }
     if (atom_type == ATOM_STSZ)
     {
         /* sample size box */
