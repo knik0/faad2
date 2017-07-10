@@ -432,6 +432,7 @@ static void usage(void)
     faad_fprintf(stdout, " -w    Write output to stdio instead of a file.\n");
     faad_fprintf(stdout, " -g    Disable gapless decoding.\n");
     faad_fprintf(stdout, " -q    Quiet - suppresses status messages.\n");
+    faad_fprintf(stdout, " -j X  Jump - start output X seconds into track (MP4 files only).\n");
     faad_fprintf(stdout, "Example:\n");
     faad_fprintf(stdout, "       %s infile.aac\n", progName);
     faad_fprintf(stdout, "       %s infile.mp4\n", progName);
@@ -803,7 +804,7 @@ static const unsigned long srates[] =
 
 static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
                   int outputFormat, int fileType, int downMatrix, int noGapless,
-                  int infoOnly, int adts_out, float *song_length)
+                  int infoOnly, int adts_out, float *song_length, float seek_to)
 {
     int track;
     unsigned long samplerate;
@@ -811,7 +812,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
     void *sample_buffer;
 
     mp4ff_t *infile;
-    long sampleId, numSamples;
+    long sampleId, numSamples, startSampleId;
 
     audio_file *aufile;
 
@@ -971,7 +972,14 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
 
     numSamples = mp4ff_num_samples(infile, track);
 
-    for (sampleId = 0; sampleId < numSamples; sampleId++)
+    startSampleId = 0;
+    if (seek_to > 0.1) {
+    	int32_t sample = mp4ff_find_sample(infile, track, (int64_t)(seek_to * timescale), NULL);
+    	if (sample > 0 && sample < numSamples)
+			startSampleId = sample;
+    }
+
+    for (sampleId = startSampleId; sampleId < numSamples; sampleId++)
     {
         int rc;
         long dur;
@@ -1130,6 +1138,7 @@ int main(int argc, char *argv[])
     char *aacFileName = NULL;
     char *audioFileName = NULL;
     char *adtsFileName = NULL;
+    float seekTo = 0;
     unsigned char header[8];
     float length = 0;
     FILE *hMP4File;
@@ -1162,11 +1171,12 @@ int main(int argc, char *argv[])
             { "info",       0, 0, 'i' },
             { "stdio",      0, 0, 'w' },
             { "stdio",      0, 0, 'g' },
+            { "seek",       1, 0, 'j' },
             { "help",       0, 0, 'h' },
             { 0, 0, 0, 0 }
         };
 
-        c = getopt_long(argc, argv, "o:a:s:f:b:l:wgdhitq",
+        c = getopt_long(argc, argv, "o:a:s:f:b:l:j:wgdhitq",
             long_options, &option_index);
 
         if (c == -1)
@@ -1255,6 +1265,12 @@ int main(int argc, char *argv[])
                         showHelp = 1;
                     }
                 }
+            }
+            break;
+        case 'j':
+            if (optarg)
+            {
+            	seekTo = atof(optarg);
             }
             break;
         case 't':
@@ -1381,10 +1397,14 @@ int main(int argc, char *argv[])
     if (header[4] == 'f' && header[5] == 't' && header[6] == 'y' && header[7] == 'p')
         mp4file = 1;
 
+    if (!mp4file && seekTo != 0) {
+    	faad_fprintf(stderr, "Warning: can only seek in MP4 files");
+    }
+
     if (mp4file)
     {
         result = decodeMP4file(aacFileName, audioFileName, adtsFileName, writeToStdio,
-            outputFormat, format, downMatrix, noGapless, infoOnly, adts_out, &length);
+            outputFormat, format, downMatrix, noGapless, infoOnly, adts_out, &length, seekTo);
     } else {
 
 	if (readFromStdin == 1) {
