@@ -29,8 +29,23 @@
 **/
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include "mp4ffint.h"
+
+static uint64_t actual_file_size(mp4ff_callback_t *f)
+{
+    int64_t cur_pos, end_pos;
+
+    cur_pos = ftell(f->user_data);
+
+    fseek(f->user_data, 0, SEEK_END);
+    end_pos = ftell(f->user_data);
+
+    fseek(f->user_data, cur_pos, SEEK_SET);
+
+    return end_pos;
+}
 
 mp4ff_t *mp4ff_open_read(mp4ff_callback_t *f)
 {
@@ -39,6 +54,7 @@ mp4ff_t *mp4ff_open_read(mp4ff_callback_t *f)
     memset(ff, 0, sizeof(mp4ff_t));
 
     ff->stream = f;
+    ff->actual_file_size = actual_file_size(f);
 
     if (parse_atoms(ff,0) < 0)
     {
@@ -56,6 +72,7 @@ mp4ff_t *mp4ff_open_read_metaonly(mp4ff_callback_t *f)
     memset(ff, 0, sizeof(mp4ff_t));
 
     ff->stream = f;
+    ff->actual_file_size = actual_file_size(f);
 
     if (parse_atoms(ff,1) < 0)
     {
