@@ -242,9 +242,6 @@ uint64_t mp4ff_atom_read_header(mp4ff_t *f, uint8_t *atom_type, uint8_t *header_
     size = mp4ff_atom_get_size(atom_header);
     *header_size = 8;
 
-    if (size > f->actual_file_size)
-        return 0;
-
     /* check for 64 bit atom size */
     if (size == 1)
     {
@@ -269,16 +266,16 @@ static int32_t mp4ff_read_stsz(mp4ff_t *f)
     f->track[f->total_tracks - 1]->stsz_sample_size = mp4ff_read_int32(f);
     f->track[f->total_tracks - 1]->stsz_sample_count = mp4ff_read_int32(f);
 
-    if (f->track[f->total_tracks - 1]->stsz_sample_count > f->actual_file_size)
-        return -1;
-
     if (f->track[f->total_tracks - 1]->stsz_sample_size == 0)
     {
         int32_t i;
         f->track[f->total_tracks - 1]->stsz_table =
             (int32_t*)malloc(f->track[f->total_tracks - 1]->stsz_sample_count*sizeof(int32_t));
 
-        for (i = 0; i < f->track[f->total_tracks - 1]->stsz_sample_count; i++)
+        if (!f->track[f->total_tracks - 1]->stsz_table)
+            return -1;
+
+        for (i = 0; i < f->track[f->total_tracks - 1]->stsz_sample_count && !f->read_error; i++)
         {
             f->track[f->total_tracks - 1]->stsz_table[i] = mp4ff_read_int32(f);
         }
@@ -403,10 +400,7 @@ static int32_t mp4ff_read_stsd(mp4ff_t *f)
 
     f->track[f->total_tracks - 1]->stsd_entry_count = mp4ff_read_int32(f);
 
-    if (f->track[f->total_tracks - 1]->stsd_entry_count > f->actual_file_size)
-        return -1;
-
-    for (i = 0; i < f->track[f->total_tracks - 1]->stsd_entry_count; i++)
+    for (i = 0; i < f->track[f->total_tracks - 1]->stsd_entry_count && !f->read_error; i++)
     {
         uint64_t skip = mp4ff_position(f);
         uint64_t size;
@@ -443,9 +437,6 @@ static int32_t mp4ff_read_stsc(mp4ff_t *f)
     mp4ff_read_int24(f); /* flags */
     f->track[f->total_tracks - 1]->stsc_entry_count = mp4ff_read_int32(f);
 
-    if (f->track[f->total_tracks - 1]->stsc_entry_count > f->actual_file_size)
-        return -1;
-
     f->track[f->total_tracks - 1]->stsc_first_chunk =
         (int32_t*)malloc(f->track[f->total_tracks - 1]->stsc_entry_count*sizeof(int32_t));
     f->track[f->total_tracks - 1]->stsc_samples_per_chunk =
@@ -453,7 +444,26 @@ static int32_t mp4ff_read_stsc(mp4ff_t *f)
     f->track[f->total_tracks - 1]->stsc_sample_desc_index =
         (int32_t*)malloc(f->track[f->total_tracks - 1]->stsc_entry_count*sizeof(int32_t));
 
-    for (i = 0; i < f->track[f->total_tracks - 1]->stsc_entry_count; i++)
+    if (!f->track[f->total_tracks - 1]->stsc_first_chunk)
+    {
+        return -1;
+    }
+    if (!f->track[f->total_tracks - 1]->stsc_samples_per_chunk)
+    {
+        free(f->track[f->total_tracks - 1]->stsc_first_chunk);
+        f->track[f->total_tracks - 1]->stsc_first_chunk = NULL;
+        return -1;
+    }
+    if (!f->track[f->total_tracks - 1]->stsc_sample_desc_index)
+    {
+        free(f->track[f->total_tracks - 1]->stsc_first_chunk);
+        f->track[f->total_tracks - 1]->stsc_first_chunk = NULL;
+        free(f->track[f->total_tracks - 1]->stsc_samples_per_chunk);
+        f->track[f->total_tracks - 1]->stsc_samples_per_chunk = NULL;
+        return -1;
+    }
+
+    for (i = 0; i < f->track[f->total_tracks - 1]->stsc_entry_count && !f->read_error; i++)
     {
         f->track[f->total_tracks - 1]->stsc_first_chunk[i] = mp4ff_read_int32(f);
         f->track[f->total_tracks - 1]->stsc_samples_per_chunk[i] = mp4ff_read_int32(f);
@@ -474,13 +484,13 @@ static int32_t mp4ff_read_stco(mp4ff_t *f)
     mp4ff_read_int24(f); /* flags */
     f->track[f->total_tracks - 1]->stco_entry_count = mp4ff_read_int32(f);
 
-    if (f->track[f->total_tracks - 1]->stco_entry_count > f->actual_file_size)
-        return -1;
-
     f->track[f->total_tracks - 1]->stco_chunk_offset =
         (int32_t*)malloc(f->track[f->total_tracks - 1]->stco_entry_count*sizeof(int32_t));
 
-    for (i = 0; i < f->track[f->total_tracks - 1]->stco_entry_count; i++)
+    if (!f->track[f->total_tracks - 1]->stco_chunk_offset)
+        return -1;
+
+    for (i = 0; i < f->track[f->total_tracks - 1]->stco_entry_count && !f->read_error; i++)
     {
         f->track[f->total_tracks - 1]->stco_chunk_offset[i] = mp4ff_read_int32(f);
     }
@@ -503,9 +513,6 @@ static int32_t mp4ff_read_ctts(mp4ff_t *f)
     mp4ff_read_int24(f); /* flags */
     p_track->ctts_entry_count = mp4ff_read_int32(f);
 
-    if (f->track[f->total_tracks - 1]->ctts_entry_count > f->actual_file_size)
-        return -1;
-
     p_track->ctts_sample_count = (int32_t*)malloc(p_track->ctts_entry_count * sizeof(int32_t));
     p_track->ctts_sample_offset = (int32_t*)malloc(p_track->ctts_entry_count * sizeof(int32_t));
 
@@ -518,7 +525,7 @@ static int32_t mp4ff_read_ctts(mp4ff_t *f)
     }
     else
     {
-        for (i = 0; i < f->track[f->total_tracks - 1]->ctts_entry_count; i++)
+        for (i = 0; i < f->track[f->total_tracks - 1]->ctts_entry_count && !f->read_error; i++)
         {
             p_track->ctts_sample_count[i] = mp4ff_read_int32(f);
             p_track->ctts_sample_offset[i] = mp4ff_read_int32(f);
@@ -543,9 +550,6 @@ static int32_t mp4ff_read_stts(mp4ff_t *f)
     mp4ff_read_int24(f); /* flags */
     p_track->stts_entry_count = mp4ff_read_int32(f);
 
-    if (f->track[f->total_tracks - 1]->stts_entry_count > f->actual_file_size)
-        return -1;
-
     p_track->stts_sample_count = (int32_t*)malloc(p_track->stts_entry_count * sizeof(int32_t));
     p_track->stts_sample_delta = (int32_t*)malloc(p_track->stts_entry_count * sizeof(int32_t));
 
@@ -558,7 +562,7 @@ static int32_t mp4ff_read_stts(mp4ff_t *f)
     }
     else
     {
-        for (i = 0; i < f->track[f->total_tracks - 1]->stts_entry_count; i++)
+        for (i = 0; i < f->track[f->total_tracks - 1]->stts_entry_count && !f->read_error; i++)
         {
             p_track->stts_sample_count[i] = mp4ff_read_int32(f);
             p_track->stts_sample_delta[i] = mp4ff_read_int32(f);
@@ -677,13 +681,10 @@ static int32_t mp4ff_read_meta(mp4ff_t *f, const uint64_t size)
     uint8_t atom_type;
     uint8_t header_size = 0;
 
-    if (size > f->actual_file_size)
-        return -1;
-
     mp4ff_read_char(f); /* version */
     mp4ff_read_int24(f); /* flags */
 
-    while (sumsize < (size-(header_size+4)))
+    while (sumsize < (size-(header_size+4)) && !f->read_error)
     {
         subsize = mp4ff_atom_read_header(f, &atom_type, &header_size);
         if (subsize <= header_size+4)
@@ -736,6 +737,9 @@ int32_t mp4ff_atom_read(mp4ff_t *f, const int32_t size, const uint8_t atom_type)
         ret = mp4ff_read_meta(f, size);
 #endif
     }
+
+    if (f->read_error)
+        ret = -1;
 
     mp4ff_set_position(f, dest_position);
 

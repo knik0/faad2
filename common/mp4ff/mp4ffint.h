@@ -223,7 +223,7 @@ typedef struct
     uint64_t moov_size;
     uint8_t last_atom;
     uint64_t file_size;
-    uint64_t actual_file_size;
+    int32_t read_error;
 
     /* mvhd */
     int32_t time_scale;
