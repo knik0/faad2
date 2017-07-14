@@ -240,7 +240,7 @@ static int32_t mp4ff_parse_tag(mp4ff_t *f, const uint8_t parent_atom_type, const
     uint32_t len = 0;
 
 
-    while (sumsize < size && !f->read_error)
+    while (sumsize < size && !f->stream->read_error) /* CVE-2017-9222 */
     {
 		uint64_t destpos;
         subsize = mp4ff_atom_read_header(f, &atom_type, &header_size);
@@ -343,7 +343,7 @@ int32_t mp4ff_parse_metadata(mp4ff_t *f, const int32_t size)
     uint8_t atom_type;
     uint8_t header_size = 0;
 
-    while (sumsize < size && !f->read_error)
+    while (sumsize < size)
     {
         subsize = mp4ff_atom_read_header(f, &atom_type, &header_size);
         if (subsize == 0)

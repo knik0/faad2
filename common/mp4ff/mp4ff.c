@@ -40,7 +40,9 @@ mp4ff_t *mp4ff_open_read(mp4ff_callback_t *f)
 
     ff->stream = f;
 
-    if (parse_atoms(ff,0) < 0)
+    parse_atoms(ff,0);
+
+    if (ff->error)
     {
         free(ff);
         ff = NULL;
@@ -57,7 +59,9 @@ mp4ff_t *mp4ff_open_read_metaonly(mp4ff_callback_t *f)
 
     ff->stream = f;
 
-    if (parse_atoms(ff,1) < 0)
+    parse_atoms(ff,1);
+
+    if (ff->error)
     {
         free(ff);
         ff = NULL;
@@ -109,21 +113,20 @@ void mp4ff_close(mp4ff_t *ff)
     if (ff) free(ff);
 }
 
-static int32_t mp4ff_track_add(mp4ff_t *f)
+static void mp4ff_track_add(mp4ff_t *f)
 {
     f->total_tracks++;
 
     if (f->total_tracks > MAX_TRACKS)
     {
         f->total_tracks = 0;
-        return -1;
+        f->error++;
+        return;
     }
 
     f->track[f->total_tracks - 1] = malloc(sizeof(mp4ff_track_t));
 
     memset(f->track[f->total_tracks - 1], 0, sizeof(mp4ff_track_t));
-
-    return 0;
 }
 
 static int need_parse_when_meta_only(uint8_t atom_type)
@@ -175,8 +178,7 @@ int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size,int meta_only)
          */
         if (atom_type == ATOM_TRAK)
         {
-            if (mp4ff_track_add(f) < 0)
-                return -1;
+            mp4ff_track_add(f);
         }
 
         /* parse subatoms */
@@ -185,11 +187,9 @@ int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size,int meta_only)
 			mp4ff_set_position(f, mp4ff_position(f)+size-header_size);
 		} else if (atom_type < SUBATOMIC)
         {
-            if (parse_sub_atoms(f, size-header_size,meta_only) < 0)
-                return -1;
+            parse_sub_atoms(f, size-header_size,meta_only);
         } else {
-            if (mp4ff_atom_read(f, (uint32_t)size, atom_type) < 0)
-                return -1;
+            mp4ff_atom_read(f, (uint32_t)size, atom_type);
         }
     }
 
@@ -204,6 +204,7 @@ int32_t parse_atoms(mp4ff_t *f,int meta_only)
     uint8_t header_size = 0;
 
     f->file_size = 0;
+    f->stream->read_error = 0;
 
     while ((size = mp4ff_atom_read_header(f, &atom_type, &header_size)) != 0)
     {
@@ -230,8 +231,7 @@ int32_t parse_atoms(mp4ff_t *f,int meta_only)
 			mp4ff_set_position(f, mp4ff_position(f)+size-header_size);
 		} else if (atom_type < SUBATOMIC)
         {
-            if (parse_sub_atoms(f, size-header_size,meta_only) < 0)
-                return -1;
+            parse_sub_atoms(f, size-header_size,meta_only);
         } else {
             /* skip this atom */
             mp4ff_set_position(f, mp4ff_position(f)+size-header_size);
