@@ -42,12 +42,6 @@ mp4ff_t *mp4ff_open_read(mp4ff_callback_t *f)
 
     parse_atoms(ff,0);
 
-    if (ff->error)
-    {
-        free(ff);
-        ff = NULL;
-    }
-
     return ff;
 }
 
@@ -60,12 +54,6 @@ mp4ff_t *mp4ff_open_read_metaonly(mp4ff_callback_t *f)
     ff->stream = f;
 
     parse_atoms(ff,1);
-
-    if (ff->error)
-    {
-        free(ff);
-        ff = NULL;
-    }
 
     return ff;
 }
@@ -113,16 +101,9 @@ void mp4ff_close(mp4ff_t *ff)
     if (ff) free(ff);
 }
 
-static void mp4ff_track_add(mp4ff_t *f)
+void mp4ff_track_add(mp4ff_t *f)
 {
     f->total_tracks++;
-
-    if (f->total_tracks > MAX_TRACKS)
-    {
-        f->total_tracks = 0;
-        f->error++;
-        return;
-    }
 
     f->track[f->total_tracks - 1] = malloc(sizeof(mp4ff_track_t));
 
@@ -204,7 +185,6 @@ int32_t parse_atoms(mp4ff_t *f,int meta_only)
     uint8_t header_size = 0;
 
     f->file_size = 0;
-    f->stream->read_error = 0;
 
     while ((size = mp4ff_atom_read_header(f, &atom_type, &header_size)) != 0)
     {

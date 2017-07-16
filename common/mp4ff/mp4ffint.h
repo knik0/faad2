@@ -144,7 +144,6 @@ typedef struct
     uint32_t (*seek)(void *user_data, uint64_t position);
     uint32_t (*truncate)(void *user_data);
     void *user_data;
-    uint32_t read_error;
 } mp4ff_callback_t;
 
 
@@ -224,7 +223,6 @@ typedef struct
     uint64_t moov_size;
     uint8_t last_atom;
     uint64_t file_size;
-    uint32_t error;
 
     /* mvhd */
     int32_t time_scale;
