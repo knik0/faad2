@@ -35,8 +35,8 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#include "mp4ff_int_types.h"
 #include <stdlib.h>
+#include <stdint.h>
 
 #define MAX_TRACKS 1024
 #define TRACK_UNKNOWN 0
