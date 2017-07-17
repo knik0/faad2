@@ -47,12 +47,113 @@ typedef struct
     uint32_t (*read)(void *user_data, void *buffer, uint32_t length);
     uint32_t (*write)(void *udata, void *buffer, uint32_t length);
     uint32_t (*seek)(void *user_data, uint64_t position);
-	uint32_t (*truncate)(void *user_data);
+    uint32_t (*truncate)(void *user_data);
     void *user_data;
+    uint32_t read_error;
 } mp4ff_callback_t;
 
+#ifdef USE_TAGGING
+
+/* metadata tag structure */
+typedef struct
+{
+    char *item;
+    char *value;
+    uint32_t len;
+} mp4ff_tag_t;
+
+/* metadata list structure */
+typedef struct
+{
+    mp4ff_tag_t *tags;
+    uint32_t count;
+} mp4ff_metadata_t;
+
+int32_t mp4ff_meta_update(mp4ff_callback_t *f,const mp4ff_metadata_t * data);
+
+#endif
+
+
+#ifndef MP4FF_INTERNAL_H
 /* mp4 main file structure */
 typedef void* mp4ff_t;
+#else
+typedef struct
+{
+    int32_t type;
+    int32_t channelCount;
+    int32_t sampleSize;
+    uint16_t sampleRate;
+    int32_t audioType;
+
+    /* stsd */
+    int32_t stsd_entry_count;
+
+    /* stsz */
+    int32_t stsz_sample_size;
+    int32_t stsz_sample_count;
+    int32_t *stsz_table;
+
+    /* stts */
+    int32_t stts_entry_count;
+    int32_t *stts_sample_count;
+    int32_t *stts_sample_delta;
+
+    /* stsc */
+    int32_t stsc_entry_count;
+    int32_t *stsc_first_chunk;
+    int32_t *stsc_samples_per_chunk;
+    int32_t *stsc_sample_desc_index;
+
+    /* stsc */
+    int32_t stco_entry_count;
+    int32_t *stco_chunk_offset;
+
+    /* ctts */
+    int32_t ctts_entry_count;
+    int32_t *ctts_sample_count;
+    int32_t *ctts_sample_offset;
+
+    /* esde */
+    uint8_t *decoderConfig;
+    int32_t decoderConfigLen;
+
+    uint32_t maxBitrate;
+    uint32_t avgBitrate;
+
+    uint32_t timeScale;
+    uint64_t duration;
+
+} mp4ff_track_t;
+
+/* mp4 main file structure */
+typedef struct
+{
+    /* stream to read from */
+    mp4ff_callback_t *stream;
+    int64_t current_position;
+
+    int32_t moov_read;
+    uint64_t moov_offset;
+    uint64_t moov_size;
+    uint8_t last_atom;
+    uint64_t file_size;
+    uint32_t error;
+
+    /* mvhd */
+    int32_t time_scale;
+    int32_t duration;
+
+    /* incremental track index while reading the file */
+    int32_t total_tracks;
+
+    /* track data */
+    mp4ff_track_t *track[MAX_TRACKS];
+
+    /* metadata */
+    mp4ff_metadata_t tags;
+} mp4ff_t;
+#endif
 
 
 /* API */
@@ -110,26 +211,6 @@ int mp4ff_meta_get_totaldiscs(const mp4ff_t *f, char **value);
 int mp4ff_meta_get_compilation(const mp4ff_t *f, char **value);
 int mp4ff_meta_get_tempo(const mp4ff_t *f, char **value);
 int32_t mp4ff_meta_get_coverart(const mp4ff_t *f, char **value);
-#ifdef USE_TAGGING
-
-/* metadata tag structure */
-typedef struct
-{
-    char *item;
-    char *value;
-} mp4ff_tag_t;
-
-/* metadata list structure */
-typedef struct
-{
-    mp4ff_tag_t *tags;
-    uint32_t count;
-} mp4ff_metadata_t;
-
-int32_t mp4ff_meta_update(mp4ff_callback_t *f,const mp4ff_metadata_t * data);
-
-#endif
-
 
 #ifdef __cplusplus
 }

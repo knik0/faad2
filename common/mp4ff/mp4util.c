@@ -37,6 +37,9 @@ int32_t mp4ff_read_data(mp4ff_t *f, int8_t *data, uint32_t size)
 
     result = f->stream->read(f->stream->user_data, data, size);
 
+    if (result < size)
+        f->stream->read_error++;
+
     f->current_position += size;
 
     return result;
