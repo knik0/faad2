@@ -35,11 +35,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#else
-#include "mp4ff_int_types.h"
-#endif
 
 /* file callback structure */
 typedef struct
