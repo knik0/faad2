@@ -73,8 +73,6 @@ extern "C" {
   #endif
 #endif
 
-#define FAAD2_VERSION PACKAGE_VERSION
-
 /* object types for AAC */
 #define MAIN       1
 #define LC         2
@@ -250,6 +248,10 @@ void NEAACDECAPI *NeAACDecDecode2(NeAACDecHandle hDecoder,
 char NEAACDECAPI NeAACDecAudioSpecificConfig(unsigned char *pBuffer,
                                              unsigned long buffer_size,
                                              mp4AudioSpecificConfig *mp4ASC);
+
+/* Get version and copyright strings */
+int NEAACDECAPI NeAACDecGetVersion(char **faad_id_string,
+                                   char **faad_copyright_string);
 
 #ifdef _WIN32
   #pragma pack(pop)

@@ -1142,6 +1142,8 @@ int main(int argc, char *argv[])
     unsigned char header[8];
     float length = 0;
     FILE *hMP4File;
+    char *faad_id_string;
+    char *faad_copyright_string;
 
 /* System dependant types */
 #ifdef _WIN32
@@ -1299,13 +1301,11 @@ int main(int argc, char *argv[])
         }
     }
 
+    NeAACDecGetVersion(&faad_id_string, &faad_copyright_string);
 
-    faad_fprintf(stderr, " *********** Ahead Software MPEG-4 AAC Decoder V%s ******************\n\n", FAAD2_VERSION);
+    faad_fprintf(stderr, " *********** Ahead Software MPEG-4 AAC Decoder V%s ******************\n\n", faad_id_string);
     faad_fprintf(stderr, " Build: %s\n", __DATE__);
-    faad_fprintf(stderr, " Copyright 2002-2004: Ahead Software AG\n");
-    faad_fprintf(stderr, " http://www.audiocoding.com\n");
-    faad_fprintf(stderr, "\n Latest version and bug tracking available here:\n");
-    faad_fprintf(stderr, " http://sourceforge.net/projects/faac/\n\n");
+    faad_fprintf(stderr, "%s", faad_copyright_string);
     if (cap & FIXED_POINT_CAP)
         faad_fprintf(stderr, " Fixed point version\n");
     else

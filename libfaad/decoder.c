@@ -64,6 +64,23 @@ static void create_channel_config(NeAACDecStruct *hDecoder,
                                   NeAACDecFrameInfo *hInfo);
 
 
+int NEAACDECAPI NeAACDecGetVersion(char **faad_id_string,
+                                   char **faad_copyright_string)
+{
+    static char *libfaadName = PACKAGE_VERSION;
+    static char *libCopyright =
+        " Copyright 2002-2004: Ahead Software AG\n"
+	" http://www.audiocoding.com\n"
+	" bug tracking: https://sourceforge.net/p/faac/bugs/\n";
+
+    if (faad_id_string)
+        *faad_id_string = libfaadName;
+
+    if (faad_copyright_string)
+        *faad_copyright_string = libCopyright;
+
+    return 0;
+}
 char NEAACDECAPI *NeAACDecGetErrorMessage(unsigned char errcode)
 {
     if (errcode >= NUM_ERROR_MESSAGES)
@@ -115,7 +132,7 @@ NeAACDecHandle NEAACDECAPI NeAACDecOpen(void)
     hDecoder->config.downMatrix = 0;
     hDecoder->adts_header_present = 0;
     hDecoder->adif_header_present = 0;
-	hDecoder->latm_header_present = 0;
+    hDecoder->latm_header_present = 0;
 #ifdef ERROR_RESILIENCE
     hDecoder->aacSectionDataResilienceFlag = 0;
     hDecoder->aacScalefactorDataResilienceFlag = 0;
@@ -283,8 +300,8 @@ long NEAACDECAPI NeAACDecInit(NeAACDecHandle hpDecoder,
 #endif
         /* Check if an ADIF header is present */
         if ((buffer[0] == 'A') && (buffer[1] == 'D') &&
-			(buffer[2] == 'I') && (buffer[3] == 'F'))
-		{
+            (buffer[2] == 'I') && (buffer[3] == 'F'))
+        {
             hDecoder->adif_header_present = 1;
 
             get_adif_header(&adif, &ld);
@@ -325,7 +342,7 @@ long NEAACDECAPI NeAACDecInit(NeAACDecHandle hpDecoder,
     }
 
     if (!*samplerate)
-	return -1;
+        return -1;
 
 #if (defined(PS_DEC) || defined(DRM_PS))
     /* check if we have a mono file */
