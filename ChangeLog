@@ -1,3 +1,11 @@
+	- NeAACDecGetVersion: 
+		new api function to get version and copyright strings
+
+2.8.1:
+	- seeking support for MP4 files
+2.8.0:
+	- patches and fixed bugs
+
 2009-02-02 - Version 2.7
 	* DAB+ support
 	* Use public headers internally to prevent duplicate declarations
