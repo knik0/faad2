@@ -73,6 +73,8 @@ extern "C" {
   #endif
 #endif
 
+#define FAAD2_VERSION "unknown"
+
 /* object types for AAC */
 #define MAIN       1
 #define LC         2
