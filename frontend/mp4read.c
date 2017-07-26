@@ -982,14 +982,12 @@ int mp4read_open(char *name)
 
     if (mp4config.verbose.tags)
     {
-        fprintf(stderr, "/moov/meta:\n");
         rewind(g_fin);
         g_atom = g_meta1;
         atomsize = INT_MAX;
         ret = parse(&atomsize);
         if (ret < 0)
         {
-            fprintf(stderr, "/meta:\n");
             rewind(g_fin);
             g_atom = g_meta2;
             atomsize = INT_MAX;
