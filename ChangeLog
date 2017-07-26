@@ -1,3 +1,4 @@
+	- New MP4 input module
 	- NeAACDecGetVersion: 
 		new api function to get version and copyright strings
 
