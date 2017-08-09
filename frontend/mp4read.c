@@ -567,8 +567,11 @@ static int ilstin(int size)
                 asize -= 4;
                 if (memcmp(id, "name", 4))
                     goto skip;
+                u32in();
+                asize -= 4;
+                dsize -= 4;
             }
-            spc = 17 - dsize;
+            spc = 13 - dsize;
             if (spc < 0) spc = 0;
             while (dsize > 0)
             {
@@ -588,6 +591,9 @@ static int ilstin(int size)
                 asize -= 4;
                 if (memcmp(id, "data", 4))
                     goto skip;
+                u32in();
+                asize -= 4;
+                dsize -= 4;
             }
             while (dsize > 0)
             {
