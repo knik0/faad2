@@ -4,7 +4,7 @@ AM_CPPFLAGS	= -iquote $(top_srcdir)/include
 include_HEADERS = $(top_srcdir)/include/faad.h \
 		  $(top_srcdir)/include/neaacdec.h
 
-libfaad_la_LDFLAGS = -version-info 2:0:0
+libfaad_la_LDFLAGS = -version-info 2:0:0 -no-undefined
 libfaad_la_LIBADD = -lm
 libfaad_la_CFLAGS = -fvisibility=hidden
 
