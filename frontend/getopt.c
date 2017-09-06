@@ -172,7 +172,6 @@ static enum
 #if __STDC__ || defined(PROTO)
 extern char *getenv(const char *name);
 extern int  strcmp (const char *s1, const char *s2);
-extern int  strncmp(const char *s1, const char *s2, unsigned int n);
 
 static int my_strlen(const char *s);
 static char *my_index (const char *str, int chr);

@@ -11,7 +11,7 @@ esac
 
 aclocal -I .                   && \
 autoheader                     && \
-$LIBTOOLIZE --automake --copy   && \
-automake --add-missing --copy  && \
+$LIBTOOLIZE --automake && \
+automake --add-missing && \
 autoconf                       && \
 echo "Ready to run ./configure"
