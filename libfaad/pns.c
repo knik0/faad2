@@ -212,8 +212,8 @@ void pns_decode(ic_stream *ics_left, ic_stream *ics_right,
                     offs = ics_left->swb_offset[sfb];
                     size = min(ics_left->swb_offset[sfb+1], ics_left->swb_offset_max) - offs;
 
-                    r1_dep = __r1;
-                    r2_dep = __r2;
+                    r1_dep = *__r1;
+                    r2_dep = *__r2;
 
                     /* Generate random vector */
                     gen_rand_vector(&spec_left[(group*nshort)+offs],
