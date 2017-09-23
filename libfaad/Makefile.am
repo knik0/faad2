@@ -17,7 +17,7 @@ libfaad_la_SOURCES = bits.c cfft.c decoder.c drc.c \
 		     sbr_dct.c sbr_e_nf.c sbr_fbt.c sbr_hfadj.c sbr_hfgen.c \
 		     sbr_huff.c sbr_qmf.c sbr_syntax.c sbr_tf_grid.c sbr_dec.c \
 		     analysis.h bits.h cfft.h cfft_tab.h common.h \
-		     decoder.h drc.h drm_dec.h error.h fixed.h filtbank.h \
+		     drc.h drm_dec.h error.h fixed.h filtbank.h \
 		     huffman.h ic_predict.h iq_table.h is.h kbd_win.h lt_predict.h \
 		     mdct.h mdct_tab.h mp4.h ms.h output.h pns.h ps_dec.h ps_tables.h \
 		     pulse.h rvlc.h \
