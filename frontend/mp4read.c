@@ -239,6 +239,23 @@ static int mp4ain(int size)
     return size;
 }
 
+
+static uint32_t getsize(void)
+{
+    int cnt;
+    uint32_t size = 0;
+    for (cnt = 0; cnt < 4; cnt++)
+    {
+        int tmp = u8in();
+
+        size <<= 7;
+        size |= (tmp & 0x7f);
+        if (!(tmp & 0x80))
+            break;
+    }
+    return size;
+}
+
 static int esdsin(int size)
 {
     // descriptor tree:
@@ -248,22 +265,6 @@ static int esdsin(int size)
     //   MP4SLConfigDescriptor
     enum
     { TAG_ES = 3, TAG_DC = 4, TAG_DSI = 5, TAG_SLC = 6 };
-
-    uint32_t getsize(void)
-    {
-        int cnt;
-        uint32_t size = 0;
-        for (cnt = 0; cnt < 4; cnt++)
-        {
-            int tmp = u8in();
-
-            size <<= 7;
-            size |= (tmp & 0x7f);
-            if (!(tmp & 0x80))
-                break;
-        }
-        return size;
-    }
 
     // version/flags
     u32in();
