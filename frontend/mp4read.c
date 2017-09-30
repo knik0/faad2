@@ -178,7 +178,7 @@ static int hdlr1in(int size)
     if (memcmp("soun", buf, 4))
     {
         if (mp4config.verbose.header)
-            fprintf(stderr, "unsuported, skipping\n");
+            fprintf(stderr, "unsupported, skipping\n");
         return ERR_UNSUPPORTED;
     }
     else
