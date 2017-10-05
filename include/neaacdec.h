@@ -202,7 +202,7 @@ typedef struct NeAACDecFrameInfo
     unsigned char ps;
 } NeAACDecFrameInfo;
 
-char NEAACDECAPI *NeAACDecGetErrorMessage(unsigned char errcode);
+char* NEAACDECAPI NeAACDecGetErrorMessage(unsigned char errcode);
 
 unsigned long NEAACDECAPI NeAACDecGetCapabilities(void);
 
@@ -235,12 +235,12 @@ void NEAACDECAPI NeAACDecPostSeekReset(NeAACDecHandle hDecoder, long frame);
 
 void NEAACDECAPI NeAACDecClose(NeAACDecHandle hDecoder);
 
-void NEAACDECAPI *NeAACDecDecode(NeAACDecHandle hDecoder,
+void* NEAACDECAPI NeAACDecDecode(NeAACDecHandle hDecoder,
                                  NeAACDecFrameInfo *hInfo,
                                  unsigned char *buffer,
                                  unsigned long buffer_size);
 
-void NEAACDECAPI *NeAACDecDecode2(NeAACDecHandle hDecoder,
+void* NEAACDECAPI NeAACDecDecode2(NeAACDecHandle hDecoder,
                                   NeAACDecFrameInfo *hInfo,
                                   unsigned char *buffer,
                                   unsigned long buffer_size,
