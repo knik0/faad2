@@ -13,3 +13,6 @@ Makefile
 *.libs
 *.deps
 *.la
+project/msvc/.vs/
+project/msvc/bin/
+project/msvc/intermediate/

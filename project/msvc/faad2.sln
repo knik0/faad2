@@ -1,0 +1,45 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.12
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "aacinfo", "aacinfo.vcxproj", "{FE985E4D-79DB-4DD3-BFED-824B4677A161}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libfaad", "libfaad.vcxproj", "{BC3EFE27-9015-4C9C-AD3C-72B3B7ED2114}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libfaad2_dll", "libfaad2_dll.vcxproj", "{482DA264-EE88-4575-B208-87C4CB80CD08}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "faad", "faad.vcxproj", "{2BD8CBB3-DFC9-4A6A-9B7A-07ED749BED58}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FE985E4D-79DB-4DD3-BFED-824B4677A161}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FE985E4D-79DB-4DD3-BFED-824B4677A161}.Debug|Win32.Build.0 = Debug|Win32
+		{FE985E4D-79DB-4DD3-BFED-824B4677A161}.Release|Win32.ActiveCfg = Release|Win32
+		{FE985E4D-79DB-4DD3-BFED-824B4677A161}.Release|Win32.Build.0 = Release|Win32
+		{BC3EFE27-9015-4C9C-AD3C-72B3B7ED2114}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BC3EFE27-9015-4C9C-AD3C-72B3B7ED2114}.Debug|Win32.Build.0 = Debug|Win32
+		{BC3EFE27-9015-4C9C-AD3C-72B3B7ED2114}.Release|Win32.ActiveCfg = Release|Win32
+		{BC3EFE27-9015-4C9C-AD3C-72B3B7ED2114}.Release|Win32.Build.0 = Release|Win32
+		{482DA264-EE88-4575-B208-87C4CB80CD08}.Debug|Win32.ActiveCfg = Debug|Win32
+		{482DA264-EE88-4575-B208-87C4CB80CD08}.Debug|Win32.Build.0 = Debug|Win32
+		{482DA264-EE88-4575-B208-87C4CB80CD08}.Release|Win32.ActiveCfg = Release|Win32
+		{482DA264-EE88-4575-B208-87C4CB80CD08}.Release|Win32.Build.0 = Release|Win32
+		{2BD8CBB3-DFC9-4A6A-9B7A-07ED749BED58}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2BD8CBB3-DFC9-4A6A-9B7A-07ED749BED58}.Debug|Win32.Build.0 = Debug|Win32
+		{2BD8CBB3-DFC9-4A6A-9B7A-07ED749BED58}.Release|Win32.ActiveCfg = Release|Win32
+		{2BD8CBB3-DFC9-4A6A-9B7A-07ED749BED58}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {89E2B8B3-42E4-4058-9565-E79943F3445F}
+	EndGlobalSection
+	GlobalSection(DPCodeReviewSolutionGUID) = preSolution
+		DPCodeReviewSolutionGUID = {00000000-0000-0000-0000-000000000000}
+	EndGlobalSection
+EndGlobal
