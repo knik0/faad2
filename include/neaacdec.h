@@ -60,14 +60,16 @@ extern "C" {
 
 #ifdef _WIN32
   #pragma pack(push, 8)
-  #define CDECL __cdecl
-  #define ATTR
+  #ifndef CDECL
+   #define CDECL __cdecl
+  #endif
+  #define VISIBLE __declspec( dllexport )
 #elif defined(__GNUC__) && __GNUC__ >= 4
   #define CDECL
-  #define ATTR __attribute__((visibility("default")))
+  #define VISIBLE __attribute__((visibility("default")))
 #else
   #define CDECL
-  #define ATTR
+  #define VISIBLE
 #endif
 
 #define FAAD2_VERSION "unknown"
@@ -199,57 +201,57 @@ typedef struct NeAACDecFrameInfo
     unsigned char ps;
 } NeAACDecFrameInfo;
 
-ATTR char* CDECL NeAACDecGetErrorMessage(unsigned char errcode);
+VISIBLE char* CDECL NeAACDecGetErrorMessage(unsigned char errcode);
 
-ATTR unsigned long CDECL NeAACDecGetCapabilities(void);
+VISIBLE unsigned long CDECL NeAACDecGetCapabilities(void);
 
-ATTR NeAACDecHandle CDECL NeAACDecOpen(void);
+VISIBLE NeAACDecHandle CDECL NeAACDecOpen(void);
 
-ATTR NeAACDecConfigurationPtr CDECL NeAACDecGetCurrentConfiguration(NeAACDecHandle hDecoder);
+VISIBLE NeAACDecConfigurationPtr CDECL NeAACDecGetCurrentConfiguration(NeAACDecHandle hDecoder);
 
-ATTR unsigned char CDECL NeAACDecSetConfiguration(NeAACDecHandle hDecoder,
+VISIBLE unsigned char CDECL NeAACDecSetConfiguration(NeAACDecHandle hDecoder,
                                                    NeAACDecConfigurationPtr config);
 
 /* Init the library based on info from the AAC file (ADTS/ADIF) */
-ATTR long CDECL NeAACDecInit(NeAACDecHandle hDecoder,
+VISIBLE long CDECL NeAACDecInit(NeAACDecHandle hDecoder,
                               unsigned char *buffer,
                               unsigned long buffer_size,
                               unsigned long *samplerate,
                               unsigned char *channels);
 
 /* Init the library using a DecoderSpecificInfo */
-ATTR char CDECL NeAACDecInit2(NeAACDecHandle hDecoder,
+VISIBLE char CDECL NeAACDecInit2(NeAACDecHandle hDecoder,
                                unsigned char *pBuffer,
                                unsigned long SizeOfDecoderSpecificInfo,
                                unsigned long *samplerate,
                                unsigned char *channels);
 
 /* Init the library for DRM */
-ATTR char CDECL NeAACDecInitDRM(NeAACDecHandle *hDecoder, unsigned long samplerate,
+VISIBLE char CDECL NeAACDecInitDRM(NeAACDecHandle *hDecoder, unsigned long samplerate,
                                  unsigned char channels);
 
-ATTR void CDECL NeAACDecPostSeekReset(NeAACDecHandle hDecoder, long frame);
+VISIBLE void CDECL NeAACDecPostSeekReset(NeAACDecHandle hDecoder, long frame);
 
-ATTR void CDECL NeAACDecClose(NeAACDecHandle hDecoder);
+VISIBLE void CDECL NeAACDecClose(NeAACDecHandle hDecoder);
 
-ATTR void* CDECL NeAACDecDecode(NeAACDecHandle hDecoder,
+VISIBLE void* CDECL NeAACDecDecode(NeAACDecHandle hDecoder,
                                  NeAACDecFrameInfo *hInfo,
                                  unsigned char *buffer,
                                  unsigned long buffer_size);
 
-ATTR void* CDECL NeAACDecDecode2(NeAACDecHandle hDecoder,
+VISIBLE void* CDECL NeAACDecDecode2(NeAACDecHandle hDecoder,
                                   NeAACDecFrameInfo *hInfo,
                                   unsigned char *buffer,
                                   unsigned long buffer_size,
                                   void **sample_buffer,
                                   unsigned long sample_buffer_size);
 
-ATTR char CDECL NeAACDecAudioSpecificConfig(unsigned char *pBuffer,
+VISIBLE char CDECL NeAACDecAudioSpecificConfig(unsigned char *pBuffer,
                                              unsigned long buffer_size,
                                              mp4AudioSpecificConfig *mp4ASC);
 
 /* Get version and copyright strings */
-ATTR int CDECL NeAACDecGetVersion(char **faad_id_string,
+VISIBLE int CDECL NeAACDecGetVersion(char **faad_id_string,
                                    char **faad_copyright_string);
 
 #ifdef _WIN32

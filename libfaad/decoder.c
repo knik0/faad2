@@ -64,7 +64,7 @@ static void create_channel_config(NeAACDecStruct *hDecoder,
                                   NeAACDecFrameInfo *hInfo);
 
 
-ATTR int CDECL NeAACDecGetVersion(char **faad_id_string,
+VISIBLE int CDECL NeAACDecGetVersion(char **faad_id_string,
                                    char **faad_copyright_string)
 {
     static char *libfaadName = PACKAGE_VERSION;
@@ -81,14 +81,14 @@ ATTR int CDECL NeAACDecGetVersion(char **faad_id_string,
 
     return 0;
 }
-ATTR char* CDECL NeAACDecGetErrorMessage(unsigned char errcode)
+VISIBLE char* CDECL NeAACDecGetErrorMessage(unsigned char errcode)
 {
     if (errcode >= NUM_ERROR_MESSAGES)
         return NULL;
     return err_msg[errcode];
 }
 
-ATTR unsigned long CDECL NeAACDecGetCapabilities(void)
+VISIBLE unsigned long CDECL NeAACDecGetCapabilities(void)
 {
     uint32_t cap = 0;
 
@@ -115,7 +115,7 @@ ATTR unsigned long CDECL NeAACDecGetCapabilities(void)
 }
 
 const unsigned char mes[] = { 0x67,0x20,0x61,0x20,0x20,0x20,0x6f,0x20,0x72,0x20,0x65,0x20,0x6e,0x20,0x20,0x20,0x74,0x20,0x68,0x20,0x67,0x20,0x69,0x20,0x72,0x20,0x79,0x20,0x70,0x20,0x6f,0x20,0x63 };
-ATTR NeAACDecHandle CDECL NeAACDecOpen(void)
+VISIBLE NeAACDecHandle CDECL NeAACDecOpen(void)
 {
     uint8_t i;
     NeAACDecStruct *hDecoder = NULL;
@@ -176,7 +176,7 @@ ATTR NeAACDecHandle CDECL NeAACDecOpen(void)
     return hDecoder;
 }
 
-ATTR NeAACDecConfigurationPtr CDECL NeAACDecGetCurrentConfiguration(NeAACDecHandle hpDecoder)
+VISIBLE NeAACDecConfigurationPtr CDECL NeAACDecGetCurrentConfiguration(NeAACDecHandle hpDecoder)
 {
     NeAACDecStruct* hDecoder = (NeAACDecStruct*)hpDecoder;
     if (hDecoder)
@@ -189,7 +189,7 @@ ATTR NeAACDecConfigurationPtr CDECL NeAACDecGetCurrentConfiguration(NeAACDecHand
     return NULL;
 }
 
-ATTR unsigned char CDECL NeAACDecSetConfiguration(NeAACDecHandle hpDecoder,
+VISIBLE unsigned char CDECL NeAACDecSetConfiguration(NeAACDecHandle hpDecoder,
                                                    NeAACDecConfigurationPtr config)
 {
     NeAACDecStruct* hDecoder = (NeAACDecStruct*)hpDecoder;
@@ -252,7 +252,7 @@ static int latmCheck(latm_header *latm, bitfile *ld)
 }
 
 
-ATTR long CDECL NeAACDecInit(NeAACDecHandle hpDecoder,
+VISIBLE long CDECL NeAACDecInit(NeAACDecHandle hpDecoder,
                               unsigned char *buffer,
                               unsigned long buffer_size,
                               unsigned long *samplerate,
@@ -386,7 +386,7 @@ ATTR long CDECL NeAACDecInit(NeAACDecHandle hpDecoder,
 }
 
 /* Init the library using a DecoderSpecificInfo */
-ATTR char CDECL NeAACDecInit2(NeAACDecHandle hpDecoder,
+VISIBLE char CDECL NeAACDecInit2(NeAACDecHandle hpDecoder,
                                unsigned char *pBuffer,
                                unsigned long SizeOfDecoderSpecificInfo,
                                unsigned long *samplerate,
@@ -480,7 +480,7 @@ ATTR char CDECL NeAACDecInit2(NeAACDecHandle hpDecoder,
 }
 
 #ifdef DRM
-ATTR char CDECL NeAACDecInitDRM(NeAACDecHandle *hpDecoder,
+VISIBLE char CDECL NeAACDecInitDRM(NeAACDecHandle *hpDecoder,
                                  unsigned long samplerate,
                                  unsigned char channels)
 {
@@ -523,7 +523,7 @@ ATTR char CDECL NeAACDecInitDRM(NeAACDecHandle *hpDecoder,
 }
 #endif
 
-ATTR void CDECL NeAACDecClose(NeAACDecHandle hpDecoder)
+VISIBLE void CDECL NeAACDecClose(NeAACDecHandle hpDecoder)
 {
     uint8_t i;
     NeAACDecStruct* hDecoder = (NeAACDecStruct*)hpDecoder;
@@ -577,7 +577,7 @@ ATTR void CDECL NeAACDecClose(NeAACDecHandle hpDecoder)
     if (hDecoder) faad_free(hDecoder);
 }
 
-ATTR void CDECL NeAACDecPostSeekReset(NeAACDecHandle hpDecoder, long frame)
+VISIBLE void CDECL NeAACDecPostSeekReset(NeAACDecHandle hpDecoder, long frame)
 {
     NeAACDecStruct* hDecoder = (NeAACDecStruct*)hpDecoder;
     if (hDecoder)
@@ -807,7 +807,7 @@ static void create_channel_config(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *h
     }
 }
 
-ATTR void* CDECL NeAACDecDecode(NeAACDecHandle hpDecoder,
+VISIBLE void* CDECL NeAACDecDecode(NeAACDecHandle hpDecoder,
                                  NeAACDecFrameInfo *hInfo,
                                  unsigned char *buffer,
                                  unsigned long buffer_size)
@@ -816,7 +816,7 @@ ATTR void* CDECL NeAACDecDecode(NeAACDecHandle hpDecoder,
     return aac_frame_decode(hDecoder, hInfo, buffer, buffer_size, NULL, 0);
 }
 
-ATTR void* CDECL NeAACDecDecode2(NeAACDecHandle hpDecoder,
+VISIBLE void* CDECL NeAACDecDecode2(NeAACDecHandle hpDecoder,
                                   NeAACDecFrameInfo *hInfo,
                                   unsigned char *buffer,
                                   unsigned long buffer_size,

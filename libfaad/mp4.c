@@ -114,7 +114,7 @@ static uint8_t ObjectTypesTable[32] = {
 };
 
 /* Table 1.6.1 */
-ATTR char CDECL NeAACDecAudioSpecificConfig(unsigned char *pBuffer,
+VISIBLE char CDECL NeAACDecAudioSpecificConfig(unsigned char *pBuffer,
                                              unsigned long buffer_size,
                                              mp4AudioSpecificConfig *mp4ASC)
 {
