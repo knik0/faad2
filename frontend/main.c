@@ -35,6 +35,7 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <io.h>
 #ifndef __MINGW32__
 #define off_t __int64
 #endif
@@ -51,6 +52,7 @@
 
 #include <neaacdec.h>
 
+#include "unicode_support.h"
 #include "audio.h"
 #include "mp4read.h"
 
@@ -68,6 +70,7 @@
 #define MAX_CHANNELS 6 /* make this higher to support files with
                           more channels */
 
+#define MAX_PERCENTS 384
 
 static int quiet = 0;
 
@@ -78,11 +81,16 @@ static void faad_fprintf(FILE *stream, const char *fmt, ...)
     if (!quiet)
     {
         va_start(ap, fmt);
-
         vfprintf(stream, fmt, ap);
-
         va_end(ap);
     }
+
+#ifdef _WIN32
+	if (!_isatty(_fileno(stream)))
+	{
+		fflush(stream); /*ensure real-time progress output on Win32*/
+	}
+#endif
 }
 
 /* FAAD file buffering routines */
@@ -462,7 +470,7 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
     NeAACDecFrameInfo frameInfo;
     NeAACDecConfigurationPtr config;
 
-    char percents[200];
+    char percents[MAX_PERCENTS];
     int percent, old_percent = -1;
     int bread, fileread;
     int header_type = 0;
@@ -479,7 +487,7 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
 
     if (adts_out)
     {
-        adtsFile = fopen(adts_fn, "wb");
+        adtsFile = faad_fopen(adts_fn, "wb");
         if (adtsFile == NULL)
         {
             faad_fprintf(stderr, "Error opening file: %s\n", adts_fn);
@@ -491,12 +499,12 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
     {
 	b.infile = stdin;
 #ifdef _WIN32
-        setmode(fileno(stdin), O_BINARY);
+        _setmode(_fileno(stdin), O_BINARY);
 #endif
 
     } else
     {
-    	b.infile = fopen(aacfile, "rb");
+    	b.infile = faad_fopen(aacfile, "rb");
     	if (b.infile == NULL)
     	{
     	    /* unable to open file */
@@ -727,7 +735,7 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
         if (percent > old_percent)
         {
             old_percent = percent;
-            sprintf(percents, "%d%% decoding %s.", percent, aacfile);
+            snprintf(percents, MAX_PERCENTS, "%d%% decoding %s.", percent, aacfile);
             faad_fprintf(stderr, "%s\r", percents);
 #ifdef _WIN32
             SetConsoleTitle(percents);
@@ -795,7 +803,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
     NeAACDecFrameInfo frameInfo;
     mp4AudioSpecificConfig mp4ASC;
 
-    char percents[200];
+    char percents[MAX_PERCENTS];
     int percent, old_percent = -1;
 
     int first_time = 1;
@@ -833,7 +841,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
 
     if (adts_out)
     {
-        adtsFile = fopen(adts_fn, "wb");
+        adtsFile = faad_fopen(adts_fn, "wb");
         if (adtsFile == NULL)
         {
             faad_fprintf(stderr, "Error opening file: %s\n", adts_fn);
@@ -953,7 +961,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
                         outputFormat, fileType, aacChannelConfig2wavexChannelMask(&frameInfo));
                 } else {
 #ifdef _WIN32
-                    setmode(fileno(stdout), O_BINARY);
+                    _setmode(_fileno(stdout), O_BINARY);
 #endif
                     aufile = open_audio_file("-", frameInfo.samplerate, frameInfo.channels,
                         outputFormat, fileType, aacChannelConfig2wavexChannelMask(&frameInfo));
@@ -972,7 +980,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
         if (percent > old_percent)
         {
             old_percent = percent;
-            sprintf(percents, "%d%% decoding %s.", percent, mp4file);
+            snprintf(percents, MAX_PERCENTS, "%d%% decoding %s.", percent, mp4file);
             faad_fprintf(stderr, "%s\r", percents);
 #ifdef _WIN32
             SetConsoleTitle(percents);
@@ -1007,7 +1015,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
     return frameInfo.error;
 }
 
-int main(int argc, char *argv[])
+static int faad_main(int argc, char *argv[])
 {
     int result;
     int infoOnly = 0;
@@ -1265,13 +1273,13 @@ int main(int argc, char *argv[])
 	readFromStdin = 1;
 	hMP4File  = stdin;
 #ifdef _WIN32
-        setmode(fileno(stdin), O_BINARY);
+        _setmode(_fileno(stdin), O_BINARY);
 #endif
 
     } else {
 
     	mp4file = 0;
-    	hMP4File = fopen(aacFileName, "rb");
+    	hMP4File = faad_fopen(aacFileName, "rb");
     	if (!hMP4File)
     	{
     	    faad_fprintf(stderr, "Error opening file: %s\n", aacFileName);
@@ -1337,4 +1345,20 @@ int main(int argc, char *argv[])
       free (aacFileName);
 
     return 0;
+}
+
+int main(int argc, char *argv[])
+{
+#ifdef _WIN32
+	int argc_utf8, exit_code;
+	char **argv_utf8;
+	init_console_utf8(stderr);
+	init_commandline_arguments_utf8(&argc_utf8, &argv_utf8);
+	exit_code = faad_main(argc_utf8, argv_utf8);
+	free_commandline_arguments_utf8(&argc_utf8, &argv_utf8);
+	uninit_console_utf8();
+	return exit_code;
+#else
+	return faad_main(argc, argv);
+#endif
 }

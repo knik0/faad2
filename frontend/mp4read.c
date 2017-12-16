@@ -24,6 +24,7 @@
 #include <time.h>
 #include <limits.h>
 
+#include "unicode_support.h"
 #include "mp4read.h"
 
 enum ATOM_TYPE
@@ -45,17 +46,29 @@ mp4config_t mp4config = { 0 };
 
 static FILE *g_fin = NULL;
 
-static inline uint32_t bswap32(uint32_t u32)
+static inline uint32_t bswap32(const uint32_t u32)
 {
 #ifndef WORDS_BIGENDIAN
+#ifdef _MSC_VER
+	return _byteswap_ulong(u32);
+#else
     return __builtin_bswap32(u32);
+#endif
+#else
+	return u32;
 #endif
 }
 
-static inline uint16_t bswap16(uint16_t u16)
+static inline uint16_t bswap16(const uint16_t u16)
 {
 #ifndef WORDS_BIGENDIAN
-    return __builtin_bswap16(u16);
+#ifdef _MSC_VER
+	return _byteswap_ushort(u16);
+#else
+	return __builtin_bswap16(u16);
+#endif
+#else
+	return u16;
 #endif
 }
 
@@ -927,7 +940,7 @@ int mp4read_seek(int framenum)
 
 static void mp4info(void)
 {
-    fprintf(stderr, "Modification Time:\t\%s", mp4time(mp4config.mtime));
+    fprintf(stderr, "Modification Time:\t\t%s", mp4time(mp4config.mtime));
     fprintf(stderr, "Samplerate:\t\t%d\n", mp4config.samplerate);
     fprintf(stderr, "Total samples:\t\t%d\n", mp4config.samples);
     fprintf(stderr, "Total channels:\t\t%d\n", mp4config.channels);
@@ -958,7 +971,7 @@ int mp4read_open(char *name)
 
     mp4read_close();
 
-    g_fin = fopen(name, "rb");
+    g_fin = faad_fopen(name, "rb");
     if (!g_fin)
         return ERR_FAIL;
 
