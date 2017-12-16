@@ -39,7 +39,6 @@
 #ifndef __MINGW32__
 #define off_t __int64
 #endif
-#include "unicode_support.h"
 #else
 #include <time.h>
 #endif
@@ -53,6 +52,7 @@
 
 #include <neaacdec.h>
 
+#include "unicode_support.h"
 #include "audio.h"
 #include "mp4read.h"
 

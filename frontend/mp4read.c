@@ -24,9 +24,7 @@
 #include <time.h>
 #include <limits.h>
 
-#ifdef _WIN32
 #include "unicode_support.h"
-#endif
 #include "mp4read.h"
 
 enum ATOM_TYPE

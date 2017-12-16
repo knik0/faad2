@@ -38,9 +38,7 @@
 #include <neaacdec.h>
 #include <stdint.h>
 
-#ifdef _WIN32
 #include "unicode_support.h"
-#endif
 #include "audio.h"
 
 
