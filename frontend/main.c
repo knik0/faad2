@@ -80,11 +80,16 @@ static void faad_fprintf(FILE *stream, const char *fmt, ...)
     if (!quiet)
     {
         va_start(ap, fmt);
-
         vfprintf(stream, fmt, ap);
-
         va_end(ap);
     }
+
+#ifdef _WIN32
+	if (!_isatty(_fileno(stream)))
+	{
+		fflush(stream); /*ensure real-time progress output on Win32*/
+	}
+#endif
 }
 
 /* FAAD file buffering routines */
