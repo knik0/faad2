@@ -45,17 +45,29 @@ mp4config_t mp4config = { 0 };
 
 static FILE *g_fin = NULL;
 
-static inline uint32_t bswap32(uint32_t u32)
+static inline uint32_t bswap32(const uint32_t u32)
 {
 #ifndef WORDS_BIGENDIAN
+#ifdef _MSC_VER
+	return _byteswap_ulong(u32);
+#else
     return __builtin_bswap32(u32);
+#endif
+#else
+	return u32;
 #endif
 }
 
-static inline uint16_t bswap16(uint16_t u16)
+static inline uint16_t bswap16(const uint16_t u16)
 {
 #ifndef WORDS_BIGENDIAN
-    return __builtin_bswap16(u16);
+#ifdef _MSC_VER
+	return _byteswap_ushort(u16);
+#else
+	return __builtin_bswap16(u16);
+#endif
+#else
+	return u16;
 #endif
 }
 
