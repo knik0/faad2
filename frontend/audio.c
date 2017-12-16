@@ -38,6 +38,9 @@
 #include <neaacdec.h>
 #include <stdint.h>
 
+#ifdef _WIN32
+#include "unicode_support.h"
+#endif
 #include "audio.h"
 
 
@@ -74,13 +77,13 @@ audio_file *open_audio_file(char *infile, int samplerate, int channels,
     if(infile[0] == '-')
     {
 #ifdef _WIN32
-        setmode(fileno(stdout), O_BINARY);
+        _setmode(_fileno(stdout), O_BINARY);
 #endif
         aufile->sndfile = stdout;
         aufile->toStdio = 1;
     } else {
         aufile->toStdio = 0;
-        aufile->sndfile = fopen(infile, "wb");
+        aufile->sndfile = faad_fopen(infile, "wb");
     }
 
     if (aufile->sndfile == NULL)

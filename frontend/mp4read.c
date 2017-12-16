@@ -24,6 +24,9 @@
 #include <time.h>
 #include <limits.h>
 
+#ifdef _WIN32
+#include "unicode_support.h"
+#endif
 #include "mp4read.h"
 
 enum ATOM_TYPE
@@ -939,7 +942,7 @@ int mp4read_seek(int framenum)
 
 static void mp4info(void)
 {
-    fprintf(stderr, "Modification Time:\t\%s", mp4time(mp4config.mtime));
+    fprintf(stderr, "Modification Time:\t\t%s", mp4time(mp4config.mtime));
     fprintf(stderr, "Samplerate:\t\t%d\n", mp4config.samplerate);
     fprintf(stderr, "Total samples:\t\t%d\n", mp4config.samples);
     fprintf(stderr, "Total channels:\t\t%d\n", mp4config.channels);
@@ -970,7 +973,7 @@ int mp4read_open(char *name)
 
     mp4read_close();
 
-    g_fin = fopen(name, "rb");
+    g_fin = faad_fopen(name, "rb");
     if (!g_fin)
         return ERR_FAIL;
 
