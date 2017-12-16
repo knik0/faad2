@@ -70,6 +70,7 @@
 #define MAX_CHANNELS 6 /* make this higher to support files with
                           more channels */
 
+#define MAX_PERCENTS 384
 
 static int quiet = 0;
 
@@ -469,7 +470,7 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
     NeAACDecFrameInfo frameInfo;
     NeAACDecConfigurationPtr config;
 
-    char percents[200];
+    char percents[MAX_PERCENTS];
     int percent, old_percent = -1;
     int bread, fileread;
     int header_type = 0;
@@ -734,7 +735,7 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
         if (percent > old_percent)
         {
             old_percent = percent;
-            sprintf(percents, "%d%% decoding %s.", percent, aacfile);
+            snprintf(percents, MAX_PERCENTS, "%d%% decoding %s.", percent, aacfile);
             faad_fprintf(stderr, "%s\r", percents);
 #ifdef _WIN32
             SetConsoleTitle(percents);
@@ -802,7 +803,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
     NeAACDecFrameInfo frameInfo;
     mp4AudioSpecificConfig mp4ASC;
 
-    char percents[200];
+    char percents[MAX_PERCENTS];
     int percent, old_percent = -1;
 
     int first_time = 1;
@@ -979,7 +980,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
         if (percent > old_percent)
         {
             old_percent = percent;
-            sprintf(percents, "%d%% decoding %s.", percent, mp4file);
+            snprintf(percents, MAX_PERCENTS, "%d%% decoding %s.", percent, mp4file);
             faad_fprintf(stderr, "%s\r", percents);
 #ifdef _WIN32
             SetConsoleTitle(percents);
