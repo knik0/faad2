@@ -20,6 +20,9 @@
     <ClCompile Include="..\..\frontend\mp4read.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\frontend\unicode_support.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\frontend\audio.h">
@@ -28,22 +31,16 @@
     <ClInclude Include="..\..\frontend\getopt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\common\mp4v2\mp4.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\mp4v2\mpeg4ip.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\neaacdec.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\mp4v2\systems.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\common\mp4v2\win32_ver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\frontend\mp4read.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\frontend\unicode_support.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
