@@ -55,7 +55,7 @@
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>../../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NDEBUG;WIN32;_LIB;HAVE_LRINTF;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;WIN32;_LIB;HAVE_LRINTF;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -67,12 +67,18 @@
       <Culture>0x0413</Culture>
     </ResourceCompile>
     <Lib />
+    <PreBuildEvent>
+      <Command>"$(SolutionDir)..\..\utils\win32\ac2ver.exe" "faad2" "$(SolutionDir)..\..\configure.ac" &gt; "$(SolutionDir)..\..\libfaad\win32_ver.h"</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Retrieving package version...</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>../../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_DEBUG;WIN32;_LIB;HAVE_LRINTF;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;WIN32;_LIB;HAVE_LRINTF;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader />
@@ -84,6 +90,12 @@
       <Culture>0x0413</Culture>
     </ResourceCompile>
     <Lib />
+    <PreBuildEvent>
+      <Command>"$(SolutionDir)..\..\utils\win32\ac2ver.exe" "faad2" "$(SolutionDir)..\..\configure.ac" &gt; "$(SolutionDir)..\..\libfaad\win32_ver.h"</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Retrieving package version...</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\libfaad\bits.c" />

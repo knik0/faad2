@@ -1349,7 +1349,7 @@ static int faad_main(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-#ifdef _WIN32
+#if defined WIN32 || defined _WIN32 || defined WIN64 || defined _WIN64
 	int argc_utf8, exit_code;
 	char **argv_utf8;
 	init_console_utf8(stderr);

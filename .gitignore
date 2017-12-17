@@ -16,3 +16,4 @@ Makefile
 project/msvc/.vs/
 project/msvc/bin/
 project/msvc/intermediate/
+libfaad/win32_ver.h

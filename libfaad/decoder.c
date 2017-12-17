@@ -53,6 +53,10 @@
 uint16_t dbg_count;
 #endif
 
+#if defined WIN32 || defined _WIN32 || defined WIN64 || defined _WIN64
+#include "win32_ver.h"
+#endif
+
 /* static function declarations */
 static void* aac_frame_decode(NeAACDecStruct *hDecoder,
                               NeAACDecFrameInfo *hInfo,

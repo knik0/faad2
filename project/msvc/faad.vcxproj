@@ -59,7 +59,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>../../include;../../common/mp4ff;../../frontend;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader />
@@ -85,7 +85,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>../../include;../../common/mp4ff;../../frontend;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -104,14 +104,13 @@
     <ClCompile Include="..\..\frontend\audio.c" />
     <ClCompile Include="..\..\frontend\main.c" />
     <ClCompile Include="..\..\frontend\mp4read.c" />
+    <ClCompile Include="..\..\frontend\unicode_support.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\frontend\getopt.h" />
-    <ClInclude Include="..\..\common\mp4v2\mp4.h" />
-    <ClInclude Include="..\..\common\mp4v2\mpeg4ip.h" />
-    <ClInclude Include="..\..\common\mp4v2\systems.h" />
     <ClInclude Include="..\..\common\mp4v2\win32_ver.h" />
     <ClInclude Include="..\..\frontend\mp4read.h" />
+    <ClInclude Include="..\..\frontend\unicode_support.h" />
     <ClInclude Include="..\..\include\neaacdec.h" />
     <ClInclude Include="..\..\frontend\audio.h" />
   </ItemGroup>
