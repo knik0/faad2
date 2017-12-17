@@ -1,3 +1,6 @@
+2.8.7:
+	- MSVC build fixes
+	- fixed a coulple bugs
 2.8.6:
 2.8.5:
 	- another package fix
