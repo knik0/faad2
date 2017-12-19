@@ -1,4 +1,4 @@
-SUBDIRS = libfaad common frontend plugins
+SUBDIRS = libfaad frontend plugins
 
 EXTRA_DIST = faad2.spec docs/libfaad.3 project utils
 

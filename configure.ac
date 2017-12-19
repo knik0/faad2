@@ -156,8 +156,6 @@ if test x$WITHDRM = xyes; then
 fi
 
 AC_CONFIG_FILES(libfaad/Makefile)
-AC_CONFIG_FILES(common/Makefile)
-AC_CONFIG_FILES(common/mp4ff/Makefile)
 AC_CONFIG_FILES(plugins/Makefile)
 AC_CONFIG_FILES(plugins/xmms/Makefile)
 AC_CONFIG_FILES(plugins/xmms/src/Makefile)
