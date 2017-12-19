@@ -572,42 +572,43 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
 
     /* get AAC infos for printing */
     header_type = 0;
-    if (streaminput == 1 )
-	lookforheader(&b);
+    if (streaminput == 1)
+        lookforheader(&b);
 
     if ((b.buffer[0] == 0xFF) && ((b.buffer[1] & 0xF6) == 0xF0))
     {
-        if (streaminput ==1)
-	{
-	    int frames, frame_length;
-	    int samplerate;
-	    float frames_per_sec, bytes_per_frame;
-	    samplerate = adts_sample_rates[(b.buffer[2]&0x3c)>>2];
-	    frame_length = ((((unsigned int)b.buffer[3] & 0x3)) << 11)
-	        | (((unsigned int)b.buffer[4]) << 3) | (b.buffer[5] >> 5);
+        if (streaminput == 1)
+        {
+            int /*frames,*/ frame_length;
+            int samplerate;
+            float frames_per_sec, bytes_per_frame;
+            channels = 2;
+            samplerate = adts_sample_rates[(b.buffer[2]&0x3c)>>2];
+            frame_length = ((((unsigned int)b.buffer[3] & 0x3)) << 11)
+                | (((unsigned int)b.buffer[4]) << 3) | (b.buffer[5] >> 5);
+            frames_per_sec = (float)samplerate/1024.0f;
+            bytes_per_frame = (float)frame_length/(float)(1000);
+            bitrate = (int)(8. * bytes_per_frame * frames_per_sec + 0.5);
+            length = 1;
+            faad_fprintf(stderr, "Streamed input format  samplerate %d channels %d.\n", samplerate, channels);
+        } else {
+            adts_parse(&b, &bitrate, &length);
+            fseek(b.infile, tagsize, SEEK_SET);
 
-	    frames_per_sec = (float)samplerate/1024.0f;
-	    bytes_per_frame = (float)frame_length/(float)(1000);
-	    bitrate = (int)(8. * bytes_per_frame * frames_per_sec + 0.5);
-	    length = 1;
-	    faad_fprintf(stderr, "Streamed input format  samplerate %d channels %d.\n",samplerate,channels);
-
-	} else {
-		adts_parse(&b, &bitrate, &length);
-        	fseek(b.infile, tagsize, SEEK_SET);
-
-        	bread = fread(b.buffer, 1, FAAD_MIN_STREAMSIZE*MAX_CHANNELS, b.infile);
-        	if (bread != FAAD_MIN_STREAMSIZE*MAX_CHANNELS)
-        	    b.at_eof = 1;
-        	else
-        	    b.at_eof = 0;
-        	b.bytes_into_buffer = bread;
-        	b.bytes_consumed = 0;
-        	b.file_offset = tagsize;
-	}
+            bread = fread(b.buffer, 1, FAAD_MIN_STREAMSIZE*MAX_CHANNELS, b.infile);
+            if (bread != FAAD_MIN_STREAMSIZE*MAX_CHANNELS)
+                b.at_eof = 1;
+            else
+                b.at_eof = 0;
+            b.bytes_into_buffer = bread;
+            b.bytes_consumed = 0;
+            b.file_offset = tagsize;
+        }
 
         header_type = 1;
-    } else if (memcmp(b.buffer, "ADIF", 4) == 0) {
+    }
+    else if (memcmp(b.buffer, "ADIF", 4) == 0)
+    {
         int skip_size = (b.buffer[4] & 0x80) ? 9 : 0;
         bitrate = ((unsigned int)(b.buffer[4 + skip_size] & 0x0F)<<19) |
             ((unsigned int)b.buffer[5 + skip_size]<<11) |
@@ -785,7 +786,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
                   int outputFormat, int fileType, int downMatrix, int noGapless,
                   int infoOnly, int adts_out, float *song_length, float seek_to)
 {
-    int track;
+    /*int track;*/
     unsigned long samplerate;
     unsigned char channels;
     void *sample_buffer;
@@ -876,7 +877,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
     faad_fprintf(stderr, "%s file info:\n\n", mp4file);
     {
         char *tag = NULL, *item = NULL;
-        int k, j;
+        /*int k, j;*/
         char *ot[6] = { "NULL", "MAIN AAC", "LC AAC", "SSR AAC", "LTP AAC", "HE AAC" };
         float seconds;
         seconds = (float)mp4config.samples/(float)mp4ASC.samplingFrequency;
@@ -901,7 +902,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
     mp4read_seek(startSampleId);
     for (sampleId = startSampleId; sampleId < mp4config.frame.ents; sampleId++)
     {
-        int rc;
+        /*int rc;*/
         long dur;
         unsigned int sample_count;
         unsigned int delay = 0;

@@ -241,7 +241,7 @@ void pns_decode(ic_stream *ics_left, ic_stream *ics_right,
                         (ics_left->ms_used[g][sfb])) ||
                         (ics_left->ms_mask_present == 2)))
                     {
-                        uint16_t c;
+                        /*uint16_t c;*/
 
                         offs = ics_right->swb_offset[sfb];
                         size = min(ics_right->swb_offset[sfb+1], ics_right->swb_offset_max) - offs;
