@@ -225,7 +225,7 @@ uint8_t reordered_spectral_data(NeAACDecStruct *hDecoder, ic_stream *ics,
 
     uint16_t sp_offset[8];
     uint16_t g, i, sortloop, set, bitsread;
-    uint16_t bitsleft, codewordsleft;
+    /*uint16_t bitsleft, codewordsleft*/;
     uint8_t w_idx, sfb, this_CB, last_CB, this_sec_CB; 
     
     const uint16_t nshort = hDecoder->frameLength/8;
