@@ -48,7 +48,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <getopt.h>
 
 #include <neaacdec.h>
 
@@ -60,7 +59,6 @@
 # include <getopt.h>
 #else
 # include "getopt.h"
-# include "getopt.c"
 #endif
 
 #ifndef min
