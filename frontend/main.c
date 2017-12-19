@@ -86,10 +86,10 @@ static void faad_fprintf(FILE *stream, const char *fmt, ...)
     }
 
 #ifdef _WIN32
-	if (!_isatty(_fileno(stream)))
-	{
-		fflush(stream); /*ensure real-time progress output on Win32*/
-	}
+    if (!_isatty(_fileno(stream)))
+    {
+        fflush(stream); /*ensure real-time progress output on Win32*/
+    }
 #endif
 }
 
@@ -153,41 +153,43 @@ static void advance_buffer(aac_buffer *b, int bytes)
 {
     while ((b->bytes_into_buffer > 0) && (bytes > 0))
     {
-	int chunk = min(bytes, b->bytes_into_buffer);
-	
-	bytes -= chunk;
-	b->file_offset += chunk;
-	b->bytes_consumed = chunk;
-	b->bytes_into_buffer -= chunk;
+        int chunk = min(bytes, b->bytes_into_buffer);
+    
+        bytes -= chunk;
+        b->file_offset += chunk;
+        b->bytes_consumed = chunk;
+        b->bytes_into_buffer -= chunk;
 
-	if (b->bytes_into_buffer == 0)
-	    fill_buffer(b);
+        if (b->bytes_into_buffer == 0)
+            fill_buffer(b);
     }
 }
 
 static void lookforheader(aac_buffer *b)
 {
-  int i = 0;
-	while (!b->at_eof )
-	{
-       		if (b->bytes_into_buffer > 4)
-        	{
-		    if( ((b->buffer[0+i] == 0xff) && ((b->buffer[1+i] & 0xf6) == 0xf0)) ||
-       			 (b->buffer[0+i] == 'A'    && b->buffer[1+i] == 'D' && b->buffer[2+i] == 'I' && b->buffer[3+i] == 'F'))
-			{
-				fill_buffer(b);
-				break;
-			} else {
-				i++;
-    				b->file_offset       += 1;
-    				b->bytes_consumed    += 1;
-    				b->bytes_into_buffer -= 1;
-			}
-		} else {
-			fill_buffer(b);
-			i = 0;
-		}
-	}
+    int i = 0;
+    while (!b->at_eof )
+    {
+        if (b->bytes_into_buffer > 4)
+        {
+            if( ((b->buffer[0+i] == 0xff) && ((b->buffer[1+i] & 0xf6) == 0xf0)) ||
+                (b->buffer[0+i] == 'A'    && b->buffer[1+i] == 'D' && b->buffer[2+i] == 'I' && b->buffer[3+i] == 'F'))
+            {
+                fill_buffer(b);
+                break;
+            } else {
+                i++;
+                b->file_offset       += 1;
+                b->bytes_consumed    += 1;
+                b->bytes_into_buffer -= 1;
+            }
+        }
+        else
+        {
+            fill_buffer(b);
+            i = 0;
+        }
+    }
 }
 
 static int adts_sample_rates[] = {96000,88200,64000,48000,44100,32000,24000,22050,16000,12000,11025,8000,7350,0,0,0};
@@ -497,36 +499,37 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
 
     if (0 == strcmp(aacfile, "-"))
     {
-	b.infile = stdin;
+        b.infile = stdin;
 #ifdef _WIN32
         _setmode(_fileno(stdin), O_BINARY);
 #endif
 
-    } else
+    }
+    else
     {
-    	b.infile = faad_fopen(aacfile, "rb");
-    	if (b.infile == NULL)
-    	{
-    	    /* unable to open file */
-    	    faad_fprintf(stderr, "Error opening file: %s\n", aacfile);
-    	    return 1;
-    	}
+        b.infile = faad_fopen(aacfile, "rb");
+        if (b.infile == NULL)
+        {
+            /* unable to open file */
+            faad_fprintf(stderr, "Error opening file: %s\n", aacfile);
+            return 1;
+        }
     }
 
     retval = fseek(b.infile, 0, SEEK_END);
 #ifdef _WIN32
-	if (0 == strcmp(aacfile, "-")) {
-	  retval = -1;
-	}
+    if (0 == strcmp(aacfile, "-")) {
+        retval = -1;
+    }
 #endif
     if (retval )
     {
-	 faad_fprintf(stderr, "Input not seekable %s\n", aacfile);
-	 fileread = -1;
-         streaminput = 1;
+        faad_fprintf(stderr, "Input not seekable %s\n", aacfile);
+        fileread = -1;
+        streaminput = 1;
     } else {
-    	fileread = ftell(b.infile);
-    	fseek(b.infile, 0, SEEK_SET);
+        fileread = ftell(b.infile);
+        fseek(b.infile, 0, SEEK_SET);
     };
 
     if (!(b.buffer = (unsigned char*)malloc(FAAD_MIN_STREAMSIZE*MAX_CHANNELS)))
@@ -747,7 +750,7 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
         {
             if (write_audio_file(aufile, sample_buffer, frameInfo.samples, 0) == 0)
                 break;
-		}
+        }
 
         /* fill buffer */
         fill_buffer(&b);
@@ -1171,7 +1174,7 @@ static int faad_main(int argc, char *argv[])
         case 'j':
             if (optarg)
             {
-            	seekTo = atof(optarg);
+                seekTo = atof(optarg);
             }
             break;
         case 't':
@@ -1270,22 +1273,22 @@ static int faad_main(int argc, char *argv[])
 
     /* check for mp4 file */
     if (0 == strcmp(aacFileName, "-")) {
-   	faad_fprintf(stderr, "Reading from stdin: %s\n", aacFileName);
-	readFromStdin = 1;
-	hMP4File  = stdin;
+        faad_fprintf(stderr, "Reading from stdin: %s\n", aacFileName);
+        readFromStdin = 1;
+        hMP4File  = stdin;
 #ifdef _WIN32
         _setmode(_fileno(stdin), O_BINARY);
 #endif
 
     } else {
 
-    	mp4file = 0;
-    	hMP4File = faad_fopen(aacFileName, "rb");
-    	if (!hMP4File)
-    	{
-    	    faad_fprintf(stderr, "Error opening file: %s\n", aacFileName);
-    	    return 1;
-    	}
+        mp4file = 0;
+        hMP4File = faad_fopen(aacFileName, "rb");
+        if (!hMP4File)
+        {
+            faad_fprintf(stderr, "Error opening file: %s\n", aacFileName);
+            return 1;
+        }
     }
 
     fread(header, 1, 8, hMP4File);
@@ -1297,7 +1300,7 @@ static int faad_main(int argc, char *argv[])
         mp4file = 1;
 
     if (!mp4file && seekTo != 0) {
-    	faad_fprintf(stderr, "Warning: can only seek in MP4 files");
+        faad_fprintf(stderr, "Warning: can only seek in MP4 files");
     }
 
     if (mp4file)
@@ -1306,16 +1309,16 @@ static int faad_main(int argc, char *argv[])
             outputFormat, format, downMatrix, noGapless, infoOnly, adts_out, &length, seekTo);
     } else {
 
-	if (readFromStdin == 1) {
-		ungetc(header[7],hMP4File);
-		ungetc(header[6],hMP4File);
-		ungetc(header[5],hMP4File);
-		ungetc(header[4],hMP4File);
-		ungetc(header[3],hMP4File);
-		ungetc(header[2],hMP4File);
-		ungetc(header[1],hMP4File);
-		ungetc(header[0],hMP4File);
-	}
+    if (readFromStdin == 1) {
+        ungetc(header[7],hMP4File);
+        ungetc(header[6],hMP4File);
+        ungetc(header[5],hMP4File);
+        ungetc(header[4],hMP4File);
+        ungetc(header[3],hMP4File);
+        ungetc(header[2],hMP4File);
+        ungetc(header[1],hMP4File);
+        ungetc(header[0],hMP4File);
+    }
 
         result = decodeAACfile(aacFileName, audioFileName, adtsFileName, writeToStdio,
             def_srate, object_type, outputFormat, format, downMatrix, infoOnly, adts_out,
@@ -1351,15 +1354,15 @@ static int faad_main(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 #if defined WIN32 || defined _WIN32 || defined WIN64 || defined _WIN64
-	int argc_utf8, exit_code;
-	char **argv_utf8;
-	init_console_utf8(stderr);
-	init_commandline_arguments_utf8(&argc_utf8, &argv_utf8);
-	exit_code = faad_main(argc_utf8, argv_utf8);
-	free_commandline_arguments_utf8(&argc_utf8, &argv_utf8);
-	uninit_console_utf8();
-	return exit_code;
+    int argc_utf8, exit_code;
+    char **argv_utf8;
+    init_console_utf8(stderr);
+    init_commandline_arguments_utf8(&argc_utf8, &argv_utf8);
+    exit_code = faad_main(argc_utf8, argv_utf8);
+    free_commandline_arguments_utf8(&argc_utf8, &argv_utf8);
+    uninit_console_utf8();
+    return exit_code;
 #else
-	return faad_main(argc, argv);
+    return faad_main(argc, argv);
 #endif
 }
