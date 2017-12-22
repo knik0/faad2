@@ -49,28 +49,30 @@ static FILE *g_fin = NULL;
 static inline uint32_t bswap32(const uint32_t u32)
 {
 #ifndef WORDS_BIGENDIAN
-#ifdef _MSC_VER
-	return _byteswap_ulong(u32);
-#else
+#if defined (__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 3)))
     return __builtin_bswap32(u32);
+#elif defined (_MSC_VER)
+    return _byteswap_ulong(u32);
+#else
+    return (u32 << 24) | ((u32 << 8) & 0xFF0000) | ((u32 >> 8) & 0xFF00) | (u32 >> 24);
 #endif
 #else
-	return u32;
+    return u32;
 #endif
 }
 
 static inline uint16_t bswap16(const uint16_t u16)
 {
 #ifndef WORDS_BIGENDIAN
-#ifdef _MSC_VER
-	return _byteswap_ushort(u16);
-#elif __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
-	return __builtin_bswap16(u16);
+#if defined (__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)))
+    return __builtin_bswap16(u16);
+#elif defined (_MSC_VER)
+    return _byteswap_ushort(u16);
 #else
-	return (u16<<8)|(u16>>8);
+    return (u16 << 8) | (u16 >> 8);
 #endif
 #else
-	return u16;
+    return u16;
 #endif
 }
 
