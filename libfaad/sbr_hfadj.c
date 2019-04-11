@@ -485,6 +485,12 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
             ml1 = sbr->f_table_lim[sbr->bs_limiter_bands][k];
             ml2 = sbr->f_table_lim[sbr->bs_limiter_bands][k+1];
 
+            if (ml1 > MAX_M)
+                ml1 = MAX_M;
+
+            if (ml2 > MAX_M)
+                ml2 = MAX_M;
+
 
             /* calculate the accumulated E_orig and E_curr over the limiter band */
             for (m = ml1; m < ml2; m++)
@@ -949,6 +955,12 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
             ml1 = sbr->f_table_lim[sbr->bs_limiter_bands][k];
             ml2 = sbr->f_table_lim[sbr->bs_limiter_bands][k+1];
 
+            if (ml1 > MAX_M)
+                ml1 = MAX_M;
+
+            if (ml2 > MAX_M)
+                ml2 = MAX_M;
+
 
             /* calculate the accumulated E_orig and E_curr over the limiter band */
             for (m = ml1; m < ml2; m++)
@@ -1192,6 +1204,12 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 
             ml1 = sbr->f_table_lim[sbr->bs_limiter_bands][k];
             ml2 = sbr->f_table_lim[sbr->bs_limiter_bands][k+1];
+
+            if (ml1 > MAX_M)
+                ml1 = MAX_M;
+
+            if (ml2 > MAX_M)
+                ml2 = MAX_M;
 
 
             /* calculate the accumulated E_orig and E_curr over the limiter band */
