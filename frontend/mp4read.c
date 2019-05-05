@@ -797,7 +797,8 @@ static int moovin(int sizemax)
 {
     long apos = ftell(g_fin);
     uint32_t atomsize;
-    int err;
+    creator_t *old_atom = g_atom;
+    int err, ret = sizemax;
 
     static creator_t mvhd[] = {
         {ATOM_NAME, "mvhd"},
@@ -841,8 +842,11 @@ static int moovin(int sizemax)
 
     g_atom = mvhd;
     atomsize = sizemax + apos - ftell(g_fin);
-    if (parse(&atomsize) < 0)
+    if (parse(&atomsize) < 0) {
+        g_atom = old_atom;
         return ERR_FAIL;
+    }
+
     fseek(g_fin, apos, SEEK_SET);
 
     while (1)
@@ -856,13 +860,16 @@ static int moovin(int sizemax)
         err = parse(&atomsize);
         //fprintf(stderr, "SIZE: %x/%x\n", atomsize, sizemax);
         if (err >= 0)
-            return sizemax;
-        if (err != ERR_UNSUPPORTED)
-            return err;
+            break;
+        if (err != ERR_UNSUPPORTED) {
+            ret = err;
+            break;
+        }
         //fprintf(stderr, "UNSUPP\n");
     }
 
-    return sizemax;
+    g_atom = old_atom;
+    return ret;
 }
 
 
