@@ -526,6 +526,8 @@ uint8_t derived_frequency_table(sbr_info *sbr, uint8_t bs_xover_band,
     }
 
     sbr->M = sbr->f_table_res[HI_RES][sbr->N_high] - sbr->f_table_res[HI_RES][0];
+    if (sbr->M > MAX_M)
+        return 1;
     sbr->kx = sbr->f_table_res[HI_RES][0];
     if (sbr->kx > 32)
         return 1;
