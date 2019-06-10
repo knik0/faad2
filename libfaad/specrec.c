@@ -1109,13 +1109,13 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_s
 #ifdef PROFILE
     int64_t count = faad_get_ts();
 #endif
-    if (hDecoder->element_alloced[hDecoder->fr_ch_ele] == 0)
+    if (hDecoder->element_alloced[hDecoder->fr_ch_ele] != 2)
     {
         retval = allocate_channel_pair(hDecoder, cpe->channel, (uint8_t)cpe->paired_channel);
         if (retval > 0)
             return retval;
 
-        hDecoder->element_alloced[hDecoder->fr_ch_ele] = 1;
+        hDecoder->element_alloced[hDecoder->fr_ch_ele] = 2;
     }
 
     /* dequantisation and scaling */
