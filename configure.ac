@@ -92,7 +92,9 @@ AC_DEFUN([AC_C99_FUNC_LRINTF],
   ac_cv_c99_lrintf,
 [
 lrintf_save_CFLAGS=$CFLAGS
-CFLAGS="-O -lm"
+lrintf_save_LIBS=$LIBS
+CFLAGS="-O"
+LIBS="-lm"
 AC_TRY_LINK([
 #define         _ISOC9X_SOURCE  1
 #define         _ISOC99_SOURCE  1
@@ -103,6 +105,7 @@ AC_TRY_LINK([
 ], if (!lrintf(3.14159)) lrintf(2.7183);, ac_cv_c99_lrintf=yes, ac_cv_c99_lrintf=no)
 
 CFLAGS=$lrintf_save_CFLAGS
+LIBS=$lrintf_save_LIBS
 
 ])
 
