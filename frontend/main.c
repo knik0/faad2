@@ -915,6 +915,11 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
 
         sample_buffer = NeAACDecDecode(hDecoder, &frameInfo, mp4config.bitbuf.data, mp4config.bitbuf.size);
 
+        if (!sample_buffer) {
+            /* unable to decode file, abort */
+            break;
+        }
+
         if (adts_out == 1)
         {
             adtsData = MakeAdtsHeader(&adtsDataSize, &frameInfo, 0);

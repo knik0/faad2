@@ -196,7 +196,7 @@ uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint16_t cnt,
             /* if an error occured with the new header values revert to the old ones */
             if (rt > 0)
             {
-                calc_sbr_tables(sbr, saved_start_freq, saved_stop_freq,
+                result += calc_sbr_tables(sbr, saved_start_freq, saved_stop_freq,
                     saved_samplerate_mode, saved_freq_scale,
                     saved_alter_scale, saved_xover_band);
             }
@@ -215,7 +215,7 @@ uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint16_t cnt,
             if ((result > 0) &&
                 (sbr->Reset || (sbr->bs_header_flag && sbr->just_seeked)))
             {
-                calc_sbr_tables(sbr, saved_start_freq, saved_stop_freq,
+                result += calc_sbr_tables(sbr, saved_start_freq, saved_stop_freq,
                     saved_samplerate_mode, saved_freq_scale,
                     saved_alter_scale, saved_xover_band);          
             }
