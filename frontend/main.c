@@ -1211,7 +1211,11 @@ static int faad_main(int argc, char *argv[])
     NeAACDecGetVersion(&faad_id_string, &faad_copyright_string);
 
     faad_fprintf(stderr, " *********** Ahead Software MPEG-4 AAC Decoder V%s ******************\n\n", faad_id_string);
-    faad_fprintf(stderr, " Build: %s\n", __DATE__);
+#ifndef BUILD_DATE
+#define BUILD_DATE __DATE__
+#endif
+    faad_fprintf(stderr, " Build: %s\n", BUILD_DATE);
+#undef BUILD_DATE
     faad_fprintf(stderr, "%s", faad_copyright_string);
     if (cap & FIXED_POINT_CAP)
         faad_fprintf(stderr, " Fixed point version\n");
