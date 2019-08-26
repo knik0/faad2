@@ -915,18 +915,18 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
         /* element_output_channels not set yet */
         hDecoder->element_output_channels[hDecoder->fr_ch_ele] = output_channels;
     } else if (hDecoder->element_output_channels[hDecoder->fr_ch_ele] != output_channels) {
-        /* element inconsistency */
-
-        /* this only happens if PS is actually found but not in the first frame
+        /* element inconsistency
+         * this only happens if PS is actually found but not in the first frame
          * this means that there is only 1 bitstream element!
          */
 
-        /* reset the allocation */
-        hDecoder->element_alloced[hDecoder->fr_ch_ele] = 0;
-
-        hDecoder->element_output_channels[hDecoder->fr_ch_ele] = output_channels;
-
-        //return 21;
+        if (hDecoder->fr_channels == 1) {
+            /* reset the allocation */
+            hDecoder->element_alloced[hDecoder->fr_ch_ele] = 0;
+            hDecoder->element_output_channels[hDecoder->fr_ch_ele] = output_channels;
+        } else {
+            return 21;
+        }
     }
 
     if (hDecoder->element_alloced[hDecoder->fr_ch_ele] == 0)

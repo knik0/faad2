@@ -1508,6 +1508,20 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
 
                 //printf("%d\n", ps->iid_index[env][bk]);
 
+                /* index range is supposed to be -7...7 or -15...15 depending on iid_mode
+                   (Table 8.24, ISO/IEC 14496-3:2005).
+                   if it is outside these boundaries, this is most likely an error. sanitize
+                   it and try to process further. */
+                if (ps->iid_index[env][bk] < -no_iid_steps) {
+                    fprintf(stderr, "Warning: invalid iid_index: %d < %d\n", ps->iid_index[env][bk],
+                        -no_iid_steps);
+                    ps->iid_index[env][bk] = -no_iid_steps;
+                } else if (ps->iid_index[env][bk] > no_iid_steps) {
+                    fprintf(stderr, "Warning: invalid iid_index: %d > %d\n", ps->iid_index[env][bk],
+                        no_iid_steps);
+                    ps->iid_index[env][bk] = no_iid_steps;
+                }
+
                 /* calculate the scalefactors c_1 and c_2 from the intensity differences */
                 c_1 = sf_iid[no_iid_steps + ps->iid_index[env][bk]];
                 c_2 = sf_iid[no_iid_steps - ps->iid_index[env][bk]];
