@@ -1,3 +1,50 @@
+2.9.0:
+	[ Krzysztof Nikiel ]
+	* obsolete files removed
+	* add getopt.h as extra source
+
+	[ LoRd_MuldeR ]
+	* Fixed a number of compiler warnings because of unused variables
+	  + fixed use of un-initialized variable.
+	* Fixed indentation.
+	* More generalized solution that also fixes compilation with
+	  GCC < 4.7.3.
+	* Removed non-existing MSVC project from the solution file.
+
+	[ Cameron Cawley ]
+	* Fix compilation with GCC 4.7.4
+	* Fix compilation with MinGW
+
+	[ Michael Fink ]
+	* updated Visual Studio 2017 project for libfaad2.dll,
+	  also retrieving version from configure.ac file
+	* ignoring .user files from Visual Studio
+
+	[ Hugo Lefeuvre ]
+	* CVE-2019-6956: Buffer over read in the function ps_mix_phase()
+	  (libfaad/ps_dec.c) (Closes: #914641).
+	* CVE-2018-20196: Stack buffer overflow in the function calculate_gain
+	  (libfaad/sbr_hfadj.c).
+	* CVE-2018-20199, CVE-2018-20360: NULL pointer dereference in the function
+	  ifilter_bank (libfaad/filtbank.c).
+	* CVE-2018-20362: NULL pointer dereference vulnerability in the function
+	  ifilter_bank (libfaad/filtbank.c:275).
+	* CVE-2018-20194: Stack buffer underflow in function
+	  calculate_gain(libfaad/sbr_hfadj.c:1314).
+
+	[ Hugo Beauzée-Luyssen ]
+	* Fix a couple buffer overflows
+
+	[ Filip Roséen ]
+	* Add patch to prevent crash on SCE followed by CPE
+
+	[ Gianfranco Costamagna ]
+	* Fix link failure with gcc-9 and wl,asneeded flags
+
+	[ Fabian Greffrath ]
+	* Enable the frontend to be built reproducibly
+
+2.8.8:
 2.8.7:
 	- MSVC build fixes
 	- fixed a coulple bugs
