@@ -21,19 +21,20 @@
 	* ignoring .user files from Visual Studio
 
 	[ Hugo Lefeuvre ]
-	* CVE-2019-6956: Buffer over read in the function ps_mix_phase()
-	  (libfaad/ps_dec.c) (Closes: #914641).
-	* CVE-2018-20196: Stack buffer overflow in the function calculate_gain
-	  (libfaad/sbr_hfadj.c).
-	* CVE-2018-20199, CVE-2018-20360: NULL pointer dereference in the function
-	  ifilter_bank (libfaad/filtbank.c).
-	* CVE-2018-20362: NULL pointer dereference vulnerability in the function
-	  ifilter_bank (libfaad/filtbank.c:275).
-	* CVE-2018-20194: Stack buffer underflow in function
-	  calculate_gain(libfaad/sbr_hfadj.c:1314).
+	* Fix crash with unsupported MP4 files (NULL pointer dereference,
+	  division by zero)
+	* CVE-2019-6956: ps_dec: sanitize iid_index before mixing
+	* CVE-2018-20196: sbr_fbt: sanitize sbr->M (should not exceed MAX_M)
+	* CVE-2018-20199, CVE-2018-20360: specrec: better handle unexpected
+	  parametric stereo (PS)
+	* CVE-2018-20362, CVE-2018-19504, CVE-2018-20195, CVE-2018-20198,
+	  CVE-2018-20358: syntax.c: check for syntax element inconsistencies
+	* CVE-2018-20194, CVE-2018-19503, CVE-2018-20197, CVE-2018-20357,
+	  CVE-2018-20359, CVE-2018-20361: sbr_hfadj: sanitize frequency band
+	  borders
 
 	[ Hugo Beauzée-Luyssen ]
-	* Fix a couple buffer overflows
+	* CVE-2019-15296, CVE-2018-19502: Fix a couple buffer overflows
 
 	[ Filip Roséen ]
 	* Add patch to prevent crash on SCE followed by CPE
