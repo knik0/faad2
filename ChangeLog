@@ -1,24 +1,18 @@
 2.9.0:
 	[ Krzysztof Nikiel ]
-	* obsolete files removed
-	* add getopt.h as extra source
+	* Build system fixes and code clean-up
 
 	[ LoRd_MuldeR ]
-	* Fixed a number of compiler warnings because of unused variables
-	  + fixed use of un-initialized variable.
-	* Fixed indentation.
-	* More generalized solution that also fixes compilation with
-	  GCC < 4.7.3.
-	* Removed non-existing MSVC project from the solution file.
+	* Fix compiler warnings and code indentation
+	* Fix compilation with GCC <= 4.7.3
+	* MSVC solution file clean-up
 
 	[ Cameron Cawley ]
 	* Fix compilation with GCC 4.7.4
 	* Fix compilation with MinGW
 
 	[ Michael Fink ]
-	* updated Visual Studio 2017 project for libfaad2.dll,
-	  also retrieving version from configure.ac file
-	* ignoring .user files from Visual Studio
+	* MSVC 2017 project file update
 
 	[ Hugo Lefeuvre ]
 	* Fix crash with unsupported MP4 files (NULL pointer dereference,
@@ -37,10 +31,10 @@
 	* CVE-2019-15296, CVE-2018-19502: Fix a couple buffer overflows
 
 	[ Filip Roséen ]
-	* Add patch to prevent crash on SCE followed by CPE
+	* Prevent crash on SCE followed by CPE
 
 	[ Gianfranco Costamagna ]
-	* Fix link failure with gcc-9 and wl,asneeded flags
+	* Fix linking with GCC 9 and "-Wl,--as-needed"
 
 	[ Fabian Greffrath ]
 	* Enable the frontend to be built reproducibly
