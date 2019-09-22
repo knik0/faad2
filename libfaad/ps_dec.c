@@ -33,6 +33,7 @@
 #ifdef PS_DEC
 
 #include <stdlib.h>
+#include <stdio.h>
 #include "ps_dec.h"
 #include "ps_tables.h"
 
