@@ -470,7 +470,7 @@ static int ilstin(int size)
         {"Genre       ", "gnre", GENRE},
         {"Grouping    ", "\xa9" "grp"},
         {"Lyrics      ", "\xa9" "lyr"},
-        {"Tille       ", "\xa9" "nam"},
+        {"Title       ", "\xa9" "nam"},
         {"Rating      ", "rtng"},
         {"BPM         ", "tmpo"},
         {"Encoder     ", "\xa9" "too"},
