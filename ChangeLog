@@ -1,3 +1,8 @@
+2.9.1:
+	[ Fabian Greffrath ]
+	* Include stdio.h in libfaad/ps_dec.c for stderr (Michael Fink)
+	* Fix Tille -> Title typo in frontend/mp4read.c (Alexander Thomas)
+
 2.9.0:
 	[ Krzysztof Nikiel ]
 	* Build system fixes and code clean-up
