@@ -2644,5 +2644,5 @@ uint32_t faad_latm_frame(latm_header *latm, bitfile *ld)
             return (len*8)-(endpos-initpos);
         //faad_getbits(ld, initpos-endpos); //go back to initpos, but is valid a getbits(-N) ? 
     }
-    return -1U;
+    return 0xFFFFFFFF;
 }
