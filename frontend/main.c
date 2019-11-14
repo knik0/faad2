@@ -462,9 +462,9 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
     unsigned char channels;
     void *sample_buffer;
 
-    audio_file *aufile;
+    audio_file *aufile = NULL;
 
-    FILE *adtsFile;
+    FILE *adtsFile = NULL;
     unsigned char *adtsData;
     int adtsDataSize;
 
@@ -796,9 +796,9 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
 
     long sampleId, startSampleId;
 
-    audio_file *aufile;
+    audio_file *aufile = NULL;
 
-    FILE *adtsFile;
+    FILE *adtsFile = NULL;
     unsigned char *adtsData;
     int adtsDataSize;
 
