@@ -48,50 +48,34 @@ any way for patent royalities! YOU ARE SOLELY RESPONSIBLE FOR YOUR OWN
 ACTIONS!
 
 
-______
-PEOPLE
-
-FAAD2 is written by:
- - M. Bakker (mbakker(at)nero.com).
-
-
-_______________
-VERSION HISTORY
-
-Sorry, try building a ChangeLog from CVS.
-
 ___________________
 DIRECTORY STRUCTURE
 
 faad2 - top level directory.
 
-   aacDECdrop - windows decoder/player with drag'n'drop functionality
+   aacDECdrop - windows decoder/player with drag'n'drop functionality.
 
-   common - generally used libraries and code.
+   docs - API documentation.
 
-      faad - general common functions like filereading and streaming
-             as well as getting info from aac files.
-
-      mp4ff - Small MP4 file format library (includes tagging abilities).
-      
    frontend - command line frontend to the FAAD2 library, also supports
               MPEG-4 file decoding.
 
    include - inlude file for the FAAD2 library.
 
    libfaad - the FAAD2 AAC decoder library including SBR.
-   
-      codebook - Huffman codebooks
+
+      codebook - Huffman codebooks.
 
    plugins - plugins for all kinds of pograms.
-   
-      in_mp4 - winamp MPEG-4 AAC file input plugin.
-      
+
+      mpeg4ip - plugin for the mpeg4ip player.
+
       QCD - Quintessential player AAC plugin.
 
       QCDMp4 - Quintessential player MP4 plugin.
 
-      xmms - xmms AAC plugin
+      xmms - xmms AAC plugin.
 
-      mpeg4ip - plugin for the mpeg4ip player
+   project/msvc - Visual Studio 2017 project files.
 
+   utils/win32 - generate "win32_ver.h" from "configure.h".
