@@ -32,5 +32,5 @@ libfaad_la_SOURCES = bits.c cfft.c decoder.c drc.c \
 
 libfaad_drm_la_LDFLAGS = ${libfaad_la_LDFLAGS}
 libfaad_drm_la_LIBADD = ${libfaad_la_LIBADD}
-libfaad_drm_la_CFLAGS = ${libfaad_la_CFLAGS} -DDRM -DDRM_PS
+libfaad_drm_la_CFLAGS = ${libfaad_la_CFLAGS} -DDRM_SUPPORT
 libfaad_drm_la_SOURCES = ${libfaad_la_SOURCES}

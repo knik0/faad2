@@ -91,8 +91,10 @@ extern "C" {
 /* Allow decoding of LD profile AAC */
 #define LD_DEC
 /* Allow decoding of Digital Radio Mondiale (DRM) */
-//#define DRM
-//#define DRM_PS
+#ifdef DRM_SUPPORT
+#define DRM
+#define DRM_PS
+#endif
 
 /* LD can't do without LTP */
 #ifdef LD_DEC
@@ -115,6 +117,7 @@ extern "C" {
   #undef MAIN_DEC
   #undef SSR_DEC
   #undef DRM
+  #undef DRM_PS
   #undef ALLOW_SMALL_FRAMELENGTH
   #undef ERROR_RESILIENCE
 #endif
