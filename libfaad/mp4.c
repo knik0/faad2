@@ -33,7 +33,6 @@
 
 #include <stdlib.h>
 
-#include "bits.h"
 #include "mp4.h"
 #include "syntax.h"
 
