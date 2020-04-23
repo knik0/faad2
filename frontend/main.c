@@ -1351,7 +1351,7 @@ static int faad_main(int argc, char *argv[])
         float dec_length = (float)(clock() - begin)/(float)CLOCKS_PER_SEC;
 #endif
         faad_fprintf(stderr, "Decoding %s took: %5.2f sec. %5.2fx real-time.\n", aacFileName,
-            dec_length, length/dec_length);
+            dec_length, (dec_length > 0.01) ? (length/dec_length) : 0.);
     }
 
     if (aacFileName != NULL)
