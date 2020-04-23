@@ -1002,8 +1002,10 @@ int mp4read_open(char *name)
     }
 
     // alloc frame buffer
-    // fixme: error checking
     mp4config.bitbuf.data = malloc(mp4config.frame.maxsize);
+
+    if (!mp4config.bitbuf.data)
+        goto err;
 
     if (mp4config.verbose.header)
     {
