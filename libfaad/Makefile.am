@@ -34,3 +34,8 @@ libfaad_drm_la_LDFLAGS = ${libfaad_la_LDFLAGS}
 libfaad_drm_la_LIBADD = ${libfaad_la_LIBADD}
 libfaad_drm_la_CFLAGS = ${libfaad_la_CFLAGS} -DDRM_SUPPORT
 libfaad_drm_la_SOURCES = ${libfaad_la_SOURCES}
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = faad2.pc
+
+EXTRA_DIST = faad2.pc.in
