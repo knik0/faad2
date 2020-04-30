@@ -6,6 +6,6 @@ includedir=@includedir@
 Name: FAAD2
 Description: Freeware Advanced Audio (AAC) Decoder
 Version: @VERSION@
-Libs: -L${libdir} -lfaad2
+Libs: -L${libdir} -lfaad
 Libs.private: -lm
 Cflags: -I${includedir}
