@@ -1047,6 +1047,7 @@ static int faad_main(int argc, char *argv[])
     char *adtsFileName = NULL;
     float seekTo = 0;
     unsigned char header[8];
+    int bread;
     float length = 0;
     FILE *hMP4File;
     char *faad_id_string;
@@ -1300,16 +1301,21 @@ static int faad_main(int argc, char *argv[])
         }
     }
 
-    fread(header, 1, 8, hMP4File);
+    bread = fread(header, 1, 8, hMP4File);
 
     if (! readFromStdin )
       fclose(hMP4File);
+
+    if (bread != 8) {
+        faad_fprintf(stderr, "Error reading file.\n");
+        return 1;
+    }
 
     if (header[4] == 'f' && header[5] == 't' && header[6] == 'y' && header[7] == 'p')
         mp4file = 1;
 
     if (!mp4file && seekTo != 0) {
-        faad_fprintf(stderr, "Warning: can only seek in MP4 files");
+        faad_fprintf(stderr, "Warning: can only seek in MP4 files\n");
     }
 
     if (mp4file)
