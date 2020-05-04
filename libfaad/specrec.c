@@ -915,18 +915,18 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
         /* element_output_channels not set yet */
         hDecoder->element_output_channels[hDecoder->fr_ch_ele] = output_channels;
     } else if (hDecoder->element_output_channels[hDecoder->fr_ch_ele] != output_channels) {
-        /* element inconsistency
-         * this only happens if PS is actually found but not in the first frame
+        /* element inconsistency */
+
+        /* this only happens if PS is actually found but not in the first frame
          * this means that there is only 1 bitstream element!
          */
 
-        if (hDecoder->fr_channels == 1) {
-            /* reset the allocation */
-            hDecoder->element_alloced[hDecoder->fr_ch_ele] = 0;
-            hDecoder->element_output_channels[hDecoder->fr_ch_ele] = output_channels;
-        } else {
-            return 21;
-        }
+        /* reset the allocation */
+        hDecoder->element_alloced[hDecoder->fr_ch_ele] = 0;
+
+        hDecoder->element_output_channels[hDecoder->fr_ch_ele] = output_channels;
+
+        //return 21;
     }
 
     if (hDecoder->element_alloced[hDecoder->fr_ch_ele] == 0)
@@ -938,6 +938,9 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
         hDecoder->element_alloced[hDecoder->fr_ch_ele] = 1;
     }
 
+    /* sanity check, CVE-2018-20199, CVE-2018-20360 */
+    if(!hDecoder->time_out[sce->channel])
+        return 15;
 
     /* dequantisation and scaling */
     retval = quant_to_spec(hDecoder, ics, spec_data, spec_coef, hDecoder->frameLength);
@@ -1117,6 +1120,10 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_s
 
         hDecoder->element_alloced[hDecoder->fr_ch_ele] = 2;
     }
+
+    /* sanity check, CVE-2018-20199, CVE-2018-20360 */
+    if(!hDecoder->time_out[cpe->channel])
+        return 15;
 
     /* dequantisation and scaling */
     retval = quant_to_spec(hDecoder, ics1, spec_data1, spec_coef1, hDecoder->frameLength);
