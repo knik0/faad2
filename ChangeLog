@@ -1,3 +1,30 @@
+2.9.2:
+	[ Michał Janiszewski ]
+	* Only use x86-assembly when explicitly on x86
+	* Use unsigned integers correctly
+	* Initialize pointers that might otherwise not be
+
+	[ Fabian Greffrath ]
+	* update README esp. WRT directory structure
+
+	[ Rosen Penev ]
+	* fix compilation without SBR/PS_DEC (#48)
+	* fix compilation with LC_ONLY_DECODER (#47)
+
+	[ Fabian Greffrath ]
+	* fix "inline function 'cfftf1' declared but never defined" compiler warning
+	* fix some inconsistencies in the frontend output
+	* mp4read_open: add check for failed frame buffer allocation
+	* stszin: add check for allocation error and integer overflow
+	* add a pkg-config file
+
+	[ Stefan Pöschel ]
+	* frontend: address compile warning + add missing LF (#50)
+
+	[ François Cartegnie ]
+	* library name is faad (#52)
+	* Unbreak PS audio (#51)
+
 2.9.1:
 	[ Fabian Greffrath ]
 	* Include stdio.h in libfaad/ps_dec.c for stderr (Michael Fink)
