@@ -34,9 +34,6 @@
     <ClInclude Include="..\..\include\neaacdec.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\common\mp4v2\win32_ver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\frontend\mp4read.h">
       <Filter>Header Files</Filter>
     </ClInclude>
