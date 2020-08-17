@@ -95,6 +95,7 @@ static int stringin(char *txt, int sizemax)
         if (!txt[size])
             break;
     }
+    txt[sizemax-1] = '\0';
 
     return size;
 }
