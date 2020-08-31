@@ -344,7 +344,10 @@ static int stszin(int size)
     u32in();
     // Number of entries
     mp4config.frame.ents = u32in();
-    // fixme: check atom size
+
+    if (!(mp4config.frame.ents + 1))
+        return ERR_FAIL;
+
     mp4config.frame.data = malloc(sizeof(*mp4config.frame.data)
                                   * (mp4config.frame.ents + 1));
 
