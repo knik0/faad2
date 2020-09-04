@@ -36,7 +36,7 @@
  * As described in:
  *  P. Duhamel, Y. Mahieux, and J.P. Petit, "A Fast Algorithm for the
  *  Implementation of Filter Banks Based on 'Time Domain Aliasing
- *  Cancellation’," IEEE Proc. on ICASSP‘91, 1991, pp. 2209-2212.
+ *  Cancellation'," IEEE Proc. on ICASSP'91, 1991, pp. 2209-2212.
  *
  *
  * As of April 6th 2002 completely rewritten.
