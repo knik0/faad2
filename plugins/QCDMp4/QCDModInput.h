@@ -2,7 +2,7 @@
 //
 // File:	QCDModInput.h
 //
-// About:	Input plugin module interface.  This file is published with the 
+// About:	Input plugin module interface.  This file is published with the
 //			Input plugin SDK.
 //
 // Authors:	Written by Paul Quinn and Richard Carlson.
@@ -13,7 +13,7 @@
 //
 //	Copyright (C) 1997-2002 Quinnware
 //
-//	This code is free.  If you redistribute it in any form, leave this notice 
+//	This code is free.  If you redistribute it in any form, leave this notice
 //	here.
 //
 //	This program is distributed in the hope that it will be useful,
@@ -46,7 +46,7 @@
 #define PLAYFLAG_SEEKING			0x2
 
 // Wave Marker flags
-#define WAVE_VIS_DATA_ONLY			-1	// set to WaveDataStruct.markerstart in OutputWrite() call have data only go to vis 
+#define WAVE_VIS_DATA_ONLY			-1	// set to WaveDataStruct.markerstart in OutputWrite() call have data only go to vis
 										// and not to output plugin
 // pause flags
 #define PAUSE_DISABLED				0	// Pause() call is to unpause playback
@@ -55,7 +55,7 @@
 //-----------------------------------------------------------------------------
 // Input Module
 //-----------------------------------------------------------------------------
-typedef struct 
+typedef struct
 {
 	unsigned int		size;			// size of init structure
 	unsigned int		version;		// plugin structure version (set to PLUGIN_API_VERSION)
@@ -74,8 +74,8 @@ typedef struct
 
 																	// output plugin calls
 		int  (*OutputOpen)(const char* medianame, WAVEFORMATEX*);	// open output for wave data
-		int  (*OutputWrite)(WriteDataStruct*);						// send PCM audio data to output 
-																		// (blocks until write completes, thus if output is paused can 
+		int  (*OutputWrite)(WriteDataStruct*);						// send PCM audio data to output
+																		// (blocks until write completes, thus if output is paused can
 																		// block until unpaused)
 		int  (*OutputDrain)(int flags);								// wait for all output to complete (blocking)
 		int  (*OutputDrainCancel)(int flags);						// break a drain in progress
@@ -89,7 +89,7 @@ typedef struct
 		void *Reserved[10];
 	} toPlayer;
 
-	struct 
+	struct
 	{
 		int  (*Initialize)(QCDModInfo *modInfo, int flags);			// initialize plugin
 		void (*ShutDown)(int flags);								// shutdown plugin

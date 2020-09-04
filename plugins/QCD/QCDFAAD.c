@@ -1,19 +1,19 @@
 /*
 ** FAAD - Freeware Advanced Audio Decoder
 ** Copyright (C) 2002 M. Bakker
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** $Id: QCDFAAD.c,v 1.2 2003/04/28 19:04:35 menno Exp $
@@ -240,10 +240,10 @@ BOOL CALLBACK config_dialog_proc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 	{
     case WM_INITDIALOG:
         /* Set priority slider range and previous position */
-		SendMessage(GetDlgItem(hwndDlg, THREAD_PRIORITY_SLIDER), TBM_SETRANGE, TRUE, MAKELONG(1, 5)); 
+		SendMessage(GetDlgItem(hwndDlg, THREAD_PRIORITY_SLIDER), TBM_SETRANGE, TRUE, MAKELONG(1, 5));
 		SendMessage(GetDlgItem(hwndDlg, THREAD_PRIORITY_SLIDER), TBM_SETPOS, TRUE, m_priority);
 		SetDlgItemText(hwndDlg, IDC_STATIC2, priority_text[m_priority]);
-		
+
 		/* Put a limit to the amount of characters allowed in the buffer boxes */
 		SendMessage(GetDlgItem(hwndDlg, LOCAL_BUFFER_TXT), EM_LIMITTEXT, 4, 0);
 		SendMessage(GetDlgItem(hwndDlg, STREAM_BUFFER_TXT), EM_LIMITTEXT, 4, 0);
@@ -289,12 +289,12 @@ BOOL CALLBACK config_dialog_proc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			if(GetDlgItem(hwndDlg, VARBITRATE_CHK) == (HWND) lParam)
 			{
 				/* Variable Bitrate checkbox hit */
-				m_variable_bitrate_display = SendMessage(GetDlgItem(hwndDlg, VARBITRATE_CHK), BM_GETCHECK, 0, 0); 
+				m_variable_bitrate_display = SendMessage(GetDlgItem(hwndDlg, VARBITRATE_CHK), BM_GETCHECK, 0, 0);
 			}
 			if(GetDlgItem(hwndDlg, IDC_MEMMAP) == (HWND) lParam)
 			{
 				/* Variable Bitrate checkbox hit */
-				m_memmap_file = SendMessage(GetDlgItem(hwndDlg, IDC_MEMMAP), BM_GETCHECK, 0, 0); 
+				m_memmap_file = SendMessage(GetDlgItem(hwndDlg, IDC_MEMMAP), BM_GETCHECK, 0, 0);
 			}
 		}
 
@@ -363,22 +363,22 @@ INT_PTR CALLBACK about_dialog_proc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 
 		SetDlgItemText(hwndDlg, IDC_PLUGINVER, szPluginVer);
 		SetDlgItemText(hwndDlg, IDC_FAADVER, szFLACVer);
-		
+
 		return TRUE;
 	case WM_MOUSEMOVE:
 		ptMouse.x = LOWORD(lParam);
 		ptMouse.y = HIWORD(lParam);
 		ClientToScreen(hwndDlg, &ptMouse);
-		if( (ptMouse.x >= rcLOGO.left && ptMouse.x <= rcLOGO.right && 
-			ptMouse.y >= rcLOGO.top && ptMouse.y<= rcLOGO.bottom) 
+		if( (ptMouse.x >= rcLOGO.left && ptMouse.x <= rcLOGO.right &&
+			ptMouse.y >= rcLOGO.top && ptMouse.y<= rcLOGO.bottom)
 			||
-			(ptMouse.x >= rcMail1.left && ptMouse.x <= rcMail1.right && 
-			ptMouse.y >= rcMail1.top && ptMouse.y<= rcMail1.bottom) 
+			(ptMouse.x >= rcMail1.left && ptMouse.x <= rcMail1.right &&
+			ptMouse.y >= rcMail1.top && ptMouse.y<= rcMail1.bottom)
 			||
-			(ptMouse.x >= rcMail2.left && ptMouse.x <= rcMail2.right && 
-			ptMouse.y >= rcMail2.top && ptMouse.y<= rcMail2.bottom) 
+			(ptMouse.x >= rcMail2.left && ptMouse.x <= rcMail2.right &&
+			ptMouse.y >= rcMail2.top && ptMouse.y<= rcMail2.bottom)
 /*			||
-			(ptMouse.x >= rcMail3.left && ptMouse.x <= rcMail3.right && 
+			(ptMouse.x >= rcMail3.left && ptMouse.x <= rcMail3.right &&
 			ptMouse.y >= rcMail3.top && ptMouse.y<= rcMail3.bottom)*/ )
 			SetCursor(LoadCursor(NULL, MAKEINTRESOURCE(32649)));
 		else
@@ -389,16 +389,16 @@ INT_PTR CALLBACK about_dialog_proc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 		ptMouse.x = LOWORD(lParam);
 		ptMouse.y = HIWORD(lParam);
 		ClientToScreen(hwndDlg, &ptMouse);
-		if(ptMouse.x >= rcLOGO.left && ptMouse.x <= rcLOGO.right && 
+		if(ptMouse.x >= rcLOGO.left && ptMouse.x <= rcLOGO.right &&
 			ptMouse.y >= rcLOGO.top && ptMouse.y<= rcLOGO.bottom)
 			ShellExecute(0, NULL, "http://www.audiocoding.com", NULL,NULL, SW_NORMAL);
-		else if(ptMouse.x >= rcMail1.left && ptMouse.x <= rcMail1.right && 
+		else if(ptMouse.x >= rcMail1.left && ptMouse.x <= rcMail1.right &&
 			ptMouse.y >= rcMail1.top && ptMouse.y<= rcMail1.bottom)
 			ShellExecute(0, NULL, "mailto:shaohao@elong.com", NULL,NULL, SW_NORMAL);
-		else if(ptMouse.x >= rcMail2.left && ptMouse.x <= rcMail2.right && 
+		else if(ptMouse.x >= rcMail2.left && ptMouse.x <= rcMail2.right &&
 			ptMouse.y >= rcMail2.top && ptMouse.y<= rcMail2.bottom)
 			ShellExecute(0, NULL, "mailto:menno@audiocoding.com", NULL,NULL, SW_NORMAL);
-/*		else if(ptMouse.x >= rcMail3.left && ptMouse.x <= rcMail3.right && 
+/*		else if(ptMouse.x >= rcMail3.left && ptMouse.x <= rcMail3.right &&
 			ptMouse.y >= rcMail3.top && ptMouse.y<= rcMail3.bottom)
 			ShellExecute(0, NULL, "I don't know", NULL,NULL, SW_NORMAL);
 */
@@ -418,7 +418,7 @@ INT_PTR CALLBACK about_dialog_proc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 void About(int flags)
 {
 	if(!IsWindow(hwndAbout))
-		hwndAbout = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_ABOUT), hwndPlayer, about_dialog_proc); 
+		hwndAbout = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_ABOUT), hwndPlayer, about_dialog_proc);
 	ShowWindow(hwndAbout, SW_SHOW);
 }
 
@@ -483,7 +483,7 @@ BOOL GetMediaSupported(LPCSTR medianame, MediaInfo *mediaInfo)
     if(StringComp(ch, ".aac", 4) == 0)
     {
 		in = open_filestream((char *)medianame);
-		
+
 		if(in != NULL && mediaInfo)
 		{
 			if(in->http)
@@ -501,7 +501,7 @@ BOOL GetMediaSupported(LPCSTR medianame, MediaInfo *mediaInfo)
 				else
 					mediaInfo->op_canSeek = FALSE; /* ADIF or Headerless - not seekable */
 			}
-			
+
 			close_filestream(in);
 			return TRUE;
 		}
@@ -512,7 +512,7 @@ BOOL GetMediaSupported(LPCSTR medianame, MediaInfo *mediaInfo)
 		}
 	}
 	else
-		return FALSE;		
+		return FALSE;
 }
 
 unsigned long samplerate, channels;
@@ -522,7 +522,7 @@ int play_memmap(char *fn)
     int tagsize = 0;
 
     infile = open_filestream(fn);
-    
+
 	if (infile == NULL)
         return 1;
 
@@ -561,7 +561,7 @@ int play_file(char *fn)
     ZeroMemory(buffer, 768*2);
 
      infile = open_filestream(fn);
-    
+
 	if (infile == NULL)
         return 1;
 
@@ -654,7 +654,7 @@ BOOL Play(LPCSTR medianame, int playfrom, int playto, int flags)
 		buffer = (unsigned char*)LocalAlloc(LPTR, 768*2);
 
 		current_file_mode = m_memmap_file;
-		
+
 		if(current_file_mode)
 		{
 			if(play_memmap((char *)medianame))
@@ -665,16 +665,16 @@ BOOL Play(LPCSTR medianame, int playfrom, int playto, int flags)
 			if(play_file((char *)medianame))
 				return FALSE;
 		}
-		
+
 		if(seek_table)
 		{
 			free(seek_table);
 			seek_table = NULL;
 			seek_table_length = 0;
 		}
-		
+
 		get_AAC_format((char *)medianame, &file_info, &seek_table, &seek_table_length, 0);
-		
+
 		seek_needed = playfrom > 0 ? playfrom : -1;
 		killPlayThread = 0;
 		strcpy(lastfn,medianame);
@@ -689,11 +689,11 @@ BOOL Play(LPCSTR medianame, int playfrom, int playto, int flags)
 		play_thread_handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) PlayThread, (void *) &killPlayThread, 0, &thread_id);
 		if(!play_thread_handle)
 			return FALSE;
-		
+
 		// Note: This line seriously slows down start up time
 		if(m_priority != 3) // if the priority in config window is set to normal, there is nothing to reset!
 			SetThreadPriority(play_thread_handle, priority_table[m_priority]);
-		
+
     }
 
 	return TRUE;
@@ -720,7 +720,7 @@ BOOL Stop(LPCSTR medianame, int flags)
 	if(medianame && *medianame && stricmp(lastfn, medianame) == 0)
 	{
 		sQCDCallbacks.toPlayer.OutputStop(flags);
-		
+
 		killPlayThread = 1;
 		if(play_thread_handle != INVALID_HANDLE_VALUE)
 		{
@@ -735,7 +735,7 @@ BOOL Stop(LPCSTR medianame, int flags)
 
 		if (oldAPIs)
 			QCDCallbacks->toPlayer.PlayStopped(lastfn);
-		
+
 		lastfn[0] = 0;
 	}
 
@@ -906,14 +906,14 @@ DWORD WINAPI PlayThread(void *b)
 						QCDCallbacks->toPlayer.PositionUpdate(decode_pos_ms);
 						updatePos = 0;
 					}
-					
+
 					{
 						WriteDataStruct wd;
 
 						l = frameInfo.samples * sizeof(short);
 
 						decode_pos_ms += (1024*1000)/file_info.sampling_rate;
-						
+
 						wd.bytelen = l;
 						wd.data = sample_buffer;
 						wd.markerend = 0;
@@ -922,7 +922,7 @@ DWORD WINAPI PlayThread(void *b)
 						wd.nch = frameInfo.channels;
 						wd.numsamples =l/file_info.channels/(16/8);
 						wd.srate = file_info.sampling_rate;
-						
+
 						if (!QCDCallbacks->toPlayer.OutputWrite(&wd))
 							done = TRUE;
 					}

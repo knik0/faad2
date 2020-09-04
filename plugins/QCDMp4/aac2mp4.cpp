@@ -1,19 +1,19 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
@@ -89,8 +89,8 @@ int covert_aac_to_mp4(char *inputFileName, char *mp4FileName)
 
 static u_int8_t firstHeader[ADTS_HEADER_MAX_SIZE];
 
-/* 
- * hdr must point to at least ADTS_HEADER_MAX_SIZE bytes of memory 
+/*
+ * hdr must point to at least ADTS_HEADER_MAX_SIZE bytes of memory
  */
 static bool LoadNextAdtsHeader(FILE* inFile, u_int8_t* hdr)
 {
@@ -136,7 +136,7 @@ static bool LoadNextAdtsHeader(FILE* inFile, u_int8_t* hdr)
 					hdr[state] = b;
 					state = 1;
 				} else {
-					 /* else drop it */ 
+					 /* else drop it */
 					dropped++;
 				}
 			}
@@ -160,14 +160,14 @@ static bool LoadNextAacFrame(FILE* inFile, u_int8_t* pBuf, u_int32_t* pBufSize, 
 	if (!LoadNextAdtsHeader(inFile, hdrBuf)) {
 		return false;
 	}
-	
+
 	/* get frame size from header */
 	frameSize = MP4AV_AdtsGetFrameSize(hdrBuf);
 
 	/* get header size in bits and bytes from header */
 	hdrBitSize = MP4AV_AdtsGetHeaderBitSize(hdrBuf);
 	hdrByteSize = MP4AV_AdtsGetHeaderByteSize(hdrBuf);
-	
+
 	/* adjust the frame size to what remains to be read */
 	frameSize -= hdrByteSize;
 
@@ -219,7 +219,7 @@ static bool GetFirstHeader(FILE* inFile)
 
 	/* remember where we are */
 	fgetpos(inFile, &curPos);
-	
+
 	/* go back to start of file */
 	rewind(inFile);
 
@@ -273,8 +273,8 @@ MP4TrackId AacCreator(MP4FileHandle mp4File, FILE* inFile)
 	}
 
 	// add the new audio track
-	MP4TrackId trackId = 
-		MP4AddAudioTrack(mp4File, 
+	MP4TrackId trackId =
+		MP4AddAudioTrack(mp4File,
 			samplesPerSecond, 1024, audioType);
 
 	if (trackId == MP4_INVALID_TRACK_ID) {
@@ -295,7 +295,7 @@ MP4TrackId AacCreator(MP4FileHandle mp4File, FILE* inFile)
 		samplesPerSecond,
 		channelConfig);
 
-	if (!MP4SetTrackESConfiguration(mp4File, trackId, 
+	if (!MP4SetTrackESConfiguration(mp4File, trackId,
 	  pConfig, configLength)) {
 		MP4DeleteTrack(mp4File, trackId);
 		return MP4_INVALID_TRACK_ID;

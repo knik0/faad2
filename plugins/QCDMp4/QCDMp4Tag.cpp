@@ -304,7 +304,7 @@ UINT uGetDlgItemText(void *tagHandle, int fieldId, char *str, int max);
 //------------------------------------------------------------------------------
 
 PLUGIN_API QCDModInitTag* TAGEDITORDLL_ENTRY_POINT()
-{	
+{
 	ModInitTag.size			= sizeof(QCDModInitTag);
 	ModInitTag.version		= PLUGIN_API_VERSION;
 	ModInitTag.ShutDown		= ShutDown_Tag;
@@ -607,7 +607,7 @@ bool Strip_Tag(LPCSTR filename)
 	file = MP4Modify(filename, 0, 0);
 	if (file == MP4_INVALID_FILE_HANDLE)
 		return false;
-	
+
 	MP4MetadataDelete(file);
 
 	MP4Close(file);

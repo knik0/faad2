@@ -154,7 +154,7 @@ static void advance_buffer(aac_buffer *b, int bytes)
     while ((b->bytes_into_buffer > 0) && (bytes > 0))
     {
         int chunk = min(bytes, b->bytes_into_buffer);
-    
+
         bytes -= chunk;
         b->file_offset += chunk;
         b->bytes_consumed = chunk;

@@ -39,8 +39,8 @@ void error_dialog(const char *fmt, ...)
 	if (strlen(fmt) > 750)
 	{
 		sprintf(msgbuf, "%s %s", "<buffer overflow> ", fmt);
-	} 
-	else 
+	}
+	else
 	{
 		if (_filename != NULL && strlen(_filename) < 255)
 		{
@@ -49,7 +49,7 @@ void error_dialog(const char *fmt, ...)
 		}
 
 		va_start(ap, fmt);
-		
+
 		vsprintf(bufp, fmt, ap);
 
 		va_end(ap);

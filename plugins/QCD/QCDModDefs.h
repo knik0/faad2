@@ -13,7 +13,7 @@
 //
 //	Copyright (C) 1997-2002 Quinnware
 //
-//	This code is free.  If you redistribute it in any form, leave this notice 
+//	This code is free.  If you redistribute it in any form, leave this notice
 //	here.
 //
 //	This program is distributed in the hope that it will be useful,
@@ -47,7 +47,7 @@ typedef struct {
 //-----------------------------------------------------------------------------
 // Services (ops) provided by the Player
 //-----------------------------------------------------------------------------
-typedef enum 
+typedef enum
 {									//*** below returns numeric info (*buffer not used)
 
 	opGetPlayerVersion = 0,			// high-order word = major version (eg 3.01 is 3), low-order word = minor (eg 3.01 = 1)
@@ -65,7 +65,7 @@ typedef enum
 	opGetTrackLength = 14,			// get track length, param1 = index of track in playlist, -1 for current
 									//                   param2 = 0 for seconds, 1 for milliseconds
 	opGetTime = 15,					// get time on player, param1 = 0 for time displayed, 1 for track time, 2 for playlist time
-									//					   param2 = 0 for elapsed, 1 for remaining														   
+									//					   param2 = 0 for elapsed, 1 for remaining
 	opGetTrackState = 16,			// get whether track is marked, param1 = index of track, -1 for current
 	opGetPlaylistNum = 17,			// get playlist number of index, param1 = index of track in playlist, -1 for current
 	opGetMediaType = 18,			// get media type of track, param1 = index if track in playlist, -1 for current
@@ -88,18 +88,18 @@ typedef enum
 
 	opGetIndexFromPLNum = 28,		// get index from playlist number, param1 = playlist number
 
-	opGetChildWnd = 30,				// handle to the draggable window extension (only available on some skins) 
+	opGetChildWnd = 30,				// handle to the draggable window extension (only available on some skins)
 	opGetExtVisWnd = 31,			// handle to the external visual window
-	opGetMusicBrowserWnd = 32,		// handle to the music browser window 
-	opGetSkinPreviewWnd = 33,		// handle to the skin preview window 
-	opGetPropertiesWnd = 34,		// handle to the player properties window 
-	opGetExtInfoWnd = 35,			// handle to the extended information window 
-	opGetAboutWnd = 36,				// handle to the about window 
-	opGetSegmentsWnd = 37,			// handle to the segments window 
-	opGetEQPresetsWnd = 38,			// handle to the EQ presets window 
+	opGetMusicBrowserWnd = 32,		// handle to the music browser window
+	opGetSkinPreviewWnd = 33,		// handle to the skin preview window
+	opGetPropertiesWnd = 34,		// handle to the player properties window
+	opGetExtInfoWnd = 35,			// handle to the extended information window
+	opGetAboutWnd = 36,				// handle to the about window
+	opGetSegmentsWnd = 37,			// handle to the segments window
+	opGetEQPresetsWnd = 38,			// handle to the EQ presets window
 
 	opGetVisDimensions = 50,		// gets the width and height of visual window (param1 = -1 current vis window, 0 internal vis, 1 external vis, 2 full screen)
-									//		returns: HEIGHT in high word, WIDTH in low word 
+									//		returns: HEIGHT in high word, WIDTH in low word
 
 	opGetQueriesComplete = 60,		// get status on whether all tracks in playlist have been queryied for their info
 
@@ -133,10 +133,10 @@ typedef enum
 	opGetSkinFolder = 112,			// get current skin folder
 	opGetCDDBCacheFolder = 113,		// get current folder for CDDB cached info
 
-	opGetCurrentPlaylist = 114,		// get full pathname of playlist currently loaded 
+	opGetCurrentPlaylist = 114,		// get full pathname of playlist currently loaded
 
 	opGetMediaID = 115,				// get media identifier, param2 = index of track in playlist, -1 for current
-									//		- for CD's it's the TOC - for anything else, right now it's 0      
+									//		- for CD's it's the TOC - for anything else, right now it's 0
 
 	opGetSupportedExtensions = 116,	// get file extensions supported by the player, param2 = 0 - get all extensions, 1 - get registered extensions
 									//		- returned extensions will be colon delimited
@@ -221,7 +221,7 @@ typedef struct				// for Output Plugin Write callback
 	UINT	nch;			// number of channels
 	UINT	srate;			// sample rate
 
-	UINT	markerstart;	// Marker position at start of data (marker is time value of data) 
+	UINT	markerstart;	// Marker position at start of data (marker is time value of data)
 							// (set to WAVE_VIS_DATA_ONLY to not have data sent to output plugins)
 	UINT	markerend;		// Marker position at end of data (not currently used, set to 0)
 } WriteDataStruct;
@@ -230,18 +230,18 @@ typedef struct				// for Output Plugin Write callback
 typedef struct			// for GetTrackExtents Input Plugin callback
 {
 	UINT track;			// for CD's, set the track number. Otherwise set to 1.
-	UINT start;			// for CD's or media that doesn't start at the beginning 
+	UINT start;			// for CD's or media that doesn't start at the beginning
 						// of the file, set to start position. Otherwise set to 0.
 	UINT end;			// set to end position of media.
 	UINT unitpersec;	// whatever units are being used for this media, how many
-						// of them per second. 
+						// of them per second.
 						// (Note: ((end - start) / unitpersecond) = file length
 	UINT bytesize;		// size of file in bytes (if applicable, otherwise 0).
 } TrackExtents;
 
 //-----------------------------------------------------------------------------
 typedef struct			// for opSetAudioInfo service
-{		
+{
     long struct_size;	// sizeof(AudioInfo)
     long level;			// MPEG level (1 for MPEG1, 2 for MPEG2, 3 for MPEG2.5, 7 for MPEGpro)
     long layer;			// and layer (1, 2 or 3)
@@ -256,7 +256,7 @@ typedef struct			// for opSetAudioInfo service
 typedef struct			// for coming QCD version
 {
 	long struct_size;	// sizeof(EQInfo)
-	char enabled;		
+	char enabled;
 	char preamp;		// -128 to 127, 0 is even
 	char bands[10];		// -128 to 127, 0 is even
 } EQInfo;
@@ -273,7 +273,7 @@ typedef struct
 
 //-----------------------------------------------------------------------------
 typedef enum			// for MediaInfo.mediaType
-{ 
+{
 	UNKNOWN_MEDIA = 0,
 	CD_AUDIO_MEDIA = 1,
 	DIGITAL_FILE_MEDIA = 2,
