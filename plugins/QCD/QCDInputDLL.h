@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// 
+//
 // File:	QCDInputDLL.h
 //
 // About:	QCD Player Input module DLL interface.  For more documentation, see
@@ -11,7 +11,7 @@
 //
 //	Copyright (C) 1997-2002 Quinnware
 //
-//	This code is free.  If you redistribute it in any form, leave this notice 
+//	This code is free.  If you redistribute it in any form, leave this notice
 //	here.
 //
 //	This program is distributed in the hope that it will be useful,

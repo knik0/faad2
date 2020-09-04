@@ -102,7 +102,7 @@ void init_commandline_arguments_utf8(int *argc, char ***argv)
 		fprintf(stderr, "\nFATAL: Malloc failed\n\n");
 		exit(-1);
 	}
-	
+
 	for(i = 0; i < nArgs; i++)
 	{
 		(*argv)[i] = utf16_to_utf8(szArglist[i]);
@@ -119,7 +119,7 @@ void init_commandline_arguments_utf8(int *argc, char ***argv)
 void free_commandline_arguments_utf8(int *argc, char ***argv)
 {
 	int i = 0;
-	
+
 	if(*argv != NULL)
 	{
 		for(i = 0; i < *argc; i++)
@@ -140,7 +140,7 @@ FILE *fopen_utf8(const char *filename_utf8, const char *mode_utf8)
 	FILE *ret = NULL;
 	wchar_t *filename_utf16 = utf8_to_utf16(filename_utf8);
 	wchar_t *mode_utf16 = utf8_to_utf16(mode_utf8);
-	
+
 	if(filename_utf16 && mode_utf16)
 	{
 		ret = _wfopen(filename_utf16, mode_utf16);

@@ -2,7 +2,7 @@
 //
 // File:	QCDModTagEditor
 //
-// About:	Tag Editing plugin module interface.  This file is published with the 
+// About:	Tag Editing plugin module interface.  This file is published with the
 //			QCD plugin SDK.
 //
 // Authors:	Written by Paul Quinn
@@ -13,7 +13,7 @@
 //
 //	Copyright (C) 2002 Quinnware
 //
-//	This code is free.  If you redistribute it in any form, leave this notice 
+//	This code is free.  If you redistribute it in any form, leave this notice
 //	here.
 //
 //	This program is distributed in the hope that it will be useful,
@@ -37,10 +37,10 @@ typedef enum
 
 	TAGFIELD_TITLE = 0,
 	TAGFIELD_ARTIST,
-	TAGFIELD_ALBUM, 
+	TAGFIELD_ALBUM,
 	TAGFIELD_GENRE,
-	TAGFIELD_YEAR,  
-	TAGFIELD_TRACK, 
+	TAGFIELD_YEAR,
+	TAGFIELD_TRACK,
 	TAGFIELD_COMMENT,
 
 	TAGFIELD_COMPOSER,
@@ -49,7 +49,7 @@ typedef enum
 	TAGFIELD_YEARCOMPOSED,
 
 	TAGFIELD_ORIGARTIST,
-	TAGFIELD_LABEL, 
+	TAGFIELD_LABEL,
 	TAGFIELD_COPYRIGHT,
 	TAGFIELD_ENCODER,
 	TAGFIELD_CDDBTAGID,
@@ -59,7 +59,7 @@ typedef enum
 
 //-----------------------------------------------------------------------------
 
-typedef struct 
+typedef struct
 {
 	UINT	size;			// size of init structure
 	UINT	version;		// plugin structure version (set to PLUGIN_API_VERSION)

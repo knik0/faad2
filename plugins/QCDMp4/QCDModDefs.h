@@ -13,7 +13,7 @@
 //
 //	Copyright (C) 1997-2002 Quinnware
 //
-//	This code is free.  If you redistribute it in any form, leave this notice 
+//	This code is free.  If you redistribute it in any form, leave this notice
 //	here.
 //
 //	This program is distributed in the hope that it will be useful,
@@ -37,7 +37,7 @@
 // Current plugin version
 
 // use this version for old style API calls (all returned text in native encoding)
-#define PLUGIN_API_VERSION				250		
+#define PLUGIN_API_VERSION				250
 
 // use this version for new style API calls (all returned text in UTF8 encoding on WinNT/2K/XP (native encoding on Win9x))
 #define PLUGIN_API_VERSION_WANTUTF8		((PLUGIN_API_WANTUTF8<<16)|PLUGIN_API_VERSION)
@@ -45,7 +45,7 @@
 
 //-----------------------------------------------------------------------------
 
-typedef struct 
+typedef struct
 {
 	char				*moduleString;
 	char				*moduleExtensions;
@@ -54,7 +54,7 @@ typedef struct
 //-----------------------------------------------------------------------------
 // Services (ops) provided by the Player
 //-----------------------------------------------------------------------------
-typedef enum 
+typedef enum
 {									//*** below returns numeric info (*buffer not used)
 
 	opGetPlayerVersion = 0,			// high-order word = major version (eg 3.01 is 3), low-order word = minor (eg 3.01 = 1)
@@ -72,7 +72,7 @@ typedef enum
 	opGetTrackLength = 14,			// get track length, param1 = index of track in playlist, -1 for current
 									//                   param2 = 0 for seconds, 1 for milliseconds
 	opGetTime = 15,					// get time on player, param1 = 0 for time displayed, 1 for track time, 2 for playlist time
-									//					   param2 = 0 for elapsed, 1 for remaining														   
+									//					   param2 = 0 for elapsed, 1 for remaining
 	opGetTrackState = 16,			// get whether track is marked, param1 = index of track, -1 for current
 	opGetPlaylistNum = 17,			// get playlist number of index, param1 = index of track in playlist, -1 for current
 	opGetMediaType = 18,			// get media type of track, param1 = index if track in playlist, -1 for current
@@ -97,17 +97,17 @@ typedef enum
 
 	opGetExtensionWnd = 30,			// handle to the draggable window extension (only available on some skins), param1 = extension number (0 - 9)
 	opGetExtVisWnd = 31,			// handle to the external visual window
-	opGetMusicBrowserWnd = 32,		// handle to the music browser window 
-	opGetSkinPreviewWnd = 33,		// handle to the skin preview window 
-	opGetPropertiesWnd = 34,		// handle to the player properties window 
-	opGetExtInfoWnd = 35,			// handle to the extended information window 
-	opGetAboutWnd = 36,				// handle to the about window 
-	opGetSegmentsWnd = 37,			// handle to the segments window 
-	opGetEQPresetsWnd = 38,			// handle to the EQ presets window 
-	opGetVideoWnd = 39,				// handle to the video window 
+	opGetMusicBrowserWnd = 32,		// handle to the music browser window
+	opGetSkinPreviewWnd = 33,		// handle to the skin preview window
+	opGetPropertiesWnd = 34,		// handle to the player properties window
+	opGetExtInfoWnd = 35,			// handle to the extended information window
+	opGetAboutWnd = 36,				// handle to the about window
+	opGetSegmentsWnd = 37,			// handle to the segments window
+	opGetEQPresetsWnd = 38,			// handle to the EQ presets window
+	opGetVideoWnd = 39,				// handle to the video window
 
 	opGetVisDimensions = 50,		// gets the width and height of visual window (param1 = -1 current vis window, 0 internal vis, 1 external vis, 2 full screen)
-									//		returns: HEIGHT in high word, WIDTH in low word 
+									//		returns: HEIGHT in high word, WIDTH in low word
 
 	opShowVideoWindow = 55,			// Show or Close video window (param1 = 1 for create, 2 for create and show, 0 for close)
 
@@ -143,10 +143,10 @@ typedef enum
 	opGetSkinFolder = 112,			// get current skin folder
 	opGetCDDBCacheFolder = 113,		// get current folder for CDDB cached info
 
-	opGetCurrentPlaylist = 114,		// get full pathname of playlist currently loaded 
+	opGetCurrentPlaylist = 114,		// get full pathname of playlist currently loaded
 
 	opGetMediaID = 115,				// get media identifier, param2 = index of track in playlist, -1 for current
-									//		- for CD's it's the TOC - for anything else, right now it's 0      
+									//		- for CD's it's the TOC - for anything else, right now it's 0
 
 	opGetSupportedExtensions = 116,	// get file extensions supported by the player, param2 = 0 - get all extensions, 1 - get registered extensions
 									//		- returned extensions will be colon delimited
@@ -196,14 +196,14 @@ typedef enum
 	opSetPlayNext = 1009,			// set the next index to be played (buffer = NULL, param1 = index, index = -1 unsets playnext)
 	opSetIndexFilename = 1010,		// updates the filename (or stream) that an index in the current playlist refers to, buffer = new filename, param1 = index
 
-	opSetPlaylist = 1006,			// clear playlist, add files to playlist or reset playlist with new files 
+	opSetPlaylist = 1006,			// clear playlist, add files to playlist or reset playlist with new files
 									//		buffer = file list (each file in quotes, string null terminated) Eg; buffer="\"file1.mp3\" \"file2.mp3\"\0" - NULL to clear playlist
-									//		param1 = (string ptr)originating path (can be NULL if paths included with files) 
+									//		param1 = (string ptr)originating path (can be NULL if paths included with files)
 									//		param2 = 1 - clear playlist flag, 2 - enqueue to top
 
-	opInsertPlaylist = 1011,		// insert tracks into playlist 
+	opInsertPlaylist = 1011,		// insert tracks into playlist
 									//		buffer = file list (each file in quotes, string null terminated) Eg; buffer="\"file1.mp3\" \"file2.mp3\"\0"
-									//		param1 = (string ptr)originating path (can be NULL if paths included with files) 
+									//		param1 = (string ptr)originating path (can be NULL if paths included with files)
 									//		param2 = index location to insert tracks (-1 to insert at end)
 
 	opMovePlaylistTrack = 1012,		// param1 = index of track to move, param2 = destination index (move shifts tracks between param1 and param2)
@@ -267,7 +267,7 @@ typedef struct				// for Output Plugin Write callback
 	UINT	nch;			// number of channels
 	UINT	srate;			// sample rate
 
-	UINT	markerstart;	// Marker position at start of data (marker is time value of data) 
+	UINT	markerstart;	// Marker position at start of data (marker is time value of data)
 							// (set to WAVE_VIS_DATA_ONLY to not have data sent to output plugins)
 	UINT	markerend;		// Marker position at end of data (not currently used, set to 0)
 } WriteDataStruct;
@@ -276,18 +276,18 @@ typedef struct				// for Output Plugin Write callback
 typedef struct			// for GetTrackExtents Input Plugin callback
 {
 	UINT track;			// for CD's, set the track number. Otherwise set to 1.
-	UINT start;			// for CD's or media that doesn't start at the beginning 
+	UINT start;			// for CD's or media that doesn't start at the beginning
 						// of the file, set to start position. Otherwise set to 0.
 	UINT end;			// set to end position of media.
 	UINT unitpersec;	// whatever units are being used for this media, how many
-						// of them per second. 
+						// of them per second.
 						// (Note: ((end - start) / unitpersecond) = file length
 	UINT bytesize;		// size of file in bytes (if applicable, otherwise 0).
 } TrackExtents;
 
 //-----------------------------------------------------------------------------
 typedef struct			// for opSetAudioInfo service
-{		
+{
     long struct_size;	// sizeof(AudioInfo)
     long level;			// MPEG level (1 for MPEG1, 2 for MPEG2, 3 for MPEG2.5, 7 for MPEGpro)
     long layer;			// and layer (1, 2 or 3)
@@ -303,7 +303,7 @@ typedef struct			// for opSetAudioInfo service
 typedef struct			// for coming QCD version
 {
 	long struct_size;	// sizeof(EQInfo)
-	char enabled;		
+	char enabled;
 	char preamp;		// -128 to 127, 0 is even
 	char bands[10];		// -128 to 127, 0 is even
 } EQInfo;
@@ -320,7 +320,7 @@ typedef struct
 
 //-----------------------------------------------------------------------------
 typedef enum			// for MediaInfo.mediaType
-{ 
+{
 	UNKNOWN_MEDIA = 0,
 	CD_AUDIO_MEDIA = 1,
 	DIGITAL_FILE_MEDIA = 2,

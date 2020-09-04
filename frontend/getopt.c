@@ -204,7 +204,7 @@ my_index (str, chr)
 }
 
 #endif              /* GNU C library.  */
-
+
 /* Handle permutation of arguments.  */
 
 /* Describe the part of ARGV that contains non-options that have
@@ -265,7 +265,7 @@ exchange (argv)
     temp = *first; *first = *last; *last = temp; first++; last--;
   }
 }
-
+
 /* Scan elements of ARGV (whose length is ARGC) for option characters
    given in OPTSTRING.
 
@@ -680,7 +680,7 @@ getopt_long (argc, argv, options, long_options, opt_index)
 }
 
 #endif  /* _LIBC or not __GNU_LIBRARY__.  */
-
+
 #ifdef TEST
 
 /* Compile with -DTEST to make an executable for use in testing

@@ -28,7 +28,7 @@
 #define CREATEFONT(sz) \
 	CreateFont((sz), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
 		VARIABLE_PITCH | FF_SWISS, "")
-   
+
 HANDLE event = NULL;
 int width = 130, height = 130;
 RECT bar1, bar2, vbrBR;
@@ -232,7 +232,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 	set_outputFormat(iniSettings.outputFormat);
 	set_fileType(iniSettings.fileType);
 	set_object_type(iniSettings.object_type);
-	
+
 	for (frame = 0; frame < 8; frame++)
 		hbm[frame] = LoadImage(hinst, MAKEINTRESOURCE(IDB_TF01 + frame), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
 	frame = 0;
@@ -243,7 +243,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 		DispatchMessage(&msg);
 	}
 
-	for (frame = 0; frame < 8; frame++) 
+	for (frame = 0; frame < 8; frame++)
 		DeleteObject(hbm[frame]);
 
 	return msg.wParam;
@@ -373,7 +373,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (animate || frame)
 			{
 				frame++;
-				if (frame > 7) 
+				if (frame > 7)
 					frame -= 8;
 			}
 			else
@@ -437,7 +437,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			return 0;
 
 		case WM_COMMAND:
-			switch (LOWORD(wParam)) 
+			switch (LOWORD(wParam))
 			{
 				case IDM_QUIT:
 					WriteIniFile(INI_FILE);
@@ -446,7 +446,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 					break;
 				case IDM_ONTOP:
 					set_always_on_top(hwnd, ~GetMenuState(menu, LOWORD(wParam), MF_BYCOMMAND) & MF_CHECKED);
-					break;	
+					break;
 				case IDM_LOGERR:
 					set_logerr(hwnd, ~GetMenuState(menu, LOWORD(wParam), MF_BYCOMMAND) & MF_CHECKED);
 					break;
@@ -459,10 +459,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				}
 				case IDM_VOLUME:
 				{
-					int value = 
+					int value =
 					DialogBox(
-					hinst,  
-					MAKEINTRESOURCE(IDD_VOLUME),   
+					hinst,
+					MAKEINTRESOURCE(IDD_VOLUME),
 					hwnd, QCProc);
 
 					if (value == -2)
@@ -484,7 +484,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			hdrop = (HANDLE)wParam;
 			HandleDrag(hwnd, hdrop);
 			return 0;
-	
+
 		case WM_DESTROY:
 			decoding_done = 1;
 			PostQuitMessage(0);
@@ -498,13 +498,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
  *  Encode parameters dialog procedures.
  */
 
-BOOL CALLBACK QCProc(HWND hwndDlg, UINT message, 
-                     WPARAM wParam, LPARAM lParam) 
+BOOL CALLBACK QCProc(HWND hwndDlg, UINT message,
+                     WPARAM wParam, LPARAM lParam)
 {
-	switch (message) 
-	{ 
-		case WM_INITDIALOG: 
- 
+	switch (message)
+	{
+		case WM_INITDIALOG:
+
 			if(iniSettings.decode_mode == 0)
 			{
 				CheckDlgButton(hwndDlg,IDC_PLAYBACK,TRUE);
@@ -579,8 +579,8 @@ BOOL CALLBACK QCProc(HWND hwndDlg, UINT message,
 			EndDialog(hwndDlg, -1);
 			break;
 
-		case WM_COMMAND: 
-			switch (LOWORD(wParam)) 
+		case WM_COMMAND:
+			switch (LOWORD(wParam))
 			{
 				case IDC_BUTTON1:
 				{
@@ -670,7 +670,7 @@ BOOL CALLBACK QCProc(HWND hwndDlg, UINT message,
 					break;
        	  		}
 	}
-	return FALSE; 
+	return FALSE;
 }
 
 

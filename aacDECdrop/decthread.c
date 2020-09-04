@@ -183,7 +183,7 @@ DWORD WINAPI decode_thread(LPVOID arg)
 		numfiles = 0;
 
 		Sleep(500);
-	} 
+	}
 
 	DeleteCriticalSection(&mutex);
 

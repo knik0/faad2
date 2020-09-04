@@ -1,19 +1,19 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
@@ -217,7 +217,7 @@ uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint16_t cnt,
             {
                 result += calc_sbr_tables(sbr, saved_start_freq, saved_stop_freq,
                     saved_samplerate_mode, saved_freq_scale,
-                    saved_alter_scale, saved_xover_band);          
+                    saved_alter_scale, saved_xover_band);
             }
 
             /* we should be able to safely set result to 0 now, */
@@ -248,7 +248,7 @@ uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint16_t cnt,
 #ifdef DRM
     if (!sbr->Is_DRM_SBR)
 #endif
-    {       
+    {
         /* -4 does not apply, bs_extension_type is re-read in this function */
         num_align_bits = 8*cnt /*- 4*/ - num_sbr_bits2;
 

@@ -1,19 +1,19 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003 M. Bakker, Ahead Software AG, http://www.nero.com
-**  
+**
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-** 
+**
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software 
+** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
@@ -544,7 +544,7 @@ int Initialize(QCDModInfo *ModInfo, int flags)
 
 //----------------------------------------------------------------------------
 
-void ShutDown(int flags) 
+void ShutDown(int flags)
 {
 	Stop(mp4state.filename, STOPFLAG_FORCESTOP);
 }
@@ -1443,7 +1443,7 @@ int skip_id3v2_tag()
     return tagsize;
 }
 
-int GetMediaSupported(const char* medianame, MediaInfo *mediaInfo) 
+int GetMediaSupported(const char* medianame, MediaInfo *mediaInfo)
 {
     int tagsize = 0, init;
 
@@ -2451,7 +2451,7 @@ DWORD WINAPI MP4PlayThread(void *b)
                 }
             }
         }
-		
+
 		Sleep(10);
 
 		// catch pause
@@ -2710,7 +2710,7 @@ DWORD WINAPI AACPlayThread(void *b)
             if (frameInfo.channels > 0 && mp4state.samplerate > 0)
                 mp4state.cur_pos_sec += ((double)(frameInfo.samples/frameInfo.channels))/(double)mp4state.samplerate;
         }
-		
+
 		Sleep(10);
 
 		// catch pause
@@ -2748,7 +2748,7 @@ PLUGIN_API QCDModInitIn* INPUTDLL_ENTRY_POINT(QCDModInitIn *ModInit, QCDModInfo 
 	module.QCDCallbacks.toModule.Pause				= Pause;
 	module.QCDCallbacks.toModule.Stop				= Stop;
 	module.QCDCallbacks.toModule.About				= About;
-	module.QCDCallbacks.toModule.Configure			= Configure;	
+	module.QCDCallbacks.toModule.Configure			= Configure;
 	module.QCDCallbacks.toModule.SetEQ				= NULL;
 	module.QCDCallbacks.toModule.SetVolume			= SetVolume;
 
@@ -2964,7 +2964,7 @@ PLUGIN_API QCDModInitIn* INPUTDLL_ENTRY_POINT(QCDModInitIn *ModInit, QCDModInfo 
 //    free(temp);
 //
 //    return ret;
-//}    
+//}
 //
 //__declspec(dllexport) int winampWriteExtendedFileInfo()
 //{

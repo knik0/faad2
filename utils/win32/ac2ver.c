@@ -1,7 +1,7 @@
 /*
 ** AC2VER - extract version number from AC_INIT macro (configure.ac)
 ** Copyright (C) 2017 LoRd_MuldeR <mulder2@GMX.de>
-**  
+**
 ** This software is released under the CC0 1.0 Universal [CC0 1.0] licence!
 ** https://creativecommons.org/publicdomain/zero/1.0/legalcode
 **/
