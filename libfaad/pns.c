@@ -236,7 +236,17 @@ void pns_decode(ic_stream *ics_left, ic_stream *ics_right,
                 if ((ics_right != NULL)
                     && is_noise(ics_right, g, sfb))
                 {
-                    if (channel_pair &&
+#ifdef LTP_DEC
+                    /* See comment above. */
+                    ics_right->ltp.long_used[sfb] = 0;
+                    ics_right->ltp2.long_used[sfb] = 0;
+#endif
+#ifdef MAIN_DEC
+                    /* See comment above. */
+                    ics_right->pred.prediction_used[sfb] = 0;
+#endif
+
+                    if (channel_pair && is_noise(ics_left, g, sfb) &&
                         (((ics_left->ms_mask_present == 1) &&
                         (ics_left->ms_used[g][sfb])) ||
                         (ics_left->ms_mask_present == 2)))
@@ -251,14 +261,6 @@ void pns_decode(ic_stream *ics_left, ic_stream *ics_right,
                             ics_right->scale_factors[g][sfb], size, sub, &r1_dep, &r2_dep);
 
                     } else /*if (ics_left->ms_mask_present == 0)*/ {
-
-#ifdef LTP_DEC
-                        ics_right->ltp.long_used[sfb] = 0;
-                        ics_right->ltp2.long_used[sfb] = 0;
-#endif
-#ifdef MAIN_DEC
-                        ics_right->pred.prediction_used[sfb] = 0;
-#endif
 
                         offs = ics_right->swb_offset[sfb];
                         size = min(ics_right->swb_offset[sfb+1], ics_right->swb_offset_max) - offs;
