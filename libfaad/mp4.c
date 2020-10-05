@@ -107,7 +107,11 @@ static uint8_t ObjectTypesTable[32] = {
     0, /* 27 ER Parametric */
 #endif
     0, /* 28 (Reserved) */
-    0, /* 29 (Reserved) */
+#ifdef PS_DEC
+    1, /* 29 AAC LC + SBR + PS */
+#else
+    0, /* 29 AAC LC + SBR + PS */
+#endif
     0, /* 30 (Reserved) */
     0  /* 31 (Reserved) */
 };
@@ -174,7 +178,7 @@ int8_t AudioSpecificConfigFromBitfile(bitfile *ld,
 
 #ifdef SBR_DEC
     mp4ASC->sbr_present_flag = -1;
-    if (mp4ASC->objectTypeIndex == 5)
+    if (mp4ASC->objectTypeIndex == 5 || mp4ASC->objectTypeIndex == 29)
     {
         uint8_t tmp;
 
@@ -231,7 +235,7 @@ int8_t AudioSpecificConfigFromBitfile(bitfile *ld,
     else
 		bits_to_decode = (int8_t)(buffer_size*8 - (startpos-faad_get_processed_bits(ld)));
 
-    if ((mp4ASC->objectTypeIndex != 5) && (bits_to_decode >= 16))
+    if ((mp4ASC->objectTypeIndex != 5 && mp4ASC->objectTypeIndex != 29) && (bits_to_decode >= 16))
     {
         int16_t syncExtensionType = (int16_t)faad_getbits(ld, 11
             DEBUGVAR(1,9,"parse_audio_decoder_specific_info(): syncExtensionType"));
