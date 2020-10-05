@@ -884,7 +884,10 @@ static uint8_t ics_info(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *ld,
                     if ((ics->ltp.data_present = faad_get1bit(ld
                         DEBUGVAR(1,50,"ics_info(): ltp.data_present"))) & 1)
                     {
-                        ltp_data(hDecoder, ics, &(ics->ltp), ld);
+                        if ((retval = ltp_data(hDecoder, ics, &(ics->ltp), ld)) > 0)
+                        {
+                            return retval;
+                        }
                     }
                 }
 #endif
