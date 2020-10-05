@@ -97,9 +97,16 @@ sbr_info *sbrDecodeInit(uint16_t framelength, uint8_t id_aac,
     {
         sbr->numTimeSlotsRate = RATE * NO_TIME_SLOTS_960;
         sbr->numTimeSlots = NO_TIME_SLOTS_960;
-    } else {
+    }
+    else if (framelength == 1024)
+    {
         sbr->numTimeSlotsRate = RATE * NO_TIME_SLOTS;
         sbr->numTimeSlots = NO_TIME_SLOTS;
+    }
+    else
+    {
+        faad_free(sbr);
+        return NULL;
     }
 
     sbr->GQ_ringbuf_index[0] = 0;

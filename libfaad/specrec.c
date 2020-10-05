@@ -1056,6 +1056,8 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
 #endif
                 );
         }
+        if (!hDecoder->sbr[ele])
+            return 19;
 
         if (sce->ics1.window_sequence == EIGHT_SHORT_SEQUENCE)
             hDecoder->sbr[ele]->maxAACLine = 8*min(sce->ics1.swb_offset[max(sce->ics1.max_sfb-1, 0)], sce->ics1.swb_offset_max);
@@ -1312,6 +1314,8 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_s
 #endif
                 );
         }
+        if (!hDecoder->sbr[ele])
+            return 19;
 
         if (cpe->ics1.window_sequence == EIGHT_SHORT_SEQUENCE)
             hDecoder->sbr[ele]->maxAACLine = 8*min(cpe->ics1.swb_offset[max(cpe->ics1.max_sfb-1, 0)], cpe->ics1.swb_offset_max);
