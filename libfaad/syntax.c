@@ -884,7 +884,10 @@ static uint8_t ics_info(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *ld,
                     if ((ics->ltp.data_present = faad_get1bit(ld
                         DEBUGVAR(1,50,"ics_info(): ltp.data_present"))) & 1)
                     {
-                        ltp_data(hDecoder, ics, &(ics->ltp), ld);
+                        if ((retval = ltp_data(hDecoder, ics, &(ics->ltp), ld)) > 0)
+                        {
+                            return retval;
+                        }
                     }
                 }
 #endif
@@ -1091,6 +1094,8 @@ static uint8_t fill_element(NeAACDecStruct *hDecoder, bitfile *ld, drc_info *drc
 #endif
                     );
             }
+            if (!hDecoder->sbr[sbr_ele])
+                return 19;
 
             hDecoder->sbr_present_flag = 1;
 
@@ -1359,6 +1364,11 @@ void DRM_aac_scalable_main_element(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *
         {
             hDecoder->sbr[0] = sbrDecodeInit(hDecoder->frameLength, hDecoder->element_id[0],
                 2*get_sample_rate(hDecoder->sf_index), 0 /* ds SBR */, 1);
+        }
+        if (!hDecoder->sbr[0])
+        {
+            hInfo->error = 19;
+            return;
         }
 
         /* Reverse bit reading of SBR data in DRM audio frame */

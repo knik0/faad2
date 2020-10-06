@@ -872,7 +872,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
         if (NeAACDecAudioSpecificConfig(mp4config.asc.buf, mp4config.asc.size, &mp4ASC) >= 0)
         {
             if (mp4ASC.frameLengthFlag == 1) framesize = 960;
-            if (mp4ASC.sbr_present_flag == 1) framesize *= 2;
+            if (mp4ASC.sbr_present_flag == 1 || mp4ASC.forceUpSampling) framesize *= 2;
         }
     }
 
