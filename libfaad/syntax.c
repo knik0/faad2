@@ -344,7 +344,9 @@ static void decode_sce_lfe(NeAACDecStruct *hDecoder,
        can become 2 when some form of Parametric Stereo coding is used
     */
 
-    if (hDecoder->frame && hDecoder->element_id[hDecoder->fr_ch_ele] != id_syn_ele) {
+    if (hDecoder->element_id[hDecoder->fr_ch_ele] != INVALID_ELEMENT_ID &&
+        hDecoder->element_id[hDecoder->fr_ch_ele] != id_syn_ele)
+    {
         /* element inconsistency */
         hInfo->error = 21;
         return;
@@ -401,7 +403,9 @@ static void decode_cpe(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *hInfo, bitfi
         return;
     }
 
-    if (hDecoder->frame && hDecoder->element_id[hDecoder->fr_ch_ele] != id_syn_ele) {
+    if (hDecoder->element_id[hDecoder->fr_ch_ele] != INVALID_ELEMENT_ID &&
+        hDecoder->element_id[hDecoder->fr_ch_ele] != id_syn_ele)
+    {
         /* element inconsistency */
         hInfo->error = 21;
         return;

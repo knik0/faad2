@@ -91,6 +91,7 @@ extern "C" {
 #define ID_PCE 0x5
 #define ID_FIL 0x6
 #define ID_END 0x7
+#define INVALID_ELEMENT_ID 255
 
 #define ONLY_LONG_SEQUENCE   0x0
 #define LONG_START_SEQUENCE  0x1
