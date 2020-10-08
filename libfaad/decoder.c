@@ -153,6 +153,7 @@ NeAACDecHandle NeAACDecOpen(void)
 
     for (i = 0; i < MAX_CHANNELS; i++)
     {
+        hDecoder->element_id[i] = INVALID_ELEMENT_ID;
         hDecoder->window_shape_prev[i] = 0;
         hDecoder->time_out[i] = NULL;
         hDecoder->fb_intermed[i] = NULL;
