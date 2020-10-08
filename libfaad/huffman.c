@@ -43,7 +43,7 @@
 
 /* static function declarations */
 static INLINE void huffman_sign_bits(bitfile *ld, int16_t *sp, uint8_t len);
-static INLINE int16_t huffman_getescape(bitfile *ld, int16_t sp);
+static INLINE uint8_t huffman_getescape(bitfile *ld, int16_t *sp);
 static uint8_t huffman_2step_quad(uint8_t cb, bitfile *ld, int16_t *sp);
 static uint8_t huffman_2step_quad_sign(uint8_t cb, bitfile *ld, int16_t *sp);
 static uint8_t huffman_2step_pair(uint8_t cb, bitfile *ld, int16_t *sp);
@@ -121,24 +121,25 @@ static INLINE void huffman_sign_bits(bitfile *ld, int16_t *sp, uint8_t len)
     }
 }
 
-static INLINE int16_t huffman_getescape(bitfile *ld, int16_t sp)
+static INLINE uint8_t huffman_getescape(bitfile *ld, int16_t *sp)
 {
     uint8_t neg, i;
     int16_t j;
 	int16_t off;
+    int16_t x = *sp;
 
-    if (sp < 0)
+    if (x < 0)
     {
-        if (sp != -16)
-            return sp;
+        if (x != -16)
+            return 0;
         neg = 1;
     } else {
-        if (sp != 16)
-            return sp;
+        if (x != 16)
+            return 0;
         neg = 0;
     }
 
-    for (i = 4; ; i++)
+    for (i = 4; i < 16; i++)
     {
         if (faad_get1bit(ld
             DEBUGVAR(1,6,"huffman_getescape(): escape size")) == 0)
@@ -146,6 +147,8 @@ static INLINE int16_t huffman_getescape(bitfile *ld, int16_t sp)
             break;
         }
     }
+    if (i >= 16)
+        return 10;
 
     off = (int16_t)faad_getbits(ld, i
         DEBUGVAR(1,9,"huffman_getescape(): escape"));
@@ -154,7 +157,8 @@ static INLINE int16_t huffman_getescape(bitfile *ld, int16_t sp)
     if (neg)
         j = -j;
 
-    return j;
+    *sp = j;
+    return 0;
 }
 
 static uint8_t huffman_2step_quad(uint8_t cb, bitfile *ld, int16_t *sp)
@@ -362,8 +366,10 @@ uint8_t huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
     case 11:
     {
         uint8_t err = huffman_2step_pair_sign(11, ld, sp);
-        sp[0] = huffman_getescape(ld, sp[0]);
-        sp[1] = huffman_getescape(ld, sp[1]);
+        if (!err)
+            err = huffman_getescape(ld, &sp[0]);
+        if (!err)
+            err = huffman_getescape(ld, &sp[1]);
         return err;
     }
 #ifdef ERROR_RESILIENCE
@@ -372,8 +378,10 @@ uint8_t huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
     case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
     {
         uint8_t err = huffman_2step_pair_sign(11, ld, sp);
-        sp[0] = huffman_getescape(ld, sp[0]);
-        sp[1] = huffman_getescape(ld, sp[1]);
+        if (!err)
+            err = huffman_getescape(ld, &sp[0]);
+        if (!err)
+            err = huffman_getescape(ld, &sp[1]);
 
         /* check LAV (Largest Absolute Value) */
         /* this finds errors in the ESCAPE signal */

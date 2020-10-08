@@ -941,6 +941,10 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
     /* sanity check, CVE-2018-20199, CVE-2018-20360 */
     if(!hDecoder->time_out[sce->channel])
         return 15;
+    if(output_channels > 1 && !hDecoder->time_out[sce->channel+1])
+        return 15;
+    if(!hDecoder->fb_intermed[sce->channel])
+        return 15;
 
     /* dequantisation and scaling */
     retval = quant_to_spec(hDecoder, ics, spec_data, spec_coef, hDecoder->frameLength);
@@ -1124,7 +1128,9 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_s
     }
 
     /* sanity check, CVE-2018-20199, CVE-2018-20360 */
-    if(!hDecoder->time_out[cpe->channel])
+    if(!hDecoder->time_out[cpe->channel] || !hDecoder->time_out[cpe->paired_channel])
+        return 15;
+    if(!hDecoder->fb_intermed[cpe->channel] || !hDecoder->fb_intermed[cpe->paired_channel])
         return 15;
 
     /* dequantisation and scaling */
