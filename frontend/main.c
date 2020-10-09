@@ -699,6 +699,10 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
         /* update buffer indices */
         advance_buffer(&b, frameInfo.bytesconsumed);
 
+        /* check if the inconsistent number of channels */
+        if (aufile != NULL && frameInfo.channels != aufile->channels)
+            frameInfo.error = 12;
+
         if (frameInfo.error > 0)
         {
             faad_fprintf(stderr, "Error: %s\n",

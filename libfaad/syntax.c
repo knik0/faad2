@@ -539,37 +539,61 @@ void raw_data_block(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *hInfo,
             break;
         case 3:
             decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
+            if (hInfo->error > 0)
+                return;
             decode_cpe(hDecoder, hInfo, ld, ID_CPE);
             if (hInfo->error > 0)
                 return;
             break;
         case 4:
             decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
+            if (hInfo->error > 0)
+                return;
             decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            if (hInfo->error > 0)
+                return;
             decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
             if (hInfo->error > 0)
                 return;
             break;
         case 5:
             decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
+            if (hInfo->error > 0)
+                return;
             decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            if (hInfo->error > 0)
+                return;
             decode_cpe(hDecoder, hInfo, ld, ID_CPE);
             if (hInfo->error > 0)
                 return;
             break;
         case 6:
             decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
+            if (hInfo->error > 0)
+                return;
             decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            if (hInfo->error > 0)
+                return;
             decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            if (hInfo->error > 0)
+                return;
             decode_sce_lfe(hDecoder, hInfo, ld, ID_LFE);
             if (hInfo->error > 0)
                 return;
             break;
         case 7: /* 8 channels */
             decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
+            if (hInfo->error > 0)
+                return;
             decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            if (hInfo->error > 0)
+                return;
             decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            if (hInfo->error > 0)
+                return;
             decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            if (hInfo->error > 0)
+                return;
             decode_sce_lfe(hDecoder, hInfo, ld, ID_LFE);
             if (hInfo->error > 0)
                 return;
