@@ -1,3 +1,28 @@
+2.10.0:
+	[ tatsuz ]
+	* updated Visual Studio projects to VS 2019 (#54)
+
+	[ Fabian Greffrath ]
+	* mp4read.c: fix stack-buffer-overflow in stringin()/ftypin()
+	* fix heap-buffer-overflow in mp4read.c
+
+	[ Clayton Smith ]
+	* Remove non-ASCII characters
+	* Remove trailing whitespace
+
+	[ Andrew Wesie ]
+	* Check return value of ltp_data.
+	* Restrict SBR frame length to 960 and 1024 samples.
+	* Support object type 29.
+	* Support implicit SBR signaling in frontend.
+	* Fix PNS decoding when only right channel is noise.
+	* Initialize element_id array with an invalid id.
+	* Fix NULL pointer dereferences.
+	* Fix infinite loop in adts_parse.
+	* Fix infinite loop in huffman_getescape.
+	* Check for error after each channel decode.
+	* Check for inconsistent number of channels.
+
 2.9.2:
 	[ Michał Janiszewski ]
 	* Only use x86-assembly when explicitly on x86
