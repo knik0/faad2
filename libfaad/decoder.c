@@ -271,7 +271,7 @@ long NeAACDecInit(NeAACDecHandle hpDecoder,
     NeAACDecStruct* hDecoder = (NeAACDecStruct*)hpDecoder;
 
 
-    if ((hDecoder == NULL) || (samplerate == NULL) || (channels == NULL))
+    if ((hDecoder == NULL) || (samplerate == NULL) || (channels == NULL) || (buffer_size == 0))
         return -1;
 
     hDecoder->sf_index = get_sr_index(hDecoder->config.defSampleRate);
