@@ -1366,9 +1366,7 @@ static int faad_main(int argc, char *argv[])
             dec_length, (dec_length > 0.01) ? (length/dec_length) : 0.);
     }
 
-    if (aacFileName != NULL)
-      free (aacFileName);
-
+    free (aacFileName);
     return 0;
 }
 
