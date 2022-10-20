@@ -34,6 +34,9 @@ AC_ARG_WITH(xmms,[  --with-xmms             compile XMMS-1 plugin],
 AC_ARG_WITH(drm,[  --with-drm              compile libfaad with DRM support],
 	     WITHDRM=$withval, WITHDRM=no)
 
+AC_ARG_WITH(drc,[  --with-drc              compile libfaad with DRC support],
+	     WITHDRC=$withval, WITHDRC=yes)
+
 AC_ARG_WITH(mpeg4ip, [  --with-mpeg4ip          compile mpeg4ip plugin],
 		     WITHMPEG4IP=$withval, WITHMPEG4IP=no)
 
@@ -156,6 +159,10 @@ fi
 if test x$WITHDRM = xyes; then
   AC_DEFINE(DRM, 1, [Define if you want to use libfaad together with Digital Radio Mondiale (DRM)])
   AC_DEFINE(DRM_PS, 1, [Define if you want support for Digital Radio Mondiale (DRM) parametric stereo])
+fi
+
+if test x$WITHDRC = xyes; then
+  AC_DEFINE(APPLY_DRC, 1, [Define if you want to process Dynamic Range Compression (DRC)])
 fi
 
 AC_CONFIG_FILES(libfaad/Makefile)

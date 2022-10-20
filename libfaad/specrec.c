@@ -1007,12 +1007,13 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
         spec_coef, hDecoder->frameLength);
 
     /* drc decoding */
+#ifdef APPLY_DRC
     if (hDecoder->drc->present)
     {
         if (!hDecoder->drc->exclude_mask[sce->channel] || !hDecoder->drc->excluded_chns_present)
             drc_decode(hDecoder->drc, spec_coef);
     }
-
+#endif
     /* filter bank */
 #ifdef SSR_DEC
     if (hDecoder->object_type != SSR)
@@ -1253,6 +1254,7 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_s
         spec_coef2, hDecoder->frameLength);
 
     /* drc decoding */
+#if APPLY_DRC
     if (hDecoder->drc->present)
     {
         if (!hDecoder->drc->exclude_mask[cpe->channel] || !hDecoder->drc->excluded_chns_present)
@@ -1260,7 +1262,7 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_s
         if (!hDecoder->drc->exclude_mask[cpe->paired_channel] || !hDecoder->drc->excluded_chns_present)
             drc_decode(hDecoder->drc, spec_coef2);
     }
-
+#endif
     /* filter bank */
 #ifdef SSR_DEC
     if (hDecoder->object_type != SSR)
