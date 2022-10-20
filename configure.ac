@@ -160,6 +160,7 @@ fi
 
 AC_CONFIG_FILES(libfaad/Makefile)
 AC_CONFIG_FILES(libfaad/faad2.pc)
+AC_CONFIG_FILES(include/faad.h)
 AC_CONFIG_FILES(plugins/Makefile)
 AC_CONFIG_FILES(plugins/xmms/Makefile)
 AC_CONFIG_FILES(plugins/xmms/src/Makefile)
