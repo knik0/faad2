@@ -615,24 +615,30 @@ static void create_channel_config(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *h
     if (hDecoder->pce_set)
     {
         uint8_t i, chpos = 0;
-        uint8_t chdir, back_center = 0;
+        uint8_t chdir, back_center = 0, total = 0;
 
         hInfo->num_front_channels = hDecoder->pce.num_front_channels;
+        total += hInfo->num_front_channels;
         hInfo->num_side_channels = hDecoder->pce.num_side_channels;
+        total += hInfo->num_side_channels;
         hInfo->num_back_channels = hDecoder->pce.num_back_channels;
+        total += hInfo->num_back_channels;
         hInfo->num_lfe_channels = hDecoder->pce.num_lfe_channels;
+        total += hInfo->num_lfe_channels;
 
         chdir = hInfo->num_front_channels;
         if (chdir & 1)
         {
 #if (defined(PS_DEC) || defined(DRM_PS))
-            /* When PS is enabled output is always stereo */
-            hInfo->channel_position[chpos++] = FRONT_CHANNEL_LEFT;
-            hInfo->channel_position[chpos++] = FRONT_CHANNEL_RIGHT;
-#else
+            if( total == 1 )
+            {
+                /* When PS is enabled output is always stereo */
+                hInfo->channel_position[chpos++] = FRONT_CHANNEL_LEFT;
+                hInfo->channel_position[chpos++] = FRONT_CHANNEL_RIGHT;
+            } else
+#endif
             hInfo->channel_position[chpos++] = FRONT_CHANNEL_CENTER;
             chdir--;
-#endif
         }
         for (i = 0; i < chdir; i += 2)
         {
