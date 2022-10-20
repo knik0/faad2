@@ -1,3 +1,12 @@
+2.10.1:
+	[David Korczynski]
+	* Reject buffers of zero size.
+
+	[François Cartegnie]
+	* Fix 7.1 with PCE mapping.
+	* Have proper version string in `faad.h`.
+	* Add conditional build with DRC.
+
 2.10.0:
 	[ tatsuz ]
 	* updated Visual Studio projects to VS 2019 (#54)
