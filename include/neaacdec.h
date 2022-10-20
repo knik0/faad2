@@ -67,7 +67,9 @@ extern "C" {
   #define NEAACDECAPI
 #endif
 
-#define FAAD2_VERSION "unknown"
+#ifndef FAAD2_VERSION
+  #define FAAD2_VERSION "unknown"
+#endif
 
 /* object types for AAC */
 #define MAIN       1
