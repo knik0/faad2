@@ -1953,8 +1953,8 @@ ps_info *ps_init(uint8_t sr_index, uint8_t numTimeSlotsRate)
     for (i = 0; i < 50; i++)
     {
         RE(ps->h11_prev[i]) = 1;
-        IM(ps->h12_prev[i]) = 1;
-        RE(ps->h11_prev[i]) = 1;
+        IM(ps->h11_prev[i]) = 1;
+        RE(ps->h12_prev[i]) = 1;
         IM(ps->h12_prev[i]) = 1;
     }
 
