@@ -821,7 +821,6 @@ static uint8_t allocate_channel_pair(NeAACDecStruct *hDecoder,
     }
 #endif
 
-    if (hDecoder->time_out[channel] == NULL)
     {
         mul = 1;
 #ifdef SBR_DEC
@@ -833,6 +832,9 @@ static uint8_t allocate_channel_pair(NeAACDecStruct *hDecoder,
             hDecoder->sbr_alloced[hDecoder->fr_ch_ele] = 1;
         }
 #endif
+    }
+    if (hDecoder->time_out[channel] == NULL)
+    {
         hDecoder->time_out[channel] = (real_t*)faad_malloc(mul*hDecoder->frameLength*sizeof(real_t));
         memset(hDecoder->time_out[channel], 0, mul*hDecoder->frameLength*sizeof(real_t));
     }
