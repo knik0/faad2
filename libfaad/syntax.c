@@ -329,7 +329,10 @@ static void decode_sce_lfe(NeAACDecStruct *hDecoder,
     uint8_t channels = hDecoder->fr_channels;
     uint8_t tag = 0;
 
-    if (channels+1 > MAX_CHANNELS)
+    /* One or two channels are used;
+       exact number will be known after single_lfe_channel_element
+    */
+    if (channels+2 > MAX_CHANNELS)
     {
         hInfo->error = 12;
         return;
