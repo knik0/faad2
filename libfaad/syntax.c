@@ -1155,7 +1155,12 @@ static uint8_t fill_element(NeAACDecStruct *hDecoder, bitfile *ld, drc_info *drc
 #ifndef DRM
             while (count > 0)
             {
-                count -= extension_payload(ld, drc, count);
+                uint16_t payload_bytes = extension_payload(ld, drc, count);
+                if (payload_bytes <= count) {
+                    count -= payload_bytes;
+                } else {
+                    count = 0;
+                }
             }
 #else
             return 30;
