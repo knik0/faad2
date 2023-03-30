@@ -1491,6 +1491,30 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
 
         for (env = 0; env < ps->num_env; env++)
         {
+            uint8_t abs_iid = abs(ps->iid_index[env][bk]);
+            /* index range is supposed to be -7...7 or -15...15 depending on iid_mode
+                (Table 8.24, ISO/IEC 14496-3:2005).
+                if it is outside these boundaries, this is most likely an error. sanitize
+                it and try to process further. */
+            if (ps->iid_index[env][bk] < -no_iid_steps) {
+                fprintf(stderr, "Warning: invalid iid_index: %d < %d\n", ps->iid_index[env][bk],
+                    -no_iid_steps);
+                ps->iid_index[env][bk] = -no_iid_steps;
+                abs_iid = no_iid_steps;
+            } else if (ps->iid_index[env][bk] > no_iid_steps) {
+                fprintf(stderr, "Warning: invalid iid_index: %d > %d\n", ps->iid_index[env][bk],
+                    no_iid_steps);
+                ps->iid_index[env][bk] = no_iid_steps;
+                abs_iid = no_iid_steps;
+            }
+            if (ps->icc_index[env][bk] < 0) {
+                fprintf(stderr, "Warning: invalid icc_index: %d < 0\n", ps->icc_index[env][bk]);
+                ps->icc_index[env][bk] = 0;
+            } else if (ps->icc_index[env][bk] > 7) {
+                fprintf(stderr, "Warning: invalid icc_index: %d > 7\n", ps->icc_index[env][bk]);
+                ps->icc_index[env][bk] = 7;
+            }
+
             if (ps->icc_mode < 3)
             {
                 /* type 'A' mixing as described in 8.6.4.6.2.1 */
@@ -1509,20 +1533,6 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
 
                 //printf("%d\n", ps->iid_index[env][bk]);
 
-                /* index range is supposed to be -7...7 or -15...15 depending on iid_mode
-                   (Table 8.24, ISO/IEC 14496-3:2005).
-                   if it is outside these boundaries, this is most likely an error. sanitize
-                   it and try to process further. */
-                if (ps->iid_index[env][bk] < -no_iid_steps) {
-                    fprintf(stderr, "Warning: invalid iid_index: %d < %d\n", ps->iid_index[env][bk],
-                        -no_iid_steps);
-                    ps->iid_index[env][bk] = -no_iid_steps;
-                } else if (ps->iid_index[env][bk] > no_iid_steps) {
-                    fprintf(stderr, "Warning: invalid iid_index: %d > %d\n", ps->iid_index[env][bk],
-                        no_iid_steps);
-                    ps->iid_index[env][bk] = no_iid_steps;
-                }
-
                 /* calculate the scalefactors c_1 and c_2 from the intensity differences */
                 c_1 = sf_iid[no_iid_steps + ps->iid_index[env][bk]];
                 c_2 = sf_iid[no_iid_steps - ps->iid_index[env][bk]];
@@ -1533,23 +1543,11 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
 
                 if (ps->iid_mode >= 3)
                 {
-                    if (ps->iid_index[env][bk] < 0)
-                    {
-                        cosb =  cos_betas_fine[-ps->iid_index[env][bk]][ps->icc_index[env][bk]];
-                        sinb = -sin_betas_fine[-ps->iid_index[env][bk]][ps->icc_index[env][bk]];
-                    } else {
-                        cosb = cos_betas_fine[ps->iid_index[env][bk]][ps->icc_index[env][bk]];
-                        sinb = sin_betas_fine[ps->iid_index[env][bk]][ps->icc_index[env][bk]];
-                    }
+                    cosb = cos_betas_fine[abs_iid][ps->icc_index[env][bk]];
+                    sinb = sin_betas_fine[abs_iid][ps->icc_index[env][bk]];
                 } else {
-                    if (ps->iid_index[env][bk] < 0)
-                    {
-                        cosb =  cos_betas_normal[-ps->iid_index[env][bk]][ps->icc_index[env][bk]];
-                        sinb = -sin_betas_normal[-ps->iid_index[env][bk]][ps->icc_index[env][bk]];
-                    } else {
-                        cosb = cos_betas_normal[ps->iid_index[env][bk]][ps->icc_index[env][bk]];
-                        sinb = sin_betas_normal[ps->iid_index[env][bk]][ps->icc_index[env][bk]];
-                    }
+                    cosb = cos_betas_normal[abs_iid][ps->icc_index[env][bk]];
+                    sinb = sin_betas_normal[abs_iid][ps->icc_index[env][bk]];
                 }
 
                 ab1 = MUL_C(cosb, cosa);
@@ -1602,15 +1600,11 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
 
                 if (ps->iid_mode >= 3)
                 {
-                    uint8_t abs_iid = abs(ps->iid_index[env][bk]);
-
                     cosa = sincos_alphas_B_fine[no_iid_steps + ps->iid_index[env][bk]][ps->icc_index[env][bk]];
                     sina = sincos_alphas_B_fine[30 - (no_iid_steps + ps->iid_index[env][bk])][ps->icc_index[env][bk]];
                     cosg = cos_gammas_fine[abs_iid][ps->icc_index[env][bk]];
                     sing = sin_gammas_fine[abs_iid][ps->icc_index[env][bk]];
                 } else {
-                    uint8_t abs_iid = abs(ps->iid_index[env][bk]);
-
                     cosa = sincos_alphas_B_normal[no_iid_steps + ps->iid_index[env][bk]][ps->icc_index[env][bk]];
                     sina = sincos_alphas_B_normal[14 - (no_iid_steps + ps->iid_index[env][bk])][ps->icc_index[env][bk]];
                     cosg = cos_gammas_normal[abs_iid][ps->icc_index[env][bk]];
@@ -2025,4 +2019,3 @@ uint8_t ps_decode(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64])
 }
 
 #endif
-
