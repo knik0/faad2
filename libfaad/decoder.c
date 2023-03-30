@@ -872,6 +872,7 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
     uint16_t frame_len;
     void *sample_buffer;
     uint32_t startbit=0, endbit=0, payload_bits=0;
+    uint32_t required_buffer_size=0;
 
 #ifdef PROFILE
     int64_t count = faad_get_ts();
@@ -1104,9 +1105,6 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
         return NULL;
     }
 
-    /* allocate the buffer for the final samples */
-    if ((hDecoder->sample_buffer == NULL) ||
-        (hDecoder->alloced_channels != output_channels))
     {
         static const uint8_t str[] = { sizeof(int16_t), sizeof(int32_t), sizeof(int32_t),
             sizeof(float32_t), sizeof(double), sizeof(int16_t), sizeof(int16_t),
@@ -1119,19 +1117,25 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
             stride = 2 * stride;
         }
 #endif
-        /* check if we want to use internal sample_buffer */
-        if (sample_buffer_size == 0)
+        required_buffer_size = frame_len*output_channels*stride;
+    }
+
+    /* check if we want to use internal sample_buffer */
+    if (sample_buffer_size == 0)
+    {
+        /* allocate the buffer for the final samples */
+        if (hDecoder->sample_buffer_size != required_buffer_size) 
         {
             if (hDecoder->sample_buffer)
                 faad_free(hDecoder->sample_buffer);
             hDecoder->sample_buffer = NULL;
-            hDecoder->sample_buffer = faad_malloc(frame_len*output_channels*stride);
-        } else if (sample_buffer_size < frame_len*output_channels*stride) {
-            /* provided sample buffer is not big enough */
-            hInfo->error = 27;
-            return NULL;
+            hDecoder->sample_buffer = faad_malloc(required_buffer_size);
+            hDecoder->sample_buffer_size = required_buffer_size;
         }
-        hDecoder->alloced_channels = output_channels;
+    } else if (sample_buffer_size < required_buffer_size) {
+        /* provided sample buffer is not big enough */
+        hInfo->error = 27;
+        return NULL;
     }
 
     if (sample_buffer_size == 0)
