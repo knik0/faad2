@@ -1737,6 +1737,14 @@ static uint8_t section_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *l
                incremented and we cannot leave the while loop */
             if (ld->error != 0)
                 return 14;
+            if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
+            {
+                if (i >= 8*15)
+                    return 15;
+            } else {
+                if (i >= MAX_SFB)
+                    return 15;
+            }
 
 #ifdef ERROR_RESILIENCE
             if (hDecoder->aacSectionDataResilienceFlag)
@@ -1807,12 +1815,8 @@ static uint8_t section_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *l
             {
                 if (k + sect_len > 8*15)
                     return 15;
-                if (i >= 8*15)
-                    return 15;
             } else {
                 if (k + sect_len > MAX_SFB)
-                    return 15;
-                if (i >= MAX_SFB)
                     return 15;
             }
 
