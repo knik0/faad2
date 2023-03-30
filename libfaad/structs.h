@@ -364,10 +364,10 @@ typedef struct
        determines whether the data needed for the element is allocated or not
     */
     uint8_t element_alloced[MAX_SYNTAX_ELEMENTS];
-    /* alloced_channels:
-       determines the number of channels where output data is allocated for
+    /* sample_buffer_size:
+       (internal) output dara buffer size
     */
-    uint8_t alloced_channels;
+    uint32_t sample_buffer_size;
 
     /* output data buffer */
     void *sample_buffer;
