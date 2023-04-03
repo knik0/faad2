@@ -42,9 +42,6 @@ void faad_initbits(bitfile *ld, const void *_buffer, const uint32_t buffer_size)
     if (ld == NULL)
         return;
 
-    // useless
-    //memset(ld, 0, sizeof(bitfile));
-
     if (buffer_size == 0 || _buffer == NULL)
     {
         ld->error = 1;

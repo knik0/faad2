@@ -134,6 +134,8 @@ uint8_t rvlc_decode_scale_factors(ic_stream *ics, bitfile *ld)
 //        faad_initbits_rev(&ld_rvlc_sf_rev, (void*)rvlc_sf_buffer,
 //            ics->length_of_rvlc_sf);
     }
+    if ((ics->length_of_rvlc_sf == 0) || (ld_rvlc_sf.error != 0))
+        memset(&ld_rvlc_sf, 0, sizeof(ld_rvlc_sf));
 
     if (ics->sf_escapes_present)
     {
@@ -147,6 +149,8 @@ uint8_t rvlc_decode_scale_factors(ic_stream *ics, bitfile *ld)
 //        faad_initbits_rev(&ld_rvlc_esc_rev, (void*)rvlc_esc_buffer,
 //            ics->length_of_rvlc_escapes);
     }
+    if (!ics->sf_escapes_present || (ld_rvlc_esc.error != 0))
+        memset(&ld_rvlc_esc, 0, sizeof(ld_rvlc_esc));
 
     /* decode the rvlc scale factors and escapes */
     result = rvlc_decode_sf_forward(ics, &ld_rvlc_sf,
