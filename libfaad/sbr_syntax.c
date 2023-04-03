@@ -645,9 +645,9 @@ static uint8_t sbr_channel_pair_element(bitfile *ld, sbr_info *sbr)
 }
 
 /* integer log[2](x): input range [0,10) */
-static int8_t sbr_log2(const int8_t val)
+static uint8_t sbr_log2(const uint8_t val)
 {
-    int8_t log2tab[] = { 0, 0, 1, 2, 2, 3, 3, 3, 3, 4 };
+    uint8_t log2tab[] = { 0, 0, 1, 2, 2, 3, 3, 3, 3, 4 };
     if (val < 10 && val >= 0)
         return log2tab[val];
     else
@@ -658,7 +658,7 @@ static int8_t sbr_log2(const int8_t val)
 /* table 7 */
 static uint8_t sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch)
 {
-    uint8_t i, env, rel, result;
+    uint8_t i, j, env, rel, result;
     uint8_t bs_abs_bord, bs_abs_bord_1;
     uint8_t bs_num_env = 0;
     uint8_t saved_L_E = sbr->L_E[ch];
@@ -698,9 +698,11 @@ static uint8_t sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch)
             sbr->bs_rel_bord[ch][rel] = 2 * (uint8_t)faad_getbits(ld, 2
                 DEBUGVAR(1,253,"sbr_grid(): bs_rel_bord")) + 2;
         }
-        i = sbr_log2(bs_num_env + 1);
+        j = bs_num_env;
+        i = sbr_log2(j + 1);
         sbr->bs_pointer[ch] = (uint8_t)faad_getbits(ld, i
             DEBUGVAR(1,254,"sbr_grid(): bs_pointer"));
+        sbr->bs_pointer[ch] = min(sbr->bs_pointer[ch], j);
 
         for (env = 0; env < bs_num_env; env++)
         {
@@ -725,9 +727,11 @@ static uint8_t sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch)
             sbr->bs_rel_bord[ch][rel] = 2 * (uint8_t)faad_getbits(ld, 2
                 DEBUGVAR(1,258,"sbr_grid(): bs_rel_bord")) + 2;
         }
-        i = sbr_log2(bs_num_env + 1);
+        j = bs_num_env;
+        i = sbr_log2(j + 1);
         sbr->bs_pointer[ch] = (uint8_t)faad_getbits(ld, i
             DEBUGVAR(1,259,"sbr_grid(): bs_pointer"));
+        sbr->bs_pointer[ch] = min(sbr->bs_pointer[ch], j);
 
         for (env = 0; env < bs_num_env; env++)
         {
@@ -763,9 +767,11 @@ static uint8_t sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch)
             sbr->bs_rel_bord_1[ch][rel] = 2 * (uint8_t)faad_getbits(ld, 2
                 DEBUGVAR(1,266,"sbr_grid(): bs_rel_bord")) + 2;
         }
-        i = sbr_log2(sbr->bs_num_rel_0[ch] + sbr->bs_num_rel_1[ch] + 2);
+        j = sbr->bs_num_rel_0[ch] + sbr->bs_num_rel_1[ch] + 1;
+        i = sbr_log2(j + 1);
         sbr->bs_pointer[ch] = (uint8_t)faad_getbits(ld, i
             DEBUGVAR(1,267,"sbr_grid(): bs_pointer"));
+        sbr->bs_pointer[ch] = min(sbr->bs_pointer[ch], j);
 
         for (env = 0; env < bs_num_env; env++)
         {
