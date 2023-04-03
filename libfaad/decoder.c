@@ -923,6 +923,8 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
 
     /* initialize the bitstream */
     faad_initbits(&ld, buffer, buffer_size);
+    if (ld.error != 0)
+        return NULL;
 
 #if 0
     {

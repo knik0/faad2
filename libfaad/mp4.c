@@ -305,7 +305,8 @@ int8_t AudioSpecificConfig2(uint8_t *pBuffer,
     uint8_t ret = 0;
     bitfile ld;
     faad_initbits(&ld, pBuffer, buffer_size);
-    faad_byte_align(&ld);
+    if (ld.error != 0)
+        return -7;
     ret = AudioSpecificConfigFromBitfile(&ld, mp4ASC, pce, buffer_size, short_form);
     faad_endbits(&ld);
     return ret;
