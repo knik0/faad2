@@ -306,6 +306,9 @@ uint8_t window_grouping_info(NeAACDecStruct *hDecoder, ic_stream *ics)
 
     uint8_t sf_index = hDecoder->sf_index;
 
+    if (sf_index >= 12)
+        return 32;
+
     switch (ics->window_sequence) {
     case ONLY_LONG_SEQUENCE:
     case LONG_START_SEQUENCE:
