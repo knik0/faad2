@@ -53,11 +53,12 @@ static uint8_t middleBorder(sbr_info *sbr, uint8_t ch);
 /* first build into temp vector to be able to use previous vector on error */
 uint8_t envelope_time_border_vector(sbr_info *sbr, uint8_t ch)
 {
-    uint8_t l, border, temp;
+    uint8_t l, border, temp, trail;
     uint8_t t_E_temp[6] = {0};
 
+    trail = sbr->abs_bord_trail[ch];
     t_E_temp[0] = sbr->rate * sbr->abs_bord_lead[ch];
-    t_E_temp[sbr->L_E[ch]] = sbr->rate * sbr->abs_bord_trail[ch];
+    t_E_temp[sbr->L_E[ch]] = sbr->rate * trail;
 
     switch (sbr->bs_frame_class[ch])
     {
@@ -105,7 +106,7 @@ uint8_t envelope_time_border_vector(sbr_info *sbr, uint8_t ch)
             {
                 border += sbr->bs_rel_bord[ch][l];
 
-                if (sbr->rate * border + sbr->tHFAdj > sbr->numTimeSlotsRate+sbr->tHFGen)
+                if (border > trail)
                     return 1;
 
                 t_E_temp[i++] = sbr->rate * border;
@@ -123,7 +124,7 @@ uint8_t envelope_time_border_vector(sbr_info *sbr, uint8_t ch)
             {
                 border += sbr->bs_rel_bord_0[ch][l];
 
-                if (sbr->rate * border + sbr->tHFAdj > sbr->numTimeSlotsRate+sbr->tHFGen)
+                if (border > trail)
                     return 1;
 
                 t_E_temp[i++] = sbr->rate * border;
