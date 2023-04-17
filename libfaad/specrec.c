@@ -926,8 +926,11 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
          * this means that there is only 1 bitstream element!
          */
 
-        /* reset the allocation */
-        hDecoder->element_alloced[hDecoder->fr_ch_ele] = 0;
+        /* The simplest way to fix the accounting,
+         * is to reallocate this and all the following channels.
+         */
+        memset(&hDecoder->element_alloced[hDecoder->fr_ch_ele], 0,
+            sizeof(uint8_t) * (MAX_SYNTAX_ELEMENTS - hDecoder->fr_ch_ele));
 
         hDecoder->element_output_channels[hDecoder->fr_ch_ele] = output_channels;
 
