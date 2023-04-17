@@ -524,6 +524,11 @@ void raw_data_block(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *hInfo,
                     return;
                 break;
             }
+            if (ld->error != 0)
+            {
+                hInfo->error = 32;
+                return;
+            }
         }
 #ifdef ERROR_RESILIENCE
     } else {
