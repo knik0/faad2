@@ -19,3 +19,16 @@ project/msvc/intermediate/
 libfaad/win32_ver.h
 *.user
 /libfaad/faad2.pc
+
+# Automake garbage created by bootstrap
+aclocal.m4
+autom4te.cache
+compile
+config.guess
+config.sub
+configure
+depcomp
+INSTALL
+install-sh
+ltmain.sh
+missing
