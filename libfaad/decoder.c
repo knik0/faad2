@@ -305,7 +305,7 @@ long NeAACDecInit(NeAACDecHandle hpDecoder,
         } else
 #endif
         /* Check if an ADIF header is present */
-        if ((buffer[0] == 'A') && (buffer[1] == 'D') &&
+        if ((buffer_size >= 8) && (buffer[0] == 'A') && (buffer[1] == 'D') &&
             (buffer[2] == 'I') && (buffer[3] == 'F'))
         {
             hDecoder->adif_header_present = 1;
