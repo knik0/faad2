@@ -21,6 +21,18 @@
 
 typedef struct
 {
+    uint32_t len;
+    uint32_t offset;
+} frame_info_t;
+
+typedef struct
+{
+    uint32_t firstchunk;
+    uint32_t samplesperchunk;
+} slice_info_t;
+
+typedef struct
+{
     uint32_t ctime, mtime;
     uint32_t samplerate;
     // total sound samples
@@ -32,11 +44,13 @@ typedef struct
     uint16_t buffersize;
     uint32_t bitratemax;
     uint32_t bitrateavg;
-    uint32_t framesamples;
+    // frame size / offsets
     struct
     {
-        uint32_t *data;
-        uint32_t ents;
+        frame_info_t *info;
+        slice_info_t *map;
+        uint32_t nsamples;
+        uint32_t nsclices;
         int current;
         int maxsize;
     } frame;
@@ -46,8 +60,6 @@ typedef struct
         uint8_t buf[10];
         int size;
     } asc;
-    uint32_t mdatofs;
-    uint32_t mdatsize;
     struct {
         int size;
         uint8_t *data;

@@ -909,7 +909,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
         startSampleId = (int64_t)(seek_to * mp4config.samplerate / framesize);
 
     mp4read_seek(startSampleId);
-    for (sampleId = startSampleId; sampleId < mp4config.frame.ents; sampleId++)
+    for (sampleId = startSampleId; sampleId < mp4config.frame.nsamples; sampleId++)
     {
         /*int rc;*/
         long dur;
@@ -991,7 +991,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
             first_time = 0;
         }
 
-        percent = min((int)(sampleId*100)/mp4config.frame.ents, 100);
+        percent = min((int)(sampleId*100)/mp4config.frame.nsamples, 100);
         if (percent > old_percent)
         {
             old_percent = percent;

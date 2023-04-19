@@ -78,6 +78,15 @@ static inline uint16_t bswap16(const uint16_t u16)
 
 enum {ERR_OK = 0, ERR_FAIL = -1, ERR_UNSUPPORTED = -2};
 
+static void freeMem(void** address)
+{
+    if (*address)
+    {
+        free(*address);
+        *address = 0;
+    }
+}
+
 static int datain(void *data, int size)
 {
     if (fread(data, 1, size, g_fin) != size)
@@ -325,49 +334,111 @@ static int esdsin(int size)
     return size;
 }
 
+/* stbl "Sample Table" layout: 
+ *  - stts "Time-to-Sample" - useless
+ *  - stsc "Sample-to-Chunk" - condensed table chunk-to-num-samples
+ *  - stsz "Sample Size" - size table
+ *  - stco "Chunk Offset" - chunk starts
+ *
+ * When receiving stco we can combine stsc and stsz tables to produce final
+ * sample offsets.
+ */
+
 static int sttsin(int size)
 {
-    if (size < 16) //min stts size
+    uint32_t ntts;
+
+    if (size < 8)
         return ERR_FAIL;
+
+    // version/flags
+    u32in();
+    ntts = u32in();
+
+    if (ntts < 1)
+        return ERR_FAIL;
+
+    /* 2 x uint32_t per entry */
+    if (((size - 8u) / 8u) < ntts)
+        return ERR_FAIL;
+
+    return size;
+}
+
+static int stscin(int size)
+{
+    uint32_t i, tmp, firstchunk, prevfirstchunk, samplesperchunk;
+
+    if (size < 8)
+        return ERR_FAIL;
+
+    // version/flags
+    u32in();
+
+    mp4config.frame.nsclices = u32in();
+
+    tmp = sizeof(slice_info_t) * mp4config.frame.nsclices;
+    if (tmp < mp4config.frame.nsclices)
+        return ERR_FAIL;
+    mp4config.frame.map = malloc(tmp);
+    if (!mp4config.frame.map)
+        return ERR_FAIL;
+
+    /* 3 x uint32_t per entry */
+    if (((size - 8u) / 12u) < mp4config.frame.nsclices)
+        return ERR_FAIL;
+
+    prevfirstchunk = 0;
+    for (i = 0; i < mp4config.frame.nsclices; ++i) {
+      firstchunk = u32in();
+      samplesperchunk = u32in();
+      // id - unused
+      u32in();
+      if (firstchunk <= prevfirstchunk)
+        return ERR_FAIL;
+      if (samplesperchunk < 1)
+        return ERR_FAIL;
+      mp4config.frame.map[i].firstchunk = firstchunk;
+      mp4config.frame.map[i].samplesperchunk = samplesperchunk;
+      prevfirstchunk = firstchunk;
+    }
 
     return size;
 }
 
 static int stszin(int size)
 {
-    int cnt;
-    uint32_t ofs;
+    uint32_t i, tmp;
+
+    if (size < 12)
+        return ERR_FAIL;
 
     // version/flags
     u32in();
-    // Sample size
+    // (uniform) Sample size
+    // TODO(eustas): add uniform sample size support?
     u32in();
-    // Number of entries
-    mp4config.frame.ents = u32in();
+    mp4config.frame.nsamples = u32in();
 
-    if (!(mp4config.frame.ents + 1))
+    if (!mp4config.frame.nsamples)
         return ERR_FAIL;
 
-    mp4config.frame.data = malloc(sizeof(*mp4config.frame.data)
-                                  * (mp4config.frame.ents + 1));
-
-    if (!mp4config.frame.data)
+    tmp = sizeof(frame_info_t) * mp4config.frame.nsamples;
+    if (tmp < mp4config.frame.nsamples)
+        return ERR_FAIL;
+    mp4config.frame.info = malloc(tmp);
+    if (!mp4config.frame.info)
         return ERR_FAIL;
 
-    ofs = 0;
-    mp4config.frame.data[0] = ofs;
-    for (cnt = 0; cnt < mp4config.frame.ents; cnt++)
+    if ((size - 12u) / 4u < mp4config.frame.nsamples)
+        return ERR_FAIL;
+
+    for (i = 0; i < mp4config.frame.nsamples; i++)
     {
-        uint32_t fsize = u32in();
-
-        ofs += fsize;
-        if (mp4config.frame.maxsize < fsize)
-            mp4config.frame.maxsize = fsize;
-
-        mp4config.frame.data[cnt + 1] = ofs;
-
-        if (ofs < mp4config.frame.data[cnt])
-            return ERR_FAIL;
+        mp4config.frame.info[i].len = u32in();
+        mp4config.frame.info[i].offset = 0;
+        if (mp4config.frame.maxsize < mp4config.frame.info[i].len)
+            mp4config.frame.maxsize = mp4config.frame.info[i].len;
     }
 
     return size;
@@ -375,14 +446,51 @@ static int stszin(int size)
 
 static int stcoin(int size)
 {
+    uint32_t numchunks, chunkstart, chunkn, slicen, samplesleft, i, offset;
+    uint32_t nextoffset;
+
+    if (size < 8)
+        return ERR_FAIL;
+
     // version/flags
     u32in();
+
     // Number of entries
-    if (u32in() < 1)
+    numchunks = u32in();
+    if ((numchunks < 1) || ((numchunks + 1) == 0))
         return ERR_FAIL;
-    // first chunk offset
-    mp4config.mdatofs = u32in();
-    // ignore the rest
+
+    if ((size - 8u) / 4u < numchunks)
+        return ERR_FAIL;
+
+    chunkn = 0;
+    samplesleft = 0;
+    slicen = 0;
+    offset = 0;
+
+    for (i = 0; i < mp4config.frame.nsamples; ++i) {
+        if (samplesleft == 0)
+        {
+            chunkn++;
+            if (chunkn > numchunks)
+                return ERR_FAIL;
+            if (slicen < mp4config.frame.nsclices)
+            {
+                if (chunkn == mp4config.frame.map[slicen + 1].firstchunk)
+                    slicen++;
+            }
+            samplesleft = mp4config.frame.map[slicen].samplesperchunk;
+            offset = u32in();
+        }
+        mp4config.frame.info[i].offset = offset;
+        nextoffset = offset + mp4config.frame.info[i].len;
+        if (nextoffset < offset)
+            return ERR_FAIL;
+        offset = nextoffset;
+        samplesleft--;
+    }
+
+    freeMem(&mp4config.frame.map);
 
     return size;
 }
@@ -843,11 +951,12 @@ static int moovin(int sizemax)
         {ATOM_NAME, "stts"},
         {ATOM_DATA, sttsin},
         {ATOM_NAME, "stsc"},
+        {ATOM_DATA, stscin}
         {ATOM_NAME, "stsz"},
         {ATOM_DATA, stszin},
         {ATOM_NAME, "stco"},
         {ATOM_DATA, stcoin},
-        {0}
+        {ATOM_STOP}
     };
 
     g_atom = mvhd;
@@ -926,18 +1035,20 @@ static creator_t g_meta2[] = {
 
 int mp4read_frame(void)
 {
-    if (mp4config.frame.current >= mp4config.frame.ents)
+    if (mp4config.frame.current >= mp4config.frame.nsamples)
         return ERR_FAIL;
 
-    mp4config.bitbuf.size = mp4config.frame.data[mp4config.frame.current + 1]
-        - mp4config.frame.data[mp4config.frame.current];
+    // TODO(eustas): avoid no-op seeks
+    mp4read_seek(mp4config.frame.current);
+
+    mp4config.bitbuf.size = mp4config.frame.info[mp4config.frame.current].len;
 
     if (fread(mp4config.bitbuf.data, 1, mp4config.bitbuf.size, g_fin)
         != mp4config.bitbuf.size)
     {
         fprintf(stderr, "can't read frame data(frame %d@0x%x)\n",
                mp4config.frame.current,
-               mp4config.frame.data[mp4config.frame.current]);
+               mp4config.frame.info[mp4config.frame.current].offset);
 
         return ERR_FAIL;
     }
@@ -949,9 +1060,9 @@ int mp4read_frame(void)
 
 int mp4read_seek(int framenum)
 {
-    if (framenum > mp4config.frame.ents)
+    if (framenum > mp4config.frame.nsamples)
         return ERR_FAIL;
-    if (fseek(g_fin, mp4config.mdatofs + mp4config.frame.data[framenum], SEEK_SET))
+    if (fseek(g_fin, mp4config.frame.info[framenum].offset, SEEK_SET))
         return ERR_FAIL;
 
     mp4config.frame.current = framenum;
@@ -969,18 +1080,17 @@ static void mp4info(void)
     fprintf(stderr, "Buffer size:\t\t%d\n", mp4config.buffersize);
     fprintf(stderr, "Max bitrate:\t\t%d\n", mp4config.bitratemax);
     fprintf(stderr, "Average bitrate:\t%d\n", mp4config.bitrateavg);
-    fprintf(stderr, "Samples per frame:\t%d\n", mp4config.framesamples);
-    fprintf(stderr, "Frames:\t\t\t%d\n", mp4config.frame.ents);
+    fprintf(stderr, "Frames:\t\t\t%d\n", mp4config.frame.nsamples);
     fprintf(stderr, "ASC size:\t\t%d\n", mp4config.asc.size);
     fprintf(stderr, "Duration:\t\t%.1f sec\n", (float)mp4config.samples/mp4config.samplerate);
-    fprintf(stderr, "Data offset/size:\t%x/%x\n", mp4config.mdatofs, mp4config.mdatsize);
+    fprintf(stderr, "Data offset:\t%x\n", mp4config.frame.info[0].offset);
 }
 
 int mp4read_close(void)
 {
-#define FREE(x) if(x){free(x);x=0;}
-    FREE(mp4config.frame.data);
-    FREE(mp4config.bitbuf.data);
+    freeMem(&mp4config.frame.info);
+    freeMem(&mp4config.frame.map);
+    freeMem(&mp4config.bitbuf.data);
 
     return ERR_OK;
 }
