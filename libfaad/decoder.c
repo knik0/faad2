@@ -867,7 +867,7 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
     uint16_t i;
     uint8_t channels = 0;
     uint8_t output_channels = 0;
-    bitfile ld = {0};
+    bitfile ld;
     uint32_t bitsconsumed;
     uint16_t frame_len;
     void *sample_buffer;

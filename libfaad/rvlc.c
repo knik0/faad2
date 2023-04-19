@@ -226,7 +226,7 @@ static uint8_t rvlc_decode_sf_forward(ic_stream *ics, bitfile *ld_sf, bitfile *l
                         noise_energy += t;
                     }
 
-                    if (is_position < 0 || is_position > 255)
+                    if (noise_energy < 0 || noise_energy > 255)
                         return 4;
                     ics->scale_factors[g][sfb] = noise_energy;
 
@@ -237,7 +237,7 @@ static uint8_t rvlc_decode_sf_forward(ic_stream *ics, bitfile *ld_sf, bitfile *l
                     t = rvlc_huffman_sf(ld_sf, ld_esc, +1);
 
                     scale_factor += t;
-                    if (scale_factor < 0)
+                    if (scale_factor < 0 || scale_factor > 255)
                         return 4;
 
                     ics->scale_factors[g][sfb] = scale_factor;
