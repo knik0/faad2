@@ -50,7 +50,6 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
   unsigned char num_channels;
   int res =
       NeAACDecInit(decoder, first_part, first_part_size, &sample_rate, &num_channels);
-  free(first_part);
   if (res != 0) {
     NeAACDecClose(decoder);
     free(first_part);
