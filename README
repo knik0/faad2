@@ -78,3 +78,4 @@ faad2 - top level directory.
    project/msvc - Visual Studio 2017 project files.
 
    utils/win32 - generate "win32_ver.h" from "configure.h".
+
