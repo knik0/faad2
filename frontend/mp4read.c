@@ -78,14 +78,7 @@ static inline uint16_t bswap16(const uint16_t u16)
 
 enum {ERR_OK = 0, ERR_FAIL = -1, ERR_UNSUPPORTED = -2};
 
-static void freeMem(void** address)
-{
-    if (*address)
-    {
-        free(*address);
-        *address = 0;
-    }
-}
+#define freeMem(A) if (*(A)) {free(*(A)); *(A) = NULL;}
 
 static int datain(void *data, int size)
 {
@@ -951,7 +944,7 @@ static int moovin(int sizemax)
         {ATOM_NAME, "stts"},
         {ATOM_DATA, sttsin},
         {ATOM_NAME, "stsc"},
-        {ATOM_DATA, stscin}
+        {ATOM_DATA, stscin},
         {ATOM_NAME, "stsz"},
         {ATOM_DATA, stszin},
         {ATOM_NAME, "stco"},
