@@ -38,7 +38,7 @@ jobs:
         fetch-depth: 1
     - name: Configure and build
       run: |
-        ./bootstap
+        ./bootstrap
         mkdir -p $RUNNER_TEMP/usrlocal
         ./configure --prefix=$RUNNER_TEMP/usrlocal
         make clean -j `nproc`
