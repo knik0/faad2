@@ -951,7 +951,7 @@ static int moovin(int sizemax)
         {ATOM_NAME, "stts"},
         {ATOM_DATA, sttsin},
         {ATOM_NAME, "stsc"},
-        {ATOM_DATA, stscin}
+        {ATOM_DATA, stscin},
         {ATOM_NAME, "stsz"},
         {ATOM_DATA, stszin},
         {ATOM_NAME, "stco"},
