@@ -209,7 +209,7 @@ void pns_decode(ic_stream *ics_left, ic_stream *ics_right,
                     */
                     ics_left->pred.prediction_used[sfb] = 0;
 #endif
-                    begin = min(base + ics_right->swb_offset[sfb], ics_right->swb_offset_max);
+                    begin = min(base + ics_left->swb_offset[sfb], ics_left->swb_offset_max);
                     end = min(base + ics_left->swb_offset[sfb+1], ics_left->swb_offset_max);
 
                     r1_dep = *__r1;
