@@ -161,7 +161,7 @@ void pns_decode(ic_stream *ics_left, ic_stream *ics_right,
                 /* RNG states */ uint32_t *__r1, uint32_t *__r2)
 {
     uint8_t g, sfb, b;
-    uint16_t size, offs;
+    uint16_t begin, end;
 
     uint8_t group = 0;
     uint16_t nshort = frame_len >> 3;
@@ -186,6 +186,7 @@ void pns_decode(ic_stream *ics_left, ic_stream *ics_right,
         /* Do perceptual noise substitution decoding */
         for (b = 0; b < ics_left->window_group_length[g]; b++)
         {
+            uint16_t base = group * nshort;
             for (sfb = 0; sfb < ics_left->max_sfb; sfb++)
             {
                 uint32_t r1_dep = 0, r2_dep = 0;
@@ -208,16 +209,15 @@ void pns_decode(ic_stream *ics_left, ic_stream *ics_right,
                     */
                     ics_left->pred.prediction_used[sfb] = 0;
 #endif
-
-                    offs = ics_left->swb_offset[sfb];
-                    size = min(ics_left->swb_offset[sfb+1], ics_left->swb_offset_max) - offs;
+                    begin = min(base + ics_right->swb_offset[sfb], ics_right->swb_offset_max);
+                    end = min(base + ics_left->swb_offset[sfb+1], ics_left->swb_offset_max);
 
                     r1_dep = *__r1;
                     r2_dep = *__r2;
 
                     /* Generate random vector */
-                    gen_rand_vector(&spec_left[(group*nshort)+offs],
-                        ics_left->scale_factors[g][sfb], size, sub, __r1, __r2);
+                    gen_rand_vector(&spec_left[begin],
+                        ics_left->scale_factors[g][sfb], end - begin, sub, __r1, __r2);
                 }
 
 /* From the spec:
@@ -253,21 +253,20 @@ void pns_decode(ic_stream *ics_left, ic_stream *ics_right,
                     {
                         /*uint16_t c;*/
 
-                        offs = ics_right->swb_offset[sfb];
-                        size = min(ics_right->swb_offset[sfb+1], ics_right->swb_offset_max) - offs;
+                        begin = min(base + ics_right->swb_offset[sfb], ics_right->swb_offset_max);
+                        end = min(base + ics_right->swb_offset[sfb+1], ics_right->swb_offset_max);
 
                         /* Generate random vector dependent on left channel*/
-                        gen_rand_vector(&spec_right[(group*nshort)+offs],
-                            ics_right->scale_factors[g][sfb], size, sub, &r1_dep, &r2_dep);
+                        gen_rand_vector(&spec_right[begin],
+                            ics_right->scale_factors[g][sfb], end - begin, sub, &r1_dep, &r2_dep);
 
                     } else /*if (ics_left->ms_mask_present == 0)*/ {
-
-                        offs = ics_right->swb_offset[sfb];
-                        size = min(ics_right->swb_offset[sfb+1], ics_right->swb_offset_max) - offs;
+                        begin = min(base + ics_right->swb_offset[sfb], ics_right->swb_offset_max);
+                        end = min(base + ics_right->swb_offset[sfb+1], ics_right->swb_offset_max);
 
                         /* Generate random vector */
-                        gen_rand_vector(&spec_right[(group*nshort)+offs],
-                            ics_right->scale_factors[g][sfb], size, sub, __r1, __r2);
+                        gen_rand_vector(&spec_right[begin],
+                            ics_right->scale_factors[g][sfb], end - begin, sub, __r1, __r2);
                     }
                 }
             } /* sfb */
