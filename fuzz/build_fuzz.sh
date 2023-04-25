@@ -26,9 +26,16 @@
 # Commercial non-GPL licensing of this software is possible.
 # For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 
+# ASAN:
+export SANITIZER=address
+export SANITIZER_FLAGS="-fsanitize=$SANITIZER -fsanitize-address-use-after-scope"
+# UBSAN:
+#export SANITIZER=array-bounds,bool,builtin,enum,float-divide-by-zero,function,integer-divide-by-zero,null,object-size,return,returns-nonnull-attribute,shift,signed-integer-overflow,unsigned-integer-overflow,unreachable,vla-bound,vptr
+#export SANITIZER_FLAGS="-fsanitize=$SANITIZER -fno-sanitize-recover=$SANITIZER"
+
 export CC="clang"
 export CXX="clang++"
-export BASE_FLAGS="-O1 -fno-omit-frame-pointer -gline-tables-only -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=address -fsanitize-address-use-after-scope -fsanitize=fuzzer-no-link"
+export BASE_FLAGS="-O1 -fno-omit-frame-pointer -gline-tables-only -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION $SANITIZER_FLAGS -fsanitize=fuzzer-no-link"
 export CFLAGS="${BASE_FLAGS}"
 export LDFLAGS="${BASE_FLAGS}"
 export CXXFLAGS="${BASE_FLAGS} -stdlib=libc++"
@@ -39,5 +46,5 @@ cd libfaad
 make -j `nproc`
 cd ../
 for fname in config decode; do
-  $CC $CFALGS -fsanitize=fuzzer,address -I./include ./fuzz/fuzz_${fname}.c -o ./fuzz/fuzz_${fname} ./libfaad/.libs/libfaad.a
+  $CC $CFALGS -fsanitize=fuzzer,$SANITIZER -I./include ./fuzz/fuzz_${fname}.c -o ./fuzz/fuzz_${fname} ./libfaad/.libs/libfaad.a
 done

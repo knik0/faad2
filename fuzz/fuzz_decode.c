@@ -34,36 +34,55 @@
 #include "neaacdec.h"
 
 int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
-  if (size < 2) return 0;
-  size_t first_part_size = data[0] | (data[1] << 8);
-  data += 2;
-  size -= 2;
-  first_part_size = (first_part_size > size) ? size : first_part_size;
-  size_t second_part_size = size - first_part_size;
-
-  NeAACDecHandle decoder = NeAACDecOpen();
-
-  unsigned char* first_part = (unsigned char *)malloc(first_part_size);
-  memcpy(first_part, data, first_part_size);
-
+  size_t preamble = 2 + 2 + 1 + sizeof(NeAACDecConfiguration);
+  NeAACDecConfiguration config;
   uint64_t sample_rate;
   unsigned char num_channels;
-  int res =
-      NeAACDecInit(decoder, first_part, first_part_size, &sample_rate, &num_channels);
-  if (res != 0) {
-    NeAACDecClose(decoder);
-    free(first_part);
-    return 0;
+
+  if (size < preamble) return 0;
+  size_t len1 = data[0] | (data[1] << 8);
+  data += 2;
+  size_t len2 = data[0] | (data[1] << 8);
+  data += 2;
+  uint8_t flags = data[0];
+  data += 1;
+  memcpy(&config, data, sizeof(NeAACDecConfiguration));
+  data += sizeof(NeAACDecConfiguration);
+  size -= preamble;
+
+  if (len1 + len2 > size) return 0;
+  size_t len3 = size - len1 - len2;
+  int useInit2 = flags & 1;
+  int res, ok;
+
+  unsigned char* part1 = (unsigned char *)malloc(len1);
+  unsigned char* part2 = (unsigned char *)malloc(len2);
+  unsigned char* part3 = (unsigned char *)malloc(len3);
+  memcpy(part1, data, len1);
+  data += len1;
+  memcpy(part2, data, len2);
+  data += len2;
+  memcpy(part3, data, len3);
+  data += len3;
+
+  NeAACDecHandle decoder = NeAACDecOpen();
+  ok = NeAACDecSetConfiguration(decoder, &config);
+  if (!ok) goto cleanup;
+  if (useInit2) {
+    res = NeAACDecInit2(decoder, part1, len1, &sample_rate, &num_channels);
+  } else {
+    res = NeAACDecInit(decoder, part1, len1, &sample_rate, &num_channels);
   }
-
-  unsigned char* second_part = (unsigned char *)malloc(second_part_size);
-  memcpy(second_part, data + first_part_size, second_part_size);
-
+  if (res != 0) goto cleanup;
   NeAACDecFrameInfo faad_info;
-  NeAACDecDecode(decoder, &faad_info, second_part, second_part_size);
+  NeAACDecDecode(decoder, &faad_info, part2, len2);
+  NeAACDecDecode(decoder, &faad_info, part3, len3);
+
+cleanup:
   NeAACDecClose(decoder);
-  free(first_part);
-  free(second_part);
+  free(part1);
+  free(part2);
+  free(part3);
 
   return 0;
 }
