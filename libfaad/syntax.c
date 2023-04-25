@@ -2522,6 +2522,7 @@ static void adts_error_check(adts_header *adts, bitfile *ld)
 }
 
 /* LATM parsing functions */
+#if 0
 
 static uint32_t latm_get_value(bitfile *ld)
 {
@@ -2535,7 +2536,6 @@ static uint32_t latm_get_value(bitfile *ld)
 
     return value;
 }
-
 
 static uint32_t latmParsePayload(latm_header *latm, bitfile *ld)
 {
@@ -2559,7 +2559,6 @@ static uint32_t latmParsePayload(latm_header *latm, bitfile *ld)
 
     return framelen;
 }
-
 
 static uint32_t latmAudioMuxElement(latm_header *latm, bitfile *ld)
 {
@@ -2677,7 +2676,6 @@ static uint32_t latmAudioMuxElement(latm_header *latm, bitfile *ld)
           return 0;
 }
 
-
 uint32_t faad_latm_frame(latm_header *latm, bitfile *ld)
 {
     uint16_t len;
@@ -2705,3 +2703,4 @@ uint32_t faad_latm_frame(latm_header *latm, bitfile *ld)
     }
     return 0xFFFFFFFF;
 }
+#endif

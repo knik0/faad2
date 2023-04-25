@@ -233,6 +233,7 @@ unsigned char NeAACDecSetConfiguration(NeAACDecHandle hpDecoder,
 }
 
 
+#if 0
 static int latmCheck(latm_header *latm, bitfile *ld)
 {
     uint32_t good=0, bad=0, bits, m;
@@ -256,7 +257,7 @@ static int latmCheck(latm_header *latm, bitfile *ld)
 
     return (good>0);
 }
-
+#endif
 
 long NeAACDecInit(NeAACDecHandle hpDecoder,
                               unsigned char *buffer,

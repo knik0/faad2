@@ -122,7 +122,9 @@ uint8_t reordered_spectral_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfil
 void DRM_aac_scalable_main_element(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *hInfo,
                                    bitfile *ld, program_config *pce, drc_info *drc);
 #endif
+#if 0
 uint32_t faad_latm_frame(latm_header *latm, bitfile *ld);
+#endif
 
 #ifdef __cplusplus
 }
