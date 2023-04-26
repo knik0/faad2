@@ -94,20 +94,21 @@ static INLINE void gen_rand_vector(real_t *spec, int16_t scale_factor, uint16_t 
     uint16_t i;
     real_t energy = 0.0;
 
-    real_t scale = (real_t)1.0/(real_t)size;
-
     for (i = 0; i < size; i++)
     {
-        real_t tmp = scale*(real_t)(int32_t)ne_rng(__r1, __r2);
+        real_t tmp = (real_t)(int32_t)ne_rng(__r1, __r2);
         spec[i] = tmp;
         energy += tmp*tmp;
     }
 
-    scale = (real_t)1.0/(real_t)sqrt(energy);
-    scale *= (real_t)pow(2.0, 0.25 * scale_factor);
-    for (i = 0; i < size; i++)
+    if (energy > 0)
     {
-        spec[i] *= scale;
+        real_t scale = (real_t)1.0/(real_t)sqrt(energy);
+        scale *= (real_t)pow(2.0, 0.25 * scale_factor);
+        for (i = 0; i < size; i++)
+        {
+            spec[i] *= scale;
+        }
     }
 #else
     uint16_t i;
