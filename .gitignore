@@ -13,6 +13,7 @@ Makefile
 *.libs
 *.deps
 *.la
+*.log
 project/msvc/.vs/
 project/msvc/bin/
 project/msvc/intermediate/
@@ -25,10 +26,16 @@ aclocal.m4
 autom4te.cache
 compile
 config.guess
+config.h
 config.sub
+config.status
 configure
 depcomp
+faad2.spec
+include/faad.h
 INSTALL
 install-sh
+libtool
 ltmain.sh
 missing
+stamp-h1

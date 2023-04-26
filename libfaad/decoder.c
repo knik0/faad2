@@ -613,25 +613,24 @@ static void create_channel_config(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *h
     }
 
     /* check if there is a PCE */
+    /* TODO: why CPE flag is ignored? */
     if (hDecoder->pce_set)
     {
         uint8_t i, chpos = 0;
-        uint8_t chdir, back_center = 0, total = 0;
+        uint8_t chdir, back_center = 0;
 
         hInfo->num_front_channels = hDecoder->pce.num_front_channels;
-        total += hInfo->num_front_channels;
         hInfo->num_side_channels = hDecoder->pce.num_side_channels;
-        total += hInfo->num_side_channels;
         hInfo->num_back_channels = hDecoder->pce.num_back_channels;
-        total += hInfo->num_back_channels;
         hInfo->num_lfe_channels = hDecoder->pce.num_lfe_channels;
-        total += hInfo->num_lfe_channels;
-
         chdir = hInfo->num_front_channels;
         if (chdir & 1)
         {
 #if (defined(PS_DEC) || defined(DRM_PS))
-            if( total == 1 )
+            if (hInfo->num_front_channels == 1 &&
+                hInfo->num_side_channels == 0 &&
+                hInfo->num_back_channels == 0 &&
+                hInfo->num_lfe_channels == 0)
             {
                 /* When PS is enabled output is always stereo */
                 hInfo->channel_position[chpos++] = FRONT_CHANNEL_LEFT;
@@ -641,16 +640,16 @@ static void create_channel_config(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *h
             hInfo->channel_position[chpos++] = FRONT_CHANNEL_CENTER;
             chdir--;
         }
-        for (i = 0; i < chdir; i += 2)
+        for (i = 0; i < chdir; i++)
         {
-            hInfo->channel_position[chpos++] = FRONT_CHANNEL_LEFT;
-            hInfo->channel_position[chpos++] = FRONT_CHANNEL_RIGHT;
+            hInfo->channel_position[chpos++] =
+                (i & 1) ? FRONT_CHANNEL_RIGHT : FRONT_CHANNEL_LEFT;
         }
 
-        for (i = 0; i < hInfo->num_side_channels; i += 2)
+        for (i = 0; i < hInfo->num_side_channels; i++)
         {
-            hInfo->channel_position[chpos++] = SIDE_CHANNEL_LEFT;
-            hInfo->channel_position[chpos++] = SIDE_CHANNEL_RIGHT;
+            hInfo->channel_position[chpos++] =
+                (i & 1) ? SIDE_CHANNEL_RIGHT : SIDE_CHANNEL_LEFT;
         }
 
         chdir = hInfo->num_back_channels;
@@ -659,10 +658,10 @@ static void create_channel_config(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *h
             back_center = 1;
             chdir--;
         }
-        for (i = 0; i < chdir; i += 2)
+        for (i = 0; i < chdir; i++)
         {
-            hInfo->channel_position[chpos++] = BACK_CHANNEL_LEFT;
-            hInfo->channel_position[chpos++] = BACK_CHANNEL_RIGHT;
+            hInfo->channel_position[chpos++] =
+                (i & 1) ? BACK_CHANNEL_RIGHT : BACK_CHANNEL_LEFT;
         }
         if (back_center)
         {
@@ -1075,6 +1074,15 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
 #endif
 
     /* Make a channel configuration based on either a PCE or a channelConfiguration */
+    if (!hDecoder->downMatrix && hDecoder->pce_set)
+    {
+        /* In some codepath program_config_element result is ignored. */
+        if (hDecoder->pce.channels > MAX_CHANNELS)
+        {
+            hInfo->error = 22;
+            return NULL;
+        }
+    }
     create_channel_config(hDecoder, hInfo);
 
     /* number of samples in this frame */
