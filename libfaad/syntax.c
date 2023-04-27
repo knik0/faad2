@@ -369,9 +369,16 @@ static void decode_sce_lfe(NeAACDecStruct *hDecoder,
         hDecoder->internal_channel[channels+1] = channels+1;
     } else {
         if (hDecoder->pce_set)
+        {
+            if (hDecoder->pce.channels > MAX_CHANNELS)
+            {
+                hInfo->error = 22;
+                return;
+            }
             hDecoder->internal_channel[hDecoder->pce.sce_channel[tag]] = channels;
-        else
+        } else {
             hDecoder->internal_channel[channels] = channels;
+        }
     }
 
     hDecoder->fr_channels += hDecoder->element_output_channels[hDecoder->fr_ch_ele];
@@ -392,6 +399,11 @@ static void decode_cpe(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *hInfo, bitfi
     if (hDecoder->fr_ch_ele+1 > MAX_SYNTAX_ELEMENTS)
     {
         hInfo->error = 13;
+        return;
+    }
+    if (hDecoder->pce_set && (hDecoder->pce.channels > MAX_CHANNELS))
+    {
+        hInfo->error = 22;
         return;
     }
 
