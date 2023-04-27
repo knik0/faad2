@@ -320,13 +320,15 @@ uint8_t reordered_spectral_data(NeAACDecStruct *hDecoder, ic_stream *ics,
                                         } else {
                                             /* remaining stuff after last segment, we unfortunately couldn't read
                                                this in earlier because it might not fit in 64 bits. since we already
-                                               decoded (and removed) the PCW it is now guaranteed to fit */
+                                               decoded (and removed) the PCW it is now should fit */
                                             if (bitsread < sp_data_len)
                                             {
                                                 const uint8_t additional_bits = sp_data_len - bitsread;
 
                                                 read_segment(&segment[numberOfSegments], additional_bits, ld);
                                                 segment[numberOfSegments].len += segment[numberOfSegments-1].len;
+                                                if (segment[numberOfSegments].len > 64)
+                                                    return 10;
                                                 rewrev_bits(&segment[numberOfSegments]);
 
                                                 if (segment[numberOfSegments-1].len > 32)
