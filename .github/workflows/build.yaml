@@ -25,7 +25,12 @@
 # For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 
 name: Build
-on: [pull_request]
+on:
+  push:
+    branches: [ master ]
+    tags-ignore: ['*']
+  pull_request:
+    branches: [ master ]
 
 jobs:
   BuildWithAutomake:
