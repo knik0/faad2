@@ -674,7 +674,7 @@ static uint8_t sbr_grid(bitfile *ld, sbr_info *sbr, uint8_t ch)
         i = (uint8_t)faad_getbits(ld, 2
             DEBUGVAR(1,249,"sbr_grid(): bs_num_env_raw"));
 
-        bs_num_env = min(1 << i, 5);
+        bs_num_env = min(1u << i, 5u);
 
         i = (uint8_t)faad_get1bit(ld
             DEBUGVAR(1,250,"sbr_grid(): bs_freq_res_flag"));

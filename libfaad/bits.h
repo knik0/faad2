@@ -150,7 +150,7 @@ static INLINE uint32_t faad_showbits(bitfile *ld, uint32_t bits)
 
     bits -= ld->bits_left;
     //return ((ld->bufa & bitmask[ld->bits_left]) << bits) | (ld->bufb >> (32 - bits));
-    return ((ld->bufa & ((1<<ld->bits_left)-1)) << bits) | (ld->bufb >> (32 - bits));
+    return ((ld->bufa & ((1u<<ld->bits_left)-1)) << bits) | (ld->bufb >> (32 - bits));
 }
 
 static INLINE void faad_flushbits(bitfile *ld, uint32_t bits)
@@ -217,20 +217,20 @@ static INLINE uint32_t faad_showbits_rev(bitfile *ld, uint32_t bits)
     {
         for (i = 0; i < bits; i++)
         {
-            if (ld->bufa & (1 << (i + (32 - ld->bits_left))))
-                B |= (1 << (bits - i - 1));
+            if (ld->bufa & (1u << (i + (32 - ld->bits_left))))
+                B |= (1u << (bits - i - 1));
         }
         return B;
     } else {
         for (i = 0; i < ld->bits_left; i++)
         {
-            if (ld->bufa & (1 << (i + (32 - ld->bits_left))))
-                B |= (1 << (bits - i - 1));
+            if (ld->bufa & (1u << (i + (32 - ld->bits_left))))
+                B |= (1u << (bits - i - 1));
         }
         for (i = 0; i < bits - ld->bits_left; i++)
         {
-            if (ld->bufb & (1 << (i + (32-ld->bits_left))))
-                B |= (1 << (bits - ld->bits_left - i - 1));
+            if (ld->bufb & (1u << (i + (32-ld->bits_left))))
+                B |= (1u << (bits - ld->bits_left - i - 1));
         }
         return B;
     }

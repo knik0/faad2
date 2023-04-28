@@ -1733,7 +1733,7 @@ static uint8_t section_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *l
         sect_bits = 3;
     else
         sect_bits = 5;
-    sect_esc_val = (1<<sect_bits) - 1;
+    sect_esc_val = (1u<<sect_bits) - 1;
 
 #if 0
     printf("\ntotal sfb %d\n", ics->max_sfb);
