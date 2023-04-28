@@ -155,12 +155,12 @@ static void concat_bits(bits_t *b, bits_t *a)
     {
         /* maskoff superfluous high b bits */
         bl = b->bufa;
-        bh = b->bufb & ((1 << (b->len-32)) - 1);
+        bh = b->bufb & ((1u << (b->len-32)) - 1);
         /* left shift a b->len bits */
         ah = al << (b->len - 32);
         al = 0;
     } else {
-        bl = b->bufa & ((1 << (b->len)) - 1);
+        bl = b->bufa & ((1u << (b->len)) - 1);
         bh = 0;
         ah = (ah << (b->len)) | (al >> (32 - b->len));
         al = al << b->len;
