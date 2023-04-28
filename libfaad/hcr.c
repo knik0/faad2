@@ -386,7 +386,13 @@ uint8_t reordered_spectral_data(NeAACDecStruct *hDecoder, ic_stream *ics,
 
                 if (!codeword[codeword_idx].decoded && segment[segment_idx].len > 0)
                 {
-                    uint8_t tmplen;
+                    uint8_t tmplen = segment[segment_idx].len + codeword[codeword_idx].bits.len;
+
+                    if (tmplen > 64)
+                    {
+                      // Drop bits that do not fit concatenation result.
+                      flushbits_hcr(&codeword[codeword_idx].bits, tmplen - 64);
+                    }
 
                     if (codeword[codeword_idx].bits.len != 0)
                         concat_bits(&segment[segment_idx], &codeword[codeword_idx].bits);
