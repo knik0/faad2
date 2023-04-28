@@ -43,13 +43,17 @@ jobs:
          - name: clang
            cc: clang
            cxx: clang++
+           cflags: -Wall -fcolor-diagnostics -fansi-escape-codes
          - name: gcc
            cc: gcc
            cxx: g++
+           cflags: -Wall -fdiagnostics-color=always
 
     env:
       CC: ${{ matrix.cc || 'cc' }}
       CXX: ${{ matrix.cxx || 'cxx' }}
+      CFLAGS: ${{ matrix.cflags || '-Wall' }}
+      CXXFLAGS: ${{ matrix.cflags || '-Wall' }}
 
     steps:
     - name: Checkout the source
@@ -58,8 +62,6 @@ jobs:
         submodules: false
         fetch-depth: 1
     - name: Configure and build
-      env:
-        CFLAGS: -Wall
       run: |
         ./bootstrap
         mkdir -p $RUNNER_TEMP/usrlocal
