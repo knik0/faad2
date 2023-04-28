@@ -35,6 +35,22 @@ on:
 jobs:
   BuildWithAutomake:
     runs-on: ubuntu-latest
+
+    strategy:
+     fail-fast: false
+     matrix:
+       include:
+         - name: clang
+           cc: clang
+           cxx: clang++
+         - name: gcc
+           cc: gcc
+           cxx: g++
+
+    env:
+      CC: ${{ matrix.cc || 'cc' }}
+      CXX: ${{ matrix.cxx || 'cxx' }}
+
     steps:
     - name: Checkout the source
       uses: actions/checkout@v2
