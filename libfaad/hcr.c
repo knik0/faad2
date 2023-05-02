@@ -142,24 +142,40 @@ static void rewrev_bits(bits_t *bits)
 
 
 /* merge bits of a to b */
+/* precondition: a->len + b->len <= 64 */
 static void concat_bits(bits_t *b, bits_t *a)
 {
     uint32_t bl, bh, al, ah;
 
+    /* empty addend */
     if (a->len == 0) return;
+
+    /* addend becomes result */
+    if (b->len == 0)
+    {
+        *b = *a;
+        return;
+    }
 
     al = a->bufa;
     ah = a->bufb;
 
     if (b->len > 32)
     {
+        /* (b->len - 32) is 1..31 */
         /* maskoff superfluous high b bits */
         bl = b->bufa;
         bh = b->bufb & ((1u << (b->len-32)) - 1);
         /* left shift a b->len bits */
         ah = al << (b->len - 32);
         al = 0;
+    } else if (b->len == 32) {
+        bl = b->bufa;
+        bh = 0;
+        ah = al;
+        al = 0;
     } else {
+        /* b->len is 1..31, (32 - b->len) is 1..31 */
         bl = b->bufa & ((1u << (b->len)) - 1);
         bh = 0;
         ah = (ah << (b->len)) | (al >> (32 - b->len));
