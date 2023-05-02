@@ -29,6 +29,7 @@
 **/
 
 /* High Frequency adjustment */
+#include <float.h>
 
 #include "common.h"
 #include "structs.h"
@@ -175,6 +176,8 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
 #endif
                 }
 
+                if (nrg < -FLT_MAX || nrg > FLT_MAX)
+                    return 1;
                 sbr->E_curr[ch][m][l] = nrg / div;
 #ifdef SBR_LOW_POWER
 #ifdef FIXED_POINT
@@ -227,6 +230,8 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
                         }
                     }
 
+                    if (nrg < -FLT_MAX || nrg > FLT_MAX)
+                        return 1;
                     sbr->E_curr[ch][k - sbr->kx][l] = nrg / div;
 #ifdef SBR_LOW_POWER
 #ifdef FIXED_POINT
