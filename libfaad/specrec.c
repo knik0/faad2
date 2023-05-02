@@ -40,6 +40,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include "specrec.h"
 #include "filtbank.h"
 #include "syntax.h"
@@ -571,6 +572,12 @@ static uint8_t quant_to_spec(NeAACDecStruct *hDecoder,
 
     k = 0;
     gindex = 0;
+
+    /* In this case quant_to_spec is no-op and spec_data remains undefined.
+     * Without peeking into AAC specification, there is no strong evidence if
+     * such streams are invalid -> just calm down MSAN. */
+    if (ics->num_swb == 0)
+        memset(spec_data, 0, frame_len * sizeof(real_t));
 
     for (g = 0; g < ics->num_window_groups; g++)
     {

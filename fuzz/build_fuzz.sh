@@ -29,6 +29,9 @@
 # ASAN:
 export SANITIZER=address
 export SANITIZER_FLAGS="-fsanitize=$SANITIZER -fsanitize-address-use-after-scope"
+# MSAN:
+#export SANITIZER=memory
+#export SANITIZER_FLAGS="-fsanitize=$SANITIZER -fsanitize-memory-track-origins=2"
 # UBSAN:
 #export SANITIZER=array-bounds,bool,builtin,enum,float-divide-by-zero,function,integer-divide-by-zero,null,object-size,return,returns-nonnull-attribute,shift,signed-integer-overflow,unsigned-integer-overflow,unreachable,vla-bound,vptr
 #export SANITIZER_FLAGS="-fsanitize=$SANITIZER -fno-sanitize-recover=$SANITIZER"
@@ -43,6 +46,7 @@ export CXXFLAGS="${BASE_FLAGS} -stdlib=libc++"
 ./bootstrap
 ./configure
 cd libfaad
+make clean -j `nproc`
 make -j `nproc`
 cd ../
 for fname in config decode; do
