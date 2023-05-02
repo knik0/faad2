@@ -546,6 +546,9 @@ int8_t huffman_spectral_data_2(uint8_t cb, bits_t *ld, int16_t *sp)
                         break;
                 }
 
+                if (i > 32)
+                    return -1;
+
                 if (getbits_hcr(ld, i, &off))
                     return -1;
                 j = off + (1<<i);
