@@ -85,59 +85,37 @@ typedef struct
     bits_t      bits;
 } codeword_t;
 
-/* rewind and reverse */
-/* 32 bit version */
-static uint32_t rewrev_word(uint32_t v, const uint8_t len)
+static uint32_t reverse_word(uint32_t v)
 {
-    /* 32 bit reverse */
     v = ((v >> S[0]) & B[0]) | ((v << S[0]) & ~B[0]);
     v = ((v >> S[1]) & B[1]) | ((v << S[1]) & ~B[1]);
     v = ((v >> S[2]) & B[2]) | ((v << S[2]) & ~B[2]);
     v = ((v >> S[3]) & B[3]) | ((v << S[3]) & ~B[3]);
     v = ((v >> S[4]) & B[4]) | ((v << S[4]) & ~B[4]);
-
-    /* shift off low bits */
-    v >>= (32 - len);
-
     return v;
 }
-
-/* 64 bit version */
-static void rewrev_lword(uint32_t *hi, uint32_t *lo, const uint8_t len)
-{
-    if (len <= 32) {
-        *hi = 0;
-        *lo = rewrev_word(*lo, len);
-    } else
-    {
-        uint32_t t = *hi, v = *lo;
-
-        /* double 32 bit reverse */
-        v = ((v >> S[0]) & B[0]) | ((v << S[0]) & ~B[0]);
-        t = ((t >> S[0]) & B[0]) | ((t << S[0]) & ~B[0]);
-        v = ((v >> S[1]) & B[1]) | ((v << S[1]) & ~B[1]);
-        t = ((t >> S[1]) & B[1]) | ((t << S[1]) & ~B[1]);
-        v = ((v >> S[2]) & B[2]) | ((v << S[2]) & ~B[2]);
-        t = ((t >> S[2]) & B[2]) | ((t << S[2]) & ~B[2]);
-        v = ((v >> S[3]) & B[3]) | ((v << S[3]) & ~B[3]);
-        t = ((t >> S[3]) & B[3]) | ((t << S[3]) & ~B[3]);
-        v = ((v >> S[4]) & B[4]) | ((v << S[4]) & ~B[4]);
-        t = ((t >> S[4]) & B[4]) | ((t << S[4]) & ~B[4]);
-
-        /* last 32<>32 bit swap is implicit below */
-
-        /* shift off low bits (this is really only one 64 bit shift) */
-        *lo = (t >> (64 - len)) | (v << (len - 32));
-        *hi = v >> (64 - len);
-    }
-}
-
 
 /* bits_t version */
 static void rewrev_bits(bits_t *bits)
 {
     if (bits->len == 0) return;
-    rewrev_lword(&bits->bufb, &bits->bufa,  bits->len);
+    if (bits->len <= 32) {
+        bits->bufb = 0;
+        bits->bufa = reverse_word(bits->bufa) >> (32 - bits->len);
+    } else {
+        /* last 32<>32 bit swap via rename */
+        uint32_t lo = reverse_word(bits->bufb);
+        uint32_t hi = reverse_word(bits->bufa);
+
+        if (bits->len == 64) {
+            bits->bufb = hi;
+            bits->bufa = lo;
+        } else {
+            /* shift off low bits (this is really only one 64 bit shift) */
+            bits->bufb = hi >> (64 - bits->len);
+            bits->bufa = (lo >> (64 - bits->len)) | (hi << (bits->len - 32));
+        }
+    }
 }
 
 
@@ -217,8 +195,8 @@ static void read_segment(bits_t *segment, uint8_t segwidth, bitfile *ld)
         segment->bufa = faad_getbits(ld, 32);
 
     } else {
-        segment->bufa = faad_getbits(ld, segwidth);
         segment->bufb = 0;
+        segment->bufa = faad_getbits(ld, segwidth);
     }
 }
 

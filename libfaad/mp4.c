@@ -233,7 +233,7 @@ int8_t AudioSpecificConfigFromBitfile(bitfile *ld,
     if(short_form)
         bits_to_decode = 0;
     else
-		bits_to_decode = (int8_t)(buffer_size*8 - (startpos-faad_get_processed_bits(ld)));
+		bits_to_decode = (int8_t)(buffer_size*8 + faad_get_processed_bits(ld) - startpos);
 
     if ((mp4ASC->objectTypeIndex != 5 && mp4ASC->objectTypeIndex != 29) && (bits_to_decode >= 16))
     {
