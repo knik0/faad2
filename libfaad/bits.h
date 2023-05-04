@@ -396,26 +396,29 @@ typedef struct
     int8_t len;
 } bits_t;
 
-
+/* PRECONDITION: bits <= 32 */
 static INLINE uint32_t showbits_hcr(bits_t *ld, uint8_t bits)
 {
+    uint32_t mask;
+    int8_t tail;
     if (bits == 0) return 0;
+    if (ld->len == 0) return 0;
+    tail = ld->len - bits;
+    mask = 0xFFFFFFFF >> (32 - bits);
     if (ld->len <= 32)
     {
-        /* huffman_spectral_data_2 needs to read more than may be available, bits maybe
-           > ld->len, deliver 0 than */
-        if (ld->len >= bits)
-            return ((ld->bufa >> (ld->len - bits)) & (0xFFFFFFFF >> (32 - bits)));
+        /* huffman_spectral_data_2 might request more than available (tail < 0),
+           pad with zeroes then. */
+        if (tail >= 0)
+            return (ld->bufa >> tail) & mask; /* tail is 0..31 */
         else
-            return ((ld->bufa << (bits - ld->len)) & (0xFFFFFFFF >> (32 - bits)));
+            return (ld->bufa << -tail) & mask; /* -tail is 1..31 */
     } else {
-        if ((ld->len - bits) < 32)
-        {
-            return ( (ld->bufb & (0xFFFFFFFF >> (64 - ld->len))) << (bits - ld->len + 32)) |
-                (ld->bufa >> (ld->len - bits));
-        } else {
-            return ((ld->bufb >> (ld->len - bits - 32)) & (0xFFFFFFFF >> (32 - bits)));
-        }
+        /* tail is 1..63 */
+        if (tail < 32)
+            return ((ld->bufb << (32 - tail)) | (ld->bufa >> tail)) & mask;
+        else
+            return (ld->bufb >> (tail - 32)) & mask;
     }
 }
 
