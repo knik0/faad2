@@ -74,6 +74,13 @@ static void passf2pos(const uint16_t ido, const uint16_t l1, const complex_t *cc
 
     if (ido == 1)
     {
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        // TODO: remove this code once fuzzer proves it is totally unreahable
+        // For supported frame lengths that have odd number of factor 2 it is
+        // never the last factor; consequently `ido` should never be 1.
+        __builtin_trap();
+        /*
+#endif
         for (k = 0; k < l1; k++)
         {
             ah = 2*k;
@@ -84,6 +91,9 @@ static void passf2pos(const uint16_t ido, const uint16_t l1, const complex_t *cc
             IM(ch[ah])    = IM(cc[ac]) + IM(cc[ac+1]);
             IM(ch[ah+l1]) = IM(cc[ac]) - IM(cc[ac+1]);
         }
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        */
+#endif
     } else {
         for (k = 0; k < l1; k++)
         {
@@ -119,6 +129,13 @@ static void passf2neg(const uint16_t ido, const uint16_t l1, const complex_t *cc
 
     if (ido == 1)
     {
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        // TODO: remove this code once fuzzer proves it is totally unreahable
+        // For supported frame lengths that have odd number of factor 2 it is
+        // never the last factor; consequently `ido` should never be 1.
+        __builtin_trap();
+        /*
+#endif
         for (k = 0; k < l1; k++)
         {
             ah = 2*k;
@@ -129,6 +146,9 @@ static void passf2neg(const uint16_t ido, const uint16_t l1, const complex_t *cc
             IM(ch[ah])    = IM(cc[ac]) + IM(cc[ac+1]);
             IM(ch[ah+l1]) = IM(cc[ac]) - IM(cc[ac+1]);
         }
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        */
+#endif
     } else {
         for (k = 0; k < l1; k++)
         {
@@ -169,6 +189,13 @@ static void passf3(const uint16_t ido, const uint16_t l1, const complex_t *cc,
 
     if (ido == 1)
     {
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        // TODO: remove this code once fuzzer proves it is totally unreahable
+        // 3 is never the the biggest factor for supported frame lengths;
+        // consequently `ido` should never be 1.
+        __builtin_trap();
+        /*
+#endif
         if (isign == 1)
         {
             for (k = 0; k < l1; k++)
@@ -215,6 +242,9 @@ static void passf3(const uint16_t ido, const uint16_t l1, const complex_t *cc,
                 IM(ch[ah+2*l1]) = IM(c2) + RE(c3);
             }
         }
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        */
+#endif
     } else {
         if (isign == 1)
         {
@@ -560,6 +590,13 @@ static void passf5(const uint16_t ido, const uint16_t l1, const complex_t *cc,
             }
         }
     } else {
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        // TODO: remove this code once fuzzer proves it is totally unreahable
+        // 5 if the biggest factor and it never repeated for supported frame
+        // lengths; consequently `ido` should always be 1.
+        __builtin_trap();
+        /*
+#endif
         if (isign == 1)
         {
             for (k = 0; k < l1; k++)
@@ -682,6 +719,9 @@ static void passf5(const uint16_t ido, const uint16_t l1, const complex_t *cc,
                 }
             }
         }
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        */
+#endif
     }
 }
 

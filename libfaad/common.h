@@ -412,8 +412,8 @@ typedef real_t complex_t[2];
 /* common functions */
 uint8_t cpu_has_sse(void);
 uint32_t ne_rng(uint32_t *__r1, uint32_t *__r2);
-uint32_t wl_min_lzc(uint32_t x);
 #ifdef FIXED_POINT
+uint32_t wl_min_lzc(uint32_t x);
 #define LOG2_MIN_INF REAL_CONST(-10000)
 int32_t log2_int(uint32_t val);
 int32_t log2_fix(uint32_t val);

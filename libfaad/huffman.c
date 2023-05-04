@@ -52,7 +52,9 @@ static uint8_t huffman_binary_quad(uint8_t cb, bitfile *ld, int16_t *sp);
 static uint8_t huffman_binary_quad_sign(uint8_t cb, bitfile *ld, int16_t *sp);
 static uint8_t huffman_binary_pair(uint8_t cb, bitfile *ld, int16_t *sp);
 static uint8_t huffman_binary_pair_sign(uint8_t cb, bitfile *ld, int16_t *sp);
+#if 0
 static int16_t huffman_codebook(uint8_t i);
+#endif
 static void vcb11_check_LAV(uint8_t cb, int16_t *sp);
 
 int8_t huffman_scale_factor(bitfile *ld)
@@ -311,12 +313,14 @@ static uint8_t huffman_binary_pair_sign(uint8_t cb, bitfile *ld, int16_t *sp)
     return err;
 }
 
+#if 0
 static int16_t huffman_codebook(uint8_t i)
 {
     static const uint32_t data = 16428320;
     if (i == 0) return (int16_t)(data >> 16) & 0xFFFF;
     else        return (int16_t)data & 0xFFFF;
 }
+#endif
 
 static void vcb11_check_LAV(uint8_t cb, int16_t *sp)
 {
@@ -359,10 +363,13 @@ uint8_t huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
     case 8: /* 2-step method for data pairs */
     case 10:
         return huffman_2step_pair_sign(cb, ld, sp);
+    /* Codebook 12 is disallowed, see `section_data` */
+#if 0
     case 12: {
         uint8_t err = huffman_2step_pair(11, ld, sp);
         sp[0] = huffman_codebook(0); sp[1] = huffman_codebook(1);
         return err; }
+#endif
     case 11:
     {
         uint8_t err = huffman_2step_pair_sign(11, ld, sp);
