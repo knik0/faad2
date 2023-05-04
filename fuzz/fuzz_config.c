@@ -34,6 +34,23 @@
 #include "neaacdec.h"
 
 int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+  long sink = 0;
+
+  if (size < 1) return 0;
+  unsigned char error_code = *(data++);
+  size -= 1;
+
+  char* error_message = NeAACDecGetErrorMessage(error_code);
+  if (error_message) sink += strlen(error_message);
+
+  char* id = NULL;
+  char* copyright = NULL;
+  sink += NeAACDecGetVersion(&id, &copyright);
+  sink += strlen(id);
+  sink += strlen(copyright);
+
+  sink += (long)NeAACDecGetCapabilities();
+
   unsigned char* non_const_data = (unsigned char *)malloc(size);
   memcpy(non_const_data, data, size);
   mp4AudioSpecificConfig mp4ASC;
@@ -41,5 +58,5 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
   NeAACDecAudioSpecificConfig(non_const_data, (unsigned long) size, &mp4ASC);
   free(non_const_data);
 
-  return 0;
+  return (sink < 0) ? sink : 0;
 }

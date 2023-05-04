@@ -74,12 +74,16 @@ static uint32_t const bitmask[] = {
 
 void faad_initbits(bitfile *ld, const void *buffer, const uint32_t buffer_size);
 void faad_endbits(bitfile *ld);
+#if 0
 void faad_initbits_rev(bitfile *ld, void *buffer,
                        uint32_t bits_in_buffer);
+#endif
 uint8_t faad_byte_align(bitfile *ld);
 uint32_t faad_get_processed_bits(bitfile *ld);
 void faad_flushbits_ex(bitfile *ld, uint32_t bits);
+#ifdef DRM
 void faad_rewindbits(bitfile *ld);
+#endif
 void faad_resetbits(bitfile *ld, int bits);
 uint8_t *faad_getbitbuffer(bitfile *ld, uint32_t bits
                        DEBUGDEC);
@@ -207,6 +211,7 @@ static INLINE uint8_t faad_get1bit(bitfile *ld DEBUGDEC)
     return r;
 }
 
+#if 0
 /* reversed bitreading routines */
 static INLINE uint32_t faad_showbits_rev(bitfile *ld, uint32_t bits)
 {
@@ -284,6 +289,7 @@ static /*INLINE*/ uint32_t faad_getbits_rev(bitfile *ld, uint32_t n
 
     return ret;
 }
+#endif
 
 #ifdef DRM
 /* CRC lookup table for G8 polynome in DRM standard */

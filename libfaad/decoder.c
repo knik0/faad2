@@ -836,7 +836,7 @@ void* NeAACDecDecode2(NeAACDecHandle hpDecoder,
                                   unsigned long sample_buffer_size)
 {
     NeAACDecStruct* hDecoder = (NeAACDecStruct*)hpDecoder;
-    if ((sample_buffer == NULL) || (sample_buffer_size == 0))
+    if ((sample_buffer == NULL) || (*sample_buffer == NULL) || (sample_buffer_size == 0))
     {
         hInfo->error = 27;
         return NULL;

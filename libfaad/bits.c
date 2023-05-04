@@ -126,6 +126,7 @@ void faad_flushbits_ex(bitfile *ld, uint32_t bits)
 //        ld->error = 1;
 }
 
+#ifdef DRM
 /* rewind to beginning */
 void faad_rewindbits(bitfile *ld)
 {
@@ -156,6 +157,7 @@ void faad_rewindbits(bitfile *ld)
     ld->bits_left = 32;
     ld->tail = &ld->start[2];
 }
+#endif
 
 /* reset to a certain point */
 void faad_resetbits(bitfile *ld, int bits)
@@ -239,6 +241,7 @@ uint32_t faad_origbitbuffer_size(bitfile *ld)
 }
 #endif
 
+#if 0
 /* reversed bit reading routines, used for RVLC and HCR */
 void faad_initbits_rev(bitfile *ld, void *buffer,
                        uint32_t bits_in_buffer)
@@ -267,5 +270,6 @@ void faad_initbits_rev(bitfile *ld, void *buffer,
     ld->bytes_left = ld->buffer_size;
     ld->error = 0;
 }
+#endif
 
 /* EOF */

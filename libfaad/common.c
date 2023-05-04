@@ -244,6 +244,8 @@ uint32_t ne_rng(uint32_t *__r1, uint32_t *__r2)
     return (*__r1 = (t3 >> 1) | t1 ) ^ (*__r2 = (t4 + t4) | t2 );
 }
 
+#ifdef FIXED_POINT
+
 static uint32_t ones32(uint32_t x)
 {
     x -= ((x >> 1) & 0x55555555);
@@ -296,8 +298,6 @@ uint32_t wl_min_lzc(uint32_t x)
     return (count + 1);
 #endif
 }
-
-#ifdef FIXED_POINT
 
 #define TABLE_BITS 6
 /* just take the maximum number of bits for interpolation */

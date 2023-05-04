@@ -38,6 +38,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
   NeAACDecConfiguration config;
   uint64_t sample_rate;
   unsigned char num_channels;
+  NeAACDecConfigurationPtr config_ptr;
 
   if (size < preamble) return 0;
   size_t len1 = data[0] | (data[1] << 8);
@@ -52,8 +53,14 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 
   if (len1 + len2 > size) return 0;
   size_t len3 = size - len1 - len2;
-  int useInit2 = flags & 1;
+  int use_init2 = flags & 1;
+  int seek_before = flags & 2;
+  int seek_between = flags & 4;
+  size_t buffer_op = (flags >> 3) & 3;
   int res, ok;
+  const size_t kBufferSize[4] = {0, 0, 16, 16384};
+  size_t buffer_size = kBufferSize[buffer_op];
+  void* buffer = buffer_size > 0 ? (unsigned char *)malloc(buffer_size) : NULL;
 
   unsigned char* part1 = (unsigned char *)malloc(len1);
   unsigned char* part2 = (unsigned char *)malloc(len2);
@@ -68,21 +75,34 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
   NeAACDecHandle decoder = NeAACDecOpen();
   ok = NeAACDecSetConfiguration(decoder, &config);
   if (!ok) goto cleanup;
-  if (useInit2) {
+  config_ptr = NeAACDecGetCurrentConfiguration(decoder);
+  if (!config_ptr) __builtin_trap();
+  if (use_init2) {
     res = NeAACDecInit2(decoder, part1, len1, &sample_rate, &num_channels);
   } else {
     res = NeAACDecInit(decoder, part1, len1, &sample_rate, &num_channels);
   }
   if (res != 0) goto cleanup;
   NeAACDecFrameInfo faad_info;
+  if (seek_before) {
+    NeAACDecPostSeekReset(decoder, 0x1234567);
+  }
   NeAACDecDecode(decoder, &faad_info, part2, len2);
-  NeAACDecDecode(decoder, &faad_info, part3, len3);
+  if (seek_between) {
+    NeAACDecPostSeekReset(decoder, -0x1234567);
+  }
+  if (buffer_op == 0) {
+    NeAACDecDecode(decoder, &faad_info, part3, len3);
+  } else {
+    NeAACDecDecode2(decoder, &faad_info, part3, len3, &buffer, buffer_size);
+  }
 
 cleanup:
   NeAACDecClose(decoder);
   free(part1);
   free(part2);
   free(part3);
+  if (buffer) free(buffer);
 
   return 0;
 }
