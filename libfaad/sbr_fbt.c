@@ -193,7 +193,7 @@ uint8_t master_frequency_table_fs0(sbr_info *sbr, uint8_t k0, uint8_t k2,
     int8_t incr;
     uint8_t k;
     uint8_t dk;
-    uint32_t nrBands, k2Achieved;
+    int32_t nrBands, k2Achieved;
     int32_t k2Diff, vDk[64] = {0};
 
     /* mft only defined for k2 > k0 */
