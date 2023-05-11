@@ -103,12 +103,6 @@
       <Culture>0x0413</Culture>
     </ResourceCompile>
     <Lib />
-    <PreBuildEvent>
-      <Command>"$(SolutionDir)..\..\utils\win32\ac2ver.exe" "faad2" "$(SolutionDir)..\..\configure.ac" &gt; "$(SolutionDir)..\..\libfaad\win32_ver.h"</Command>
-    </PreBuildEvent>
-    <PreBuildEvent>
-      <Message>Retrieving package version...</Message>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -128,12 +122,6 @@
       <Culture>0x0413</Culture>
     </ResourceCompile>
     <Lib />
-    <PreBuildEvent>
-      <Command>"$(SolutionDir)..\..\utils\win32\ac2ver.exe" "faad2" "$(SolutionDir)..\..\configure.ac" &gt; "$(SolutionDir)..\..\libfaad\win32_ver.h"</Command>
-    </PreBuildEvent>
-    <PreBuildEvent>
-      <Message>Retrieving package version...</Message>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -151,12 +139,6 @@
       <Culture>0x0413</Culture>
     </ResourceCompile>
     <Lib />
-    <PreBuildEvent>
-      <Command>"$(SolutionDir)..\..\utils\win32\ac2ver.exe" "faad2" "$(SolutionDir)..\..\configure.ac" &gt; "$(SolutionDir)..\..\libfaad\win32_ver.h"</Command>
-    </PreBuildEvent>
-    <PreBuildEvent>
-      <Message>Retrieving package version...</Message>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -175,12 +157,6 @@
       <Culture>0x0413</Culture>
     </ResourceCompile>
     <Lib />
-    <PreBuildEvent>
-      <Command>"$(SolutionDir)..\..\utils\win32\ac2ver.exe" "faad2" "$(SolutionDir)..\..\configure.ac" &gt; "$(SolutionDir)..\..\libfaad\win32_ver.h"</Command>
-    </PreBuildEvent>
-    <PreBuildEvent>
-      <Message>Retrieving package version...</Message>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\libfaad\bits.c" />

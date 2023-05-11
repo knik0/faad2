@@ -117,10 +117,6 @@
       <ModuleDefinitionFile>.\libfaad2.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <PreBuildEvent>
-      <Message>Retrieving package version...</Message>
-      <Command>"$(SolutionDir)..\..\utils\win32\ac2ver.exe" "faad2" "$(SolutionDir)..\..\configure.ac" &gt; "$(SolutionDir)..\..\libfaad\win32_ver.h"</Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Midl>
@@ -149,10 +145,6 @@
       <ModuleDefinitionFile>.\libfaad2.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <PreBuildEvent>
-      <Message>Retrieving package version...</Message>
-      <Command>"$(SolutionDir)..\..\utils\win32\ac2ver.exe" "faad2" "$(SolutionDir)..\..\configure.ac" &gt; "$(SolutionDir)..\..\libfaad\win32_ver.h"</Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Midl>
@@ -182,10 +174,6 @@
     <Link>
       <ModuleDefinitionFile>.\libfaad2.def</ModuleDefinitionFile>
     </Link>
-    <PreBuildEvent>
-      <Message>Retrieving package version...</Message>
-      <Command>"$(SolutionDir)..\..\utils\win32\ac2ver.exe" "faad2" "$(SolutionDir)..\..\configure.ac" &gt; "$(SolutionDir)..\..\libfaad\win32_ver.h"</Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Midl>
@@ -215,10 +203,6 @@
     <Link>
       <ModuleDefinitionFile>.\libfaad2.def</ModuleDefinitionFile>
     </Link>
-    <PreBuildEvent>
-      <Message>Retrieving package version...</Message>
-      <Command>"$(SolutionDir)..\..\utils\win32\ac2ver.exe" "faad2" "$(SolutionDir)..\..\configure.ac" &gt; "$(SolutionDir)..\..\libfaad\win32_ver.h"</Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\libfaad\bits.c" />

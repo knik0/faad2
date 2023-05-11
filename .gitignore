@@ -17,8 +17,9 @@ Makefile
 project/msvc/.vs/
 project/msvc/bin/
 project/msvc/intermediate/
-libfaad/win32_ver.h
 *.user
+*~
+*.bak
 /libfaad/faad2.pc
 
 # Automake garbage created by bootstrap
