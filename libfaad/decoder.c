@@ -53,8 +53,8 @@
 uint16_t dbg_count;
 #endif
 
-#if (defined WIN32 || defined _WIN32 || defined WIN64 || defined _WIN64) && !defined(PACKAGE_VERSION)
-#include "win32_ver.h"
+#if !defined(PACKAGE_VERSION)
+#include "version.h"
 #endif
 
 /* static function declarations */
