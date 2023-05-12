@@ -21,6 +21,7 @@ project/msvc/intermediate/
 *~
 *.bak
 /libfaad/faad2.pc
+bazel-*
 
 # Automake garbage created by bootstrap
 aclocal.m4

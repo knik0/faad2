@@ -14,7 +14,7 @@ case $OSTYPE in
 	;;
 esac
 
-PACKAGE_VERSION=`sed -n 's/#define PACKAGE_VERSION //p' libfaad/version.h`
+PACKAGE_VERSION=`sed "$SED_ERE" 's/#define PACKAGE_VERSION "(.+)"/\1/' libfaad/version.h`
 sed -i.bak "$SED_ERE" "s/^(AC_INIT.+)[0-9]+\.[0-9]+\.[0-9]+(.+)$/\1$PACKAGE_VERSION\2/" configure.ac
 
 aclocal -I .                   && \

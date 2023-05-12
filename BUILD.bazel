@@ -1,0 +1,50 @@
+load("@rules_fuzzing//fuzzing:cc_defs.bzl", "cc_fuzz_test")
+
+# Unless building for embedded systems all headers / functions should exist.
+FAAD_DEFINES = [
+    "HAVE_INTTYPES_H=1",
+    "HAVE_STRINGS_H=1",
+    "HAVE_SYS_STAT_H=1",
+    "HAVE_SYS_TYPES_H=1",
+    "HAVE_MEMCPY=1",
+    "STDC_HEADERS=1",
+]
+
+FAAD_SOURCES = glob([
+    "libfaad/**/*.c",
+    "libfaad/**/*.h",
+])
+
+FAAD_FLAGS = [
+    "-Wall",
+    "-pedantic",
+]
+
+DRM_AFFIX = ["", "_drm"]
+DRM_DEFINES = [[], ["DRM_SUPPORT"]]
+FIXED_AFFIX = ["", "_fixed"]
+FIXED_DEFINES = [[], ["FIXED_POINT"]]
+
+[cc_library(
+    name = "faad" + DRM_AFFIX[drm] + FIXED_AFFIX[fixed],
+    srcs = FAAD_SOURCES,
+    hdrs = ["include/neaacdec.h"],
+    copts = FAAD_FLAGS,
+    includes = ["libfaad"],
+    local_defines = FAAD_DEFINES + DRM_DEFINES[drm] + FIXED_DEFINES[fixed],
+    strip_include_prefix = "include",
+) for drm in range(2) for fixed in range(2)]
+
+# To start fuzzing run: bazel run --config=asan-libfuzzer //:fuzz_config_run
+cc_fuzz_test(
+    name = "fuzz_config",
+    srcs = ["fuzz/fuzz_config.c"],
+    deps = [":faad"],
+)
+
+# To start fuzzing run: bazel run --config=asan-libfuzzer //:fuzz_decode_run
+cc_fuzz_test(
+    name = "fuzz_decode",
+    srcs = ["fuzz/fuzz_decode.c"],
+    deps = [":faad"],
+)
