@@ -1813,7 +1813,7 @@ static uint8_t section_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *l
 #ifdef ERROR_RESILIENCE
             }
 #endif
-            while ((sect_len_incr == sect_esc_val) /* &&
+            while (sect_len_incr == sect_esc_val /* &&
                 (k+sect_len < ics->max_sfb)*/)
             {
                 sect_len += sect_len_incr;
