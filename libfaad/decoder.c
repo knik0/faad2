@@ -850,11 +850,11 @@ void* NeAACDecDecode2(NeAACDecHandle hpDecoder,
 
 #define ERROR_STATE_INIT 6
 
-static void conceal_output(NeAACDecStruct *hDecoder, uint16_t frame_len,
-                           uint8_t out_ch, void *sample_buffer)
-{
-    return;
-}
+//static void conceal_output(NeAACDecStruct *hDecoder, uint16_t frame_len,
+//                           uint8_t out_ch, void *sample_buffer)
+//{
+//    return;
+//}
 #endif
 
 static void* aac_frame_decode(NeAACDecStruct *hDecoder,
@@ -994,7 +994,7 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
 
     /* decode the complete bitstream */
 #ifdef DRM
-    if (/*(hDecoder->object_type == 6) ||*/ (hDecoder->object_type == DRM_ER_LC))
+    if (/*(hDecoder->object_type == 6) ||*/ hDecoder->object_type == DRM_ER_LC)
     {
         DRM_aac_scalable_main_element(hDecoder, hInfo, &ld, &hDecoder->pce, hDecoder->drc);
     } else {

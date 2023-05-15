@@ -49,6 +49,8 @@ cd libfaad
 make clean -j `nproc`
 make -j `nproc`
 cd ../
-for fname in config decode; do
-  $CC $CFALGS -fsanitize=fuzzer,$SANITIZER -I./include ./fuzz/fuzz_${fname}.c -o ./fuzz/fuzz_${fname} ./libfaad/.libs/libfaad.a
+for fname in "config" "decode"; do
+  for affix in "" "_drm"; do
+    $CC $CFALGS -fsanitize=fuzzer,$SANITIZER -I./include ./fuzz/fuzz_${fname}.c -o ./fuzz/fuzz${affix}_${fname} ./libfaad/.libs/libfaad${affix}.a
+  done
 done

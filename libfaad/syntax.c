@@ -86,7 +86,6 @@ static void gain_control_data(bitfile *ld, ic_stream *ics);
 #endif
 static uint8_t spectral_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *ld,
                              int16_t *spectral_data);
-static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count);
 static uint8_t pulse_data(ic_stream *ics, pulse_info *pul, bitfile *ld);
 static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld);
 #ifdef LTP_DEC
@@ -95,13 +94,15 @@ static uint8_t ltp_data(NeAACDecStruct *hDecoder, ic_stream *ics, ltp_info *ltp,
 static uint8_t adts_fixed_header(adts_header *adts, bitfile *ld);
 static void adts_variable_header(adts_header *adts, bitfile *ld);
 static void adts_error_check(adts_header *adts, bitfile *ld);
-static uint8_t dynamic_range_info(bitfile *ld, drc_info *drc);
-static uint8_t excluded_channels(bitfile *ld, drc_info *drc);
 static uint8_t side_info(NeAACDecStruct *hDecoder, element *ele,
                          bitfile *ld, ic_stream *ics, uint8_t scal_flag);
 #ifdef DRM
 static int8_t DRM_aac_scalable_main_header(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_stream *ics2,
                                            bitfile *ld, uint8_t this_layer_stereo);
+#else
+static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count);
+static uint8_t dynamic_range_info(bitfile *ld, drc_info *drc);
+static uint8_t excluded_channels(bitfile *ld, drc_info *drc);
 #endif
 
 
@@ -876,31 +877,31 @@ static uint8_t ics_info(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *ld,
             if (hDecoder->object_type == MAIN) /* MPEG2 style AAC predictor */
             {
                 uint8_t sfb;
-
+                uint8_t predictor_reset, predictor_reset_group_number, prediction_used;
                 uint8_t limit = min(ics->max_sfb, max_pred_sfb(hDecoder->sf_index));
-#ifdef MAIN_DEC
-                ics->pred.limit = limit;
-#endif
 
-                if ((
-#ifdef MAIN_DEC
-                    ics->pred.predictor_reset =
-#endif
-                    faad_get1bit(ld DEBUGVAR(1,53,"ics_info(): pred.predictor_reset"))) & 1)
+                predictor_reset = faad_get1bit(ld DEBUGVAR(1,53,"ics_info(): pred.predictor_reset"));
+                if (predictor_reset)
                 {
-#ifdef MAIN_DEC
-                    ics->pred.predictor_reset_group_number =
-#endif
+                    predictor_reset_group_number =
                         (uint8_t)faad_getbits(ld, 5 DEBUGVAR(1,54,"ics_info(): pred.predictor_reset_group_number"));
                 }
 
                 for (sfb = 0; sfb < limit; sfb++)
                 {
+                    prediction_used = faad_get1bit(ld DEBUGVAR(1,55,"ics_info(): pred.prediction_used"));
 #ifdef MAIN_DEC
-                    ics->pred.prediction_used[sfb] =
+                    ics->pred.prediction_used[sfb] = prediction_used;
 #endif
-                        faad_get1bit(ld DEBUGVAR(1,55,"ics_info(): pred.prediction_used"));
                 }
+#ifdef MAIN_DEC
+                ics->pred.limit = limit;
+                ics->pred.predictor_reset = predictor_reset;
+                ics->pred.predictor_reset_group_number = predictor_reset_group_number;
+#else
+                (void)predictor_reset_group_number;
+                (void)prediction_used;
+#endif
             }
 #ifdef LTP_DEC
             else { /* Long Term Prediction */
@@ -1291,14 +1292,11 @@ static void gain_control_data(bitfile *ld, ic_stream *ics)
 void DRM_aac_scalable_main_element(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *hInfo,
                                    bitfile *ld, program_config *pce, drc_info *drc)
 {
-    uint8_t retval = 0;
     uint8_t channels = hDecoder->fr_channels = 0;
-    uint8_t ch;
     uint8_t this_layer_stereo = (hDecoder->channelConfiguration > 1) ? 1 : 0;
     element cpe = {0};
     ic_stream *ics1 = &(cpe.ics1);
     ic_stream *ics2 = &(cpe.ics2);
-    int16_t *spec_data;
     ALIGN int16_t spec_data1[1024] = {0};
     ALIGN int16_t spec_data2[1024] = {0};
 
@@ -1429,7 +1427,7 @@ void DRM_aac_scalable_main_element(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *
         prevbufstart = revbuffer;
         pbufend = &buffer[buffer_size - 1];
         for (i = 0; i < buffer_size; i++)
-            *prevbufstart++ = tabFlipbits[*pbufend--];
+            *prevbufstart++ = reverse_byte(*pbufend--);
 
         /* Set SBR data */
         /* consider 8 bits from AAC-CRC */
@@ -1507,8 +1505,6 @@ static int8_t DRM_aac_scalable_main_header(NeAACDecStruct *hDecoder, ic_stream *
                                            bitfile *ld, uint8_t this_layer_stereo)
 {
     uint8_t retval = 0;
-    uint8_t ch;
-    ic_stream *ics;
     uint8_t ics_reserved_bit;
 
     ics_reserved_bit = faad_get1bit(ld
@@ -1895,11 +1891,13 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
 {
     uint8_t g, sfb;
     int16_t t;
-    int8_t noise_pcm_flag = 1;
 
     int16_t scale_factor = ics->global_gain;
     int16_t is_position = 0;
+#ifndef DRM
+    int8_t noise_pcm_flag = 1;
     int16_t noise_energy = ics->global_gain - 90;
+#endif
 
     for (g = 0; g < ics->num_window_groups; g++)
     {
@@ -2232,6 +2230,7 @@ static uint8_t spectral_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *
     return 0;
 }
 
+#ifndef DRM
 /* Table 4.4.30 */
 static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count)
 {
@@ -2388,6 +2387,7 @@ static uint8_t excluded_channels(bitfile *ld, drc_info *drc)
 
     return n;
 }
+#endif
 
 /* Annex A: Audio Interchange Formats */
 

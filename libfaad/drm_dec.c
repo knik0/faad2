@@ -251,11 +251,11 @@ static const uint8_t sa_freq_scale[9] =
     0, 1, 2, 3, 5, 7, 10, 13, 23
 };
 
-static const uint8_t pan_freq_scale[21] =
-{
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-    11, 12, 13, 14, 15, 18, 22, 26, 32, 64
-};
+//static const uint8_t pan_freq_scale[21] =
+//{
+//    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+//    11, 12, 13, 14, 15, 18, 22, 26, 32, 64
+//};
 
 static const uint8_t pan_quant_class[20] =
 {
@@ -290,10 +290,10 @@ static const uint8_t delay_length[3] =
     3, 4, 5
 };
 
-static const real_t delay_fraction[] =
-{
-    FRAC_CONST(0.43), FRAC_CONST(0.75), FRAC_CONST(0.347)
-};
+//static const real_t delay_fraction[] =
+//{
+//    FRAC_CONST(0.43), FRAC_CONST(0.75), FRAC_CONST(0.347)
+//};
 
 static const real_t peak_decay = FRAC_CONST(0.76592833836465);
 
