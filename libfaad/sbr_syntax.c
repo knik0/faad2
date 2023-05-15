@@ -886,7 +886,11 @@ static uint16_t sbr_extension(bitfile *ld, sbr_info *sbr,
 #endif
 #ifdef DRM_PS
     case DRM_PARAMETRIC_STEREO:
-        sbr->ps_used = 1;
+        /* If not expected then only decode but do not expose. */
+        if (sbr->Is_DRM_SBR)
+        {
+            sbr->ps_used = 1;
+        }
         if (!sbr->drm_ps)
         {
             sbr->drm_ps = drm_ps_init();
