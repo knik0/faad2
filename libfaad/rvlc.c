@@ -467,8 +467,8 @@ static int8_t rvlc_huffman_sf(bitfile *ld_sf, bitfile *ld_esc /*,
     i = h->len;
     if (direction > 0)
         cw = faad_getbits(ld_sf, i DEBUGVAR(1,0,""));
-    // else
-    //     cw = faad_getbits_rev(ld_sf, i DEBUGVAR(1,0,""));
+    else
+        cw = 0 /* faad_getbits_rev(ld_sf, i DEBUGVAR(1,0,"")) */;
 
     while ((cw != h->cw)
         && (i < 10))
@@ -479,8 +479,8 @@ static int8_t rvlc_huffman_sf(bitfile *ld_sf, bitfile *ld_esc /*,
         cw <<= j;
         if (direction > 0)
             cw |= faad_getbits(ld_sf, j DEBUGVAR(1,0,""));
-        // else
-        //     cw |= faad_getbits_rev(ld_sf, j DEBUGVAR(1,0,""));
+        else
+            cw |= 0 /* faad_getbits_rev(ld_sf, j DEBUGVAR(1,0,"")) */;
     }
 
     index = h->index;
@@ -520,8 +520,8 @@ static int8_t rvlc_huffman_esc(bitfile *ld /*,
     i = h->len;
     if (direction > 0)
         cw = faad_getbits(ld, i DEBUGVAR(1,0,""));
-    // else
-    //     cw = faad_getbits_rev(ld, i DEBUGVAR(1,0,""));
+    else
+        cw = 0 /* faad_getbits_rev(ld, i DEBUGVAR(1,0,"")) */;
 
     while ((cw != h->cw)
         && (i < 21))
@@ -532,8 +532,8 @@ static int8_t rvlc_huffman_esc(bitfile *ld /*,
         cw <<= j;
         if (direction > 0)
             cw |= faad_getbits(ld, j DEBUGVAR(1,0,""));
-        // else
-        //     cw |= faad_getbits_rev(ld, j DEBUGVAR(1,0,""));
+        else
+            cw |= 0 /* faad_getbits_rev(ld, j DEBUGVAR(1,0,"")) */;
     }
 
     return h->index;

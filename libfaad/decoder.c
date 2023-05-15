@@ -871,7 +871,9 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
     uint32_t bitsconsumed;
     uint16_t frame_len;
     void *sample_buffer;
+#if 0
     uint32_t startbit=0, endbit=0, payload_bits=0;
+#endif
     uint32_t required_buffer_size=0;
 
 #ifdef PROFILE

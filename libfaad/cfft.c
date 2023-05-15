@@ -508,8 +508,8 @@ static void passf5(const uint16_t ido, const uint16_t l1, const complex_t *cc,
     static real_t ti11 = FRAC_CONST(0.951056516295154);
     static real_t tr12 = FRAC_CONST(-0.809016994374947);
     static real_t ti12 = FRAC_CONST(0.587785252292473);
-    uint16_t i, k, ac, ah;
-    complex_t c2, c3, c4, c5, d3, d4, d5, d2, t2, t3, t4, t5;
+    uint16_t k, ac, ah;
+    complex_t c2, c3, c4, c5, t2, t3, t4, t5;
 
     if (ido == 1)
     {
@@ -596,6 +596,9 @@ static void passf5(const uint16_t ido, const uint16_t l1, const complex_t *cc,
         // lengths; consequently `ido` should always be 1.
         __builtin_trap();
         /*
+#else
+        uint16_t i;
+        complex_t d3, d4, d5, d2;
 #endif
         if (isign == 1)
         {
@@ -736,7 +739,7 @@ static INLINE void cfftf1pos(uint16_t n, complex_t *c, complex_t *ch,
 {
     uint16_t i;
     uint16_t k1, l1, l2;
-    uint16_t na, nf, ip, iw, ix2, ix3, ix4, ido, idl1;
+    uint16_t na, nf, ip, iw, ix2, ix3, ix4, ido;
 
     nf = ifac[1];
     na = 0;
@@ -748,7 +751,6 @@ static INLINE void cfftf1pos(uint16_t n, complex_t *c, complex_t *ch,
         ip = ifac[k1];
         l2 = ip*l1;
         ido = n / l2;
-        idl1 = ido*l1;
 
         switch (ip)
         {
@@ -815,7 +817,7 @@ static INLINE void cfftf1neg(uint16_t n, complex_t *c, complex_t *ch,
 {
     uint16_t i;
     uint16_t k1, l1, l2;
-    uint16_t na, nf, ip, iw, ix2, ix3, ix4, ido, idl1;
+    uint16_t na, nf, ip, iw, ix2, ix3, ix4, ido;
 
     nf = ifac[1];
     na = 0;
@@ -827,7 +829,6 @@ static INLINE void cfftf1neg(uint16_t n, complex_t *c, complex_t *ch,
         ip = ifac[k1];
         l2 = ip*l1;
         ido = n / l2;
-        idl1 = ido*l1;
 
         switch (ip)
         {

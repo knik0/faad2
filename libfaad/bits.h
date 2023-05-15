@@ -111,39 +111,6 @@ static INLINE uint32_t getdword(void *mem)
     return tmp;
 }
 
-/* reads only n bytes from the stream instead of the standard 4 */
-static /*INLINE*/ uint32_t getdword_n(void *mem, int n)
-{
-    uint32_t tmp = 0;
-#ifndef ARCH_IS_BIG_ENDIAN
-    switch (n)
-    {
-    case 3:
-        ((uint8_t*)&tmp)[1] = ((uint8_t*)mem)[2];
-    case 2:
-        ((uint8_t*)&tmp)[2] = ((uint8_t*)mem)[1];
-    case 1:
-        ((uint8_t*)&tmp)[3] = ((uint8_t*)mem)[0];
-    default:
-        break;
-    }
-#else
-    switch (n)
-    {
-    case 3:
-        ((uint8_t*)&tmp)[2] = ((uint8_t*)mem)[2];
-    case 2:
-        ((uint8_t*)&tmp)[1] = ((uint8_t*)mem)[1];
-    case 1:
-        ((uint8_t*)&tmp)[0] = ((uint8_t*)mem)[0];
-    default:
-        break;
-    }
-#endif
-
-    return tmp;
-}
-
 static INLINE uint32_t faad_showbits(bitfile *ld, uint32_t bits)
 {
     if (bits <= ld->bits_left)

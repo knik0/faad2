@@ -202,9 +202,6 @@ static const  uint8_t    Parity [256] = {  // parity
     1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0
 };
 
-static uint32_t  __r1 = 1;
-static uint32_t  __r2 = 1;
-
 
 /*
  *  This is a simple random number generator with good quality for audio purposes.
