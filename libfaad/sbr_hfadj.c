@@ -1329,7 +1329,7 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 
                 /* limit the additional noise energy level */
                 /* and apply the limiter */
-                if (G_max > G)
+                if (G <= G_max)
                 {
                     Q_M_lim[m] = Q_M;
                     G_lim[m] = G;

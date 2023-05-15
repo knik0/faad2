@@ -453,14 +453,15 @@ static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
 #endif
     }
 
-    if ((MUL_R(RE(alpha_0[k]),RE(alpha_0[k])) + MUL_R(IM(alpha_0[k]),IM(alpha_0[k])) >= REAL_CONST(16)) ||
-        (MUL_R(RE(alpha_1[k]),RE(alpha_1[k])) + MUL_R(IM(alpha_1[k]),IM(alpha_1[k])) >= REAL_CONST(16)))
-    {
-        RE(alpha_0[k]) = 0;
-        IM(alpha_0[k]) = 0;
-        RE(alpha_1[k]) = 0;
-        IM(alpha_1[k]) = 0;
-    }
+    /* Sanity check; important: use "yes" check to filter-out NaN values. */
+    if ((MUL_R(RE(alpha_0[k]),RE(alpha_0[k])) + MUL_R(IM(alpha_0[k]),IM(alpha_0[k])) <= REAL_CONST(16)) &&
+        (MUL_R(RE(alpha_1[k]),RE(alpha_1[k])) + MUL_R(IM(alpha_1[k]),IM(alpha_1[k])) <= REAL_CONST(16)))
+        return;
+    /* Fallback */
+    RE(alpha_0[k]) = 0;
+    IM(alpha_0[k]) = 0;
+    RE(alpha_1[k]) = 0;
+    IM(alpha_1[k]) = 0;
 }
 #else
 static void calc_prediction_coef_lp(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],

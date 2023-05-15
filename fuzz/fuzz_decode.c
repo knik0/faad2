@@ -26,6 +26,7 @@
 ** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
 **/
 
+#include <fenv.h> 
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -33,12 +34,15 @@
 
 #include "neaacdec.h"
 
+int feenableexcept(int excepts);
+
 int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
   size_t preamble = 2 + 2 + 1 + sizeof(NeAACDecConfiguration);
   NeAACDecConfiguration config;
   uint64_t sample_rate;
   unsigned char num_channels;
   NeAACDecConfigurationPtr config_ptr;
+  /* feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW); */
 
   if (size < preamble) return 0;
   size_t len1 = data[0] | (data[1] << 8);
