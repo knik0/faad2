@@ -1371,6 +1371,7 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
         ps->delay_buf_index_ser[m] = temp_delay_ser[m];
 }
 
+#if 0
 #ifdef FIXED_POINT
 #define step(shift) \
     if ((0x40000000l >> shift) + root <= value)       \
@@ -1400,6 +1401,7 @@ static real_t ps_sqrt(real_t value)
 }
 #else
 #define ps_sqrt(A) sqrt(A)
+#endif
 #endif
 
 static const real_t ipdopd_cos_tab[] = {
