@@ -69,3 +69,37 @@ jobs:
         make clean -j `nproc`
         make -j `nproc`
         make install-strip -j `nproc`
+
+  BuildWithBazel:
+    runs-on: ubuntu-latest
+
+    strategy:
+     fail-fast: false
+
+    steps:
+    - name: Checkout the source
+      uses: actions/checkout@v2
+      with:
+        submodules: false
+        fetch-depth: 1
+    - name: Configure and build
+      run: |
+        bazel build :all
+
+  BuildWithCMake:
+    runs-on: ubuntu-latest
+
+    strategy:
+     fail-fast: false
+
+    steps:
+    - name: Checkout the source
+      uses: actions/checkout@v2
+      with:
+        submodules: false
+        fetch-depth: 1
+    - name: Configure and build
+      run: |
+        cmake -B build . -DCMAKE_INSTALL_PREFIX=$RUNNER_TEMP/usrlocal
+        cmake --build build -j `nproc`
+        cmake --install build
