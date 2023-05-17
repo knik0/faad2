@@ -2,10 +2,7 @@ dnl
 dnl This is the configure.in for faad2 related to unix creation
 
 dnl - libfaad.so
-dnl - libmp4ff.a (only static for moment)
 dnl - faad
-dnl - xmms input mp4/aac plugin
-dnl - mpeg4ip plugin (requires mpeg4ip's libmp4v2 to be installed)
 
 AC_PREREQ(2.50)
 dnl DO NOT EDIT VERSION; actual version is substituted by bootstrap
@@ -20,7 +17,6 @@ dnl Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_CPP
-dnl disable for mpeg4ip plugin
 AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -29,36 +25,20 @@ AC_CHECK_PROGS(RPMBUILD, rpmbuild, rpm)
 
 AC_CONFIG_HEADERS([config.h])
 
-AC_ARG_WITH(xmms,[  --with-xmms             compile XMMS-1 plugin],
-	     WITHXMMS=$withval, WITHXMMS=no)
-
 AC_ARG_WITH(drm,[  --with-drm              compile libfaad with DRM support],
 	     WITHDRM=$withval, WITHDRM=no)
 
 AC_ARG_WITH(drc,[  --with-drc              compile libfaad with DRC support],
 	     WITHDRC=$withval, WITHDRC=yes)
 
-AC_ARG_WITH(mpeg4ip, [  --with-mpeg4ip          compile mpeg4ip plugin],
-		     WITHMPEG4IP=$withval, WITHMPEG4IP=no)
-
 dnl Checks for header files required for mp4.h
 AC_HEADER_STDC
 AC_CHECK_HEADERS(stdint.h inttypes.h)
-AC_CHECK_HEADERS(mathf.h)
-AC_CHECK_HEADERS(float.h)
 AC_CHECK_FUNCS(strchr memcpy)
-AC_CHECK_HEADERS(sys/time.h)
 AC_HEADER_TIME
 
 dnl DRMS 
-AC_CHECK_HEADERS(errno.h sys/stat.h sys/types.h limits.h)
-AC_CHECK_HEADERS(sysfs/libsysfs.h)
-AC_CHECK_HEADERS(IOKit/IOKitLib.h,
-  [AC_CHECK_LIB(IOKit, main,
-    [AC_DEFINE(HAVE_IOKIT_IOKITLIB_H, 1, [Define if you have the IOKit API])
-     MP4FF_LIBS="-lIOKit"
-     AC_SUBST(MP4FF_LIBS)])])
-AC_CHECK_FUNCS(getpwuid)
+AC_CHECK_HEADERS(sys/stat.h sys/types.h)
 
 AC_C_INLINE
 AC_C_BIGENDIAN
@@ -126,40 +106,8 @@ MY_CHECK_TYPEDEF_FROM_INCLUDE([float32_t temp],
 
 AC_CHECK_FUNCS(strsep)
 
-AC_CHECK_PROG(external_mp4v2, mpeg4ip-config, yes, no)
-AM_CONDITIONAL(HAVE_MPEG4IP_PLUG, false)
-if test x$WITHMPEG4IP = xyes; then
-   if test x$external_mp4v2 = xyes; then
-      AM_CONDITIONAL(HAVE_MPEG4IP_PLUG, true)
-      AC_MSG_NOTICE("Building MPEG4IP plugin")
-   else
-	AC_MSG_NOTICE("MPEG4IP libmp4v2 is required for MPEG4IP plugin")
-   fi
-fi
-
-if test x$WITHXMMS = xyes; then
-  AC_CHECK_PROGS(XMMS_CONFIG, xmms-config,"not_found")
-  if test "$XMMS_CONFIG" = "not_found"; then
-    AC_MSG_ERROR("*** xmms-config not found - xmms plugin can't be build")
-  fi
-  AC_CHECK_HEADER(pthread.h,,
-           AC_MSG_ERROR(*** pthread headers support not installed or not found))
-  AC_CHECK_HEADER(id3.h,,
-       AC_MSG_ERROR(*** id3lib headers support not installed or not found))
-  AC_CHECK_PROGS(GTK_CONFIG, gtk-config, "not_found")
-  if test "$XGTK_CONFIG" = "not_found"; then
-    AC_MSG_ERROR("*** gtk-config not found - xmms plugin can't be build without")
-  fi
-
-  AM_CONDITIONAL(HAVE_XMMS, true)
-else
- AC_MSG_NOTICE(no xmms build configured)
- AM_CONDITIONAL(HAVE_XMMS, false)
-fi
-
 if test x$WITHDRM = xyes; then
-  AC_DEFINE(DRM, 1, [Define if you want to use libfaad together with Digital Radio Mondiale (DRM)])
-  AC_DEFINE(DRM_PS, 1, [Define if you want support for Digital Radio Mondiale (DRM) parametric stereo])
+  AC_DEFINE(DRM_SUPPORT, 1, [Define if you want to use libfaad together with Digital Radio Mondiale (DRM)])
 fi
 
 if test x$WITHDRC = xyes; then
@@ -169,10 +117,6 @@ fi
 AC_CONFIG_FILES(libfaad/Makefile)
 AC_CONFIG_FILES(libfaad/faad2.pc)
 AC_CONFIG_FILES(include/faad.h)
-AC_CONFIG_FILES(plugins/Makefile)
-AC_CONFIG_FILES(plugins/xmms/Makefile)
-AC_CONFIG_FILES(plugins/xmms/src/Makefile)
-AC_CONFIG_FILES(plugins/mpeg4ip/Makefile)
 AC_CONFIG_FILES(faad2.spec)
 AC_CONFIG_FILES(frontend/Makefile)
 AC_CONFIG_FILES(Makefile)
