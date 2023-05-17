@@ -1,6 +1,6 @@
-SUBDIRS = libfaad frontend plugins
+SUBDIRS = libfaad frontend
 
-EXTRA_DIST = faad2.spec docs/libfaad.3 project utils
+EXTRA_DIST = faad2.spec docs/libfaad.3 project
 
 rpm:	Makefile
 	make dist

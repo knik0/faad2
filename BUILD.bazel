@@ -8,6 +8,7 @@ FAAD_DEFINES = [
     "HAVE_SYS_TYPES_H=1",
     "HAVE_MEMCPY=1",
     "STDC_HEADERS=1",
+    "APPLY_DRC",
 ]
 
 FAAD_SOURCES = glob([

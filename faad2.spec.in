@@ -1,9 +1,3 @@
-# option to compile without XMMS plugin
-%if %{?without_xmms:1}%{!?without_xmms:0}
- %define _without_xmms --without-xmms
-%else
- %define _with_xmms --with-xmms
-%endif
 # this has been taken from http://www.hyperborea.org/software/dillo/dillo.spec
 #################################################################################
 # Identify which distribution we're building on.
@@ -32,24 +26,8 @@ Source0:    http://download.sourceforge.net/faad/%{name}-%{version}.tar.gz
 #Patch:                faad2-%{version}.patch
 BuildRequires: autoconf, automake, libtool, gcc-c++
 
-%if %{?_with_xmms:1}%{!?_with_xmms:0}
-BuildRequires: xmms-devel
-%endif
-
 URL:        http://www.audiocoding.com/
 #################################################################################
-%if %{?_with_xmms:1}%{!?_with_xmms:0}
-# GTK Dependencies
-%if %{mdk}
-BuildRequires: libgtk+-devel >= 1.2.0
-%endif
-%if %{suse}
-BuildRequires: gtk-devel >= 1.2.0
-%endif
-%if !%{suse} && !%{mdk}
-BuildRequires: gtk+-devel >= 1.2.0
-%endif
-%endif
 
 BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-root
 Packager:   a.kurpiers@nt.tu-darmstadt.de
@@ -57,9 +35,6 @@ Packager:   a.kurpiers@nt.tu-darmstadt.de
 %description
 FAAD 2 is a LC, MAIN and LTP profile, MPEG2 and MPEG-4 AAC decoder, completely
 written from scratch. FAAD 2 is licensed under the GPL.
-
-Includes libmp4ff, a Quicktime library for UNIX in a freely redistributable,
-statically linkable library.
 
 %package devel
 Summary: Development libraries the FAAD 2 AAC decoder.
@@ -69,21 +44,6 @@ Requires: %{name}
 %description devel
 Header files and development documentation for libfaad.
 
-%if %{?_with_xmms:1}%{!?_with_xmms:0}
-%package xmms
-Group: Applications/Multimedia
-Summary: AAC and MP4 input plugin for xmms
-Requires: %{name}, xmms
-
-
-%description xmms
-The AAC xmms input plugin for xmms recognizes AAC files by an
-.aac extension.
-This MP4 xmms plugin reads AAC files with and without ID3 tags (version 2.x).
-AAC files are MPEG2 or MPEG4 files that can be found in MPEG4 audio files
-(.mp4). MPEG4 files with AAC inside can be read by RealPlayer or Quicktime.
-%endif
-
 %prep
 #%setup -n %{name}
 %setup -n %{name}-%{version}
@@ -91,16 +51,13 @@ AAC files are MPEG2 or MPEG4 files that can be found in MPEG4 audio files
 
 %build
 #sh bootstrap
-./configure --with-drm %{?_with_xmms} %{?_without_xmms} --prefix=/usr
+./configure --with-drm --prefix=/usr
 make
 
 %install
 rm -rf %{buildroot}
 # Hack to work around a problem with DESTDIR in libtool 1.4.x
 LIBRARY_PATH="%{buildroot}/usr/lib:${LIBRARY_PATH}" make install DESTDIR=%{buildroot}
-# install libmp4ff
-install -m 755 common/mp4ff/libmp4ff.a %{buildroot}%{_libdir}
-install common/mp4ff/mp4ff.h %{buildroot}%{_includedir}
 
 %post -p /sbin/ldconfig
 
@@ -121,15 +78,6 @@ rm -rf %{buildroot}
 %{_libdir}/libfaad.la
 %{_includedir}/faad.h
 %{_includedir}/neaacdec.h
-%{_includedir}/mp4ff.h
-%{_libdir}/libmp4ff.a
-
-%if %{?_with_xmms:1}%{!?_with_xmms:0}
-%files xmms
-%defattr(-,root,root)
-%doc plugins/xmms/README
-%_libdir/xmms/Input/*
-%endif
 
 %changelog
 * Tue Jan 24 2006 Alexander Kurpiers <a.kurpiers@nt.tu-darmstadt.de>
