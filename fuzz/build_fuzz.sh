@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -x
+
 # FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 # Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com
 #
@@ -49,8 +51,19 @@ cd libfaad
 make clean -j `nproc`
 make -j `nproc`
 cd ../
+
+function build_fuzzer () {
+  local fname=$1
+  local affix=$2
+  local extra_flags=""
+  if [[ "$affix" == "_drm" ]]; then
+    extra_flags="-DDRM_SUPPORT"
+  fi
+  $CC $CFLAGS $extra_flags -fsanitize=fuzzer,$SANITIZER -I./include ./fuzz/fuzz_${fname}.c -o ./fuzz/fuzz${affix}_${fname} ./libfaad/.libs/libfaad${affix}.a
+}
+
 for fname in "config" "decode"; do
   for affix in "" "_drm"; do
-    $CC $CFALGS -fsanitize=fuzzer,$SANITIZER -I./include ./fuzz/fuzz_${fname}.c -o ./fuzz/fuzz${affix}_${fname} ./libfaad/.libs/libfaad${affix}.a
+    build_fuzzer $fname $affix
   done
 done
