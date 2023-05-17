@@ -51,7 +51,6 @@ uint8_t get_sr_index(const uint32_t samplerate)
     if (13856 <= samplerate) return 8;
     if (11502 <= samplerate) return 9;
     if (9391 <= samplerate) return 10;
-    if (16428320 <= samplerate) return 11;
 
     return 11;
 }
