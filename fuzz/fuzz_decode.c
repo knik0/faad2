@@ -62,7 +62,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
   int seek_between = flags & 4;
   size_t buffer_op = (flags >> 3) & 3;
   int use_drm = flags & 32;
-  int drm_channnels = (flags >> 5) & 7;
+  int drm_channels = (flags >> 5) & 7;
   unsigned long drm_sample_rate = config.defSampleRate;
   int res, ok;
   const size_t kBufferSize[4] = {0, 0, 16, 16384};
@@ -91,7 +91,10 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
   }
   if (use_drm) {
 #ifdef DRM_SUPPORT
-    NeAACDecInitDRM(decoder, drm_channnels, drm_sample_rate);
+    NeAACDecInitDRM(decoder, drm_channels, drm_sample_rate);
+#else
+    (void)drm_channels;
+    (void)drm_sample_rate;
 #endif
   }
 

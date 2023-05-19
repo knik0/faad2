@@ -44,8 +44,9 @@ cc_fuzz_test(
 )
 
 # To start fuzzing run: bazel run --config=asan-libfuzzer //:fuzz_decode_run
-cc_fuzz_test(
-    name = "fuzz_decode",
+[cc_fuzz_test(
+    name = "fuzz_decode" + DRM_AFFIX[drm] + FIXED_AFFIX[fixed],
     srcs = ["fuzz/fuzz_decode.c"],
-    deps = [":faad"],
-)
+    local_defines = DRM_DEFINES[drm],
+    deps = [":faad" + DRM_AFFIX[drm] + FIXED_AFFIX[fixed]],
+) for drm in range(2) for fixed in range(2)]
