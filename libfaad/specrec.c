@@ -642,17 +642,22 @@ static uint8_t quant_to_spec(NeAACDecStruct *hDecoder,
 
                     wb = wa + bin;
 
-                    if (exp < 0)
+                    if (exp == -32)
                     {
-                        spec_data[wb+0] = iq0 >>= -exp;
-                        spec_data[wb+1] = iq1 >>= -exp;
-                        spec_data[wb+2] = iq2 >>= -exp;
-                        spec_data[wb+3] = iq3 >>= -exp;
+                        spec_data[wb+0] = 0;
+                        spec_data[wb+1] = 0;
+                        spec_data[wb+2] = 0;
+                        spec_data[wb+3] = 0;
+                    } else if (exp < 0) {
+                        spec_data[wb+0] = iq0 >> -exp;
+                        spec_data[wb+1] = iq1 >> -exp;
+                        spec_data[wb+2] = iq2 >> -exp;
+                        spec_data[wb+3] = iq3 >> -exp;
                     } else {
-                        spec_data[wb+0] = iq0 <<= exp;
-                        spec_data[wb+1] = iq1 <<= exp;
-                        spec_data[wb+2] = iq2 <<= exp;
-                        spec_data[wb+3] = iq3 <<= exp;
+                        spec_data[wb+0] = iq0 << exp;
+                        spec_data[wb+1] = iq1 << exp;
+                        spec_data[wb+2] = iq2 << exp;
+                        spec_data[wb+3] = iq3 << exp;
                     }
                     if (frac != 0)
                     {
