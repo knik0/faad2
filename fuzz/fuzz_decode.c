@@ -91,7 +91,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
   }
   if (use_drm) {
 #ifdef DRM_SUPPORT
-    NeAACDecInitDRM(decoder, drm_channels, drm_sample_rate);
+    NeAACDecInitDRM(&decoder, drm_channels, drm_sample_rate);
 #else
     (void)drm_channels;
     (void)drm_sample_rate;
