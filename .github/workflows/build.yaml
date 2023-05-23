@@ -33,43 +33,6 @@ on:
     branches: [ master ]
 
 jobs:
-  BuildWithAutomake:
-    runs-on: ubuntu-latest
-
-    strategy:
-     fail-fast: false
-     matrix:
-       include:
-         - name: clang
-           cc: clang
-           cxx: clang++
-           cflags: -Wall -fcolor-diagnostics -fansi-escape-codes
-         - name: gcc
-           cc: gcc
-           cxx: g++
-           cflags: -Wall -fdiagnostics-color=always
-
-    env:
-      CC: ${{ matrix.cc || 'cc' }}
-      CXX: ${{ matrix.cxx || 'cxx' }}
-      CFLAGS: ${{ matrix.cflags || '-Wall' }}
-      CXXFLAGS: ${{ matrix.cflags || '-Wall' }}
-
-    steps:
-    - name: Checkout the source
-      uses: actions/checkout@v2
-      with:
-        submodules: false
-        fetch-depth: 1
-    - name: Configure and build
-      run: |
-        ./bootstrap
-        mkdir -p $RUNNER_TEMP/usrlocal
-        ./configure --prefix=$RUNNER_TEMP/usrlocal
-        make clean -j `nproc`
-        make -j `nproc`
-        make install-strip -j `nproc`
-
   BuildWithBazel:
     runs-on: ubuntu-latest
 
@@ -91,6 +54,28 @@ jobs:
 
     strategy:
      fail-fast: false
+     matrix:
+       include:
+         - name: Clang Shared
+           cc: clang
+           cxx: clang++
+           cflags: -Wall -fcolor-diagnostics -fansi-escape-codes
+           shared: 'true'
+         - name: Clang Static
+           cc: clang
+           cxx: clang++
+           cflags: -Wall -fcolor-diagnostics -fansi-escape-codes
+         - name: GCC Static
+           cc: gcc
+           cxx: g++
+           cflags: -Wall -fdiagnostics-color=always
+
+    env:
+      CC: ${{ matrix.cc || 'cc' }}
+      CXX: ${{ matrix.cxx || 'cxx' }}
+      CFLAGS: ${{ matrix.cflags || '-Wall' }}
+      CXXFLAGS: ${{ matrix.cflags || '-Wall' }}
+      SHARED: ${{matrix.shared || 'false'}}
 
     steps:
     - name: Checkout the source
@@ -100,6 +85,8 @@ jobs:
         fetch-depth: 1
     - name: Configure and build
       run: |
-        cmake -B build . -DCMAKE_INSTALL_PREFIX=$RUNNER_TEMP/usrlocal
+        cmake -B build . \
+            -DCMAKE_INSTALL_PREFIX=$RUNNER_TEMP/usrlocal \
+            -DBUILD_SHARED_LIBS=${SHARED}
         cmake --build build -j `nproc`
         cmake --install build

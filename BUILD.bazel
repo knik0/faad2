@@ -2,13 +2,14 @@ load("@rules_fuzzing//fuzzing:cc_defs.bzl", "cc_fuzz_test")
 
 # Unless building for embedded systems all headers / functions should exist.
 FAAD_DEFINES = [
+    "APPLY_DRC",
+    "HAVE_GETOPT_H=1",
     "HAVE_INTTYPES_H=1",
+    "HAVE_MEMCPY=1",
     "HAVE_STRINGS_H=1",
     "HAVE_SYS_STAT_H=1",
     "HAVE_SYS_TYPES_H=1",
-    "HAVE_MEMCPY=1",
     "STDC_HEADERS=1",
-    "APPLY_DRC",
 ]
 
 FAAD_SOURCES = glob([
@@ -21,10 +22,25 @@ FAAD_FLAGS = [
     "-pedantic",
 ]
 
-DRM_AFFIX = ["", "_drm"]
-DRM_DEFINES = [[], ["DRM_SUPPORT"]]
-FIXED_AFFIX = ["", "_fixed"]
-FIXED_DEFINES = [[], ["FIXED_POINT"]]
+DRM_AFFIX = [
+    "",
+    "_drm",
+]
+
+DRM_DEFINES = [
+    [],
+    ["DRM_SUPPORT"],
+]
+
+FIXED_AFFIX = [
+    "",
+    "_fixed",
+]
+
+FIXED_DEFINES = [
+    [],
+    ["FIXED_POINT"],
+]
 
 [cc_library(
     name = "faad" + DRM_AFFIX[drm] + FIXED_AFFIX[fixed],
@@ -49,4 +65,14 @@ cc_fuzz_test(
     srcs = ["fuzz/fuzz_decode.c"],
     local_defines = DRM_DEFINES[drm],
     deps = [":faad" + DRM_AFFIX[drm] + FIXED_AFFIX[fixed]],
+) for drm in range(2) for fixed in range(2)]
+
+CLI_SOURCES = glob(["frontend/**/*.c", "frontend/**/*.h"], exclude = ["frontend/**/getopt.*"])
+
+[cc_binary(
+    name = "faad_cli" + DRM_AFFIX[drm] + FIXED_AFFIX[fixed],
+    srcs = CLI_SOURCES,
+    includes = ["frontend"],
+    local_defines = FAAD_DEFINES + DRM_DEFINES[drm] + FIXED_DEFINES[fixed],
+    deps = [":faad"],
 ) for drm in range(2) for fixed in range(2)]
