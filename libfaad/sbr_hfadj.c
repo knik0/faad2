@@ -520,12 +520,16 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
             else
                 acc1 = log2_int(acc1);
 
+            if (acc2 == 0)
+                acc2 = LOG2_MIN_INF;
+            else
+                acc2 = log2_int(acc2);
 
             /* calculate the maximum gain */
             /* ratio of the energy of the original signal and the energy
              * of the HF generated signal
              */
-            G_max = acc1 - log2_int(acc2) + limGain[sbr->bs_limiter_gains];
+            G_max = acc1 - acc2 + limGain[sbr->bs_limiter_gains];
             G_max = min(G_max, limGain[3]);
 
 
@@ -647,7 +651,7 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
                         Q_M_size++;
                     }
                 } else {
-                    /* G > G_max */
+                    /* G >= G_max */
                     Q_M_lim[m] = Q_M + G_max - G;
                     G_lim[m] = G_max;
 
@@ -670,10 +674,14 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
                 den += pow2_int(log2_int_tab[Q_M_size] + Q_M);
             }
 
+            if (den == 0)
+                den = LOG2_MIN_INF;
+            else
+                den = log2_int(den /*+ EPS*/);
 
             /* calculate the final gain */
             /* G_boost: [0..2.51188643] */
-            G_boost = acc1 - log2_int(den /*+ EPS*/);
+            G_boost = acc1 - den;
             G_boost = min(G_boost, REAL_CONST(1.328771237) /* log2(1.584893192 ^ 2) */);
 
 

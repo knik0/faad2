@@ -675,7 +675,7 @@ void DST4_32(real_t *y, real_t *x)
     f148 = f145 + f146;
     f149 = f147 - f146;
     f150 = f4 + f26;
-    f151 = MUL_F(FRAC_CONST(1.2130114330978077), f4);
+    f151 = MUL_C(COEF_CONST(1.2130114330978077), f4);
     f152 = MUL_F(FRAC_CONST(-0.9700312531945440), f150);
     f153 = MUL_F(FRAC_CONST(-0.7270510732912803), f26);
     f154 = f151 + f152;

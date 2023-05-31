@@ -654,10 +654,10 @@ static uint8_t quant_to_spec(NeAACDecStruct *hDecoder,
                         spec_data[wb+2] = iq2 >> -exp;
                         spec_data[wb+3] = iq3 >> -exp;
                     } else {
-                        spec_data[wb+0] = iq0 << exp;
-                        spec_data[wb+1] = iq1 << exp;
-                        spec_data[wb+2] = iq2 << exp;
-                        spec_data[wb+3] = iq3 << exp;
+                        spec_data[wb+0] = (int32_t)((uint32_t)iq0 << exp);
+                        spec_data[wb+1] = (int32_t)((uint32_t)iq1 << exp);
+                        spec_data[wb+2] = (int32_t)((uint32_t)iq2 << exp);
+                        spec_data[wb+3] = (int32_t)((uint32_t)iq3 << exp);
                     }
                     if (frac != 0)
                     {

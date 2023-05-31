@@ -358,7 +358,7 @@ real_t pow2_fix(real_t val)
     int32_t whole = (val >> REAL_BITS);
 
     /* rest = [0..1] */
-    int32_t rest = val - (whole << REAL_BITS);
+    int32_t rest = val & ((1 << REAL_BITS) - 1);
 
     /* index into pow2_tab */
     int32_t index = rest >> (REAL_BITS-TABLE_BITS);
@@ -401,7 +401,7 @@ int32_t pow2_int(real_t val)
     int32_t whole = (val >> REAL_BITS);
 
     /* rest = [0..1] */
-    int32_t rest = val - (whole << REAL_BITS);
+    int32_t rest = val & ((1 << REAL_BITS) - 1);
 
     /* index into pow2_tab */
     int32_t index = rest >> (REAL_BITS-TABLE_BITS);
