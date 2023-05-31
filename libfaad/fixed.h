@@ -48,7 +48,9 @@ extern "C" {
 /* FRAC is the fractional only part of the fixed point number [0.0..1.0) */
 #define FRAC_SIZE 32 /* frac is a 32 bit integer */
 #define FRAC_BITS 31
-#define FRAC_PRECISION ((uint32_t)(1 << FRAC_BITS))
+/* Multiplication by power of 2 will be compiled to left-shift */
+#define FRAC_MUL (1u << (FRAC_SIZE - FRAC_BITS))
+#define FRAC_PRECISION ((uint32_t)(1u << FRAC_BITS))
 #define FRAC_MAX 0x7FFFFFFF
 
 typedef int32_t real_t;
@@ -262,7 +264,7 @@ static INLINE void ComplexMult(real_t *y1, real_t *y2,
          : "=d" (__xxo) : "d" (X), "d" (Y) : "A0","A1"); __xxo; })
 #else
   #define _MulHigh(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1u << (FRAC_SIZE-1))) >> FRAC_SIZE)
-  #define MUL_F(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (FRAC_BITS-1))) >> FRAC_BITS)
+  #define MUL_F(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1u << (FRAC_BITS-1))) >> FRAC_BITS)
 #endif
 #endif
   #define MUL_Q2(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (Q2_BITS-1))) >> Q2_BITS)
@@ -273,8 +275,8 @@ static INLINE void ComplexMult(real_t *y1, real_t *y2,
 static INLINE void ComplexMult(real_t *y1, real_t *y2,
     real_t x1, real_t x2, real_t c1, real_t c2)
 {
-    *y1 = (_MulHigh(x1, c1) + _MulHigh(x2, c2))<<(FRAC_SIZE-FRAC_BITS);
-    *y2 = (_MulHigh(x2, c1) - _MulHigh(x1, c2))<<(FRAC_SIZE-FRAC_BITS);
+    *y1 = (_MulHigh(x1, c1) + _MulHigh(x2, c2)) * FRAC_MUL;
+    *y2 = (_MulHigh(x2, c1) - _MulHigh(x1, c2)) * FRAC_MUL;
 }
 
 #endif
