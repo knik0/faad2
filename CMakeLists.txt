@@ -21,6 +21,8 @@ if(NOT DEFINED FAAD_BUNDLED_MODE)
 endif()
 mark_as_advanced(FAAD_BUNDLED_MODE)
 
+find_library(MATH_LIBRARY m)
+
 include(GNUInstallDirs)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -41,18 +43,11 @@ file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/include/faad.h ${FAAD_H_SRC})
 
 # Read sources list
 
-function(transform_sources_list INPUT_FILE OUTPUT_FILE)
-  file(READ ${INPUT_FILE} TEXT)
-  string(REGEX REPLACE "\\\\\n" "~continuation~" TEXT ${TEXT})
-  string(REGEX REPLACE "([a-zA-Z_][a-zA-Z0-9_]*)[\t ]*=[\t ]*([^\n]*)" "SET(\\1 \\2)" TEXT ${TEXT})
-  string(REPLACE "~continuation~" "\n" TEXT ${TEXT})
-  file(WRITE ${OUTPUT_FILE} ${TEXT})
-endfunction()
-
-transform_sources_list("libfaad/sources.lst" "${CMAKE_CURRENT_BINARY_DIR}/sources.lst.cmake")
-include("${CMAKE_CURRENT_BINARY_DIR}/sources.lst.cmake")
-list(TRANSFORM LIBFAAD_SOURCES PREPEND "libfaad/")
+file(GLOB_RECURSE LIBFAAD_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} libfaad/*.c libfaad/*.h)
 mark_as_advanced(LIBFAAD_SOURCES)
+
+file(GLOB_RECURSE FAAD_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} frontend/*.c frontend/*.h)
+list(FILTER FAAD_SOURCES EXCLUDE REGEX ".*getopt\\.[ch]$")
 
 # Build
 
@@ -79,8 +74,11 @@ endif()  # GCC
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/include/neaacdec.h
      DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/include)
 
-foreach(LIB in faad faad_drm faad_fixed faad_drm_fixed)
+foreach(LIB faad faad_drm faad_fixed faad_drm_fixed)
   add_library(${LIB} ${LIBFAAD_SOURCES})
+  if(MATH_LIBRARY)
+    target_link_libraries(${LIB} PUBLIC ${MATH_LIBRARY})
+  endif()
   target_include_directories(${LIB} PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}/include
   )
@@ -95,14 +93,14 @@ foreach(LIB in faad faad_drm faad_fixed faad_drm_fixed)
   )
 endforeach()
 
-foreach(LIB in faad_drm faad_drm_fixed)
-target_compile_definitions(faad_drm PRIVATE
+foreach(LIB faad_drm faad_drm_fixed)
+target_compile_definitions(${LIB} PRIVATE
   DRM_SUPPORT
 )
 endforeach()
 
-foreach(LIB in faad_fixed faad_drm_fixed)
-target_compile_definitions(faad_drm PRIVATE
+foreach(LIB faad_fixed faad_drm_fixed)
+target_compile_definitions(${LIB} PRIVATE
   FIXED_POINT
 )
 endforeach()
@@ -172,6 +170,13 @@ endfunction()
 
 transform_pc_file("libfaad/faad2.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/faad2.pc" "${FAAD_VERSION}")
 
+# CLI
+
+add_executable(faad_cli ${FAAD_SOURCES})
+target_link_libraries(faad_cli faad)
+target_compile_definitions(faad_cli PRIVATE ${FAAD_DEFINES})
+set_target_properties(faad_cli PROPERTIES OUTPUT_NAME faad)
+
 # Installation
 
 if(NOT FAAD_BUNDLED_MODE)
@@ -179,7 +184,7 @@ if(NOT FAAD_BUNDLED_MODE)
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 
   install(
-    TARGETS faad faad_drm
+    TARGETS faad faad_cli faad_drm
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"

@@ -785,12 +785,6 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
     return frameInfo.error;
 }
 
-static const unsigned long srates[] =
-{
-    96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000,
-    12000, 11025, 8000
-};
-
 static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
                   int outputFormat, int fileType, int downMatrix, int noGapless,
                   int infoOnly, int adts_out, float *song_length, float seek_to)
@@ -885,7 +879,6 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
     /* print some mp4 file info */
     faad_fprintf(stderr, "%s file info:\n\n", mp4file);
     {
-        char *tag = NULL, *item = NULL;
         /*int k, j;*/
         char *ot[6] = { "NULL", "MAIN AAC", "LC AAC", "SSR AAC", "LTP AAC", "HE AAC" };
         float seconds;

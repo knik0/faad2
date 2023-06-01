@@ -439,7 +439,7 @@ static int stszin(int size)
 
 static int stcoin(int size)
 {
-    uint32_t numchunks, chunkstart, chunkn, slicen, samplesleft, i, offset;
+    uint32_t numchunks, chunkn, slicen, samplesleft, i, offset;
     uint32_t nextoffset;
 
     if (size < 8)
