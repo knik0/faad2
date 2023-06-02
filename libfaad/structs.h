@@ -259,7 +259,7 @@ typedef struct
     uint8_t num_sec[8]; /* number of sections in a group */
 
     uint8_t global_gain;
-    int16_t scale_factors[8][51]; /* [0..255] */
+    int16_t scale_factors[8][51]; /* [0..255], except for noise and intensity */
 
     uint8_t ms_mask_present;
     uint8_t ms_used[MAX_WINDOW_GROUPS][MAX_SFB];
