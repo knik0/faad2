@@ -161,7 +161,7 @@ void drc_decode(drc_info *drc, real_t *spec)
         } else {
             for (i = bottom; i < top; i++)
             {
-                spec[i] <<= exp;
+                spec[i] = (int32_t)(((uint32_t)spec[i]) << exp);
                 if (frac)
                     spec[i] = MUL_R(spec[i],drc_pow2_table[frac+23]);
             }

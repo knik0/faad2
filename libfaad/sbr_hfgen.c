@@ -274,7 +274,7 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t buffer[MAX_NTS
 #ifdef FIXED_POINT
     const real_t rel = FRAC_CONST(0.999999); // 1 / (1 + 1e-6f);
     uint32_t mask, exp;
-    real_t pow2_to_exp;
+    real_t half;
 #else
     const real_t rel = 1 / (1 + 1e-6f);
 #endif
@@ -295,16 +295,31 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t buffer[MAX_NTS
 
     exp = wl_min_lzc(mask);
 
+    /* All-zero input. */
+    if (exp == 0) {
+        RE(ac->r01) = 0;
+        IM(ac->r01) = 0;
+        RE(ac->r02) = 0;
+        IM(ac->r02) = 0;
+        RE(ac->r11) = 0;
+        // IM(ac->r11) = 0; // unused
+        RE(ac->r12) = 0;
+        IM(ac->r12) = 0;
+        RE(ac->r22) = 0;
+        // IM(ac->r22) = 0; // unused
+        ac->det = 0;
+        return;
+    }
+    /* Otherwise exp > 0. */
     /* improves accuracy */
-    if (exp > 0)
-        exp -= 1;
+    exp -= 1;
+    /* Now exp is 0..31 */
+    half = (1 << exp) >> 1;
 
-    pow2_to_exp = 1<<(exp-1);
-
-    temp2_r = (QMF_RE(buffer[offset-2][bd]) + pow2_to_exp) >> exp;
-    temp2_i = (QMF_IM(buffer[offset-2][bd]) + pow2_to_exp) >> exp;
-    temp3_r = (QMF_RE(buffer[offset-1][bd]) + pow2_to_exp) >> exp;
-    temp3_i = (QMF_IM(buffer[offset-1][bd]) + pow2_to_exp) >> exp;
+    temp2_r = (QMF_RE(buffer[offset-2][bd]) + half) >> exp;
+    temp2_i = (QMF_IM(buffer[offset-2][bd]) + half) >> exp;
+    temp3_r = (QMF_RE(buffer[offset-1][bd]) + half) >> exp;
+    temp3_i = (QMF_IM(buffer[offset-1][bd]) + half) >> exp;
     // Save these because they are needed after loop
     temp4_r = temp2_r;
     temp4_i = temp2_i;
@@ -313,12 +328,12 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t buffer[MAX_NTS
 
     for (j = offset; j < len + offset; j++)
     {
-    	temp1_r = temp2_r; // temp1_r = (QMF_RE(buffer[offset-2][bd] + (1<<(exp-1))) >> exp;
-    	temp1_i = temp2_i; // temp1_i = (QMF_IM(buffer[offset-2][bd] + (1<<(exp-1))) >> exp;
-    	temp2_r = temp3_r; // temp2_r = (QMF_RE(buffer[offset-1][bd] + (1<<(exp-1))) >> exp;
-    	temp2_i = temp3_i; // temp2_i = (QMF_IM(buffer[offset-1][bd] + (1<<(exp-1))) >> exp;
-        temp3_r = (QMF_RE(buffer[j][bd]) + pow2_to_exp) >> exp;
-        temp3_i = (QMF_IM(buffer[j][bd]) + pow2_to_exp) >> exp;
+        temp1_r = temp2_r; // temp1_r = (QMF_RE(buffer[offset-2][bd] + (1<<(exp-1))) >> exp;
+        temp1_i = temp2_i; // temp1_i = (QMF_IM(buffer[offset-2][bd] + (1<<(exp-1))) >> exp;
+        temp2_r = temp3_r; // temp2_r = (QMF_RE(buffer[offset-1][bd] + (1<<(exp-1))) >> exp;
+        temp2_i = temp3_i; // temp2_i = (QMF_IM(buffer[offset-1][bd] + (1<<(exp-1))) >> exp;
+        temp3_r = (QMF_RE(buffer[j][bd]) + half) >> exp;
+        temp3_i = (QMF_IM(buffer[j][bd]) + half) >> exp;
         r01r += MUL_R(temp3_r, temp2_r) + MUL_R(temp3_i, temp2_i);
         r01i += MUL_R(temp3_i, temp2_r) - MUL_R(temp3_r, temp2_i);
         r02r += MUL_R(temp3_r, temp1_r) + MUL_R(temp3_i, temp1_i);

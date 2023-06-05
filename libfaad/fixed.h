@@ -281,7 +281,11 @@ static INLINE void ComplexMult(real_t *y1, real_t *y2,
 
 #endif
 
-
+/* Saturated left shift */
+#define SAT_SHIFT_MASK(E) (~0u << (31u - (E)))
+#define SAT_SHIFT(V,E,M) (((((V) >> ((E) + 1)) ^ (V)) & (M)) \
+    ? (((V) < 0) ? -0x80000000 : 0x7FFFFFFF) \
+    : ((int32_t)((uint32_t)(V) << (E))))
 
 #ifdef __cplusplus
 }

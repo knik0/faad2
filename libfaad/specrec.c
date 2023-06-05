@@ -566,6 +566,8 @@ static uint8_t quant_to_spec(NeAACDecStruct *hDecoder,
     uint8_t error = 0; /* Init error flag */
 #ifndef FIXED_POINT
     real_t scf;
+#else
+    int32_t sat_shift_mask;
 #endif
 
     k = 0;
@@ -591,6 +593,22 @@ static uint8_t quant_to_spec(NeAACDecStruct *hDecoder,
 
             width = ics->swb_offset[sfb+1] - ics->swb_offset[sfb];
 
+#ifdef FIXED_POINT
+            scale_factor -= 100;
+            /* IMDCT pre-scaling */
+            if (hDecoder->object_type == LD)
+            {
+                scale_factor -= 24 /*9*/;
+            } else {
+                if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
+                    scale_factor -= 16 /*7*/;
+                else
+                    scale_factor -= 28 /*10*/;
+            }
+            if (scale_factor > 120)
+                scale_factor = 120;  /* => exp <= 30 */
+#endif
+
             /* scale_factor for IS or PNS, has different meaning; fill with almost zeroes */
             if (is_intensity(ics, g, sfb) || is_noise(ics, g, sfb))
             {
@@ -602,22 +620,11 @@ static uint8_t quant_to_spec(NeAACDecStruct *hDecoder,
             /* frac must always be > 0 */
             frac = (scale_factor /* - 100 */) & 3;
 
-#ifdef FIXED_POINT
-            exp -= 25;
-            /* IMDCT pre-scaling */
-            if (hDecoder->object_type == LD)
-            {
-                exp -= 6 /*9*/;
-            } else {
-                if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
-                    exp -= 4 /*7*/;
-                else
-                    exp -= 7 /*10*/;
-            }
-#endif
-
 #ifndef FIXED_POINT
             scf = pow2sf_tab[exp/*+25*/] * pow2_table[frac];
+#else
+            if (exp > 0)
+                sat_shift_mask = SAT_SHIFT_MASK(exp);
 #endif
 
             for (win = 0; win < ics->window_group_length[g]; win++)
@@ -642,16 +649,16 @@ static uint8_t quant_to_spec(NeAACDecStruct *hDecoder,
                         spec_data[wb+1] = 0;
                         spec_data[wb+2] = 0;
                         spec_data[wb+3] = 0;
-                    } else if (exp < 0) {
+                    } else if (exp <= 0) {
                         spec_data[wb+0] = iq0 >> -exp;
                         spec_data[wb+1] = iq1 >> -exp;
                         spec_data[wb+2] = iq2 >> -exp;
                         spec_data[wb+3] = iq3 >> -exp;
                     } else {
-                        spec_data[wb+0] = (int32_t)((uint32_t)iq0 << exp);
-                        spec_data[wb+1] = (int32_t)((uint32_t)iq1 << exp);
-                        spec_data[wb+2] = (int32_t)((uint32_t)iq2 << exp);
-                        spec_data[wb+3] = (int32_t)((uint32_t)iq3 << exp);
+                        spec_data[wb+0] = SAT_SHIFT(iq0, exp, sat_shift_mask);
+                        spec_data[wb+1] = SAT_SHIFT(iq1, exp, sat_shift_mask);
+                        spec_data[wb+2] = SAT_SHIFT(iq2, exp, sat_shift_mask);
+                        spec_data[wb+3] = SAT_SHIFT(iq3, exp, sat_shift_mask);
                     }
                     if (frac != 0)
                     {
