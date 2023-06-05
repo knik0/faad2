@@ -1918,8 +1918,6 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
                 /* decode intensity position */
                 t = huffman_scale_factor(ld);
                 is_position += (t - 60);
-                if (is_position < 0 || is_position > 255)
-                    return 4;
                 ics->scale_factors[g][sfb] = is_position;
 #ifdef SF_PRINT
                 printf("%d\n", ics->scale_factors[g][sfb]);
@@ -1940,8 +1938,6 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
                     t -= 60;
                 }
                 noise_energy += t;
-                if (noise_energy < 0 || noise_energy > 255)
-                    return 4;
                 ics->scale_factors[g][sfb] = noise_energy;
 #ifdef SF_PRINT
                 printf("%d\n", ics->scale_factors[g][sfb]);

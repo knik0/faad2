@@ -36,9 +36,6 @@
 
 #ifdef FIXED_POINT
 static real_t pow05_table[] = {
-    COEF_CONST(1.68179283050743), /* 0.5^(-3/4) */
-    COEF_CONST(1.41421356237310), /* 0.5^(-2/4) */
-    COEF_CONST(1.18920711500272), /* 0.5^(-1/4) */
     COEF_CONST(1.0),              /* 0.5^( 0/4) */
     COEF_CONST(0.84089641525371), /* 0.5^(+1/4) */
     COEF_CONST(0.70710678118655), /* 0.5^(+2/4) */
@@ -69,6 +66,7 @@ void is_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec,
             {
                 if (is_intensity(icsr, g, sfb))
                 {
+                    int16_t scale_factor = icsr->scale_factors[g][sfb];
 #ifdef MAIN_DEC
                     /* For scalefactor bands coded in intensity stereo the
                        corresponding predictors in the right channel are
@@ -79,10 +77,12 @@ void is_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec,
 #endif
 
 #ifndef FIXED_POINT
-                    scale = (real_t)pow(0.5, (0.25*icsr->scale_factors[g][sfb]));
+                    scale_factor = min(max(scale_factor, -120), 120);
+                    scale = (real_t)pow(0.5, (0.25*scale_factor));
 #else
-                    exp = icsr->scale_factors[g][sfb] >> 2;
-                    frac = icsr->scale_factors[g][sfb] & 3;
+                    scale_factor = min(max(scale_factor, -60), 60);
+                    exp = scale_factor >> 2;
+                    frac = scale_factor & 3;
 #endif
 
                     /* Scale from left to right channel,
@@ -96,7 +96,7 @@ void is_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec,
                             r_spec[(group*nshort)+i] = l_spec[(group*nshort)+i] << -exp;
                         else
                             r_spec[(group*nshort)+i] = l_spec[(group*nshort)+i] >> exp;
-                        r_spec[(group*nshort)+i] = MUL_C(r_spec[(group*nshort)+i], pow05_table[frac + 3]);
+                        r_spec[(group*nshort)+i] = MUL_C(r_spec[(group*nshort)+i], pow05_table[frac]);
 #endif
                         if (is_intensity(icsr, g, sfb) != invert_intensity(ics, g, sfb))
                             r_spec[(group*nshort)+i] = -r_spec[(group*nshort)+i];
