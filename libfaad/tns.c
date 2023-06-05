@@ -36,12 +36,13 @@
 
 
 /* static function declarations */
-static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_compress,
-                            uint8_t *coef, real_t *a);
+/* returns exp */
+static uint8_t tns_decode_coef(uint8_t order, uint8_t coef_res_bits,
+                               uint8_t coef_compress, uint8_t *coef, real_t *a);
 static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *lpc,
-                          uint8_t order);
+                          uint8_t order, uint8_t exp);
 static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *lpc,
-                          uint8_t order);
+                          uint8_t order, uint8_t exp);
 
 
 #ifdef _MSC_VER
@@ -77,6 +78,7 @@ static real_t tns_coef_1_4[] =
     COEF_CONST(-0.6736956436), COEF_CONST(-0.5264321629), COEF_CONST(-0.3612416662), COEF_CONST(-0.1837495178)
 };
 
+static real_t* all_tns_coefs[] = {tns_coef_0_3, tns_coef_0_4, tns_coef_1_3, tns_coef_1_4};
 
 /* TNS decoding for one channel and frame */
 void tns_decode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
@@ -88,6 +90,7 @@ void tns_decode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
     uint16_t bottom, top, start, end;
     uint16_t nshort = frame_len/8;
     real_t lpc[TNS_MAX_ORDER+1];
+    uint8_t exp;
 
     if (!ics->tns_data_present)
         return;
@@ -104,7 +107,7 @@ void tns_decode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
             if (!tns_order)
                 continue;
 
-            tns_decode_coef(tns_order, tns->coef_res[w]+3,
+            exp = tns_decode_coef(tns_order, tns->coef_res[w]+3,
                 tns->coef_compress[w][f], tns->coef[w][f], lpc);
 
             start = min(bottom, max_tns_sfb(sr_index, object_type, (ics->window_sequence == EIGHT_SHORT_SEQUENCE)));
@@ -127,7 +130,7 @@ void tns_decode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
                 inc = 1;
             }
 
-            tns_ar_filter(&spec[(w*nshort)+start], size, inc, lpc, tns_order);
+            tns_ar_filter(&spec[(w*nshort)+start], size, inc, lpc, tns_order, exp);
         }
     }
 }
@@ -142,6 +145,7 @@ void tns_encode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
     uint16_t bottom, top, start, end;
     uint16_t nshort = frame_len/8;
     real_t lpc[TNS_MAX_ORDER+1];
+    uint8_t exp;
 
     if (!ics->tns_data_present)
         return;
@@ -158,7 +162,7 @@ void tns_encode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
             if (!tns_order)
                 continue;
 
-            tns_decode_coef(tns_order, tns->coef_res[w]+3,
+            exp = tns_decode_coef(tns_order, tns->coef_res[w]+3,
                 tns->coef_compress[w][f], tns->coef[w][f], lpc);
 
             start = min(bottom, max_tns_sfb(sr_index, object_type, (ics->window_sequence == EIGHT_SHORT_SEQUENCE)));
@@ -181,55 +185,66 @@ void tns_encode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
                 inc = 1;
             }
 
-            tns_ma_filter(&spec[(w*nshort)+start], size, inc, lpc, tns_order);
+            tns_ma_filter(&spec[(w*nshort)+start], size, inc, lpc, tns_order, exp);
         }
     }
 }
 
 /* Decoder transmitted coefficients for one TNS filter */
-static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_compress,
+static uint8_t tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_compress,
                             uint8_t *coef, real_t *a)
 {
     uint8_t i, m;
     real_t tmp2[TNS_MAX_ORDER+1], b[TNS_MAX_ORDER+1];
+    uint8_t table_index = 2 * (coef_compress == 0) + (coef_res_bits == 3);
+    real_t* tns_coef = all_tns_coefs[table_index];
+    uint8_t exp = 0;
 
     /* Conversion to signed integer */
     for (i = 0; i < order; i++)
-    {
-        if (coef_compress == 0)
-        {
-            if (coef_res_bits == 3)
-            {
-                tmp2[i] = tns_coef_0_3[coef[i]];
-            } else {
-                tmp2[i] = tns_coef_0_4[coef[i]];
-            }
-        } else {
-            if (coef_res_bits == 3)
-            {
-                tmp2[i] = tns_coef_1_3[coef[i]];
-            } else {
-                tmp2[i] = tns_coef_1_4[coef[i]];
-            }
-        }
-    }
+        tmp2[i] = tns_coef[coef[i]];
 
     /* Conversion to LPC coefficients */
     a[0] = COEF_CONST(1.0);
     for (m = 1; m <= order; m++)
     {
+        a[m] = tmp2[m-1]; /* changed */
+#ifdef FIXED_POINT
+        a[m] >>= exp;
+#endif
+
         for (i = 1; i < m; i++) /* loop only while i<m */
-            b[i] = a[i] + MUL_C(tmp2[m-1], a[m-i]);
+            b[i] = a[i] + MUL_C(a[m], a[m-i]);
 
         for (i = 1; i < m; i++) /* loop only while i<m */
             a[i] = b[i];
 
-        a[m] = tmp2[m-1]; /* changed */
+#ifdef FIXED_POINT
+        /* OK not to check after the last iteration. */
+        if (m < order)
+        {
+            real_t sum_abs = COEF_CONST(0.0);
+            for (i = 1; i <= m; ++i)
+            {
+                sum_abs += (a[i] >= 0) ? a[i] : -a[i];
+            }
+            /* Next iteration would turn sum to 2*sum + 1; maximal "coef" is 7.999 */
+            if (sum_abs >= COEF_CONST(3.5))
+            {
+                exp++;
+                for (i = 1; i <= m; ++i)
+                {
+                    a[i] >>= 1;
+                }
+            }
+        }
+#endif
     }
+    return exp;
 }
 
 static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *lpc,
-                          uint8_t order)
+                          uint8_t order, uint8_t exp)
 {
     /*
      - Simple all-pole filter of order "order" defined by
@@ -242,17 +257,25 @@ static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
 
     uint8_t j;
     uint16_t i;
-    real_t y;
     /* state is stored as a double ringbuffer */
     real_t state[2*TNS_MAX_ORDER] = {0};
     int8_t state_index = 0;
 
+#ifdef FIXED_POINT
+    if (exp >= 4)
+        return;
+#endif
+
     for (i = 0; i < size; i++)
     {
-        y = *spectrum;
-
+        real_t y = REAL_CONST(0.0);
         for (j = 0; j < order; j++)
-            y -= MUL_C(state[state_index+j], lpc[j+1]);
+            y += MUL_C(state[state_index+j], lpc[j+1]);
+#ifdef FIXED_POINT
+        if (exp > 0)
+            y <<= exp;
+#endif
+        y = *spectrum - y;
 
         /* double ringbuffer state */
         state_index--;
@@ -272,7 +295,7 @@ static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
 }
 
 static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *lpc,
-                          uint8_t order)
+                          uint8_t order, uint8_t exp)
 {
     /*
      - Simple all-zero filter of order "order" defined by
@@ -290,12 +313,21 @@ static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
     real_t state[2*TNS_MAX_ORDER] = {0};
     int8_t state_index = 0;
 
+#ifdef FIXED_POINT
+    if (exp >= 4)
+        return;
+#endif
+
     for (i = 0; i < size; i++)
     {
-        y = *spectrum;
-
+        real_t y = REAL_CONST(0.0);
         for (j = 0; j < order; j++)
             y += MUL_C(state[state_index+j], lpc[j+1]);
+#ifdef FIXED_POINT
+        if (exp > 0)
+            y <<= exp;
+#endif
+        y = *spectrum + y;
 
         /* double ringbuffer state */
         state_index--;
