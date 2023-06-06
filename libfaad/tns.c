@@ -209,10 +209,6 @@ static uint8_t tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coe
     for (m = 1; m <= order; m++)
     {
         a[m] = tmp2[m-1]; /* changed */
-#ifdef FIXED_POINT
-        a[m] >>= exp;
-#endif
-
         for (i = 1; i < m; i++) /* loop only while i<m */
             b[i] = a[i] + MUL_C(a[m], a[m-i]);
 
@@ -220,6 +216,8 @@ static uint8_t tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coe
             a[i] = b[i];
 
 #ifdef FIXED_POINT
+        a[m] >>= exp;
+
         /* OK not to check after the last iteration. */
         if (m < order)
         {
