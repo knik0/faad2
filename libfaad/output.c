@@ -473,6 +473,7 @@ void* output_to_PCM(NeAACDecStruct *hDecoder,
     uint16_t i;
     int16_t *short_sample_buffer = (int16_t*)sample_buffer;
     int32_t *int_sample_buffer = (int32_t*)sample_buffer;
+    int32_t exp, half, sat_shift_mask;
 
     /* Copy output to a standard PCM buffer */
     for (ch = 0; ch < channels; ch++)
@@ -527,19 +528,21 @@ void* output_to_PCM(NeAACDecStruct *hDecoder,
             }
             break;
         case FAAD_FMT_32BIT:
+            exp = 16 - REAL_BITS;
+            half = 1 << (exp - 1);
+            sat_shift_mask = SAT_SHIFT_MASK(exp);
             for(i = 0; i < frame_len; i++)
             {
                 int32_t tmp = get_sample(input, ch, i, hDecoder->downMatrix, hDecoder->upMatrix,
                     hDecoder->internal_channel);
                 if (tmp >= 0)
                 {
-                    tmp += (1 << (16-REAL_BITS-1));
-                    tmp <<= (16-REAL_BITS);
+                    tmp += half;
                 } else {
-                    tmp += -(1 << (16-REAL_BITS-1));
-                    tmp <<= (16-REAL_BITS);
+                    tmp += -half;
                 }
-                int_sample_buffer[(i*channels)+ch] = (int32_t)tmp;
+                tmp = SAT_SHIFT(tmp, exp, sat_shift_mask);
+                int_sample_buffer[(i*channels)+ch] = tmp;
             }
             break;
         case FAAD_FMT_FIXED:

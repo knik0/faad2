@@ -74,5 +74,5 @@ CLI_SOURCES = glob(["frontend/**/*.c", "frontend/**/*.h"], exclude = ["frontend/
     srcs = CLI_SOURCES,
     includes = ["frontend"],
     local_defines = FAAD_DEFINES + DRM_DEFINES[drm] + FIXED_DEFINES[fixed],
-    deps = [":faad"],
+    deps = [":faad" + DRM_AFFIX[drm] + FIXED_AFFIX[fixed]],
 ) for drm in range(2) for fixed in range(2)]

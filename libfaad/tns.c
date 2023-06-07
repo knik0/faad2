@@ -306,7 +306,6 @@ static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
 
     uint8_t j;
     uint16_t i;
-    real_t y;
     /* state is stored as a double ringbuffer */
     real_t state[2*TNS_MAX_ORDER] = {0};
     int8_t state_index = 0;
