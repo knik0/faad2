@@ -55,7 +55,7 @@ typedef struct
 
 audio_file *open_audio_file(char *infile, int samplerate, int channels,
                             int outputFormat, int fileType, long channelMask);
-int write_audio_file(audio_file *aufile, void *sample_buffer, int samples, int offset);
+int write_audio_file(audio_file *aufile, void *sample_buffer, int samples);
 void close_audio_file(audio_file *aufile);
 
 #ifdef __cplusplus
