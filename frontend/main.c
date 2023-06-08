@@ -666,6 +666,9 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
         break;
     }
 
+    // Override the logic of skipping 0-th output frame.
+    NeAACDecPostSeekReset(hDecoder, 1);
+
     if (infoOnly)
     {
         NeAACDecClose(hDecoder);
@@ -754,7 +757,7 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
 
         if ((frameInfo.error == 0) && (frameInfo.samples > 0) && (!adts_out))
         {
-            if (write_audio_file(aufile, sample_buffer, frameInfo.samples, 0) == 0)
+            if (write_audio_file(aufile, sample_buffer, frameInfo.samples) == 0)
                 break;
         }
 
@@ -907,7 +910,6 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
         /*int rc;*/
         long dur;
         unsigned int sample_count;
-        unsigned int delay = 0;
 
         if (mp4read_frame())
             break;
@@ -997,7 +999,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
 
         if ((frameInfo.error == 0) && (sample_count > 0) && (!adts_out))
         {
-            if (write_audio_file(aufile, sample_buffer, sample_count, delay) == 0)
+            if (write_audio_file(aufile, sample_buffer, sample_count) == 0)
                 break;
         }
 
@@ -1153,6 +1155,8 @@ static int faad_main(int argc, char *argv[])
                 } else {
                     outputFormat = atoi(dr);
                     if ((outputFormat < 1) || (outputFormat > 5))
+                        showHelp = 1;
+                    if (outputFormat == 5)  // Not yet unsupported by "audio".
                         showHelp = 1;
                 }
             }

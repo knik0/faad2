@@ -111,19 +111,19 @@ audio_file *open_audio_file(char *infile, int samplerate, int channels,
     return aufile;
 }
 
-int write_audio_file(audio_file *aufile, void *sample_buffer, int samples, int offset)
+int write_audio_file(audio_file *aufile, void *sample_buffer, int samples)
 {
     char *buf = (char *)sample_buffer;
     switch (aufile->outputFormat)
     {
     case FAAD_FMT_16BIT:
-        return write_audio_16bit(aufile, buf + offset*2, samples);
+        return write_audio_16bit(aufile, buf, samples);
     case FAAD_FMT_24BIT:
-        return write_audio_24bit(aufile, buf + offset*4, samples);
+        return write_audio_24bit(aufile, buf, samples);
     case FAAD_FMT_32BIT:
-        return write_audio_32bit(aufile, buf + offset*4, samples);
+        return write_audio_32bit(aufile, buf, samples);
     case FAAD_FMT_FLOAT:
-        return write_audio_float(aufile, buf + offset*4, samples);
+        return write_audio_float(aufile, buf, samples);
     default:
         return 0;
     }
