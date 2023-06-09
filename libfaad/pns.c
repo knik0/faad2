@@ -42,42 +42,33 @@ static void gen_rand_vector(real_t *spec, int16_t scale_factor, uint16_t size,
 
 #ifdef FIXED_POINT
 
-#define DIV(A, B) (((int64_t)A << REAL_BITS)/B)
-
-#define step(shift) \
-    if ((0x40000000l >> shift) + root <= value)       \
-    {                                                 \
-        value -= (0x40000000l >> shift) + root;       \
-        root = (root >> 1) | (0x40000000l >> shift);  \
-    } else {                                          \
-        root = root >> 1;                             \
-    }
-
-/* fixed point square root approximation */
-/* !!!! ONLY WORKS FOR EVEN %REAL_BITS% !!!! */
-real_t fp_sqrt(real_t value)
-{
-    real_t root = 0;
-
-    step( 0); step( 2); step( 4); step( 6);
-    step( 8); step(10); step(12); step(14);
-    step(16); step(18); step(20); step(22);
-    step(24); step(26); step(28); step(30);
-
-    if (root < value)
-        ++root;
-
-    root <<= (REAL_BITS/2);
-
-    return root;
-}
-
 static real_t const pow2_table[] =
 {
     COEF_CONST(1.0),
     COEF_CONST(1.18920711500272),
     COEF_CONST(1.41421356237310),
     COEF_CONST(1.68179283050743)
+};
+
+// mean_energy_table[x] == sqrt(3 / x)
+static real_t const mean_energy_table[] =
+{
+    COEF_CONST(0.0),                // should not happen
+    COEF_CONST(1.7320508075688772),
+    COEF_CONST(1.224744871391589),
+    COEF_CONST(1.0),                // sqrt(3/3)
+    COEF_CONST(0.8660254037844386),
+    COEF_CONST(0.7745966692414834),
+    COEF_CONST(0.7071067811865476),
+    COEF_CONST(0.6546536707079771),
+    COEF_CONST(0.6123724356957945),
+    COEF_CONST(0.5773502691896257),
+    COEF_CONST(0.5477225575051661),
+    COEF_CONST(0.5222329678670935),
+    COEF_CONST(0.5),                // sqrt(3/12)
+    COEF_CONST(0.4803844614152614),
+    COEF_CONST(0.4629100498862757),
+    COEF_CONST(0.4472135954999579),
 };
 #endif
 
@@ -114,49 +105,43 @@ static INLINE void gen_rand_vector(real_t *spec, int16_t scale_factor, uint16_t 
     }
 #else
     uint16_t i;
-    real_t energy = 0, scale;
+    real_t scale;
     int32_t exp, frac;
+    int32_t idx, mask;
 
     /* IMDCT pre-scaling */
     scale_factor -= 4 * sub;
 
-    scale_factor = min(max(scale_factor, -60), 60);
+    // 52 stands for 2**13 == 8192 factor; larger factor causes overflows later (in cfft).
+    scale_factor = min(max(scale_factor, -(REAL_BITS * 4)), 52);
 
     exp = scale_factor >> 2;
     frac = scale_factor & 3;
 
+    /* 29 <= REAL_BITS + exp <= 0 */
+    mask = (1 << (REAL_BITS + exp)) - 1;
+
+    idx = size;
+    scale = COEF_CONST(1);
+    // At most 2 iterations.
+    while (idx >= 16)
+    {
+        idx >>= 2;
+        scale >>= 1;
+    }
+    scale = MUL_C(scale, mean_energy_table[idx]);
+    if (frac)
+        scale = MUL_C(scale, pow2_table[frac]);
+    // scale is less than 4.0 now.
+
     for (i = 0; i < size; i++)
     {
-        /* this can be replaced by a 16 bit random generator!!!! */
         real_t tmp = (int32_t)ne_rng(__r1, __r2);
         if (tmp < 0)
-            tmp = -(tmp & ((1<<(REAL_BITS-1))-1));
+            tmp = -(tmp & mask);
         else
-            tmp = (tmp & ((1<<(REAL_BITS-1))-1));
-
-        energy += MUL_R(tmp,tmp);
-
-        spec[i] = tmp;
-    }
-    /* energy ~= size / 3 */
-
-    energy = fp_sqrt(energy);
-    if (energy > 0)
-    {
-        scale = DIV(REAL_CONST(1),energy);
-
-        if (exp < 0)
-            scale >>= -exp;
-        else
-            scale <<= exp;
-
-        if (frac)
-            scale = MUL_C(scale, pow2_table[frac]);
-
-        for (i = 0; i < size; i++)
-        {
-            spec[i] = MUL_R(spec[i], scale);
-        }
+            tmp = (tmp & mask);
+        spec[i] = MUL_C(tmp, scale);
     }
 #endif
 }
