@@ -148,8 +148,9 @@ NeAACDecHandle NeAACDecOpen(void)
     hDecoder->frame = 0;
     hDecoder->sample_buffer = NULL;
 
-    hDecoder->__r1 = 1;
-    hDecoder->__r2 = 1;
+    // Same as (1, 1) after 1024 iterations; otherwise first values does not look random at all.
+    hDecoder->__r1 = 0x2bb431ea;
+    hDecoder->__r2 = 0x206155b7;
 
     for (i = 0; i < MAX_CHANNELS; i++)
     {
