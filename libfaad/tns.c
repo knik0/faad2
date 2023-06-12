@@ -258,10 +258,12 @@ static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
     /* state is stored as a double ringbuffer */
     real_t state[2*TNS_MAX_ORDER] = {0};
     int8_t state_index = 0;
+    int32_t mul = 1;
 
 #ifdef FIXED_POINT
     if (exp >= 4)
         return;
+    mul = 1 << exp;
 #endif
 
     for (i = 0; i < size; i++)
@@ -269,11 +271,7 @@ static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
         real_t y = REAL_CONST(0.0);
         for (j = 0; j < order; j++)
             y += MUL_C(state[state_index+j], lpc[j+1]);
-#ifdef FIXED_POINT
-        if (exp > 0)
-            y <<= exp;
-#endif
-        y = *spectrum - y;
+        y = *spectrum - (y * mul);
 
         /* double ringbuffer state */
         state_index--;
@@ -309,10 +307,12 @@ static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
     /* state is stored as a double ringbuffer */
     real_t state[2*TNS_MAX_ORDER] = {0};
     int8_t state_index = 0;
+    int32_t mul = 1;
 
 #ifdef FIXED_POINT
     if (exp >= 4)
         return;
+    mul = 1 << exp;
 #endif
 
     for (i = 0; i < size; i++)
@@ -320,11 +320,8 @@ static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
         real_t y = REAL_CONST(0.0);
         for (j = 0; j < order; j++)
             y += MUL_C(state[state_index+j], lpc[j+1]);
-#ifdef FIXED_POINT
-        if (exp > 0)
-            y <<= exp;
-#endif
-        y = *spectrum + y;
+
+        y = *spectrum + (y * mul);
 
         /* double ringbuffer state */
         state_index--;
