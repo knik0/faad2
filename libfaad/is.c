@@ -48,9 +48,8 @@ void is_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec,
 {
     uint8_t g, sfb, b;
     uint16_t i;
-#ifndef FIXED_POINT
     real_t scale;
-#else
+#ifdef FIXED_POINT
     int32_t exp, frac;
 #endif
 
@@ -81,23 +80,21 @@ void is_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec,
                     scale = (real_t)pow(0.5, (0.25*scale_factor));
 #else
                     scale_factor = min(max(scale_factor, -60), 60);
-                    exp = scale_factor >> 2;
+                    exp = scale_factor >> 2; /* exp is -15..15 */
                     frac = scale_factor & 3;
+                    scale = pow05_table[frac];
+                    exp += COEF_BITS - REAL_BITS; /* exp is -1..29 */
+                    if (exp < 0)
+                        scale <<= -exp;
+                    else
+                        scale >>= exp;
 #endif
 
                     /* Scale from left to right channel,
                        do not touch left channel */
                     for (i = icsr->swb_offset[sfb]; i < min(icsr->swb_offset[sfb+1], ics->swb_offset_max); i++)
                     {
-#ifndef FIXED_POINT
                         r_spec[(group*nshort)+i] = MUL_R(l_spec[(group*nshort)+i], scale);
-#else
-                        if (exp < 0)
-                            r_spec[(group*nshort)+i] = l_spec[(group*nshort)+i] << -exp;
-                        else
-                            r_spec[(group*nshort)+i] = l_spec[(group*nshort)+i] >> exp;
-                        r_spec[(group*nshort)+i] = MUL_C(r_spec[(group*nshort)+i], pow05_table[frac]);
-#endif
                         if (is_intensity(icsr, g, sfb) != invert_intensity(ics, g, sfb))
                             r_spec[(group*nshort)+i] = -r_spec[(group*nshort)+i];
                     }
