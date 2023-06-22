@@ -362,7 +362,7 @@ static real_t find_log2_Q(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
         /* tmp / pan in log2 */
         return tmp - pan;
     } else {
-        return (6 << REAL_BITS) - (sbr->Q[ch][k][l] << REAL_BITS);
+        return (6 - sbr->Q[ch][k][l]) * REAL_PRECISION;
     }
 }
 
