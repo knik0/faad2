@@ -1894,6 +1894,14 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
 
     int16_t scale_factor = ics->global_gain;
     int16_t is_position = 0;
+    int16_t scale_factor_max = 255;
+#ifdef FIXED_POINT
+    /* TODO: consider rolling out to regular build. */
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    /* The value is inexact, adjusted to current fuzzer findings. */
+    scale_factor_max = 175;
+#endif  // FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+#endif  // FIXED_POINT
 #ifndef DRM
     int8_t noise_pcm_flag = 1;
     int16_t noise_energy = ics->global_gain - 90;
@@ -1959,7 +1967,7 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
                 scale_factor += (t - 60);
                 if (scale_factor < 0 || scale_factor > 255)
                     return 4;
-                ics->scale_factors[g][sfb] = scale_factor;
+                ics->scale_factors[g][sfb] = min(scale_factor, scale_factor_max);
 #ifdef SF_PRINT
                 printf("%d\n", ics->scale_factors[g][sfb]);
 #endif
