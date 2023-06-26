@@ -53,13 +53,13 @@ list(FILTER FAAD_SOURCES EXCLUDE REGEX ".*getopt\\.[ch]$")
 
 # Lets stick to predefined config, until more flexibility is actually requested.
 set(FAAD_DEFINES
+  APPLY_DRC
   HAVE_INTTYPES_H=1
+  HAVE_MEMCPY=1
   HAVE_STRINGS_H=1
   HAVE_SYS_STAT_H=1
   HAVE_SYS_TYPES_H=1
-  HAVE_MEMCPY=1
   STDC_HEADERS=1
-  APPLY_DRC
 )
 
 set(FAAD_FLAGS

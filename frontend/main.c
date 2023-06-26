@@ -56,13 +56,6 @@
 #include "audio.h"
 #include "mp4read.h"
 
-#ifdef HAVE_GETOPT_H
-# include <getopt.h>
-#else
-# include "getopt.h"
-# include "getopt.c"
-#endif
-
 #ifndef min
 #define min(a,b) ( (a) < (b) ? (a) : (b) )
 #endif

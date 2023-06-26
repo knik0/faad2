@@ -65,7 +65,7 @@ typedef int32_t real_t;
 #define Q2_PRECISION (1 << Q2_BITS)
 #define Q2_CONST(A) (((A) >= 0) ? ((real_t)((A)*(Q2_PRECISION)+0.5)) : ((real_t)((A)*(Q2_PRECISION)-0.5)))
 
-#if defined(_WIN32) && !defined(_WIN32_WCE)
+#if defined(_WIN32) && !defined(_WIN32_WCE) && !defined(__GNUC__)
 
 /* multiply with real shift */
 static INLINE real_t MUL_R(real_t A, real_t B)
