@@ -3,7 +3,6 @@ load("@rules_fuzzing//fuzzing:cc_defs.bzl", "cc_fuzz_test")
 # Unless building for embedded systems all headers / functions should exist.
 FAAD_DEFINES = [
     "APPLY_DRC",
-    "HAVE_GETOPT_H=1",
     "HAVE_INTTYPES_H=1",
     "HAVE_MEMCPY=1",
     "HAVE_STRINGS_H=1",
