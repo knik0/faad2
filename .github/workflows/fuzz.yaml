@@ -27,10 +27,9 @@
 name: OSS-Fuzz
 on:
   push:
-    branches: [ master ]
-    tags-ignore: ['*']
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    types: [opened, reopened, labeled, synchronize]
 
 jobs:
   Fuzzing:
