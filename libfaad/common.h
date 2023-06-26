@@ -151,9 +151,11 @@ extern "C" {
 #ifdef FIXED_POINT
 #define DIV_R(A, B) (((int64_t)A * REAL_PRECISION)/B)
 #define DIV_C(A, B) (((int64_t)A * COEF_PRECISION)/B)
+#define DIV_F(A, B) (((int64_t)A * FRAC_PRECISION)/B)
 #else
 #define DIV_R(A, B) ((A)/(B))
 #define DIV_C(A, B) ((A)/(B))
+#define DIV_F(A, B) ((A)/(B))
 #endif
 
 #ifndef SBR_LOW_POWER
@@ -405,8 +407,8 @@ char *strchr(), *strrchr();
 #endif
 
 typedef real_t complex_t[2];
-#define RE(A) A[0]
-#define IM(A) A[1]
+#define RE(A) (A)[0]
+#define IM(A) (A)[1]
 
 
 /* common functions */
