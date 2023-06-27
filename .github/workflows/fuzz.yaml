@@ -31,6 +31,10 @@ on:
   pull_request:
     types: [opened, reopened, labeled, synchronize]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   Fuzzing:
     runs-on: ubuntu-latest

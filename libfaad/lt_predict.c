@@ -146,7 +146,7 @@ static INLINE int16_t real_to_int16(real_t sig_in)
             return -32768;
     }
 
-    return (sig_in >> REAL_BITS);
+    return (int16_t)(sig_in >> REAL_BITS);
 }
 #else
 static INLINE int16_t real_to_int16(real_t sig_in)
@@ -166,7 +166,7 @@ static INLINE int16_t real_to_int16(real_t sig_in)
             return -32768;
     }
 
-    return lrintf(sig_in);
+    return (int16_t)lrintf(sig_in);
 }
 #endif
 

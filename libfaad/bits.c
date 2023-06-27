@@ -116,7 +116,7 @@ void faad_initbits(bitfile *ld, const void *_buffer, const uint32_t buffer_size)
 
 void faad_endbits(bitfile *ld)
 {
-    // void
+    (void)ld;
 }
 
 uint32_t faad_get_processed_bits(bitfile *ld)
@@ -193,11 +193,11 @@ void faad_rewindbits(bitfile *ld)
 #endif
 
 /* reset to a certain point */
-void faad_resetbits(bitfile *ld, int bits)
+void faad_resetbits(bitfile *ld, uint32_t bits)
 {
     uint32_t tmp;
-    int words = bits >> 5;
-    int remainder = bits & 0x1F;
+    uint32_t words = bits >> 5;
+    uint32_t remainder = bits & 0x1F;
 
     if (ld->buffer_size < words * 4)
         ld->bytes_left = 0;

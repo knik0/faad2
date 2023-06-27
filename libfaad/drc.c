@@ -32,7 +32,6 @@
 #include "structs.h"
 
 #include <stdlib.h>
-#include <string.h>
 #include "syntax.h"
 #include "drc.h"
 

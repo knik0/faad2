@@ -38,9 +38,7 @@
 #include "common.h"
 #include "structs.h"
 
-#include <string.h>
 #include <stdlib.h>
-#include <string.h>
 #include "specrec.h"
 #include "filtbank.h"
 #include "syntax.h"
@@ -567,7 +565,7 @@ static uint8_t quant_to_spec(NeAACDecStruct *hDecoder,
 #ifndef FIXED_POINT
     real_t scf;
 #else
-    int32_t sat_shift_mask;
+    int32_t sat_shift_mask = 0;
 #endif
 
     k = 0;
@@ -607,6 +605,8 @@ static uint8_t quant_to_spec(NeAACDecStruct *hDecoder,
             }
             if (scale_factor > 120)
                 scale_factor = 120;  /* => exp <= 30 */
+#else
+            (void)hDecoder;
 #endif
 
             /* scale_factor for IS or PNS, has different meaning; fill with almost zeroes */
@@ -654,7 +654,7 @@ static uint8_t quant_to_spec(NeAACDecStruct *hDecoder,
                         spec_data[wb+1] = iq1 >> -exp;
                         spec_data[wb+2] = iq2 >> -exp;
                         spec_data[wb+3] = iq3 >> -exp;
-                    } else {
+                    } else { /* exp > 0 */
                         spec_data[wb+0] = SAT_SHIFT(iq0, exp, sat_shift_mask);
                         spec_data[wb+1] = SAT_SHIFT(iq1, exp, sat_shift_mask);
                         spec_data[wb+2] = SAT_SHIFT(iq2, exp, sat_shift_mask);
@@ -906,7 +906,7 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
                                    element *sce, int16_t *spec_data)
 {
     uint8_t retval;
-    int output_channels;
+    uint8_t output_channels;
     ALIGN real_t spec_coef[1024];
 
 #ifdef PROFILE

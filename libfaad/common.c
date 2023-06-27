@@ -475,7 +475,7 @@ int32_t log2_int(uint32_t val)
 real_t log2_fix(uint32_t val)
 {
     uint32_t frac;
-    int8_t exp = 0;
+    int32_t exp = 0;
     uint32_t index;
     uint32_t index_frac;
     uint32_t x1, x2;

@@ -139,6 +139,7 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
 {
     uint8_t m, l, j, k, k_l, k_h, p;
     real_t nrg, div;
+    (void)adj;  /* TODO: remove parameter? */
 
     if (sbr->bs_interpol_freq == 1)
     {
@@ -336,7 +337,7 @@ static real_t find_log2_Q(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
         real_t tmp = (7 << REAL_BITS) - (sbr->Q[0][k][l] << REAL_BITS);
         real_t pan;
 
-        uint8_t Q = sbr->Q[1][k][l];
+        int32_t Q = sbr->Q[1][k][l];
 
         if (ch == 0)
         {

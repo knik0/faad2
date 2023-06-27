@@ -264,6 +264,8 @@ static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
     if (exp >= 4)
         return;
     mul = 1 << exp;
+#else
+    (void)exp;
 #endif
 
     for (i = 0; i < size; i++)
@@ -313,6 +315,8 @@ static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
     if (exp >= 4)
         return;
     mul = 1 << exp;
+#else
+    (void)exp;
 #endif
 
     for (i = 0; i < size; i++)

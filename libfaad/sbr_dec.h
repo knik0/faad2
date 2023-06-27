@@ -111,7 +111,6 @@ typedef struct
 
     real_t *G_temp_prev[2][5];
     real_t *Q_temp_prev[2][5];
-    int8_t GQ_ringbuf_index[2];
 
     int16_t E[2][64][MAX_L_E];
     int16_t E_prev[2][64];
@@ -141,6 +140,8 @@ typedef struct
     uint8_t bs_add_harmonic[2][64];
     uint8_t bs_add_harmonic_prev[2][64];
 
+    int8_t GQ_ringbuf_index[2];
+
     uint16_t index_noise_prev[2];
     uint8_t psi_is_prev[2];
 
@@ -159,21 +160,20 @@ typedef struct
     uint8_t M_prev;
     uint16_t frame_len;
 
-    uint8_t Reset;
     uint32_t frame;
     uint32_t header_count;
 
-    uint8_t id_aac;
     qmfa_info *qmfa[2];
     qmfs_info *qmfs[2];
 
     qmf_t Xsbr[2][MAX_NTSRHFG][64];
 
-#ifdef DRM
-    uint8_t Is_DRM_SBR;
-#ifdef DRM_PS
+#if defined(DRM) && defined(DRM_PS)
     drm_ps_info *drm_ps;
 #endif
+
+#ifdef PS_DEC
+    ps_info *ps;
 #endif
 
     uint8_t numTimeSlotsRate;
@@ -181,9 +181,6 @@ typedef struct
     uint8_t tHFGen;
     uint8_t tHFAdj;
 
-#ifdef PS_DEC
-    ps_info *ps;
-#endif
 #if (defined(PS_DEC) || defined(DRM_PS))
     uint8_t ps_used;
     uint8_t psResetFlag;
@@ -226,6 +223,13 @@ typedef struct
     uint8_t bs_num_rel_1[2];
     uint8_t bs_df_env[2][9];
     uint8_t bs_df_noise[2][3];
+
+    uint8_t Reset;
+    uint8_t id_aac;
+
+#ifdef DRM
+    uint8_t Is_DRM_SBR;
+#endif
 } sbr_info;
 
 sbr_info *sbrDecodeInit(uint16_t framelength, uint8_t id_aac,

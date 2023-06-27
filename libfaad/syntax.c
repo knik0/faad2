@@ -37,7 +37,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 
 #include "syntax.h"
 #include "specrec.h"
@@ -885,6 +884,8 @@ static uint8_t ics_info(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *ld,
                 {
                     predictor_reset_group_number =
                         (uint8_t)faad_getbits(ld, 5 DEBUGVAR(1,54,"ics_info(): pred.predictor_reset_group_number"));
+                } else {
+                    predictor_reset_group_number = 0;
                 }
 
                 for (sfb = 0; sfb < limit; sfb++)
@@ -939,9 +940,11 @@ static uint8_t ics_info(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *ld,
                         }
                     }
                 }
-#endif
+#endif  /* ERROR_RESILIENCE */
             }
-#endif
+#else  /* LTP_DEC */
+            (void)common_window;
+#endif  /* LTP_DEC */
         }
     }
 
@@ -1078,6 +1081,7 @@ static uint16_t data_stream_element(NeAACDecStruct *hDecoder, bitfile *ld)
 {
     uint8_t byte_aligned;
     uint16_t i, count;
+    (void)hDecoder;  /* TODO: remove parameter; rename method; why result is unused? */
 
     /* element_instance_tag = */ faad_getbits(ld, LEN_TAG
         DEBUGVAR(1,60,"data_stream_element(): element_instance_tag"));
@@ -1181,6 +1185,7 @@ static uint8_t fill_element(NeAACDecStruct *hDecoder, bitfile *ld, drc_info *drc
                 }
             }
 #else
+            (void)drc;
             return 30;
 #endif
 #ifdef SBR_DEC
@@ -1299,6 +1304,9 @@ void DRM_aac_scalable_main_element(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *
     ic_stream *ics2 = &(cpe.ics2);
     ALIGN int16_t spec_data1[1024] = {0};
     ALIGN int16_t spec_data2[1024] = {0};
+
+    (void)drc;  /* TODO: remove unused parameter? */
+    (void)pce;  /* TODO: remove unused parameter? */
 
     hDecoder->fr_ch_ele = 0;
 
@@ -1724,11 +1732,15 @@ static uint8_t section_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *l
 {
     uint8_t g;
     uint8_t sect_esc_val, sect_bits;
+    uint8_t sect_lim; /* 51 or 120, anyways less than 127. */
 
-    if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
+    if (ics->window_sequence == EIGHT_SHORT_SEQUENCE) {
         sect_bits = 3;
-    else
+        sect_lim = 8 * 15;
+    } else {
         sect_bits = 5;
+        sect_lim = MAX_SFB;
+    }
     sect_esc_val = (1u<<sect_bits) - 1;
 
 #if 0
@@ -1748,21 +1760,15 @@ static uint8_t section_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *l
 #endif
             uint8_t sfb;
             uint8_t sect_len_incr;
-            uint16_t sect_len = 0;
+            uint8_t sect_len = 0;
             uint8_t sect_cb_bits = 4;
 
             /* if "faad_getbits" detects error and returns "0", "k" is never
                incremented and we cannot leave the while loop */
             if (ld->error != 0)
                 return 14;
-            if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
-            {
-                if (i >= 8*15)
-                    return 15;
-            } else {
-                if (i >= MAX_SFB)
-                    return 15;
-            }
+            if (i >= sect_lim)
+                return 15;
 
 #ifdef ERROR_RESILIENCE
             if (hDecoder->aacSectionDataResilienceFlag)
@@ -1813,6 +1819,8 @@ static uint8_t section_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *l
                 (k+sect_len < ics->max_sfb)*/)
             {
                 sect_len += sect_len_incr;
+                if (sect_len > sect_lim)
+                    return 15;
                 sect_len_incr = (uint8_t)faad_getbits(ld, sect_bits
                     DEBUGVAR(1,72,"section_data(): sect_len_incr"));
             }
@@ -1829,14 +1837,10 @@ static uint8_t section_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *l
             printf("%d\n", ics->sect_end[g][i]);
 #endif
 
-            if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
-            {
-                if (k + sect_len > 8*15)
-                    return 15;
-            } else {
-                if (k + sect_len > MAX_SFB)
-                    return 15;
-            }
+            if (sect_len > sect_lim)
+                return 15;
+            if (k + sect_len > sect_lim)
+                return 15;
 
             for (sfb = k; sfb < k + sect_len; sfb++)
             {
@@ -1853,7 +1857,7 @@ static uint8_t section_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *l
                 ics->sect_cb[g][i]);
 #endif
 
-            k += sect_len;
+            k += sect_len; /* k <= sect_lim */
             i++;
         }
         ics->num_sec[g] = i;
@@ -2014,7 +2018,7 @@ static uint8_t scale_factor_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfi
 /* Table 4.4.27 */
 static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld)
 {
-    uint8_t w, filt, i, start_coef_bits, coef_bits;
+    uint8_t w, filt, i, coef_bits;
     uint8_t n_filt_bits = 2;
     uint8_t length_bits = 6;
     uint8_t order_bits = 5;
@@ -2028,6 +2032,7 @@ static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld)
 
     for (w = 0; w < ics->num_windows; w++)
     {
+        uint8_t start_coef_bits = 3;
         tns->n_filt[w] = (uint8_t)faad_getbits(ld, n_filt_bits
             DEBUGVAR(1,74,"tns_data(): n_filt"));
 #if 0
@@ -2038,11 +2043,7 @@ static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld)
         {
             if ((tns->coef_res[w] = faad_get1bit(ld
                 DEBUGVAR(1,75,"tns_data(): coef_res"))) & 1)
-            {
                 start_coef_bits = 4;
-            } else {
-                start_coef_bits = 3;
-            }
 #if 0
             printf("%d\n", tns->coef_res[w]);
 #endif

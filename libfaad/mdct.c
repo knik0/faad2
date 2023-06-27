@@ -126,7 +126,7 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     complex_t x;
 #ifdef ALLOW_SMALL_FRAMELENGTH
 #ifdef FIXED_POINT
-    real_t scale, b_scale = 0;
+    real_t scale = 0, b_scale = 0;
 #endif
 #endif
     ALIGN complex_t Z1[512];

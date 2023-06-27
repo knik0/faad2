@@ -27,16 +27,24 @@
    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+
 #if defined WIN32 || defined _WIN32 || defined WIN64 || defined _WIN64
 
 #include "unicode_support.h"
 
+#include <stdlib.h>
+
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <shellapi.h>
 #include <io.h>
 
 static UINT g_old_output_cp = ((UINT)-1);
 
-char *utf16_to_utf8(const wchar_t *input)
+static char *utf16_to_utf8(const wchar_t *input)
 {
 	char *Buffer;
 	int BuffSize = 0, Result = 0;
@@ -51,22 +59,7 @@ char *utf16_to_utf8(const wchar_t *input)
 	return ((Result > 0) && (Result <= BuffSize)) ? Buffer : NULL;
 }
 
-char *utf16_to_ansi(const wchar_t *input)
-{
-	char *Buffer;
-	int BuffSize = 0, Result = 0;
-
-	BuffSize = WideCharToMultiByte(CP_ACP, 0, input, -1, NULL, 0, NULL, NULL);
-	Buffer = (char*) malloc(sizeof(char) * BuffSize);
-	if(Buffer)
-	{
-		Result = WideCharToMultiByte(CP_ACP, 0, input, -1, Buffer, BuffSize, NULL, NULL);
-	}
-
-	return ((Result > 0) && (Result <= BuffSize)) ? Buffer : NULL;
-}
-
-wchar_t *utf8_to_utf16(const char *input)
+static wchar_t *utf8_to_utf16(const char *input)
 {
 	wchar_t *Buffer;
 	int BuffSize = 0, Result = 0;
@@ -135,11 +128,11 @@ void free_commandline_arguments_utf8(int *argc, char ***argv)
 	}
 }
 
-FILE *fopen_utf8(const char *filename_utf8, const char *mode_utf8)
+FILE *faad_fopen(const char *filename, const char *mode)
 {
 	FILE *ret = NULL;
-	wchar_t *filename_utf16 = utf8_to_utf16(filename_utf8);
-	wchar_t *mode_utf16 = utf8_to_utf16(mode_utf8);
+	wchar_t *filename_utf16 = utf8_to_utf16(filename);
+	wchar_t *mode_utf16 = utf8_to_utf16(mode);
 
 	if(filename_utf16 && mode_utf16)
 	{
@@ -167,6 +160,13 @@ void uninit_console_utf8(void)
 	{
 		SetConsoleOutputCP(g_old_output_cp);
 	}
+}
+
+#else
+
+FILE *faad_fopen(const char *filename, const char *mode)
+{
+	return fopen(filename, mode);
 }
 
 #endif
