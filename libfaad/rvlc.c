@@ -185,6 +185,14 @@ static uint8_t rvlc_decode_sf_forward(ic_stream *ics, bitfile *ld_sf, bitfile *l
     int16_t scale_factor = ics->global_gain;
     int16_t is_position = 0;
     int16_t noise_energy = ics->global_gain - 90 - 256;
+    int16_t scale_factor_max = 255;
+#ifdef FIXED_POINT
+    /* TODO: consider rolling out to regular build. */
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    /* The value is inexact, adjusted to current fuzzer findings. */
+    scale_factor_max = 174;
+#endif  // FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+#endif  // FIXED_POINT
 
 #ifdef PRINT_RVLC
     printf("\nglobal_gain: %d\n", ics->global_gain);
@@ -240,7 +248,7 @@ static uint8_t rvlc_decode_sf_forward(ic_stream *ics, bitfile *ld_sf, bitfile *l
                     if (scale_factor < 0 || scale_factor > 255)
                         return 4;
 
-                    ics->scale_factors[g][sfb] = scale_factor;
+                    ics->scale_factors[g][sfb] = min(scale_factor, scale_factor_max);
 
                     break;
                 }

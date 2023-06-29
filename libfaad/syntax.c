@@ -1903,7 +1903,7 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
     /* TODO: consider rolling out to regular build. */
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     /* The value is inexact, adjusted to current fuzzer findings. */
-    scale_factor_max = 175;
+    scale_factor_max = 174;
 #endif  // FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 #endif  // FIXED_POINT
 #ifndef DRM

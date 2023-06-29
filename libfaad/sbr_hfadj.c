@@ -323,9 +323,8 @@ static real_t find_log2_E(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
         /* tmp / pan in log2 */
         return tmp - pan;
     } else {
-        uint8_t amp = (sbr->amp_res[ch]) ? 0 : 1;
-
-        return (6 << REAL_BITS) + (sbr->E[ch][k][l] << (REAL_BITS-amp));
+        real_t mul = (sbr->amp_res[ch]) ? REAL_PRECISION : (REAL_PRECISION / 2);
+        return 6 * REAL_PRECISION + sbr->E[ch][k][l] * mul;
     }
 }
 
