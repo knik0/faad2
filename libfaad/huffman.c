@@ -402,7 +402,7 @@ uint8_t huffman_spectral_data(uint8_t cb, bitfile *ld, int16_t *sp)
         return 11;
     }
 
-    return 0;
+    /* return 0; */
 }
 
 
@@ -418,7 +418,7 @@ int8_t huffman_spectral_data_2(uint8_t cb, bits_t *ld, int16_t *sp)
     uint32_t cw;
     uint16_t offset = 0;
     uint8_t extra_bits;
-    uint8_t i, vcb11 = 0;
+    uint8_t vcb11 = 0;
 
 
     switch (cb)
@@ -517,6 +517,7 @@ int8_t huffman_spectral_data_2(uint8_t cb, bits_t *ld, int16_t *sp)
 	/* decode sign bits */
     if (unsigned_cb[cb])
     {
+        uint8_t i;
         for(i = 0; i < ((cb < FIRST_PAIR_HCB) ? QUAD_LEN : PAIR_LEN); i++)
         {
             if(sp[i])

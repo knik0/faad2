@@ -31,6 +31,10 @@ on:
   pull_request:
     types: [opened, reopened, labeled, synchronize]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   BuildWithBazel:
     runs-on: ubuntu-latest
@@ -49,7 +53,7 @@ jobs:
         bazel build :all
 
   BuildWithCMake:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os || 'ubuntu-latest' }}
 
     strategy:
      fail-fast: false
@@ -68,13 +72,19 @@ jobs:
            cc: gcc
            cxx: g++
            cflags: -Wall -fdiagnostics-color=always
+         - name: MSVC
+           os: windows-latest
+           cmake_args: >-
+             -G "Visual Studio 17 2022" -A x64
+         - name: OSX
+           os: macos-latest
 
     env:
       CC: ${{ matrix.cc || 'cc' }}
       CXX: ${{ matrix.cxx || 'cxx' }}
       CFLAGS: ${{ matrix.cflags || '-Wall' }}
       CXXFLAGS: ${{ matrix.cflags || '-Wall' }}
-      SHARED: ${{matrix.shared || 'false'}}
+      SHARED: ${{ matrix.shared || 'false' }}
 
     steps:
     - name: Checkout the source
@@ -83,15 +93,18 @@ jobs:
         submodules: false
         fetch-depth: 1
     - name: Configure and build
+      shell: bash
       run: |
+        export NUM_CORES=`nproc || getconf _NPROCESSORS_ONLN`
         cmake -B build . \
             -DCMAKE_INSTALL_PREFIX=$RUNNER_TEMP/usrlocal \
-            -DBUILD_SHARED_LIBS=${SHARED}
-        cmake --build build -j `nproc`
+            -DBUILD_SHARED_LIBS=${SHARED} \
+            ${{ matrix.cmake_args }}
+        cmake --build build -j ${NUM_CORES}
         cmake --install build
 
   BuildOnMsys:
-    name: Windows MSYS2 / ${{ matrix.msystem }}
+    name: BuildOnMsys (${{ matrix.msystem }})
     runs-on: windows-latest
     strategy:
       fail-fast: false

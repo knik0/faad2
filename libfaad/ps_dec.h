@@ -89,11 +89,6 @@ typedef struct
     /* a header has been read */
     uint8_t header_read;
 
-    /* hybrid filterbank parameters */
-    void *hyb;
-    uint8_t use34hybrid_bands;
-    uint8_t numTimeSlotsRate;
-
     /**/
     uint8_t num_groups;
     uint8_t num_hybrid_groups;
@@ -101,15 +96,22 @@ typedef struct
     uint8_t nr_allpass_bands;
     uint8_t decay_cutoff;
 
-    uint8_t *group_border;
-    uint16_t *map_group2bk;
-
     /* filter delay handling */
     uint8_t saved_delay;
     uint8_t delay_buf_index_ser[NO_ALLPASS_LINKS];
     uint8_t num_sample_delay_ser[NO_ALLPASS_LINKS];
     uint8_t delay_D[64];
     uint8_t delay_buf_index_delay[64];
+
+    /* mixing and phase */
+    uint8_t phase_hist;
+
+    /* hybrid filterbank parameters */
+    uint8_t use34hybrid_bands;
+    uint8_t numTimeSlotsRate;
+
+    uint8_t *group_border;
+    uint16_t *map_group2bk;
 
     complex_t delay_Qmf[14][64]; /* 14 samples delay max, 64 QMF channels */
     complex_t delay_SubQmf[2][32]; /* 2 samples delay max (SubQmf is always allpass filtered) */
@@ -129,10 +131,11 @@ typedef struct
     complex_t h12_prev[50];
     complex_t h21_prev[50];
     complex_t h22_prev[50];
-    uint8_t phase_hist;
     complex_t ipd_prev[20][2];
     complex_t opd_prev[20][2];
 
+    /* hybrid filterbank parameters */
+    void *hyb;
 } ps_info;
 
 /* ps_syntax.c */

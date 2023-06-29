@@ -847,17 +847,6 @@ void* NeAACDecDecode2(NeAACDecHandle hpDecoder,
         sample_buffer, sample_buffer_size);
 }
 
-#ifdef DRM
-
-#define ERROR_STATE_INIT 6
-
-//static void conceal_output(NeAACDecStruct *hDecoder, uint16_t frame_len,
-//                           uint8_t out_ch, void *sample_buffer)
-//{
-//    return;
-//}
-#endif
-
 static void* aac_frame_decode(NeAACDecStruct *hDecoder,
                               NeAACDecFrameInfo *hInfo,
                               unsigned char *buffer,
@@ -1237,11 +1226,6 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
     return sample_buffer;
 
 error:
-
-
-#ifdef DRM
-    hDecoder->error_state = ERROR_STATE_INIT;
-#endif
 
     /* reset filterbank state */
     for (i = 0; i < MAX_CHANNELS; i++)

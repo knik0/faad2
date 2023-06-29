@@ -510,6 +510,10 @@ static void passf5(const uint16_t ido, const uint16_t l1, const complex_t *cc,
     static real_t ti12 = FRAC_CONST(0.587785252292473);
     uint16_t k, ac, ah;
     complex_t c2, c3, c4, c5, t2, t3, t4, t5;
+    (void)wa1;
+    (void)wa2;
+    (void)wa3;
+    (void)wa4;
 
     if (ido == 1)
     {
@@ -993,6 +997,8 @@ startloop:
         }
         l1 = l2;
     }
+#else  // FIXED_POINT
+    (void)wa;  /* whoa! does it work for FIXED_POINT? */
 #endif
 }
 

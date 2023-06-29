@@ -47,7 +47,9 @@ file(GLOB_RECURSE LIBFAAD_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} libfaad/*
 mark_as_advanced(LIBFAAD_SOURCES)
 
 file(GLOB_RECURSE FAAD_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} frontend/*.c frontend/*.h)
-list(FILTER FAAD_SOURCES EXCLUDE REGEX ".*getopt\\.[ch]$")
+if (NOT MSVC)
+  list(FILTER FAAD_SOURCES EXCLUDE REGEX ".*getopt\\.[ch]$")
+endif()
 
 # Build
 
@@ -56,6 +58,7 @@ set(FAAD_DEFINES
   APPLY_DRC
   HAVE_INTTYPES_H=1
   HAVE_MEMCPY=1
+  HAVE_STRING_H=1
   HAVE_STRINGS_H=1
   HAVE_SYS_STAT_H=1
   HAVE_SYS_TYPES_H=1
@@ -64,8 +67,18 @@ set(FAAD_DEFINES
 
 set(FAAD_FLAGS
   -Wall
-  -pedantic
 )
+if(MSVC)
+  list(APPEND FAAD_FLAGS
+    /wd4702 # unreachable code; there is a false-positive report
+    /wd4820 # implicit padding in structs
+    /wd5045 # Spectre nonsense
+  )
+else()
+  list(APPEND FAAD_FLAGS
+    -pedantic
+  )
+endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "GNU")
   list(APPEND FAAD_FLAGS -ffloat-store)
@@ -175,11 +188,19 @@ transform_pc_file("libfaad/faad2.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/faad2.pc" "
 add_executable(faad_cli ${FAAD_SOURCES})
 target_link_libraries(faad_cli faad)
 target_compile_definitions(faad_cli PRIVATE ${FAAD_DEFINES})
-set_target_properties(faad_cli PROPERTIES OUTPUT_NAME faad)
+target_compile_options(faad_cli PRIVATE ${FAAD_FLAGS})
+
+if (MSVC)
+  target_include_directories(faad_cli PRIVATE
+    frontend
+  )
+else()
+  set_target_properties(faad_cli PROPERTIES OUTPUT_NAME faad)
+endif()
 
 # Installation
 
-if(NOT FAAD_BUNDLED_MODE)
+if(NOT FAAD_BUNDLED_MODE AND NOT MSVC)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/faad2.pc"
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 

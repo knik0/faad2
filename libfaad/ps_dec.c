@@ -263,6 +263,7 @@ static void channel_filter2(hyb_info *hyb, uint8_t frame_len, const real_t *filt
                             qmf_t *buffer, qmf_t **X_hybrid)
 {
     uint8_t i;
+    (void)hyb;  /* TODO: remove parameter? */
 
     for (i = 0; i < frame_len; i++)
     {
@@ -297,6 +298,7 @@ static void channel_filter4(hyb_info *hyb, uint8_t frame_len, const real_t *filt
 {
     uint8_t i;
     real_t input_re1[2], input_re2[2], input_im1[2], input_im2[2];
+    (void)hyb;  /* TODO: remove parameter? */
 
     for (i = 0; i < frame_len; i++)
     {
@@ -372,6 +374,7 @@ static void channel_filter8(hyb_info *hyb, uint8_t frame_len, const real_t *filt
     uint8_t i, n;
     real_t input_re1[4], input_re2[4], input_im1[4], input_im2[4];
     real_t x[4];
+    (void)hyb;  /* TODO: remove parameter? */
 
     for (i = 0; i < frame_len; i++)
     {
@@ -464,6 +467,7 @@ static void channel_filter12(hyb_info *hyb, uint8_t frame_len, const real_t *fil
     uint8_t i, n;
     real_t input_re1[6], input_re2[6], input_im1[6], input_im2[6];
     real_t out_re1[6], out_re2[6], out_im1[6], out_im2[6];
+    (void)hyb;  /* TODO: remove parameter? */
 
     for (i = 0; i < frame_len; i++)
     {
@@ -586,6 +590,7 @@ static void hybrid_synthesis(hyb_info *hyb, qmf_t X[32][64], qmf_t X_hybrid[32][
     uint8_t offset = 0;
     uint8_t qmf_bands = (use34) ? 5 : 3;
     uint8_t *resolution = (use34) ? hyb->resolution34 : hyb->resolution20;
+    (void)numTimeSlotsRate;  /* TODO: remove parameter? */
 
     for(band = 0; band < qmf_bands; band++)
     {
@@ -1034,8 +1039,8 @@ static void ps_data_decode(ps_info *ps)
 static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64],
                            qmf_t X_hybrid_left[32][32], qmf_t X_hybrid_right[32][32])
 {
-    uint8_t gr, n, m, bk;
-    uint8_t temp_delay;
+    uint8_t gr, n, bk;
+    uint8_t temp_delay = 0;
     uint8_t sb, maxsb;
     const complex_t *Phi_Fract_SubQmf;
     uint8_t temp_delay_ser[NO_ALLPASS_LINKS];
@@ -1192,10 +1197,10 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
                 }
             }
 
-            /* calculate g_DecaySlope_filt for every m multiplied by filter_a[m] */
-            for (m = 0; m < NO_ALLPASS_LINKS; m++)
+            /* calculate g_DecaySlope_filt for every n multiplied by filter_a[n] */
+            for (n = 0; n < NO_ALLPASS_LINKS; n++)
             {
-                g_DecaySlope_filt[m] = MUL_F(g_DecaySlope, filter_a[m]);
+                g_DecaySlope_filt[n] = MUL_F(g_DecaySlope, filter_a[n]);
             }
 
 
@@ -1207,6 +1212,7 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
             for (n = ps->border_position[0]; n < ps->border_position[ps->num_env]; n++)
             {
                 complex_t tmp, tmp0, R0;
+                uint8_t m;
 
                 if (gr < ps->num_hybrid_groups)
                 {
@@ -1232,7 +1238,6 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
                     IM(ps->delay_Qmf[ps->delay_buf_index_delay[sb]][sb]) = IM(inputLeft);
                 } else {
                     /* allpass filter */
-                    uint8_t m;
                     complex_t Phi_Fract;
 
                     /* fetch parameters */
@@ -1367,8 +1372,8 @@ static void ps_decorrelate(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][
 
     /* update delay indices */
     ps->saved_delay = temp_delay;
-    for (m = 0; m < NO_ALLPASS_LINKS; m++)
-        ps->delay_buf_index_ser[m] = temp_delay_ser[m];
+    for (n = 0; n < NO_ALLPASS_LINKS; n++)
+        ps->delay_buf_index_ser[n] = temp_delay_ser[n];
 }
 
 #if 0
@@ -1493,7 +1498,7 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
 
         for (env = 0; env < ps->num_env; env++)
         {
-            uint8_t abs_iid = abs(ps->iid_index[env][bk]);
+            uint8_t abs_iid = (uint8_t)abs(ps->iid_index[env][bk]);
             /* index range is supposed to be -7...7 or -15...15 depending on iid_mode
                 (Table 8.24, ISO/IEC 14496-3:2005).
                 if it is outside these boundaries, this is most likely an error. sanitize
@@ -1909,6 +1914,7 @@ ps_info *ps_init(uint8_t sr_index, uint8_t numTimeSlotsRate)
             ps->num_sample_delay_ser[i] = delay_length_d[0][i];
         }
 #else
+        (void)sr_index;
         /* THESE ARE CONSTANTS NOW */
         ps->num_sample_delay_ser[i] = delay_length_d[i];
 #endif

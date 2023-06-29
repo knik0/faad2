@@ -33,17 +33,12 @@
 #include <stdio.h>
 
 #if defined WIN32 || defined _WIN32 || defined WIN64 || defined _WIN64
-char *utf16_to_utf8(const wchar_t *input);
-char *utf16_to_ansi(const wchar_t *input);
-wchar_t *utf8_to_utf16(const char *input);
 void init_commandline_arguments_utf8(int *argc, char ***argv);
 void free_commandline_arguments_utf8(int *argc, char ***argv);
-FILE *fopen_utf8(const char *filename_utf8, const char *mode_utf8);
 void init_console_utf8(FILE *const stream);
 void uninit_console_utf8(void);
-#define faad_fopen(X,Y) fopen_utf8((X),(Y))
-#else
-#define faad_fopen(X,Y) fopen((X),(Y))
 #endif
+
+FILE *faad_fopen(const char *filename, const char *mode);
 
 #endif //UNICODE_SUPPORT_H_INCLUDED

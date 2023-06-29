@@ -172,6 +172,7 @@ extern "C" {
 #if defined(_WIN32) && !defined(__MINGW32__)
 
 #include <stdlib.h>
+#include <string.h>
 
 typedef unsigned __int64 uint64_t;
 typedef unsigned __int32 uint32_t;
@@ -184,7 +185,7 @@ typedef signed __int8  int8_t;
 typedef float float32_t;
 
 
-#else
+#else  /* WIN */
 
 #include <stdio.h>
 #if HAVE_SYS_TYPES_H
@@ -254,7 +255,7 @@ char *strchr(), *strrchr();
 # endif
 #endif
 
-#endif
+#endif  /* WIN */
 
 #ifdef WORDS_BIGENDIAN
 #define ARCH_IS_BIG_ENDIAN

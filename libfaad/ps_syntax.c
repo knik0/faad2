@@ -474,6 +474,7 @@ static uint16_t ps_extension(ps_info *ps, bitfile *ld,
 {
     uint8_t n;
     uint16_t bits = (uint16_t)faad_get_processed_bits(ld);
+    (void)num_bits_left;  /* TODO: remove parameter, or actually use it. */
 
     if (ps_extension_id == 0)
     {
@@ -537,7 +538,7 @@ static void huff_data(bitfile *ld, const uint8_t dt, const uint8_t nr_par,
 static INLINE int8_t ps_huff_dec(bitfile *ld, ps_huff_tab t_huff)
 {
     uint8_t bit;
-    int16_t index = 0;
+    int8_t index = 0;
 
     while (index >= 0)
     {

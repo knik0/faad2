@@ -507,7 +507,7 @@ static void drm_ps_pan_element(drm_ps_info *ps, bitfile *ld)
 static int8_t huff_dec(bitfile *ld, drm_ps_huff_tab huff)
 {
     uint8_t bit;
-    int16_t index = 0;
+    int8_t index = 0;
 
     while (index >= 0)
     {

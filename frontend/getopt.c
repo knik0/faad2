@@ -37,6 +37,7 @@
 #endif
 
 #include <stdio.h>
+#include <string.h>
 
 /* Comment out all this code if we are using the GNU C Library, and are not
    actually compiling the library itself.  This code is part of the GNU C
@@ -176,24 +177,17 @@ extern int  strcmp (const char *s1, const char *s2);
 static int my_strlen(const char *s);
 static char *my_index (const char *str, int chr);
 #else
-extern char *getenv ();
+extern char *getenv (const char *name);
 #endif
 
-static int
-my_strlen (str)
-     const char *str;
-{
+static int my_strlen(const char *str) {
   int n = 0;
   while (*str++)
     n++;
   return n;
 }
 
-static char *
-my_index (str, chr)
-     const char *str;
-     int chr;
-{
+static char *my_index(const char *str, int chr) {
   while (*str)
     {
       if (*str == chr)
@@ -237,10 +231,7 @@ static int last_nonopt;
 static void exchange (char **argv);
 #endif
 
-static void
-exchange (argv)
-     char **argv;
-{
+static void exchange (char **argv) {
   char *temp, **first, **last;
 
   /* Reverse all the elements [first_nonopt, optind) */
@@ -322,15 +313,7 @@ exchange (argv)
    If LONG_ONLY is nonzero, '-' as well as '--' can introduce
    long-named options.  */
 
-int
-_getopt_internal (argc, argv, optstring, longopts, longind, long_only)
-     int argc;
-     char *const *argv;
-     const char *optstring;
-     const struct option *longopts;
-     int *longind;
-     int long_only;
-{
+int _getopt_internal(int argc, char *const *argv, const char *optstring, const struct option *longopts, int *longind, int long_only) {
   int option_index;
 
   optarg = 0;
@@ -656,26 +639,14 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
   }
 }
 
-int
-getopt (argc, argv, optstring)
-     int argc;
-     char *const *argv;
-     const char *optstring;
-{
+int getopt (int argc, char *const *argv, const char *optstring) {
   return _getopt_internal (argc, argv, optstring,
                (const struct option *) 0,
                (int *) 0,
                0);
 }
 
-int
-getopt_long (argc, argv, options, long_options, opt_index)
-     int argc;
-     char *const *argv;
-     const char *options;
-     const struct option *long_options;
-     int *opt_index;
-{
+int getopt_long(int argc, char *const *argv, const char *options, const struct option *long_options, int *opt_index) {
   return _getopt_internal (argc, argv, options, long_options, opt_index, 0);
 }
 

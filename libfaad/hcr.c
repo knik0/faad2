@@ -32,7 +32,6 @@
 #include "structs.h"
 
 #include <stdlib.h>
-#include <string.h>
 
 #include "specrec.h"
 #include "huffman.h"
@@ -311,13 +310,13 @@ uint8_t reordered_spectral_data(NeAACDecStruct *hDecoder, ic_stream *ics,
                                             rewrev_bits(&segment[numberOfSegments]);
 
                                             numberOfSegments++;
-                                        } else {
+                                        } else {  // sp_data_len - bitsread < segwidth
                                             /* remaining stuff after last segment, we unfortunately couldn't read
                                                this in earlier because it might not fit in 64 bits. since we already
                                                decoded (and removed) the PCW it is now should fit */
                                             if (bitsread < sp_data_len)
                                             {
-                                                const uint8_t additional_bits = sp_data_len - bitsread;
+                                                const uint8_t additional_bits = (uint8_t)(sp_data_len - bitsread);
 
                                                 read_segment(&segment[numberOfSegments], additional_bits, ld);
                                                 segment[numberOfSegments].len += segment[numberOfSegments-1].len;

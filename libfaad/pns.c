@@ -84,6 +84,7 @@ static INLINE void gen_rand_vector(real_t *spec, int16_t scale_factor, uint16_t 
 #ifndef FIXED_POINT
     uint16_t i;
     real_t energy = 0.0;
+    (void)sub;
 
     scale_factor = min(max(scale_factor, -120), 120);
 
@@ -170,6 +171,8 @@ void pns_decode(ic_stream *ics_left, ic_stream *ics_right,
         else
             sub = 10 /*10*/;
     }
+#else
+    (void)object_type;
 #endif
 
     for (g = 0; g < ics_left->num_window_groups; g++)

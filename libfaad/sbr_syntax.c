@@ -232,7 +232,7 @@ uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint16_t cnt,
     /* check if we read more bits then were available for sbr */
     if (8*cnt < num_sbr_bits2)
     {
-        faad_resetbits(ld, num_sbr_bits1 + 8*cnt);
+        faad_resetbits(ld, num_sbr_bits1 + 8u * cnt);
         num_sbr_bits2 = 8*cnt;
 
 #ifdef PS_DEC
@@ -856,6 +856,7 @@ static uint16_t sbr_extension(bitfile *ld, sbr_info *sbr,
     uint8_t header;
     uint16_t ret;
 #endif
+    (void)num_bits_left;  /* TODO: remove or actually use parameter. */
 
     switch (bs_extension_id)
     {

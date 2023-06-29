@@ -17,6 +17,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************/
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -35,12 +37,21 @@ enum ATOM_TYPE
     ATOM_ASCENT,                /* ends group */
     ATOM_DATA,
 };
+
+typedef int (*parse_t)(int);
+
 typedef struct
 {
     uint16_t opcode;
-    void *data;
+    const char *name;
+    parse_t parse;
 } creator_t;
 
+#define STOP() {ATOM_STOP, NULL, NULL}
+#define NAME(N) {ATOM_NAME, N, NULL}
+#define DESCENT() {ATOM_DESCENT, NULL, NULL}
+#define ASCENT() {ATOM_ASCENT, NULL, NULL}
+#define DATA(N, F) {ATOM_NAME, N, NULL}, {ATOM_DATA, NULL, F}
 
 mp4config_t mp4config = { 0 };
 
@@ -80,11 +91,9 @@ enum {ERR_OK = 0, ERR_FAIL = -1, ERR_UNSUPPORTED = -2};
 
 #define freeMem(A) if (*(A)) {free(*(A)); *(A) = NULL;}
 
-static int datain(void *data, int size)
+static size_t datain(void *data, size_t size)
 {
-    if (fread(data, 1, size, g_fin) != size)
-        return ERR_FAIL;
-    return size;
+    return fread(data, 1, size, g_fin);
 }
 
 static int stringin(char *txt, int sizemax)
@@ -180,7 +189,7 @@ static int mdhdin(int size)
     u16in();
 
     return size;
-};
+}
 
 static int hdlr1in(int size)
 {
@@ -215,7 +224,7 @@ static int hdlr1in(int size)
     u8in();
 
     return size;
-};
+}
 
 static int stsdin(int size)
 {
@@ -226,7 +235,7 @@ static int stsdin(int size)
         return ERR_FAIL;
 
     return size;
-};
+}
 
 static int mp4ain(int size)
 {
@@ -529,11 +538,12 @@ static int tagu32(char *tagname, int n /*number of stored fields*/)
 
 static int metain(int size)
 {
+    (void)size;  /* why not used? */
     // version/flags
     u32in();
 
     return ERR_OK;
-};
+}
 
 static int hdlr2in(int size)
 {
@@ -557,7 +567,7 @@ static int hdlr2in(int size)
     u8in();
 
     return size;
-};
+}
 
 static int ilstin(int size)
 {
@@ -762,7 +772,7 @@ static int ilstin(int size)
                 break;
             case GENRE:
                 {
-                    uint8_t gnum = u16in();
+                    uint16_t gnum = u16in();
                     asize -= 2;
                     if (!gnum)
                        goto skip;
@@ -810,7 +820,7 @@ static int ilstin(int size)
     fprintf(stderr, "-------------------------------\n");
 
     return size;
-};
+}
 
 static creator_t *g_atom = 0;
 static int parse(uint32_t *sizemax)
@@ -824,7 +834,7 @@ static int parse(uint32_t *sizemax)
         fprintf(stderr, "parse error: root is not a 'name' opcode\n");
         return ERR_FAIL;
     }
-    //fprintf(stderr, "looking for '%s'\n", (char *)g_atom->data);
+    //fprintf(stderr, "looking for '%s'\n", (char *)g_atom->name);
 
     // search for atom in the file
     while (1)
@@ -835,7 +845,7 @@ static int parse(uint32_t *sizemax)
         apos = ftell(g_fin);
         if (apos >= (aposmax - 8))
         {
-            fprintf(stderr, "parse error: atom '%s' not found\n", (char *)g_atom->data);
+            fprintf(stderr, "parse error: atom '%s' not found\n", g_atom->name);
             return ERR_FAIL;
         }
         if ((tmp = u32in()) < 8)
@@ -854,7 +864,7 @@ static int parse(uint32_t *sizemax)
 
         //fprintf(stderr, "atom: '%c%c%c%c'(%x)", name[0],name[1],name[2],name[3], size);
 
-        if (!memcmp(name, g_atom->data, 4))
+        if (!memcmp(name, g_atom->name, 4))
         {
             //fprintf(stderr, "OK\n");
             break;
@@ -867,7 +877,7 @@ static int parse(uint32_t *sizemax)
     g_atom++;
     if (g_atom->opcode == ATOM_DATA)
     {
-        int err = ((int (*)(int)) g_atom->data)(size - 8);
+        int err = g_atom->parse(size - 8);
         if (err < ERR_OK)
         {
             fseek(g_fin, apos + size, SEEK_SET);
@@ -877,7 +887,7 @@ static int parse(uint32_t *sizemax)
     }
     if (g_atom->opcode == ATOM_DESCENT)
     {
-        long apos = ftell(g_fin);;
+        long apos2 = ftell(g_fin);
 
         //fprintf(stderr, "descent\n");
         g_atom++;
@@ -890,7 +900,8 @@ static int parse(uint32_t *sizemax)
                 g_atom++;
                 break;
             }
-            fseek(g_fin, apos, SEEK_SET);
+            // TODO: does not feel well - we always return to the same point!
+            fseek(g_fin, apos2, SEEK_SET);
             if ((ret = parse(&subsize)) < 0)
                 return ret;
         }
@@ -902,8 +913,6 @@ static int parse(uint32_t *sizemax)
     return ERR_OK;
 }
 
-
-
 static int moovin(int sizemax)
 {
     long apos = ftell(g_fin);
@@ -912,44 +921,35 @@ static int moovin(int sizemax)
     int err, ret = sizemax;
 
     static creator_t mvhd[] = {
-        {ATOM_NAME, "mvhd"},
-        {0}
+        NAME("mvhd"),
+        STOP()
     };
     static creator_t trak[] = {
-        {ATOM_NAME, "trak"},
-        {ATOM_DESCENT},
-        {ATOM_NAME, "tkhd"},
-        {ATOM_NAME, "mdia"},
-        {ATOM_DESCENT},
-        {ATOM_NAME, "mdhd"},
-        {ATOM_DATA, mdhdin},
-        {ATOM_NAME, "hdlr"},
-        {ATOM_DATA, hdlr1in},
-        {ATOM_NAME, "minf"},
-        {ATOM_DESCENT},
-        {ATOM_NAME, "smhd"},
-        {ATOM_NAME, "dinf"},
-        {ATOM_NAME, "stbl"},
-        {ATOM_DESCENT},
-        {ATOM_NAME, "stsd"},
-        {ATOM_DATA, stsdin},
-        {ATOM_DESCENT},
-        {ATOM_NAME, "mp4a"},
-        {ATOM_DATA, mp4ain},
-        {ATOM_DESCENT},
-        {ATOM_NAME, "esds"},
-        {ATOM_DATA, esdsin},
-        {ATOM_ASCENT},
-        {ATOM_ASCENT},
-        {ATOM_NAME, "stts"},
-        {ATOM_DATA, sttsin},
-        {ATOM_NAME, "stsc"},
-        {ATOM_DATA, stscin},
-        {ATOM_NAME, "stsz"},
-        {ATOM_DATA, stszin},
-        {ATOM_NAME, "stco"},
-        {ATOM_DATA, stcoin},
-        {ATOM_STOP}
+        NAME("trak"),
+        DESCENT(),
+        NAME("tkhd"),
+        NAME("mdia"),
+        DESCENT(),
+        DATA("mdhd", mdhdin),
+        DATA("hdlr", hdlr1in),
+        NAME("minf"),
+        DESCENT(),
+        NAME("smhd"),
+        NAME("dinf"),
+        NAME("stbl"),
+        DESCENT(),
+        DATA("stsd", stsdin),
+        DESCENT(),
+        DATA("mp4a", mp4ain),
+        DESCENT(),
+        DATA("esds", esdsin),
+        ASCENT(),
+        ASCENT(),
+        DATA("stts", sttsin),
+        DATA("stsc", stscin),
+        DATA("stsz", stszin),
+        DATA("stco", stcoin),
+        STOP()
     };
 
     g_atom = mvhd;
@@ -986,43 +986,35 @@ static int moovin(int sizemax)
 
 
 static creator_t g_head[] = {
-    {ATOM_NAME, "ftyp"},
-    {ATOM_DATA, ftypin},
-    {0}
+    DATA("ftyp", ftypin),
+    STOP()
 };
 
 static creator_t g_moov[] = {
-    {ATOM_NAME, "moov"},
-    {ATOM_DATA, moovin},
-    //{ATOM_DESCENT},
-    //{ATOM_NAME, "mvhd"},
-    {0}
+    DATA("moov", moovin),
+    //DESCENT(),
+    //NAME("mvhd"),
+    STOP()
 };
 
 static creator_t g_meta1[] = {
-    {ATOM_NAME, "moov"},
-    {ATOM_DESCENT},
-    {ATOM_NAME, "udta"},
-    {ATOM_DESCENT},
-    {ATOM_NAME, "meta"},
-    {ATOM_DATA, metain},
-    {ATOM_DESCENT},
-    {ATOM_NAME, "hdlr"},
-    {ATOM_DATA, hdlr2in},
-    {ATOM_NAME, "ilst"},
-    {ATOM_DATA, ilstin},
-    {0}
+    NAME("moov"),
+    DESCENT(),
+    NAME("udta"),
+    DESCENT(),
+    DATA("meta", metain),
+    DESCENT(),
+    DATA("hdlr", hdlr2in),
+    DATA("ilst", ilstin),
+    STOP()
 };
 
 static creator_t g_meta2[] = {
-    {ATOM_NAME, "meta"},
-    {ATOM_DATA, metain},
-    {ATOM_DESCENT},
-    {ATOM_NAME, "hdlr"},
-    {ATOM_DATA, hdlr2in},
-    {ATOM_NAME, "ilst"},
-    {ATOM_DATA, ilstin},
-    {0}
+    DATA("meta", metain),
+    DESCENT(),
+    DATA("hdlr", hdlr2in),
+    DATA("ilst", ilstin),
+    STOP()
 };
 
 
@@ -1051,7 +1043,7 @@ int mp4read_frame(void)
     return ERR_OK;
 }
 
-int mp4read_seek(int framenum)
+int mp4read_seek(uint32_t framenum)
 {
     if (framenum > mp4config.frame.nsamples)
         return ERR_FAIL;

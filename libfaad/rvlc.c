@@ -119,7 +119,7 @@ uint8_t rvlc_decode_scale_factors(ic_stream *ics, bitfile *ld)
     uint8_t intensity_used = 0;
     uint8_t *rvlc_sf_buffer = NULL;
     uint8_t *rvlc_esc_buffer = NULL;
-    bitfile ld_rvlc_sf, ld_rvlc_esc;
+    bitfile ld_rvlc_sf = {0}, ld_rvlc_esc = {0};
 //    bitfile ld_rvlc_sf_rev, ld_rvlc_esc_rev;
 
     if (ics->length_of_rvlc_sf > 0)
@@ -458,8 +458,8 @@ static rvlc_huff_table book_escape[] = {
 static int8_t rvlc_huffman_sf(bitfile *ld_sf, bitfile *ld_esc /*,
                               int8_t direction*/)
 {
-    uint8_t i, j;
-    int8_t index;
+    uint16_t i, j;
+    int16_t index;
     uint32_t cw;
     rvlc_huff_table *h = book_rvlc;
     int8_t direction = +1;
@@ -506,13 +506,13 @@ static int8_t rvlc_huffman_sf(bitfile *ld_sf, bitfile *ld_esc /*,
 #endif
     }
 
-    return index;
+    return (int8_t)index;
 }
 
 static int8_t rvlc_huffman_esc(bitfile *ld /*,
                                int8_t direction*/)
 {
-    uint8_t i, j;
+    uint16_t i, j;
     uint32_t cw;
     rvlc_huff_table *h = book_escape;
     int8_t direction = +1;
@@ -536,7 +536,7 @@ static int8_t rvlc_huffman_esc(bitfile *ld /*,
             cw |= 0 /* faad_getbits_rev(ld, j DEBUGVAR(1,0,"")) */;
     }
 
-    return h->index;
+    return (int8_t)h->index;
 }
 
 #endif

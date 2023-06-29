@@ -105,9 +105,14 @@ uint8_t qmf_start_channel(uint8_t bs_start_freq, uint8_t bs_samplerate_mode,
     }
 }
 
-static int longcmp(const void *a, const void *b)
+static int int32cmp(const void *a, const void *b)
 {
     return ((int)(*(int32_t*)a - *(int32_t*)b));
+}
+
+static int uint8cmp(const void *a, const void *b)
+{
+    return ((int)(*(uint8_t*)a - *(uint8_t*)b));
 }
 
 /* calculate the stop QMF channel for the master frequency band table */
@@ -166,7 +171,7 @@ uint8_t qmf_stop_channel(uint8_t bs_stop_freq, uint32_t sample_rate,
         }
 
         /* needed? */
-        qsort(stopDk, 13, sizeof(stopDk[0]), longcmp);
+        qsort(stopDk, 13, sizeof(stopDk[0]), int32cmp);
 
         k2 = stopMin;
         for (i = 0; i < bs_stop_freq; i++)
@@ -179,7 +184,7 @@ uint8_t qmf_stop_channel(uint8_t bs_stop_freq, uint32_t sample_rate,
         return min(64, stopMin + offset[get_sr_index(sample_rate)][min(bs_stop_freq, 13)]);
     }
 
-    return 0;
+    // return 0;
 }
 
 /* calculate the master frequency table from k0, k2, bs_freq_scale
@@ -361,6 +366,7 @@ uint8_t master_frequency_table(sbr_info *sbr, uint8_t k0, uint8_t k2,
 #ifdef FIXED_POINT
     real_t rk2, rk0;
 #endif
+    (void)bs_alter_scale;  /* TODO: remove parameter? */
 
     /* mft only defined for k2 > k0 */
     if (k2 <= k0)
@@ -414,7 +420,7 @@ uint8_t master_frequency_table(sbr_info *sbr, uint8_t k0, uint8_t k2,
     }
 
     /* needed? */
-    qsort(vDk0, nrBand0, sizeof(vDk0[0]), longcmp);
+    qsort(vDk0, nrBand0, sizeof(vDk0[0]), int32cmp);
 
     vk0[0] = k0;
     for (k = 1; k <= nrBand0; k++)
@@ -464,14 +470,14 @@ uint8_t master_frequency_table(sbr_info *sbr, uint8_t k0, uint8_t k2,
         int32_t change;
 
         /* needed? */
-        qsort(vDk1, nrBand1 + 1, sizeof(vDk1[0]), longcmp);
+        qsort(vDk1, nrBand1 + 1, sizeof(vDk1[0]), int32cmp);
         change = vDk0[nrBand0 - 1] - vDk1[0];
         vDk1[0] = vDk0[nrBand0 - 1];
         vDk1[nrBand1 - 1] = vDk1[nrBand1 - 1] - change;
     }
 
     /* needed? */
-    qsort(vDk1, nrBand1, sizeof(vDk1[0]), longcmp);
+    qsort(vDk1, nrBand1, sizeof(vDk1[0]), int32cmp);
     vk1[0] = k1;
     for (k = 1; k <= nrBand1; k++)
     {
@@ -536,11 +542,10 @@ uint8_t derived_frequency_table(sbr_info *sbr, uint8_t bs_xover_band,
 
     minus = (sbr->N_high & 1) ? 1 : 0;
 
+    i = 0;
     for (k = 0; k <= sbr->N_low; k++)
     {
-        if (k == 0)
-            i = 0;
-        else
+        if (k != 0)
             i = (uint8_t)(2*k - minus);
         sbr->f_table_res[LO_RES][k] = sbr->f_table_res[HI_RES][i];
     }
@@ -577,15 +582,11 @@ uint8_t derived_frequency_table(sbr_info *sbr, uint8_t bs_xover_band,
         sbr->N_Q = min(5, sbr->N_Q);
     }
 
+    i = 0;
     for (k = 0; k <= sbr->N_Q; k++)
     {
-        if (k == 0)
-        {
-            i = 0;
-        } else {
-            /* i = i + (int32_t)((sbr->N_low - i)/(sbr->N_Q + 1 - k)); */
+        if (k != 0)
             i = i + (sbr->N_low - i)/(sbr->N_Q + 1 - k);
-        }
         sbr->f_table_noise[k] = sbr->f_table_res[LO_RES][i];
     }
 
@@ -651,7 +652,7 @@ void limiter_frequency_table(sbr_info *sbr)
 
     for (s = 1; s < 4; s++)
     {
-        int32_t limTable[100 /*TODO*/] = {0};
+        uint8_t limTable[100 /*TODO*/] = {0};
         uint8_t patchBorders[64/*??*/] = {0};
 
 #if 0
@@ -674,7 +675,7 @@ void limiter_frequency_table(sbr_info *sbr)
         }
 
         /* needed */
-        qsort(limTable, sbr->noPatches + sbr->N_low, sizeof(limTable[0]), longcmp);
+        qsort(limTable, sbr->noPatches + sbr->N_low, sizeof(limTable[0]), uint8cmp);
         k = 1;
         nrLim = sbr->noPatches + sbr->N_low - 1;
 
@@ -729,7 +730,7 @@ restart:
                         } else {
                             /* remove (k-1)th element */
                             limTable[k-1] = sbr->f_table_res[LO_RES][sbr->N_low];
-                            qsort(limTable, sbr->noPatches + sbr->N_low, sizeof(limTable[0]), longcmp);
+                            qsort(limTable, sbr->noPatches + sbr->N_low, sizeof(limTable[0]), uint8cmp);
                             nrLim--;
                             goto restart;
                         }
@@ -737,7 +738,7 @@ restart:
                 }
                 /* remove kth element */
                 limTable[k] = sbr->f_table_res[LO_RES][sbr->N_low];
-                qsort(limTable, nrLim, sizeof(limTable[0]), longcmp);
+                qsort(limTable, nrLim, sizeof(limTable[0]), uint8cmp);
                 nrLim--;
                 goto restart;
             } else {

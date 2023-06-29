@@ -47,6 +47,9 @@ extern "C" {
 
 typedef struct _bitfile
 {
+    const void *buffer;
+    uint32_t *tail;
+    uint32_t *start;
     /* bit input */
     uint32_t bufa;
     uint32_t bufb;
@@ -54,9 +57,6 @@ typedef struct _bitfile
     uint32_t buffer_size; /* size of the buffer in bytes */
     uint32_t bytes_left;
     uint8_t error;
-    uint32_t *tail;
-    uint32_t *start;
-    const void *buffer;
 } bitfile;
 
 
@@ -84,7 +84,7 @@ void faad_flushbits_ex(bitfile *ld, uint32_t bits);
 #ifdef DRM
 void faad_rewindbits(bitfile *ld);
 #endif
-void faad_resetbits(bitfile *ld, int bits);
+void faad_resetbits(bitfile *ld, uint32_t bits);
 uint8_t *faad_getbitbuffer(bitfile *ld, uint32_t bits
                        DEBUGDEC);
 #ifdef DRM

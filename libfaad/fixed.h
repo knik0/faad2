@@ -65,7 +65,7 @@ typedef int32_t real_t;
 #define Q2_PRECISION (1 << Q2_BITS)
 #define Q2_CONST(A) (((A) >= 0) ? ((real_t)((A)*(Q2_PRECISION)+0.5)) : ((real_t)((A)*(Q2_PRECISION)-0.5)))
 
-#if defined(_WIN32) && !defined(_WIN32_WCE) && !defined(__GNUC__)
+#if defined(_WIN32) && !defined(_WIN32_WCE) && !defined(__GNUC__) && !defined(_WIN64)
 
 /* multiply with real shift */
 static INLINE real_t MUL_R(real_t A, real_t B)
@@ -284,7 +284,7 @@ static INLINE void ComplexMult(real_t *y1, real_t *y2,
 /* Saturated left shift */
 #define SAT_SHIFT_MASK(E) (~0u << (31u - (E)))
 #define SAT_SHIFT(V,E,M) (((((V) >> ((E) + 1)) ^ (V)) & (M)) \
-    ? (((V) < 0) ? -0x80000000 : 0x7FFFFFFF) \
+    ? (((V) < 0) ? (int32_t)0x80000000 : 0x7FFFFFFF) \
     : ((int32_t)((uint32_t)(V) << (E))))
 
 #ifdef __cplusplus
