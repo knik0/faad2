@@ -418,8 +418,8 @@ uint32_t ne_rng(uint32_t *__r1, uint32_t *__r2);
 #ifdef FIXED_POINT
 uint32_t wl_min_lzc(uint32_t x);
 #define LOG2_MIN_INF REAL_CONST(-10000)
-int32_t log2_int(uint32_t val);
-int32_t pow2_int(real_t val);
+int32_t log2_int(uint64_t val);
+uint64_t pow2_int(real_t val);
 real_t pow2_fix(real_t val);
 #endif
 uint8_t get_sr_index(const uint32_t samplerate);
