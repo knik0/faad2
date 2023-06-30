@@ -32,8 +32,11 @@ endif()
 
 # Extract version information
 
-file(STRINGS "libfaad/version.h" _faad_version_line REGEX "^#define PACKAGE_VERSION .+$")
-string(REGEX REPLACE "^#define PACKAGE_VERSION \"(.+)\"" "\\1" FAAD_VERSION "${_faad_version_line}")
+set(CAPTURE_PACKAGE_VERSION "[ \\t]*\"PACKAGE_VERSION\"[ \\t]*:[ \\t]\"(.*)\"")
+file(STRINGS "properties.json" _faad_version_line REGEX "${CAPTURE_PACKAGE_VERSION}")
+message("${_faad_version_line}")
+string(REGEX REPLACE "${CAPTURE_PACKAGE_VERSION}" "\\1" FAAD_VERSION "${_faad_version_line}")
+
 message(STATUS "FAAD PACKAGE_VERSION: ${FAAD_VERSION}")
 mark_as_advanced(FAAD_VERSION)
 
@@ -63,6 +66,7 @@ set(FAAD_DEFINES
   HAVE_SYS_STAT_H=1
   HAVE_SYS_TYPES_H=1
   STDC_HEADERS=1
+  PACKAGE_VERSION=\"${FAAD_VERSION}\"
 )
 
 set(FAAD_FLAGS

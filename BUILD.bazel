@@ -1,4 +1,5 @@
 load("@rules_fuzzing//fuzzing:cc_defs.bzl", "cc_fuzz_test")
+load("@properties//:properties.bzl", "PROPERTIES")
 
 # Unless building for embedded systems all headers / functions should exist.
 FAAD_DEFINES = [
@@ -10,6 +11,7 @@ FAAD_DEFINES = [
     "HAVE_SYS_STAT_H=1",
     "HAVE_SYS_TYPES_H=1",
     "STDC_HEADERS=1",
+    "PACKAGE_VERSION=\\\"%s\\\"" % PROPERTIES["PACKAGE_VERSION"],
 ]
 
 FAAD_SOURCES = glob([

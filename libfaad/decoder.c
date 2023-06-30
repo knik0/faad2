@@ -54,7 +54,7 @@ uint16_t dbg_count;
 #endif
 
 #if !defined(PACKAGE_VERSION)
-#include "version.h"
+#error "PACKAGE_VERSION must be defined"
 #endif
 
 /* static function declarations */
