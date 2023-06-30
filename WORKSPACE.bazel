@@ -1,4 +1,7 @@
+load(":workspace.bzl", "wrap_json_properties")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+wrap_json_properties(name = "properties", src = "@//:properties.json")
 
 http_archive(
     name = "rules_fuzzing",
