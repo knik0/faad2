@@ -279,11 +279,11 @@ static const real_t log2_int_tab[] = {
     REAL_CONST(5.906890595608518), REAL_CONST(5.930737337562887), REAL_CONST(5.954196310386876), REAL_CONST(5.977279923499916)
 };
 
-static const real_t pan_log2_tab[] = {
+// pan_log2_tab[X] = log2(2**X + 1) - X
+static const real_t pan_log2_tab[13] = {
     REAL_CONST(1.000000000000000), REAL_CONST(0.584962500721156), REAL_CONST(0.321928094887362), REAL_CONST(0.169925001442312), REAL_CONST(0.087462841250339),
     REAL_CONST(0.044394119358453), REAL_CONST(0.022367813028455), REAL_CONST(0.011227255423254), REAL_CONST(0.005624549193878), REAL_CONST(0.002815015607054),
-    REAL_CONST(0.001408194392808), REAL_CONST(0.000704269011247), REAL_CONST(0.000352177480301), REAL_CONST(0.000176099486443), REAL_CONST(0.000088052430122),
-    REAL_CONST(0.000044026886827), REAL_CONST(0.000022013611360), REAL_CONST(0.000011006847667)
+    REAL_CONST(0.001408194392808), REAL_CONST(0.000704269011247), REAL_CONST(0.000352177480301)
 };
 
 static real_t find_log2_E(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
@@ -291,13 +291,16 @@ static real_t find_log2_E(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
     /* check for coupled energy/noise data */
     if (sbr->bs_coupling == 1)
     {
+        int16_t e = sbr->E[0][k][l];
+        int16_t E = sbr->E[1][k][l];
         uint8_t amp0 = (sbr->amp_res[0]) ? 0 : 1;
         uint8_t amp1 = (sbr->amp_res[1]) ? 0 : 1;
-        real_t tmp = (7 << REAL_BITS) + (sbr->E[0][k][l] << (REAL_BITS-amp0));
-        real_t pan;
+        real_t tmp, pan;
 
         /* E[1] should always be even so shifting is OK */
-        uint8_t E = sbr->E[1][k][l] >> amp1;
+        E >>= amp1;
+        if (e < 0 || e >= 64 || E < 0 || E > 24)
+            return LOG2_MIN_INF;
 
         if (ch == 0)
         {
@@ -321,10 +324,14 @@ static real_t find_log2_E(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
         }
 
         /* tmp / pan in log2 */
+        tmp = (7 << REAL_BITS) + (e << (REAL_BITS-amp0));
         return tmp - pan;
     } else {
-        real_t mul = (sbr->amp_res[ch]) ? REAL_PRECISION : (REAL_PRECISION / 2);
-        return 6 * REAL_PRECISION + sbr->E[ch][k][l] * mul;
+        int16_t e = sbr->E[ch][k][l];
+        uint8_t amp = (sbr->amp_res[ch]) ? 0 : 1;
+        if (e < 0 || (e >> amp) >= 64)
+            return LOG2_MIN_INF;
+        return 6 * REAL_PRECISION + e * (REAL_PRECISION >> amp);
     }
 }
 
@@ -333,10 +340,12 @@ static real_t find_log2_Q(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
     /* check for coupled energy/noise data */
     if (sbr->bs_coupling == 1)
     {
-        real_t tmp = (7 << REAL_BITS) - (sbr->Q[0][k][l] << REAL_BITS);
-        real_t pan;
-
+        int32_t q = sbr->Q[0][k][l];
         int32_t Q = sbr->Q[1][k][l];
+        real_t tmp, pan;
+
+        if (q < 0 || q > 30 || Q < 0 || Q > 24)
+            return LOG2_MIN_INF;
 
         if (ch == 0)
         {
@@ -360,9 +369,13 @@ static real_t find_log2_Q(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
         }
 
         /* tmp / pan in log2 */
+        tmp = (7 - q) * REAL_PRECISION;
         return tmp - pan;
     } else {
-        return (6 - sbr->Q[ch][k][l]) * REAL_PRECISION;
+        int32_t q = sbr->Q[ch][k][l];
+        if (q < 0 || q > 30)
+            return LOG2_MIN_INF;
+        return (6 - q) * REAL_PRECISION;
     }
 }
 
@@ -457,6 +470,7 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
     ALIGN real_t G_boost;
     ALIGN real_t S_M[MAX_M];
 
+    real_t exp = REAL_CONST(-10);
 
     for (l = 0; l < sbr->L_E[ch]; l++)
     {
@@ -504,7 +518,7 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
                 {
                     current_res_band_size++;
                 } else {
-                    acc1 += pow2_int(-REAL_CONST(10) + log2_int_tab[current_res_band_size] + find_log2_E(sbr, current_res_band, l, ch));
+                    acc1 += pow2_int(exp + log2_int_tab[current_res_band_size] + find_log2_E(sbr, current_res_band, l, ch));
 
                     current_res_band++;
                     current_res_band_size = 1;
@@ -512,7 +526,7 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 
                 acc2 += sbr->E_curr[ch][m][l];
             }
-            acc1 += pow2_int(-REAL_CONST(10) + log2_int_tab[current_res_band_size] + find_log2_E(sbr, current_res_band, l, ch));
+            acc1 += pow2_int(exp + log2_int_tab[current_res_band_size] + find_log2_E(sbr, current_res_band, l, ch));
 
 
             if (acc1 == 0)
@@ -594,7 +608,7 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
                     E_curr = LOG2_MIN_INF;
                 else
                     E_curr = log2_int(sbr->E_curr[ch][m][l]);
-                E_orig = -REAL_CONST(10) + find_log2_E(sbr, current_res_band2, l, ch);
+                E_orig = exp + find_log2_E(sbr, current_res_band2, l, ch);
 
 
                 Q_orig = find_log2_Q(sbr, current_f_noise_band, current_t_noise_band, ch);
@@ -627,8 +641,8 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
                  * of the HF generated signal
                  */
                 /* E_curr here is officially E_curr+1 so the log2() of that can never be < 0 */
-                /* scaled by -10 */
-                G = E_orig - max(-REAL_CONST(10), E_curr);
+                /* scaled by exp */
+                G = E_orig - max(exp, E_curr);
                 if ((S_mapped == 0) && (delta == 1))
                 {
                     /* G = G * 1/(1+Q) */
@@ -1669,7 +1683,7 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
                     int8_t rev = (((m + sbr->kx) & 1) ? -1 : 1);
                     QMF_RE(psi) = adj->S_M_boost[l][m] * phi_re[fIndexSine];
 #ifdef FIXED_POINT
-                    QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) += (QMF_RE(psi) << REAL_BITS);
+                    QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) += QMF_RE(psi) * REAL_PRECISION;
 #else
                     QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) += QMF_RE(psi);
 #endif
@@ -1677,7 +1691,7 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
 #ifndef SBR_LOW_POWER
                     QMF_IM(psi) = rev * adj->S_M_boost[l][m] * phi_im[fIndexSine];
 #ifdef FIXED_POINT
-                    QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) += (QMF_IM(psi) << REAL_BITS);
+                    QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) += QMF_IM(psi) * REAL_PRECISION;
 #else
                     QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) += QMF_IM(psi);
 #endif
