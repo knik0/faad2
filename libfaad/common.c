@@ -366,6 +366,8 @@ real_t pow2_fix(real_t val)
 
     if (val == 0)
         return (1<<REAL_BITS);
+    if (REAL_BITS + whole < 0)
+        return 0;
 
     /* leave INTERP_BITS bits */
     index_frac = rest >> (REAL_BITS-TABLE_BITS-INTERP_BITS);
@@ -471,46 +473,4 @@ int32_t log2_int(uint32_t val)
     return ((exp+REAL_BITS) << REAL_BITS) + errcorr + x1;
 }
 
-/* ld(x) = ld(x*y/y) = ld(x/y) + ld(y), with y=2^N and [1 <= (x/y) < 2] */
-real_t log2_fix(uint32_t val)
-{
-    uint32_t frac;
-    int32_t exp = 0;
-    uint32_t index;
-    uint32_t index_frac;
-    uint32_t x1, x2;
-    uint32_t errcorr;
-
-    /* error */
-    if (val == 0)
-        return -100000;
-
-    exp = floor_log2(val);
-    exp -= REAL_BITS;
-
-    /* frac = [1..2] */
-    if (exp >= 0)
-        frac = val >> exp;
-    else
-        frac = val << -exp;
-
-    /* index in the log2 table */
-    index = frac >> (REAL_BITS-TABLE_BITS);
-
-    /* leftover part for linear interpolation */
-    index_frac = frac & ((1<<(REAL_BITS-TABLE_BITS))-1);
-
-    /* leave INTERP_BITS bits */
-    index_frac = index_frac >> (REAL_BITS-TABLE_BITS-INTERP_BITS);
-
-    x1 = log2_tab[index & ((1<<TABLE_BITS)-1)];
-    x2 = log2_tab[(index & ((1<<TABLE_BITS)-1)) + 1];
-
-    /* linear interpolation */
-    /* retval = exp + ((index_frac)*x2 + (1-index_frac)*x1) */
-
-    errcorr = (index_frac * (x2-x1)) >> INTERP_BITS;
-
-    return (exp << REAL_BITS) + errcorr + x1;
-}
 #endif

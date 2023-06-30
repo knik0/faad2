@@ -190,7 +190,7 @@ static uint8_t rvlc_decode_sf_forward(ic_stream *ics, bitfile *ld_sf, bitfile *l
     /* TODO: consider rolling out to regular build. */
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     /* The value is inexact, adjusted to current fuzzer findings. */
-    scale_factor_max = 174;
+    scale_factor_max = 165;
 #endif  // FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 #endif  // FIXED_POINT
 
