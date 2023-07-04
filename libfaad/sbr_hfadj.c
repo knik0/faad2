@@ -301,26 +301,18 @@ static real_t find_log2_E(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
         E >>= amp1;
         if (e < 0 || e >= 64 || E < 0 || E > 24)
             return LOG2_MIN_INF;
+        E -= 12;
 
-        if (ch == 0)
+        if (ch != 0)  // L/R anti-symmetry
+            E = -E;
+
+        if (E >= 0)
         {
-            if (E > 12)
-            {
-                /* negative */
-                pan = pan_log2_tab[-12 + E];
-            } else {
-                /* positive */
-                pan = pan_log2_tab[12 - E] + ((12 - E)<<REAL_BITS);
-            }
+            /* negative */
+            pan = pan_log2_tab[E];
         } else {
-            if (E < 12)
-            {
-                /* negative */
-                pan = pan_log2_tab[-E + 12];
-            } else {
-                /* positive */
-                pan = pan_log2_tab[E - 12] + ((E - 12)<<REAL_BITS);
-            }
+            /* positive */
+            pan = pan_log2_tab[-E] + ((-E)<<REAL_BITS);
         }
 
         /* tmp / pan in log2 */
@@ -346,26 +338,18 @@ static real_t find_log2_Q(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
 
         if (q < 0 || q > 30 || Q < 0 || Q > 24)
             return LOG2_MIN_INF;
+        Q -= 12;
 
-        if (ch == 0)
+        if (ch != 0)  // L/R anti-symmetry
+            Q = -Q;
+
+        if (Q >= 0)
         {
-            if (Q > 12)
-            {
-                /* negative */
-                pan = pan_log2_tab[-12 + Q];
-            } else {
-                /* positive */
-                pan = pan_log2_tab[12 - Q] + ((12 - Q)<<REAL_BITS);
-            }
+            /* negative */
+            pan = pan_log2_tab[Q];
         } else {
-            if (Q < 12)
-            {
-                /* negative */
-                pan = pan_log2_tab[-Q + 12];
-            } else {
-                /* positive */
-                pan = pan_log2_tab[Q - 12] + ((Q - 12)<<REAL_BITS);
-            }
+            /* positive */
+            pan = pan_log2_tab[-Q] + ((-Q)<<REAL_BITS);
         }
 
         /* tmp / pan in log2 */
