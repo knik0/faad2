@@ -357,6 +357,10 @@ real_t pow2_fix(real_t val)
     real_t retval;
     int32_t whole = (val >> REAL_BITS);
 
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if (whole >= 17) __builtin_trap();
+#endif
+
     /* rest = [0..1] */
     int32_t rest = val & ((1 << REAL_BITS) - 1);
 
