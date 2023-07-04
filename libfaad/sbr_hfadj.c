@@ -457,8 +457,9 @@ static real_t find_log2_Qplus1(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
 static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 {
     /* log2 values of limiter gains */
+    /* Last one is log2(1e9), not log2(1e10) due to FIXED POINT float limitations */
     static real_t limGain[] = {
-        REAL_CONST(-1.0), REAL_CONST(0.0), REAL_CONST(1.0), REAL_CONST(33.219)
+        REAL_CONST(-1.0), REAL_CONST(0.0), REAL_CONST(1.0), REAL_CONST(29.897)
     };
     uint8_t m, l, k;
 
@@ -630,6 +631,7 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
                     S_M[m] = LOG2_MIN_INF; /* -inf */
                 } else {
                     S_M[m] = E_orig - Q_orig_plus1;
+                    S_M[m] = min(S_M[m], limGain[3]);
 
                     /* accumulate sinusoid part of the total energy */
                     den += pow2_int(S_M[m]);
