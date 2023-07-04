@@ -477,11 +477,10 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
         {
             real_t Q_M = 0;
             real_t G_max;
-            real_t den = 0;
-            real_t acc1 = 0;
-            real_t acc2 = 0;
+            uint64_t den = 0, acc1 = 0, acc2 = 0;
             uint8_t current_res_band_size = 0;
             uint8_t Q_M_size = 0;
+            real_t log_e, log_den, log_acc1, log_acc2;
 
             uint8_t ml1, ml2;
 
@@ -503,7 +502,8 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
                 {
                     current_res_band_size++;
                 } else {
-                    acc1 += pow2_int(exp + log2_int_tab[current_res_band_size] + find_log2_E(sbr, current_res_band, l, ch));
+                    log_e = find_log2_E(sbr, current_res_band, l, ch);
+                    acc1 += pow2_int(exp + log2_int_tab[current_res_band_size] + log_e);
 
                     current_res_band++;
                     current_res_band_size = 1;
@@ -511,24 +511,27 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 
                 acc2 += sbr->E_curr[ch][m][l];
             }
-            acc1 += pow2_int(exp + log2_int_tab[current_res_band_size] + find_log2_E(sbr, current_res_band, l, ch));
+            if (current_res_band_size) {
+                log_e = find_log2_E(sbr, current_res_band, l, ch);
+                acc1 += pow2_int(exp + log2_int_tab[current_res_band_size] + log_e);
+            }
 
 
             if (acc1 == 0)
-                acc1 = LOG2_MIN_INF;
+                log_acc1 = LOG2_MIN_INF;
             else
-                acc1 = log2_int(acc1);
+                log_acc1 = log2_int(acc1);
 
             if (acc2 == 0)
-                acc2 = LOG2_MIN_INF;
+                log_acc2 = LOG2_MIN_INF;
             else
-                acc2 = log2_int(acc2);
+                log_acc2 = log2_int(acc2);
 
             /* calculate the maximum gain */
             /* ratio of the energy of the original signal and the energy
              * of the HF generated signal
              */
-            G_max = acc1 - acc2 + limGain[sbr->bs_limiter_gains];
+            G_max = log_acc1 - log_acc2 + limGain[sbr->bs_limiter_gains];
             G_max = min(G_max, limGain[3]);
 
 
@@ -675,13 +678,13 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
             }
 
             if (den == 0)
-                den = LOG2_MIN_INF;
+                log_den = LOG2_MIN_INF;
             else
-                den = log2_int(den /*+ EPS*/);
+                log_den = log2_int(den /*+ EPS*/);
 
             /* calculate the final gain */
             /* G_boost: [0..2.51188643] */
-            G_boost = acc1 - den;
+            G_boost = log_acc1 - log_den;
             G_boost = min(G_boost, REAL_CONST(1.328771237) /* log2(1.584893192 ^ 2) */);
 
 
