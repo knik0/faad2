@@ -253,7 +253,12 @@ static uint32_t ones32(uint32_t x)
     return (x & 0x0000003f);
 }
 
-static uint32_t floor_log2(uint32_t x)
+static uint32_t ones64(uint64_t x)
+{
+    return ones32((uint32_t)x) + ones32(x >> 32);
+}
+
+static uint32_t floor_log2(uint64_t x)
 {
 #if 1
     x |= (x >> 1);
@@ -261,8 +266,9 @@ static uint32_t floor_log2(uint32_t x)
     x |= (x >> 4);
     x |= (x >> 8);
     x |= (x >> 16);
+    x |= (x >> 32);
 
-    return (ones32(x) - 1);
+    return (ones64(x) - 1);
 #else
     uint32_t count = 0;
 
@@ -398,13 +404,14 @@ real_t pow2_fix(real_t val)
     return retval;
 }
 
-int32_t pow2_int(real_t val)
+uint64_t pow2_int(real_t val)
 {
     uint32_t x1, x2;
     uint32_t errcorr;
     uint32_t index_frac;
-    real_t retval;
+    uint64_t retval;
     int32_t whole = (val >> REAL_BITS);
+    int32_t exp = 0;
 
     /* rest = [0..1] */
     int32_t rest = val & ((1 << REAL_BITS) - 1);
@@ -412,30 +419,35 @@ int32_t pow2_int(real_t val)
     /* index into pow2_tab */
     int32_t index = rest >> (REAL_BITS-TABLE_BITS);
 
-
+    if (val < 0)
+        return 0;
     if (val == 0)
         return 1;
+    if (whole > COEF_BITS) {
+        exp = whole - COEF_BITS;
+        whole = COEF_BITS;
+    }
 
     /* leave INTERP_BITS bits */
     index_frac = rest >> (REAL_BITS-TABLE_BITS-INTERP_BITS);
     index_frac = index_frac & ((1<<INTERP_BITS)-1);
 
-    if (whole > 0)
-        retval = 1 << whole;
+    if (whole >= 0)
+        retval = (uint32_t)(1 << whole);
     else
         retval = 0;
 
     x1 = pow2_tab[index & ((1<<TABLE_BITS)-1)];
     x2 = pow2_tab[(index & ((1<<TABLE_BITS)-1)) + 1];
-    errcorr = ( (index_frac*(x2-x1))) >> INTERP_BITS;
+    errcorr = ((index_frac*(x2-x1))) >> INTERP_BITS;
 
     retval = MUL_R(retval, (errcorr + x1));
 
-    return retval;
+    return retval << exp;
 }
 
 /* ld(x) = ld(x*y/y) = ld(x/y) + ld(y), with y=2^N and [1 <= (x/y) < 2] */
-int32_t log2_int(uint32_t val)
+int32_t log2_int(uint64_t val)
 {
     uint32_t frac;
     int32_t exp = 0;
@@ -444,18 +456,18 @@ int32_t log2_int(uint32_t val)
     uint32_t x1, x2;
     uint32_t errcorr;
 
-    /* error */
-    if (val == 0)
-        return -10000;
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if (val == 0) __builtin_trap();
+#endif
 
     exp = floor_log2(val);
     exp -= REAL_BITS;
 
     /* frac = [1..2] */
     if (exp >= 0)
-        frac = val >> exp;
+        frac = (uint32_t)(val >> exp);
     else
-        frac = val << -exp;
+        frac = (uint32_t)(val << -exp);
 
     /* index in the log2 table */
     index = frac >> (REAL_BITS-TABLE_BITS);
