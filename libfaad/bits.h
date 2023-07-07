@@ -95,20 +95,8 @@ uint32_t faad_origbitbuffer_size(bitfile *ld);
 /* circumvent memory alignment errors on ARM */
 static INLINE uint32_t getdword(void *mem)
 {
-    uint32_t tmp;
-#ifndef ARCH_IS_BIG_ENDIAN
-    ((uint8_t*)&tmp)[0] = ((uint8_t*)mem)[3];
-    ((uint8_t*)&tmp)[1] = ((uint8_t*)mem)[2];
-    ((uint8_t*)&tmp)[2] = ((uint8_t*)mem)[1];
-    ((uint8_t*)&tmp)[3] = ((uint8_t*)mem)[0];
-#else
-    ((uint8_t*)&tmp)[0] = ((uint8_t*)mem)[0];
-    ((uint8_t*)&tmp)[1] = ((uint8_t*)mem)[1];
-    ((uint8_t*)&tmp)[2] = ((uint8_t*)mem)[2];
-    ((uint8_t*)&tmp)[3] = ((uint8_t*)mem)[3];
-#endif
-
-    return tmp;
+    uint8_t* m8 = (uint8_t*)mem;
+    return (uint32_t)m8[3] | ((uint32_t)m8[2] << 8) | ((uint32_t)m8[1] << 16) | ((uint32_t)m8[0] << 24);
 }
 
 static INLINE uint32_t faad_showbits(bitfile *ld, uint32_t bits)

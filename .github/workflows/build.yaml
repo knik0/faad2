@@ -67,11 +67,11 @@ jobs:
          - name: Clang Static
            cc: clang
            cxx: clang++
-           cflags: -Wall -fcolor-diagnostics -fansi-escape-codes
+           cflags: -Wall -fcolor-diagnostics -fansi-escape-codes -O2 -Werror=strict-aliasing
          - name: GCC Static
            cc: gcc
            cxx: g++
-           cflags: -Wall -fdiagnostics-color=always
+           cflags: -Wall -fdiagnostics-color=always -O2 -Werror=strict-aliasing
          - name: MSVC
            os: windows-latest
            cmake_args: >-

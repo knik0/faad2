@@ -38,12 +38,24 @@
 #include "pns.h"
 
 
-static void flt_round(float32_t *pf)
+static uint32_t float_to_bits(float32_t f32) {
+    uint32_t u32;
+    memcpy(&u32, &f32, 4);
+    return u32;
+}
+
+static float32_t bits_to_float(uint32_t u32) {
+    float32_t f32;
+    memcpy(&f32, &u32, 4);
+    return f32;
+}
+
+static float32_t flt_round(float32_t pf)
 {
     int32_t flg;
     uint32_t tmp, tmp1, tmp2;
 
-    tmp = *(uint32_t*)pf;
+    tmp = float_to_bits(pf);
     flg = tmp & (uint32_t)0x00008000;
     tmp &= (uint32_t)0xffff0000;
     tmp1 = tmp;
@@ -55,33 +67,30 @@ static void flt_round(float32_t *pf)
         tmp2 = tmp;                             /* add 1 lsb and elided one */
         tmp &= (uint32_t)0xff800000;       /* extract exponent and sign */
 
-        *pf = *(float32_t*)&tmp1 + *(float32_t*)&tmp2 - *(float32_t*)&tmp;
+        return bits_to_float(tmp1) + bits_to_float(tmp2) - bits_to_float(tmp);
     } else {
-        *pf = *(float32_t*)&tmp;
+        return bits_to_float(tmp);
     }
 }
 
 static int16_t quant_pred(float32_t x)
 {
-    int16_t q;
-    uint32_t *tmp = (uint32_t*)&x;
-
-    q = (int16_t)(*tmp>>16);
-
-    return q;
+    return (int16_t)(float_to_bits(x) >> 16);
 }
 
 static float32_t inv_quant_pred(int16_t q)
 {
-    float32_t x;
-    uint32_t *tmp = (uint32_t*)&x;
-    *tmp = ((uint32_t)q)<<16;
-
-    return x;
+    uint16_t u16 = (uint16_t)q;
+    return bits_to_float((uint32_t)u16 << 16);
 }
 
 static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t pred)
 {
+#ifdef FIXED_POINT
+    // main codepath is simply not ready for FIXED_POINT, better not to run it at all.
+    if (pred)
+        *output = input;
+#else
     uint16_t tmp;
     int16_t i, j;
     real_t dr1;
@@ -160,7 +169,7 @@ static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t 
 #endif
 
         predictedvalue = k1*r[0] + k2*r[1];
-        flt_round(&predictedvalue);
+        predictedvalue = flt_round(predictedvalue);
         *output = input + predictedvalue;
     }
 
@@ -183,6 +192,7 @@ static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t 
     state->COR[1] = quant_pred(COR[1]);
     state->VAR[0] = quant_pred(VAR[0]);
     state->VAR[1] = quant_pred(VAR[1]);
+#endif
 }
 
 static void reset_pred_state(pred_state *state)

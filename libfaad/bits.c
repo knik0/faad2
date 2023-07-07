@@ -37,34 +37,18 @@
 /* reads only n bytes from the stream instead of the standard 4 */
 static /*INLINE*/ uint32_t getdword_n(void *mem, int n)
 {
-    uint32_t tmp = 0;
-#ifndef ARCH_IS_BIG_ENDIAN
+    uint8_t* m8 = (uint8_t*)mem;
     switch (n)
     {
     case 3:
-        ((uint8_t*)&tmp)[1] = ((uint8_t*)mem)[2];
+        return ((uint32_t)m8[2] << 8) | ((uint32_t)m8[1] << 16) | ((uint32_t)m8[0] << 24);
     case 2:
-        ((uint8_t*)&tmp)[2] = ((uint8_t*)mem)[1];
+        return ((uint32_t)m8[1] << 16) | ((uint32_t)m8[0] << 24);
     case 1:
-        ((uint8_t*)&tmp)[3] = ((uint8_t*)mem)[0];
+        return (uint32_t)m8[0] << 24;
     default:
-        break;
+        return 0;
     }
-#else
-    switch (n)
-    {
-    case 3:
-        ((uint8_t*)&tmp)[2] = ((uint8_t*)mem)[2];
-    case 2:
-        ((uint8_t*)&tmp)[1] = ((uint8_t*)mem)[1];
-    case 1:
-        ((uint8_t*)&tmp)[0] = ((uint8_t*)mem)[0];
-    default:
-        break;
-    }
-#endif
-
-    return tmp;
 }
 
 /* initialize buffer, call once before first getbits or showbits */

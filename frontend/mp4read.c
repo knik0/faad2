@@ -57,36 +57,6 @@ mp4config_t mp4config = { 0 };
 
 static FILE *g_fin = NULL;
 
-static inline uint32_t bswap32(const uint32_t u32)
-{
-#ifndef WORDS_BIGENDIAN
-#if defined (__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 3)))
-    return __builtin_bswap32(u32);
-#elif defined (_MSC_VER)
-    return _byteswap_ulong(u32);
-#else
-    return (u32 << 24) | ((u32 << 8) & 0xFF0000) | ((u32 >> 8) & 0xFF00) | (u32 >> 24);
-#endif
-#else
-    return u32;
-#endif
-}
-
-static inline uint16_t bswap16(const uint16_t u16)
-{
-#ifndef WORDS_BIGENDIAN
-#if defined (__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)))
-    return __builtin_bswap16(u16);
-#elif defined (_MSC_VER)
-    return _byteswap_ushort(u16);
-#else
-    return (u16 << 8) | (u16 >> 8);
-#endif
-#else
-    return u16;
-#endif
-}
-
 enum {ERR_OK = 0, ERR_FAIL = -1, ERR_UNSUPPORTED = -2};
 
 #define freeMem(A) if (*(A)) {free(*(A)); *(A) = NULL;}
@@ -113,18 +83,16 @@ static int stringin(char *txt, int sizemax)
 
 static uint32_t u32in(void)
 {
-    uint32_t u32;
-    datain(&u32, 4);
-    u32 = bswap32(u32);
-    return u32;
+    uint8_t u8[4];
+    datain(&u8, 4);
+    return (uint32_t)u8[3] | ((uint32_t)u8[2] << 8) | ((uint32_t)u8[1] << 16) | ((uint32_t)u8[1] << 24);
 }
 
 static uint16_t u16in(void)
 {
-    uint16_t u16;
-    datain(&u16, 2);
-    u16 = bswap16(u16);
-    return u16;
+    uint8_t u8[2];
+    datain(&u8, 2);
+    return (uint16_t)u8[1] | ((uint16_t)u8[0] << 8);
 }
 
 static int u8in(void)
