@@ -1621,6 +1621,7 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
                 RE(h21) = MUL_C(COEF_SQRT2, MUL_C(-cosa, sing));
                 RE(h22) = MUL_C(COEF_SQRT2, MUL_C(sina, sing));
             }
+            IM(h11) = IM(h12) = IM(h21) = IM(h22) = 0;
 
             /* calculate phase rotation parameters H_xy */
             /* note that the imaginary part of these parameters are only calculated when
@@ -1765,6 +1766,7 @@ static void ps_mix_phase(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64
             RE(H12) = RE(ps->h12_prev[gr]);
             RE(H21) = RE(ps->h21_prev[gr]);
             RE(H22) = RE(ps->h22_prev[gr]);
+            IM(H11) = IM(H12) = IM(H21) = IM(H22) = 0;
 
             RE(ps->h11_prev[gr]) = RE(h11);
             RE(ps->h12_prev[gr]) = RE(h12);

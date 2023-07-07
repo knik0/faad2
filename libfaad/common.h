@@ -259,10 +259,6 @@ char *strchr(), *strrchr();
 
 #endif  /* WIN */
 
-#ifdef WORDS_BIGENDIAN
-#define ARCH_IS_BIG_ENDIAN
-#endif
-
 /* FIXED_POINT doesn't work with MAIN and SSR yet */
 #ifdef FIXED_POINT
   #undef MAIN_DEC
