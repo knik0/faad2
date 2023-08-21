@@ -1036,7 +1036,8 @@ static void mp4info(void)
     fprintf(stderr, "Frames:\t\t\t%d\n", mp4config.frame.nsamples);
     fprintf(stderr, "ASC size:\t\t%d\n", mp4config.asc.size);
     fprintf(stderr, "Duration:\t\t%.1f sec\n", (float)mp4config.samples/mp4config.samplerate);
-    fprintf(stderr, "Data offset:\t%x\n", mp4config.frame.info[0].offset);
+    if (mp4config.frame.nsamples)
+        fprintf(stderr, "Data offset:\t%x\n", mp4config.frame.info[0].offset);
 }
 
 int mp4read_close(void)
