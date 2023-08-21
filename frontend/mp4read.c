@@ -444,8 +444,8 @@ static int stcoin(int size)
             chunkn++;
             if (chunkn > numchunks)
                 return ERR_FAIL;
-            if (slicen < mp4config.frame.nsclices)
-            {
+            if (slicen < mp4config.frame.nsclices &&
+                (slicen + 1) < mp4config.frame.nsclices) {
                 if (chunkn == mp4config.frame.map[slicen + 1].firstchunk)
                     slicen++;
             }
