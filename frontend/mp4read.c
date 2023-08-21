@@ -85,7 +85,7 @@ static uint32_t u32in(void)
 {
     uint8_t u8[4];
     datain(&u8, 4);
-    return (uint32_t)u8[3] | ((uint32_t)u8[2] << 8) | ((uint32_t)u8[1] << 16) | ((uint32_t)u8[1] << 24);
+    return (uint32_t)u8[3] | ((uint32_t)u8[2] << 8) | ((uint32_t)u8[1] << 16) | ((uint32_t)u8[0] << 24);
 }
 
 static uint16_t u16in(void)
