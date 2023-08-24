@@ -441,9 +441,9 @@ static real_t find_log2_Qplus1(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
 static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 {
     /* log2 values of limiter gains */
-    /* Last one is log2(1e9), not log2(1e10) due to FIXED POINT float limitations */
+    /* Last one less than log2(1e10) due to FIXED POINT float limitations */
     static real_t limGain[] = {
-        REAL_CONST(-1.0), REAL_CONST(0.0), REAL_CONST(1.0), REAL_CONST(29.897)
+        REAL_CONST(-1.0), REAL_CONST(0.0), REAL_CONST(1.0), REAL_CONST(21.0)
     };
     uint8_t m, l, k;
 
@@ -1615,7 +1615,7 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
 #ifndef SBR_LOW_POWER
                 if (h_SL != 0)
                 {
-                	uint8_t ri = sbr->GQ_ringbuf_index[ch];
+                    uint8_t ri = sbr->GQ_ringbuf_index[ch];
                     for (n = 0; n <= 4; n++)
                     {
                         real_t curr_h_smooth = h_smooth[n];
@@ -1632,8 +1632,8 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
 #ifndef SBR_LOW_POWER
                 }
 #endif
-
-                Q_filt = (adj->S_M_boost[l][m] != 0 || no_noise) ? 0 : Q_filt;
+                if (adj->S_M_boost[l][m] != 0 || no_noise)
+                    Q_filt = 0;
 
                 /* add noise to the output */
                 fIndexNoise = (fIndexNoise + 1) & 511;
