@@ -140,6 +140,14 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
     uint8_t m, l, j, k, k_l, k_h, p;
     real_t nrg, div;
     (void)adj;  /* TODO: remove parameter? */
+#ifdef FIXED_POINT
+    const real_t half = REAL_CONST(0.5);
+    real_t limit;
+    real_t mul;
+#else
+    const real_t half = 0;  /* Compiler is smart enough to eliminate +0 op. */
+    const real_t limit = FLT_MAX;
+#endif
 
     if (sbr->bs_interpol_freq == 1)
     {
@@ -154,6 +162,10 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
 
             if (div == 0)
                 div = 1;
+#ifdef FIXED_POINT
+            limit = div << (30 - (COEF_BITS - REAL_BITS));
+            mul = (1 << (COEF_BITS - REAL_BITS)) / div;
+#endif
 
             for (m = 0; m < sbr->M; m++)
             {
@@ -161,25 +173,27 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
 
                 for (i = l_i + sbr->tHFAdj; i < u_i + sbr->tHFAdj; i++)
                 {
-#ifdef FIXED_POINT
-#ifdef SBR_LOW_POWER
-                    nrg += ((QMF_RE(Xsbr[i][m + sbr->kx])+(1<<(REAL_BITS-1)))>>REAL_BITS)*((QMF_RE(Xsbr[i][m + sbr->kx])+(1<<(REAL_BITS-1)))>>REAL_BITS);
-#else
-                    nrg += ((QMF_RE(Xsbr[i][m + sbr->kx])+(1<<(REAL_BITS-1)))>>REAL_BITS)*((QMF_RE(Xsbr[i][m + sbr->kx])+(1<<(REAL_BITS-1)))>>REAL_BITS) +
-                        ((QMF_IM(Xsbr[i][m + sbr->kx])+(1<<(REAL_BITS-1)))>>REAL_BITS)*((QMF_IM(Xsbr[i][m + sbr->kx])+(1<<(REAL_BITS-1)))>>REAL_BITS);
-#endif
-#else
-                    nrg += MUL_R(QMF_RE(Xsbr[i][m + sbr->kx]), QMF_RE(Xsbr[i][m + sbr->kx]))
+                    real_t re = QMF_RE(Xsbr[i][m + sbr->kx]) + half;
+                    real_t im = QMF_IM(Xsbr[i][m + sbr->kx]) + half;
+                    (void)im;
+                    /* Actually, that should be MUL_R. On floating-point build
+                       that is the same. On fixed point-build we use it to
+                       pre-scale result (to aviod overflow). That, of course
+                       causes some precision loss. */
+                    nrg += MUL_C(re, re)
 #ifndef SBR_LOW_POWER
-                        + MUL_R(QMF_IM(Xsbr[i][m + sbr->kx]), QMF_IM(Xsbr[i][m + sbr->kx]))
+                        + MUL_C(im, im)
 #endif
                         ;
-#endif
                 }
 
-                if (nrg < -FLT_MAX || nrg > FLT_MAX)
+                if (nrg < -limit || nrg > limit)
                     return 1;
+#ifdef FIXED_POINT
+                sbr->E_curr[ch][m][l] = nrg * mul;
+#else
                 sbr->E_curr[ch][m][l] = nrg / div;
+#endif
 #ifdef SBR_LOW_POWER
 #ifdef FIXED_POINT
                 sbr->E_curr[ch][m][l] <<= 1;
@@ -209,31 +223,37 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
 
                     if (div == 0)
                         div = 1;
+#ifdef FIXED_POINT
+                    limit = div << (30 - (COEF_BITS - REAL_BITS));
+                    mul = (1 << (COEF_BITS - REAL_BITS)) / div;
+#endif
 
                     for (i = l_i + sbr->tHFAdj; i < u_i + sbr->tHFAdj; i++)
                     {
                         for (j = k_l; j < k_h; j++)
                         {
-#ifdef FIXED_POINT
-#ifdef SBR_LOW_POWER
-                            nrg += ((QMF_RE(Xsbr[i][j])+(1<<(REAL_BITS-1)))>>REAL_BITS)*((QMF_RE(Xsbr[i][j])+(1<<(REAL_BITS-1)))>>REAL_BITS);
-#else
-                            nrg += ((QMF_RE(Xsbr[i][j])+(1<<(REAL_BITS-1)))>>REAL_BITS)*((QMF_RE(Xsbr[i][j])+(1<<(REAL_BITS-1)))>>REAL_BITS) +
-                                ((QMF_IM(Xsbr[i][j])+(1<<(REAL_BITS-1)))>>REAL_BITS)*((QMF_IM(Xsbr[i][j])+(1<<(REAL_BITS-1)))>>REAL_BITS);
-#endif
-#else
-                            nrg += MUL_R(QMF_RE(Xsbr[i][j]), QMF_RE(Xsbr[i][j]))
+                            real_t re = QMF_RE(Xsbr[i][j]) + half;
+                            real_t im = QMF_IM(Xsbr[i][j]) + half;
+                            (void)im;
+                            /* Actually, that should be MUL_R. On floating-point build
+                               that is the same. On fixed point-build we use it to
+                               pre-scale result (to aviod overflow). That, of course
+                               causes some precision loss. */
+                            nrg += MUL_C(re, re)
 #ifndef SBR_LOW_POWER
-                                + MUL_R(QMF_IM(Xsbr[i][j]), QMF_IM(Xsbr[i][j]))
+                                + MUL_C(im, im)
 #endif
                                 ;
-#endif
                         }
                     }
 
-                    if (nrg < -FLT_MAX || nrg > FLT_MAX)
+                    if (nrg < -limit || nrg > limit)
                         return 1;
+#ifdef FIXED_POINT
+                    sbr->E_curr[ch][k - sbr->kx][l] = nrg * mul;
+#else
                     sbr->E_curr[ch][k - sbr->kx][l] = nrg / div;
+#endif
 #ifdef SBR_LOW_POWER
 #ifdef FIXED_POINT
                     sbr->E_curr[ch][k - sbr->kx][l] <<= 1;
