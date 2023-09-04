@@ -160,7 +160,7 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
 
             div = (real_t)(u_i - l_i);
 
-            if (div == 0)
+            if (div <= 0)
                 div = 1;
 #ifdef FIXED_POINT
             limit = div << (30 - (COEF_BITS - REAL_BITS));
@@ -221,7 +221,7 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
 
                     div = (real_t)((u_i - l_i)*(k_h - k_l));
 
-                    if (div == 0)
+                    if (div <= 0)
                         div = 1;
 #ifdef FIXED_POINT
                     limit = div << (30 - (COEF_BITS - REAL_BITS));
