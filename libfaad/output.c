@@ -440,28 +440,29 @@ void *output_to_PCM(NeAACDecStruct *hDecoder,
 
 #define DM_MUL FRAC_CONST(0.3203772410170407) // 1/(1+sqrt(2) + 1/sqrt(2))
 #define RSQRT2 FRAC_CONST(0.7071067811865475244) // 1/sqrt(2)
+#define BOTH FRAC_CONST(0.2265409196609864215998) // 1/(sqrt(2) + 2 + 1)
 
 static INLINE real_t get_sample(real_t **input, uint8_t channel, uint16_t sample,
                                 uint8_t down_matrix, uint8_t up_matrix,
                                 uint8_t *internal_channel)
 {
+    real_t C;
     if (up_matrix == 1)
         return input[internal_channel[0]][sample];
 
     if (!down_matrix)
         return input[internal_channel[channel]][sample];
 
+    C = MUL_F(input[internal_channel[0]][sample], BOTH);
     if (channel == 0)
     {
-        real_t C   = MUL_F(input[internal_channel[0]][sample], RSQRT2);
-        real_t L_S = MUL_F(input[internal_channel[3]][sample], RSQRT2);
-        real_t cum = input[internal_channel[1]][sample] + C + L_S;
-        return MUL_F(cum, DM_MUL);
+        real_t L_S = MUL_F(input[internal_channel[3]][sample], BOTH);
+        real_t core = MUL_F(input[internal_channel[1]][sample], DM_MUL);
+        return core + C + L_S;
     } else {
-        real_t C   = MUL_F(input[internal_channel[0]][sample], RSQRT2);
-        real_t R_S = MUL_F(input[internal_channel[4]][sample], RSQRT2);
-        real_t cum = input[internal_channel[2]][sample] + C + R_S;
-        return MUL_F(cum, DM_MUL);
+        real_t R_S = MUL_F(input[internal_channel[4]][sample], BOTH);
+        real_t core = MUL_F(input[internal_channel[2]][sample], DM_MUL);
+        return core + C + R_S;
     }
 }
 
