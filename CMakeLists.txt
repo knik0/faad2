@@ -34,11 +34,20 @@ endif()
 
 set(CAPTURE_PACKAGE_VERSION "[ \\t]*\"PACKAGE_VERSION\"[ \\t]*:[ \\t]\"(.*)\"")
 file(STRINGS "properties.json" _faad_version_line REGEX "${CAPTURE_PACKAGE_VERSION}")
-message("${_faad_version_line}")
 string(REGEX REPLACE "${CAPTURE_PACKAGE_VERSION}" "\\1" FAAD_VERSION "${_faad_version_line}")
+string(REPLACE "\." ";" FAAD_VERSION_PARTS ${FAAD_VERSION})
+list(GET FAAD_VERSION_PARTS 0 FAAD_VERSION_MAJOR)
+list(GET FAAD_VERSION_PARTS 1 FAAD_VERSION_MINOR)
+list(GET FAAD_VERSION_PARTS 2 FAAD_VERSION_PATCH)
+# Semantic -> library version
+# NB(eustas): likely that will be always OK; if not, we could read "overrides" from properties.json
+math(EXPR FAAD_ABI_VERSION_CURRENT "${FAAD_VERSION_MAJOR} + ${FAAD_VERSION_MINOR}")
+set(FAAD_ABI_VERSION_AGE "${FAAD_VERSION_MINOR}")
+set(FAAD_ABI_VERSION_REVISION "${FAAD_VERSION_PATCH}")
+set(FAAD_ABI_COMPATIBILITY "${FAAD_VERSION_MAJOR}")
 
 message(STATUS "FAAD PACKAGE_VERSION: ${FAAD_VERSION}")
-mark_as_advanced(FAAD_VERSION)
+mark_as_advanced(FAAD_VERSION FAAD_ABI_COMPATIBILITY FAAD_ABI_VERSION_AGE FAAD_ABI_VERSION_REVISION)
 
 file(READ include/faad.h.in FAAD_H_SRC)
 string(REGEX REPLACE "@VERSION@" "${FAAD_VERSION}" FAAD_H_SRC ${FAAD_H_SRC})
@@ -186,6 +195,13 @@ function(transform_pc_file INPUT_FILE OUTPUT_FILE VERSION)
 endfunction()
 
 transform_pc_file("libfaad/faad2.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/faad2.pc" "${FAAD_VERSION}")
+
+foreach(LIB faad faad_drm faad_fixed faad_drm_fixed)
+  set_target_properties(${LIB} PROPERTIES
+      VERSION "${FAAD_ABI_COMPATIBILITY}.${FAAD_ABI_VERSION_AGE}.${FAAD_ABI_VERSION_REVISION}"
+      SOVERSION "${FAAD_ABI_COMPATIBILITY}"
+  )
+endforeach()
 
 # CLI
 
