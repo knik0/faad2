@@ -122,13 +122,18 @@ extern "C" {
   #undef ERROR_RESILIENCE
 #endif
 
-#define SBR_DEC
-//#define SBR_LOW_POWER
-#define PS_DEC
+// Define DISABLE_SBR if you want to disable SBR decoding.
+//#define DISABLE_SBR
 
-#ifdef SBR_LOW_POWER
-#undef PS_DEC
-#endif
+// Define SBR_LOW_POWER if you want only low power SBR decoding without PS.
+//#define SBR_LOW_POWER
+
+#ifndef DISABLE_SBR
+# define SBR_DEC
+# ifndef SBR_LOW_POWER
+#  define PS_DEC
+# endif // SBR_LOW_POWER
+#endif // DISABLE_SBR
 
 /* FIXED POINT: No MAIN decoding */
 #ifdef FIXED_POINT
