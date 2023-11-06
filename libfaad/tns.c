@@ -196,7 +196,7 @@ static uint8_t tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coe
 {
     uint8_t i, m;
     real_t tmp2[TNS_MAX_ORDER+1], b[TNS_MAX_ORDER+1];
-    uint8_t table_index = 2 * (coef_compress == 0) + (coef_res_bits == 3);
+    uint8_t table_index = 2 * (coef_compress != 0) + (coef_res_bits != 3);
     real_t* tns_coef = all_tns_coefs[table_index];
     uint8_t exp = 0;
 
