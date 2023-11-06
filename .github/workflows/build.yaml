@@ -44,7 +44,7 @@ jobs:
 
     steps:
     - name: Checkout the source
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         submodules: false
         fetch-depth: 1
@@ -88,7 +88,7 @@ jobs:
 
     steps:
     - name: Checkout the source
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         submodules: false
         fetch-depth: 1
@@ -120,7 +120,7 @@ jobs:
         shell: msys2 {0}
     steps:
     - name: Checkout the source
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         submodules: false
         fetch-depth: 1
