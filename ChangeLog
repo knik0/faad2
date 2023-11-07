@@ -1,3 +1,79 @@
+2.11.0:
+	[ Eugène Filin ]
+	* Fix incorrect variable initialization
+
+	[ Eugene Kliuchnikov ]
+	* CI/CD, build, etc
+
+	   - setup GitHub workflows; test build under MSVC, OSX, MSYS2, Linux
+	   - add CMake build system
+	   - additionally add Bazel build
+	   - remove automake and MSVC project files
+	   - add fuzzers that cover almost all decoder code
+	   - setup fuzzing for various builds: (no-)FIXED_POINT / (no-)DRM
+	   - remove dead code
+	   - address differes compilers warnings
+	   - move version to distingished place that different build systems can read
+
+	* "Safe" bugs
+
+	   "Safe" means that it is unlikely to be exploited; those affect the decoded
+	   result for (most likely) extreme inputs. Some fixes are useful only for
+	   "FIXED_POINT" build, since it has more restrictions on intermediate values.
+
+	   - "negative range" in estimate_current_envelope
+	   - integer overflow in channel downmixing
+	   - integer overflow in estimate_envelope
+	   - integer overflows caused by "practical infinite" gain
+	   - integer overflows in HF adjustment code
+	   - several "left shift of negative value"
+	   - priming RNG to avoid using values that does not look random at all
+	   - do not drop the first frame of output; other decoders don't do this
+	   - touching uninitialized values in lt_update_state
+	   - touching uninitialized values in bit-reader buffers
+
+	* "Almost Safe" bugs
+
+	   "Almost safe" means that those are unlinkly to be exploited; if those surface
+	   depends on build options / environment.
+
+	   - division by zero in HF (noise?) generator and scale factor adjustment
+	   - division by zero gen_rand_vector
+
+	* "Unsafe" bugs
+
+	   "Unsafe" means that those can cause crash, or could somehow else be exploited.
+
+	   - CLI: accessing unallocated memory in mp4info (corrupted / zero-samples input) (CVE-2023-38857)
+	   - CLI: out-of-bounds when parsing mp4 header
+	   - CLI: crash because of wrong mp4 frame offset calculation (CVE-2023-38857)
+	   - error handling rvlc_decode_scale_factors (CPU bomb?)
+	   - null pointer dereference (in DRM + PS build)
+	   - index-out-of-bounds / stack-buffer-overflow in decode_sce_lfe
+		 (for streams with PCE)
+	   - stack-buffer-overflow in pns_decode
+	   - null pointer derefernce (when channels change their type in the middle
+		 of the stream)
+	   - infinite loop on currupted stream
+	   - add practial limits for scale factors; otherwise calculated NaN/Inf values
+		 could confuse further logic, resulting in access-out-of-bounds
+	   - check sf_index in window_grouping_info to avoid access-out-of-bounds
+	   - clamp bs_pointer values to avoid access-out-of-bounds
+	   - infinite loop in fill_element
+	   - sanitize input values in ps_mix_phase to avoid access-out-of-bounds
+	   - fix internal decoder buffer size calculation to avoid heap-out-of-bounds
+	   - calculate channel length multiplier even if main channel is already allocated
+		 to avoid heap-out-of-bounds
+	   - reserve enough slots for channels in decode_sce_lfe
+		 to avoid heap-out-of-bounds
+
+	[ David Korczynski ]
+	* Fuzzing integration with oss-fuzz
+
+	[ Steveice10 ]
+	* Add define option to disable SBR/PS support
+	* Fix coefficient table selection in tns_decode_coef
+
 2.10.1:
 	[David Korczynski]
 	* Reject buffers of zero size.
