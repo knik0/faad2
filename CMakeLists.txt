@@ -15,11 +15,17 @@ if(NOT DEFINED FAAD_BUNDLED_MODE)
   # depending on whether or not we are the top-level project.
   if(FAAD_PARENT_DIRECTORY)
     set(FAAD_BUNDLED_MODE ON)
+    set(BUILD_SHARED_LIBS OFF)
   else()
     set(FAAD_BUNDLED_MODE OFF)
+    set(BUILD_SHARED_LIBS ON)
   endif()
 endif()
 mark_as_advanced(FAAD_BUNDLED_MODE)
+
+if(BUILD_SHARED_LIBS)
+  set(CMAKE_C_VISIBILITY_PRESET hidden)
+endif()
 
 find_library(MATH_LIBRARY m)
 
