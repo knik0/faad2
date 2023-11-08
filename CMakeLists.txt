@@ -243,4 +243,10 @@ if(NOT FAAD_BUNDLED_MODE AND NOT MSVC)
     FILES ${CMAKE_CURRENT_BINARY_DIR}/include/neaacdec.h
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
   )
+
+  install(
+    FILES frontend/faad.man
+    DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
+    RENAME faad.1
+  )
 endif()  # FAAD_BUNDLED_MODE
