@@ -7,6 +7,17 @@ include(CheckSymbolExists)
 
 project(LIBFAAD2 LANGUAGES C)
 
+# Set a default build type if none was specified
+set(default_build_type "RelWithDebInfo")
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
+  set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
+      STRING "Choose the type of build." FORCE)
+  # Set the possible values of build type for cmake-gui
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+    "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+
 # If FAAD is being bundled in another project, we don't want to
 # install anything. However, we want to let people override this, so
 # we'll use the FAAD_BUNDLED_MODE variable to let them do that; just
