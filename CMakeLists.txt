@@ -3,6 +3,8 @@
 #  - Solaris 11.4 SRU 15 : 3.15
 cmake_minimum_required(VERSION 3.15)
 
+include(CheckSymbolExists)
+
 project(LIBFAAD2 LANGUAGES C)
 
 # If FAAD is being bundled in another project, we don't want to
@@ -89,6 +91,13 @@ set(FAAD_DEFINES
   STDC_HEADERS=1
   PACKAGE_VERSION=\"${FAAD_VERSION}\"
 )
+
+check_symbol_exists(lrintf "math.h" HAVE_LRINTF)
+if(HAVE_LRINTF)
+  list(APPEND FAAD_DEFINES
+    HAVE_LRINTF=1
+  )
+endif()
 
 set(FAAD_FLAGS
   -Wall
