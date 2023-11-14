@@ -1,3 +1,12 @@
+2.11.1 (2023-11-14):
+	[ Fabian Greffrath ]
+	* Build shared libraries and hide symbols by default.
+	* Install man page by default.
+	* Check for `lrintf()` availability, link with `-lm` and define `HAVE_LRINTF` accordingly.
+	* Set a default build type if none was specified.
+	* Build DLL name with SOVERSION by default on Windows.
+	* Fix inlined `lrintf()` function signatures.
+
 2.11.0 (2023-11-07):
 	[ Eugène Filin ]
 	* Fix incorrect variable initialization
