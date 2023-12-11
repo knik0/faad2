@@ -78,6 +78,9 @@ extern "C" {
 #define INTENSITY_HCB2 14
 #define INTENSITY_HCB  15
 
+/* Maximal accessed codebook index. */
+#define LAST_CB_IDX    11
+
 /* 1st step table */
 typedef struct
 {
@@ -115,16 +118,6 @@ typedef struct
     int8_t data[2];
 } hcb_bin_pair;
 
-hcb *hcb_table[];
-hcb_2_quad *hcb_2_quad_table[];
-hcb_2_pair *hcb_2_pair_table[];
-hcb_bin_pair *hcb_bin_table[];
-uint8_t hcbN[];
-uint8_t unsigned_cb[];
-int hcb_2_quad_table_size[];
-int hcb_2_pair_table_size[];
-int hcb_bin_table_size[];
-
 #include "codebook/hcb_1.h"
 #include "codebook/hcb_2.h"
 #include "codebook/hcb_3.h"
@@ -137,7 +130,6 @@ int hcb_bin_table_size[];
 #include "codebook/hcb_10.h"
 #include "codebook/hcb_11.h"
 #include "codebook/hcb_sf.h"
-
 
 #ifdef __cplusplus
 }
