@@ -36,7 +36,7 @@
  *
  * Used to find offset into 2nd step table and number of extra bits to get
  */
-static hcb hcb11_1[] = {
+static const hcb hcb11_1[32] = {
     /* 4 bits */
     { /* 00000 */ 0, 0 },
     { /*       */ 0, 0 },
@@ -92,13 +92,15 @@ static hcb hcb11_1[] = {
 
     /* 10/11/12 bits */
     { /* 11111 */ 246, 7 }
+
+     /* Size of second level table is 246 + 128 = 374 */
 };
 
 /* 2nd step table
  *
  * Gives size of codeword and actual data (x,y,v,w)
  */
-static hcb_2_pair hcb11_2[] = {
+static hcb_2_pair hcb11_2[374] = {
     /* 4 */
     { 4,  0,  0 },
     { 4,  1,  1 },

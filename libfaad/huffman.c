@@ -66,45 +66,29 @@ int8_t huffman_scale_factor(bitfile *ld)
         uint8_t b = faad_get1bit(ld
             DEBUGVAR(1,255,"huffman_scale_factor()"));
         offset += hcb_sf[offset][b];
-
-        if (offset > 240)
-        {
-            /* printf("ERROR: offset into hcb_sf = %d >240!\n", offset); */
-            return -1;
-        }
     }
 
     return hcb_sf[offset][0];
 }
 
 
-hcb *hcb_table[] = {
-    0, hcb1_1, hcb2_1, 0, hcb4_1, 0, hcb6_1, 0, hcb8_1, 0, hcb10_1, hcb11_1
-};
-
-hcb_2_quad *hcb_2_quad_table[] = {
-    0, hcb1_2, hcb2_2, 0, hcb4_2, 0, 0, 0, 0, 0, 0, 0
-};
-
-hcb_2_pair *hcb_2_pair_table[] = {
-    0, 0, 0, 0, 0, 0, hcb6_2, 0, hcb8_2, 0, hcb10_2, hcb11_2
-};
-
-hcb_bin_pair *hcb_bin_table[] = {
-    0, 0, 0, 0, 0, hcb5, 0, hcb7, 0, hcb9, 0, 0
-};
-
-uint8_t hcbN[] = { 0, 5, 5, 0, 5, 0, 5, 0, 5, 0, 6, 5 };
+static const uint8_t hcbN[LAST_CB_IDX + 1] =
+{   0,      5,      5,    0,      5,    0,      5,    0,      5,    0,       6,       5};
+static const hcb* hcb_table[LAST_CB_IDX + 1] =
+{NULL, hcb1_1, hcb2_1, NULL, hcb4_1, NULL, hcb6_1, NULL, hcb8_1, NULL, hcb10_1, hcb11_1};
+static const hcb_2_quad* hcb_2_quad_table[LAST_CB_IDX + 1] =
+{NULL, hcb1_2, hcb2_2, NULL, hcb4_2, NULL,   NULL, NULL,   NULL, NULL,    NULL,    NULL};
+static const hcb_2_pair* hcb_2_pair_table[LAST_CB_IDX + 1] =
+{NULL,   NULL,   NULL, NULL,   NULL, NULL, hcb6_2, NULL, hcb8_2, NULL, hcb10_2, hcb11_2};
+static const hcb_bin_pair* hcb_bin_table[LAST_CB_IDX + 1] =
+{NULL,   NULL,   NULL, NULL,   NULL, hcb5,   NULL, hcb7,   NULL, hcb9,    NULL,    NULL};
+/*                     hcb3 is the unique case */
 
 /* defines whether a huffman codebook is unsigned or not */
 /* Table 4.6.2 */
-uint8_t unsigned_cb[] = { 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-  /* codebook 16 to 31 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+static uint8_t unsigned_cb[32] = { 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+           /* codebook 16 to 31 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 };
-
-int hcb_2_quad_table_size[] = { 0, 114, 86, 0, 185, 0, 0, 0, 0, 0, 0, 0 };
-int hcb_2_pair_table_size[] = { 0, 0, 0, 0, 0, 0, 126, 0, 83, 0, 210, 373 };
-int hcb_bin_table_size[] = { 0, 0, 0, 161, 0, 161, 0, 127, 0, 337, 0, 0 };
 
 static INLINE void huffman_sign_bits(bitfile *ld, int16_t *sp, uint8_t len)
 {
@@ -166,34 +150,39 @@ static INLINE uint8_t huffman_getescape(bitfile *ld, int16_t *sp)
 static uint8_t huffman_2step_quad(uint8_t cb, bitfile *ld, int16_t *sp)
 {
     uint32_t cw;
-    uint16_t offset = 0;
+    uint16_t offset;
     uint8_t extra_bits;
+    const hcb* root;
+    uint8_t root_bits;
+    const hcb_2_quad* table;
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if (hcbN[cb] == 0) __builtin_trap();
+    if (hcb_table[cb] == NULL) __builtin_trap();
+    if (hcb_2_quad_table[cb] == NULL) __builtin_trap();
+    // In other words, `cb` is one of [1, 2, 4].
+#endif
+    root = hcb_table[cb];
+    root_bits = hcbN[cb];
+    table = hcb_2_quad_table[cb];
 
-    cw = faad_showbits(ld, hcbN[cb]);
-    offset = hcb_table[cb][cw].offset;
-    extra_bits = hcb_table[cb][cw].extra_bits;
+    cw = faad_showbits(ld, root_bits);
+    offset = root[cw].offset;
+    extra_bits = root[cw].extra_bits;
 
     if (extra_bits)
     {
-        /* we know for sure it's more than hcbN[cb] bits long */
-        faad_flushbits(ld, hcbN[cb]);
+        /* We know for sure it's more than `root_bits` bits long. */
+        faad_flushbits(ld, root_bits);
         offset += (uint16_t)faad_showbits(ld, extra_bits);
-        faad_flushbits(ld, hcb_2_quad_table[cb][offset].bits - hcbN[cb]);
+        faad_flushbits(ld, table[offset].bits - root_bits);
     } else {
-        faad_flushbits(ld, hcb_2_quad_table[cb][offset].bits);
+        faad_flushbits(ld, table[offset].bits);
     }
 
-    if (offset > hcb_2_quad_table_size[cb])
-    {
-        /* printf("ERROR: offset into hcb_2_quad_table = %d >%d!\n", offset,
-           hcb_2_quad_table_size[cb]); */
-        return 10;
-    }
-
-    sp[0] = hcb_2_quad_table[cb][offset].x;
-    sp[1] = hcb_2_quad_table[cb][offset].y;
-    sp[2] = hcb_2_quad_table[cb][offset].v;
-    sp[3] = hcb_2_quad_table[cb][offset].w;
+    sp[0] = table[offset].x;
+    sp[1] = table[offset].y;
+    sp[2] = table[offset].v;
+    sp[3] = table[offset].w;
 
     return 0;
 }
@@ -209,32 +198,37 @@ static uint8_t huffman_2step_quad_sign(uint8_t cb, bitfile *ld, int16_t *sp)
 static uint8_t huffman_2step_pair(uint8_t cb, bitfile *ld, int16_t *sp)
 {
     uint32_t cw;
-    uint16_t offset = 0;
+    uint16_t offset;
     uint8_t extra_bits;
+    const hcb* root;
+    uint8_t root_bits;
+    const hcb_2_pair* table;
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if (hcbN[cb] == 0) __builtin_trap();
+    if (hcb_table[cb] == NULL) __builtin_trap();
+    if (hcb_2_pair_table[cb] == NULL) __builtin_trap();
+    // In other words, `cb` is one of [6, 8, 10, 11].
+#endif
+    root = hcb_table[cb];
+    root_bits = hcbN[cb];
+    table = hcb_2_pair_table[cb];
 
-    cw = faad_showbits(ld, hcbN[cb]);
-    offset = hcb_table[cb][cw].offset;
-    extra_bits = hcb_table[cb][cw].extra_bits;
+    cw = faad_showbits(ld, root_bits);
+    offset = root[cw].offset;
+    extra_bits = root[cw].extra_bits;
 
     if (extra_bits)
     {
         /* we know for sure it's more than hcbN[cb] bits long */
-        faad_flushbits(ld, hcbN[cb]);
+        faad_flushbits(ld, root_bits);
         offset += (uint16_t)faad_showbits(ld, extra_bits);
-        faad_flushbits(ld, hcb_2_pair_table[cb][offset].bits - hcbN[cb]);
+        faad_flushbits(ld, table[offset].bits - root_bits);
     } else {
-        faad_flushbits(ld, hcb_2_pair_table[cb][offset].bits);
+        faad_flushbits(ld, table[offset].bits);
     }
 
-    if (offset > hcb_2_pair_table_size[cb])
-    {
-        /* printf("ERROR: offset into hcb_2_pair_table = %d >%d!\n", offset,
-           hcb_2_pair_table_size[cb]); */
-        return 10;
-    }
-
-    sp[0] = hcb_2_pair_table[cb][offset].x;
-    sp[1] = hcb_2_pair_table[cb][offset].y;
+    sp[0] = table[offset].x;
+    sp[1] = table[offset].y;
 
     return 0;
 }
@@ -250,25 +244,23 @@ static uint8_t huffman_2step_pair_sign(uint8_t cb, bitfile *ld, int16_t *sp)
 static uint8_t huffman_binary_quad(uint8_t cb, bitfile *ld, int16_t *sp)
 {
     uint16_t offset = 0;
+    const hcb_bin_quad* table = hcb3;
 
-    while (!hcb3[offset].is_leaf)
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if (cb != 3) __builtin_trap();
+#endif
+
+    while (!table[offset].is_leaf)
     {
         uint8_t b = faad_get1bit(ld
             DEBUGVAR(1,255,"huffman_spectral_data():3"));
-        offset += hcb3[offset].data[b];
+        offset += table[offset].data[b];
     }
 
-    if (offset > hcb_bin_table_size[cb])
-    {
-        /* printf("ERROR: offset into hcb_bin_table = %d >%d!\n", offset,
-           hcb_bin_table_size[cb]); */
-        return 10;
-    }
-
-    sp[0] = hcb3[offset].data[0];
-    sp[1] = hcb3[offset].data[1];
-    sp[2] = hcb3[offset].data[2];
-    sp[3] = hcb3[offset].data[3];
+    sp[0] = table[offset].data[0];
+    sp[1] = table[offset].data[1];
+    sp[2] = table[offset].data[2];
+    sp[3] = table[offset].data[3];
 
     return 0;
 }
@@ -284,23 +276,23 @@ static uint8_t huffman_binary_quad_sign(uint8_t cb, bitfile *ld, int16_t *sp)
 static uint8_t huffman_binary_pair(uint8_t cb, bitfile *ld, int16_t *sp)
 {
     uint16_t offset = 0;
+    const hcb_bin_pair* table;
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if (hcb_bin_table[cb] == NULL) __builtin_trap();
+    if (cb == 3) __builtin_trap();
+    // In other words, `cb` is one of [5, 7, 9].
+#endif
+    table = hcb_bin_table[cb];
 
-    while (!hcb_bin_table[cb][offset].is_leaf)
+    while (!table[offset].is_leaf)
     {
         uint8_t b = faad_get1bit(ld
             DEBUGVAR(1,255,"huffman_spectral_data():9"));
-        offset += hcb_bin_table[cb][offset].data[b];
+        offset += table[offset].data[b];
     }
 
-    if (offset > hcb_bin_table_size[cb])
-    {
-        /* printf("ERROR: offset into hcb_bin_table = %d >%d!\n", offset,
-           hcb_bin_table_size[cb]); */
-        return 10;
-    }
-
-    sp[0] = hcb_bin_table[cb][offset].data[0];
-    sp[1] = hcb_bin_table[cb][offset].data[1];
+    sp[0] = table[offset].data[0];
+    sp[1] = table[offset].data[1];
 
     return 0;
 }
@@ -425,35 +417,50 @@ int8_t huffman_spectral_data_2(uint8_t cb, bits_t *ld, int16_t *sp)
     {
     case 1: /* 2-step method for data quadruples */
     case 2:
-    case 4:
+    case 4: {
+        const hcb* root;
+        uint8_t root_bits;
+        const hcb_2_quad* table;
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        if (hcbN[cb] == 0) __builtin_trap();
+        if (hcb_table[cb] == NULL) __builtin_trap();
+        if (hcb_2_quad_table[cb] == NULL) __builtin_trap();
+        // In other words, `cb` is one of [1, 2, 4].
+#endif
+        root = hcb_table[cb];
+        root_bits = hcbN[cb];
+        table = hcb_2_quad_table[cb];
 
-        cw = showbits_hcr(ld, hcbN[cb]);
-        offset = hcb_table[cb][cw].offset;
-        extra_bits = hcb_table[cb][cw].extra_bits;
+        cw = showbits_hcr(ld, root_bits);
+        offset = root[cw].offset;
+        extra_bits = root[cw].extra_bits;
 
         if (extra_bits)
         {
-            /* we know for sure it's more than hcbN[cb] bits long */
-            if ( flushbits_hcr(ld, hcbN[cb]) ) return -1;
+            /* We know for sure it's more than root_bits bits long. */
+            if (flushbits_hcr(ld, root_bits)) return -1;
             offset += (uint16_t)showbits_hcr(ld, extra_bits);
-            if ( flushbits_hcr(ld, hcb_2_quad_table[cb][offset].bits - hcbN[cb]) ) return -1;
+            if (flushbits_hcr(ld, table[offset].bits - root_bits)) return -1;
         } else {
-            if ( flushbits_hcr(ld, hcb_2_quad_table[cb][offset].bits) ) return -1;
+            if (flushbits_hcr(ld, table[offset].bits)) return -1;
         }
 
-        sp[0] = hcb_2_quad_table[cb][offset].x;
-        sp[1] = hcb_2_quad_table[cb][offset].y;
-        sp[2] = hcb_2_quad_table[cb][offset].v;
-        sp[3] = hcb_2_quad_table[cb][offset].w;
+        sp[0] = table[offset].x;
+        sp[1] = table[offset].y;
+        sp[2] = table[offset].v;
+        sp[3] = table[offset].w;
         break;
-
+    }
     case 6: /* 2-step method for data pairs */
     case 8:
     case 10:
     case 11:
     /* VCB11 uses codebook 11 */
     case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
-    case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
+    case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31: {
+        const hcb* root;
+        uint8_t root_bits;
+        const hcb_2_pair* table;
 
         if (cb >= 16)
         {
@@ -461,58 +468,67 @@ int8_t huffman_spectral_data_2(uint8_t cb, bits_t *ld, int16_t *sp)
             vcb11 = cb;
             cb = 11;
         }
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        if (hcbN[cb] == 0) __builtin_trap();
+        if (hcb_table[cb] == NULL) __builtin_trap();
+        if (hcb_2_pair_table[cb] == NULL) __builtin_trap();
+        // In other words, `cb` is one of [6, 8, 10, 11].
+#endif
+        root = hcb_table[cb];
+        root_bits = hcbN[cb];
+        table = hcb_2_pair_table[cb];
 
-        cw = showbits_hcr(ld, hcbN[cb]);
-        offset = hcb_table[cb][cw].offset;
-        extra_bits = hcb_table[cb][cw].extra_bits;
+        cw = showbits_hcr(ld, root_bits);
+        offset = root[cw].offset;
+        extra_bits = root[cw].extra_bits;
 
         if (extra_bits)
         {
             /* we know for sure it's more than hcbN[cb] bits long */
-            if ( flushbits_hcr(ld, hcbN[cb]) ) return -1;
+            if (flushbits_hcr(ld, root_bits)) return -1;
             offset += (uint16_t)showbits_hcr(ld, extra_bits);
-            if ( flushbits_hcr(ld, hcb_2_pair_table[cb][offset].bits - hcbN[cb]) ) return -1;
+            if (flushbits_hcr(ld, table[offset].bits - root_bits)) return -1;
         } else {
-            if ( flushbits_hcr(ld, hcb_2_pair_table[cb][offset].bits) ) return -1;
+            if ( flushbits_hcr(ld, table[offset].bits)) return -1;
         }
-        sp[0] = hcb_2_pair_table[cb][offset].x;
-        sp[1] = hcb_2_pair_table[cb][offset].y;
+        sp[0] = table[offset].x;
+        sp[1] = table[offset].y;
         break;
-
-    case 3: /* binary search for data quadruples */
-
-        while (!hcb3[offset].is_leaf)
+    }
+    case 3: { /* binary search for data quadruples */
+        const hcb_bin_quad* table = hcb3;
+        while (!table[offset].is_leaf)
         {
             uint8_t b;
-
-            if ( get1bit_hcr(ld, &b) ) return -1;
-            offset += hcb3[offset].data[b];
+            if (get1bit_hcr(ld, &b)) return -1;
+            offset += table[offset].data[b];
         }
 
-        sp[0] = hcb3[offset].data[0];
-        sp[1] = hcb3[offset].data[1];
-        sp[2] = hcb3[offset].data[2];
-        sp[3] = hcb3[offset].data[3];
+        sp[0] = table[offset].data[0];
+        sp[1] = table[offset].data[1];
+        sp[2] = table[offset].data[2];
+        sp[3] = table[offset].data[3];
 
         break;
+    }
 
     case 5: /* binary search for data pairs */
     case 7:
-    case 9:
-
-        while (!hcb_bin_table[cb][offset].is_leaf)
+    case 9: {
+        const hcb_bin_pair* table = hcb_bin_table[cb];
+        while (!table[offset].is_leaf)
         {
             uint8_t b;
 
             if (get1bit_hcr(ld, &b) ) return -1;
-            offset += hcb_bin_table[cb][offset].data[b];
+            offset += table[offset].data[b];
         }
 
-        sp[0] = hcb_bin_table[cb][offset].data[0];
-        sp[1] = hcb_bin_table[cb][offset].data[1];
+        sp[0] = table[offset].data[0];
+        sp[1] = table[offset].data[1];
 
         break;
-    }
+    }}
 
 	/* decode sign bits */
     if (unsigned_cb[cb])
