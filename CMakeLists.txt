@@ -245,28 +245,34 @@ foreach(LIB faad faad_drm faad_fixed faad_drm_fixed)
 endforeach()
 
 # CLI
+option(BUILD_FAAD_CLI "Build faad_cli executable" ON)
+if (BUILD_FAAD_CLI)
+  add_executable(faad_cli ${FAAD_SOURCES})
+  target_link_libraries(faad_cli faad)
+  target_compile_definitions(faad_cli PRIVATE ${FAAD_DEFINES})
+  target_compile_options(faad_cli PRIVATE ${FAAD_FLAGS})
 
-add_executable(faad_cli ${FAAD_SOURCES})
-target_link_libraries(faad_cli faad)
-target_compile_definitions(faad_cli PRIVATE ${FAAD_DEFINES})
-target_compile_options(faad_cli PRIVATE ${FAAD_FLAGS})
-
-if (MSVC)
-  target_include_directories(faad_cli PRIVATE
-    frontend
-  )
-else()
-  set_target_properties(faad_cli PROPERTIES OUTPUT_NAME faad)
+  if (MSVC)
+    target_include_directories(faad_cli PRIVATE
+      frontend
+    )
+  else()
+    set_target_properties(faad_cli PROPERTIES OUTPUT_NAME faad)
+  endif()
 endif()
-
 # Installation
 
 if(NOT FAAD_BUNDLED_MODE AND NOT MSVC)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/faad2.pc"
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 
+  set(INSTALL_TARGETS faad faad_drm)
+  if (BUILD_FAAD_CLI)
+    list(APPEND INSTALL_TARGETS faad_cli)
+  endif()
+
   install(
-    TARGETS faad faad_cli faad_drm
+    TARGETS ${INSTALL_TARGETS}
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
