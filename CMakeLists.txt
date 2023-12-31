@@ -96,7 +96,6 @@ endif()
 
 # Lets stick to predefined config, until more flexibility is actually requested.
 set(FAAD_DEFINES
-  APPLY_DRC
   HAVE_INTTYPES_H=1
   HAVE_MEMCPY=1
   HAVE_STRING_H=1
@@ -106,6 +105,13 @@ set(FAAD_DEFINES
   STDC_HEADERS=1
   PACKAGE_VERSION=\"${FAAD_VERSION}\"
 )
+
+option(FAAD_APPLY_DRC "Apply dynamic range control" ON)
+if(FAAD_APPLY_DRC)
+  list(APPEND FAAD_DEFINES
+    APPLY_DRC
+  )
+endif()
 
 check_library_exists(m lrintf "" HAVE_LIBM)
 if(HAVE_LIBM)
