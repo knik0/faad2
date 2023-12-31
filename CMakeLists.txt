@@ -96,7 +96,6 @@ endif()
 
 # Lets stick to predefined config, until more flexibility is actually requested.
 set(FAAD_DEFINES
-  APPLY_DRC
   HAVE_INTTYPES_H=1
   HAVE_MEMCPY=1
   HAVE_STRING_H=1
@@ -106,6 +105,13 @@ set(FAAD_DEFINES
   STDC_HEADERS=1
   PACKAGE_VERSION=\"${FAAD_VERSION}\"
 )
+
+option(FAAD_APPLY_DRC "Apply dynamic range control" ON)
+if(FAAD_APPLY_DRC)
+  list(APPEND FAAD_DEFINES
+    APPLY_DRC
+  )
+endif()
 
 check_library_exists(m lrintf "" HAVE_LIBM)
 if(HAVE_LIBM)
@@ -245,8 +251,8 @@ foreach(LIB faad faad_drm faad_fixed faad_drm_fixed)
 endforeach()
 
 # CLI
-option(BUILD_FAAD_CLI "Build faad_cli executable" ON)
-if (BUILD_FAAD_CLI)
+option(FAAD_BUILD_CLI "Build faad_cli executable" ON)
+if (FAAD_BUILD_CLI)
   add_executable(faad_cli ${FAAD_SOURCES})
   target_link_libraries(faad_cli faad)
   target_compile_definitions(faad_cli PRIVATE ${FAAD_DEFINES})
@@ -267,7 +273,7 @@ if(NOT FAAD_BUNDLED_MODE AND NOT MSVC)
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 
   set(INSTALL_TARGETS faad faad_drm)
-  if (BUILD_FAAD_CLI)
+  if (FAAD_BUILD_CLI)
     list(APPEND INSTALL_TARGETS faad_cli)
   endif()
 
