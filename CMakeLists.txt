@@ -251,8 +251,8 @@ foreach(LIB faad faad_drm faad_fixed faad_drm_fixed)
 endforeach()
 
 # CLI
-option(BUILD_FAAD_CLI "Build faad_cli executable" ON)
-if (BUILD_FAAD_CLI)
+option(FAAD_BUILD_CLI "Build faad_cli executable" ON)
+if (FAAD_BUILD_CLI)
   add_executable(faad_cli ${FAAD_SOURCES})
   target_link_libraries(faad_cli faad)
   target_compile_definitions(faad_cli PRIVATE ${FAAD_DEFINES})
@@ -273,7 +273,7 @@ if(NOT FAAD_BUNDLED_MODE AND NOT MSVC)
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 
   set(INSTALL_TARGETS faad faad_drm)
-  if (BUILD_FAAD_CLI)
+  if (FAAD_BUILD_CLI)
     list(APPEND INSTALL_TARGETS faad_cli)
   endif()
 
