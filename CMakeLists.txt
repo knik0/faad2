@@ -268,7 +268,7 @@ if (FAAD_BUILD_CLI)
 endif()
 # Installation
 
-if(NOT FAAD_BUNDLED_MODE AND NOT MSVC)
+if(NOT FAAD_BUNDLED_MODE)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/faad2.pc"
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 
