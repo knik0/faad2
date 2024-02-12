@@ -76,6 +76,8 @@ jobs:
            os: windows-latest
            cmake_args: >-
              -G "Visual Studio 17 2022" -A x64
+           cmake_build_options: >-
+             --config Release
          - name: OSX
            os: macos-latest
 
@@ -100,7 +102,7 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=$RUNNER_TEMP/usrlocal \
             -DBUILD_SHARED_LIBS=${SHARED} \
             ${{ matrix.cmake_args }}
-        cmake --build build -j ${NUM_CORES}
+        cmake --build build -j ${NUM_CORES} ${{ matrix.cmake_build_options || '' }}
         cmake --install build
 
   BuildOnMsys:
