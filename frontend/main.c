@@ -925,7 +925,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
         decoded += dur;
 
         if (decoded > mp4config.samples)
-            dur += mp4config.samples - decoded;
+            dur -= decoded - mp4config.samples;
 
         if (dur > framesize)
         {
