@@ -323,7 +323,7 @@ static size_t write_audio_16bit(audio_file *aufile, void *sample_buffer,
 
     if (aufile->channels == 6 && aufile->channelMask)
     {
-        for (i = 0; i < samples; i += aufile->channels)
+        for (i = 0; i+6 < samples; i += aufile->channels)
         {
             short r1, r2, r3, r4, r5, r6;
             r1 = sample_buffer16[i];
@@ -366,7 +366,7 @@ static size_t write_audio_24bit(audio_file *aufile, void *sample_buffer,
 
     if (aufile->channels == 6 && aufile->channelMask)
     {
-        for (i = 0; i < samples; i += aufile->channels)
+        for (i = 0; i+6 < samples; i += aufile->channels)
         {
             long r1, r2, r3, r4, r5, r6;
             r1 = sample_buffer24[i];
@@ -410,7 +410,7 @@ static size_t write_audio_32bit(audio_file *aufile, void *sample_buffer,
 
     if (aufile->channels == 6 && aufile->channelMask)
     {
-        for (i = 0; i < samples; i += aufile->channels)
+        for (i = 0; i+6 < samples; i += aufile->channels)
         {
             long r1, r2, r3, r4, r5, r6;
             r1 = sample_buffer32[i];
@@ -455,7 +455,7 @@ static size_t write_audio_float(audio_file *aufile, void *sample_buffer,
 
     if (aufile->channels == 6 && aufile->channelMask)
     {
-        for (i = 0; i < samples; i += aufile->channels)
+        for (i = 0; i+6 < samples; i += aufile->channels)
         {
             float r1, r2, r3, r4, r5, r6;
             r1 = sample_buffer_f[i];
