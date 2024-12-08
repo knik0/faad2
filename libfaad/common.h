@@ -255,7 +255,7 @@ typedef float float32_t;
 #  define strchr index
 #  define strrchr rindex
 # endif
-char *strchr(), *strrchr();
+char *strchr(const char *, int), *strrchr(const char *, int);
 # if !HAVE_MEMCPY
 #  define memcpy(d, s, n) bcopy((s), (d), (n))
 #  define memmove(d, s, n) bcopy((s), (d), (n))
