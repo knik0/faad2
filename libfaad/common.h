@@ -201,18 +201,9 @@ typedef float float32_t;
 #if HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
-#if STDC_HEADERS
-# include <stdlib.h>
-# include <stddef.h>
-#else
-# if HAVE_STDLIB_H
-#  include <stdlib.h>
-# endif
-#endif
+#include <stdlib.h>
+#include <stddef.h>
 #if HAVE_STRING_H
-# if !STDC_HEADERS && HAVE_MEMORY_H
-#  include <memory.h>
-# endif
 # include <string.h>
 #endif
 #if HAVE_STRINGS_H
@@ -248,19 +239,7 @@ typedef signed char int8_t;
 typedef float float32_t;
 #endif
 
-#if STDC_HEADERS
-# include <string.h>
-#else
-# if !HAVE_STRCHR
-#  define strchr index
-#  define strrchr rindex
-# endif
-char *strchr(), *strrchr();
-# if !HAVE_MEMCPY
-#  define memcpy(d, s, n) bcopy((s), (d), (n))
-#  define memmove(d, s, n) bcopy((s), (d), (n))
-# endif
-#endif
+#include <string.h>
 
 #endif  /* WIN */
 
