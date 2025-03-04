@@ -141,3 +141,9 @@ jobs:
             -DBUILD_SHARED_LIBS='true'
         cmake --build build -j `nproc`
         cmake --install build
+    - name: Upload artifacts (Windows)
+      uses: actions/upload-artifact@v4
+      if: runner.os == 'Windows'
+      with:
+        name: faac-${{ github.sha }}-${{ matrix.msystem }}
+        path: $RUNNER_TEMP/usrlocal
