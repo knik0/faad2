@@ -136,8 +136,9 @@ jobs:
           cmake:p
     - name: Configure and build
       run: |
+        mkdir -p temp
         cmake -B build . \
-            -DCMAKE_INSTALL_PREFIX=$RUNNER_TEMP/usrlocal \
+            -DCMAKE_INSTALL_PREFIX=$(realpath temp) \
             -DBUILD_SHARED_LIBS='true'
         cmake --build build -j `nproc`
         cmake --install build
@@ -146,4 +147,4 @@ jobs:
       if: runner.os == 'Windows'
       with:
         name: faac-${{ github.sha }}-${{ matrix.msystem }}
-        path: $RUNNER_TEMP/usrlocal
+        path: temp
