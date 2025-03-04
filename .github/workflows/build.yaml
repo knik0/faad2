@@ -116,7 +116,6 @@ jobs:
          - msystem: clang64
          - msystem: ucrt64
          - msystem: mingw32
-         - msystem: clang32
     defaults:
       run:
         shell: msys2 {0}
