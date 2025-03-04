@@ -1,3 +1,19 @@
+2.11.2 (2025-03-04):
+	[ Armin Novak ]
+	* Add option BUILD_FAAD_CLI
+
+	[ Johannes Kauffmann ]
+	* Add conditional build with DRC
+
+	[ Roman Artiukhin ]
+	* Use adts_frame for adts header detection
+
+	[ gavtroy ]
+	* Fix gapless calculation in frontend
+
+	[ DingHao ]
+	* Fix write_audio_* function heap buffer overflow
+
 2.11.1 (2023-11-14):
 	[ Fabian Greffrath ]
 	* Build shared libraries and hide symbols by default.
