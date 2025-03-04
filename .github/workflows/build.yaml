@@ -146,5 +146,5 @@ jobs:
       uses: actions/upload-artifact@v4
       if: runner.os == 'Windows'
       with:
-        name: faac-${{ github.sha }}-${{ matrix.msystem }}
+        name: faad2-${{ github.sha }}-${{ matrix.msystem }}
         path: temp
