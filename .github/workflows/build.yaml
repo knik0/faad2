@@ -36,22 +36,6 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  BuildWithBazel:
-    runs-on: ubuntu-latest
-
-    strategy:
-     fail-fast: false
-
-    steps:
-    - name: Checkout the source
-      uses: actions/checkout@v4
-      with:
-        submodules: false
-        fetch-depth: 1
-    - name: Configure and build
-      run: |
-        bazel build :all
-
   BuildWithCMake:
     runs-on: ${{ matrix.os || 'ubuntu-latest' }}
 
@@ -112,10 +96,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-         - msystem: mingw64
-         - msystem: clang64
          - msystem: ucrt64
-         - msystem: mingw32
     defaults:
       run:
         shell: msys2 {0}
