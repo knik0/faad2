@@ -159,20 +159,21 @@ static INLINE void ComplexMult(real_t *y1, real_t *y2,
 #elif defined(__GNUC__) && defined (__arm__)
 
 /* taken from MAD */
-#define arm_mul(x, y, SCALEBITS) \
-({ \
-    uint32_t __hi; \
-    uint32_t __lo; \
-    uint32_t __result; \
-    asm("smull  %0, %1, %3, %4\n\t" \
-        "movs   %0, %0, lsr %5\n\t" \
-        "adc    %2, %0, %1, lsl %6" \
-        : "=&r" (__lo), "=&r" (__hi), "=r" (__result) \
-        : "%r" (x), "r" (y), \
-        "M" (SCALEBITS), "M" (32 - (SCALEBITS)) \
-        : "cc"); \
-        __result; \
-})
+static INLINE real_t arm_mul(real_t x, real_t y, unsigned int SCALEBITS)
+{
+    uint32_t __hi;
+    uint32_t __lo;
+    uint32_t __result;
+
+    asm("smull  %0, %1, %3, %4\n\t"
+        "movs   %0, %0, lsr %5\n\t"
+        "adc    %2, %0, %1, lsl %6"
+        : "=&r" (__lo), "=&r" (__hi), "=r" (__result)
+        : "%r" (x), "r" (y),
+        "M" (SCALEBITS), "M" (32 - (SCALEBITS))
+        : "cc");
+    return __result;					\
+}
 
 static INLINE real_t MUL_R(real_t A, real_t B)
 {
