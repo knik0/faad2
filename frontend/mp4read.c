@@ -347,6 +347,9 @@ static int stscin(int size)
 
     mp4config.frame.nsclices = u32in();
 
+    if (!mp4config.frame.nsclices)
+        return ERR_FAIL;
+
     tmp = sizeof(slice_info_t) * mp4config.frame.nsclices;
     if (tmp < mp4config.frame.nsclices)
         return ERR_FAIL;
