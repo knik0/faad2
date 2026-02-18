@@ -44,7 +44,7 @@
 #define DECAY_CUTOFF         3
 #define DECAY_SLOPE          0.05f
 
-/* type definitaions */
+/* type definitions */
 typedef const int8_t (*drm_ps_huff_tab)[2];
 
 
