@@ -847,27 +847,35 @@ static uint8_t allocate_channel_pair(NeAACDecStruct *hDecoder,
         }
 #endif
     }
-    if (hDecoder->time_out[channel] == NULL)
+    if (hDecoder->time_out[channel] != NULL)
     {
-        hDecoder->time_out[channel] = (real_t*)faad_malloc(mul*hDecoder->frameLength*sizeof(real_t));
-        memset(hDecoder->time_out[channel], 0, mul*hDecoder->frameLength*sizeof(real_t));
+        faad_free(hDecoder->time_out[channel]);
+        hDecoder->time_out[channel] = NULL;
     }
-    if (hDecoder->time_out[paired_channel] == NULL)
+    if (hDecoder->time_out[paired_channel] != NULL)
     {
-        hDecoder->time_out[paired_channel] = (real_t*)faad_malloc(mul*hDecoder->frameLength*sizeof(real_t));
-        memset(hDecoder->time_out[paired_channel], 0, mul*hDecoder->frameLength*sizeof(real_t));
+        faad_free(hDecoder->time_out[paired_channel]);
+        hDecoder->time_out[paired_channel] = NULL;
     }
+    hDecoder->time_out[channel] = (real_t*)faad_malloc(mul*hDecoder->frameLength*sizeof(real_t));
+    memset(hDecoder->time_out[channel], 0, mul*hDecoder->frameLength*sizeof(real_t));
+    hDecoder->time_out[paired_channel] = (real_t*)faad_malloc(mul*hDecoder->frameLength*sizeof(real_t));
+    memset(hDecoder->time_out[paired_channel], 0, mul*hDecoder->frameLength*sizeof(real_t));
 
-    if (hDecoder->fb_intermed[channel] == NULL)
+    if (hDecoder->fb_intermed[channel] != NULL)
     {
-        hDecoder->fb_intermed[channel] = (real_t*)faad_malloc(hDecoder->frameLength*sizeof(real_t));
-        memset(hDecoder->fb_intermed[channel], 0, hDecoder->frameLength*sizeof(real_t));
+        faad_free(hDecoder->fb_intermed[channel]);
+        hDecoder->fb_intermed[channel] = NULL;
     }
-    if (hDecoder->fb_intermed[paired_channel] == NULL)
+    if (hDecoder->fb_intermed[paired_channel] != NULL)
     {
-        hDecoder->fb_intermed[paired_channel] = (real_t*)faad_malloc(hDecoder->frameLength*sizeof(real_t));
-        memset(hDecoder->fb_intermed[paired_channel], 0, hDecoder->frameLength*sizeof(real_t));
+        faad_free(hDecoder->fb_intermed[paired_channel]);
+        hDecoder->fb_intermed[paired_channel] = NULL;
     }
+    hDecoder->fb_intermed[channel] = (real_t*)faad_malloc(hDecoder->frameLength*sizeof(real_t));
+    memset(hDecoder->fb_intermed[channel], 0, hDecoder->frameLength*sizeof(real_t));
+    hDecoder->fb_intermed[paired_channel] = (real_t*)faad_malloc(hDecoder->frameLength*sizeof(real_t));
+    memset(hDecoder->fb_intermed[paired_channel], 0, hDecoder->frameLength*sizeof(real_t));
 
 #ifdef SSR_DEC
     if (hDecoder->object_type == SSR)
