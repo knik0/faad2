@@ -1016,7 +1016,7 @@ int mp4read_frame(void)
 
 int mp4read_seek(uint32_t framenum)
 {
-    if (framenum > mp4config.frame.nsamples)
+    if (framenum >= mp4config.frame.nsamples)
         return ERR_FAIL;
     if (fseek(g_fin, mp4config.frame.info[framenum].offset, SEEK_SET))
         return ERR_FAIL;
