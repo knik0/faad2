@@ -350,9 +350,9 @@ static int stscin(int size)
     if (!mp4config.frame.nsclices)
         return ERR_FAIL;
 
-    tmp = sizeof(slice_info_t) * mp4config.frame.nsclices;
-    if (tmp < mp4config.frame.nsclices)
+    if (mp4config.frame.nsclices > UINT32_MAX / sizeof(slice_info_t))
         return ERR_FAIL;
+    tmp = sizeof(slice_info_t) * mp4config.frame.nsclices;
     mp4config.frame.map = malloc(tmp);
     if (!mp4config.frame.map)
         return ERR_FAIL;
@@ -396,9 +396,9 @@ static int stszin(int size)
     if (!mp4config.frame.nsamples)
         return ERR_FAIL;
 
-    tmp = sizeof(frame_info_t) * mp4config.frame.nsamples;
-    if (tmp < mp4config.frame.nsamples)
+    if (mp4config.frame.nsamples > UINT32_MAX / sizeof(frame_info_t))
         return ERR_FAIL;
+    tmp = sizeof(frame_info_t) * mp4config.frame.nsamples;
     mp4config.frame.info = malloc(tmp);
     if (!mp4config.frame.info)
         return ERR_FAIL;
