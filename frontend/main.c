@@ -1114,7 +1114,7 @@ static int faad_main(int argc, char *argv[])
             if (optarg)
             {
                 char dr[10];
-                if (sscanf(optarg, "%s", dr) < 1) {
+                if (sscanf(optarg, "%9s", dr) < 1) {
                     def_srate = 0;
                 } else {
                     def_srate = atoi(dr);
@@ -1125,7 +1125,7 @@ static int faad_main(int argc, char *argv[])
             if (optarg)
             {
                 char dr[10];
-                if (sscanf(optarg, "%s", dr) < 1)
+                if (sscanf(optarg, "%9s", dr) < 1)
                 {
                     format = 1;
                 } else {
@@ -1139,7 +1139,7 @@ static int faad_main(int argc, char *argv[])
             if (optarg)
             {
                 char dr[10];
-                if (sscanf(optarg, "%s", dr) < 1)
+                if (sscanf(optarg, "%9s", dr) < 1)
                 {
                     outputFormat = FAAD_FMT_16BIT; /* just use default */
                 } else {
@@ -1156,7 +1156,7 @@ static int faad_main(int argc, char *argv[])
             if (optarg)
             {
                 char dr[10];
-                if (sscanf(optarg, "%s", dr) < 1)
+                if (sscanf(optarg, "%9s", dr) < 1)
                 {
                     object_type = LC; /* default */
                 } else {
