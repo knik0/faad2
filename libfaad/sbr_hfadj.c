@@ -1713,7 +1713,7 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
                             QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
                                 (rev*phi_re[i_min1] * MUL_F(adj->S_M_boost[l][m - 1], FRAC_CONST(0.00815)));
                         }
-                        if (m + sbr->kx < 64)
+                        if (m + sbr->kx + 1 < 64)
                         {
                             QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx + 1]) +=
                                 (rev*phi_re[i_min1] * MUL_F(adj->S_M_boost[l][m], FRAC_CONST(0.00815)));
