@@ -444,8 +444,14 @@ static uint8_t sbr_process_channel(sbr_info *sbr, real_t *channel_buf, qmf_t X[M
             {
                 QMF_RE(X[l][k]) = 0;
             }
-            QMF_RE(X[l][kx_band - 1 + bsco_band]) +=
-                QMF_RE(sbr->Xsbr[ch][l + sbr->tHFAdj][kx_band - 1 + bsco_band]);
+            /* kx_band can be 0 (kx_prev on the first frame's leading slots),
+               which would make kx_band - 1 + bsco_band index X[l][-1]. There is
+               no band below 0 to add in that case, so skip the overlap. */
+            if (kx_band + bsco_band > 0)
+            {
+                QMF_RE(X[l][kx_band - 1 + bsco_band]) +=
+                    QMF_RE(sbr->Xsbr[ch][l + sbr->tHFAdj][kx_band - 1 + bsco_band]);
+            }
 #endif
         }
     }
