@@ -39,6 +39,10 @@
 #include "ssr_fb.h"
 #include "ssr_ipqf.h"
 
+static void ssr_gc_function(ssr_info *ssr, real_t *prev_fmd,
+                            real_t *gc_function, uint8_t window_sequence,
+                            uint16_t frame_len);
+
 void ssr_decode(ssr_info *ssr, fb_info *fb, uint8_t window_sequence,
                 uint8_t window_shape, uint8_t window_shape_prev,
                 real_t *freq_in, real_t *time_out, real_t *overlap,
