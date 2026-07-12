@@ -138,13 +138,19 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
                                          qmf_t Xsbr[MAX_NTSRHFG][64], uint8_t ch)
 {
     uint8_t m, l, j, k, k_l, k_h, p;
-    real_t nrg, div;
+    real_t div;
     (void)adj;  /* TODO: remove parameter? */
 #ifdef FIXED_POINT
+    /* the per-bin energy is accumulated over the envelope's time slots and,
+       for the wider bands, its QMF bins; that sum exceeds 32 bits on ordinary
+       content, so keep it in 64 bits. the running int32 sum otherwise wraps
+       before the limit test below can reject an over-range energy. */
+    int64_t nrg;
     const real_t half = REAL_CONST(0.5);
     real_t limit;
     real_t mul;
 #else
+    real_t nrg;
     const real_t half = 0;  /* Compiler is smart enough to eliminate +0 op. */
     const real_t limit = FLT_MAX;
 #endif
