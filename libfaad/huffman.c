@@ -561,7 +561,7 @@ int8_t huffman_spectral_data_2(uint8_t cb, bits_t *ld, int16_t *sp)
 
                 neg = (sp[k] < 0) ? 1 : 0;
 
-                for (i = 4; ; i++)
+                for (i = 4; i < 16; i++)
                 {
                     uint8_t b;
                     if (get1bit_hcr(ld, &b))
@@ -570,7 +570,7 @@ int8_t huffman_spectral_data_2(uint8_t cb, bits_t *ld, int16_t *sp)
                         break;
                 }
 
-                if (i > 32)
+                if (i >= 16)
                     return -1;
 
                 if (getbits_hcr(ld, i, &off))
