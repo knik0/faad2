@@ -450,11 +450,20 @@ uint16_t ps_data(ps_info *ps, bitfile *ld, uint8_t *header)
         num_bits_left = 8 * cnt;
         while (num_bits_left > 7)
         {
+            uint16_t bits_read;
             uint8_t ps_extension_id = (uint8_t)faad_getbits(ld, 2
                 DEBUGVAR(1,1013,"ps_data(): ps_extension_size"));
 
             num_bits_left -= 2;
-            num_bits_left -= ps_extension(ps, ld, ps_extension_id, num_bits_left);
+            bits_read = ps_extension(ps, ld, ps_extension_id, num_bits_left);
+
+            /* ps_extension() decodes a variable amount of Huffman data and does
+               not stop at the advertised ps_extension_size, so it can read more
+               than num_bits_left. Clamp instead of letting the uint16_t wrap. */
+            if (bits_read > num_bits_left)
+                num_bits_left = 0;
+            else
+                num_bits_left -= bits_read;
         }
 
         faad_getbits(ld, num_bits_left
