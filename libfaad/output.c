@@ -488,13 +488,15 @@ void* output_to_PCM(NeAACDecStruct *hDecoder,
                     hDecoder->internal_channel);
                 if (tmp >= 0)
                 {
-                    tmp += (1 << (REAL_BITS-1));
+                    if (tmp <= 0x7FFFFFFF - (1 << (REAL_BITS-1)))
+                        tmp += (1 << (REAL_BITS-1));
                     if (tmp >= REAL_CONST(32767))
                     {
                         tmp = REAL_CONST(32767);
                     }
                 } else {
-                    tmp += -(1 << (REAL_BITS-1));
+                    if (tmp >= (int32_t)0x80000000 + (1 << (REAL_BITS-1)))
+                        tmp += -(1 << (REAL_BITS-1));
                     if (tmp <= REAL_CONST(-32768))
                     {
                         tmp = REAL_CONST(-32768);
@@ -511,14 +513,16 @@ void* output_to_PCM(NeAACDecStruct *hDecoder,
                     hDecoder->internal_channel);
                 if (tmp >= 0)
                 {
-                    tmp += (1 << (REAL_BITS-9));
+                    if (tmp <= 0x7FFFFFFF - (1 << (REAL_BITS-9)))
+                        tmp += (1 << (REAL_BITS-9));
                     tmp >>= (REAL_BITS-8);
                     if (tmp >= 8388607)
                     {
                         tmp = 8388607;
                     }
                 } else {
-                    tmp += -(1 << (REAL_BITS-9));
+                    if (tmp >= (int32_t)0x80000000 + (1 << (REAL_BITS-9)))
+                        tmp += -(1 << (REAL_BITS-9));
                     tmp >>= (REAL_BITS-8);
                     if (tmp <= -8388608)
                     {
@@ -538,9 +542,11 @@ void* output_to_PCM(NeAACDecStruct *hDecoder,
                     hDecoder->internal_channel);
                 if (tmp >= 0)
                 {
-                    tmp += half;
+                    if (tmp <= 0x7FFFFFFF - half)
+                        tmp += half;
                 } else {
-                    tmp += -half;
+                    if (tmp >= (int32_t)0x80000000 + half)
+                        tmp += -half;
                 }
                 tmp = SAT_SHIFT(tmp, exp, sat_shift_mask);
                 int_sample_buffer[(i*channels)+ch] = tmp;

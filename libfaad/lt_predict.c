@@ -137,11 +137,13 @@ static INLINE int16_t real_to_int16(real_t sig_in)
 {
     if (sig_in >= 0)
     {
-        sig_in += (1 << (REAL_BITS-1));
+        if (sig_in <= 0x7FFFFFFF - (1 << (REAL_BITS-1)))
+            sig_in += (1 << (REAL_BITS-1));
         if (sig_in >= REAL_CONST(32768))
             return 32767;
     } else {
-        sig_in += -(1 << (REAL_BITS-1));
+        if (sig_in >= (int32_t)0x80000000 + (1 << (REAL_BITS-1)))
+            sig_in += -(1 << (REAL_BITS-1));
         if (sig_in <= REAL_CONST(-32768))
             return -32768;
     }
