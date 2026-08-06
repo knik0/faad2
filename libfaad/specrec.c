@@ -372,6 +372,9 @@ uint8_t window_grouping_info(NeAACDecStruct *hDecoder, ic_stream *ics)
 #ifdef LD_DEC
         }
 #endif
+        if (ics->num_swb > 0 && ics->swb_offset[ics->num_swb] < ics->swb_offset[ics->num_swb-1]) {
+            return 32;
+        }
         return 0;
     case EIGHT_SHORT_SEQUENCE:
         ics->num_windows = 8;
