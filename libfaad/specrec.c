@@ -996,8 +996,8 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
     /* MAIN object type prediction */
     if (hDecoder->object_type == MAIN)
     {
-		if (!hDecoder->pred_stat[sce->channel])
-			return 33;
+        if (!hDecoder->pred_stat[sce->channel])
+            return 33;
 
         /* intra channel prediction */
         ic_prediction(ics, spec_coef, hDecoder->pred_stat[sce->channel], hDecoder->frameLength,
@@ -1230,6 +1230,9 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_s
     /* MAIN object type prediction */
     if (hDecoder->object_type == MAIN)
     {
+        if (!hDecoder->pred_stat[cpe->channel] || !hDecoder->pred_stat[cpe->paired_channel])
+            return 33;
+
         /* intra channel prediction */
         ic_prediction(ics1, spec_coef1, hDecoder->pred_stat[cpe->channel], hDecoder->frameLength,
             hDecoder->sf_index);
