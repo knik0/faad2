@@ -1026,6 +1026,9 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
         }
 #endif
 
+        if (!hDecoder->lt_pred_stat[sce->channel])
+            return 34;
+
         /* long term prediction */
         lt_prediction(ics, &(ics->ltp), spec_coef, hDecoder->lt_pred_stat[sce->channel], hDecoder->fb,
             ics->window_shape, hDecoder->window_shape_prev[sce->channel],
@@ -1270,6 +1273,9 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_s
             ltp2->lag = hDecoder->ltp_lag[cpe->paired_channel];
         }
 #endif
+
+        if (!hDecoder->lt_pred_stat[cpe->channel] || !hDecoder->lt_pred_stat[cpe->paired_channel])
+            return 34;
 
         /* long term prediction */
         lt_prediction(ics1, ltp1, spec_coef1, hDecoder->lt_pred_stat[cpe->channel], hDecoder->fb,
