@@ -1006,8 +1006,8 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
     /* MAIN object type prediction */
     if (hDecoder->object_type == MAIN)
     {
-		if (!hDecoder->pred_stat[sce->channel])
-			return 33;
+        if (!hDecoder->pred_stat[sce->channel])
+            return 33;
 
         /* intra channel prediction */
         ic_prediction(ics, spec_coef, hDecoder->pred_stat[sce->channel], hDecoder->frameLength,
@@ -1035,6 +1035,9 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
             ics->ltp.lag = hDecoder->ltp_lag[sce->channel];
         }
 #endif
+
+        if (!hDecoder->lt_pred_stat[sce->channel])
+            return 34;
 
         /* long term prediction */
         lt_prediction(ics, &(ics->ltp), spec_coef, hDecoder->lt_pred_stat[sce->channel], hDecoder->fb,
@@ -1240,6 +1243,9 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_s
     /* MAIN object type prediction */
     if (hDecoder->object_type == MAIN)
     {
+        if (!hDecoder->pred_stat[cpe->channel] || !hDecoder->pred_stat[cpe->paired_channel])
+            return 33;
+
         /* intra channel prediction */
         ic_prediction(ics1, spec_coef1, hDecoder->pred_stat[cpe->channel], hDecoder->frameLength,
             hDecoder->sf_index);
@@ -1277,6 +1283,9 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_s
             ltp2->lag = hDecoder->ltp_lag[cpe->paired_channel];
         }
 #endif
+
+        if (!hDecoder->lt_pred_stat[cpe->channel] || !hDecoder->lt_pred_stat[cpe->paired_channel])
+            return 34;
 
         /* long term prediction */
         lt_prediction(ics1, ltp1, spec_coef1, hDecoder->lt_pred_stat[cpe->channel], hDecoder->fb,

@@ -65,6 +65,6 @@ char *err_msg[] = {
     "No standard extension payload allowed in DRM",
     "PCE shall be the first element in a frame",
     "Bitstream value not allowed by specification",
-	"MAIN prediction not initialised"
+    "MAIN prediction not initialised",
+    "Long term prediction not initialised"
 };
-
