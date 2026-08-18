@@ -57,7 +57,11 @@ typedef struct
     // AudioSpecificConfig data:
     struct
     {
-        uint8_t buf[10];
+        // Some muxers (e.g. FFmpeg/libavformat) zero-pad the DecSpecificInfo
+        // descriptor, so the declared ASC length can exceed the ~2 bytes of
+        // meaningful data. A 10-byte buffer rejected such files in esdsin()
+        // with "parse:-1"; 64 bytes safely holds any real AudioSpecificConfig.
+        uint8_t buf[64];
         uint32_t size;
     } asc;
     struct {
