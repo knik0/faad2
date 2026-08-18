@@ -372,6 +372,9 @@ uint8_t window_grouping_info(NeAACDecStruct *hDecoder, ic_stream *ics)
 #ifdef LD_DEC
         }
 #endif
+        if (ics->num_swb > 0 && ics->swb_offset[ics->num_swb] < ics->swb_offset[ics->num_swb-1]) {
+            return 32;
+        }
         return 0;
     case EIGHT_SHORT_SEQUENCE:
         ics->num_windows = 8;
@@ -594,6 +597,13 @@ static uint8_t quant_to_spec(NeAACDecStruct *hDecoder,
             int16_t scale_factor = ics->scale_factors[g][sfb];
 
             width = ics->swb_offset[sfb+1] - ics->swb_offset[sfb];
+            if (width + 3 >= 1024) 
+            {
+                // quant_data contains 1024 uint16_t, the k iterator + 3
+                // should never reach more 1024
+                error = 17;
+                continue;
+            }
 
 #ifdef FIXED_POINT
             scale_factor -= 100;
