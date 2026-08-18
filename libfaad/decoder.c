@@ -372,6 +372,9 @@ long NeAACDecInit(NeAACDecHandle hpDecoder,
     }
 #endif
 
+    if (can_decode_ot(hDecoder->object_type) < 0)
+        return -1;
+
     /* must be done before frameLength is divided by 2 for LD */
 #ifdef SSR_DEC
     if (hDecoder->object_type == SSR)
@@ -384,9 +387,6 @@ long NeAACDecInit(NeAACDecHandle hpDecoder,
     if (hDecoder->object_type == LD)
         hDecoder->frameLength >>= 1;
 #endif
-
-    if (can_decode_ot(hDecoder->object_type) < 0)
-        return -1;
 
     return bits;
 }
