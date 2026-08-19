@@ -1,3 +1,39 @@
+2.11.3 (2026-08-19):
+	[ Dario Binacchi ]
+	* Fix ISO C warning in `libfaad/fixed.h`
+
+	[ Fabian Greffrath ]
+	* Check for `mp4config.frame.nsclices == 0` in `frontend/mp4read.c` to fix
+	  Heap Buffer Overflow
+
+	[ Kevin Valerio ]
+	* SBR: prevent heap overflow in channel-pair reconstruction
+
+	[ netliomax25-code ]
+	* Fix off-by-one frame index check in `mp4read_seek`
+	* Fix integer overflow in `stszin`/`stscin` allocation size checks
+	* Bound `sscanf` field width in option parsing
+	* Fix out-of-bounds `iq_table` read in `iquant` for -32768
+	* Prevent `length_of_rvlc_sf` underflow in `rvlc_scale_factor_data`
+	* Fix out-of-bounds `Xsbr` write in `hf_assembly` sinusoid addition
+	* Fix out-of-bounds `X` underflow in SBR low-power QMF assembly
+	* Fix `ssr_gc_function` signature mismatch in `ssr_gain_control`
+	* Fix signed overflow in `estimate_current_envelope` energy sum
+	* Cap escape length in `huffman_spectral_data_2`
+	* Prevent `num_bits_left` underflow in `ps_data` extension parsing
+	* Fix signed overflow in fixed-point sample rounding before saturation
+
+	[ Steve Lhomme ]
+	* Add sanity checks on the width in `libfaad/specrec.c`
+	* Check the last `swb_offset` value is valid in `libfaad/specrec.c`
+	* Return early from `NeAACDecInit` when the object type can't be supported
+
+	[ Thomas Lange ]
+	* Fix null pointer dereferences in intra channel and long term prediction
+
+	[ hexapod0815 ]
+	* Increase the ASC buffer from 10 to 64 bytes in `frontend/mp4read.h`
+
 2.11.2 (2025-03-04):
 	[ Armin Novak ]
 	* Add option BUILD_FAAD_CLI
