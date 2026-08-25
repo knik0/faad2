@@ -147,8 +147,7 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
        before the limit test below can reject an over-range energy. */
     int64_t nrg;
     const real_t half = REAL_CONST(0.5);
-    real_t limit;
-    real_t mul;
+    int64_t limit;
 #else
     real_t nrg;
     const real_t half = 0;  /* Compiler is smart enough to eliminate +0 op. */
@@ -169,8 +168,7 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
             if (div <= 0)
                 div = 1;
 #ifdef FIXED_POINT
-            limit = div << (30 - (COEF_BITS - REAL_BITS));
-            mul = (1 << (COEF_BITS - REAL_BITS)) / div;
+            limit = (int64_t)div << 30;
 #endif
 
             for (m = 0; m < sbr->M; m++)
@@ -196,7 +194,7 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
                 if (nrg < -limit || nrg > limit)
                     return 1;
 #ifdef FIXED_POINT
-                sbr->E_curr[ch][m][l] = nrg * mul;
+                sbr->E_curr[ch][m][l] = (real_t)(nrg / div);
 #else
                 sbr->E_curr[ch][m][l] = nrg / div;
 #endif
@@ -230,8 +228,7 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
                     if (div <= 0)
                         div = 1;
 #ifdef FIXED_POINT
-                    limit = div << (30 - (COEF_BITS - REAL_BITS));
-                    mul = (1 << (COEF_BITS - REAL_BITS)) / div;
+                    limit = (int64_t)div << 30;
 #endif
 
                     for (i = l_i + sbr->tHFAdj; i < u_i + sbr->tHFAdj; i++)
@@ -256,7 +253,7 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
                     if (nrg < -limit || nrg > limit)
                         return 1;
 #ifdef FIXED_POINT
-                    sbr->E_curr[ch][k - sbr->kx][l] = nrg * mul;
+                    sbr->E_curr[ch][k - sbr->kx][l] = (real_t)(nrg / div);
 #else
                     sbr->E_curr[ch][k - sbr->kx][l] = nrg / div;
 #endif
