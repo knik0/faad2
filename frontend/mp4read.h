@@ -37,7 +37,19 @@ typedef struct
     uint32_t samplerate;
     // total sound samples
     uint32_t samples;
+    uint32_t mvhd_timescale;
     uint32_t channels;
+
+    // gapless container trimming information (in audio sample frames per channel)
+    uint32_t gapless_delay;
+    uint64_t gapless_valid_samples;
+    uint32_t gapless_padding;
+    int has_gapless_info;
+
+    // raw elst values preserved until samplerate is available
+    int64_t elst_media_time;
+    uint64_t elst_segment_duration;
+    int has_elst;
     // sample depth
     uint32_t bits;
     // buffer config

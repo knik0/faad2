@@ -44,7 +44,7 @@ Set the output file format. The number takes one of the following values:
 .RE
 .TP
 .BI \-g
-Set the processing to not perform gapless decoding.
+Disable sample-accurate gapless decoding (output un-trimmed raw PCM).
 .TP
 .B \-h ", \-\^\-help"
 Shows a usage summary.
