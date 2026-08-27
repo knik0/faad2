@@ -203,8 +203,10 @@ void pns_decode(ic_stream *ics_left, ic_stream *ics_right,
                     */
                     ics_left->pred.prediction_used[sfb] = 0;
 #endif
-                    begin = min(base + ics_left->swb_offset[sfb], ics_left->swb_offset_max);
-                    end = min(base + ics_left->swb_offset[sfb+1], ics_left->swb_offset_max);
+                    /* swb_offset_max is per-window, not per-frame; clamping
+                       group>0 offsets against it zeroed out begin/end. */
+                    begin = min(base + ics_left->swb_offset[sfb], frame_len);
+                    end = min(base + ics_left->swb_offset[sfb+1], frame_len);
 
                     r1_dep = *__r1;
                     r2_dep = *__r2;
@@ -247,16 +249,16 @@ void pns_decode(ic_stream *ics_left, ic_stream *ics_right,
                     {
                         /*uint16_t c;*/
 
-                        begin = min(base + ics_right->swb_offset[sfb], ics_right->swb_offset_max);
-                        end = min(base + ics_right->swb_offset[sfb+1], ics_right->swb_offset_max);
+                        begin = min(base + ics_right->swb_offset[sfb], frame_len);
+                        end = min(base + ics_right->swb_offset[sfb+1], frame_len);
 
                         /* Generate random vector dependent on left channel*/
                         gen_rand_vector(&spec_right[begin],
                             ics_right->scale_factors[g][sfb], end - begin, sub, &r1_dep, &r2_dep);
 
                     } else /*if (ics_left->ms_mask_present == 0)*/ {
-                        begin = min(base + ics_right->swb_offset[sfb], ics_right->swb_offset_max);
-                        end = min(base + ics_right->swb_offset[sfb+1], ics_right->swb_offset_max);
+                        begin = min(base + ics_right->swb_offset[sfb], frame_len);
+                        end = min(base + ics_right->swb_offset[sfb+1], frame_len);
 
                         /* Generate random vector */
                         gen_rand_vector(&spec_right[begin],
