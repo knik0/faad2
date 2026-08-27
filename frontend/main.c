@@ -803,9 +803,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
     int first_time = 1;
 
     /* for gapless decoding */
-    unsigned int useAacLength = 1;
     unsigned int framesize;
-    unsigned decoded;
 
     if (strcmp(mp4file, "-") == 0 ) {
         faad_fprintf(stderr, "Cannot open stdin for MP4 input \n");
@@ -854,8 +852,6 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
     }
 
     framesize = 1024;
-    useAacLength = 0;
-    decoded = 0;
 
     if (mp4config.asc.size)
     {
@@ -887,6 +883,43 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
         return 0;
     }
 
+    /* Implicit SBR signaling declares the container at the core
+       (pre-SBR) rate, not output rate. Rescale to output domain. */
+    if (mp4config.has_gapless_info && mp4config.samplerate > 0 &&
+        mp4ASC.samplingFrequency > 0 && mp4ASC.samplingFrequency != mp4config.samplerate)
+    {
+        double rate_ratio = (double)mp4ASC.samplingFrequency / (double)mp4config.samplerate;
+        mp4config.gapless_delay = (uint32_t)(mp4config.gapless_delay * rate_ratio + 0.5);
+        mp4config.gapless_valid_samples = (uint64_t)(mp4config.gapless_valid_samples * rate_ratio + 0.5);
+    }
+
+    uint32_t net_start_trim = 0;
+    uint64_t target_valid_samples = 0;
+    uint64_t written_audio_frames = 0;
+    int enable_gapless_trim = !noGapless;
+
+    if (enable_gapless_trim)
+    {
+        if (mp4config.has_gapless_info)
+        {
+            if (mp4config.gapless_delay > framesize)
+                net_start_trim = mp4config.gapless_delay - framesize;
+            else
+                net_start_trim = 0;
+
+            target_valid_samples = mp4config.gapless_valid_samples;
+        }
+        else if (mp4config.samples > 0)
+        {
+            net_start_trim = 0;
+            target_valid_samples = mp4config.samples;
+        }
+        else
+        {
+            enable_gapless_trim = 0;
+        }
+    }
+
     startSampleId = 0;
     if (seek_to > 0.1) {
         int64_t sample = (int64_t)(seek_to * mp4config.samplerate / framesize);
@@ -897,9 +930,6 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
     mp4read_seek(startSampleId);
     for (sampleId = startSampleId; sampleId < mp4config.frame.nsamples; sampleId++)
     {
-        /*int rc;*/
-        unsigned long dur;
-        unsigned int sample_count;
 
         if (mp4read_frame())
             break;
@@ -919,31 +949,6 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
             fwrite(adtsData, 1, adtsDataSize, adtsFile);
 
             fwrite(mp4config.bitbuf.data, 1, frameInfo.bytesconsumed, adtsFile);
-        }
-
-        dur = frameInfo.samples / frameInfo.channels;
-        decoded += dur;
-
-        if (decoded > mp4config.samples)
-            dur -= decoded - mp4config.samples;
-
-        if (dur > framesize)
-        {
-            faad_fprintf(stderr, "Warning: excess frame detected in MP4 file.\n");
-            dur = framesize;
-        }
-
-        if (!noGapless)
-        {
-            if (useAacLength || (mp4config.samplerate != samplerate)) {
-                sample_count = frameInfo.samples;
-            } else {
-                sample_count = (unsigned int)(dur * frameInfo.channels);
-                if (sample_count > frameInfo.samples)
-                    sample_count = frameInfo.samples;
-            }
-        } else {
-            sample_count = frameInfo.samples;
         }
 
         /* open the sound file now that the number of channels are known */
@@ -987,9 +992,60 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
 #endif
         }
 
-        if ((frameInfo.error == 0) && (sample_count > 0) && (!adts_out))
+        if ((frameInfo.error == 0) && (frameInfo.samples > 0) && (!adts_out))
         {
-            if (write_audio_file(aufile, sample_buffer, sample_count) == 0)
+            void *curr_buffer = sample_buffer;
+            unsigned int sample_count = frameInfo.samples;
+            unsigned int frame_audio_frames = sample_count / frameInfo.channels;
+            int stop_decoding = 0;
+
+            if (enable_gapless_trim)
+            {
+                /* Start slicing: skip initial delay samples across frame boundary */
+                if (net_start_trim > 0)
+                {
+                    if (frame_audio_frames <= net_start_trim)
+                    {
+                        net_start_trim -= frame_audio_frames;
+                        sample_count = 0;
+                    }
+                    else
+                    {
+                        unsigned int skip_frames = net_start_trim;
+                        net_start_trim = 0;
+                        frame_audio_frames -= skip_frames;
+                        sample_count = frame_audio_frames * frameInfo.channels;
+
+                        size_t sample_size = sizeof(int16_t);
+                        if (outputFormat == FAAD_FMT_24BIT || outputFormat == FAAD_FMT_32BIT || outputFormat == FAAD_FMT_FLOAT)
+                            sample_size = sizeof(int32_t);
+                        else if (outputFormat == FAAD_FMT_DOUBLE)
+                            sample_size = sizeof(double);
+
+                        curr_buffer = (char*)curr_buffer + (skip_frames * frameInfo.channels * sample_size);
+                    }
+                }
+
+                /* End slicing: truncate buffer when target valid audio count is met */
+                if (sample_count > 0 && target_valid_samples > 0)
+                {
+                    if (written_audio_frames + frame_audio_frames >= target_valid_samples)
+                    {
+                        uint64_t remaining_frames = target_valid_samples - written_audio_frames;
+                        sample_count = (unsigned int)(remaining_frames * frameInfo.channels);
+                        stop_decoding = 1;
+                    }
+                }
+            }
+
+            if (sample_count > 0)
+            {
+                if (write_audio_file(aufile, curr_buffer, sample_count) == 0)
+                    break;
+                written_audio_frames += sample_count / frameInfo.channels;
+            }
+
+            if (stop_decoding)
                 break;
         }
 
@@ -1071,7 +1127,6 @@ static int faad_main(int argc, char *argv[])
             { "downmix",    0, 0, 'd' },
             { "info",       0, 0, 'i' },
             { "stdio",      0, 0, 'w' },
-            { "stdio",      0, 0, 'g' },
             { "seek",       1, 0, 'j' },
             { "help",       0, 0, 'h' },
             { 0, 0, 0, 0 }
