@@ -1143,7 +1143,11 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
     {
         int ele = hDecoder->fr_ch_ele;
         int ch = sce->channel;
-        int frame_size = (hDecoder->sbr_alloced[ele]) ? 2 : 1;
+        int frame_size = 1;
+#ifdef SBR_DEC
+        if (hDecoder->sbr_alloced[ele])
+            frame_size = 2;
+#endif
         frame_size *= hDecoder->frameLength*sizeof(real_t);
 
         memcpy(hDecoder->time_out[ch+1], hDecoder->time_out[ch], frame_size);

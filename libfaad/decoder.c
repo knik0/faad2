@@ -179,6 +179,9 @@ NeAACDecHandle NeAACDecOpen(void)
 #endif
 
     hDecoder->drc = drc_init(REAL_CONST(1.0), REAL_CONST(1.0));
+#if (defined(PS_DEC) || defined(DRM_PS))
+    hDecoder->ps_present_flag = -1;
+#endif
 
     return hDecoder;
 }
@@ -350,15 +353,6 @@ long NeAACDecInit(NeAACDecHandle hpDecoder,
     if (!*samplerate)
         return -1;
 
-#if (defined(PS_DEC) || defined(DRM_PS))
-    /* check if we have a mono file */
-    if (*channels == 1)
-    {
-        /* upMatrix to 2 channels for implicit signalling of PS */
-        *channels = 2;
-    }
-#endif
-
     hDecoder->channelConfiguration = *channels;
 
 #ifdef SBR_DEC
@@ -428,12 +422,7 @@ char NeAACDecInit2(NeAACDecHandle hpDecoder,
         hDecoder->pce_set = 1;
     }
 #if (defined(PS_DEC) || defined(DRM_PS))
-    /* check if we have a mono file */
-    if (*channels == 1)
-    {
-        /* upMatrix to 2 channels for implicit signalling of PS */
-        *channels = 2;
-    }
+    hDecoder->ps_present_flag = mp4ASC.ps_present_flag;
 #endif
     hDecoder->sf_index = mp4ASC.samplingFrequencyIndex;
     hDecoder->object_type = mp4ASC.objectTypeIndex;
@@ -629,7 +618,8 @@ static void create_channel_config(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *h
             if (hInfo->num_front_channels == 1 &&
                 hInfo->num_side_channels == 0 &&
                 hInfo->num_back_channels == 0 &&
-                hInfo->num_lfe_channels == 0)
+                hInfo->num_lfe_channels == 0 &&
+                hDecoder->ps_used_global)
             {
                 /* When PS is enabled output is always stereo */
                 hInfo->channel_position[chpos++] = FRONT_CHANNEL_LEFT;
@@ -677,10 +667,16 @@ static void create_channel_config(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *h
         {
         case 1:
 #if (defined(PS_DEC) || defined(DRM_PS))
-            /* When PS is enabled output is always stereo */
-            hInfo->num_front_channels = 2;
-            hInfo->channel_position[0] = FRONT_CHANNEL_LEFT;
-            hInfo->channel_position[1] = FRONT_CHANNEL_RIGHT;
+            if (hDecoder->ps_used_global)
+            {
+                /* When PS is enabled output is always stereo */
+                hInfo->num_front_channels = 2;
+                hInfo->channel_position[0] = FRONT_CHANNEL_LEFT;
+                hInfo->channel_position[1] = FRONT_CHANNEL_RIGHT;
+            } else {
+                hInfo->num_front_channels = 1;
+                hInfo->channel_position[0] = FRONT_CHANNEL_CENTER;
+            }
 #else
             hInfo->num_front_channels = 1;
             hInfo->channel_position[0] = FRONT_CHANNEL_CENTER;
@@ -1054,13 +1050,6 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
 
 #if (defined(PS_DEC) || defined(DRM_PS))
     hDecoder->upMatrix = 0;
-    /* check if we have a mono file */
-    if (output_channels == 1)
-    {
-        /* upMatrix to 2 channels for implicit signalling of PS */
-        hDecoder->upMatrix = 1;
-        output_channels = 2;
-    }
 #endif
 
     /* Make a channel configuration based on either a PCE or a channelConfiguration */

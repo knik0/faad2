@@ -415,6 +415,7 @@ typedef struct
 #endif
 
 #if (defined(PS_DEC) || defined(DRM_PS))
+    int8_t ps_present_flag;
     uint8_t ps_used[MAX_SYNTAX_ELEMENTS];
     uint8_t ps_used_global;
 #endif

@@ -158,6 +158,7 @@ typedef struct mp4AudioSpecificConfig
     char sbr_present_flag;
     char forceUpSampling;
     char downSampledSBR;
+    char ps_present_flag;
 } mp4AudioSpecificConfig;
 
 typedef struct NeAACDecConfiguration
