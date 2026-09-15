@@ -1166,10 +1166,15 @@ static uint8_t fill_element(NeAACDecStruct *hDecoder, bitfile *ld, drc_info *drc
 #if (defined(PS_DEC) || defined(DRM_PS))
             if (hDecoder->sbr[sbr_ele]->ps_used)
             {
-                hDecoder->ps_used[sbr_ele] = 1;
+                if (hDecoder->ps_present_flag != 0)
+                {
+                    hDecoder->ps_used[sbr_ele] = 1;
 
-                /* set element independent flag to 1 as well */
-                hDecoder->ps_used_global = 1;
+                    /* set element independent flag to 1 as well */
+                    hDecoder->ps_used_global = 1;
+                } else {
+                    hDecoder->sbr[sbr_ele]->ps_used = 0;
+                }
             }
 #endif
         } else {
