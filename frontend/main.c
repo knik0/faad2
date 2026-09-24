@@ -66,6 +66,9 @@
 
 #define MAX_PERCENTS 384
 
+/* SBR QMF analysis+synthesis delay, core-rate samples (ISO/IEC 14496-3) */
+#define SBR_DECODER_DELAY 481
+
 static int quiet = 0;
 
 static void faad_fprintf(FILE *stream, const char *fmt, ...)
@@ -804,6 +807,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
 
     /* for gapless decoding */
     unsigned int framesize;
+    int sbr_upsampled;
 
     if (strcmp(mp4file, "-") == 0 ) {
         faad_fprintf(stderr, "Cannot open stdin for MP4 input \n");
@@ -852,13 +856,18 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
     }
 
     framesize = 1024;
+    sbr_upsampled = 0;
 
     if (mp4config.asc.size)
     {
         if (NeAACDecAudioSpecificConfig(mp4config.asc.buf, mp4config.asc.size, &mp4ASC) >= 0)
         {
             if (mp4ASC.frameLengthFlag == 1) framesize = 960;
-            if (mp4ASC.sbr_present_flag == 1 || mp4ASC.forceUpSampling) framesize *= 2;
+            if (mp4ASC.sbr_present_flag == 1 || mp4ASC.forceUpSampling)
+            {
+                framesize *= 2;
+                sbr_upsampled = 1;
+            }
         }
     }
 
@@ -902,8 +911,11 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
     {
         if (mp4config.has_gapless_info)
         {
-            if (mp4config.gapless_delay > framesize)
-                net_start_trim = mp4config.gapless_delay - framesize;
+            /* Encoders (Apple, fdk-aac) leave the SBR decoder's QMF delay
+               out of the priming; the decoder adds it. */
+            uint32_t delay = mp4config.gapless_delay + (sbr_upsampled ? 2 * SBR_DECODER_DELAY : 0);
+            if (delay > framesize)
+                net_start_trim = delay - framesize;
             else
                 net_start_trim = 0;
 
