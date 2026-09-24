@@ -249,8 +249,10 @@ int8_t AudioSpecificConfigFromBitfile(bitfile *ld,
                 {
                     uint8_t tmp;
 
-					/* Don't set OT to SBR until checked that it is actually there */
-					mp4ASC->objectTypeIndex = tmp_OTi;
+					/* Don't set OT to SBR until checked that it is actually there.
+					 * PS is carried by ps_present_flag: an object type >= 17
+					 * would send the LC core down the ER syntax path. */
+					mp4ASC->objectTypeIndex = HE_AAC;
 
                     if (tmp_OTi == 29)
                         mp4ASC->ps_present_flag = 1;
@@ -280,8 +282,6 @@ int8_t AudioSpecificConfigFromBitfile(bitfile *ld,
                         {
                             mp4ASC->ps_present_flag = (uint8_t)faad_get1bit(ld
                                 DEBUGVAR(1,15,"parse_audio_decoder_specific_info(): ps_present_flag"));
-                            if (mp4ASC->ps_present_flag == 1)
-                                mp4ASC->objectTypeIndex = 29;
                         }
                     }
                 }
