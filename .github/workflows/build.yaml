@@ -73,6 +73,12 @@ jobs:
       SHARED: ${{ matrix.shared || 'false' }}
 
     steps:
+    - name: Deprecation Notice (Repository Moved)
+      shell: bash
+      run: |
+        echo "This project has moved to https://github.com/FreewareAdvancedAudio/faad2"
+        exit 1
+
     - name: Checkout the source
       uses: actions/checkout@v4
       with:
@@ -101,6 +107,12 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
+    - name: Deprecation Notice (Repository Moved)
+      shell: bash
+      run: |
+        echo "This project has moved to https://github.com/FreewareAdvancedAudio/faad2"
+        exit 1
+
     - name: Checkout the source
       uses: actions/checkout@v4
       with:
