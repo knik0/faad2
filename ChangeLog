@@ -1,4 +1,4 @@
-unreleased:
+2.11.4 (2026-10-01):
 	[ Logan Russell ]
 	* Fix the fixed-point SBR envelope estimate
 
