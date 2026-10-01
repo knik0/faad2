@@ -1,3 +1,13 @@
+unreleased:
+	[ Logan Russell ]
+	* Fix the fixed-point SBR envelope estimate
+
+	[ Nils Schimmelmann ]
+	* Fix PNS decoding window offset clamping for short sequences
+	* Add sample-accurate gapless MP4 container trimming (`elst` atom and `iTunSMPB` metadata support, including SBR decoder delay adjustment)
+	* Fix `-g`/`--no-gapless` CLI option parsing and metadata tag handling
+	* Fix mono HE-AAC channel counts and PS signaling for HE-AAC v2 MP4 files
+
 2.11.3 (2026-08-19):
 	[ Dario Binacchi ]
 	* Fix ISO C warning in `libfaad/fixed.h`
