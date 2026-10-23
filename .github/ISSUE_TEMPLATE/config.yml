@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report an issue in the active FAAD2 repository
+    url: https://github.com/FreewareAdvancedAudio/faad2/issues/new
+    about: This project has moved. Please report issues in the active repository.
